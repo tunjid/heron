@@ -97,8 +97,9 @@ fun PaneScaffoldState.PaneFab(
             // The material3 ExtendedFloatingActionButton does not allow for placing
             // Modifier.animateContentSize() on its row.
             FloatingActionButton(
-                modifier = modifier
+                modifier = Modifier
                     .animateFabSize()
+                    .then(modifier)
                     .paneStickySharedElement(
                         sharedContentState = rememberSharedContentState(
                             key = FabSharedElementKey,
@@ -111,8 +112,8 @@ fun PaneScaffoldState.PaneFab(
                 content = {
                     Row(
                         modifier = Modifier
-                            .animateFabSize()
-                            .padding(horizontal = 16.dp),
+                            .padding(horizontal = 16.dp)
+                            .animateFabSize(),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         if (icon != null) FabIcon(icon)

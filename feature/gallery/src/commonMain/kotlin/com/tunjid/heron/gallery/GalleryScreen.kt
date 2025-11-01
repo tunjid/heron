@@ -26,7 +26,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
@@ -264,7 +263,6 @@ internal fun GalleryScreen(
             val signedInProfileId = state.signedInProfileId
             MediaPoster(
                 modifier = Modifier
-                    .align(Alignment.TopStart)
                     .statusBarsPadding()
                     .padding(
                         horizontal = 16.dp,
@@ -308,7 +306,6 @@ internal fun GalleryScreen(
                 post = state.post,
                 paneScaffoldState = paneScaffoldState,
                 modifier = Modifier
-                    .align(Alignment.CenterEnd)
                     .padding(horizontal = 16.dp),
                 onReplyToPost = { post ->
                     actions(
@@ -330,7 +327,6 @@ internal fun GalleryScreen(
             )
             GalleryFooter(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .padding(vertical = 24.dp)
                     .windowInsetsPadding(insets = WindowInsets.navigationBars),
@@ -461,7 +457,7 @@ private fun GalleryFooter(
         Box(
             modifier = Modifier
                 .align(Alignment.End)
-                .padding(horizontal = 12.dp),
+                .padding(horizontal = 16.dp),
         ) {
             when (item) {
                 is GalleryItem.Photo -> imageDownloadState.DownloadButton(item)
@@ -516,7 +512,7 @@ private fun MediaOverlay(
     modifier: Modifier = Modifier,
     galleryItem: GalleryItem?,
     isVisible: Boolean,
-    content: @Composable BoxScope.(item: GalleryItem) -> Unit,
+    content: @Composable (item: GalleryItem) -> Unit,
 ) {
     val visible by rememberUpdatedState(galleryItem != null && isVisible)
     val alphaState = animateFloatAsState(
@@ -538,12 +534,14 @@ private fun MediaOverlay(
 
     // The Overlay is stateful, so it should not be removed from the composition.
     // So instead of AnimatedVisibility, alpha and zIndices are  manipulated.
-    Box(
+    Column(
         modifier = modifier
             .zIndex(zIndex)
             .fillMaxSize()
             .graphicsLayer { alpha = alphaState.value }
             .background(color = Color.Black.copy(alpha = 0.8f)),
+        verticalArrangement = Arrangement.SpaceBetween,
+        horizontalAlignment = Alignment.End,
         content = {
             if (galleryItem != null) content(galleryItem)
         },

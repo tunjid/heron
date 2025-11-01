@@ -32,5 +32,6 @@ fun samplePost(): Post {
             bookmarked = false,
         ),
         labels = emptyList(),
+        embeddedRecord = null,
     )
 }

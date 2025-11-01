@@ -56,7 +56,6 @@ fun FeedGenerator(
     sharedElementPrefix: String,
     feedGenerator: FeedGenerator,
     status: FeedGenerator.Status,
-    onFeedGeneratorClicked: (FeedGenerator) -> Unit,
     onFeedGeneratorStatusUpdated: (Update) -> Unit,
 ) = with(movableElementSharedTransitionScope) {
     RecordLayout(
@@ -110,9 +109,6 @@ fun FeedGenerator(
                     onFeedGeneratorStatusUpdated(update)
                 },
             )
-        },
-        onClicked = {
-            onFeedGeneratorClicked(feedGenerator)
         },
     )
 }

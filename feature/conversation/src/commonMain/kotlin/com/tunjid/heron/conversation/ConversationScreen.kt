@@ -77,16 +77,14 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
-import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
+import com.tunjid.heron.scaffold.navigation.recordDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.postActions
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
-import com.tunjid.heron.timeline.utilities.pendingOffsetFor
-import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -462,15 +460,13 @@ private fun PostMessage(
                         ),
                     )
                 },
-                onPostClicked = { post, quotingPostUri ->
+                onPostClicked = { post ->
                     actions(
                         Action.Navigate.To(
-                            postDestination(
+                            recordDestination(
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                sharedElementPrefix = item.id.withQuotingPostUriPrefix(
-                                    quotingPostUri = quotingPostUri,
-                                ),
-                                post = post,
+                                sharedElementPrefix = item.id,
+                                record = post,
                             ),
                         ),
                     )
@@ -487,6 +483,19 @@ private fun PostMessage(
                                     ),
                                     quotingPostUri = quotingPostUri,
                                 ),
+                            ),
+                        ),
+                    )
+                },
+                onPostRecordClicked = { record, owningPostUri ->
+                    actions(
+                        Action.Navigate.To(
+                            recordDestination(
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                sharedElementPrefix = item.id.withQuotingPostUriPrefix(
+                                    quotingPostUri = owningPostUri,
+                                ),
+                                record = record,
                             ),
                         ),
                     )

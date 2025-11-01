@@ -44,6 +44,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LocalTextStyle
@@ -111,10 +112,10 @@ import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.navigation.editProfileDestination
 import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
-import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.profileFollowersDestination
 import com.tunjid.heron.scaffold.navigation.profileFollowsDestination
+import com.tunjid.heron.scaffold.navigation.recordDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
@@ -327,7 +328,21 @@ internal fun ProfileScreen(
                                     FeedGenerator(
                                         modifier = Modifier
                                             .fillParentMaxWidth()
-                                            .animateItem(),
+                                            .clip(RecordShape)
+                                            .animateItem()
+                                            .clickable {
+                                                actions(
+                                                    Action.Navigate.To(
+                                                        pathDestination(
+                                                            path = feedGenerator.uri.path,
+                                                            models = listOf(feedGenerator),
+                                                            sharedElementPrefix = ProfileCollectionSharedElementPrefix,
+                                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                                        ),
+                                                    ),
+                                                )
+                                            }
+                                            .recordPadding(),
                                         movableElementSharedTransitionScope = paneScaffoldState,
                                         sharedElementPrefix = ProfileCollectionSharedElementPrefix,
                                         feedGenerator = feedGenerator,
@@ -335,18 +350,6 @@ internal fun ProfileScreen(
                                             true -> FeedGenerator.Status.Pinned
                                             false -> FeedGenerator.Status.Saved
                                             null -> FeedGenerator.Status.None
-                                        },
-                                        onFeedGeneratorClicked = {
-                                            actions(
-                                                Action.Navigate.To(
-                                                    pathDestination(
-                                                        path = it.uri.path,
-                                                        models = listOf(it),
-                                                        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
-                                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                    ),
-                                                ),
-                                            )
                                         },
                                         onFeedGeneratorStatusUpdated = { update ->
                                             if (paneScaffoldState.isSignedOut) signInPopUpState.show()
@@ -362,22 +365,25 @@ internal fun ProfileScreen(
                                 itemContent = { starterPack ->
                                     StarterPack(
                                         modifier = Modifier
-                                            .fillMaxWidth(),
+                                            .fillParentMaxWidth()
+                                            .clip(RecordShape)
+                                            .animateItem()
+                                            .clickable {
+                                                actions(
+                                                    Action.Navigate.To(
+                                                        pathDestination(
+                                                            path = starterPack.uri.path,
+                                                            models = listOf(starterPack),
+                                                            sharedElementPrefix = ProfileCollectionSharedElementPrefix,
+                                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                                        ),
+                                                    ),
+                                                )
+                                            }
+                                            .recordPadding(),
                                         movableElementSharedTransitionScope = paneScaffoldState,
                                         sharedElementPrefix = ProfileCollectionSharedElementPrefix,
                                         starterPack = starterPack,
-                                        onStarterPackClicked = {
-                                            actions(
-                                                Action.Navigate.To(
-                                                    pathDestination(
-                                                        path = it.uri.path,
-                                                        models = listOf(it),
-                                                        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
-                                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                    ),
-                                                ),
-                                            )
-                                        },
                                     )
                                 },
                             )
@@ -389,22 +395,24 @@ internal fun ProfileScreen(
                                     FeedList(
                                         modifier = Modifier
                                             .fillParentMaxWidth()
-                                            .animateItem(),
+                                            .clip(RecordShape)
+                                            .animateItem()
+                                            .clickable {
+                                                actions(
+                                                    Action.Navigate.To(
+                                                        pathDestination(
+                                                            path = list.uri.path,
+                                                            models = listOf(list),
+                                                            sharedElementPrefix = ProfileCollectionSharedElementPrefix,
+                                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                                        ),
+                                                    ),
+                                                )
+                                            }
+                                            .recordPadding(),
                                         movableElementSharedTransitionScope = paneScaffoldState,
                                         sharedElementPrefix = ProfileCollectionSharedElementPrefix,
                                         list = list,
-                                        onListClicked = {
-                                            actions(
-                                                Action.Navigate.To(
-                                                    pathDestination(
-                                                        path = it.uri.path,
-                                                        models = listOf(it),
-                                                        sharedElementPrefix = ProfileCollectionSharedElementPrefix,
-                                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                    ),
-                                                ),
-                                            )
-                                        },
                                     )
                                 },
                             )
@@ -1055,17 +1063,15 @@ private fun ProfileTimeline(
                                         ),
                                     )
                                 },
-                                onPostClicked = { post: Post, quotingPostUri: PostUri? ->
+                                onPostClicked = { post: Post ->
                                     pendingScrollOffsetState.value =
                                         gridState.pendingOffsetFor(item)
                                     actions(
                                         Action.Navigate.To(
-                                            postDestination(
+                                            recordDestination(
                                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
-                                                    quotingPostUri = quotingPostUri,
-                                                ),
-                                                post = post,
+                                                sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                                                record = post,
                                             ),
                                         ),
                                     )
@@ -1084,6 +1090,21 @@ private fun ProfileTimeline(
                                                         quotingPostUri = quotingPostUri,
                                                     )
                                                     .takeIf { post.author.did == profile.did },
+                                            ),
+                                        ),
+                                    )
+                                },
+                                onPostRecordClicked = { record, owningPostUri ->
+                                    pendingScrollOffsetState.value =
+                                        gridState.pendingOffsetFor(item)
+                                    actions(
+                                        Action.Navigate.To(
+                                            recordDestination(
+                                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                                sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
+                                                    quotingPostUri = owningPostUri,
+                                                ),
+                                                record = record,
                                             ),
                                         ),
                                     )
@@ -1248,6 +1269,11 @@ private class HeaderState(
     private val expandedToCollapsedAvatar
         get() = ExpandedProfilePhotoSize - CollapsedProfilePhotoSize
 }
+
+private val RecordShape = RoundedCornerShape(8.dp)
+
+private fun Modifier.recordPadding() =
+    padding(8.dp)
 
 private val ExpandedProfilePhotoSize = 68.dp
 private val CollapsedProfilePhotoSize = 36.dp

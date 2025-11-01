@@ -44,10 +44,7 @@ internal fun PostRecord(
             isBlurred = false,
             sharedElementPrefix = sharedElementPrefix,
             onClick = {
-                postActions.onPostClicked(
-                    post = post,
-                    quotingPostUri = null,
-                )
+                postActions.onPostClicked(post = post)
             },
             onLinkTargetClicked = postActions::onLinkTargetClicked,
             onProfileClicked = { post, profile ->

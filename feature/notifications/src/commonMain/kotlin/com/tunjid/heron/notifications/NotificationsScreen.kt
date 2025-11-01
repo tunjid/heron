@@ -59,8 +59,8 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
-import com.tunjid.heron.scaffold.navigation.postDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
+import com.tunjid.heron.scaffold.navigation.recordDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
@@ -167,10 +167,10 @@ internal fun NotificationsScreen(
         { notification: Notification.PostAssociated ->
             actions(
                 Action.Navigate.To(
-                    postDestination(
+                    recordDestination(
                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         sharedElementPrefix = notification.sharedElementPrefix(),
-                        post = notification.associatedPost,
+                        record = notification.associatedPost,
                     ),
                 ),
             )
@@ -192,7 +192,6 @@ internal fun NotificationsScreen(
         }
     }
     val onPostInteraction = postInteractionState::onInteraction
-    val onPostOptions = postOptionsState::showOptions
 
     val pullToRefreshState = rememberPullToRefreshState()
 

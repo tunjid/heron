@@ -109,12 +109,11 @@ fun Post(
             now = now,
             createdAt = createdAt,
         )
-        val verticalPadding = presentation.postVerticalPadding
         Column(
             modifier = Modifier
-                .padding(vertical = verticalPadding)
+                .padding(vertical = presentation.postVerticalPadding)
                 .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(verticalPadding),
+            verticalArrangement = Arrangement.spacedBy(presentation.postContentSpacing),
         ) {
             presentation.contentOrder.forEach { order ->
                 key(order.key) {
@@ -228,7 +227,6 @@ private fun TextContent(
             onClick = {
                 data.postActions.onPostClicked(
                     post = data.post,
-                    quotingPostUri = null,
                 )
             },
             onLinkTargetClicked = { post, linkTarget ->
@@ -263,7 +261,7 @@ private fun EmbedContent(
             .fillMaxWidth(),
         now = data.now,
         embed = data.post.embed,
-        quote = data.post.quote,
+        embeddedRecord = data.post.embeddedRecord,
         postUri = data.post.uri,
         blurredMediaDefinitions = data.blurredMediaDefinitions,
         presentation = data.presentation,
@@ -278,10 +276,10 @@ private fun EmbedContent(
                 quotingPostUri = data.post.uri.takeIf { quote != null },
             )
         },
-        onQuotedPostClicked = { quotedPost ->
-            data.postActions.onPostClicked(
-                post = quotedPost,
-                quotingPostUri = data.post.uri,
+        onEmbeddedRecordClicked = { record ->
+            data.postActions.onPostRecordClicked(
+                record = record,
+                owningPostUri = data.post.uri,
             )
         },
         onQuotedProfileClicked = { quotedPost, quotedProfile ->
@@ -371,6 +369,14 @@ private fun Modifier.contentPresentationPadding(
  * Vertical content padding for the post composable
  */
 private val Timeline.Presentation.postVerticalPadding: Dp
+    get() = when (this) {
+        Timeline.Presentation.Text.WithEmbed -> 8.dp
+        Timeline.Presentation.Media.Expanded -> 8.dp
+        Timeline.Presentation.Media.Condensed -> 0.dp
+        Timeline.Presentation.Media.Grid -> 0.dp
+    }
+
+private val Timeline.Presentation.postContentSpacing: Dp
     get() = when (this) {
         Timeline.Presentation.Text.WithEmbed -> 4.dp
         Timeline.Presentation.Media.Expanded -> 8.dp

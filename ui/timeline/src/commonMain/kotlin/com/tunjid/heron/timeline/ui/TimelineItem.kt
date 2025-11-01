@@ -90,26 +90,20 @@ fun TimelineItem(
         item = item,
         modifier = modifier,
         presentation = presentation,
-        onPostClicked = { post ->
-            postActions.onPostClicked(
-                post = post,
-                quotingPostUri = null,
-            )
-        },
+        onPostClicked = postActions::onPostClicked,
         content = {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .timelineCardPresentationPadding(
                         presentation = presentation,
-                        top = if (item.isThreadedAnchor) 0.dp else 16.dp,
-                        bottom = if (item.isThreadedAncestorOrAnchor) 0.dp else 8.dp,
                     ),
             ) {
                 if (item is TimelineItem.Repost) {
                     PostReasonLine(
                         modifier = Modifier.padding(
                             start = 32.dp,
+                            top = 4.dp,
                             bottom = 4.dp,
                         ),
                         item = item,
@@ -210,7 +204,7 @@ private fun ThreadedPost(
                             if (index != item.posts.lastIndex || item.isThreadedAncestor) Timeline(
                                 modifier = Modifier
                                     .matchParentSize()
-                                    .padding(top = 52.dp),
+                                    .padding(top = 60.dp),
                             )
                         },
                     )
@@ -220,10 +214,7 @@ private fun ThreadedPost(
                                 .padding(start = 8.dp)
                                 .childThreadNode(videoId = null),
                             onClick = {
-                                postActions.onPostClicked(
-                                    post = post,
-                                    quotingPostUri = null,
-                                )
+                                postActions.onPostClicked(post = post)
                             },
                         )
                         else Timeline(
@@ -238,7 +229,7 @@ private fun ThreadedPost(
                     }
                     if (index == item.posts.lastIndex - 1 && !item.isThreadedAncestorOrAnchor && maxPosts >= item.posts.size) Spacer(
                         Modifier
-                            .height(4.dp)
+                            .height(2.dp)
                             .childThreadNode(videoId = null),
                     )
                 }

@@ -597,6 +597,7 @@ internal class OfflineTimelineRepository(
                                                     ?.let(recordUrisToEmbeddedRecords::get)
                                                 val post = populatedPostEntity.asExternalModel(
                                                     quote = embeddedRecord as? Post,
+                                                    embeddedRecord = embeddedRecord,
                                                 )
                                                 spinThread(
                                                     list = list,
@@ -1030,7 +1031,11 @@ internal class OfflineTimelineRepository(
                                     ?.asExternalModel(
                                         quote = urisToEmbeddedPosts[entity.postUri]
                                             ?.entity
-                                            ?.asExternalModel(quote = null),
+                                            ?.asExternalModel(
+                                                quote = null,
+                                                embeddedRecord = null,
+                                            ),
+                                        embeddedRecord = null,
                                     ) ?: return@mapNotNull null
 
                                 val postLabels = when {
@@ -1077,12 +1082,21 @@ internal class OfflineTimelineRepository(
                                             replyRoot.asExternalModel(
                                                 quote = urisToEmbeddedPosts[replyRoot.entity.uri]
                                                     ?.entity
-                                                    ?.asExternalModel(quote = null),
+                                                    ?.asExternalModel(
+                                                        quote = null,
+                                                        embeddedRecord = null,
+                                                    ),
+                                                embeddedRecord = null,
                                             ),
                                             replyParent.asExternalModel(
                                                 quote = urisToEmbeddedPosts[replyParent.entity.uri]
                                                     ?.entity
-                                                    ?.asExternalModel(quote = null),
+                                                    ?.asExternalModel(
+                                                        quote = null,
+                                                        embeddedRecord = null,
+
+                                                    ),
+                                                embeddedRecord = null,
                                             ),
                                             mainPost,
                                         ),
@@ -1347,6 +1361,7 @@ internal class OfflineTimelineRepository(
                     entities.map {
                         it.asExternalModel(
                             quote = null,
+                            embeddedRecord = null,
                         )
                     }
                 },

@@ -27,6 +27,7 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.search.SearchResult
@@ -48,7 +49,8 @@ internal fun PostSearchResult(
     onProfileClicked: (profile: Profile, post: Post, sharedElementPrefix: String) -> Unit,
     onPostClicked: (post: Post, sharedElementPrefix: String) -> Unit,
     onReplyToPost: (SearchResult.OfPost) -> Unit,
-    onMediaClicked: (media: Embed.Media, index: Int, result: SearchResult.OfPost, quotingPostUri: PostUri?) -> Unit,
+    onPostRecordClicked: (record: Record, sharedElementPrefix: String) -> Unit,
+    onMediaClicked: (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
     onPostInteraction: (Post.Interaction) -> Unit,
     onPostOptionsClicked: (Post) -> Unit,
 ) {
@@ -84,10 +86,10 @@ internal fun PostSearchResult(
                         onLinkTargetClicked = { _, linkTarget ->
                             onLinkTargetClicked(result, linkTarget)
                         },
-                        onPostClicked = { post, quotingPostUri ->
+                        onPostClicked = { post ->
                             onPostClicked(
                                 post,
-                                sharedElementPrefix.withQuotingPostUriPrefix(quotingPostUri),
+                                sharedElementPrefix,
                             )
                         },
                         onProfileClicked = { profile, post, quotingPostUri ->
@@ -97,8 +99,19 @@ internal fun PostSearchResult(
                                 sharedElementPrefix.withQuotingPostUriPrefix(quotingPostUri),
                             )
                         },
-                        onPostMediaClicked = { media, index, _, quotingPostId ->
-                            onMediaClicked(media, index, result, quotingPostId)
+                        onPostRecordClicked = { record, owningPostUri ->
+                            onPostRecordClicked(
+                                record,
+                                sharedElementPrefix.withQuotingPostUriPrefix(owningPostUri),
+                            )
+                        },
+                        onPostMediaClicked = { media, index, post, quotingPostUri ->
+                            onMediaClicked(
+                                media,
+                                index,
+                                post,
+                                sharedElementPrefix.withQuotingPostUriPrefix(quotingPostUri),
+                            )
                         },
                         onReplyToPost = {
                             onReplyToPost(result)

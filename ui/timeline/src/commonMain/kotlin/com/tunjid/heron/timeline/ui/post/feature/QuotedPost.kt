@@ -75,7 +75,7 @@ fun QuotedPost(
         modifier = modifier,
     ) {
         FeatureContainer(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(8.dp),
             onClick = onClick,
         ) {
             Row(
