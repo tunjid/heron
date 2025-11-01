@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Report
 import androidx.compose.material.icons.rounded.Warning
@@ -46,16 +47,24 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
+import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.timeline.ui.feed.FeedGenerator
+import com.tunjid.heron.timeline.ui.list.FeedList
+import com.tunjid.heron.timeline.ui.list.StarterPack
 import com.tunjid.heron.timeline.ui.post.feature.BlockedPostPost
+import com.tunjid.heron.timeline.ui.post.feature.FeatureContainer
 import com.tunjid.heron.timeline.ui.post.feature.InvisiblePostPost
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
 import com.tunjid.heron.timeline.ui.post.feature.UnknownPostPost
@@ -71,14 +80,14 @@ internal fun PostEmbed(
     modifier: Modifier = Modifier,
     now: Instant,
     embed: Embed?,
-    quote: Post?,
+    embeddedRecord: Record?,
     postUri: PostUri,
     sharedElementPrefix: String,
     blurredMediaDefinitions: List<Label.Definition>,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onLinkTargetClicked: (Post, LinkTarget) -> Unit,
     onPostMediaClicked: (media: Embed.Media, index: Int, quote: Post?) -> Unit,
-    onQuotedPostClicked: (Post) -> Unit,
+    onEmbeddedRecordClicked: (Record) -> Unit,
     onQuotedProfileClicked: (Post, Profile) -> Unit,
     presentation: Timeline.Presentation,
 ) {
@@ -139,27 +148,67 @@ internal fun PostEmbed(
                 null -> Unit
             }
             if (presentation == Timeline.Presentation.Text.WithEmbed) {
-                if (quote != null) Spacer(Modifier.height(16.dp))
-                when (quote?.cid) {
+                if (embeddedRecord != null) Spacer(Modifier.height(16.dp))
+                when (embeddedRecord) {
+                    is Post -> when (embeddedRecord.cid) {
+                        Constants.notFoundPostId -> InvisiblePostPost(onClick = {})
+                        Constants.blockedPostId -> BlockedPostPost(onClick = {})
+                        Constants.unknownPostId -> UnknownPostPost(onClick = {})
+                        else -> QuotedPost(
+                            now = now,
+                            quotedPost = embeddedRecord,
+                            sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
+                                quotingPostUri = postUri,
+                            ),
+                            isBlurred = blurredMediaDefinitions.isNotEmpty(),
+                            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                            onLinkTargetClicked = onLinkTargetClicked,
+                            onProfileClicked = onQuotedProfileClicked,
+                            onPostMediaClicked = onPostMediaClicked,
+                            onClick = {
+                                onEmbeddedRecordClicked(embeddedRecord)
+                            },
+                        )
+                    }
+                    is FeedGenerator -> FeatureContainer(
+                        onClick = { onEmbeddedRecordClicked(embeddedRecord) },
+                    ) {
+                        FeedGenerator(
+                            modifier = Modifier.padding(12.dp),
+                            movableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                            sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
+                                quotingPostUri = postUri,
+                            ),
+                            feedGenerator = embeddedRecord,
+                            status = FeedGenerator.Status.None,
+                            onFeedGeneratorStatusUpdated = {},
+                        )
+                    }
+                    is FeedList -> FeatureContainer(
+                        onClick = { onEmbeddedRecordClicked(embeddedRecord) },
+                    ) {
+                        FeedList(
+                            modifier = Modifier.padding(12.dp),
+                            movableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                            sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
+                                quotingPostUri = postUri,
+                            ),
+                            list = embeddedRecord,
+                        )
+                    }
+                    is StarterPack -> FeatureContainer(
+                        onClick = { onEmbeddedRecordClicked(embeddedRecord) },
+                    ) {
+                        StarterPack(
+                            modifier = Modifier.padding(12.dp),
+                            movableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                            sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
+                                quotingPostUri = postUri,
+                            ),
+                            starterPack = embeddedRecord,
+                        )
+                    }
                     null -> Unit
-                    Constants.notFoundPostId -> InvisiblePostPost(onClick = {})
-                    Constants.blockedPostId -> BlockedPostPost(onClick = {})
-                    Constants.unknownPostId -> UnknownPostPost(onClick = {})
-                    else -> QuotedPost(
-                        now = now,
-                        quotedPost = quote,
-                        sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
-                            quotingPostUri = postUri,
-                        ),
-                        isBlurred = blurredMediaDefinitions.isNotEmpty(),
-                        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                        onLinkTargetClicked = onLinkTargetClicked,
-                        onProfileClicked = onQuotedProfileClicked,
-                        onPostMediaClicked = onPostMediaClicked,
-                        onClick = {
-                            onQuotedPostClicked(quote)
-                        },
-                    )
                 }
             }
         }

@@ -17,12 +17,9 @@
 package com.tunjid.heron.ui
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -46,15 +43,10 @@ fun RecordLayout(
     sharedElementType: Any,
     avatar: @Composable () -> Unit,
     action: @Composable (() -> Unit)? = null,
-    onClicked: () -> Unit,
 ) = with(movableElementSharedTransitionScope) {
     Column(
-        modifier = modifier
-            .clickable { onClicked() }
-            .padding(
-                vertical = 4.dp,
-                horizontal = 16.dp,
-            ),
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         AttributionLayout(
             modifier = Modifier
@@ -93,27 +85,19 @@ fun RecordLayout(
             },
             action = action,
         )
-        Spacer(
-            modifier = Modifier
-                .height(8.dp),
-        )
-        Text(
-            text = description ?: "",
-            style = MaterialTheme.typography.bodySmall,
-        )
-        Spacer(
-            modifier = Modifier
-                .height(8.dp),
-        )
-        Text(
-            text = blurb ?: "",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.outline,
-        )
-        Spacer(
-            modifier = Modifier
-                .height(4.dp),
-        )
+        description.takeUnless(String?::isNullOrEmpty)?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        blurb.takeUnless(String?::isNullOrEmpty)?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.outline,
+            )
+        }
     }
 }
 

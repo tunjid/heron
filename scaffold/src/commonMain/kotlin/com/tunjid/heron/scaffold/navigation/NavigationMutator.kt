@@ -25,8 +25,12 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Start
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.UrlEncodableModel
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
@@ -119,13 +123,13 @@ fun profileDestination(
     referringRouteOption = referringRouteOption,
 )
 
-fun postDestination(
-    post: Post,
+fun recordDestination(
+    record: Record,
     sharedElementPrefix: String,
     referringRouteOption: ReferringRouteOption,
 ): NavigationAction.Destination = pathDestination(
-    path = post.uri.path,
-    models = listOf(post),
+    path = record.reference.uri.path,
+    models = listOf(record).filterIsInstance<UrlEncodableModel>(),
     sharedElementPrefix = sharedElementPrefix,
     referringRouteOption = referringRouteOption,
 )

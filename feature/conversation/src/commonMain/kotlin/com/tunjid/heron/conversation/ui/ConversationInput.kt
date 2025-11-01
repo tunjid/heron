@@ -273,7 +273,8 @@ fun PaneScaffoldState.SendButton(
 private val NoOpPostActions = postActions(
     onLinkTargetClicked = { _, _ -> },
     onProfileClicked = { _, _, _ -> },
-    onPostClicked = { _, _ -> },
+    onPostClicked = {},
+    onPostRecordClicked = { _, _ -> },
     onPostMediaClicked = { _, _, _, _ -> },
     onReplyToPost = {},
     onPostInteraction = {},

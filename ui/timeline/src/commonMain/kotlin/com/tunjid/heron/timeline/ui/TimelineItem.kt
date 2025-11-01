@@ -90,12 +90,7 @@ fun TimelineItem(
         item = item,
         modifier = modifier,
         presentation = presentation,
-        onPostClicked = { post ->
-            postActions.onPostClicked(
-                post = post,
-                quotingPostUri = null,
-            )
-        },
+        onPostClicked = postActions::onPostClicked,
         content = {
             Column(
                 modifier = Modifier
@@ -219,10 +214,7 @@ private fun ThreadedPost(
                                 .padding(start = 8.dp)
                                 .childThreadNode(videoId = null),
                             onClick = {
-                                postActions.onPostClicked(
-                                    post = post,
-                                    quotingPostUri = null,
-                                )
+                                postActions.onPostClicked(post = post)
                             },
                         )
                         else Timeline(

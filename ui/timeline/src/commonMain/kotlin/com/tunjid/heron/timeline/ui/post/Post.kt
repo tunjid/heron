@@ -227,7 +227,6 @@ private fun TextContent(
             onClick = {
                 data.postActions.onPostClicked(
                     post = data.post,
-                    quotingPostUri = null,
                 )
             },
             onLinkTargetClicked = { post, linkTarget ->
@@ -262,7 +261,7 @@ private fun EmbedContent(
             .fillMaxWidth(),
         now = data.now,
         embed = data.post.embed,
-        quote = data.post.quote,
+        embeddedRecord = data.post.embeddedRecord,
         postUri = data.post.uri,
         blurredMediaDefinitions = data.blurredMediaDefinitions,
         presentation = data.presentation,
@@ -277,10 +276,10 @@ private fun EmbedContent(
                 quotingPostUri = data.post.uri.takeIf { quote != null },
             )
         },
-        onQuotedPostClicked = { quotedPost ->
-            data.postActions.onPostClicked(
-                post = quotedPost,
-                quotingPostUri = data.post.uri,
+        onEmbeddedRecordClicked = { record ->
+            data.postActions.onPostRecordClicked(
+                record = record,
+                owningPostUri = data.post.uri,
             )
         },
         onQuotedProfileClicked = { quotedPost, quotedProfile ->
