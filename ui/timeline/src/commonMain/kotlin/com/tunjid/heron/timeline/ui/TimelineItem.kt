@@ -371,8 +371,8 @@ fun TimelineCard(
         modifier = modifier,
         shape = animateDpAsState(cornerRadius).value.let(::RoundedCornerShape),
         colors =
-            if (isFlat) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            else CardDefaults.elevatedCardColors(),
+        if (isFlat) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        else CardDefaults.elevatedCardColors(),
         elevation = CardDefaults.cardElevation(),
         onClick = { onPostClicked(item.post) },
         content = { content() },
@@ -381,15 +381,15 @@ fun TimelineCard(
 
 private val ReplyThreadStartImageShape =
     RoundedPolygonShape.RoundedRectangle(
-        topStart = 1f,
-        topEnd = 1f,
-        bottomStart = 0.3f,
-        bottomEnd = 1f,
+        topStartPercent = 1f,
+        topEndPercent = 1f,
+        bottomStartPercent = 0.3f,
+        bottomEndPercent = 1f,
     )
 
 private val ReplyThreadImageShape =
     RoundedPolygonShape.Polygon(
-        cornerSizeAtIndex = (0..4).map { index ->
+        cornerSizePercentAtIndex = (0..4).map { index ->
             if (index == 2 || index == 3) 2f / 3
             else 1f
         },
@@ -397,10 +397,10 @@ private val ReplyThreadImageShape =
 
 private val ReplyThreadEndImageShape =
     RoundedPolygonShape.RoundedRectangle(
-        topStart = 0.3f,
-        topEnd = 1f,
-        bottomStart = 1f,
-        bottomEnd = 1f,
+        topStartPercent = 0.3f,
+        topEndPercent = 1f,
+        bottomStartPercent = 1f,
+        bottomEndPercent = 1f,
     )
 
 fun Post.avatarSharedElementKey(

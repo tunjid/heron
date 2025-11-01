@@ -53,10 +53,7 @@ internal fun PostImages(
     onImageClicked: (Int) -> Unit,
     presentation: Timeline.Presentation,
 ) {
-    val shape = remember(presentation) {
-        presentation.imageShapeCornerSize
-            .let(RoundedPolygonShape::RoundedRectangle)
-    }
+    val shape = presentation.imageShape
 
     val itemModifier = if (isBlurred) Modifier.sensitiveContentBlur(shape)
     else Modifier
@@ -136,15 +133,20 @@ internal fun PostImages(
     }
 }
 
-private val Timeline.Presentation.imageShapeCornerSize
+private val Timeline.Presentation.imageShape
     get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 0.15f
-        Timeline.Presentation.Media.Condensed -> 0.05f
-        Timeline.Presentation.Media.Expanded -> 0f
-        Timeline.Presentation.Media.Grid -> 0f
+        Timeline.Presentation.Text.WithEmbed -> TextWithEmbedShape
+        Timeline.Presentation.Media.Condensed -> CondensedShape
+        Timeline.Presentation.Media.Expanded -> ExpandedShape
+        Timeline.Presentation.Media.Grid -> GridShape
     }
 
 fun Image.sharedElementKey(
     prefix: String,
     postUri: PostUri,
 ) = "$prefix-$postUri-${thumb.uri}"
+
+private val TextWithEmbedShape = RoundedPolygonShape.RoundedRectangle(percent = 0.05f)
+private val CondensedShape = RoundedPolygonShape.RoundedRectangle(percent = 0.0001f)
+private val ExpandedShape = RoundedPolygonShape.RoundedRectangle(percent = 0f)
+private val GridShape = RoundedPolygonShape.RoundedRectangle(percent = 0f)
