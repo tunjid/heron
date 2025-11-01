@@ -85,11 +85,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.datetime.Clock
@@ -147,148 +145,141 @@ internal class OfflinePostRepository @Inject constructor(
     private val fileManager: FileManager,
     private val savedStateDataSource: SavedStateDataSource,
 ) : PostRepository {
+
     override fun likedBy(
         query: PostDataQuery,
         cursor: Cursor,
-    ): Flow<CursorList<ProfileWithViewerState>> = flow {
-        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-            if (signedInProfileId == null) return@inCurrentProfileSession
-            emitAll(
-                withPostEntity(
-                    query.profileId,
-                    query.postRecordKey,
-                ) { postEntity ->
-                    combine(
-                        postDao.likedBy(
-                            postUri = postEntity.uri.uri,
-                            viewingProfileId = signedInProfileId.id,
-                            offset = query.data.offset,
-                            limit = query.data.limit,
-                        ).map(List<PopulatedProfileEntity>::asExternalModels),
+    ): Flow<CursorList<ProfileWithViewerState>> = savedStateDataSource.currentSessionFlow { signedInProfileId ->
+        withPostEntity(
+            query.profileId,
+            query.postRecordKey,
+        ) { postEntity ->
+            combine(
+                postDao.likedBy(
+                    postUri = postEntity.uri.uri,
+                    viewingProfileId = signedInProfileId?.id,
+                    offset = query.data.offset,
+                    limit = query.data.limit,
+                ).map(List<PopulatedProfileEntity>::asExternalModels),
 
-                        networkService.nextCursorFlow(
-                            currentCursor = cursor,
-                            currentRequestWithNextCursor = {
-                                getLikes(
-                                    GetLikesQueryParams(
-                                        uri = postEntity.uri.uri.let(::AtUri),
-                                        limit = query.data.limit,
-                                        cursor = cursor.value,
-                                    ),
+                networkService.nextCursorFlow(
+                    currentCursor = cursor,
+                    currentRequestWithNextCursor = {
+                        getLikes(
+                            GetLikesQueryParams(
+                                uri = postEntity.uri.uri.let(::AtUri),
+                                limit = query.data.limit,
+                                cursor = cursor.value,
+                            ),
+                        )
+                    },
+                    nextCursor = GetLikesResponse::cursor,
+                    onResponse = {
+                        multipleEntitySaverProvider.saveInTransaction {
+                            likes.forEach {
+                                add(
+                                    viewingProfileId = signedInProfileId,
+                                    postUri = postEntity.uri,
+                                    like = it,
                                 )
-                            },
-                            nextCursor = GetLikesResponse::cursor,
-                            onResponse = {
-                                multipleEntitySaverProvider.saveInTransaction {
-                                    likes.forEach {
-                                        add(
-                                            viewingProfileId = signedInProfileId,
-                                            postUri = postEntity.uri,
-                                            like = it,
-                                        )
-                                    }
-                                }
-                            },
-                        ),
-                        ::CursorList,
-                    ).distinctUntilChanged()
-                },
-            )
+                            }
+                        }
+                    },
+                ),
+                ::CursorList,
+            ).distinctUntilChanged()
         }
     }
 
     override fun repostedBy(
         query: PostDataQuery,
         cursor: Cursor,
-    ): Flow<CursorList<ProfileWithViewerState>> =
+    ): Flow<CursorList<ProfileWithViewerState>> = savedStateDataSource.currentSessionFlow { signedInProfileId ->
         withPostEntity(
             query.profileId,
             query.postRecordKey,
         ) { postEntity ->
-            flow {
-                savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-                    if (signedInProfileId == null) return@inCurrentProfileSession
+            combine(
+                postDao.repostedBy(
+                    postUri = postEntity.uri.uri,
+                    viewingProfileId = signedInProfileId?.id,
+                    offset = query.data.offset,
+                    limit = query.data.limit,
+                )
+                    .map(List<PopulatedProfileEntity>::asExternalModels),
 
-                    emitAll(
-                        combine(
-                            postDao.repostedBy(
-                                postUri = postEntity.uri.uri,
-                                viewingProfileId = signedInProfileId.id,
-                                offset = query.data.offset,
+                networkService.nextCursorFlow(
+                    currentCursor = cursor,
+                    currentRequestWithNextCursor = {
+                        getRepostedBy(
+                            GetRepostedByQueryParams(
+                                uri = postEntity.uri.uri.let(::AtUri),
                                 limit = query.data.limit,
-                            ).map(List<PopulatedProfileEntity>::asExternalModels),
-
-                            networkService.nextCursorFlow(
-                                currentCursor = cursor,
-                                currentRequestWithNextCursor = {
-                                    getRepostedBy(
-                                        GetRepostedByQueryParams(
-                                            uri = postEntity.uri.uri.let(::AtUri),
-                                            limit = query.data.limit,
-                                            cursor = cursor.value,
-                                        ),
-                                    )
-                                },
-                                nextCursor = GetRepostedByResponse::cursor,
-                                onResponse = {
-                                    // TODO: add logic for repost saving if needed
-                                },
+                                cursor = cursor.value,
                             ),
-                            ::CursorList,
-                        ).distinctUntilChanged(),
-                    )
-                }
-            }
+                        )
+                    },
+                    nextCursor = GetRepostedByResponse::cursor,
+                    onResponse = {
+                        // TODO: Figure out how to get indexedAt for reposts
+                    },
+                ),
+                ::CursorList,
+            )
+                .distinctUntilChanged()
         }
+    }
 
     override fun quotes(
         query: PostDataQuery,
         cursor: Cursor,
-    ): Flow<CursorList<Post>> = withPostEntity(
-        profileId = query.profileId,
-        postRecordKey = query.postRecordKey,
-    ) { postEntity ->
-        savedStateDataSource.observedSignedInProfileId
-            .flatMapLatest { signedInProfileId ->
-                combine(
-                    postDao.quotedPosts(
-                        viewingProfileId = signedInProfileId?.id,
-                        quotedPostUri = postEntity.uri.uri,
-                    )
-                        .map { populatedPostEntities ->
-                            populatedPostEntities.map {
-                                it.asExternalModel(quote = null)
-                            }
-                        },
-                    networkService.nextCursorFlow(
-                        currentCursor = cursor,
-                        currentRequestWithNextCursor = {
-                            getQuotes(
-                                GetQuotesQueryParams(
-                                    uri = postEntity.uri.uri.let(::AtUri),
-                                    limit = query.data.limit,
-                                    cursor = cursor.value,
-                                ),
-                            )
-                        },
-                        nextCursor = GetQuotesResponse::cursor,
-                        onResponse = {
-                            savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+    ): Flow<CursorList<Post>> = savedStateDataSource.currentSessionFlow { viewSignedInProfileId ->
+        withPostEntity(
+            profileId = query.profileId,
+            postRecordKey = query.postRecordKey,
+        ) { postEntity ->
+            savedStateDataSource.observedSignedInProfileId
+                .flatMapLatest { signedInProfileId ->
+                    combine(
+                        postDao.quotedPosts(
+                            viewingProfileId = signedInProfileId?.id,
+                            quotedPostUri = postEntity.uri.uri,
+                        )
+                            .map { populatedPostEntities ->
+                                populatedPostEntities.map {
+                                    it.asExternalModel(
+                                        quote = null,
+                                    )
+                                }
+                            },
+                        networkService.nextCursorFlow(
+                            currentCursor = cursor,
+                            currentRequestWithNextCursor = {
+                                getQuotes(
+                                    GetQuotesQueryParams(
+                                        uri = postEntity.uri.uri.let(::AtUri),
+                                        limit = query.data.limit,
+                                        cursor = cursor.value,
+                                    ),
+                                )
+                            },
+                            nextCursor = GetQuotesResponse::cursor,
+                            onResponse = {
                                 multipleEntitySaverProvider.saveInTransaction {
                                     posts.forEach {
                                         add(
-                                            viewingProfileId = signedInProfileId,
+                                            viewingProfileId = viewSignedInProfileId,
                                             postView = it,
                                         )
                                     }
                                 }
-                            }
-                        },
-                    ),
-                    ::CursorList,
-                )
-                    .distinctUntilChanged()
-            }
+                            },
+                        ),
+                        ::CursorList,
+                    )
+                        .distinctUntilChanged()
+                }
+        }
     }
 
     override fun post(

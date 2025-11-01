@@ -286,15 +286,13 @@ internal class OfflineProfileRepository @Inject constructor(
     override fun followers(
         query: ProfilesQuery,
         cursor: Cursor,
-    ): Flow<CursorList<ProfileWithViewerState>> = flow {
-        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-            if (signedInProfileId == null) return@inCurrentProfileSession
-
+    ): Flow<CursorList<ProfileWithViewerState>> = savedStateDataSource.currentSessionFlow { signedInProfileId ->
+        flow {
             val profileDid = lookupProfileDid(
                 profileId = query.profileId,
                 profileDao = profileDao,
                 networkService = networkService,
-            ) ?: return@inCurrentProfileSession
+            ) ?: return@flow
 
             val response = networkService.runCatchingWithMonitoredNetworkRetry {
                 getFollowers(
@@ -310,7 +308,7 @@ internal class OfflineProfileRepository @Inject constructor(
                 )
             }
                 .getOrNull()
-                ?: return@inCurrentProfileSession
+                ?: return@flow
 
             multipleEntitySaverProvider.saveInTransaction {
                 response.followers
@@ -356,15 +354,13 @@ internal class OfflineProfileRepository @Inject constructor(
     override fun following(
         query: ProfilesQuery,
         cursor: Cursor,
-    ): Flow<CursorList<ProfileWithViewerState>> = flow {
-        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-            if (signedInProfileId == null) return@inCurrentProfileSession
-
+    ): Flow<CursorList<ProfileWithViewerState>> = savedStateDataSource.currentSessionFlow { signedInProfileId ->
+        flow {
             val profileDid = lookupProfileDid(
                 profileId = query.profileId,
                 profileDao = profileDao,
                 networkService = networkService,
-            ) ?: return@inCurrentProfileSession
+            ) ?: return@flow
 
             val response = networkService.runCatchingWithMonitoredNetworkRetry {
                 getFollows(
@@ -378,20 +374,23 @@ internal class OfflineProfileRepository @Inject constructor(
                         },
                     ),
                 )
-            }.getOrNull() ?: return@inCurrentProfileSession
+            }
+                .getOrNull()
+                ?: return@flow
 
             multipleEntitySaverProvider.saveInTransaction {
-                response.follows.forEach { profileView ->
-                    add(
-                        viewingProfileId = signedInProfileId,
-                        profileView = profileView,
-                    )
-                }
+                response.follows
+                    .forEach { profileView ->
+                        add(
+                            viewingProfileId = signedInProfileId,
+                            profileView = profileView,
+                        )
+                    }
             }
 
             val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
 
-            // Emit network results immediately (for minimal latency)
+            // Emit network results immediately for minimal latency during search
             emit(
                 CursorList(
                     items = response.follows.toProfileWithViewerStates(
@@ -409,12 +408,13 @@ internal class OfflineProfileRepository @Inject constructor(
                     signedInProfileId = signedInProfileId,
                     profileMapper = ProfileView::profile,
                     idMapper = { did.did.let(::ProfileId) },
-                ).map { profileWithViewerStates ->
-                    CursorList(
-                        items = profileWithViewerStates,
-                        nextCursor = nextCursor,
-                    )
-                },
+                )
+                    .map { profileWithViewerStates ->
+                        CursorList(
+                            items = profileWithViewerStates,
+                            nextCursor = nextCursor,
+                        )
+                    },
             )
         }
     }

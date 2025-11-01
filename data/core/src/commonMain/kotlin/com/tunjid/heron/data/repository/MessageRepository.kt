@@ -131,7 +131,7 @@ internal class OfflineMessageRepository @Inject constructor(
     override fun conversations(
         query: ConversationQuery,
         cursor: Cursor,
-    ): Flow<CursorList<Conversation>> =
+    ): Flow<CursorList<Conversation>> = savedStateDataSource.currentSessionFlow { signedInProfileId ->
         combine(
             savedStateDataSource.observedSignedInProfileId
                 .filterNotNull()
@@ -157,14 +157,12 @@ internal class OfflineMessageRepository @Inject constructor(
                 },
                 nextCursor = ListConvosResponse::cursor,
                 onResponse = {
-                    savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-                        multipleEntitySaverProvider.saveInTransaction {
-                            convos.forEach {
-                                add(
-                                    viewingProfileId = signedInProfileId,
-                                    convoView = it,
-                                )
-                            }
+                    multipleEntitySaverProvider.saveInTransaction {
+                        convos.forEach {
+                            add(
+                                viewingProfileId = signedInProfileId,
+                                convoView = it,
+                            )
                         }
                     }
                 },
@@ -172,11 +170,12 @@ internal class OfflineMessageRepository @Inject constructor(
             ::CursorList,
         )
             .distinctUntilChanged()
+    }
 
     override fun messages(
         query: MessageQuery,
         cursor: Cursor,
-    ): Flow<CursorList<Message>> =
+    ): Flow<CursorList<Message>> = savedStateDataSource.currentSessionFlow { signedInProfileId ->
         savedStateDataSource.observedSignedInProfileId
             .filterNotNull()
             .flatMapLatest { signedInProfileId ->
@@ -291,6 +290,7 @@ internal class OfflineMessageRepository @Inject constructor(
                 )
                     .distinctUntilChanged()
             }
+    }
 
     override suspend fun monitorConversationLogs() {
         flow {

@@ -156,111 +156,111 @@ internal class OfflineSearchRepository @Inject constructor(
     override fun postSearch(
         query: SearchQuery.OfPosts,
         cursor: Cursor,
-    ): Flow<CursorList<Post>> =
+    ): Flow<CursorList<Post>> = savedStateDataSource.currentSessionFlow { signedInProfileId ->
         if (query.query.isBlank()) emptyFlow()
         else flow {
-            savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-                if (signedInProfileId == null) return@inCurrentProfileSession
-
-                val response = networkService.runCatchingWithMonitoredNetworkRetry {
-                    searchPosts(
-                        params = SearchPostsQueryParams(
-                            q = query.query,
-                            limit = query.data.limit,
-                            sort = when (query) {
-                                is SearchQuery.OfPosts.Latest -> SearchPostsSort.Latest
-                                is SearchQuery.OfPosts.Top -> SearchPostsSort.Top
-                            },
-                            cursor = when (cursor) {
-                                Cursor.Initial -> cursor.value
-                                is Cursor.Next -> cursor.value
-                                Cursor.Pending -> null
-                            },
-                        ),
-                    )
-                }.getOrNull() ?: return@inCurrentProfileSession
-
-                multipleEntitySaverProvider.saveInTransaction {
-                    response.posts.forEach { postView ->
-                        add(
-                            viewingProfileId = signedInProfileId,
-                            postView = postView,
-                        )
-                    }
-                }
-
-                emit(
-                    CursorList(
-                        items = response.posts.map { postView ->
-                            postView.post(signedInProfileId)
+            val response = networkService.runCatchingWithMonitoredNetworkRetry {
+                searchPosts(
+                    params = SearchPostsQueryParams(
+                        q = query.query,
+                        limit = query.data.limit,
+                        sort = when (query) {
+                            is SearchQuery.OfPosts.Latest -> SearchPostsSort.Latest
+                            is SearchQuery.OfPosts.Top -> SearchPostsSort.Top
                         },
-                        nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending,
+                        cursor = when (cursor) {
+                            Cursor.Initial -> cursor.value
+                            is Cursor.Next -> cursor.value
+                            Cursor.Pending -> null
+                        },
                     ),
                 )
             }
+                .getOrNull()
+                ?: return@flow
+
+            multipleEntitySaverProvider.saveInTransaction {
+                response.posts.forEach { postView ->
+                    add(
+                        viewingProfileId = signedInProfileId,
+                        postView = postView,
+                    )
+                }
+            }
+
+            emit(
+                CursorList(
+                    items = response.posts.map { postView ->
+                        postView.post(signedInProfileId)
+                    },
+                    nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending,
+                ),
+            )
         }
+    }
 
     override fun profileSearch(
         query: SearchQuery.OfProfiles,
         cursor: Cursor,
-    ): Flow<CursorList<ProfileWithViewerState>> =
+    ): Flow<CursorList<ProfileWithViewerState>> = savedStateDataSource.currentSessionFlow { signedInProfileId ->
         if (query.query.isBlank()) emptyFlow()
         else flow {
-            savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-                if (signedInProfileId == null) return@inCurrentProfileSession
+            val response = networkService.runCatchingWithMonitoredNetworkRetry {
+                searchActors(
+                    params = SearchActorsQueryParams(
+                        q = query.query,
+                        limit = query.data.limit,
+                        cursor = when (cursor) {
+                            Cursor.Initial -> cursor.value
+                            is Cursor.Next -> cursor.value
+                            Cursor.Pending -> null
+                        },
+                    ),
+                )
+            }
+                .getOrNull()
+                ?: return@flow
 
-                val response = networkService.runCatchingWithMonitoredNetworkRetry {
-                    searchActors(
-                        params = SearchActorsQueryParams(
-                            q = query.query,
-                            limit = query.data.limit,
-                            cursor = when (cursor) {
-                                Cursor.Initial -> cursor.value
-                                is Cursor.Next -> cursor.value
-                                Cursor.Pending -> null
-                            },
-                        ),
-                    )
-                }.getOrNull() ?: return@inCurrentProfileSession
-
-                multipleEntitySaverProvider.saveInTransaction {
-                    response.actors.forEach { profileView ->
+            multipleEntitySaverProvider.saveInTransaction {
+                response.actors
+                    .forEach { profileView ->
                         add(
                             viewingProfileId = signedInProfileId,
                             profileView = profileView,
                         )
                     }
-                }
+            }
 
-                val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
+            val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
 
-                // Emit network data immediately (for instant UI updates)
-                emit(
-                    CursorList(
-                        items = response.actors.toProfileWithViewerStates(
-                            signedInProfileId = signedInProfileId,
-                            profileMapper = ProfileView::profile,
-                            profileViewerStateEntities = ProfileView::profileViewerStateEntities,
-                        ),
-                        nextCursor = nextCursor,
-                    ),
-                )
-
-                emitAll(
-                    response.actors.observeProfileWithViewerStates(
-                        profileDao = profileDao,
+            // Emit network results immediately for minimal latency during search
+            emit(
+                CursorList(
+                    items = response.actors.toProfileWithViewerStates(
                         signedInProfileId = signedInProfileId,
                         profileMapper = ProfileView::profile,
-                        idMapper = { did.did.let(::ProfileId) },
-                    ).map { profileWithViewerStates ->
+                        profileViewerStateEntities = ProfileView::profileViewerStateEntities,
+                    ),
+                    nextCursor = nextCursor,
+                ),
+            )
+
+            emitAll(
+                response.actors.observeProfileWithViewerStates(
+                    profileDao = profileDao,
+                    signedInProfileId = signedInProfileId,
+                    profileMapper = ProfileView::profile,
+                    idMapper = { did.did.let(::ProfileId) },
+                )
+                    .map { profileWithViewerStates ->
                         CursorList(
                             items = profileWithViewerStates,
                             nextCursor = nextCursor,
                         )
                     },
-                )
-            }
+            )
         }
+    }
 
     override fun feedGeneratorSearch(
         query: SearchQuery.OfFeedGenerators,
@@ -316,10 +316,8 @@ internal class OfflineSearchRepository @Inject constructor(
     override fun autoCompleteProfileSearch(
         query: SearchQuery.OfProfiles,
         cursor: Cursor,
-    ): Flow<List<ProfileWithViewerState>> = flow {
-        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-            if (signedInProfileId == null) return@inCurrentProfileSession
-
+    ): Flow<List<ProfileWithViewerState>> = savedStateDataSource.currentSessionFlow { signedInProfileId ->
+        flow {
             val profileViews = networkService.runCatchingWithMonitoredNetworkRetry {
                 searchActorsTypeahead(
                     params = SearchActorsTypeaheadQueryParams(
@@ -329,7 +327,7 @@ internal class OfflineSearchRepository @Inject constructor(
                 )
             }
                 .getOrNull()
-                ?.actors ?: return@inCurrentProfileSession
+                ?.actors ?: return@flow
 
             multipleEntitySaverProvider.saveInTransaction {
                 profileViews.forEach { profileView ->
@@ -340,7 +338,7 @@ internal class OfflineSearchRepository @Inject constructor(
                 }
             }
 
-            // Emit immediate network results
+            // Emit network results immediately for minimal latency during search
             emit(
                 profileViews.toProfileWithViewerStates(
                     signedInProfileId = signedInProfileId,

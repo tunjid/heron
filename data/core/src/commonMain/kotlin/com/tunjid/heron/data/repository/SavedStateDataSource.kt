@@ -34,11 +34,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.selects.select
@@ -344,4 +347,14 @@ internal suspend inline fun SavedStateDataSource.onEachSignedInProfile(
     crossinline block: suspend () -> Unit,
 ) = observedSignedInProfileId.collectLatest { profileId ->
     if (profileId != null) block()
+}
+
+/**
+ * Helper extension method when handling [inCurrentProfileSession] in flow*/
+internal inline fun <T> SavedStateDataSource.currentSessionFlow(
+    crossinline block: suspend (ProfileId?) -> Flow<T>,
+): Flow<T> = flow {
+    inCurrentProfileSession { signedInProfileId ->
+        emitAll(block(signedInProfileId))
+    }
 }

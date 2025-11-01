@@ -46,6 +46,7 @@ import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.TimelinePreference
@@ -57,6 +58,7 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
@@ -65,10 +67,10 @@ import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.TimelineDao
-import com.tunjid.heron.data.database.entities.EmbeddedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
+import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.ThreadedPostEntity
@@ -79,6 +81,7 @@ import com.tunjid.heron.data.database.entities.preferredPresentationPartial
 import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
+import com.tunjid.heron.data.utilities.LazyList
 import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.lookupProfileDid
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
@@ -547,91 +550,96 @@ internal class OfflineTimelineRepository(
 
     override fun postThreadedItems(
         postUri: PostUri,
-    ): Flow<List<TimelineItem>> = flow {
-        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-            emitAll(
-                savedStateDataSource.savedState
-                    .map(::signedInProfileIdToContentLabelPreferences)
-                    .distinctUntilChanged()
-                    .flatMapLatest { (_, contentLabelPreferences) ->
-                        postDao.postEntitiesByUri(
-                            viewingProfileId = signedInProfileId?.id,
-                            postUris = setOf(postUri),
+    ): Flow<List<TimelineItem>> = savedStateDataSource.currentSessionFlow { signedInProfileId ->
+        savedStateDataSource.savedState
+            .map(::signedInProfileIdToContentLabelPreferences)
+            .distinctUntilChanged()
+            .flatMapLatest { (currentProfileId, contentLabelPreferences) ->
+                postDao.postEntitiesByUri(
+                    viewingProfileId = signedInProfileId?.id,
+                    postUris = setOf(postUri),
+                )
+                    .mapNotNull(List<PostEntity>::firstOrNull)
+                    .take(1)
+                    .flatMapLatest { postEntity ->
+                        postDao.postThread(
+                            postUri = postEntity.uri.uri,
                         )
-                            .mapNotNull(List<PostEntity>::firstOrNull)
-                            .take(1)
-                            .flatMapLatest { postEntity ->
-                                postDao.postThread(
-                                    postUri = postEntity.uri.uri,
-                                )
-                                    .flatMapLatest { postThread ->
-                                        val postUris = postThread.map { it.entity.uri }.toSet()
-                                        combine(
-                                            flow = postDao.posts(
-                                                viewingProfileId = signedInProfileId?.id,
-                                                postUris = postUris,
-                                            ),
-                                            flow2 = postDao.embeddedPosts(
-                                                viewingProfileId = signedInProfileId?.id,
-                                                postUris = postUris,
-                                            ),
-                                            flow3 = labelers(),
-                                            transform = { posts, embeddedPosts, labelers ->
-                                                val urisToPosts = posts.associateBy { it.entity.uri }
-                                                val idsToEmbeddedPosts = embeddedPosts.associateBy(
-                                                    EmbeddedPopulatedPostEntity::parentPostUri,
-                                                )
+                            .flatMapLatest { postThread ->
+                                val postUris = postThread.map { it.entity.uri }.toSet()
+                                val embeddedRecordUris = postThread.mapNotNull {
+                                    it.entity.record?.embeddedRecordUri
+                                }.toSet()
 
-                                                postThread.fold(
-                                                    initial = emptyList<TimelineItem.Thread>(),
-                                                    operation = { list, thread ->
-                                                        val populatedPostEntity =
-                                                            urisToPosts.getValue(thread.entity.uri)
-                                                        val post = populatedPostEntity.asExternalModel(
-                                                            quote = idsToEmbeddedPosts[thread.entity.uri]
-                                                                ?.entity
-                                                                ?.asExternalModel(quote = null),
-                                                        )
-                                                        spinThread(
-                                                            list = list,
-                                                            thread = thread,
-                                                            post = post,
-                                                            labelers = labelers,
-                                                            labelPreferences = contentLabelPreferences,
-                                                        )
-                                                    },
+                                combine(
+                                    flow = postDao.posts(
+                                        viewingProfileId = signedInProfileId?.id,
+                                        postUris = postUris,
+                                    ).distinctUntilChanged(),
+                                    flow2 = records(
+                                        uris = embeddedRecordUris.toList(),
+                                        viewingProfileId = currentProfileId,
+                                    ),
+                                    flow3 = labelers(),
+                                    transform = { posts, embeddedRecords, labelers ->
+                                        val urisToPosts = posts.associateBy { it.entity.uri }
+                                        val recordUrisToEmbeddedRecords = embeddedRecords.associateBy {
+                                            it.reference.uri
+                                        }
+
+                                        postThread.fold(
+                                            initial = emptyList<TimelineItem.Thread>(),
+                                            operation = { list, thread ->
+                                                val populatedPostEntity = urisToPosts.getValue(thread.entity.uri)
+                                                val embeddedRecord = thread.entity
+                                                    .record
+                                                    ?.embeddedRecordUri
+                                                    ?.let(recordUrisToEmbeddedRecords::get)
+                                                val post = populatedPostEntity.asExternalModel(
+                                                    quote = embeddedRecord as? Post,
+                                                )
+                                                spinThread(
+                                                    list = list,
+                                                    thread = thread,
+                                                    post = post,
+                                                    labelers = labelers,
+                                                    labelPreferences = contentLabelPreferences,
                                                 )
                                             },
                                         )
-                                    }
+                                    },
+                                )
                             }
-                            .withRefresh {
-                                networkService.runCatchingWithMonitoredNetworkRetry {
-                                    getPostThread(
-                                        GetPostThreadQueryParams(uri = AtUri(postUri.uri)),
-                                    )
-                                }
-                                    .getOrNull()
-                                    ?.thread
-                                    ?.let { thread ->
-                                        when (thread) {
-                                            is GetPostThreadResponseThreadUnion.ThreadViewPost -> {
-                                                multipleEntitySaverProvider.saveInTransaction {
-                                                    add(
-                                                        viewingProfileId = signedInProfileId,
-                                                        threadViewPost = thread.value,
-                                                    )
-                                                }
-                                            }
-                                            else -> Unit
+                    }
+                    .withRefresh {
+                        networkService.runCatchingWithMonitoredNetworkRetry {
+                            getPostThread(
+                                GetPostThreadQueryParams(
+                                    uri = AtUri(postUri.uri),
+                                ),
+                            )
+                        }
+                            .getOrNull()
+                            ?.thread
+                            ?.let { thread ->
+                                when (thread) {
+                                    is GetPostThreadResponseThreadUnion.BlockedPost -> Unit
+                                    is GetPostThreadResponseThreadUnion.NotFoundPost -> Unit
+                                    is GetPostThreadResponseThreadUnion.ThreadViewPost -> {
+                                        multipleEntitySaverProvider.saveInTransaction {
+                                            add(
+                                                viewingProfileId = signedInProfileId,
+                                                threadViewPost = thread.value,
+                                            )
                                         }
                                     }
+                                    is GetPostThreadResponseThreadUnion.Unknown -> Unit
+                                }
                             }
-                            .distinctUntilChanged()
-                    },
-            )
-        }
-    }.filterNotNull()
+                    }
+                    .distinctUntilChanged()
+            }
+    }
 
     override fun homeTimelines(): Flow<List<Timeline.Home>> =
         savedStateDataSource.savedState
@@ -889,66 +897,66 @@ internal class OfflineTimelineRepository(
         pollInterval: Duration,
         networkRequestBlock: suspend BlueskyApi.() -> AtpResponse<T>,
         networkResponseToFeedViews: (T) -> List<FeedViewPost>,
-    ) = savedStateDataSource.observedSignedInProfileId
-        .filterNotNull()
-        .distinctUntilChanged()
-        .flatMapLatest { signedInProfileId ->
-            flow {
-                savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-                    if (signedInProfileId == null) return@inCurrentProfileSession
+    ): Flow<Boolean> = savedStateDataSource.currentSessionFlow { signedInProfileId ->
+        val pollFlow = flow {
+            while (true) {
+                val pollInstant = Clock.System.now()
 
-                    while (true) {
-                        val pollInstant = Clock.System.now()
-
-                        val succeeded = networkService.runCatchingWithMonitoredNetworkRetry(
-                            block = networkRequestBlock,
-                        )
-                            .getOrNull()
-                            ?.let(networkResponseToFeedViews)
-                            ?.let { fetchedFeedViewPosts ->
-                                multipleEntitySaverProvider.saveInTransaction {
-                                    add(
-                                        viewingProfileId = signedInProfileId,
-                                        timeline = timeline,
-                                        feedViewPosts = fetchedFeedViewPosts,
-                                    )
-                                }
-                            } != null
-
-                        //  Emit both values and re-use the signedInProfileId for DB lookup
-                        if (succeeded) emit(Pair(signedInProfileId, pollInstant))
-                        delay(pollInterval.inWholeMilliseconds)
-                    }
-                }
-            }.flatMapLatest { (signedInProfileId, pollInstant) ->
-                combine(
-                    timelineDao.lastFetchKey(
-                        viewingProfileId = signedInProfileId.id,
-                        sourceId = timeline.sourceId,
-                    )
-                        .map { it?.lastFetchedAt ?: pollInstant }
-                        .distinctUntilChangedBy(Instant::toEpochMilliseconds)
-                        .flatMapLatest {
-                            timelineDao.feedItems(
-                                viewingProfileId = signedInProfileId.id,
-                                sourceId = timeline.sourceId,
-                                before = it,
-                                limit = 1,
-                                offset = 0,
+                val succeeded = networkService.runCatchingWithMonitoredNetworkRetry(
+                    block = networkRequestBlock,
+                )
+                    .getOrNull()
+                    ?.let(networkResponseToFeedViews)
+                    ?.let { fetchedFeedViewPosts ->
+                        multipleEntitySaverProvider.saveInTransaction {
+                            add(
+                                viewingProfileId = signedInProfileId,
+                                timeline = timeline,
+                                feedViewPosts = fetchedFeedViewPosts,
                             )
-                        },
-                    timelineDao.feedItems(
-                        viewingProfileId = signedInProfileId.id,
-                        sourceId = timeline.sourceId,
-                        before = pollInstant,
-                        limit = 1,
-                        offset = 0,
-                    ),
-                ) { latestSeen, latestSaved ->
-                    latestSaved.firstOrNull()?.id != latestSeen.firstOrNull()?.id
-                }
+                        }
+                    } != null
+
+                if (succeeded) emit(pollInstant)
+
+                delay(pollInterval.inWholeMilliseconds)
             }
         }
+        combine(
+            flow = savedStateDataSource.observedSignedInProfileId,
+            flow2 = pollFlow,
+            transform = ::Pair,
+        ).flatMapLatest { (observedProfile, pollInstant) ->
+            val currentViewingProfileId = observedProfile?.id
+
+            combine(
+                timelineDao.lastFetchKey(
+                    viewingProfileId = currentViewingProfileId,
+                    sourceId = timeline.sourceId,
+                )
+                    .map { it?.lastFetchedAt ?: pollInstant }
+                    .distinctUntilChangedBy(Instant::toEpochMilliseconds)
+                    .flatMapLatest {
+                        timelineDao.feedItems(
+                            viewingProfileId = currentViewingProfileId,
+                            sourceId = timeline.sourceId,
+                            before = it,
+                            limit = 1,
+                            offset = 0,
+                        )
+                    },
+                timelineDao.feedItems(
+                    viewingProfileId = currentViewingProfileId,
+                    sourceId = timeline.sourceId,
+                    before = pollInstant,
+                    limit = 1,
+                    offset = 0,
+                ),
+            ) { latestSeen, latestSaved ->
+                latestSaved.firstOrNull()?.id != latestSeen.firstOrNull()?.id
+            }
+        }
+    }
 
     private fun observeAndRefreshTimeline(
         query: TimelineQuery,
@@ -1298,6 +1306,58 @@ internal class OfflineTimelineRepository(
         // Just tack the post to the current thread
         else -> list.dropLast(1) + list.last().let {
             it.copy(posts = it.posts + post)
+        }
+    }
+
+    private fun records(
+        uris: List<RecordUri>,
+        viewingProfileId: ProfileId?,
+    ): Flow<List<Record>> {
+        val feedUris = LazyList<FeedGeneratorUri>()
+        val listUris = LazyList<ListUri>()
+        val postUris = LazyList<PostUri>()
+        val starterPackUris = LazyList<StarterPackUri>()
+
+        uris.forEach { uri ->
+            when (uri) {
+                is FeedGeneratorUri -> feedUris.add(uri)
+                is ListUri -> listUris.add(uri)
+                is PostUri -> postUris.add(uri)
+                is StarterPackUri -> starterPackUris.add(uri)
+            }
+        }
+
+        return combine(
+            feedUris.list
+                .toFlowOrEmpty(feedGeneratorDao::feedGenerators)
+                .distinctUntilChanged()
+                .map { entities ->
+                    entities.map(PopulatedFeedGeneratorEntity::asExternalModel)
+                },
+            listUris.list
+                .toFlowOrEmpty(listDao::lists)
+                .distinctUntilChanged()
+                .map { entities ->
+                    entities.map(PopulatedListEntity::asExternalModel)
+                },
+            postUris.list
+                .toFlowOrEmpty { postDao.posts(viewingProfileId?.id, it) }
+                .distinctUntilChanged()
+                .map { entities ->
+                    entities.map {
+                        it.asExternalModel(
+                            quote = null,
+                        )
+                    }
+                },
+            starterPackUris.list
+                .toFlowOrEmpty(starterPackDao::starterPacks)
+                .distinctUntilChanged()
+                .map { entities ->
+                    entities.map(PopulatedStarterPackEntity::asExternalModel)
+                },
+        ) { feeds, lists, posts, starterPacks ->
+            feeds + lists + posts + starterPacks
         }
     }
 }
