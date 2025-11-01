@@ -24,6 +24,7 @@ import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedState
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
 import com.tunjid.heron.data.utilities.writequeue.FailedWrite
@@ -34,11 +35,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.selects.select
@@ -46,6 +50,7 @@ import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoBuf
 import okio.FileSystem
+import okio.IOException
 import okio.Path
 import sh.christian.ozone.api.model.JsonContent
 
@@ -169,30 +174,16 @@ val InitialSavedState: SavedState = VersionedSavedState.Initial
 
 val EmptySavedState: SavedState = VersionedSavedState.Empty
 
-internal val SavedStateDataSource.signedInProfileId
-    get() = savedState
-        .value
-        .auth
-        .ifSignedIn()
-        ?.authProfileId
+fun SavedState.isSignedIn(): Boolean =
+    auth.ifSignedIn() != null
 
-internal val SavedStateDataSource.observedSignedInProfileId
-    get() = savedState
-        .map { it.auth.ifSignedIn()?.authProfileId }
-        .distinctUntilChanged()
+fun SavedState.signedInProfilePreferences() =
+    signedInProfileData?.preferences
 
 internal val SavedStateDataSource.signedInAuth
     get() = savedState
         .map { it.auth.ifSignedIn() }
         .distinctUntilChanged()
-
-private fun SavedState.AuthTokens?.ifSignedIn(): SavedState.AuthTokens.Authenticated? =
-    when (this) {
-        is SavedState.AuthTokens.Authenticated -> this
-        is SavedState.AuthTokens.Guest,
-        null,
-        -> null
-    }
 
 internal fun SavedState.signedProfilePreferencesOrDefault(): Preferences =
     signedInProfileData
@@ -204,14 +195,21 @@ internal fun SavedState.signedProfilePreferencesOrDefault(): Preferences =
             null -> Server.BlueSky.endpoint
         }.let(::preferencesForUrl)
 
-internal val SavedState.signedInProfileId: ProfileId?
+private fun SavedState.AuthTokens?.ifSignedIn(): SavedState.AuthTokens.Authenticated? =
+    when (this) {
+        is SavedState.AuthTokens.Authenticated -> this
+        is SavedState.AuthTokens.Guest,
+        null,
+        -> null
+    }
+
+private val SavedState.signedInProfileId: ProfileId?
     get() = auth.ifSignedIn()?.authProfileId
 
-fun SavedState.isSignedIn(): Boolean =
-    auth.ifSignedIn() != null
-
-fun SavedState.signedInProfilePreferences() =
-    signedInProfileData?.preferences
+private val SavedStateDataSource.observedSignedInProfileId
+    get() = savedState
+        .map { it.auth.ifSignedIn()?.authProfileId }
+        .distinctUntilChanged()
 
 private fun preferencesForUrl(url: String) =
     when (url) {
@@ -323,7 +321,7 @@ internal suspend fun SavedStateDataSource.updateSignedInUserNotifications(
 internal suspend inline fun <T> SavedStateDataSource.inCurrentProfileSession(
     crossinline block: suspend (ProfileId?) -> T,
 ): T? {
-    val currentProfileId = savedState.value.signedInProfileId ?: return null
+    val currentProfileId = savedState.value.signedInProfileId
     return coroutineScope {
         select {
             async {
@@ -345,3 +343,28 @@ internal suspend inline fun SavedStateDataSource.onEachSignedInProfile(
 ) = observedSignedInProfileId.collectLatest { profileId ->
     if (profileId != null) block()
 }
+
+/**
+ * Returns a new [Flow] on each authorized session change or an empty flow
+ */
+internal inline fun <T> SavedStateDataSource.singleAuthorizedSessionFlow(
+    crossinline block: suspend (ProfileId) -> Flow<T>,
+): Flow<T> = observedSignedInProfileId
+    .flatMapLatest { signedInProfileId ->
+        if (signedInProfileId == null) emptyFlow()
+        else block(signedInProfileId)
+    }
+
+/**
+ * Returns a new [Flow] on each session change
+ */
+internal inline fun <T> SavedStateDataSource.singleSessionFlow(
+    crossinline block: suspend (ProfileId?) -> Flow<T>,
+): Flow<T> = observedSignedInProfileId
+    .flatMapLatest { signedInProfileId ->
+        block(signedInProfileId)
+    }
+
+internal fun expiredSessionOutcome() = Outcome.Failure(ExpiredSessionException)
+
+private object ExpiredSessionException : IOException()

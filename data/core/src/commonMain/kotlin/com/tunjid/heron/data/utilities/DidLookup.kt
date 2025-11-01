@@ -31,7 +31,7 @@ import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.repository.SavedStateDataSource
-import com.tunjid.heron.data.repository.signedInProfileId
+import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import kotlin.collections.map
@@ -111,22 +111,21 @@ internal suspend fun refreshProfile(
     networkService: NetworkService,
     multipleEntitySaverProvider: MultipleEntitySaverProvider,
     savedStateDataSource: SavedStateDataSource,
-) {
+) = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
     val profileDid = lookupProfileDid(
         profileId = profileId,
         profileDao = profileDao,
         networkService = networkService,
-    ) ?: return
+    ) ?: return@inCurrentProfileSession
+
     networkService.runCatchingWithMonitoredNetworkRetry {
-        getProfile(
-            GetProfileQueryParams(actor = profileDid),
-        )
+        getProfile(GetProfileQueryParams(actor = profileDid))
     }
         .getOrNull()
         ?.let { response ->
             multipleEntitySaverProvider.saveInTransaction {
                 add(
-                    viewingProfileId = savedStateDataSource.signedInProfileId,
+                    viewingProfileId = signedInProfileId,
                     profileView = response,
                 )
             }

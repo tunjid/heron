@@ -49,7 +49,6 @@ import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.models.labelVisibilitiesToDefinitions
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
@@ -92,7 +91,6 @@ import com.tunjid.heron.data.utilities.toFlowOrEmpty
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
-import kotlin.collections.firstOrNull
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
@@ -551,11 +549,11 @@ internal class OfflineTimelineRepository(
 
     override fun postThreadedItems(
         postUri: PostUri,
-    ): Flow<List<TimelineItem>> =
+    ): Flow<List<TimelineItem>> = savedStateDataSource.singleSessionFlow { signedInProfileId ->
         savedStateDataSource.savedState
-            .map(::signedInProfileIdToContentLabelPreferences)
+            .map { it.signedProfilePreferencesOrDefault().contentLabelPreferences }
             .distinctUntilChanged()
-            .flatMapLatest { (signedInProfileId, contentLabelPreferences) ->
+            .flatMapLatest { contentLabelPreferences ->
                 postDao.postEntitiesByUri(
                     viewingProfileId = signedInProfileId?.id,
                     postUris = setOf(postUri),
@@ -587,14 +585,16 @@ internal class OfflineTimelineRepository(
                                     flow3 = labelers(),
                                     transform = { posts, embeddedRecords, labelers ->
                                         val urisToPosts = posts.associateBy { it.entity.uri }
-                                        val recordUrisToEmbeddedRecords = embeddedRecords.associateBy {
-                                            it.reference.uri
-                                        }
+                                        val recordUrisToEmbeddedRecords =
+                                            embeddedRecords.associateBy {
+                                                it.reference.uri
+                                            }
 
                                         postThread.fold(
                                             initial = emptyList<TimelineItem.Thread>(),
                                             operation = { list, thread ->
-                                                val populatedPostEntity = urisToPosts.getValue(thread.entity.uri)
+                                                val populatedPostEntity =
+                                                    urisToPosts.getValue(thread.entity.uri)
                                                 val embeddedRecord = thread.entity
                                                     .record
                                                     ?.embeddedRecordUri
@@ -634,7 +634,7 @@ internal class OfflineTimelineRepository(
                                         multipleEntitySaverProvider
                                             .saveInTransaction {
                                                 add(
-                                                    viewingProfileId = savedStateDataSource.signedInProfileId,
+                                                    viewingProfileId = signedInProfileId,
                                                     threadViewPost = thread.value,
                                                 )
                                             }
@@ -645,191 +645,198 @@ internal class OfflineTimelineRepository(
                     }
                     .distinctUntilChanged()
             }
+    }
 
     override fun homeTimelines(): Flow<List<Timeline.Home>> =
-        savedStateDataSource.savedState
-            .map(::timelineInfo)
-            .distinctUntilChanged()
-            .flatMapLatest { (signedInProfileId, timelinePreferences) ->
-                timelinePreferences.mapIndexed { index, preference ->
-                    when (Type.safeValueOf(preference.type)) {
-                        Type.Feed -> feedGeneratorTimeline(
-                            signedInProfileId = signedInProfileId,
-                            uri = FeedGeneratorUri(preference.value),
-                            position = index,
-                            isPinned = preference.pinned,
-                        )
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            savedStateDataSource.savedState
+                .map { it.signedProfilePreferencesOrDefault().timelinePreferences }
+                .distinctUntilChanged()
+                .flatMapLatest { timelinePreferences ->
+                    timelinePreferences.mapIndexed { index, preference ->
+                        when (Type.safeValueOf(preference.type)) {
+                            Type.Feed -> feedGeneratorTimeline(
+                                signedInProfileId = signedInProfileId,
+                                uri = FeedGeneratorUri(preference.value),
+                                position = index,
+                                isPinned = preference.pinned,
+                            )
 
-                        Type.List -> listTimeline(
-                            signedInProfileId = signedInProfileId,
-                            uri = ListUri(preference.value),
-                            position = index,
-                            isPinned = preference.pinned,
-                        )
+                            Type.List -> listTimeline(
+                                signedInProfileId = signedInProfileId,
+                                uri = ListUri(preference.value),
+                                position = index,
+                                isPinned = preference.pinned,
+                            )
 
-                        Type.Timeline -> followingTimeline(
-                            signedInProfileId = signedInProfileId,
-                            name = preference.value.replaceFirstChar(Char::titlecase),
-                            position = index,
-                            isPinned = preference.pinned,
-                        )
+                            Type.Timeline -> followingTimeline(
+                                signedInProfileId = signedInProfileId,
+                                name = preference.value.replaceFirstChar(Char::titlecase),
+                                position = index,
+                                isPinned = preference.pinned,
+                            )
 
-                        is Type.Unknown -> emptyFlow()
+                            is Type.Unknown -> emptyFlow()
+                        }
                     }
+                        .merge()
+                        .scan(emptyList<Timeline.Home>()) { timelines, timeline ->
+                            // Add newest item first
+                            (listOf(timeline) + timelines).distinctBy(Timeline.Home::sourceId)
+                        }
+                        .map { homeTimelines ->
+                            homeTimelines.sortedBy(Timeline.Home::position)
+                        }
+                        .distinctUntilChangedBy { timelines ->
+                            timelines.joinToString(
+                                separator = "-",
+                                transform = { "${it.name}-${it.presentation.key}-${it.isPinned}" },
+                            )
+                        }
+                        .filter(List<Timeline.Home>::isNotEmpty)
+                        .debounce { timelines ->
+                            if (timelines.size == timelinePreferences.size) 0.seconds
+                            else 3.seconds
+                        }
                 }
-                    .merge()
-                    .scan(emptyList<Timeline.Home>()) { timelines, timeline ->
-                        // Add newest item first
-                        (listOf(timeline) + timelines).distinctBy(Timeline.Home::sourceId)
-                    }
-                    .map { homeTimelines ->
-                        homeTimelines.sortedBy(Timeline.Home::position)
-                    }
-                    .distinctUntilChangedBy { timelines ->
-                        timelines.joinToString(
-                            separator = "-",
-                            transform = { "${it.name}-${it.presentation.key}-${it.isPinned}" },
-                        )
-                    }
-                    .filter(List<Timeline.Home>::isNotEmpty)
-                    .debounce { timelines ->
-                        if (timelines.size == timelinePreferences.size) 0.seconds
-                        else 3.seconds
-                    }
-            }
-            .distinctUntilChanged()
+                .distinctUntilChanged()
+        }
 
     override fun timeline(
         request: TimelineRequest,
-    ): Flow<Timeline> = savedStateDataSource.savedState
-        .map(::timelineInfo)
-        .distinctUntilChanged()
-        .flatMapLatest { (signedInProfileId, preferences) ->
-            flow {
-                when (request) {
-                    is TimelineRequest.OfFeed.WithUri -> emitAll(
-                        feedGeneratorTimeline(
-                            signedInProfileId = signedInProfileId,
-                            uri = request.uri,
-                            position = 0,
-                            isPinned = preferences.firstOrNull {
-                                it.value == request.uri.uri
-                            }?.pinned ?: false,
-                        ),
-                    )
-
-                    is TimelineRequest.OfList.WithUri -> emitAll(
-                        listTimeline(
-                            signedInProfileId = signedInProfileId,
-                            uri = request.uri,
-                            position = 0,
-                            isPinned = preferences.firstOrNull {
-                                it.value == request.uri.uri
-                            }?.pinned ?: false,
-                        ),
-                    )
-
-                    is TimelineRequest.OfFeed.WithProfile -> {
-                        val profileDid = lookupProfileDid(
-                            profileId = request.profileHandleOrDid,
-                            profileDao = profileDao,
-                            networkService = networkService,
-                        ) ?: return@flow
-                        val uri = FeedGeneratorUri(
-                            uri = "at://${profileDid.did}/${Collections.FeedGenerator}/${request.feedUriSuffix}",
-                        )
-                        emitAll(
+    ): Flow<Timeline> = savedStateDataSource.singleSessionFlow { signedInProfileId ->
+        savedStateDataSource.savedState
+            .map { it.signedProfilePreferencesOrDefault().timelinePreferences }
+            .distinctUntilChanged()
+            .flatMapLatest { preferences ->
+                flow {
+                    when (request) {
+                        is TimelineRequest.OfFeed.WithUri -> emitAll(
                             feedGeneratorTimeline(
                                 signedInProfileId = signedInProfileId,
-                                uri = uri,
+                                uri = request.uri,
                                 position = 0,
                                 isPinned = preferences.firstOrNull {
-                                    it.value == uri.uri
+                                    it.value == request.uri.uri
                                 }?.pinned ?: false,
                             ),
                         )
-                    }
 
-                    is TimelineRequest.OfList.WithProfile -> {
-                        val profileDid = lookupProfileDid(
-                            profileId = request.profileHandleOrDid,
-                            profileDao = profileDao,
-                            networkService = networkService,
-                        ) ?: return@flow
-                        val uri = ListUri(
-                            uri = "at://${profileDid.did}/${Collections.List}/${request.listUriSuffix}",
-                        )
-                        emitAll(
+                        is TimelineRequest.OfList.WithUri -> emitAll(
                             listTimeline(
                                 signedInProfileId = signedInProfileId,
-                                uri = uri,
+                                uri = request.uri,
                                 position = 0,
                                 isPinned = preferences.firstOrNull {
-                                    it.value == uri.uri
+                                    it.value == request.uri.uri
+                                }?.pinned ?: false,
+                            ),
+                        )
+
+                        is TimelineRequest.OfFeed.WithProfile -> {
+                            val profileDid = lookupProfileDid(
+                                profileId = request.profileHandleOrDid,
+                                profileDao = profileDao,
+                                networkService = networkService,
+                            ) ?: return@flow
+                            val uri = FeedGeneratorUri(
+                                uri = "at://${profileDid.did}/${Collections.FeedGenerator}/${request.feedUriSuffix}",
+                            )
+                            emitAll(
+                                feedGeneratorTimeline(
+                                    signedInProfileId = signedInProfileId,
+                                    uri = uri,
+                                    position = 0,
+                                    isPinned = preferences.firstOrNull {
+                                        it.value == uri.uri
+                                    }?.pinned ?: false,
+                                ),
+                            )
+                        }
+
+                        is TimelineRequest.OfList.WithProfile -> {
+                            val profileDid = lookupProfileDid(
+                                profileId = request.profileHandleOrDid,
+                                profileDao = profileDao,
+                                networkService = networkService,
+                            ) ?: return@flow
+                            val uri = ListUri(
+                                uri = "at://${profileDid.did}/${Collections.List}/${request.listUriSuffix}",
+                            )
+                            emitAll(
+                                listTimeline(
+                                    signedInProfileId = signedInProfileId,
+                                    uri = uri,
+                                    position = 0,
+                                    isPinned = preferences.firstOrNull {
+                                        it.value == uri.uri
+                                    }?.pinned ?: false,
+                                ),
+                            )
+                        }
+
+                        is TimelineRequest.OfProfile -> emitAll(
+                            profileTimeline(
+                                signedInProfileId = signedInProfileId,
+                                profileHandleOrDid = request.profileHandleOrDid,
+                                type = request.type,
+                            ),
+                        )
+
+                        is TimelineRequest.OfStarterPack.WithProfile -> {
+                            val profileDid = lookupProfileDid(
+                                profileId = request.profileHandleOrDid,
+                                profileDao = profileDao,
+                                networkService = networkService,
+                            ) ?: return@flow
+                            val uri = StarterPackUri(
+                                uri = "at://${profileDid.did}/${Collections.StarterPack}/${request.starterPackUriSuffix}",
+                            )
+                            emitAll(
+                                starterPackTimeline(
+                                    signedInProfileId = signedInProfileId,
+                                    uri = uri,
+                                ),
+                            )
+                        }
+
+                        is TimelineRequest.OfStarterPack.WithUri -> emitAll(
+                            starterPackTimeline(
+                                signedInProfileId = signedInProfileId,
+                                uri = request.uri,
+                            ),
+                        )
+
+                        TimelineRequest.Following -> emitAll(
+                            followingTimeline(
+                                // TODO: Get a string resource for this
+                                name = "",
+                                signedInProfileId = signedInProfileId,
+                                position = 0,
+                                isPinned = preferences.firstOrNull {
+                                    Type.safeValueOf(it.type) is Type.Timeline
                                 }?.pinned ?: false,
                             ),
                         )
                     }
-
-                    is TimelineRequest.OfProfile -> emitAll(
-                        profileTimeline(
-                            signedInProfileId = signedInProfileId,
-                            profileHandleOrDid = request.profileHandleOrDid,
-                            type = request.type,
-                        ),
-                    )
-
-                    is TimelineRequest.OfStarterPack.WithProfile -> {
-                        val profileDid = lookupProfileDid(
-                            profileId = request.profileHandleOrDid,
-                            profileDao = profileDao,
-                            networkService = networkService,
-                        ) ?: return@flow
-                        val uri = StarterPackUri(
-                            uri = "at://${profileDid.did}/${Collections.StarterPack}/${request.starterPackUriSuffix}",
-                        )
-                        emitAll(
-                            starterPackTimeline(
-                                signedInProfileId = signedInProfileId,
-                                uri = uri,
-                            ),
-                        )
-                    }
-
-                    is TimelineRequest.OfStarterPack.WithUri -> emitAll(
-                        starterPackTimeline(
-                            signedInProfileId = signedInProfileId,
-                            uri = request.uri,
-                        ),
-                    )
-
-                    TimelineRequest.Following -> emitAll(
-                        followingTimeline(
-                            // TODO: Get a string resource for this
-                            name = "",
-                            signedInProfileId = signedInProfileId,
-                            position = 0,
-                            isPinned = preferences.firstOrNull {
-                                Type.safeValueOf(it.type) is Type.Timeline
-                            }?.pinned ?: false,
-                        ),
-                    )
                 }
             }
-        }
+    }
 
     override suspend fun updatePreferredPresentation(
         timeline: Timeline,
         presentation: Timeline.Presentation,
-    ): Outcome = runCatchingUnlessCancelled {
-        timelineDao.updatePreferredTimelinePresentation(
-            partial = preferredPresentationPartial(
-                signedInProfileId = savedStateDataSource.signedInProfileId,
-                sourceId = timeline.sourceId,
-                presentation = presentation,
-            ),
-        )
-    }.toOutcome()
+    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        runCatchingUnlessCancelled {
+            timelineDao.updatePreferredTimelinePresentation(
+                partial = preferredPresentationPartial(
+                    signedInProfileId = signedInProfileId,
+                    sourceId = timeline.sourceId,
+                    presentation = presentation,
+                ),
+            )
+        }.toOutcome()
+    } ?: expiredSessionOutcome()
 
     override suspend fun updateHomeTimelines(
         update: Timeline.Update,
@@ -864,8 +871,7 @@ internal class OfflineTimelineRepository(
         nextCursor: NetworkResponse.() -> String?,
         networkFeed: NetworkResponse.() -> List<FeedViewPost>,
     ): Flow<Cursor> = savedStateDataSource
-        .observedSignedInProfileId
-        .flatMapLatest { signedInProfileId ->
+        .singleSessionFlow { signedInProfileId ->
             nextCursorFlow(
                 currentCursor = currentCursor,
                 currentRequestWithNextCursor = currentRequestWithNextCursor,
@@ -900,9 +906,8 @@ internal class OfflineTimelineRepository(
         pollInterval: Duration,
         networkRequestBlock: suspend BlueskyApi.() -> AtpResponse<T>,
         networkResponseToFeedViews: (T) -> List<FeedViewPost>,
-    ) = combine(
-        flow = savedStateDataSource.observedSignedInProfileId,
-        flow2 = flow {
+    ) = savedStateDataSource.singleSessionFlow { signedInProfileId ->
+        flow {
             while (true) {
                 val pollInstant = Clock.System.now()
                 val succeeded = networkService.runCatchingWithMonitoredNetworkRetry(
@@ -913,19 +918,18 @@ internal class OfflineTimelineRepository(
                     ?.let { fetchedFeedViewPosts ->
                         multipleEntitySaverProvider.saveInTransaction {
                             add(
-                                viewingProfileId = savedStateDataSource.signedInProfileId,
+                                viewingProfileId = signedInProfileId,
                                 timeline = timeline,
                                 feedViewPosts = fetchedFeedViewPosts,
                             )
                         }
                     } != null
 
-                if (succeeded) emit(pollInstant)
+                if (succeeded) emit(signedInProfileId to pollInstant)
                 delay(pollInterval.inWholeMilliseconds)
             }
-        },
-        transform = ::Pair,
-    )
+        }
+    }
         .flatMapLatest { (signedInProfileId, pollInstant) ->
             combine(
                 timelineDao.lastFetchKey(
@@ -970,156 +974,166 @@ internal class OfflineTimelineRepository(
     private fun observeTimeline(
         query: TimelineQuery,
     ): Flow<List<TimelineItem>> =
-        savedStateDataSource.savedState
-            .map(::signedInProfileIdToContentLabelPreferences)
-            .distinctUntilChanged()
-            .flatMapLatest { (signedInProfileId, contentLabelPreferences) ->
-                val labelsVisibilityMap = contentLabelPreferences.associateBy(
-                    keySelector = ContentLabelPreference::label,
-                    valueTransform = ContentLabelPreference::visibility,
-                )
-                timelineDao.feedItems(
-                    viewingProfileId = signedInProfileId?.id,
-                    sourceId = query.timeline.sourceId,
-                    before = query.data.cursorAnchor,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
-                    .distinctUntilChanged()
-                    .flatMapLatest latestFeedItems@{ itemEntities ->
-                        if (itemEntities.isEmpty()) return@latestFeedItems emptyFlow()
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            savedStateDataSource.savedState
+                .map { it.signedProfilePreferencesOrDefault().contentLabelPreferences }
+                .distinctUntilChanged()
+                .flatMapLatest { contentLabelPreferences ->
+                    val labelsVisibilityMap = contentLabelPreferences.associateBy(
+                        keySelector = ContentLabelPreference::label,
+                        valueTransform = ContentLabelPreference::visibility,
+                    )
+                    timelineDao.feedItems(
+                        viewingProfileId = signedInProfileId?.id,
+                        sourceId = query.timeline.sourceId,
+                        before = query.data.cursorAnchor,
+                        offset = query.data.offset,
+                        limit = query.data.limit,
+                    )
+                        .distinctUntilChanged()
+                        .flatMapLatest latestFeedItems@{ itemEntities ->
+                            if (itemEntities.isEmpty()) return@latestFeedItems emptyFlow()
 
-                        val postIds = itemEntities.flatMap {
-                            listOfNotNull(
-                                it.postUri,
-                                it.reply?.parentPostUri,
-                                it.reply?.rootPostUri,
-                            )
-                        }
-                            .toSet()
-                        val profileIds = itemEntities.mapNotNullTo(
-                            destination = mutableSetOf(),
-                            transform = TimelineItemEntity::reposter,
-                        )
-
-                        val recordUris = itemEntities.mapNotNullTo(
-                            destination = mutableSetOf(),
-                            transform = TimelineItemEntity::embeddedRecordUri,
-                        ).toList()
-
-                        combine(
-                            flow = postIds.toFlowOrEmpty { ids ->
-                                postDao.posts(
-                                    viewingProfileId = signedInProfileId?.id,
-                                    postUris = ids,
+                            val postIds = itemEntities.flatMap {
+                                listOfNotNull(
+                                    it.postUri,
+                                    it.reply?.parentPostUri,
+                                    it.reply?.rootPostUri,
                                 )
-                                    .distinctUntilChanged()
-                            },
-                            flow2 = records(
-                                uris = recordUris,
-                                viewingProfileId = signedInProfileId,
-                            ),
-                            flow3 = profileIds.toFlowOrEmpty(
-                                block = profileDao::profiles,
+                            }
+                                .toSet()
+                            val profileIds = itemEntities.mapNotNullTo(
+                                destination = mutableSetOf(),
+                                transform = TimelineItemEntity::reposter,
                             )
-                                .distinctUntilChanged(),
-                            flow4 = labelers(),
-                        ) { posts, embeddedRecords, repostProfiles, labelers ->
-                            if (posts.isEmpty()) return@combine emptyList()
-                            val urisToPosts = posts.associateBy { it.entity.uri }
-                            val idsToRepostProfiles = repostProfiles.associateBy { it.did }
-                            val recordUrisToEmbeddedRecords = embeddedRecords.associateBy { it.reference.uri }
-
-                            itemEntities.mapNotNull { entity ->
-                                val embeddedRecord = entity.embeddedRecordUri
-                                    ?.let(recordUrisToEmbeddedRecords::get)
-                                val mainPost = urisToPosts[entity.postUri]
-                                    ?.asExternalModel(
-                                        quote = embeddedRecord as? Post,
-                                        embeddedRecord = embeddedRecord,
-                                    ) ?: return@mapNotNull null
-
-                                val postLabels = when {
-                                    mainPost.labels.isEmpty() -> emptySet()
-                                    else -> mainPost.labels.mapTo(
-                                        destination = mutableSetOf(),
-                                        transform = Label::value,
+                            combine(
+                                flow = postIds.toFlowOrEmpty { ids ->
+                                    postDao.posts(
+                                        viewingProfileId = signedInProfileId?.id,
+                                        postUris = ids,
                                     )
-                                }
+                                },
+                                flow2 = postIds.toFlowOrEmpty { ids ->
+                                    postDao.embeddedPosts(
+                                        viewingProfileId = signedInProfileId?.id,
+                                        postUris = ids,
+                                    )
+                                },
+                                flow3 = profileIds.toFlowOrEmpty(
+                                    block = profileDao::profiles,
+                                ),
+                                flow4 = labelers(),
+                            ) { posts, embeddedPosts, repostProfiles, labelers ->
+                                if (posts.isEmpty()) return@combine emptyList()
+                                val urisToPosts = posts.associateBy { it.entity.uri }
+                                val urisToEmbeddedPosts =
+                                    embeddedPosts.associateBy { it.parentPostUri }
+                                val idsToRepostProfiles = repostProfiles.associateBy { it.did }
 
-                                if (postLabels.contains(Label.Hidden)) return@mapNotNull null
+                                itemEntities.mapNotNull { entity ->
+                                    val mainPost = urisToPosts[entity.postUri]
+                                        ?.asExternalModel(
+                                            quote = urisToEmbeddedPosts[entity.postUri]
+                                                ?.entity
+                                                ?.asExternalModel(
+                                                    quote = null,
+                                                    embeddedRecord = null,
+                                                ),
+                                            embeddedRecord = null,
+                                        ) ?: return@mapNotNull null
 
-                                val isSignedIn = signedInProfileId != null
-                                if (!isSignedIn && postLabels.contains(Label.NonAuthenticated)) return@mapNotNull null
+                                    val postLabels = when {
+                                        mainPost.labels.isEmpty() -> emptySet()
+                                        else -> mainPost.labels.mapTo(
+                                            destination = mutableSetOf(),
+                                            transform = Label::value,
+                                        )
+                                    }
 
-                                val visibilitiesToDefinitions = labelVisibilitiesToDefinitions(
-                                    postLabels = postLabels,
-                                    labelers = labelers,
-                                    labelsVisibilityMap = labelsVisibilityMap,
-                                )
+                                    // Check for global hidden label
+                                    if (postLabels.contains(Label.Hidden)) return@mapNotNull null
 
-                                val shouldHide = visibilitiesToDefinitions.getOrElse(
-                                    key = Label.Visibility.Hide,
-                                    defaultValue = ::emptyList,
-                                ).isNotEmpty()
+                                    // Check for global non authenticated label
+                                    val isSignedIn = signedInProfileId != null
+                                    if (!isSignedIn && postLabels.contains(Label.NonAuthenticated)) return@mapNotNull null
 
-                                if (shouldHide) return@mapNotNull null
+                                    val visibilitiesToDefinitions = labelVisibilitiesToDefinitions(
+                                        postLabels = postLabels,
+                                        labelers = labelers,
+                                        labelsVisibilityMap = labelsVisibilityMap,
+                                    )
 
-                                val replyParent = entity.reply?.let { urisToPosts[it.parentPostUri] }
-                                val replyRoot = entity.reply?.let { urisToPosts[it.rootPostUri] }
-                                val repostedBy = entity.reposter?.let { idsToRepostProfiles[it] }
+                                    val shouldHide = visibilitiesToDefinitions.getOrElse(
+                                        key = Label.Visibility.Hide,
+                                        defaultValue = ::emptyList,
+                                    ).isNotEmpty()
 
-                                when {
-                                    replyRoot != null && replyParent != null -> TimelineItem.Thread(
-                                        id = entity.id,
-                                        generation = null,
-                                        anchorPostIndex = 2,
-                                        hasBreak = entity.reply?.grandParentPostAuthorId != null,
-                                        labelVisibilitiesToDefinitions = visibilitiesToDefinitions,
-                                        posts = listOf(
-                                            replyRoot.asExternalModel(
-                                                quote = null,
-                                                embeddedRecord = replyRoot.entity
-                                                    .record
-                                                    ?.embeddedRecordUri
-                                                    ?.let(recordUrisToEmbeddedRecords::get),
+                                    if (shouldHide) return@mapNotNull null
+
+                                    val replyParent =
+                                        entity.reply?.let { urisToPosts[it.parentPostUri] }
+                                    val replyRoot =
+                                        entity.reply?.let { urisToPosts[it.rootPostUri] }
+                                    val repostedBy =
+                                        entity.reposter?.let { idsToRepostProfiles[it] }
+
+                                    when {
+                                        replyRoot != null && replyParent != null -> TimelineItem.Thread(
+                                            id = entity.id,
+                                            generation = null,
+                                            anchorPostIndex = 2,
+                                            hasBreak = entity.reply?.grandParentPostAuthorId != null,
+                                            labelVisibilitiesToDefinitions = visibilitiesToDefinitions,
+                                            posts = listOf(
+                                                replyRoot.asExternalModel(
+                                                    quote = urisToEmbeddedPosts[replyRoot.entity.uri]
+                                                        ?.entity
+                                                        ?.asExternalModel(
+                                                            quote = null,
+                                                            embeddedRecord = null,
+                                                        ),
+                                                    embeddedRecord = null,
+                                                ),
+                                                replyParent.asExternalModel(
+                                                    quote = urisToEmbeddedPosts[replyParent.entity.uri]
+                                                        ?.entity
+                                                        ?.asExternalModel(
+                                                            quote = null,
+                                                            embeddedRecord = null,
+
+                                                        ),
+                                                    embeddedRecord = null,
+                                                ),
+                                                mainPost,
                                             ),
-                                            replyParent.asExternalModel(
-                                                quote = null,
-                                                embeddedRecord = replyParent.entity
-                                                    .record
-                                                    ?.embeddedRecordUri
-                                                    ?.let(recordUrisToEmbeddedRecords::get),
-                                            ),
-                                            mainPost,
-                                        ),
-                                    )
+                                        )
 
-                                    repostedBy != null -> TimelineItem.Repost(
-                                        id = entity.id,
-                                        post = mainPost,
-                                        by = repostedBy.asExternalModel(),
-                                        at = entity.indexedAt,
-                                        labelVisibilitiesToDefinitions = visibilitiesToDefinitions,
-                                    )
+                                        repostedBy != null -> TimelineItem.Repost(
+                                            id = entity.id,
+                                            post = mainPost,
+                                            by = repostedBy.asExternalModel(),
+                                            at = entity.indexedAt,
+                                            labelVisibilitiesToDefinitions = visibilitiesToDefinitions,
+                                        )
 
-                                    entity.isPinned -> TimelineItem.Pinned(
-                                        id = entity.id,
-                                        post = mainPost,
-                                        labelVisibilitiesToDefinitions = visibilitiesToDefinitions,
-                                    )
+                                        entity.isPinned -> TimelineItem.Pinned(
+                                            id = entity.id,
+                                            post = mainPost,
+                                            labelVisibilitiesToDefinitions = visibilitiesToDefinitions,
+                                        )
 
-                                    else -> TimelineItem.Single(
-                                        id = entity.id,
-                                        post = mainPost,
-                                        labelVisibilitiesToDefinitions = visibilitiesToDefinitions,
-                                    )
+                                        else -> TimelineItem.Single(
+                                            id = entity.id,
+                                            post = mainPost,
+                                            labelVisibilitiesToDefinitions = visibilitiesToDefinitions,
+                                        )
+                                    }
                                 }
                             }
+                                .filter(List<TimelineItem>::isNotEmpty)
                         }
-                            .filter(List<TimelineItem>::isNotEmpty)
-                    }
-            }
+                }
+        }
 
     private fun followingTimeline(
         signedInProfileId: ProfileId?,
@@ -1369,15 +1383,6 @@ internal class OfflineTimelineRepository(
         }
     }
 }
-
-private fun signedInProfileIdToContentLabelPreferences(state: SavedState): Pair<ProfileId?, ContentLabelPreferences> =
-    Pair(
-        first = state.signedInProfileId,
-        second = state.signedProfilePreferencesOrDefault().contentLabelPreferences,
-    )
-
-private fun timelineInfo(savedState: SavedState): Pair<ProfileId?, List<TimelinePreference>> =
-    savedState.signedInProfileId to savedState.signedProfilePreferencesOrDefault().timelinePreferences
 
 private fun TimelinePreferencesEntity?.preferredPresentation() =
     when (this?.preferredPresentation) {

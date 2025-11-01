@@ -91,7 +91,9 @@ internal class SuspendingVideoUploadService @Inject constructor(
     // https://docs.bsky.app/docs/tutorials/video#recommended-method
     override suspend fun uploadVideo(
         file: File,
-    ): Result<Blob> = savedStateDataSource.inCurrentProfileSession {
+    ): Result<Blob> = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        if (signedInProfileId == null) throw IllegalStateException("Not signed in")
+
         val authToken = savedStateDataSource.signedInAuth
             .filterNotNull()
             .first()
