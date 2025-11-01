@@ -42,14 +42,11 @@ import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
-import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Record
-import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.TimelinePreference
@@ -95,38 +92,7 @@ import com.tunjid.heron.data.utilities.toFlowOrEmpty
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
-import kotlin.collections.List
-import kotlin.collections.Map
-import kotlin.collections.associateBy
-import kotlin.collections.distinctBy
-import kotlin.collections.dropLast
-import kotlin.collections.emptyList
-import kotlin.collections.emptySet
-import kotlin.collections.filter
-import kotlin.collections.first
 import kotlin.collections.firstOrNull
-import kotlin.collections.flatMap
-import kotlin.collections.fold
-import kotlin.collections.forEach
-import kotlin.collections.getOrElse
-import kotlin.collections.getValue
-import kotlin.collections.isNotEmpty
-import kotlin.collections.joinToString
-import kotlin.collections.last
-import kotlin.collections.listOf
-import kotlin.collections.listOfNotNull
-import kotlin.collections.map
-import kotlin.collections.mapIndexed
-import kotlin.collections.mapNotNull
-import kotlin.collections.mapNotNullTo
-import kotlin.collections.mapTo
-import kotlin.collections.mutableSetOf
-import kotlin.collections.partition
-import kotlin.collections.plus
-import kotlin.collections.setOf
-import kotlin.collections.sortedBy
-import kotlin.collections.toList
-import kotlin.collections.toSet
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
@@ -612,7 +578,8 @@ internal class OfflineTimelineRepository(
                                     flow = postDao.posts(
                                         viewingProfileId = signedInProfileId?.id,
                                         postUris = postUris,
-                                    ),
+                                    )
+                                        .distinctUntilChanged(),
                                     flow2 = records(
                                         uris = embeddedRecordUris.toList(),
                                         viewingProfileId = signedInProfileId,
@@ -622,8 +589,11 @@ internal class OfflineTimelineRepository(
                                         starterPackDao = starterPackDao,
                                     ),
                                     flow3 = labelers(),
-                                    transform = { posts, recordUrisToEmbeddedRecords, labelers ->
+                                    transform = { posts, embeddedRecords, labelers ->
                                         val urisToPosts = posts.associateBy { it.entity.uri }
+                                        val recordUrisToEmbeddedRecords = embeddedRecords.associateBy {
+                                            it.reference.uri
+                                        }
 
                                         postThread.fold(
                                             initial = emptyList<TimelineItem.Thread>(),
@@ -1047,6 +1017,7 @@ internal class OfflineTimelineRepository(
                                     viewingProfileId = signedInProfileId?.id,
                                     postUris = ids,
                                 )
+                                    .distinctUntilChanged()
                             },
                             flow2 = records(
                                 uris = recordUris,
@@ -1058,12 +1029,14 @@ internal class OfflineTimelineRepository(
                             ),
                             flow3 = profileIds.toFlowOrEmpty(
                                 block = profileDao::profiles,
-                            ),
+                            )
+                                .distinctUntilChanged(),
                             flow4 = labelers(),
-                        ) { posts, recordUrisToEmbeddedRecords, repostProfiles, labelers ->
+                        ) { posts, embeddedRecords, repostProfiles, labelers ->
                             if (posts.isEmpty()) return@combine emptyList()
                             val urisToPosts = posts.associateBy { it.entity.uri }
                             val idsToRepostProfiles = repostProfiles.associateBy { it.did }
+                            val recordUrisToEmbeddedRecords = embeddedRecords.associateBy { it.reference.uri }
 
                             itemEntities.mapNotNull { entity ->
                                 val embeddedRecord = entity.embeddedRecordUri
@@ -1350,66 +1323,62 @@ internal class OfflineTimelineRepository(
             it.copy(posts = it.posts + post)
         }
     }
+}
 
-    internal fun records(
-        uris: List<RecordUri>,
-        viewingProfileId: ProfileId?,
-        feedGeneratorDao: FeedGeneratorDao,
-        listDao: ListDao,
-        postDao: PostDao,
-        starterPackDao: StarterPackDao,
-    ): Flow<Map<RecordUri, Record>> {
-        val feedUris = LazyList<FeedGeneratorUri>()
-        val listUris = LazyList<ListUri>()
-        val postUris = LazyList<PostUri>()
-        val starterPackUris = LazyList<StarterPackUri>()
+private fun records(
+    uris: List<RecordUri>,
+    viewingProfileId: ProfileId?,
+    feedGeneratorDao: FeedGeneratorDao,
+    listDao: ListDao,
+    postDao: PostDao,
+    starterPackDao: StarterPackDao,
+): Flow<List<Record>> {
+    val feedUris = LazyList<FeedGeneratorUri>()
+    val listUris = LazyList<ListUri>()
+    val postUris = LazyList<PostUri>()
+    val starterPackUris = LazyList<StarterPackUri>()
 
-        uris.forEach { uri ->
-            when (uri) {
-                is FeedGeneratorUri -> feedUris.add(uri)
-                is ListUri -> listUris.add(uri)
-                is PostUri -> postUris.add(uri)
-                is StarterPackUri -> starterPackUris.add(uri)
-            }
+    uris.forEach { uri ->
+        when (uri) {
+            is FeedGeneratorUri -> feedUris.add(uri)
+            is ListUri -> listUris.add(uri)
+            is PostUri -> postUris.add(uri)
+            is StarterPackUri -> starterPackUris.add(uri)
         }
+    }
 
-        return combine(
-            feedUris.list
-                .toFlowOrEmpty(feedGeneratorDao::feedGenerators)
-                .distinctUntilChanged()
-                .map { entities ->
-                    entities.map(PopulatedFeedGeneratorEntity::asExternalModel)
-                        .associateBy(FeedGenerator::uri)
-                },
-            listUris.list
-                .toFlowOrEmpty(listDao::lists)
-                .distinctUntilChanged()
-                .map { entities ->
-                    entities.map(PopulatedListEntity::asExternalModel)
-                        .associateBy(FeedList::uri)
-                },
-            postUris.list
-                .toFlowOrEmpty { postDao.posts(viewingProfileId?.id, it) }
-                .distinctUntilChanged()
-                .map { entities ->
-                    entities.map {
-                        it.asExternalModel(
-                            quote = null,
-                            embeddedRecord = null,
-                        )
-                    }
-                        .associateBy(Post::uri)
-                },
-            starterPackUris.list
-                .toFlowOrEmpty(starterPackDao::starterPacks)
-                .distinctUntilChanged()
-                .map { entities ->
-                    entities.map(PopulatedStarterPackEntity::asExternalModel)
-                        .associateBy(StarterPack::uri)
-                },
-        ) { feeds, lists, posts, starterPacks ->
-            feeds + lists + posts + starterPacks
-        }
+    return combine(
+        feedUris.list
+            .toFlowOrEmpty(feedGeneratorDao::feedGenerators)
+            .distinctUntilChanged()
+            .map { entities ->
+                entities.map(PopulatedFeedGeneratorEntity::asExternalModel)
+            },
+        listUris.list
+            .toFlowOrEmpty(listDao::lists)
+            .distinctUntilChanged()
+            .map { entities ->
+                entities.map(PopulatedListEntity::asExternalModel)
+            },
+        postUris.list
+            .toFlowOrEmpty { postDao.posts(viewingProfileId?.id, it) }
+            .distinctUntilChanged()
+            .map { entities ->
+                entities.map {
+                    it.asExternalModel(
+                        quote = null,
+                        embeddedRecord = null,
+                    )
+                }
+            },
+        starterPackUris.list
+            .toFlowOrEmpty(starterPackDao::starterPacks)
+            .distinctUntilChanged()
+            .map { entities ->
+                entities.map(PopulatedStarterPackEntity::asExternalModel)
+            },
+    ) { feeds, lists, posts, starterPacks ->
+        feeds + lists + posts + starterPacks
     }
 }
 
