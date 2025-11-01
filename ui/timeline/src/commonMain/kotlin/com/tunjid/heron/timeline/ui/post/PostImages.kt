@@ -26,6 +26,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Image
@@ -99,6 +100,7 @@ internal fun PostImages(
                                 .fillParentMaxWidth()
                                 .aspectRatio(1f)
                     }
+                        .clip(shape)
                         .clickable { onImageClicked(index) },
                     sharedContentState = with(paneMovableElementSharedTransitionScope) {
                         rememberSharedContentState(
