@@ -17,21 +17,17 @@
 package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Image
 import com.tunjid.heron.data.core.models.ImageList
@@ -41,7 +37,7 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
-import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 
@@ -58,11 +54,7 @@ internal fun PostImages(
     onImageClicked: (Int) -> Unit,
     presentation: Timeline.Presentation,
 ) {
-    val shape = remember(presentation) {
-        presentation.imageShapeCornerSize
-            .let(::RoundedCornerShape)
-            .toRoundedPolygonShape()
-    }
+    val shape = presentation.imageShape
 
     val itemModifier = if (isBlurred) Modifier.sensitiveContentBlur(shape)
     else Modifier
@@ -108,6 +100,7 @@ internal fun PostImages(
                                 .fillParentMaxWidth()
                                 .aspectRatio(1f)
                     }
+                        .clip(shape)
                         .clickable { onImageClicked(index) },
                     sharedContentState = with(paneMovableElementSharedTransitionScope) {
                         rememberSharedContentState(
@@ -142,15 +135,20 @@ internal fun PostImages(
     }
 }
 
-private val Timeline.Presentation.imageShapeCornerSize
+private val Timeline.Presentation.imageShape
     get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 16.dp
-        Timeline.Presentation.Media.Condensed -> Dp.Hairline
-        Timeline.Presentation.Media.Expanded -> 0.dp
-        Timeline.Presentation.Media.Grid -> 0.dp
+        Timeline.Presentation.Text.WithEmbed -> TextWithEmbedShape
+        Timeline.Presentation.Media.Condensed -> CondensedShape
+        Timeline.Presentation.Media.Expanded -> ExpandedShape
+        Timeline.Presentation.Media.Grid -> GridShape
     }
 
 fun Image.sharedElementKey(
     prefix: String,
     postUri: PostUri,
 ) = "$prefix-$postUri-${thumb.uri}"
+
+private val TextWithEmbedShape = RoundedPolygonShape.RoundedRectangle(percent = 0.05f)
+private val CondensedShape = RoundedPolygonShape.RoundedRectangle(percent = 0.0001f)
+private val ExpandedShape = RoundedPolygonShape.RoundedRectangle(percent = 0f)
+private val GridShape = RoundedPolygonShape.RoundedRectangle(percent = 0f)

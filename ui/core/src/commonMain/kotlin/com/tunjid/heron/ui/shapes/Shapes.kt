@@ -18,8 +18,6 @@ package com.tunjid.heron.ui.shapes
 
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -38,7 +36,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.graphics.shapes.CornerRounding
 import androidx.graphics.shapes.Cubic
@@ -46,49 +43,27 @@ import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.circle
 import androidx.graphics.shapes.rectangle
-import kotlin.math.max
 
 @Stable
 sealed class RoundedPolygonShape : Shape {
 
     private var path = Path()
     private var matrix: Matrix = Matrix()
-    private var lastSize = Size.Unspecified
-    private var lastDensity = Density(1f)
-    internal var lastBounds: Rect = Rect.Zero
-    private var lastPolygon: RoundedPolygon? = null
 
-    private val bounds = FloatArray(4)
+    internal abstract val polygon: RoundedPolygon
 
-    internal abstract fun createPolygon(
-        size: Size,
-        density: Density,
-    ): RoundedPolygon
-
-    internal fun ensurePolygon(
-        size: Size,
-        density: Density,
-    ): RoundedPolygon = lastPolygon
-        ?.takeIf {
-            size.canReuse(lastSize) && lastDensity == density
-        }
-        ?: createPolygon(size, density).also { polygon ->
-            lastPolygon = polygon
-            lastSize = size
-            lastDensity = density
-            lastBounds = polygon.calculateBounds(
-                bounds = bounds,
-                approximate = this !is Polygon,
-            ).let { Rect(it[0], it[1], it[2], it[3]) }
-        }
+    internal val lastBounds: Rect by lazy {
+        polygon.calculateBounds(
+            bounds = FloatArray(4),
+            approximate = this !is Polygon,
+        ).let { Rect(it[0], it[1], it[2], it[3]) }
+    }
 
     override fun createOutline(
         size: Size,
         layoutDirection: LayoutDirection,
         density: Density,
     ): Outline {
-        val polygon = ensurePolygon(size, density)
-
         path.rewind()
         path = polygon.toPath(path)
         matrix.reset()
@@ -109,100 +84,52 @@ sealed class RoundedPolygonShape : Shape {
 
     @Stable
     data object Circle : RoundedPolygonShape() {
-        private val polygon = RoundedPolygon.circle(numVertices = 8)
-        override fun createPolygon(
-            size: Size,
-            density: Density,
-        ): RoundedPolygon = polygon
+        override val polygon = RoundedPolygon.circle(numVertices = 8)
     }
 
     @Stable
     data object Rectangle : RoundedPolygonShape() {
-        private val polygon = RoundedPolygon.rectangle()
-        override fun createPolygon(
-            size: Size,
-            density: Density,
-        ): RoundedPolygon = polygon
+        override val polygon = RoundedPolygon.rectangle()
     }
 
     @Stable
     data class RoundedRectangle(
-        val roundedCornerShape: RoundedCornerShape,
+        val bottomEndPercent: Float,
+        val bottomStartPercent: Float,
+        val topStartPercent: Float,
+        val topEndPercent: Float,
     ) : RoundedPolygonShape() {
-        override fun createPolygon(
-            size: Size,
-            density: Density,
-        ): RoundedPolygon = RoundedPolygon.rectangle(
+
+        constructor(percent: Float) : this(percent, percent, percent, percent)
+
+        override val polygon = RoundedPolygon.rectangle(
             perVertexRounding = listOf(
-                roundedCornerShape.bottomEnd.normalize(
-                    size = size,
-                    density = density,
-                ),
-                roundedCornerShape.bottomStart.normalize(
-                    size = size,
-                    density = density,
-                ),
-                roundedCornerShape.topStart.normalize(
-                    size = size,
-                    density = density,
-                ),
-                roundedCornerShape.topEnd.normalize(
-                    size = size,
-                    density = density,
-                ),
+                CornerRounding(bottomEndPercent),
+                CornerRounding(bottomStartPercent),
+                CornerRounding(topStartPercent),
+                CornerRounding(topEndPercent),
             ),
         )
-
-        private fun CornerSize.normalize(
-            size: Size,
-            density: Density,
-        ): CornerRounding {
-            val maxDimension = max(size.width, size.height)
-            if (maxDimension == 0f) return CornerRounding(radius = 0f)
-
-            val absoluteCornerSize = toPx(
-                shapeSize = size,
-                density = density,
-            )
-            val radius = (absoluteCornerSize / maxDimension) * 2f
-
-            return CornerRounding(radius = radius)
-        }
     }
 
     @Stable
-    data class Polygon(
-        val cornerSizeAtIndex: List<Dp>,
+    class Polygon(
+        private val cornerSizePercentAtIndex: List<Float>,
     ) : RoundedPolygonShape() {
-
-        override fun createPolygon(
-            size: Size,
-            density: Density,
-        ): RoundedPolygon = RoundedPolygon(
-            numVertices = cornerSizeAtIndex.size,
-            perVertexRounding = cornerSizeAtIndex.map {
-                val maxDimension = max(size.width, size.height)
-                val absoluteCornerSize = with(density) { it.toPx() }
-                val radius = (absoluteCornerSize / maxDimension) * 2f
+        override val polygon = RoundedPolygon(
+            numVertices = cornerSizePercentAtIndex.size,
+            perVertexRounding = cornerSizePercentAtIndex.indices.map {
+                val radius = cornerSizePercentAtIndex[it]
                 CornerRounding(radius = radius)
             },
         )
     }
 
     @Stable
-    data class Custom(
-        val polygon: RoundedPolygon,
-    ) : RoundedPolygonShape() {
-        override fun createPolygon(
-            size: Size,
-            density: Density,
-        ): RoundedPolygon = polygon
-    }
+    class Custom(
+        override val polygon: RoundedPolygon,
+    ) : RoundedPolygonShape()
 }
-
-fun RoundedCornerShape.toRoundedPolygonShape() = RoundedPolygonShape.RoundedRectangle(
-    roundedCornerShape = this,
-)
 
 @Composable
 fun RoundedPolygonShape.animate(
@@ -281,8 +208,8 @@ private class MorphingShape(
             density = density,
         )
 
-        val startPolygon = previousShape.ensurePolygon(size, density)
-        val endPolygon = currentShape.ensurePolygon(size, density)
+        val startPolygon = previousShape.polygon
+        val endPolygon = currentShape.polygon
 
         if (
             morph == null ||
@@ -357,13 +284,4 @@ private fun pathFromCubics(
         )
     }
     path.close()
-}
-
-private fun Size.canReuse(other: Size?): Boolean {
-    if (other == null) return false
-
-    val aspectRatio = width / height
-    val otherAspectRatio = other.width / other.height
-
-    return aspectRatio / otherAspectRatio in (0.9f..1.1f)
 }

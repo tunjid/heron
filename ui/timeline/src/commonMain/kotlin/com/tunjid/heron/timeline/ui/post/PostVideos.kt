@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
@@ -41,7 +40,6 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
@@ -64,7 +62,7 @@ import com.tunjid.heron.media.video.formatVideoDuration
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.isPrimaryOrActive
-import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 import heron.ui.timeline.generated.resources.Res
@@ -90,11 +88,7 @@ internal fun PostVideo(
     val videoPlayerState = videoPlayerController.rememberUpdatedVideoPlayerState(
         videoUrl = video.playlist.uri,
         thumbnail = video.thumbnail?.uri,
-        shape = remember(presentation) {
-            presentation.videoShapeCornerSize
-                .let(::RoundedCornerShape)
-                .toRoundedPolygonShape()
-        },
+        shape = presentation.videoShape,
     )
     Box(
         modifier = modifier
@@ -284,12 +278,12 @@ private fun PlayerControlBackground(
     }
 }
 
-private val Timeline.Presentation.videoShapeCornerSize
+private val Timeline.Presentation.videoShape
     get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 8.dp
-        Timeline.Presentation.Media.Condensed -> 8.dp
-        Timeline.Presentation.Media.Expanded -> 0.dp
-        Timeline.Presentation.Media.Grid -> 0.dp
+        Timeline.Presentation.Text.WithEmbed -> TextWithEmbedShape
+        Timeline.Presentation.Media.Condensed -> CondensedShape
+        Timeline.Presentation.Media.Expanded -> ExpandedShape
+        Timeline.Presentation.Media.Grid -> GridShape
     }
 
 private val Timeline.Presentation.playButtonBackgroundSize
@@ -340,3 +334,8 @@ fun Video.sharedElementKey(
     prefix: String,
     postUri: PostUri,
 ) = "$prefix-$postUri-${playlist.uri}"
+
+private val TextWithEmbedShape = RoundedPolygonShape.RoundedRectangle(percent = 0.05f)
+private val CondensedShape = RoundedPolygonShape.RoundedRectangle(percent = 0.0001f)
+private val ExpandedShape = RoundedPolygonShape.RoundedRectangle(percent = 0f)
+private val GridShape = RoundedPolygonShape.RoundedRectangle(percent = 0f)
