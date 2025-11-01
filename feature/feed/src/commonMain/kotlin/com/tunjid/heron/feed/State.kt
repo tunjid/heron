@@ -42,6 +42,8 @@ data class State(
     val sharedElementPrefix: String? = null,
     val scrollToTopRequestId: String? = null,
     @Transient
+    val feedStatus: FeedGenerator.Status = FeedGenerator.Status.None,
+    @Transient
     val signedInProfileId: ProfileId? = null,
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
@@ -85,6 +87,10 @@ sealed class Action(val key: String) {
     data class SnackbarDismissed(
         val message: Memo,
     ) : Action(key = "SnackbarDismissed")
+
+    data class UpdateFeedGeneratorStatus(
+        val update: Timeline.Update,
+    ) : Action(key = "UpdateFeedGeneratorStatus")
 
     data object ScrollToTop : Action(key = "ScrollToTop")
 

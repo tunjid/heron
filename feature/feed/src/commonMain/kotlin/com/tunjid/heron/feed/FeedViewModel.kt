@@ -17,7 +17,9 @@
 package com.tunjid.heron.feed
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.feedGeneratorUri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
@@ -51,6 +53,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
@@ -106,6 +109,9 @@ class ActualFeedViewModel(
                         is Action.SendPostInteraction -> action.flow.postInteractionMutations(
                             writeQueue = writeQueue,
                         )
+                        is Action.UpdateFeedGeneratorStatus -> action.flow.feedGeneratorStatusMutations(
+                            writeQueue = writeQueue,
+                        )
                         is Action.ScrollToTop -> action.flow.scrollToTopMutations()
                         is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 
@@ -135,7 +141,13 @@ private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
     val existingHolder = state().timelineStateHolder
     if (existingHolder != null) return@flow emitAll(
         merge(
-            existingHolder.state.mapToMutation { copy(timelineState = it) },
+            existingHolder.state.mapToMutation {
+                copy(timelineState = it)
+            },
+            feedStatusMutations(
+                timeline = existingHolder.state.value.timeline,
+                timelineRepository = timelineRepository,
+            ),
             timelineCreatorMutations(
                 timeline = existingHolder.state.value.timeline,
                 profileRepository = profileRepository,
@@ -154,9 +166,18 @@ private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
     emit {
         copy(timelineStateHolder = createdHolder)
     }
+
+    if (timeline !is Timeline.Home.Feed) return@flow
+
     emitAll(
         merge(
-            createdHolder.state.mapToMutation { copy(timelineState = it) },
+            createdHolder.state.mapToMutation {
+                copy(timelineState = it)
+            },
+            feedStatusMutations(
+                timeline = timeline,
+                timelineRepository = timelineRepository,
+            ),
             timelineCreatorMutations(
                 timeline = timeline,
                 profileRepository = profileRepository,
@@ -191,26 +212,50 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
         copy(messages = messages - action.message)
     }
 
+private fun Flow<Action.UpdateFeedGeneratorStatus>.feedGeneratorStatusMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        writeQueue.enqueue(Writable.TimelineUpdate(action.update))
+    }
+
 private fun timelineCreatorMutations(
     timeline: Timeline,
     profileRepository: ProfileRepository,
 ): Flow<Mutation<State>> =
-    when (timeline) {
-        is Timeline.Home.Feed -> profileRepository.profile(
-            profileId = timeline.feedGenerator.creator.did,
+    timeline.withFeedTimelineOrNull { feedTimeline ->
+        profileRepository.profile(
+            profileId = feedTimeline.feedGenerator.creator.did,
         )
+            .mapToMutation {
+                copy(creator = it)
+            }
+    } ?: emptyFlow()
 
-        is Timeline.Home.Following -> emptyFlow()
-        is Timeline.Home.List -> profileRepository.profile(
-            profileId = timeline.feedList.creator.did,
-        )
+private fun feedStatusMutations(
+    timeline: Timeline,
+    timelineRepository: TimelineRepository,
+): Flow<Mutation<State>> =
+    timeline.withFeedTimelineOrNull { feedTimeline ->
+        timelineRepository.preferences()
+            .distinctUntilChangedBy { it.timelinePreferences }
+            .mapToMutation { preferences ->
+                val pinned =
+                    preferences.timelinePreferences.firstOrNull {
+                        it.feedGeneratorUri == feedTimeline.feedGenerator.uri
+                    }
+                        ?.pinned
 
-        is Timeline.Profile -> emptyFlow()
-        is Timeline.StarterPack -> emptyFlow()
+                copy(
+                    feedStatus = when (pinned) {
+                        true -> FeedGenerator.Status.Pinned
+                        false -> FeedGenerator.Status.Saved
+                        null -> FeedGenerator.Status.None
+                    },
+                )
+            }
     }
-        .mapToMutation {
-            copy(creator = it)
-        }
+        ?: emptyFlow()
 
 fun recentConversationMutations(
     messageRepository: MessageRepository,
@@ -219,3 +264,9 @@ fun recentConversationMutations(
         .mapToMutation { conversations ->
             copy(recentConversations = conversations)
         }
+
+internal inline fun <T> Timeline.withFeedTimelineOrNull(
+    block: (Timeline.Home.Feed) -> T,
+) =
+    if (this is Timeline.Home.Feed) block(this)
+    else null

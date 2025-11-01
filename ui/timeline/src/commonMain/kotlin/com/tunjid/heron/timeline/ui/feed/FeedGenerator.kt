@@ -55,7 +55,7 @@ fun FeedGenerator(
     movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     sharedElementPrefix: String,
     feedGenerator: FeedGenerator,
-    status: FeedGenerator.Status,
+    status: FeedGenerator.Status?,
     onFeedGeneratorStatusUpdated: (Update) -> Unit,
 ) = with(movableElementSharedTransitionScope) {
     RecordLayout(
@@ -94,21 +94,36 @@ fun FeedGenerator(
             )
         },
         action = {
-            ItemSelection(
-                selectedItem = status,
-                availableItems = remember { FeedGenerator.Status.entries },
-                key = FeedGenerator.Status::name,
-                icon = FeedGenerator.Status::icon,
-                stringResource = FeedGenerator.Status::textResource,
-                onItemSelected = { status ->
-                    val update = when (status) {
-                        FeedGenerator.Status.Pinned -> Update.OfFeedGenerator.Pin(feedGenerator.uri)
-                        FeedGenerator.Status.Saved -> Update.OfFeedGenerator.Save(feedGenerator.uri)
-                        FeedGenerator.Status.None -> Update.OfFeedGenerator.Remove(feedGenerator.uri)
-                    }
-                    onFeedGeneratorStatusUpdated(update)
-                },
-            )
+            status?.let {
+                FeedGeneratorStatus(
+                    status = it,
+                    feedGenerator = feedGenerator,
+                    onFeedGeneratorStatusUpdated = onFeedGeneratorStatusUpdated,
+                )
+            }
+        },
+    )
+}
+
+@Composable
+fun FeedGeneratorStatus(
+    status: FeedGenerator.Status,
+    feedGenerator: FeedGenerator,
+    onFeedGeneratorStatusUpdated: (Update) -> Unit,
+) {
+    ItemSelection(
+        selectedItem = status,
+        availableItems = remember { FeedGenerator.Status.entries },
+        key = FeedGenerator.Status::name,
+        icon = FeedGenerator.Status::icon,
+        stringResource = FeedGenerator.Status::textResource,
+        onItemSelected = { selectedStatus ->
+            val update = when (selectedStatus) {
+                FeedGenerator.Status.Pinned -> Update.OfFeedGenerator.Pin(feedGenerator.uri)
+                FeedGenerator.Status.Saved -> Update.OfFeedGenerator.Save(feedGenerator.uri)
+                FeedGenerator.Status.None -> Update.OfFeedGenerator.Remove(feedGenerator.uri)
+            }
+            onFeedGeneratorStatusUpdated(update)
         },
     )
 }

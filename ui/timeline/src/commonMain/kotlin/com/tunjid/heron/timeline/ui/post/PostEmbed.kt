@@ -151,9 +151,9 @@ internal fun PostEmbed(
                 if (embeddedRecord != null) Spacer(Modifier.height(16.dp))
                 when (embeddedRecord) {
                     is Post -> when (embeddedRecord.cid) {
-                        Constants.notFoundPostId -> InvisiblePostPost(onClick = {})
-                        Constants.blockedPostId -> BlockedPostPost(onClick = {})
-                        Constants.unknownPostId -> UnknownPostPost(onClick = {})
+                        Constants.notFoundPostId -> InvisiblePostPost(onClick = null)
+                        Constants.blockedPostId -> BlockedPostPost(onClick = null)
+                        Constants.unknownPostId -> UnknownPostPost(onClick = null)
                         else -> QuotedPost(
                             now = now,
                             quotedPost = embeddedRecord,
@@ -180,7 +180,7 @@ internal fun PostEmbed(
                                 quotingPostUri = postUri,
                             ),
                             feedGenerator = embeddedRecord,
-                            status = FeedGenerator.Status.None,
+                            status = null,
                             onFeedGeneratorStatusUpdated = {},
                         )
                     }
