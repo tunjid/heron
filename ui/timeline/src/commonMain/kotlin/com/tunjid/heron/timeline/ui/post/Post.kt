@@ -378,7 +378,7 @@ private val Timeline.Presentation.postVerticalPadding: Dp
 
 private val Timeline.Presentation.postContentSpacing: Dp
     get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 4.dp
+        Timeline.Presentation.Text.WithEmbed -> 8.dp
         Timeline.Presentation.Media.Expanded -> 8.dp
         Timeline.Presentation.Media.Condensed -> 0.dp
         Timeline.Presentation.Media.Grid -> 0.dp
