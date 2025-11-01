@@ -312,7 +312,9 @@ internal class OfflinePostRepository @Inject constructor(
 
     override suspend fun createPost(
         request: Post.Create.Request,
-    ): Outcome = savedStateDataSource.inCurrentProfileSession currentSession@{
+    ): Outcome = savedStateDataSource.inCurrentProfileSession currentSession@{ signedInProfileId ->
+        if (signedInProfileId == null) return@currentSession expiredSessionOutcome()
+
         val resolvedLinks: List<Link> = resolveLinks(
             profileDao = profileDao,
             networkService = networkService,
@@ -397,8 +399,9 @@ internal class OfflinePostRepository @Inject constructor(
 
     override suspend fun sendInteraction(
         interaction: Post.Interaction,
-    ): Outcome = savedStateDataSource.inCurrentProfileSession { authorId ->
-        if (authorId == null) return@inCurrentProfileSession Outcome.Failure(Exception("No signed in profile id"))
+    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+
         when (interaction) {
             is Post.Interaction.Create -> networkService.runCatchingWithMonitoredNetworkRetry {
                 when (interaction) {
@@ -411,7 +414,7 @@ internal class OfflinePostRepository @Inject constructor(
 
                     is Post.Interaction.Create.Like -> createRecord(
                         CreateRecordRequest(
-                            repo = authorId.id.let(::Did),
+                            repo = signedInProfileId.id.let(::Did),
                             collection = Nsid(Collections.Like),
                             record = BskyLike(
                                 subject = StrongRef(
@@ -425,7 +428,7 @@ internal class OfflinePostRepository @Inject constructor(
 
                     is Post.Interaction.Create.Repost -> createRecord(
                         CreateRecordRequest(
-                            repo = authorId.id.let(::Did),
+                            repo = signedInProfileId.id.let(::Did),
                             collection = Nsid(Collections.Repost),
                             record = BskyRepost(
                                 subject = StrongRef(
@@ -446,7 +449,7 @@ internal class OfflinePostRepository @Inject constructor(
                                 partial = PostViewerStatisticsEntity.Partial.Like(
                                     likeUri = uriOrCidString.let(::GenericUri),
                                     postUri = interaction.postUri,
-                                    viewingProfileId = authorId,
+                                    viewingProfileId = signedInProfileId,
                                 ),
                             )
                             postDao.updateLikeCount(interaction.postUri.uri, true)
@@ -456,7 +459,7 @@ internal class OfflinePostRepository @Inject constructor(
                                 partial = PostViewerStatisticsEntity.Partial.Repost(
                                     repostUri = uriOrCidString.let(::GenericUri),
                                     postUri = interaction.postUri,
-                                    viewingProfileId = authorId,
+                                    viewingProfileId = signedInProfileId,
                                 ),
                             )
                             postDao.updateRepostCount(interaction.postUri.uri, true)
@@ -466,7 +469,7 @@ internal class OfflinePostRepository @Inject constructor(
                                 partial = PostViewerStatisticsEntity.Partial.Bookmark(
                                     bookmarked = true,
                                     postUri = interaction.postUri,
-                                    viewingProfileId = authorId,
+                                    viewingProfileId = signedInProfileId,
                                 ),
                             )
                             postDao.updateBookmarkCount(interaction.postUri.uri, true)
@@ -482,14 +485,14 @@ internal class OfflinePostRepository @Inject constructor(
                     )
                     is Post.Interaction.Delete.RemoveRepost -> deleteRecord(
                         DeleteRecordRequest(
-                            repo = authorId.id.let(::Did),
+                            repo = signedInProfileId.id.let(::Did),
                             collection = Nsid(Collections.Repost),
                             rkey = Collections.rKey(interaction.repostUri),
                         ),
                     )
                     is Post.Interaction.Delete.Unlike -> deleteRecord(
                         DeleteRecordRequest(
-                            repo = authorId.id.let(::Did),
+                            repo = signedInProfileId.id.let(::Did),
                             collection = Nsid(Collections.Like),
                             rkey = Collections.rKey(interaction.likeUri),
                         ),
@@ -503,7 +506,7 @@ internal class OfflinePostRepository @Inject constructor(
                                 partial = PostViewerStatisticsEntity.Partial.Like(
                                     likeUri = null,
                                     postUri = interaction.postUri,
-                                    viewingProfileId = authorId,
+                                    viewingProfileId = signedInProfileId,
                                 ),
                             )
                             postDao.updateLikeCount(interaction.postUri.uri, false)
@@ -513,7 +516,7 @@ internal class OfflinePostRepository @Inject constructor(
                                 partial = PostViewerStatisticsEntity.Partial.Repost(
                                     repostUri = null,
                                     postUri = interaction.postUri,
-                                    viewingProfileId = authorId,
+                                    viewingProfileId = signedInProfileId,
                                 ),
                             )
                             postDao.updateRepostCount(interaction.postUri.uri, false)
@@ -523,7 +526,7 @@ internal class OfflinePostRepository @Inject constructor(
                                 partial = PostViewerStatisticsEntity.Partial.Bookmark(
                                     bookmarked = false,
                                     postUri = interaction.postUri,
-                                    viewingProfileId = authorId,
+                                    viewingProfileId = signedInProfileId,
                                 ),
                             )
                             postDao.updateBookmarkCount(interaction.postUri.uri, false)

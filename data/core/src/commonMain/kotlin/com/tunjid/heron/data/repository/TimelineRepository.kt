@@ -836,7 +836,7 @@ internal class OfflineTimelineRepository(
                 ),
             )
         }.toOutcome()
-    } ?: Outcome.Failure(Exception("No signed in profile id"))
+    } ?: expiredSessionOutcome()
 
     override suspend fun updateHomeTimelines(
         update: Timeline.Update,

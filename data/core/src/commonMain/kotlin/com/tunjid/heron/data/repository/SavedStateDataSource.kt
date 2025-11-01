@@ -321,7 +321,7 @@ internal suspend fun SavedStateDataSource.updateSignedInUserNotifications(
 internal suspend inline fun <T> SavedStateDataSource.inCurrentProfileSession(
     crossinline block: suspend (ProfileId?) -> T,
 ): T? {
-    val currentProfileId = savedState.value.signedInProfileId ?: return null
+    val currentProfileId = savedState.value.signedInProfileId
     return coroutineScope {
         select {
             async {

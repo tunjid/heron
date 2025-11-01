@@ -291,6 +291,7 @@ internal class OfflineMessageRepository @Inject constructor(
 
     override suspend fun monitorConversationLogs() {
         savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+            if (signedInProfileId == null) return@inCurrentProfileSession
             flow {
                 while (true) {
                     emit(Unit)
@@ -370,6 +371,8 @@ internal class OfflineMessageRepository @Inject constructor(
     override suspend fun sendMessage(
         message: Message.Create,
     ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+
         val resolvedLinks: List<Link> = resolveLinks(
             profileDao = profileDao,
             networkService = networkService,
@@ -408,26 +411,26 @@ internal class OfflineMessageRepository @Inject constructor(
 
     override suspend fun updateReaction(
         reaction: Message.UpdateReaction,
-    ): Outcome = networkService.runCatchingWithMonitoredNetworkRetry {
-        when (reaction) {
-            is Message.UpdateReaction.Add -> addReaction(
-                AddReactionRequest(
-                    convoId = reaction.convoId.id,
-                    messageId = reaction.messageId.id,
-                    value = reaction.value,
-                ),
-            ).map(AddReactionResponse::message)
+    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        networkService.runCatchingWithMonitoredNetworkRetry {
+            when (reaction) {
+                is Message.UpdateReaction.Add -> addReaction(
+                    AddReactionRequest(
+                        convoId = reaction.convoId.id,
+                        messageId = reaction.messageId.id,
+                        value = reaction.value,
+                    ),
+                ).map(AddReactionResponse::message)
 
-            is Message.UpdateReaction.Remove -> removeReaction(
-                RemoveReactionRequest(
-                    convoId = reaction.convoId.id,
-                    messageId = reaction.messageId.id,
-                    value = reaction.value,
-                ),
-            ).map(RemoveReactionResponse::message)
-        }
-    }.toOutcome { message ->
-        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+                is Message.UpdateReaction.Remove -> removeReaction(
+                    RemoveReactionRequest(
+                        convoId = reaction.convoId.id,
+                        messageId = reaction.messageId.id,
+                        value = reaction.value,
+                    ),
+                ).map(RemoveReactionResponse::message)
+            }
+        }.toOutcome { message ->
             multipleEntitySaverProvider.saveInTransaction {
                 add(
                     viewingProfileId = signedInProfileId,
@@ -436,7 +439,7 @@ internal class OfflineMessageRepository @Inject constructor(
                 )
             }
         }
-    }
+    } ?: expiredSessionOutcome()
 }
 
 fun MessageRepository.recentConversations(): Flow<List<Conversation>> =
