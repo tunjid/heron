@@ -51,7 +51,7 @@ import com.tunjid.heron.images.rememberUpdatedImageState
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.media.video.VideoPlayer
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
-import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import kotlinx.coroutines.flow.first
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -213,4 +213,4 @@ private fun MediaUpload(
     }
 }
 
-private val MediaUploadItemShape = RoundedCornerShape(8.dp).toRoundedPolygonShape()
+private val MediaUploadItemShape = RoundedPolygonShape.RoundedRectangle(0.1f)

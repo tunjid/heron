@@ -67,7 +67,6 @@ import com.tunjid.heron.timeline.ui.post.PostReasonLine
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.see_more_posts
@@ -372,8 +371,8 @@ fun TimelineCard(
         modifier = modifier,
         shape = animateDpAsState(cornerRadius).value.let(::RoundedCornerShape),
         colors =
-        if (isFlat) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        else CardDefaults.elevatedCardColors(),
+            if (isFlat) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            else CardDefaults.elevatedCardColors(),
         elevation = CardDefaults.cardElevation(),
         onClick = { onPostClicked(item.post) },
         content = { content() },
@@ -381,28 +380,28 @@ fun TimelineCard(
 }
 
 private val ReplyThreadStartImageShape =
-    RoundedCornerShape(
-        topStartPercent = 100,
-        topEndPercent = 100,
-        bottomStartPercent = 30,
-        bottomEndPercent = 100,
-    ).toRoundedPolygonShape()
+    RoundedPolygonShape.RoundedRectangle(
+        topStart = 1f,
+        topEnd = 1f,
+        bottomStart = 0.3f,
+        bottomEnd = 1f,
+    )
 
 private val ReplyThreadImageShape =
     RoundedPolygonShape.Polygon(
         cornerSizeAtIndex = (0..4).map { index ->
-            if (index == 2 || index == 3) 32.dp
-            else 48.dp
+            if (index == 2 || index == 3) 2f / 3
+            else 1f
         },
     )
 
 private val ReplyThreadEndImageShape =
-    RoundedCornerShape(
-        topStartPercent = 30,
-        topEndPercent = 100,
-        bottomStartPercent = 100,
-        bottomEndPercent = 100,
-    ).toRoundedPolygonShape()
+    RoundedPolygonShape.RoundedRectangle(
+        topStart = 0.3f,
+        topEnd = 1f,
+        bottomStart = 1f,
+        bottomEnd = 1f,
+    )
 
 fun Post.avatarSharedElementKey(
     prefix: String?,

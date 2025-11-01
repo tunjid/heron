@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
@@ -64,7 +63,7 @@ import com.tunjid.heron.media.video.formatVideoDuration
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.isPrimaryOrActive
-import com.tunjid.heron.ui.shapes.toRoundedPolygonShape
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 import heron.ui.timeline.generated.resources.Res
@@ -92,8 +91,7 @@ internal fun PostVideo(
         thumbnail = video.thumbnail?.uri,
         shape = remember(presentation) {
             presentation.videoShapeCornerSize
-                .let(::RoundedCornerShape)
-                .toRoundedPolygonShape()
+                .let(RoundedPolygonShape::RoundedRectangle)
         },
     )
     Box(
@@ -286,10 +284,10 @@ private fun PlayerControlBackground(
 
 private val Timeline.Presentation.videoShapeCornerSize
     get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 8.dp
-        Timeline.Presentation.Media.Condensed -> 8.dp
-        Timeline.Presentation.Media.Expanded -> 0.dp
-        Timeline.Presentation.Media.Grid -> 0.dp
+        Timeline.Presentation.Text.WithEmbed -> 0.1f
+        Timeline.Presentation.Media.Condensed -> 0.1f
+        Timeline.Presentation.Media.Expanded -> 0f
+        Timeline.Presentation.Media.Grid -> 0f
     }
 
 private val Timeline.Presentation.playButtonBackgroundSize
