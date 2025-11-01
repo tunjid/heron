@@ -105,6 +105,7 @@ private fun MultipleParticipantTitle(
                         contentDescription = null,
                     )
                 },
+                zIndexInOverlay = ToolbarAvatarOverlayZIndex,
                 modifier = Modifier
                     .size(32.dp)
                     .offset(x = index * (-8).dp)
@@ -146,6 +147,7 @@ private fun SingleMemberTitle(
                 sharedContentState = rememberSharedContentState(
                     key = profile.conversationSharedElementKey(conversationId),
                 ),
+                zIndexInOverlay = ToolbarAvatarOverlayZIndex,
                 state = remember(profile.avatar) {
                     ImageArgs(
                         url = profile.avatar?.uri,
@@ -177,3 +179,5 @@ private fun SingleMemberTitle(
 internal fun Profile.conversationSharedElementKey(
     conversationId: ConversationId,
 ): String = "${conversationId.id}-$did"
+
+private const val ToolbarAvatarOverlayZIndex = 12f
