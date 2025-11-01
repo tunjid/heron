@@ -452,7 +452,10 @@ internal class OfflinePostRepository @Inject constructor(
                                     viewingProfileId = signedInProfileId,
                                 ),
                             )
-                            postDao.updateLikeCount(interaction.postUri.uri, true)
+                            postDao.updateLikeCount(
+                                postUri = interaction.postUri.uri,
+                                isIncrement = true,
+                            )
                         }
                         is Post.Interaction.Create.Repost -> {
                             upsertInteraction(
@@ -462,7 +465,10 @@ internal class OfflinePostRepository @Inject constructor(
                                     viewingProfileId = signedInProfileId,
                                 ),
                             )
-                            postDao.updateRepostCount(interaction.postUri.uri, true)
+                            postDao.updateRepostCount(
+                                postUri = interaction.postUri.uri,
+                                isIncrement = true,
+                            )
                         }
                         is Post.Interaction.Create.Bookmark -> {
                             upsertInteraction(
@@ -472,7 +478,10 @@ internal class OfflinePostRepository @Inject constructor(
                                     viewingProfileId = signedInProfileId,
                                 ),
                             )
-                            postDao.updateBookmarkCount(interaction.postUri.uri, true)
+                            postDao.updateBookmarkCount(
+                                postUri = interaction.postUri.uri,
+                                isBookmarked = true,
+                            )
                         }
                     }
                 }

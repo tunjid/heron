@@ -671,7 +671,7 @@ internal class OfflineTimelineRepository(
 
                             Type.Timeline -> followingTimeline(
                                 signedInProfileId = signedInProfileId,
-                                name = preference.value,
+                                name = preference.value.replaceFirstChar(Char::titlecase),
                                 position = index,
                                 isPinned = preference.pinned,
                             )
