@@ -37,9 +37,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import sh.christian.ozone.api.AtUri
 
@@ -77,8 +75,7 @@ internal class OfflineRecordRepository @Inject constructor(
 
             is PostUri ->
                 savedStateDataSource
-                    .observedSignedInProfileId
-                    .flatMapLatest { profileId ->
+                    .singleSessionFlow { profileId ->
                         postDao.posts(
                             viewingProfileId = profileId?.id,
                             postUris = listOf(uri),

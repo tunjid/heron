@@ -178,9 +178,10 @@ internal class OfflineProfileRepository @Inject constructor(
 ) : ProfileRepository {
 
     override fun signedInProfile(): Flow<Profile> =
-        signedInProfileId()
-            .flatMapLatest { profileDao.profiles(listOf(it)) }
-            .mapNotNull { it.firstOrNull()?.asExternalModel() }
+        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
+            profileDao.profiles(listOf(signedInProfileId))
+                .mapNotNull { it.firstOrNull()?.asExternalModel() }
+        }
 
     override fun profile(
         profileId: Id.Profile,
@@ -203,221 +204,220 @@ internal class OfflineProfileRepository @Inject constructor(
     override fun profileRelationships(
         profileIds: Set<Id.Profile>,
     ): Flow<List<ProfileViewerState>> =
-        signedInProfileId()
-            .flatMapLatest {
-                profileDao.viewerState(
-                    profileId = it.id,
-                    otherProfileIds = profileIds,
-                )
-            }
-            .distinctUntilChanged()
-            .map { viewerEntities ->
-                viewerEntities.map(ProfileViewerStateEntity::asExternalModel)
-            }
+        savedStateDataSource.singleAuthorizedSessionFlow {
+            profileDao.viewerState(
+                profileId = it.id,
+                otherProfileIds = profileIds,
+            )
+                .distinctUntilChanged()
+                .map { viewerEntities ->
+                    viewerEntities.map(ProfileViewerStateEntity::asExternalModel)
+                }
+        }
 
     override fun commonFollowers(
         otherProfileId: Id.Profile,
         limit: Long,
     ): Flow<List<Profile>> =
-        signedInProfileId()
-            .flatMapLatest { profileId ->
-                val otherProfileResolvedId = lookupProfileDid(
-                    profileId = otherProfileId,
-                    profileDao = profileDao,
-                    networkService = networkService,
-                )?.did ?: return@flatMapLatest emptyFlow()
+        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
+            val otherProfileResolvedId = lookupProfileDid(
+                profileId = otherProfileId,
+                profileDao = profileDao,
+                networkService = networkService,
+            )?.did ?: return@singleAuthorizedSessionFlow emptyFlow()
 
-                profileDao.commonFollowers(
-                    profileId = profileId.id,
-                    otherProfileId = otherProfileResolvedId,
-                    limit = limit,
-                )
-                    .distinctUntilChanged()
-                    .map { profileEntities ->
-                        profileEntities.map(ProfileEntity::asExternalModel)
-                    }
-            }
+            profileDao.commonFollowers(
+                profileId = signedInProfileId.id,
+                otherProfileId = otherProfileResolvedId,
+                limit = limit,
+            )
+                .distinctUntilChanged()
+                .map { profileEntities ->
+                    profileEntities.map(ProfileEntity::asExternalModel)
+                }
+        }
 
     override fun listMembers(
         query: ListMemberQuery,
         cursor: Cursor,
     ): Flow<CursorList<ListMember>> =
-        signedInProfileId()
-            .flatMapLatest { profileId ->
-                combine(
-                    listDao.listMembers(
-                        listUri = query.listUri.uri,
-                        signedInUserId = profileId.id,
-                        offset = query.data.offset,
-                        limit = query.data.limit,
-                    )
-                        .map {
-                            it.map(PopulatedListMemberEntity::asExternalModel)
-                        },
-                    networkService.nextCursorFlow(
-                        currentCursor = cursor,
-                        currentRequestWithNextCursor = {
-                            getList(
-                                GetListQueryParams(
-                                    list = query.listUri.uri.let(::AtUri),
-                                    limit = query.data.limit,
-                                    cursor = cursor.value,
-                                ),
-                            )
-                        },
-                        nextCursor = GetListResponse::cursor,
-                        onResponse = {
-                            multipleEntitySaverProvider.saveInTransaction {
-                                add(list)
-                                items.forEach { listItemView ->
-                                    add(
-                                        listUri = list.uri.atUri.let(::ListUri),
-                                        listItemView = listItemView,
-                                    )
-                                }
-                            }
-                        },
-                    ),
-                    ::CursorList,
+        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
+            combine(
+                listDao.listMembers(
+                    listUri = query.listUri.uri,
+                    signedInUserId = signedInProfileId.id,
+                    offset = query.data.offset,
+                    limit = query.data.limit,
                 )
-                    .distinctUntilChanged()
-            }
+                    .map {
+                        it.map(PopulatedListMemberEntity::asExternalModel)
+                    },
+                networkService.nextCursorFlow(
+                    currentCursor = cursor,
+                    currentRequestWithNextCursor = {
+                        getList(
+                            GetListQueryParams(
+                                list = query.listUri.uri.let(::AtUri),
+                                limit = query.data.limit,
+                                cursor = cursor.value,
+                            ),
+                        )
+                    },
+                    nextCursor = GetListResponse::cursor,
+                    onResponse = {
+                        multipleEntitySaverProvider.saveInTransaction {
+                            add(list)
+                            items.forEach { listItemView ->
+                                add(
+                                    listUri = list.uri.atUri.let(::ListUri),
+                                    listItemView = listItemView,
+                                )
+                            }
+                        }
+                    },
+                ),
+                ::CursorList,
+            )
+                .distinctUntilChanged()
+        }
 
     override fun followers(
         query: ProfilesQuery,
         cursor: Cursor,
-    ): Flow<CursorList<ProfileWithViewerState>> = savedStateDataSource.currentSessionFlow { signedInProfileId ->
-        flow {
-            val profileDid = lookupProfileDid(
-                profileId = query.profileId,
-                profileDao = profileDao,
-                networkService = networkService,
-            ) ?: return@flow
+    ): Flow<CursorList<ProfileWithViewerState>> =
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            flow {
+                val profileDid = lookupProfileDid(
+                    profileId = query.profileId,
+                    profileDao = profileDao,
+                    networkService = networkService,
+                ) ?: return@flow
 
-            val response = networkService.runCatchingWithMonitoredNetworkRetry {
-                getFollowers(
-                    GetFollowersQueryParams(
-                        actor = profileDid,
-                        limit = query.data.limit,
-                        cursor = when (cursor) {
-                            Cursor.Initial -> cursor.value
-                            is Cursor.Next -> cursor.value
-                            Cursor.Pending -> null
-                        },
+                val response = networkService.runCatchingWithMonitoredNetworkRetry {
+                    getFollowers(
+                        GetFollowersQueryParams(
+                            actor = profileDid,
+                            limit = query.data.limit,
+                            cursor = when (cursor) {
+                                Cursor.Initial -> cursor.value
+                                is Cursor.Next -> cursor.value
+                                Cursor.Pending -> null
+                            },
+                        ),
+                    )
+                }
+                    .getOrNull()
+                    ?: return@flow
+
+                multipleEntitySaverProvider.saveInTransaction {
+                    response.followers
+                        .forEach { profileView ->
+                            add(
+                                viewingProfileId = signedInProfileId,
+                                profileView = profileView,
+                            )
+                        }
+                }
+
+                val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
+
+                // Emit network results immediately for minimal latency during search
+                emit(
+                    CursorList(
+                        items = response.followers.toProfileWithViewerStates(
+                            signedInProfileId = signedInProfileId,
+                            profileMapper = ProfileView::profile,
+                            profileViewerStateEntities = ProfileView::profileViewerStateEntities,
+                        ),
+                        nextCursor = nextCursor,
                     ),
                 )
-            }
-                .getOrNull()
-                ?: return@flow
 
-            multipleEntitySaverProvider.saveInTransaction {
-                response.followers
-                    .forEach { profileView ->
-                        add(
-                            viewingProfileId = signedInProfileId,
-                            profileView = profileView,
-                        )
-                    }
-            }
-
-            val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
-
-            // Emit network results immediately for minimal latency during search
-            emit(
-                CursorList(
-                    items = response.followers.toProfileWithViewerStates(
+                emitAll(
+                    response.followers.observeProfileWithViewerStates(
+                        profileDao = profileDao,
                         signedInProfileId = signedInProfileId,
                         profileMapper = ProfileView::profile,
-                        profileViewerStateEntities = ProfileView::profileViewerStateEntities,
-                    ),
-                    nextCursor = nextCursor,
-                ),
-            )
-
-            emitAll(
-                response.followers.observeProfileWithViewerStates(
-                    profileDao = profileDao,
-                    signedInProfileId = signedInProfileId,
-                    profileMapper = ProfileView::profile,
-                    idMapper = { did.did.let(::ProfileId) },
+                        idMapper = { did.did.let(::ProfileId) },
+                    )
+                        .map { profileWithViewerStates ->
+                            CursorList(
+                                items = profileWithViewerStates,
+                                nextCursor = nextCursor,
+                            )
+                        },
                 )
-                    .map { profileWithViewerStates ->
-                        CursorList(
-                            items = profileWithViewerStates,
-                            nextCursor = nextCursor,
-                        )
-                    },
-            )
+            }
         }
-    }
 
     override fun following(
         query: ProfilesQuery,
         cursor: Cursor,
-    ): Flow<CursorList<ProfileWithViewerState>> = savedStateDataSource.currentSessionFlow { signedInProfileId ->
-        flow {
-            val profileDid = lookupProfileDid(
-                profileId = query.profileId,
-                profileDao = profileDao,
-                networkService = networkService,
-            ) ?: return@flow
+    ): Flow<CursorList<ProfileWithViewerState>> =
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            flow {
+                val profileDid = lookupProfileDid(
+                    profileId = query.profileId,
+                    profileDao = profileDao,
+                    networkService = networkService,
+                ) ?: return@flow
 
-            val response = networkService.runCatchingWithMonitoredNetworkRetry {
-                getFollows(
-                    GetFollowsQueryParams(
-                        actor = profileDid,
-                        limit = query.data.limit,
-                        cursor = when (cursor) {
-                            Cursor.Initial -> cursor.value
-                            is Cursor.Next -> cursor.value
-                            Cursor.Pending -> null
-                        },
+                val response = networkService.runCatchingWithMonitoredNetworkRetry {
+                    getFollows(
+                        GetFollowsQueryParams(
+                            actor = profileDid,
+                            limit = query.data.limit,
+                            cursor = when (cursor) {
+                                Cursor.Initial -> cursor.value
+                                is Cursor.Next -> cursor.value
+                                Cursor.Pending -> null
+                            },
+                        ),
+                    )
+                }
+                    .getOrNull()
+                    ?: return@flow
+
+                multipleEntitySaverProvider.saveInTransaction {
+                    response.follows
+                        .forEach { profileView ->
+                            add(
+                                viewingProfileId = signedInProfileId,
+                                profileView = profileView,
+                            )
+                        }
+                }
+
+                val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
+
+                // Emit network results immediately for minimal latency during search
+                emit(
+                    CursorList(
+                        items = response.follows.toProfileWithViewerStates(
+                            signedInProfileId = signedInProfileId,
+                            profileMapper = ProfileView::profile,
+                            profileViewerStateEntities = ProfileView::profileViewerStateEntities,
+                        ),
+                        nextCursor = nextCursor,
                     ),
                 )
-            }
-                .getOrNull()
-                ?: return@flow
 
-            multipleEntitySaverProvider.saveInTransaction {
-                response.follows
-                    .forEach { profileView ->
-                        add(
-                            viewingProfileId = signedInProfileId,
-                            profileView = profileView,
-                        )
-                    }
-            }
-
-            val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
-
-            // Emit network results immediately for minimal latency during search
-            emit(
-                CursorList(
-                    items = response.follows.toProfileWithViewerStates(
+                emitAll(
+                    response.follows.observeProfileWithViewerStates(
+                        profileDao = profileDao,
                         signedInProfileId = signedInProfileId,
                         profileMapper = ProfileView::profile,
-                        profileViewerStateEntities = ProfileView::profileViewerStateEntities,
-                    ),
-                    nextCursor = nextCursor,
-                ),
-            )
-
-            emitAll(
-                response.follows.observeProfileWithViewerStates(
-                    profileDao = profileDao,
-                    signedInProfileId = signedInProfileId,
-                    profileMapper = ProfileView::profile,
-                    idMapper = { did.did.let(::ProfileId) },
+                        idMapper = { did.did.let(::ProfileId) },
+                    )
+                        .map { profileWithViewerStates ->
+                            CursorList(
+                                items = profileWithViewerStates,
+                                nextCursor = nextCursor,
+                            )
+                        },
                 )
-                    .map { profileWithViewerStates ->
-                        CursorList(
-                            items = profileWithViewerStates,
-                            nextCursor = nextCursor,
-                        )
-                    },
-            )
+            }
         }
-    }
 
     override fun starterPacks(
         query: ProfilesQuery,
@@ -679,8 +679,4 @@ internal class OfflineProfileRepository @Inject constructor(
             }
             .toOutcome()
     }
-
-    private fun signedInProfileId() = savedStateDataSource.savedState
-        .mapNotNull { it.auth?.authProfileId }
-        .distinctUntilChanged()
 }

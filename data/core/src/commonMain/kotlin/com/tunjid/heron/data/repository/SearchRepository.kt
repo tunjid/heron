@@ -63,7 +63,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
@@ -156,7 +155,7 @@ internal class OfflineSearchRepository @Inject constructor(
     override fun postSearch(
         query: SearchQuery.OfPosts,
         cursor: Cursor,
-    ): Flow<CursorList<Post>> = savedStateDataSource.currentSessionFlow { signedInProfileId ->
+    ): Flow<CursorList<Post>> = savedStateDataSource.singleSessionFlow { signedInProfileId ->
         if (query.query.isBlank()) emptyFlow()
         else flow {
             val response = networkService.runCatchingWithMonitoredNetworkRetry {
@@ -202,65 +201,66 @@ internal class OfflineSearchRepository @Inject constructor(
     override fun profileSearch(
         query: SearchQuery.OfProfiles,
         cursor: Cursor,
-    ): Flow<CursorList<ProfileWithViewerState>> = savedStateDataSource.currentSessionFlow { signedInProfileId ->
-        if (query.query.isBlank()) emptyFlow()
-        else flow {
-            val response = networkService.runCatchingWithMonitoredNetworkRetry {
-                searchActors(
-                    params = SearchActorsQueryParams(
-                        q = query.query,
-                        limit = query.data.limit,
-                        cursor = when (cursor) {
-                            Cursor.Initial -> cursor.value
-                            is Cursor.Next -> cursor.value
-                            Cursor.Pending -> null
-                        },
+    ): Flow<CursorList<ProfileWithViewerState>> =
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            if (query.query.isBlank()) emptyFlow()
+            else flow {
+                val response = networkService.runCatchingWithMonitoredNetworkRetry {
+                    searchActors(
+                        params = SearchActorsQueryParams(
+                            q = query.query,
+                            limit = query.data.limit,
+                            cursor = when (cursor) {
+                                Cursor.Initial -> cursor.value
+                                is Cursor.Next -> cursor.value
+                                Cursor.Pending -> null
+                            },
+                        ),
+                    )
+                }
+                    .getOrNull()
+                    ?: return@flow
+
+                multipleEntitySaverProvider.saveInTransaction {
+                    response.actors
+                        .forEach { profileView ->
+                            add(
+                                viewingProfileId = signedInProfileId,
+                                profileView = profileView,
+                            )
+                        }
+                }
+
+                val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
+
+                // Emit network results immediately for minimal latency during search
+                emit(
+                    CursorList(
+                        items = response.actors.toProfileWithViewerStates(
+                            signedInProfileId = signedInProfileId,
+                            profileMapper = ProfileView::profile,
+                            profileViewerStateEntities = ProfileView::profileViewerStateEntities,
+                        ),
+                        nextCursor = nextCursor,
                     ),
                 )
-            }
-                .getOrNull()
-                ?: return@flow
 
-            multipleEntitySaverProvider.saveInTransaction {
-                response.actors
-                    .forEach { profileView ->
-                        add(
-                            viewingProfileId = signedInProfileId,
-                            profileView = profileView,
-                        )
-                    }
-            }
-
-            val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
-
-            // Emit network results immediately for minimal latency during search
-            emit(
-                CursorList(
-                    items = response.actors.toProfileWithViewerStates(
+                emitAll(
+                    response.actors.observeProfileWithViewerStates(
+                        profileDao = profileDao,
                         signedInProfileId = signedInProfileId,
                         profileMapper = ProfileView::profile,
-                        profileViewerStateEntities = ProfileView::profileViewerStateEntities,
-                    ),
-                    nextCursor = nextCursor,
-                ),
-            )
-
-            emitAll(
-                response.actors.observeProfileWithViewerStates(
-                    profileDao = profileDao,
-                    signedInProfileId = signedInProfileId,
-                    profileMapper = ProfileView::profile,
-                    idMapper = { did.did.let(::ProfileId) },
+                        idMapper = { did.did.let(::ProfileId) },
+                    )
+                        .map { profileWithViewerStates ->
+                            CursorList(
+                                items = profileWithViewerStates,
+                                nextCursor = nextCursor,
+                            )
+                        },
                 )
-                    .map { profileWithViewerStates ->
-                        CursorList(
-                            items = profileWithViewerStates,
-                            nextCursor = nextCursor,
-                        )
-                    },
-            )
+            }
         }
-    }
 
     override fun feedGeneratorSearch(
         query: SearchQuery.OfFeedGenerators,
@@ -316,47 +316,48 @@ internal class OfflineSearchRepository @Inject constructor(
     override fun autoCompleteProfileSearch(
         query: SearchQuery.OfProfiles,
         cursor: Cursor,
-    ): Flow<List<ProfileWithViewerState>> = savedStateDataSource.currentSessionFlow { signedInProfileId ->
-        flow {
-            val profileViews = networkService.runCatchingWithMonitoredNetworkRetry {
-                searchActorsTypeahead(
-                    params = SearchActorsTypeaheadQueryParams(
-                        q = query.query,
-                        limit = query.data.limit,
+    ): Flow<List<ProfileWithViewerState>> =
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            flow {
+                val profileViews = networkService.runCatchingWithMonitoredNetworkRetry {
+                    searchActorsTypeahead(
+                        params = SearchActorsTypeaheadQueryParams(
+                            q = query.query,
+                            limit = query.data.limit,
+                        ),
+                    )
+                }
+                    .getOrNull()
+                    ?.actors ?: return@flow
+
+                multipleEntitySaverProvider.saveInTransaction {
+                    profileViews.forEach { profileView ->
+                        add(
+                            viewingProfileId = signedInProfileId,
+                            profileView = profileView,
+                        )
+                    }
+                }
+
+                // Emit network results immediately for minimal latency during search
+                emit(
+                    profileViews.toProfileWithViewerStates(
+                        signedInProfileId = signedInProfileId,
+                        profileMapper = ProfileViewBasic::profile,
+                        profileViewerStateEntities = ProfileViewBasic::profileViewerStateEntities,
+                    ),
+                )
+
+                emitAll(
+                    profileViews.observeProfileWithViewerStates(
+                        profileDao = profileDao,
+                        signedInProfileId = signedInProfileId,
+                        profileMapper = ProfileViewBasic::profile,
+                        idMapper = { did.did.let(::ProfileId) },
                     ),
                 )
             }
-                .getOrNull()
-                ?.actors ?: return@flow
-
-            multipleEntitySaverProvider.saveInTransaction {
-                profileViews.forEach { profileView ->
-                    add(
-                        viewingProfileId = signedInProfileId,
-                        profileView = profileView,
-                    )
-                }
-            }
-
-            // Emit network results immediately for minimal latency during search
-            emit(
-                profileViews.toProfileWithViewerStates(
-                    signedInProfileId = signedInProfileId,
-                    profileMapper = ProfileViewBasic::profile,
-                    profileViewerStateEntities = ProfileViewBasic::profileViewerStateEntities,
-                ),
-            )
-
-            emitAll(
-                profileViews.observeProfileWithViewerStates(
-                    profileDao = profileDao,
-                    signedInProfileId = signedInProfileId,
-                    profileMapper = ProfileViewBasic::profile,
-                    idMapper = { did.did.let(::ProfileId) },
-                ),
-            )
         }
-    }
 
     override fun trends(): Flow<List<Trend>> = flow {
         networkService.runCatchingWithMonitoredNetworkRetry {
@@ -375,8 +376,7 @@ internal class OfflineSearchRepository @Inject constructor(
     override fun suggestedProfiles(
         category: String?,
     ): Flow<List<ProfileWithViewerState>> =
-        savedStateDataSource.observedSignedInProfileId.flatMapLatest { signedInProfileId ->
-            if (signedInProfileId == null) return@flatMapLatest emptyFlow()
+        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
             val profileViews = networkService.runCatchingWithMonitoredNetworkRetry {
                 getSuggestedUsersUnspecced(
                     GetSuggestedUsersQueryParams(
@@ -386,7 +386,7 @@ internal class OfflineSearchRepository @Inject constructor(
             }
                 .getOrNull()
                 ?.actors
-                ?: return@flatMapLatest emptyFlow()
+                ?: return@singleAuthorizedSessionFlow emptyFlow()
 
             multipleEntitySaverProvider.saveInTransaction {
                 profileViews.forEach { profileView ->
@@ -406,9 +406,7 @@ internal class OfflineSearchRepository @Inject constructor(
         }
 
     override fun suggestedStarterPacks(): Flow<List<StarterPack>> =
-        savedStateDataSource.observedSignedInProfileId.flatMapLatest { signedInProfileId ->
-            if (signedInProfileId == null) return@flatMapLatest emptyFlow()
-
+        savedStateDataSource.singleAuthorizedSessionFlow {
             val starterPackViews = networkService.runCatchingWithMonitoredNetworkRetry {
                 getSuggestedStarterPacksUnspecced(
                     GetSuggestedStarterPacksQueryParams(),
@@ -416,7 +414,7 @@ internal class OfflineSearchRepository @Inject constructor(
             }
                 .getOrNull()
                 ?.starterPacks
-                ?: return@flatMapLatest emptyFlow()
+                ?: return@singleAuthorizedSessionFlow emptyFlow()
 
             multipleEntitySaverProvider.saveInTransaction {
                 starterPackViews.forEach { starterPack ->
@@ -440,8 +438,7 @@ internal class OfflineSearchRepository @Inject constructor(
         }
 
     override fun suggestedFeeds(): Flow<List<FeedGenerator>> =
-        savedStateDataSource.observedSignedInProfileId.flatMapLatest { signedInProfileId ->
-
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
             val generatorViews = networkService.runCatchingWithMonitoredNetworkRetry {
                 if (signedInProfileId == null) getPopularFeedGeneratorsUnspecced(
                     params = GetPopularFeedGeneratorsQueryParams(),
@@ -451,7 +448,7 @@ internal class OfflineSearchRepository @Inject constructor(
                 ).map(GetSuggestedFeedsResponse::feeds)
             }
                 .getOrNull()
-                ?: return@flatMapLatest emptyFlow()
+                ?: return@singleSessionFlow emptyFlow()
 
             multipleEntitySaverProvider.saveInTransaction {
                 generatorViews.forEach { generatorView ->

@@ -28,16 +28,14 @@ import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.repository.onEachSignedInProfile
-import com.tunjid.heron.data.repository.signedInProfileId
+import com.tunjid.heron.data.repository.singleAuthorizedSessionFlow
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
@@ -197,21 +195,18 @@ internal class PersistedWriteQueue @Inject constructor(
     }
 }
 
-private fun SavedStateDataSource.signedInProfileWrites() = savedState
-    .mapNotNull { it.signedInProfileId }
-    .distinctUntilChanged()
-    .flatMapLatest { profileId ->
+private fun SavedStateDataSource.signedInProfileWrites() =
+    singleAuthorizedSessionFlow {
         savedState
             .mapNotNull { savedState ->
                 savedState
-                    .takeIf { it.signedInProfileId == profileId }
-                    ?.signedInProfileData
+                    .signedInProfileData
                     ?.writes
                     ?.pendingWrites
             }
-    }
-    .distinctUntilChangedBy { pendingWrites ->
-        pendingWrites.map(Writable::queueId)
+            .distinctUntilChangedBy { pendingWrites ->
+                pendingWrites.map(Writable::queueId)
+            }
     }
 
 private suspend inline fun SavedStateDataSource.updateWrites(

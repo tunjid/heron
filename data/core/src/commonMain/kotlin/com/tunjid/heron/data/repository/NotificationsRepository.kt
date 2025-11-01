@@ -43,7 +43,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -80,22 +79,20 @@ internal class OfflineNotificationsRepository @Inject constructor(
 ) : NotificationsRepository {
 
     override val unreadCount: Flow<Long> =
-        savedStateDataSource.observedSignedInProfileId
-            .filterNotNull()
-            .flatMapLatest {
-                flow {
-                    while (true) {
-                        val unreadCount = networkService.runCatchingWithMonitoredNetworkRetry {
-                            getUnreadCount(
-                                params = GetUnreadCountQueryParams(),
-                            )
-                        }
-                            .getOrNull()?.count ?: 0
-                        emit(unreadCount)
-                        kotlinx.coroutines.delay(30_000)
+        savedStateDataSource.singleAuthorizedSessionFlow {
+            flow {
+                while (true) {
+                    val unreadCount = networkService.runCatchingWithMonitoredNetworkRetry {
+                        getUnreadCount(
+                            params = GetUnreadCountQueryParams(),
+                        )
                     }
+                        .getOrNull()?.count ?: 0
+                    emit(unreadCount)
+                    kotlinx.coroutines.delay(30_000)
                 }
             }
+        }
             .stateIn(
                 scope = appScope,
                 started = SharingStarted.WhileSubscribed(5_000),
@@ -209,36 +206,34 @@ internal class OfflineNotificationsRepository @Inject constructor(
     private fun observeNotifications(
         query: NotificationsQuery,
     ): Flow<List<Notification>> =
-        savedStateDataSource.observedSignedInProfileId
-            .filterNotNull()
-            .flatMapLatest { signedInProfileId ->
-                notificationsDao.notifications(
-                    ownerId = signedInProfileId.id,
-                    before = query.data.cursorAnchor,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
-                    .flatMapLatest { populatedNotificationEntities ->
-                        postDao.posts(
-                            viewingProfileId = signedInProfileId.id,
-                            postUris = populatedNotificationEntities
-                                .mapNotNull { it.entity.associatedPostUri }
-                                .toSet(),
-                        ).map { posts ->
-                            val urisToPosts = posts.associateBy { it.entity.uri }
-                            populatedNotificationEntities.map {
-                                it.asExternalModel(
-                                    associatedPost = it.entity.associatedPostUri
-                                        ?.let(urisToPosts::get)
-                                        ?.asExternalModel(
-                                            quote = null,
-                                            embeddedRecord = null,
-                                        ),
-                                )
-                            }
+        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
+            notificationsDao.notifications(
+                ownerId = signedInProfileId.id,
+                before = query.data.cursorAnchor,
+                offset = query.data.offset,
+                limit = query.data.limit,
+            )
+                .flatMapLatest { populatedNotificationEntities ->
+                    postDao.posts(
+                        viewingProfileId = signedInProfileId.id,
+                        postUris = populatedNotificationEntities
+                            .mapNotNull { it.entity.associatedPostUri }
+                            .toSet(),
+                    ).map { posts ->
+                        val urisToPosts = posts.associateBy { it.entity.uri }
+                        populatedNotificationEntities.map {
+                            it.asExternalModel(
+                                associatedPost = it.entity.associatedPostUri
+                                    ?.let(urisToPosts::get)
+                                    ?.asExternalModel(
+                                        quote = null,
+                                        embeddedRecord = null,
+                                    ),
+                            )
                         }
                     }
-            }
+                }
+        }
 }
 
 private fun SavedState.signedInProfileNotifications() =

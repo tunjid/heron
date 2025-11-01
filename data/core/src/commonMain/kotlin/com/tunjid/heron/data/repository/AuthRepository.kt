@@ -48,10 +48,8 @@ import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.supervisorScope
@@ -63,7 +61,7 @@ interface AuthRepository {
 
     val signedInUser: Flow<Profile?>
 
-    fun isSignedInProfile(id: Id): Flow<Boolean>
+    fun isSignedInProfile(id: ProfileId): Flow<Boolean>
 
     suspend fun oauthRequestUri(
         request: OauthUriRequest,
@@ -93,23 +91,22 @@ internal class AuthTokenRepository(
         }
 
     override val signedInUser: Flow<Profile?> =
-        savedStateDataSource.observedSignedInProfileId
-            .flatMapLatest { signedInProfileId ->
-                val signedInUserFlow = signedInProfileId
-                    ?.let(::listOf)
-                    ?.let(profileDao::profiles)
-                    ?.filter(List<ProfileEntity>::isNotEmpty)
-                    ?.map { it.first().asExternalModel() }
-                    ?: flowOf(null)
-                signedInUserFlow.withRefresh {
-                    if (signedInProfileId != null) updateSignedInUser()
-                }
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            val signedInUserFlow = signedInProfileId
+                ?.let(::listOf)
+                ?.let(profileDao::profiles)
+                ?.filter(List<ProfileEntity>::isNotEmpty)
+                ?.map { it.first().asExternalModel() }
+                ?: flowOf(null)
+            signedInUserFlow.withRefresh {
+                if (signedInProfileId != null) updateSignedInUser()
             }
+        }
 
-    override fun isSignedInProfile(id: Id): Flow<Boolean> =
-        savedStateDataSource.savedState
-            .map { it.signedInProfileId == id }
-            .distinctUntilChanged()
+    override fun isSignedInProfile(id: ProfileId): Flow<Boolean> =
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            flowOf(signedInProfileId == id)
+        }
 
     override suspend fun oauthRequestUri(
         request: OauthUriRequest,
