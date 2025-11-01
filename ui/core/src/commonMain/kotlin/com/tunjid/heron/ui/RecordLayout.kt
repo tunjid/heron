@@ -64,6 +64,8 @@ fun RecordLayout(
                             ),
                         ),
                     text = title,
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 1,
                     style = LocalTextStyle.current.copy(fontWeight = Bold),
                 )
                 Text(
