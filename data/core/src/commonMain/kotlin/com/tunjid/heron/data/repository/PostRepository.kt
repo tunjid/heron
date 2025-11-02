@@ -89,7 +89,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
@@ -259,7 +258,6 @@ internal class OfflinePostRepository @Inject constructor(
                         .map { populatedPostEntities ->
                             populatedPostEntities.map {
                                 it.asExternalModel(
-                                    quote = null,
                                     embeddedRecord = null,
                                 )
                             }
@@ -304,7 +302,6 @@ internal class OfflinePostRepository @Inject constructor(
                 .distinctUntilChanged()
                 .mapNotNull {
                     it.firstOrNull()?.asExternalModel(
-                        quote = null,
                         embeddedRecord = null,
                     )
                 }

@@ -159,7 +159,6 @@ data class ThreadedPostEntity(
 )
 
 fun PopulatedPostEntity.asExternalModel(
-    quote: Post?,
     embeddedRecord: Record?,
 ) = Post(
     cid = entity.cid,
@@ -180,7 +179,7 @@ fun PopulatedPostEntity.asExternalModel(
 
         else -> null
     },
-    quote = quote,
+    quote = null,
     record = entity.record?.asExternalModel(),
     viewerStats = viewerStats?.asExternalModel(),
     labels = labelEntities.map(LabelEntity::asExternalModel),
