@@ -83,7 +83,6 @@ internal class OfflineRecordRepository @Inject constructor(
                     }
                     .map {
                         it.firstOrNull()?.asExternalModel(
-                            quote = null,
                             embeddedRecord = null,
                         )
                     }

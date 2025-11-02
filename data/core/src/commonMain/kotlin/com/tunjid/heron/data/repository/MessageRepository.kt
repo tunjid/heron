@@ -236,15 +236,13 @@ internal class OfflineMessageRepository @Inject constructor(
                                         ?.postUri
                                         ?.let(urisToPosts::get)
                                         ?.asExternalModel(
-                                            quote = populatedMessageEntity.post
+                                            embeddedRecord = populatedMessageEntity.post
                                                 ?.postUri
                                                 ?.let(urisToEmbeddedPosts::get)
                                                 ?.entity
                                                 ?.asExternalModel(
-                                                    quote = null,
                                                     embeddedRecord = null,
                                                 ),
-                                            embeddedRecord = null,
                                         ),
                                 )
                             }

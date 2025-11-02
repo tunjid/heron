@@ -226,7 +226,6 @@ internal class OfflineNotificationsRepository @Inject constructor(
                                 associatedPost = it.entity.associatedPostUri
                                     ?.let(urisToPosts::get)
                                     ?.asExternalModel(
-                                        quote = null,
                                         embeddedRecord = null,
                                     ),
                             )

@@ -565,13 +565,16 @@ internal class OfflineTimelineRepository(
                             postUri = postEntity.uri.uri,
                         )
                             .flatMapLatest { postThread ->
-                                val postUris = postThread.map { it.entity.uri }.toSet()
-
-                                // Get all embedded record URIs from the post thread
-                                val embeddedRecordUris = postThread.mapNotNull {
-                                    it.entity.record?.embeddedRecordUri
-                                }.toSet()
-
+                                val postUris = postThread.mapTo(
+                                    destination = mutableSetOf(),
+                                    transform = { it.entity.uri },
+                                )
+                                val embeddedRecordUris = postThread.mapNotNullTo(
+                                    destination = mutableSetOf(),
+                                    transform = {
+                                        it.entity.record?.embeddedRecordUri
+                                    },
+                                )
                                 combine(
                                     flow = postDao.posts(
                                         viewingProfileId = signedInProfileId?.id,
@@ -579,7 +582,7 @@ internal class OfflineTimelineRepository(
                                     )
                                         .distinctUntilChanged(),
                                     flow2 = records(
-                                        uris = embeddedRecordUris.toList(),
+                                        uris = embeddedRecordUris,
                                         viewingProfileId = signedInProfileId,
                                     ),
                                     flow3 = labelers(),
@@ -600,7 +603,6 @@ internal class OfflineTimelineRepository(
                                                     ?.embeddedRecordUri
                                                     ?.let(recordUrisToEmbeddedRecords::get)
                                                 val post = populatedPostEntity.asExternalModel(
-                                                    quote = embeddedRecord as? Post,
                                                     embeddedRecord = embeddedRecord,
                                                 )
                                                 spinThread(
@@ -1006,6 +1008,10 @@ internal class OfflineTimelineRepository(
                                 destination = mutableSetOf(),
                                 transform = TimelineItemEntity::reposter,
                             )
+                            val embeddedRecordUris = itemEntities.mapNotNullTo(
+                                destination = mutableSetOf(),
+                                transform = TimelineItemEntity::embeddedRecordUri,
+                            )
                             combine(
                                 flow = postIds.toFlowOrEmpty { ids ->
                                     postDao.posts(
@@ -1013,33 +1019,27 @@ internal class OfflineTimelineRepository(
                                         postUris = ids,
                                     )
                                 },
-                                flow2 = postIds.toFlowOrEmpty { ids ->
-                                    postDao.embeddedPosts(
-                                        viewingProfileId = signedInProfileId?.id,
-                                        postUris = ids,
-                                    )
-                                },
+                                flow2 = records(
+                                    embeddedRecordUris,
+                                    signedInProfileId,
+                                ),
                                 flow3 = profileIds.toFlowOrEmpty(
                                     block = profileDao::profiles,
                                 ),
                                 flow4 = labelers(),
-                            ) { posts, embeddedPosts, repostProfiles, labelers ->
+                            ) { posts, embeddedRecords, repostProfiles, labelers ->
                                 if (posts.isEmpty()) return@combine emptyList()
                                 val urisToPosts = posts.associateBy { it.entity.uri }
-                                val urisToEmbeddedPosts =
-                                    embeddedPosts.associateBy { it.parentPostUri }
+                                val recordUrisToEmbeddedRecords = embeddedRecords.associateBy {
+                                    it.reference.uri
+                                }
                                 val idsToRepostProfiles = repostProfiles.associateBy { it.did }
 
                                 itemEntities.mapNotNull { entity ->
                                     val mainPost = urisToPosts[entity.postUri]
                                         ?.asExternalModel(
-                                            quote = urisToEmbeddedPosts[entity.postUri]
-                                                ?.entity
-                                                ?.asExternalModel(
-                                                    quote = null,
-                                                    embeddedRecord = null,
-                                                ),
-                                            embeddedRecord = null,
+                                            embeddedRecord = entity.embeddedRecordUri
+                                                ?.let(recordUrisToEmbeddedRecords::get),
                                         ) ?: return@mapNotNull null
 
                                     val postLabels = when {
@@ -1086,23 +1086,16 @@ internal class OfflineTimelineRepository(
                                             labelVisibilitiesToDefinitions = visibilitiesToDefinitions,
                                             posts = listOf(
                                                 replyRoot.asExternalModel(
-                                                    quote = urisToEmbeddedPosts[replyRoot.entity.uri]
-                                                        ?.entity
-                                                        ?.asExternalModel(
-                                                            quote = null,
-                                                            embeddedRecord = null,
-                                                        ),
-                                                    embeddedRecord = null,
+                                                    embeddedRecord = replyRoot.entity
+                                                        .record
+                                                        ?.embeddedRecordUri
+                                                        ?.let(recordUrisToEmbeddedRecords::get),
                                                 ),
                                                 replyParent.asExternalModel(
-                                                    quote = urisToEmbeddedPosts[replyParent.entity.uri]
-                                                        ?.entity
-                                                        ?.asExternalModel(
-                                                            quote = null,
-                                                            embeddedRecord = null,
-
-                                                        ),
-                                                    embeddedRecord = null,
+                                                    embeddedRecord = replyParent.entity
+                                                        .record
+                                                        ?.embeddedRecordUri
+                                                        ?.let(recordUrisToEmbeddedRecords::get),
                                                 ),
                                                 mainPost,
                                             ),
@@ -1331,7 +1324,7 @@ internal class OfflineTimelineRepository(
     }
 
     private fun records(
-        uris: List<RecordUri>,
+        uris: Set<RecordUri>,
         viewingProfileId: ProfileId?,
     ): Flow<List<Record>> {
         val feedUris = LazyList<FeedGeneratorUri>()
@@ -1367,7 +1360,6 @@ internal class OfflineTimelineRepository(
                 .map { entities ->
                     entities.map {
                         it.asExternalModel(
-                            quote = null,
                             embeddedRecord = null,
                         )
                     }
