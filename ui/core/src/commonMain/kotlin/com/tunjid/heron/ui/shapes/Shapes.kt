@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
@@ -47,10 +48,14 @@ import androidx.graphics.shapes.rectangle
 @Stable
 sealed class RoundedPolygonShape : Shape {
 
-    private var path = Path()
-    private var matrix: Matrix = Matrix()
-
     internal abstract val polygon: RoundedPolygon
+
+    private var matrix: Matrix = Matrix()
+    private var lastSize = Size.Unspecified
+    private var workPath: Path? = null
+    private val shapePath: Path by lazy {
+        polygon.toPath()
+    }
 
     internal val lastBounds: Rect by lazy {
         polygon.calculateBounds(
@@ -64,21 +69,25 @@ sealed class RoundedPolygonShape : Shape {
         layoutDirection: LayoutDirection,
         density: Density,
     ): Outline {
-        path.rewind()
-        path = polygon.toPath(path)
-        matrix.reset()
+        val path = workPath
+            .takeUnless { size != lastSize }
+            ?.also(Path::rewind)
+            ?: Path().also {
+                lastSize = size
+                workPath = it
+            }
 
-        matrix.scale(
-            x = size.width / lastBounds.width,
-            y = size.height / lastBounds.height,
-        )
+        path.addPath(shapePath)
 
-        matrix.translate(
-            x = -lastBounds.left,
-            y = -lastBounds.top,
-        )
+        matrix.apply {
+            reset()
+            scale(x = size.width, y = size.height)
+        }
+
+        // Scale and translate the path to align its center with the available size
+        // center.
         path.transform(matrix)
-
+        path.translate(size.center - path.getBounds().center)
         return Outline.Generic(path)
     }
 
