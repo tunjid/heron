@@ -61,7 +61,7 @@ import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.tiler.compose.PivotedTilingEffect
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableStickySharedElementOf
 import heron.feature.messages.generated.resources.Res
 import heron.feature.messages.generated.resources.sender_reacted
 import kotlinx.datetime.Instant
@@ -183,7 +183,7 @@ fun ConversationMembers(
     ) {
         val membersSize = members.size
         members.forEachIndexed { index, profile ->
-            updatedMovableStickySharedElementOf(
+            UpdatedMovableStickySharedElementOf(
                 sharedContentState = paneScaffoldState.rememberSharedContentState(
                     key = "$conversationId-${profile.did}",
                 ),

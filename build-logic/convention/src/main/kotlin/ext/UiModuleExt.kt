@@ -64,6 +64,10 @@ fun org.gradle.api.Project.configureUiModule(
         }
         named("androidMain") {
             dependencies {
+                api(libs.compose.android.animation)
+                api(libs.compose.android.foundation.foundation)
+                api(libs.compose.android.foundation.layout)
+                api(libs.compose.android.ui.ui)
             }
         }
         named("desktopMain") {

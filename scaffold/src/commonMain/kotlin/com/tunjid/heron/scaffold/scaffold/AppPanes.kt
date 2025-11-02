@@ -63,15 +63,18 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.NavigationEventTransitionState
+import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import com.tunjid.composables.splitlayout.SplitLayoutState
-import com.tunjid.treenav.compose.navigation3.ui.NavigationEventHandler
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.current
 import com.tunjid.treenav.pop
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
-import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.launch
 
 private val PaneSpring = spring(
@@ -291,32 +294,45 @@ fun PaneScaffoldState.SecondaryPaneCloseBackHandler() {
     var widthAtStart by remember { mutableIntStateOf(0) }
     var desiredPaneWidth by remember { mutableFloatStateOf(0f) }
 
-    NavigationEventHandler(
-        enabled = remember(currentlyEnabled.value) {
-            // Force create a new lambda to work around:
-            // https://issuetracker.google.com/issues/431534103
-            { currentlyEnabled.value }
-        },
-    ) { events ->
-        try {
-            events.collectIndexed { index, event ->
-                check(appState.dismissBehavior != AppState.DismissBehavior.Gesture.Drag) {
-                    "The secondary pane close back handler should not run when dragging to dismiss"
-                }
-                if (index == 0) {
-                    appState.dismissBehavior = AppState.DismissBehavior.Gesture.Slide
-                    widthAtStart = paneAnchorState.width
-                    started = true
-                }
-                val progress = event.progress
-                val distanceToCover = paneAnchorState.maxWidth - widthAtStart
-                desiredPaneWidth = (progress * distanceToCover) + widthAtStart
-            }
-        } finally {
-            appState.dismissBehavior = AppState.DismissBehavior.None
+    NavigationBackHandler(
+        state = rememberNavigationEventState(
+            currentInfo = SecondaryPaneCloseNavigationEventInfo,
+        ),
+        isBackEnabled = currentlyEnabled.value,
+        onBackCancelled = {
             started = false
-        }
-        appState.pop()
+        },
+        onBackCompleted = {
+            started = false
+            appState.pop()
+        },
+    )
+
+    val navigationEventDispatcher = LocalNavigationEventDispatcherOwner.current!!
+        .navigationEventDispatcher
+
+    LaunchedEffect(navigationEventDispatcher) {
+        var wasIdle = true
+        navigationEventDispatcher
+            .transitionState
+            .collect { state ->
+                when (state) {
+                    NavigationEventTransitionState.Idle -> wasIdle = true
+                    is NavigationEventTransitionState.InProgress -> if (currentlyEnabled.value) {
+                        check(appState.dismissBehavior != AppState.DismissBehavior.Gesture.Drag) {
+                            "The secondary pane close back handler should not run when dragging to dismiss"
+                        }
+                        if (wasIdle) {
+                            widthAtStart = paneAnchorState.width
+                            started = true
+                        }
+                        val progress = state.latestEvent.progress
+                        val distanceToCover = paneAnchorState.maxWidth - widthAtStart
+                        desiredPaneWidth = (progress * distanceToCover) + widthAtStart
+                        wasIdle = false
+                    }
+                }
+            }
     }
 
     // Make sure desiredPaneWidth is synced with paneSplitState.width before the back gesture
@@ -358,6 +374,8 @@ fun PaneScaffoldState.SecondaryPaneCloseBackHandler() {
 }
 
 internal expect fun Modifier.platformSystemGestureExclusion(): Modifier
+
+internal object SecondaryPaneCloseNavigationEventInfo : NavigationEventInfo()
 
 private val DraggableDividerSizeDp = 48.dp
 internal val SecondaryPaneMinWidthBreakpointDp = 600.dp

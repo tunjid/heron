@@ -37,6 +37,11 @@ kotlin {
             dependencies {
                 implementation(libs.androidx.activity.compose)
                 implementation("org.jetbrains.androidx.core:core-bundle:1.1.0-alpha03")
+
+                api(libs.compose.android.animation)
+                api(libs.compose.android.foundation.foundation)
+                api(libs.compose.android.foundation.layout)
+                api(libs.compose.android.ui.ui)
             }
         }
         commonMain {
@@ -46,7 +51,9 @@ kotlin {
                 implementation(project(":ui:core"))
                 implementation(project(":ui:media"))
 
-                implementation(libs.androidx.navigation.event)
+                implementation(libs.navigation.event)
+                implementation(libs.navigation.event.compose)
+                implementation(libs.navigation3.runtime)
 
                 implementation(libs.compose.multiplatform.animation)
                 implementation(libs.compose.multiplatform.components.resources)
