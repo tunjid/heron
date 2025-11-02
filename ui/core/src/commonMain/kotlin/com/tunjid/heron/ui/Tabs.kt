@@ -81,7 +81,7 @@ class TabsState private constructor(
 
     internal val visibleTabs
         get() = when {
-            derivedTabIndex > tabs.lastIndex -> emptyList()
+            derivedTabIndex !in tabs.indices -> emptyList()
             isCollapsed -> listOf(tabs[derivedTabIndex])
             else -> tabs.toList()
         }
