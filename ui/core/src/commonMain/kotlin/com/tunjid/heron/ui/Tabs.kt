@@ -37,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -72,14 +73,21 @@ class TabsState private constructor(
     var isCollapsed by mutableStateOf(isCollapsed)
         internal set
 
+    private val derivedTabIndex by derivedStateOf {
+        selectedTabIndex().roundToInt()
+    }
+
     internal val tabs = mutableStateListOf(*(tabs.toTypedArray()))
 
     internal val visibleTabs
-        get() = if (isCollapsed) listOf(tabs[selectedTabIndex().roundToInt()])
-        else tabs.toList()
+        get() = when {
+            derivedTabIndex !in tabs.indices -> emptyList()
+            isCollapsed -> listOf(tabs[derivedTabIndex])
+            else -> tabs.toList()
+        }
 
-    internal fun tabIndex() =
-        if (isCollapsed) 0f
+    internal val tabIndicatorIndex
+        get() = if (isCollapsed) 0f
         else selectedTabIndex()
 
     companion object {
@@ -144,7 +152,7 @@ fun Tabs(
                 },
             )
         }
-        Indicator(lazyListState, ::tabIndex)
+        Indicator(lazyListState, ::tabIndicatorIndex)
     }
 }
 
