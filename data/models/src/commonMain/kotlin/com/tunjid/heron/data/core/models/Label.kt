@@ -80,7 +80,19 @@ data class Labeler(
     val creatorId: ProfileId,
     val definitions: List<Label.Definition>,
     val values: List<Label.Value>,
-)
+) {
+    @Serializable
+    data class LocaleInfo(
+        val lang: String,
+        val name: String,
+        val description: String,
+    ) : UrlEncodableModel
+
+    @Serializable
+    data class LocalInfoList(
+        val list: List<LocaleInfo>,
+    ) : UrlEncodableModel
+}
 
 typealias Labelers = List<Labeler>
 
