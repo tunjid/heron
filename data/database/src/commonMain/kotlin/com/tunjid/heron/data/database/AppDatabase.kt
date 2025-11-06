@@ -37,7 +37,9 @@ import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.ConversationEntity
 import com.tunjid.heron.data.database.entities.ConversationMembersEntity
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
+import com.tunjid.heron.data.database.entities.LabelDefinitionEntity
 import com.tunjid.heron.data.database.entities.LabelEntity
+import com.tunjid.heron.data.database.entities.LabelerEntity
 import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.ListMemberEntity
 import com.tunjid.heron.data.database.entities.MessageEntity
@@ -81,7 +83,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 25,
+    version = 26,
     entities = [
         ExternalEmbedEntity::class,
         ImageEntity::class,
@@ -100,6 +102,8 @@ import kotlinx.coroutines.IO
         PostLikeEntity::class,
         PostRepostEntity::class,
         LabelEntity::class,
+        LabelerEntity::class,
+        LabelDefinitionEntity::class,
         ListEntity::class,
         ListMemberEntity::class,
         FeedGeneratorEntity::class,
@@ -168,6 +172,8 @@ import kotlinx.coroutines.IO
         // Migration 23 - 24 is a manual migration
         // add support of embedded records in post
         AutoMigration(from = 24, to = 25),
+        // Add LabelerEntity and LabelDefinitionEntity
+        AutoMigration(from = 25, to = 26),
     ],
     exportSchema = true,
 )
