@@ -89,7 +89,7 @@ data class Labeler(
     ) : UrlEncodableModel
 
     @Serializable
-    data class LocalInfoList(
+    data class LocaleInfoList(
         val list: List<LocaleInfo>,
     ) : UrlEncodableModel
 }
