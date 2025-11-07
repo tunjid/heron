@@ -5,6 +5,8 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.Relation
+import com.tunjid.heron.data.core.models.Label
+import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 
@@ -46,4 +48,13 @@ data class PopulatedLabelerEntity(
         entityColumn = "creatorId",
     )
     val definitions: List<LabelDefinitionEntity>,
+)
+
+fun PopulatedLabelerEntity.asExternalModel(): Labeler = Labeler(
+    uri = entity.uri,
+    creatorId = entity.creatorId,
+    definitions = definitions.map { it.asExternalModelWithLocale().first },
+    values = definitions.map {
+        Label.Value(it.identifier)
+    },
 )
