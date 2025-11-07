@@ -78,7 +78,7 @@ data class Label(
 @Serializable
 data class Labeler(
     val uri: GenericUri,
-    val creatorId: ProfileId,
+    val creator: Profile,
     val definitions: List<Label.Definition>,
     val values: List<Label.Value>,
 ) {

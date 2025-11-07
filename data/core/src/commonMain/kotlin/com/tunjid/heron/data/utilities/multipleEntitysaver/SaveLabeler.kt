@@ -10,13 +10,14 @@ internal fun MultipleEntitySaver.add(
     labeler: LabelerViewDetailed,
 ) {
     val creator = labeler.creator
+    val creatorId = ProfileId(creator.did.did)
     val labelValueDefinitions = labeler.policies.labelValueDefinitions
 
     add(
         LabelerEntity(
             cid = labeler.cid.cid,
             uri = GenericUri(labeler.uri.atUri),
-            creatorId = ProfileId(creator.did.did),
+            creatorId = creatorId,
             likeCount = labeler.likeCount,
         ),
     )
@@ -28,7 +29,7 @@ internal fun MultipleEntitySaver.add(
 
     labelValueDefinitions.forEach { def ->
         add(
-            creatorId = ProfileId(creator.did.did),
+            creatorId = creatorId,
             labelValueDefinition = def,
         )
     }

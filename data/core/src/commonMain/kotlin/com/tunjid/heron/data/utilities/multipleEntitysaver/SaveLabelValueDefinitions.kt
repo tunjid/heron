@@ -14,7 +14,7 @@ internal fun MultipleEntitySaver.add(
     val localeList = Labeler.LocaleInfoList(
         list = labelValueDefinition.locales.map {
             Labeler.LocaleInfo(
-                lang = it.lang.toString(),
+                lang = it.lang.tag,
                 name = it.name,
                 description = it.description,
             )

@@ -18,10 +18,12 @@ package com.tunjid.heron.data.utilities
 
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
+import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackUri
@@ -52,7 +54,7 @@ internal object Collections {
         rkey = uri.recordKey.value,
     )
 
-    val DefaultLabelers = BlueSkuLabelersStub
+    val DefaultLabelers = BlueSkyLabelersStub
 }
 
 // TODO: This should be more specific
@@ -147,10 +149,13 @@ private const val LeadingSlash = "/"
 
 private const val Alphabet = "234567abcdefghijklmnopqrstuvwxyz"
 
-private val BlueSkuLabelersStub = listOf(
+private val BlueSkyLabelersStub = listOf(
     Labeler(
         uri = GenericUri(uri = "at://did:plc:ar7c4by46qjdydhdevvrndac/app.bsky.labeler.service/self"),
-        creatorId = ProfileId(id = "did:plc:ar7c4by46qjdydhdevvrndac"),
+        creator = stubProfile(
+            did = ProfileId(id = "did:plc:ar7c4by46qjdydhdevvrndac"),
+            handle = ProfileHandle(""),
+        ),
         definitions = listOf(
             Label.Definition(
                 adultOnly = false,
