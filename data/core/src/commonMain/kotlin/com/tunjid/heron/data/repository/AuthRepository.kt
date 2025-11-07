@@ -233,11 +233,11 @@ private fun Preferences.update(getPreferencesResponse: GetPreferencesResponse) =
                 is PreferencesUnion.AdultContentPref -> preferences
                 is PreferencesUnion.BskyAppStatePref -> preferences
                 is PreferencesUnion.ContentLabelPref -> preferences.copy(
-                    contentLabelPreferences = preferences.contentLabelPreferences
-                        .plus(preferencesUnion.asExternalModel())
-                        .asReversed()
-                        .distinctBy(ContentLabelPreference::label)
-                        .asReversed(),
+                    contentLabelPreferences = preferencesUnion.asExternalModel().let { newPref ->
+                        preferences.contentLabelPreferences
+                            .filterNot { it.label == newPref.label }
+                            .plus(newPref)
+                    },
                 )
 
                 is PreferencesUnion.FeedViewPref -> preferences

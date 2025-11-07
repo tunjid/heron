@@ -274,9 +274,9 @@ internal class OfflineTimelineRepository(
                             }
                                 .getOrNull()
                                 ?.views
-                                ?.forEach { responseViewUnion ->
-                                    multipleEntitySaverProvider
-                                        .saveInTransaction {
+                                ?.let { responseViewUnionList ->
+                                    multipleEntitySaverProvider.saveInTransaction {
+                                        responseViewUnionList.forEach { responseViewUnion ->
                                             when (responseViewUnion) {
                                                 is GetServicesResponseViewUnion.LabelerView -> add(
                                                     viewingProfileId = signedInProfileId,
@@ -289,6 +289,7 @@ internal class OfflineTimelineRepository(
                                                 is GetServicesResponseViewUnion.Unknown -> Unit
                                             }
                                         }
+                                    }
                                 }
                         }
                 }
