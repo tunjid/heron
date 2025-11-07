@@ -142,7 +142,7 @@ private fun timelineMutations(
 ): Flow<Mutation<State>> =
     combine(
         savedStateDataSource.savedState.take(1),
-        timelineRepository.homeTimelines(),
+        timelineRepository.homeTimelines,
         ::Pair,
     ).mapToMutation { (savedState, homeTimelines) ->
         val tabUri = currentTabUri
