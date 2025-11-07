@@ -53,7 +53,7 @@ data class PopulatedLabelerEntity(
 fun PopulatedLabelerEntity.asExternalModel(): Labeler = Labeler(
     uri = entity.uri,
     creatorId = entity.creatorId,
-    definitions = definitions.map { it.asExternalModelWithLocale().first },
+    definitions = definitions.map { it.asExternalModel() },
     values = definitions.map {
         Label.Value(it.identifier)
     },
