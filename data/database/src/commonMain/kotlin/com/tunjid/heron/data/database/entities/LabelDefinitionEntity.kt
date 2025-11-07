@@ -34,11 +34,12 @@ data class LabelDefinitionEntity(
     val localeInfoCbor: String,
 )
 
-fun LabelDefinitionEntity.asExternalModelWithLocale(): Pair<Label.Definition, Labeler.LocaleInfoList> =
+fun LabelDefinitionEntity.asExternalModel(): Label.Definition =
     Label.Definition(
         adultOnly = adultOnly,
         blurs = Label.BlurTarget.valueOf(blurs.lowercase()),
         defaultSetting = Label.Visibility(defaultSetting.lowercase()),
         identifier = Label.Value(identifier),
         severity = Label.Severity.valueOf(severity.lowercase()),
-    ) to localeInfoCbor.fromBase64EncodedUrl()
+        locales = localeInfoCbor.fromBase64EncodedUrl(),
+    )

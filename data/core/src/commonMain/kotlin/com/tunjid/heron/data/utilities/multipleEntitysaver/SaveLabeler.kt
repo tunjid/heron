@@ -6,6 +6,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.LabelerEntity
 
 internal fun MultipleEntitySaver.add(
+    viewingProfileId: ProfileId?,
     labeler: LabelerViewDetailed,
 ) {
     val creator = labeler.creator
@@ -18,6 +19,11 @@ internal fun MultipleEntitySaver.add(
             creatorId = ProfileId(creator.did.did),
             likeCount = labeler.likeCount,
         ),
+    )
+
+    add(
+        viewingProfileId = viewingProfileId,
+        profileView = creator,
     )
 
     labelValueDefinitions.forEach { def ->

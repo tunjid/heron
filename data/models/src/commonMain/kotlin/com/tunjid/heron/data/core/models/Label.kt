@@ -54,6 +54,7 @@ data class Label(
         val defaultSetting: Visibility,
         val identifier: Value,
         val severity: Severity,
+        val locales: Labeler.LocaleInfoList = Labeler.LocaleInfoList(emptyList()),
     )
 
     enum class BlurTarget {

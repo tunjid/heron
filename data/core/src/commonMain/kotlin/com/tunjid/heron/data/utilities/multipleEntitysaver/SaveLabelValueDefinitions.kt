@@ -1,6 +1,7 @@
 package com.tunjid.heron.data.utilities.multipleEntitysaver
 
 import com.atproto.label.LabelValueDefinition
+import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.ProfileId
@@ -28,7 +29,7 @@ internal fun MultipleEntitySaver.add(
             identifier = labelValueDefinition.identifier,
             adultOnly = labelValueDefinition.adultOnly ?: false,
             blurs = labelValueDefinition.blurs.value.lowercase(),
-            defaultSetting = labelValueDefinition.defaultSetting?.value?.lowercase() ?: "warn",
+            defaultSetting = labelValueDefinition.defaultSetting?.value?.lowercase() ?: Label.Visibility.Warn.value,
             severity = labelValueDefinition.severity.value.lowercase(),
             localeInfoCbor = localeCbor,
         ),

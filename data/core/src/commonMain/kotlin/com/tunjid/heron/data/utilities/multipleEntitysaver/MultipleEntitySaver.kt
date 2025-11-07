@@ -21,7 +21,6 @@ import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
-import com.tunjid.heron.data.database.daos.LabelDefinitionDao
 import com.tunjid.heron.data.database.daos.LabelerDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.MessageDao
@@ -71,7 +70,6 @@ import kotlinx.datetime.Instant
 class MultipleEntitySaverProvider @Inject constructor(
     private val postDao: PostDao,
     private val labelDao: LabelDao,
-    private val labelDefinitionDao: LabelDefinitionDao,
     private val labelerDao: LabelerDao,
     private val listDao: ListDao,
     private val embedDao: EmbedDao,
@@ -88,7 +86,6 @@ class MultipleEntitySaverProvider @Inject constructor(
     ) = MultipleEntitySaver(
         postDao = postDao,
         labelDao = labelDao,
-        labelDefinitionDao = labelDefinitionDao,
         labelerDao = labelerDao,
         listDao = listDao,
         embedDao = embedDao,
@@ -110,9 +107,8 @@ class MultipleEntitySaverProvider @Inject constructor(
  */
 internal class MultipleEntitySaver(
     private val postDao: PostDao,
-    private val labelDao: LabelDao,
-    private val labelDefinitionDao: LabelDefinitionDao,
     private val labelerDao: LabelerDao,
+    private val labelDao: LabelDao,
     private val listDao: ListDao,
     private val embedDao: EmbedDao,
     private val profileDao: ProfileDao,
@@ -153,9 +149,9 @@ internal class MultipleEntitySaver(
 
     private val listEntities = LazyList<ListEntity>()
 
-    private val labelEntities = LazyList<LabelEntity>()
     private val labelerEntities = LazyList<LabelerEntity>()
     private val labelDefinitionsEntities = LazyList<LabelDefinitionEntity>()
+    private val labelEntities = LazyList<LabelEntity>()
 
     private val feedGeneratorEntities = LazyList<FeedGeneratorEntity>()
 
@@ -242,9 +238,9 @@ internal class MultipleEntitySaver(
 
         feedGeneratorDao.upsertFeedGenerators(feedGeneratorEntities.list)
 
-        labelDao.upsertLabels(labelEntities.list)
-        labelDefinitionDao.upsertLabelValueDefinitions(labelDefinitionsEntities.list)
         labelerDao.upsertLabelers(labelerEntities.list)
+        labelDao.upsertLabelValueDefinitions(labelDefinitionsEntities.list)
+        labelDao.upsertLabels(labelEntities.list)
 
         timelineDao.upsertTimelineItems(timelineItemEntities.list)
 
