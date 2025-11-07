@@ -237,7 +237,7 @@ private fun feedStatusMutations(
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> =
     timeline.withFeedTimelineOrNull { feedTimeline ->
-        timelineRepository.preferences()
+        timelineRepository.preferences
             .distinctUntilChangedBy { it.timelinePreferences }
             .mapToMutation { preferences ->
                 val pinned =

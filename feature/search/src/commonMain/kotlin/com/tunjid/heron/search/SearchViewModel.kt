@@ -248,7 +248,7 @@ private fun suggestedFeedGeneratorMutations(
 private fun feedGeneratorUrisToStatusMutations(
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> =
-    timelineRepository.preferences()
+    timelineRepository.preferences
         .distinctUntilChangedBy { it.timelinePreferences }
         .mapToMutation { preferences ->
             copy(
@@ -488,8 +488,8 @@ private fun CoroutineScope.searchStateHolders(
                             },
                             cursorListLoader = { query, cursor ->
                                 combine(
-                                    timelineRepository.labelers(),
-                                    timelineRepository.preferences()
+                                    timelineRepository.labelers,
+                                    timelineRepository.preferences
                                         .map { it.contentLabelPreferences },
                                     ::Pair,
                                 )

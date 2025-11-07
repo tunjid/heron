@@ -155,13 +155,13 @@ private fun quotedPostMutations(
 private fun labelPreferencesMutations(
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> =
-    timelineRepository.preferences()
+    timelineRepository.preferences
         .mapToMutation { copy(labelPreferences = it.contentLabelPreferences) }
 
 private fun labelerMutations(
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> =
-    timelineRepository.labelers()
+    timelineRepository.labelers
         .mapToMutation { copy(labelers = it) }
 
 private fun Flow<Action.PostTextChanged>.postTextMutations(): Flow<Mutation<State>> =

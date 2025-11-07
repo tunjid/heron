@@ -285,7 +285,7 @@ private fun profileRelationshipMutations(
 private fun feedGeneratorUrisToStatusMutations(
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> =
-    timelineRepository.preferences()
+    timelineRepository.preferences
         .distinctUntilChangedBy { it.timelinePreferences }
         .mapToMutation { preferences ->
             copy(

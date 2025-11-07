@@ -187,11 +187,11 @@ class TimelineQuery(
 
 interface TimelineRepository {
 
-    fun preferences(): Flow<Preferences>
+    val preferences: Flow<Preferences>
 
-    fun labelers(): Flow<List<Labeler>>
+    val labelers: Flow<List<Labeler>>
 
-    fun homeTimelines(): Flow<List<Timeline.Home>>
+    val homeTimelines: Flow<List<Timeline.Home>>
 
     fun timeline(
         request: TimelineRequest,
@@ -235,13 +235,12 @@ internal class OfflineTimelineRepository(
     private val authRepository: AuthRepository,
 ) : TimelineRepository {
 
-    override fun preferences(): Flow<Preferences> =
-        savedStateDataSource.savedState
+    override val preferences: Flow<Preferences>
+        get() = savedStateDataSource.savedState
             .map(SavedState::signedProfilePreferencesOrDefault)
 
-    override fun labelers(): Flow<List<Labeler>> =
-        // TODO: Get labeler from bluesky moderation service
-        flowOf(Collections.DefaultLabelers)
+    override val labelers: Flow<List<Labeler>>
+        get() = flowOf(Collections.DefaultLabelers)
 
     override fun timelineItems(
         query: TimelineQuery,
@@ -585,7 +584,7 @@ internal class OfflineTimelineRepository(
                                         uris = embeddedRecordUris,
                                         viewingProfileId = signedInProfileId,
                                     ),
-                                    flow3 = labelers(),
+                                    flow3 = labelers,
                                     transform = { posts, embeddedRecords, labelers ->
                                         val urisToPosts = posts.associateBy { it.entity.uri }
                                         val recordUrisToEmbeddedRecords =
@@ -649,8 +648,8 @@ internal class OfflineTimelineRepository(
             }
     }
 
-    override fun homeTimelines(): Flow<List<Timeline.Home>> =
-        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+    override val homeTimelines: Flow<List<Timeline.Home>>
+        get() = savedStateDataSource.singleSessionFlow { signedInProfileId ->
             savedStateDataSource.savedState
                 .map { it.signedProfilePreferencesOrDefault().timelinePreferences }
                 .distinctUntilChanged()
@@ -1026,7 +1025,7 @@ internal class OfflineTimelineRepository(
                                 flow3 = profileIds.toFlowOrEmpty(
                                     block = profileDao::profiles,
                                 ),
-                                flow4 = labelers(),
+                                flow4 = labelers,
                             ) { posts, embeddedRecords, repostProfiles, labelers ->
                                 if (posts.isEmpty()) return@combine emptyList()
                                 val urisToPosts = posts.associateBy { it.entity.uri }
