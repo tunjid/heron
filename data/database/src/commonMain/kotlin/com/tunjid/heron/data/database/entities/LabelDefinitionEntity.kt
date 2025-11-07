@@ -3,6 +3,9 @@ package com.tunjid.heron.data.database.entities
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
+import com.tunjid.heron.data.core.models.Label
+import com.tunjid.heron.data.core.models.Labeler
+import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.ProfileId
 
 @Entity(
@@ -30,3 +33,12 @@ data class LabelDefinitionEntity(
     val severity: String,
     val localeInfoCbor: String,
 )
+
+fun LabelDefinitionEntity.asExternalModelWithLocale(): Pair<Label.Definition, Labeler.LocaleInfoList> =
+    Label.Definition(
+        adultOnly = adultOnly,
+        blurs = Label.BlurTarget.valueOf(blurs.lowercase()),
+        defaultSetting = Label.Visibility(defaultSetting.lowercase()),
+        identifier = Label.Value(identifier),
+        severity = Label.Severity.valueOf(severity.lowercase()),
+    ) to localeInfoCbor.fromBase64EncodedUrl()
