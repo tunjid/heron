@@ -21,7 +21,6 @@ import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
-import com.tunjid.heron.data.database.daos.LabelerDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
@@ -70,7 +69,6 @@ import kotlinx.datetime.Instant
 class MultipleEntitySaverProvider @Inject constructor(
     private val postDao: PostDao,
     private val labelDao: LabelDao,
-    private val labelerDao: LabelerDao,
     private val listDao: ListDao,
     private val embedDao: EmbedDao,
     private val profileDao: ProfileDao,
@@ -86,7 +84,6 @@ class MultipleEntitySaverProvider @Inject constructor(
     ) = MultipleEntitySaver(
         postDao = postDao,
         labelDao = labelDao,
-        labelerDao = labelerDao,
         listDao = listDao,
         embedDao = embedDao,
         profileDao = profileDao,
@@ -107,7 +104,6 @@ class MultipleEntitySaverProvider @Inject constructor(
  */
 internal class MultipleEntitySaver(
     private val postDao: PostDao,
-    private val labelerDao: LabelerDao,
     private val labelDao: LabelDao,
     private val listDao: ListDao,
     private val embedDao: EmbedDao,
@@ -238,7 +234,7 @@ internal class MultipleEntitySaver(
 
         feedGeneratorDao.upsertFeedGenerators(feedGeneratorEntities.list)
 
-        labelerDao.upsertLabelers(labelerEntities.list)
+        labelDao.upsertLabelers(labelerEntities.list)
         labelDao.upsertLabelValueDefinitions(labelDefinitionsEntities.list)
         labelDao.upsertLabels(labelEntities.list)
 

@@ -37,9 +37,13 @@ data class LabelDefinitionEntity(
 fun LabelDefinitionEntity.asExternalModel(): Label.Definition =
     Label.Definition(
         adultOnly = adultOnly,
-        blurs = Label.BlurTarget.valueOf(blurs.lowercase()),
+        blurs = Label.BlurTarget.entries.firstOrNull {
+            it.name.equals(blurs, ignoreCase = true)
+        } ?: Label.BlurTarget.None,
         defaultSetting = Label.Visibility(defaultSetting.lowercase()),
         identifier = Label.Value(identifier),
-        severity = Label.Severity.valueOf(severity.lowercase()),
+        severity = Label.Severity.entries.firstOrNull {
+            it.name.equals(severity, ignoreCase = true)
+        } ?: Label.Severity.None,
         locales = localeInfoCbor.fromBase64EncodedUrl(),
     )
