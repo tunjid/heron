@@ -27,6 +27,7 @@ import com.tunjid.heron.data.database.callbacks.UnknownProfileInsertionCallback
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
+import com.tunjid.heron.data.database.daos.LabelDefinitionDao
 import com.tunjid.heron.data.database.daos.LabelerDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.MessageDao
@@ -190,7 +191,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun postDao(): PostDao
     abstract fun embedDao(): EmbedDao
     abstract fun labelDao(): LabelDao
-
+    abstract fun labelDefinitionDao(): LabelDefinitionDao
     abstract fun labelerDao(): LabelerDao
     abstract fun timelineDao(): TimelineDao
     abstract fun feedGeneratorDao(): FeedGeneratorDao
