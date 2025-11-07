@@ -21,6 +21,7 @@ import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
+import com.tunjid.heron.data.database.daos.LabelerDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
@@ -31,7 +32,9 @@ import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.ConversationEntity
 import com.tunjid.heron.data.database.entities.ConversationMembersEntity
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
+import com.tunjid.heron.data.database.entities.LabelDefinitionEntity
 import com.tunjid.heron.data.database.entities.LabelEntity
+import com.tunjid.heron.data.database.entities.LabelerEntity
 import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.ListMemberEntity
 import com.tunjid.heron.data.database.entities.MessageEntity
@@ -67,6 +70,7 @@ import kotlinx.datetime.Instant
 class MultipleEntitySaverProvider @Inject constructor(
     private val postDao: PostDao,
     private val labelDao: LabelDao,
+    private val labelerDao: LabelerDao,
     private val listDao: ListDao,
     private val embedDao: EmbedDao,
     private val profileDao: ProfileDao,
@@ -82,6 +86,7 @@ class MultipleEntitySaverProvider @Inject constructor(
     ) = MultipleEntitySaver(
         postDao = postDao,
         labelDao = labelDao,
+        labelerDao = labelerDao,
         listDao = listDao,
         embedDao = embedDao,
         profileDao = profileDao,
@@ -103,6 +108,7 @@ class MultipleEntitySaverProvider @Inject constructor(
 internal class MultipleEntitySaver(
     private val postDao: PostDao,
     private val labelDao: LabelDao,
+    private val labelerDao: LabelerDao,
     private val listDao: ListDao,
     private val embedDao: EmbedDao,
     private val profileDao: ProfileDao,
@@ -144,6 +150,8 @@ internal class MultipleEntitySaver(
     private val listEntities = LazyList<ListEntity>()
 
     private val labelEntities = LazyList<LabelEntity>()
+    private val labelerEntities = LazyList<LabelerEntity>()
+    private val labelDefinitionsEntities = LazyList<LabelDefinitionEntity>()
 
     private val feedGeneratorEntities = LazyList<FeedGeneratorEntity>()
 
@@ -231,6 +239,8 @@ internal class MultipleEntitySaver(
         feedGeneratorDao.upsertFeedGenerators(feedGeneratorEntities.list)
 
         labelDao.upsertLabels(labelEntities.list)
+        labelDao.upsertLabelValueDefinitions(labelDefinitionsEntities.list)
+        labelerDao.upsertLabelers(labelerEntities.list)
 
         timelineDao.upsertTimelineItems(timelineItemEntities.list)
 
@@ -289,6 +299,10 @@ internal class MultipleEntitySaver(
     fun add(entity: ProfileViewerStateEntity) = profileViewerEntities.add(entity)
 
     fun add(entity: LabelEntity) = labelEntities.add(entity)
+
+    fun add(entity: LabelerEntity) = labelerEntities.add(entity)
+
+    fun add(entity: LabelDefinitionEntity) = labelDefinitionsEntities.add(entity)
 
     fun add(entity: ListEntity) = listEntities.add(entity)
 
