@@ -17,20 +17,10 @@
 package com.tunjid.heron.data.database.daos
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Transaction
-import androidx.room.Update
 import androidx.room.Upsert
-import com.tunjid.heron.data.core.types.ListId
+import com.tunjid.heron.data.database.entities.LabelDefinitionEntity
 import com.tunjid.heron.data.database.entities.LabelEntity
-import com.tunjid.heron.data.database.entities.ListEntity
-import com.tunjid.heron.data.database.entities.ListMemberEntity
-import com.tunjid.heron.data.database.entities.PopulatedListEntity
-import com.tunjid.heron.data.database.entities.PopulatedListMemberEntity
-import com.tunjid.heron.data.database.entities.partial
-import kotlinx.coroutines.flow.Flow
+import com.tunjid.heron.data.database.entities.LabelerEntity
 
 @Dao
 interface LabelDao {
@@ -38,5 +28,15 @@ interface LabelDao {
     @Upsert
     suspend fun upsertLabels(
         entities: List<LabelEntity>,
+    )
+
+    @Upsert
+    suspend fun upsertLabelValueDefinitions(
+        entities: List<LabelDefinitionEntity>,
+    )
+
+    @Upsert
+    suspend fun upsertLabelers(
+        entities: List<LabelerEntity>,
     )
 }
