@@ -18,7 +18,6 @@ package com.tunjid.heron.data.database.daos
 
 import androidx.room.Dao
 import androidx.room.Upsert
-import com.tunjid.heron.data.database.entities.LabelDefinitionEntity
 import com.tunjid.heron.data.database.entities.LabelEntity
 
 @Dao
@@ -27,10 +26,5 @@ interface LabelDao {
     @Upsert
     suspend fun upsertLabels(
         entities: List<LabelEntity>,
-    )
-
-    @Upsert
-    suspend fun upsertLabelValueDefinitions(
-        entities: List<LabelDefinitionEntity>,
     )
 }

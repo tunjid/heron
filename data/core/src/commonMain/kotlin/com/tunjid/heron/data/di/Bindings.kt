@@ -25,6 +25,7 @@ import com.tunjid.heron.data.database.configureAndBuild
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
+import com.tunjid.heron.data.database.daos.LabelDefinitionDao
 import com.tunjid.heron.data.database.daos.LabelerDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.MessageDao
@@ -184,6 +185,12 @@ class DataBindings(
     fun provideLabelDao(
         database: AppDatabase,
     ): LabelDao = database.labelDao()
+
+    @SingleIn(AppScope::class)
+    @Provides
+    fun provideLabelDefinitionsDao(
+        database: AppDatabase,
+    ): LabelDefinitionDao = database.labelDefinitionDao()
 
     @SingleIn(AppScope::class)
     @Provides
