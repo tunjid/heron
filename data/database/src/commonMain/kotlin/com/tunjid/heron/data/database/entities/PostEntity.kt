@@ -24,6 +24,7 @@ import androidx.room.Junction
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.tunjid.heron.data.core.models.ImageList
+import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
@@ -142,6 +143,16 @@ data class PopulatedPostEntity(
         entityColumn = "uri",
     )
     val labelEntities: List<LabelEntity>,
+    @Relation(
+        parentColumn = "authorId",
+        entityColumn = "uri",
+        associateBy = Junction(
+            value = ProfileEntity::class,
+            parentColumn = "did",
+            entityColumn = "did",
+        ),
+    )
+    val authorLabelEntities: List<LabelEntity>,
 )
 
 data class EmbeddedPopulatedPostEntity(
@@ -169,7 +180,9 @@ fun PopulatedPostEntity.asExternalModel(
     quoteCount = entity.quoteCount.orZero(),
     bookmarkCount = entity.bookmarkCount.orZero(),
     indexedAt = entity.indexedAt,
-    author = author.asExternalModel(),
+    author = author.asExternalModel(
+        labels = authorLabelEntities.map(LabelEntity::asExternalModel),
+    ),
     embed = when {
         externalEmbeds.isNotEmpty() -> externalEmbeds.first().asExternalModel()
         videos.isNotEmpty() -> videos.first().asExternalModel()

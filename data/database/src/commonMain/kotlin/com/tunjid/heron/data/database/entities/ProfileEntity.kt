@@ -18,6 +18,7 @@ package com.tunjid.heron.data.database.entities
 
 import androidx.room.Embedded
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.tunjid.heron.data.core.models.Label
@@ -31,6 +32,10 @@ import kotlinx.datetime.Instant
 
 @Entity(
     tableName = "profiles",
+    indices = [
+        Index(value = ["did"]),
+        Index(value = ["handle"]),
+    ],
 )
 data class ProfileEntity(
     @PrimaryKey
