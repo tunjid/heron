@@ -606,7 +606,7 @@ internal class OfflinePostRepository @Inject constructor(
 private fun List<PopulatedProfileEntity>.asExternalModels() =
     map {
         ProfileWithViewerState(
-            profile = it.entity.asExternalModel(),
+            profile = it.asExternalModel(),
             viewerState = it.relationship?.asExternalModel(),
         )
     }
