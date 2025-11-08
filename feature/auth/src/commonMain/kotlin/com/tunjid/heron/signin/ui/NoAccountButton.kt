@@ -34,8 +34,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.PrimaryDialogButton
 import com.tunjid.heron.ui.SimpleDialog
-import com.tunjid.heron.ui.SimpleDialogConfirmButton
 import com.tunjid.heron.ui.SimpleDialogText
 import com.tunjid.heron.ui.SimpleDialogTitle
 import heron.feature.auth.generated.resources.Res
@@ -97,7 +97,7 @@ private fun NoAccountDialog(
         },
         dismissButton = {
             val uriHandler = LocalUriHandler.current
-            SimpleDialogConfirmButton(
+            PrimaryDialogButton(
                 text = stringResource(Res.string.learn_more),
                 onClick = {
                     runCatching { uriHandler.openUri(AtProtoWebsiteUrl) }
@@ -105,7 +105,7 @@ private fun NoAccountDialog(
             )
         },
         confirmButton = {
-            SimpleDialogConfirmButton(
+            PrimaryDialogButton(
                 text = stringResource(Res.string.okay),
                 onClick = onDismiss,
             )

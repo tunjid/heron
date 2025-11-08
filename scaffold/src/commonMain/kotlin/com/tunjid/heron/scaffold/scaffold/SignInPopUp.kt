@@ -22,9 +22,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.tunjid.heron.ui.NeutralDialogButton
+import com.tunjid.heron.ui.PrimaryDialogButton
 import com.tunjid.heron.ui.SimpleDialog
-import com.tunjid.heron.ui.SimpleDialogConfirmButton
-import com.tunjid.heron.ui.SimpleDialogDismissButton
 import com.tunjid.heron.ui.SimpleDialogText
 import com.tunjid.heron.ui.SimpleDialogTitle
 import heron.scaffold.generated.resources.Res
@@ -80,13 +80,13 @@ private fun SignInPopUp(
             )
         },
         confirmButton = {
-            SimpleDialogConfirmButton(
+            PrimaryDialogButton(
                 text = stringResource(Res.string.sign_in),
                 onClick = onSignInClicked,
             )
         },
         dismissButton = {
-            SimpleDialogDismissButton(
+            NeutralDialogButton(
                 text = stringResource(Res.string.dismiss),
                 onClick = {
                     state.visible = false

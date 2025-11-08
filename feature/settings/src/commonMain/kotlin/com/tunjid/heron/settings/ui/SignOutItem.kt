@@ -27,9 +27,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.tunjid.heron.ui.DestructiveDialogButton
+import com.tunjid.heron.ui.NeutralDialogButton
 import com.tunjid.heron.ui.SimpleDialog
-import com.tunjid.heron.ui.SimpleDialogConfirmButton
-import com.tunjid.heron.ui.SimpleDialogDismissButton
 import com.tunjid.heron.ui.SimpleDialogText
 import com.tunjid.heron.ui.SimpleDialogTitle
 import heron.feature.settings.generated.resources.Res
@@ -87,13 +87,13 @@ fun SignOutDialog(
             )
         },
         confirmButton = {
-            SimpleDialogConfirmButton(
+            DestructiveDialogButton(
                 text = stringResource(Res.string.sign_out),
                 onClick = onConfirmSignOut,
             )
         },
         dismissButton = {
-            SimpleDialogDismissButton(
+            NeutralDialogButton(
                 text = stringResource(Res.string.cancel),
                 onClick = onDismiss,
             )

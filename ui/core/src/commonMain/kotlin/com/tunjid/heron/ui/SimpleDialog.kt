@@ -76,7 +76,7 @@ fun SimpleDialogText(
 }
 
 @Composable
-fun SimpleDialogDismissButton(
+fun DestructiveDialogButton(
     text: String,
     onClick: () -> Unit,
 ) {
@@ -88,7 +88,19 @@ fun SimpleDialogDismissButton(
 }
 
 @Composable
-fun SimpleDialogConfirmButton(
+fun NeutralDialogButton(
+    text: String,
+    onClick: () -> Unit,
+) {
+    StyledDialogButton(
+        text = text,
+        color = MaterialTheme.colorScheme.outline,
+        onClick = onClick,
+    )
+}
+
+@Composable
+fun PrimaryDialogButton(
     text: String,
     onClick: () -> Unit,
 ) {

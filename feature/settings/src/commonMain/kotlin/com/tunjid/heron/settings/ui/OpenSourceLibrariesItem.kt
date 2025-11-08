@@ -45,9 +45,9 @@ import com.mikepenz.aboutlibraries.ui.compose.m3.LicenseDialogBody
 import com.mikepenz.aboutlibraries.ui.compose.m3.libraryColors
 import com.mikepenz.aboutlibraries.ui.compose.util.author
 import com.mikepenz.aboutlibraries.ui.compose.util.htmlReadyLicenseContent
+import com.tunjid.heron.ui.NeutralDialogButton
+import com.tunjid.heron.ui.PrimaryDialogButton
 import com.tunjid.heron.ui.SimpleDialog
-import com.tunjid.heron.ui.SimpleDialogConfirmButton
-import com.tunjid.heron.ui.SimpleDialogDismissButton
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.close
 import heron.feature.settings.generated.resources.open_source_licenses
@@ -173,7 +173,7 @@ private fun LicenseDialog(
         },
         confirmButton = {
             library.website?.let { website ->
-                SimpleDialogConfirmButton(
+                PrimaryDialogButton(
                     text = stringResource(Res.string.view_website),
                     onClick = {
                         runCatching { uriHandler.openUri(website) }
@@ -182,7 +182,7 @@ private fun LicenseDialog(
             }
         },
         dismissButton = {
-            SimpleDialogDismissButton(
+            NeutralDialogButton(
                 stringResource(Res.string.close),
                 onClick = onDismiss,
             )
