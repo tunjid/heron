@@ -26,9 +26,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
@@ -37,11 +41,18 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -55,6 +66,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
+import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -70,7 +82,10 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import heron.ui.timeline.generated.resources.Res
+import heron.ui.timeline.generated.resources.post_author_label
 import kotlinx.datetime.Instant
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun Post(
@@ -105,11 +120,13 @@ fun Post(
             presentationLookaheadScope = presentationLookaheadScope,
             post = post,
             presentation = presentation,
+            labelers = labelers,
             labelVisibilitiesToDefinitions = labelVisibilitiesToDefinitions,
             sharedElementPrefix = sharedElementPrefix,
             avatarShape = avatarShape,
             now = now,
             createdAt = createdAt,
+            languageTag = Locale.current.toLanguageTag(),
         )
         Column(
             modifier = Modifier
@@ -126,6 +143,7 @@ fun Post(
                         PostContent.Embed.Media -> EmbedContent(postData)
                         PostContent.Metadata -> if (isAnchoredInTimeline) MetadataContent(postData)
                         PostContent.Text -> TextContent(postData)
+                        PostContent.Labels -> if (postData.hasLabels) LabelContent(postData)
                     }
                 }
             }
@@ -185,6 +203,78 @@ private fun AttributionContent(
                     sharedElementPrefix = data.sharedElementPrefix,
                     paneMovableElementSharedTransitionScope = this,
                 )
+            },
+        )
+
+        Timeline.Presentation.Media.Condensed -> Unit
+        Timeline.Presentation.Media.Grid -> Unit
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun LabelContent(
+    data: PostData,
+) = with(data.paneMovableElementSharedTransitionScope) {
+    when (data.presentation) {
+        Timeline.Presentation.Text.WithEmbed,
+        Timeline.Presentation.Media.Expanded,
+        -> FlowRow(
+            modifier = Modifier
+                .contentPresentationPadding(
+                    content = PostContent.Labels,
+                    presentation = data.presentation,
+                ),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            itemVerticalAlignment = Alignment.CenterVertically,
+            content = {
+                data.post.author.labels.forEach { label ->
+                    data.name(label)?.let { labelName ->
+                        val authorLabelContentDescription = data.contentDescription(label) ?.let {
+                            stringResource(
+                                Res.string.post_author_label,
+                                it,
+                            )
+                        }
+                        Row(
+                            modifier = Modifier
+                                .semantics {
+                                    role = Role.Button
+                                    authorLabelContentDescription ?.let { contentDescription = it }
+                                },
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            data.creatorAvatar(label)?.let {
+                                AsyncImage(
+                                    args = remember(it) {
+                                        ImageArgs(
+                                            url = it.uri,
+                                            contentScale = ContentScale.Crop,
+                                            contentDescription = null,
+                                            shape = data.avatarShape,
+                                        )
+                                    },
+                                    modifier = Modifier
+                                        .paneStickySharedElement(
+                                            sharedContentState = rememberSharedContentState(
+                                                data.sharedElementKey(label),
+                                            ),
+                                        )
+                                        .size(12.dp),
+                                )
+                            }
+                            Text(
+                                text = labelName,
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.outline,
+                            )
+                        }
+                    }
+                }
             },
         )
 
@@ -422,6 +512,13 @@ private fun Timeline.Presentation.postContentStartPadding(
     }
 
     PostContent.Metadata -> 0.dp
+
+    PostContent.Labels -> when (this) {
+        Timeline.Presentation.Text.WithEmbed -> 24.dp
+        Timeline.Presentation.Media.Expanded -> 8.dp
+        Timeline.Presentation.Media.Condensed -> 0.dp
+        Timeline.Presentation.Media.Grid -> 0.dp
+    }
 }
 
 private fun Timeline.Presentation.postContentEndPadding(
@@ -460,6 +557,13 @@ private fun Timeline.Presentation.postContentEndPadding(
     }
 
     PostContent.Metadata -> 0.dp
+
+    PostContent.Labels -> when (this) {
+        Timeline.Presentation.Text.WithEmbed -> 24.dp
+        Timeline.Presentation.Media.Expanded -> 8.dp
+        Timeline.Presentation.Media.Condensed -> 0.dp
+        Timeline.Presentation.Media.Grid -> 0.dp
+    }
 }
 
 private fun Embed?.asPostContent() = when (this) {
@@ -480,11 +584,13 @@ private fun rememberUpdatedPostData(
     presentationLookaheadScope: LookaheadScope,
     post: Post,
     presentation: Timeline.Presentation,
+    labelers: List<Labeler>,
     labelVisibilitiesToDefinitions: Map<Label.Visibility, List<Label.Definition>>,
     sharedElementPrefix: String,
     avatarShape: RoundedPolygonShape,
     now: Instant,
     createdAt: Instant,
+    languageTag: String,
 ): PostData {
     return remember {
         PostData(
@@ -493,11 +599,13 @@ private fun rememberUpdatedPostData(
             presentationLookaheadScope = presentationLookaheadScope,
             post = post,
             presentation = presentation,
+            labelers = labelers,
             labelVisibilitiesToDefinitions = labelVisibilitiesToDefinitions,
             sharedElementPrefix = sharedElementPrefix,
             avatarShape = avatarShape,
             now = now,
             created = createdAt,
+            languageTag = languageTag,
         )
     }.also {
         if (it.presentation != presentation) it.presentationChanged = true
@@ -506,11 +614,13 @@ private fun rememberUpdatedPostData(
         it.presentationLookaheadScope = presentationLookaheadScope
         it.post = post
         it.presentation = presentation
+        it.labelers = labelers
         it.labelVisibilitiesToDefinitions = labelVisibilitiesToDefinitions
         it.sharedElementPrefix = sharedElementPrefix
         it.avatarShape = avatarShape
         it.now = now
         it.createdAt = createdAt
+        it.languageTag = languageTag
     }
 }
 
@@ -521,11 +631,13 @@ private class PostData(
     presentationLookaheadScope: LookaheadScope,
     post: Post,
     presentation: Timeline.Presentation,
+    labelers: List<Labeler>,
     labelVisibilitiesToDefinitions: Map<Label.Visibility, List<Label.Definition>>,
     sharedElementPrefix: String,
     avatarShape: RoundedPolygonShape,
     now: Instant,
     created: Instant,
+    languageTag: String,
 ) {
     var postActions by mutableStateOf(postActions)
     var paneMovableElementSharedTransitionScope by mutableStateOf(
@@ -534,11 +646,13 @@ private class PostData(
     var presentationLookaheadScope by mutableStateOf(presentationLookaheadScope)
     var post by mutableStateOf(post)
     var presentation by mutableStateOf(presentation)
+    var labelers by mutableStateOf(labelers)
     var labelVisibilitiesToDefinitions by mutableStateOf(labelVisibilitiesToDefinitions)
     var sharedElementPrefix by mutableStateOf(sharedElementPrefix)
     var avatarShape by mutableStateOf(avatarShape)
     var now by mutableStateOf(now)
     var createdAt by mutableStateOf(created)
+    var languageTag by mutableStateOf(languageTag)
 
     var presentationChanged by mutableStateOf(false)
 
@@ -546,10 +660,50 @@ private class PostData(
         labelVisibilitiesToDefinitions.blurredMediaDefinitions
     }
 
+    val hasLabels
+        get() = post.labels.isNotEmpty() || post.author.labels.isNotEmpty()
+
+    private val labelDefinitionLookup by derivedStateOf {
+        labelers.associateBy(
+            keySelector = { it.creator.did },
+            valueTransform = { labeler ->
+                labeler.definitions.associateBy(
+                    keySelector = Label.Definition::identifier,
+                )
+            },
+        )
+    }
+
     @OptIn(ExperimentalSharedTransitionApi::class)
     val boundsTransform = BoundsTransform { _, _ ->
         SpringSpec.skipIf { !presentationChanged }
     }
+
+    fun creatorAvatar(label: Label): ImageUri? =
+        labelers.firstOrNull { it.creator.did == label.creatorId }
+            ?.creator
+            ?.avatar
+
+    fun name(label: Label): String? {
+        val labelDefinition = labelDefinitionLookup[label.creatorId] ?: return null
+        return labelDefinition[label.value]?.locale(languageTag)?.name
+    }
+
+    fun contentDescription(label: Label): String? {
+        val labelDefinition = labelDefinitionLookup[label.creatorId] ?: return null
+        return labelDefinition[label.value]?.locale(languageTag)?.description
+    }
+
+    fun sharedElementKey(
+        label: Label,
+    ) = "$sharedElementPrefix-${post.uri.uri}-${label.creatorId}-${label.value}"
+
+    private fun Label.Definition.locale(
+        currentLanguageTag: String,
+    ) = locales.list
+        .firstOrNull { it.lang == currentLanguageTag }
+        ?: locales.list
+            .firstOrNull()
 }
 
 private sealed class PostContent(val key: String) {
@@ -562,6 +716,7 @@ private sealed class PostContent(val key: String) {
 
     data object Metadata : PostContent(key = "Metadata")
     data object Actions : PostContent(key = "Actions")
+    data object Labels : PostContent(key = "Labels")
 }
 
 @Stable
@@ -579,6 +734,7 @@ private val SpringSpec = spring<Rect>(
 
 private val TextAndEmbedOrder = listOf(
     PostContent.Attribution,
+    PostContent.Labels,
     PostContent.Text,
     PostContent.Embed.Media,
     PostContent.Metadata,
@@ -587,6 +743,7 @@ private val TextAndEmbedOrder = listOf(
 
 private val ExpandedMediaOrder = listOf(
     PostContent.Attribution,
+    PostContent.Labels,
     PostContent.Embed.Media,
     PostContent.Actions,
     PostContent.Text,
@@ -595,6 +752,7 @@ private val ExpandedMediaOrder = listOf(
 
 private val CondensedMediaOrder = listOf(
     PostContent.Attribution,
+    PostContent.Labels,
     PostContent.Text,
     PostContent.Embed.Media,
     PostContent.Metadata,
@@ -603,6 +761,7 @@ private val CondensedMediaOrder = listOf(
 
 private val GridMediaOrder = listOf(
     PostContent.Attribution,
+    PostContent.Labels,
     PostContent.Text,
     PostContent.Embed.Media,
     PostContent.Metadata,
