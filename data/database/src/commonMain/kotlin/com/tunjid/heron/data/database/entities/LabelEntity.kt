@@ -28,6 +28,7 @@ import kotlinx.datetime.Instant
     tableName = "labels",
     primaryKeys = [
         "uri",
+        "value",
     ],
     foreignKeys = [
         ForeignKey(
@@ -41,6 +42,7 @@ import kotlinx.datetime.Instant
         Index(value = ["createdAt"]),
         Index(value = ["uri"]),
         Index(value = ["creatorId"]),
+        Index(value = ["value"]),
     ],
 )
 data class LabelEntity(
