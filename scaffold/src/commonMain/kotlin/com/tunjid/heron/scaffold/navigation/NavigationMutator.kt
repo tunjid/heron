@@ -283,7 +283,7 @@ private fun String.stripBeforePath(): String {
     val pathStartIndex = authorityAndPath.indexOf('/')
 
     // 3. Return the substring from that slash.
-    // If no slash is found (index -1), return an empty string.
+    // If no slash is found (index -1), return the home route.
     return if (pathStartIndex != -1) authorityAndPath.substring(pathStartIndex)
     else AppStack.Home.rootRoute.id
 }
