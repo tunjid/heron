@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,11 +63,13 @@ import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -78,10 +81,17 @@ import com.tunjid.heron.timeline.utilities.blurredMediaDefinitions
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.AttributionLayout
+import com.tunjid.heron.ui.NeutralDialogButton
+import com.tunjid.heron.ui.PrimaryDialogButton
+import com.tunjid.heron.ui.SimpleDialog
+import com.tunjid.heron.ui.SimpleDialogText
+import com.tunjid.heron.ui.SimpleDialogTitle
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import heron.ui.core.generated.resources.dismiss
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.post_author_label
 import kotlinx.datetime.Instant
@@ -231,7 +241,7 @@ private fun LabelContent(
             content = {
                 data.post.author.labels.forEach { label ->
                     data.name(label)?.let { labelName ->
-                        val authorLabelContentDescription = data.contentDescription(label) ?.let {
+                        val authorLabelContentDescription = data.contentDescription(label)?.let {
                             stringResource(
                                 Res.string.post_author_label,
                                 it,
@@ -239,9 +249,14 @@ private fun LabelContent(
                         }
                         Row(
                             modifier = Modifier
+                                .padding(2.dp)
                                 .semantics {
                                     role = Role.Button
-                                    authorLabelContentDescription ?.let { contentDescription = it }
+                                    authorLabelContentDescription?.let { contentDescription = it }
+                                }
+                                .clip(CircleShape)
+                                .clickable {
+                                    data.selectedLabel = label
                                 },
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -274,6 +289,9 @@ private fun LabelContent(
                             )
                         }
                     }
+                }
+                data.selectedLabel?.let { selectedLabel ->
+                    LabelDialog(data, selectedLabel)
                 }
             },
         )
@@ -446,6 +464,45 @@ private fun MetadataContent(
         quotes = data.post.quoteCount,
         likes = data.post.likeCount,
         onMetadataClicked = data.postActions::onPostMetadataClicked,
+    )
+}
+
+@Composable
+private fun LabelDialog(
+    data: PostData,
+    selectedLabel: Label,
+) {
+    SimpleDialog(
+        onDismissRequest = {
+            data.selectedLabel = null
+        },
+        title = {
+            SimpleDialogTitle(text = data.name(selectedLabel) ?: "")
+        },
+        text = {
+            Column {
+                SimpleDialogText(text = data.contentDescription(selectedLabel) ?: "")
+            }
+        },
+        dismissButton = {
+            NeutralDialogButton(
+                text = stringResource(CommonStrings.dismiss),
+                onClick = { data.selectedLabel = null },
+            )
+        },
+        confirmButton = {
+            data.creatorHandle(selectedLabel)?.let { profileHandle ->
+                PrimaryDialogButton(
+                    text = profileHandle.id,
+                    onClick = {
+                        data.postActions.onLinkTargetClicked(
+                            post = data.post,
+                            linkTarget = LinkTarget.UserHandleMention(profileHandle),
+                        )
+                    },
+                )
+            }
+        },
     )
 }
 
@@ -655,6 +712,7 @@ private class PostData(
     var languageTag by mutableStateOf(languageTag)
 
     var presentationChanged by mutableStateOf(false)
+    var selectedLabel by mutableStateOf<Label?>(null)
 
     val blurredMediaDefinitions by derivedStateOf {
         labelVisibilitiesToDefinitions.blurredMediaDefinitions
@@ -683,6 +741,11 @@ private class PostData(
         labelers.firstOrNull { it.creator.did == label.creatorId }
             ?.creator
             ?.avatar
+
+    fun creatorHandle(label: Label): ProfileHandle? =
+        labelers.firstOrNull { it.creator.did == label.creatorId }
+            ?.creator
+            ?.handle
 
     fun name(label: Label): String? {
         val labelDefinition = labelDefinitionLookup[label.creatorId] ?: return null
