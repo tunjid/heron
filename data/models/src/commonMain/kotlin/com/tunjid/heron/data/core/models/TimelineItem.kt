@@ -246,6 +246,7 @@ sealed class TimelineItem {
     abstract val id: String
     abstract val post: Post
 
+    abstract val labelers: List<Labeler>
     abstract val labelVisibilitiesToDefinitions: Map<Label.Visibility, List<Label.Definition>>
 
     val indexedAt
@@ -261,12 +262,14 @@ sealed class TimelineItem {
     data class Pinned(
         override val id: String,
         override val post: Post,
+        override val labelers: List<Labeler>,
         override val labelVisibilitiesToDefinitions: Map<Label.Visibility, List<Label.Definition>>,
     ) : TimelineItem()
 
     data class Repost(
         override val id: String,
         override val post: Post,
+        override val labelers: List<Labeler>,
         override val labelVisibilitiesToDefinitions: Map<Label.Visibility, List<Label.Definition>>,
         val by: Profile,
         val at: Instant,
@@ -274,6 +277,7 @@ sealed class TimelineItem {
 
     data class Thread(
         override val id: String,
+        override val labelers: List<Labeler>,
         override val labelVisibilitiesToDefinitions: Map<Label.Visibility, List<Label.Definition>>,
         val anchorPostIndex: Int,
         val posts: List<Post>,
@@ -287,6 +291,7 @@ sealed class TimelineItem {
     data class Single(
         override val id: String,
         override val post: Post,
+        override val labelers: List<Labeler>,
         override val labelVisibilitiesToDefinitions: Map<Label.Visibility, List<Label.Definition>>,
     ) : TimelineItem()
 }

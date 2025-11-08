@@ -140,6 +140,7 @@ fun TimelineItem(
                         sharedElementPrefix = sharedElementPrefix,
                         createdAt = item.post.createdAt,
                         presentation = presentation,
+                        labelers = item.labelers,
                         labelVisibilitiesToDefinitions = item.labelVisibilitiesToDefinitions,
                         postActions = postActions,
                     )
@@ -197,6 +198,7 @@ private fun ThreadedPost(
                         sharedElementPrefix = sharedElementPrefix,
                         createdAt = post.createdAt,
                         presentation = presentation,
+                        labelers = item.labelers,
                         labelVisibilitiesToDefinitions = item.labelVisibilitiesToDefinitions,
                         postActions = postActions,
                         timeline = {

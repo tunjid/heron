@@ -77,7 +77,6 @@ import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.PostEntity
-import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.ThreadedPostEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
@@ -1143,6 +1142,7 @@ internal class OfflineTimelineRepository(
                                             generation = null,
                                             anchorPostIndex = 2,
                                             hasBreak = entity.reply?.grandParentPostAuthorId != null,
+                                            labelers = labelers,
                                             labelVisibilitiesToDefinitions = visibilitiesToDefinitions,
                                             posts = listOf(
                                                 replyRoot.asExternalModel(
@@ -1166,18 +1166,21 @@ internal class OfflineTimelineRepository(
                                             post = mainPost,
                                             by = repostedBy.asExternalModel(),
                                             at = entity.indexedAt,
+                                            labelers = labelers,
                                             labelVisibilitiesToDefinitions = visibilitiesToDefinitions,
                                         )
 
                                         entity.isPinned -> TimelineItem.Pinned(
                                             id = entity.id,
                                             post = mainPost,
+                                            labelers = labelers,
                                             labelVisibilitiesToDefinitions = visibilitiesToDefinitions,
                                         )
 
                                         else -> TimelineItem.Single(
                                             id = entity.id,
                                             post = mainPost,
+                                            labelers = labelers,
                                             labelVisibilitiesToDefinitions = visibilitiesToDefinitions,
                                         )
                                     }
@@ -1354,6 +1357,7 @@ internal class OfflineTimelineRepository(
             anchorPostIndex = 0,
             hasBreak = false,
             posts = listOf(post),
+            labelers = labelers,
             labelVisibilitiesToDefinitions = post.labelVisibilitiesToDefinitions(
                 labelers = labelers,
                 labelPreferences = labelPreferences,
@@ -1371,6 +1375,7 @@ internal class OfflineTimelineRepository(
             anchorPostIndex = 0,
             hasBreak = false,
             posts = listOf(post),
+            labelers = labelers,
             labelVisibilitiesToDefinitions = post.labelVisibilitiesToDefinitions(
                 labelers = labelers,
                 labelPreferences = labelPreferences,

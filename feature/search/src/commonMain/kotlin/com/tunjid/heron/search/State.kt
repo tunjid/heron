@@ -19,6 +19,7 @@ package com.tunjid.heron.search
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Label
+import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
@@ -62,6 +63,7 @@ sealed interface SearchResult {
 
     data class OfPost(
         val post: Post,
+        val labelers: List<Labeler>,
         val labelVisibilitiesToDefinitions: Map<Label.Visibility, List<Label.Definition>>,
         override val sharedElementPrefix: String,
     ) : SearchResult
