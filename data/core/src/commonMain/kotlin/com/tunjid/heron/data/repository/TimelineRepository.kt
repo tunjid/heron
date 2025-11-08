@@ -255,7 +255,7 @@ internal class OfflineTimelineRepository(
                 it.signedInProfileData
                     ?.preferences
                     ?.labelerPreferences
-                    ?.mapNotNull(LabelerPreference::labelerId)
+                    ?.map(LabelerPreference::labelerId)
                     ?.plus(Collections.DefaultLabelerProfileId)
                     ?: listOf(Collections.DefaultLabelerProfileId)
             }

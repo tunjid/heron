@@ -235,7 +235,9 @@ private fun Preferences.update(getPreferencesResponse: GetPreferencesResponse) =
                 is PreferencesUnion.ContentLabelPref -> preferences.copy(
                     contentLabelPreferences = preferencesUnion.asExternalModel().let { newPref ->
                         preferences.contentLabelPreferences
-                            .filterNot { it.label == newPref.label }
+                            .filterNot {
+                                it.label == newPref.label && it.labelerId == newPref.labelerId
+                            }
                             .plus(newPref)
                     },
                 )
