@@ -24,5 +24,6 @@ fun sampleProfile(): Profile {
             createdFeedGeneratorCount = 0,
             createdStarterPackCount = 0,
         ),
+        labels = emptyList(),
     )
 }

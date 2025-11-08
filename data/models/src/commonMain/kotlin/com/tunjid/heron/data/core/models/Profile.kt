@@ -41,6 +41,8 @@ data class Profile(
     val indexedAt: Instant?,
     val createdAt: Instant?,
     val metadata: Metadata,
+    // Stubbed for migrations
+    val labels: List<Label> = emptyList(),
 ) : UrlEncodableModel {
 
     @Serializable
@@ -145,4 +147,5 @@ fun stubProfile(
         createdFeedGeneratorCount = 0,
         createdStarterPackCount = 0,
     ),
+    labels = emptyList(),
 )

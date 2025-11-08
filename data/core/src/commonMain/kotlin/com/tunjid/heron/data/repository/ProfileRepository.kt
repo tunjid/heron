@@ -59,8 +59,8 @@ import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedListMemberEntity
+import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
-import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
@@ -89,8 +89,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
@@ -188,8 +186,7 @@ internal class OfflineProfileRepository @Inject constructor(
     ): Flow<Profile> =
         profileDao.profiles(listOf(profileId))
             .distinctUntilChanged()
-            .map { it.firstOrNull()?.asExternalModel() }
-            .filterNotNull()
+            .mapNotNull { it.firstOrNull()?.asExternalModel() }
             .withRefresh {
                 refreshProfile(
                     profileId = profileId,
@@ -233,7 +230,7 @@ internal class OfflineProfileRepository @Inject constructor(
             )
                 .distinctUntilChanged()
                 .map { profileEntities ->
-                    profileEntities.map(ProfileEntity::asExternalModel)
+                    profileEntities.map(PopulatedProfileEntity::asExternalModel)
                 }
         }
 
