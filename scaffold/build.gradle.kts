@@ -27,10 +27,6 @@ android {
     namespace = "com.tunjid.heron.domain.navigation"
 }
 
-compose.resources {
-    publicResClass = true
-}
-
 kotlin {
     sourceSets {
         androidMain {

@@ -27,6 +27,9 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.em
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkTarget
+import heron.ui.core.generated.resources.Res
+
+typealias CommonStrings = Res.string
 
 @Composable
 fun rememberFormattedTextPost(

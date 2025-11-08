@@ -20,6 +20,11 @@ plugins {
     id("org.jetbrains.compose")
     alias(libs.plugins.composeCompiler)
 }
+
+compose.resources {
+    publicResClass = true
+}
+
 android {
     namespace = "com.tunjid.heron.ui.core"
 }

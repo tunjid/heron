@@ -63,12 +63,9 @@ import com.tunjid.treenav.requireCurrent
 import com.tunjid.treenav.strings.PathPattern
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.toRouteTrie
-import heron.scaffold.generated.resources.Res
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-
-typealias ScaffoldStrings = Res.string
 
 @Stable
 class AppState(

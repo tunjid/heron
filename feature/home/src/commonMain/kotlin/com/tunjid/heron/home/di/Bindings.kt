@@ -47,7 +47,6 @@ import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PaneSnackbarHost
 import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
-import com.tunjid.heron.scaffold.scaffold.ScaffoldStrings
 import com.tunjid.heron.scaffold.scaffold.fabOffset
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
@@ -55,6 +54,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.treenav.compose.PaneEntry
@@ -73,7 +73,7 @@ import dev.zacsweers.metro.StringKey
 import heron.feature.home.generated.resources.Res
 import heron.feature.home.generated.resources.create_post
 import heron.feature.home.generated.resources.save
-import heron.scaffold.generated.resources.sign_in
+import heron.ui.core.generated.resources.sign_in
 import org.jetbrains.compose.resources.stringResource
 
 internal const val RoutePattern = "/home"
@@ -178,7 +178,7 @@ class HomeBindings(
                             },
                         text = stringResource(
                             when {
-                                isSignedOut -> ScaffoldStrings.sign_in
+                                isSignedOut -> CommonStrings.sign_in
                                 state.tabLayout is TabLayout.Expanded -> Res.string.save
                                 else -> Res.string.create_post
                             },
