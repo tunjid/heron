@@ -32,7 +32,6 @@ interface LabelDao {
     @Query(
         """
         SELECT * FROM labelers
-        WHERE creatorId = :viewingProfileId
         ORDER BY likeCount DESC
     """,
     )
