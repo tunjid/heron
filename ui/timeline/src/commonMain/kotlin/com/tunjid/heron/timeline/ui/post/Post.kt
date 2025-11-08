@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,11 +63,12 @@ import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
-import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -78,12 +80,21 @@ import com.tunjid.heron.timeline.utilities.blurredMediaDefinitions
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.AttributionLayout
+import com.tunjid.heron.ui.NeutralDialogButton
+import com.tunjid.heron.ui.PrimaryDialogButton
+import com.tunjid.heron.ui.SimpleDialog
+import com.tunjid.heron.ui.SimpleDialogText
+import com.tunjid.heron.ui.SimpleDialogTitle
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import heron.ui.core.generated.resources.dismiss
 import heron.ui.timeline.generated.resources.Res
+import heron.ui.timeline.generated.resources.label_source
 import heron.ui.timeline.generated.resources.post_author_label
+import heron.ui.timeline.generated.resources.view_labeler
 import kotlinx.datetime.Instant
 import org.jetbrains.compose.resources.stringResource
 
@@ -230,49 +241,59 @@ private fun LabelContent(
             itemVerticalAlignment = Alignment.CenterVertically,
             content = {
                 data.post.author.labels.forEach { label ->
-                    data.name(label)?.let { labelName ->
-                        val authorLabelContentDescription = data.contentDescription(label) ?.let {
-                            stringResource(
-                                Res.string.post_author_label,
-                                it,
-                            )
-                        }
+                    data.withLabelerAndLocaleInfo(label) { labeler, localeInfo ->
+                        val authorLabelContentDescription = stringResource(
+                            Res.string.post_author_label,
+                            localeInfo.description,
+                        )
                         Row(
                             modifier = Modifier
+                                .padding(2.dp)
                                 .semantics {
                                     role = Role.Button
-                                    authorLabelContentDescription ?.let { contentDescription = it }
+                                    contentDescription = authorLabelContentDescription
+                                }
+                                .clip(CircleShape)
+                                .clickable {
+                                    data.selectedLabel = label
                                 },
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
-                            data.creatorAvatar(label)?.let {
-                                AsyncImage(
-                                    args = remember(it) {
-                                        ImageArgs(
-                                            url = it.uri,
-                                            contentScale = ContentScale.Crop,
-                                            contentDescription = null,
-                                            shape = data.avatarShape,
-                                        )
-                                    },
-                                    modifier = Modifier
-                                        .paneStickySharedElement(
-                                            sharedContentState = rememberSharedContentState(
-                                                data.sharedElementKey(label),
-                                            ),
-                                        )
-                                        .size(12.dp),
-                                )
-                            }
+                            AsyncImage(
+                                args = remember(labeler.creator.avatar) {
+                                    ImageArgs(
+                                        url = labeler.creator.avatar?.uri,
+                                        contentScale = ContentScale.Crop,
+                                        contentDescription = null,
+                                        shape = data.avatarShape,
+                                    )
+                                },
+                                modifier = Modifier
+                                    .paneStickySharedElement(
+                                        sharedContentState = rememberSharedContentState(
+                                            data.sharedElementKey(label),
+                                        ),
+                                    )
+                                    .size(12.dp),
+                            )
                             Text(
-                                text = labelName,
+                                text = localeInfo.name,
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.outline,
                             )
                         }
+                    }
+                }
+                data.selectedLabel?.let { selectedLabel ->
+                    data.withLabelerAndLocaleInfo(selectedLabel) { labeler, localeInfo ->
+                        LabelDialog(
+                            data = data,
+                            localeInfo = localeInfo,
+                            labelerHandle = labeler.creator.handle,
+                        )
                     }
                 }
             },
@@ -446,6 +467,55 @@ private fun MetadataContent(
         quotes = data.post.quoteCount,
         likes = data.post.likeCount,
         onMetadataClicked = data.postActions::onPostMetadataClicked,
+    )
+}
+
+@Composable
+private fun LabelDialog(
+    data: PostData,
+    labelerHandle: ProfileHandle,
+    localeInfo: Labeler.LocaleInfo,
+) {
+    SimpleDialog(
+        onDismissRequest = {
+            data.selectedLabel = null
+        },
+        title = {
+            SimpleDialogTitle(text = localeInfo.name)
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                SimpleDialogText(
+                    text = localeInfo.description,
+                )
+                SimpleDialogText(
+                    text = stringResource(
+                        Res.string.label_source,
+                        labelerHandle.id,
+                    ),
+                )
+            }
+        },
+        dismissButton = {
+            NeutralDialogButton(
+                text = stringResource(CommonStrings.dismiss),
+                onClick = { data.selectedLabel = null },
+            )
+        },
+        confirmButton = {
+            PrimaryDialogButton(
+                text = stringResource(Res.string.view_labeler),
+                onClick = {
+                    data.selectedLabel = null
+                    data.postActions.onLinkTargetClicked(
+                        post = data.post,
+                        linkTarget = LinkTarget.UserHandleMention(labelerHandle),
+                    )
+                },
+            )
+        },
     )
 }
 
@@ -655,6 +725,7 @@ private class PostData(
     var languageTag by mutableStateOf(languageTag)
 
     var presentationChanged by mutableStateOf(false)
+    var selectedLabel by mutableStateOf<Label?>(null)
 
     val blurredMediaDefinitions by derivedStateOf {
         labelVisibilitiesToDefinitions.blurredMediaDefinitions
@@ -662,12 +733,11 @@ private class PostData(
 
     val hasLabels
         get() = post.labels.isNotEmpty() || post.author.labels.isNotEmpty()
-
-    private val labelDefinitionLookup by derivedStateOf {
+    private val labelerDefinitionLookup by derivedStateOf {
         labelers.associateBy(
             keySelector = { it.creator.did },
             valueTransform = { labeler ->
-                labeler.definitions.associateBy(
+                labeler to labeler.definitions.associateBy(
                     keySelector = Label.Definition::identifier,
                 )
             },
@@ -679,19 +749,17 @@ private class PostData(
         SpringSpec.skipIf { !presentationChanged }
     }
 
-    fun creatorAvatar(label: Label): ImageUri? =
-        labelers.firstOrNull { it.creator.did == label.creatorId }
-            ?.creator
-            ?.avatar
-
-    fun name(label: Label): String? {
-        val labelDefinition = labelDefinitionLookup[label.creatorId] ?: return null
-        return labelDefinition[label.value]?.locale(languageTag)?.name
-    }
-
-    fun contentDescription(label: Label): String? {
-        val labelDefinition = labelDefinitionLookup[label.creatorId] ?: return null
-        return labelDefinition[label.value]?.locale(languageTag)?.description
+    inline fun withLabelerAndLocaleInfo(
+        label: Label,
+        labeler: (Labeler, Labeler.LocaleInfo) -> Unit,
+    ) {
+        labelerDefinitionLookup[label.creatorId]?.let { (labeler, definitionMap) ->
+            definitionMap[label.value]?.let { definition ->
+                definition.locale(languageTag)?.let { localeInfo ->
+                    labeler(labeler, localeInfo)
+                }
+            }
+        }
     }
 
     fun sharedElementKey(
