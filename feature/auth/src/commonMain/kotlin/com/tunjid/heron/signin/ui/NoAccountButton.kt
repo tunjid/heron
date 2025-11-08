@@ -18,9 +18,7 @@ package com.tunjid.heron.signin.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -36,6 +34,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.PrimaryDialogButton
+import com.tunjid.heron.ui.SimpleDialog
+import com.tunjid.heron.ui.SimpleDialogText
+import com.tunjid.heron.ui.SimpleDialogTitle
 import heron.feature.auth.generated.resources.Res
 import heron.feature.auth.generated.resources.learn_more
 import heron.feature.auth.generated.resources.no_account_dialog_details
@@ -81,47 +83,33 @@ fun NoAccountButton(
 private fun NoAccountDialog(
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    SimpleDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(
+            SimpleDialogTitle(
                 text = stringResource(Res.string.no_account_dialog_title),
             )
         },
         text = {
-            Text(
+            SimpleDialogText(
                 text = stringResource(Res.string.no_account_dialog_details),
             )
         },
         dismissButton = {
             val uriHandler = LocalUriHandler.current
-
-            TextButton(
+            PrimaryDialogButton(
+                text = stringResource(Res.string.learn_more),
                 onClick = {
                     runCatching { uriHandler.openUri(AtProtoWebsiteUrl) }
                 },
-            ) {
-                Text(
-                    text = stringResource(Res.string.learn_more),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.labelLarge,
-                )
-            }
+            )
         },
         confirmButton = {
-            TextButton(
+            PrimaryDialogButton(
+                text = stringResource(Res.string.okay),
                 onClick = onDismiss,
-            ) {
-                Text(
-                    text = stringResource(Res.string.okay),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.labelLarge,
-                )
-            }
+            )
         },
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = 6.dp,
-        shape = MaterialTheme.shapes.medium,
     )
 }
 
