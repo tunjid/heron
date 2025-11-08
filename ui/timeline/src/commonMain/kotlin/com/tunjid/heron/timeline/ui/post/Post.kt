@@ -47,6 +47,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -78,7 +82,10 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import heron.ui.timeline.generated.resources.Res
+import heron.ui.timeline.generated.resources.post_author_label
 import kotlinx.datetime.Instant
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun Post(
@@ -224,7 +231,18 @@ private fun LabelContent(
             content = {
                 data.post.author.labels.forEach { label ->
                     data.name(label)?.let { labelName ->
+                        val authorLabelContentDescription = data.contentDescription(label) ?.let {
+                            stringResource(
+                                Res.string.post_author_label,
+                                it,
+                            )
+                        }
                         Row(
+                            modifier = Modifier
+                                .semantics {
+                                    role = Role.Button
+                                    authorLabelContentDescription ?.let { contentDescription = it }
+                                },
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
@@ -234,8 +252,7 @@ private fun LabelContent(
                                         ImageArgs(
                                             url = it.uri,
                                             contentScale = ContentScale.Crop,
-                                            contentDescription = data.post.author.displayName
-                                                ?: data.post.author.handle.id,
+                                            contentDescription = null,
                                             shape = data.avatarShape,
                                         )
                                     },
@@ -646,13 +663,12 @@ private class PostData(
     val hasLabels
         get() = post.labels.isNotEmpty() || post.author.labels.isNotEmpty()
 
-    private val labelDisplayLookup by derivedStateOf {
+    private val labelDefinitionLookup by derivedStateOf {
         labelers.associateBy(
             keySelector = { it.creator.did },
             valueTransform = { labeler ->
                 labeler.definitions.associateBy(
                     keySelector = Label.Definition::identifier,
-                    valueTransform = { it.displayName(languageTag) },
                 )
             },
         )
@@ -669,23 +685,25 @@ private class PostData(
             ?.avatar
 
     fun name(label: Label): String? {
-        val labelIdentifiersToLocaleNames = labelDisplayLookup[label.creatorId] ?: return null
-        return labelIdentifiersToLocaleNames[label.value]
+        val labelDefinition = labelDefinitionLookup[label.creatorId] ?: return null
+        return labelDefinition[label.value]?.locale(languageTag)?.name
+    }
+
+    fun contentDescription(label: Label): String? {
+        val labelDefinition = labelDefinitionLookup[label.creatorId] ?: return null
+        return labelDefinition[label.value]?.locale(languageTag)?.description
     }
 
     fun sharedElementKey(
         label: Label,
     ) = "$sharedElementPrefix-${post.uri.uri}-${label.creatorId}-${label.value}"
 
-    private fun Label.Definition.displayName(
+    private fun Label.Definition.locale(
         currentLanguageTag: String,
     ) = locales.list
         .firstOrNull { it.lang == currentLanguageTag }
-        ?.name
         ?: locales.list
             .firstOrNull()
-            ?.name
-        ?: identifier.value
 }
 
 private sealed class PostContent(val key: String) {
