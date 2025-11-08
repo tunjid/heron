@@ -229,7 +229,15 @@ internal class PersistedSessionManager @Inject constructor(
     ) = with(config) {
         install(DefaultRequest) {
             // The managed session must take its default URL from the current auth token
-            url.takeFrom(savedStateDataSource.savedState.value.auth.defaultUrl)
+            val currentSavedState = savedStateDataSource.savedState.value
+            url.takeFrom(currentSavedState.auth.defaultUrl)
+            currentSavedState.signedInProfileData
+                ?.preferences
+                ?.labelerPreferences
+                ?.map { it.labelerId.id }
+                ?.let { labelProfileIds ->
+                    headers.appendAll(AtProtoLabelerHeader, labelProfileIds)
+                }
         }
         install(
             atProtoAuth(
@@ -243,7 +251,7 @@ internal class PersistedSessionManager @Inject constructor(
             level = LogLevel.INFO
             logger = object : Logger {
                 override fun log(message: String) {
-//                        println("Logger Ktor => $message")
+//                    println("Logger Ktor => $message")
                 }
             }
         }
@@ -551,6 +559,7 @@ private val SignedOutPaths = listOf(
 )
 
 private const val AtProtoProxyHeader = "Atproto-Proxy"
+private const val AtProtoLabelerHeader = "atproto-accept-labelers"
 private const val ChatAtProtoProxyHeaderValue = "did:web:api.bsky.chat#bsky_chat"
 private const val SignedOutUrl = "https://public.api.bsky.app"
 private const val RefreshTokenEndpoint = "/xrpc/com.atproto.server.refreshSession"
