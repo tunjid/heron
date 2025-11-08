@@ -499,6 +499,7 @@ private fun CoroutineScope.searchStateHolders(
                                             SearchResult.OfPost(
                                                 post = post,
                                                 sharedElementPrefix = searchState.tilingData.currentQuery.sourceId,
+                                                labelers = labelers,
                                                 labelVisibilitiesToDefinitions = post.labelVisibilitiesToDefinitions(
                                                     labelers = labelers,
                                                     labelPreferences = contentLabelPreferences,

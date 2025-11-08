@@ -29,7 +29,6 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.search.SearchResult
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.postActions
@@ -80,6 +79,7 @@ internal fun PostSearchResult(
                 sharedElementPrefix = result.sharedElementPrefix,
                 createdAt = result.post.createdAt,
                 presentation = Timeline.Presentation.Text.WithEmbed,
+                labelers = result.labelers,
                 labelVisibilitiesToDefinitions = result.labelVisibilitiesToDefinitions,
                 postActions = remember(result, onPostInteraction) {
                     postActions(

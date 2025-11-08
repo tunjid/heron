@@ -45,6 +45,7 @@ data class State(
                 posts = listOf(it),
                 generation = 0,
                 hasBreak = false,
+                labelers = emptyList(),
                 labelVisibilitiesToDefinitions = emptyMap(),
             )
         },

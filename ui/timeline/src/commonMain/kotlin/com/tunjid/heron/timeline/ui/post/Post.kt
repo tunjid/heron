@@ -50,6 +50,7 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Label
+import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
@@ -83,6 +84,7 @@ fun Post(
     sharedElementPrefix: String,
     createdAt: Instant,
     presentation: Timeline.Presentation,
+    labelers: List<Labeler>,
     labelVisibilitiesToDefinitions: Map<Label.Visibility, List<Label.Definition>>,
     postActions: PostActions,
     timeline: @Composable (BoxScope.() -> Unit) = {},
