@@ -48,7 +48,6 @@ import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PaneSnackbarHost
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
-import com.tunjid.heron.scaffold.scaffold.ScaffoldStrings
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.fabOffset
 import com.tunjid.heron.scaffold.scaffold.fullAppbarTransparency
@@ -58,6 +57,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -76,7 +76,7 @@ import dev.zacsweers.metro.StringKey
 import heron.feature.profile.generated.resources.Res
 import heron.feature.profile.generated.resources.mention
 import heron.feature.profile.generated.resources.post
-import heron.scaffold.generated.resources.sign_in
+import heron.ui.core.generated.resources.sign_in
 import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/profile/{profileHandleOrId}"
@@ -177,7 +177,7 @@ class ProfileBindings(
                             },
                         text = stringResource(
                             when {
-                                isSignedOut -> ScaffoldStrings.sign_in
+                                isSignedOut -> CommonStrings.sign_in
                                 state.isSignedInProfile -> Res.string.post
                                 else -> Res.string.mention
                             },

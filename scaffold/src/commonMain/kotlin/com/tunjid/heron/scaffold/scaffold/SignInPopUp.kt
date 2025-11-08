@@ -27,11 +27,12 @@ import com.tunjid.heron.ui.PrimaryDialogButton
 import com.tunjid.heron.ui.SimpleDialog
 import com.tunjid.heron.ui.SimpleDialogText
 import com.tunjid.heron.ui.SimpleDialogTitle
+import com.tunjid.heron.ui.text.CommonStrings
 import heron.scaffold.generated.resources.Res
-import heron.scaffold.generated.resources.dismiss
-import heron.scaffold.generated.resources.sign_in
 import heron.scaffold.generated.resources.sign_in_prompt
 import heron.scaffold.generated.resources.signed_out
+import heron.ui.core.generated.resources.dismiss
+import heron.ui.core.generated.resources.sign_in
 import org.jetbrains.compose.resources.stringResource
 
 @Stable
@@ -81,13 +82,13 @@ private fun SignInPopUp(
         },
         confirmButton = {
             PrimaryDialogButton(
-                text = stringResource(Res.string.sign_in),
+                text = stringResource(CommonStrings.sign_in),
                 onClick = onSignInClicked,
             )
         },
         dismissButton = {
             NeutralDialogButton(
-                text = stringResource(Res.string.dismiss),
+                text = stringResource(CommonStrings.dismiss),
                 onClick = {
                     state.visible = false
                 },

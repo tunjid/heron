@@ -50,9 +50,9 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.threepane.ThreePane
-import heron.scaffold.generated.resources.Res
-import heron.scaffold.generated.resources.go_back
+import heron.ui.core.generated.resources.go_back
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -156,7 +156,7 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = stringResource(Res.string.go_back),
+                            contentDescription = stringResource(CommonStrings.go_back),
                         )
                     }
                 },
