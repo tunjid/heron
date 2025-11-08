@@ -75,6 +75,7 @@ import com.tunjid.heron.data.database.migrations.Migration19To20UriPrimaryKeys
 import com.tunjid.heron.data.database.migrations.Migration21To22NotificationsOwnerIds
 import com.tunjid.heron.data.database.migrations.Migration22To23ConversationOwnerIds
 import com.tunjid.heron.data.database.migrations.Migration23To24NotificationAndConversationCompositePrimaryKeys
+import com.tunjid.heron.data.database.migrations.Migration27To28LabelEntityPrimaryKeys
 import com.tunjid.heron.data.database.migrations.Migration5To6NonNullPostUriAndAuthor
 import com.tunjid.heron.data.database.migrations.Migration6To7PostViewerStatisticsAutoMigration
 import com.tunjid.heron.data.database.migrations.Migration8To9ProfileViewersAutoMigration
@@ -83,7 +84,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 27,
+    version = 28,
     entities = [
         ExternalEmbedEntity::class,
         ImageEntity::class,
@@ -176,6 +177,7 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 25, to = 26),
         // Add indices to ProfileEntity and LabelEntity for did and uri
         AutoMigration(from = 26, to = 27),
+        // Migration 27 - 28 is a manual migration
     ],
     exportSchema = true,
 )
@@ -222,6 +224,7 @@ fun RoomDatabase.Builder<AppDatabase>.configureAndBuild() =
             Migration21To22NotificationsOwnerIds,
             Migration22To23ConversationOwnerIds,
             Migration23To24NotificationAndConversationCompositePrimaryKeys,
+            Migration27To28LabelEntityPrimaryKeys,
         )
         .addCallback(UnknownProfileInsertionCallback)
         .setDriver(BundledSQLiteDriver())
