@@ -36,6 +36,11 @@ import app.bsky.feed.GetPostThreadResponseThreadUnion
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
 import app.bsky.feed.Token
+import app.bsky.labeler.GetServicesQueryParams
+import app.bsky.labeler.GetServicesResponse
+import app.bsky.labeler.GetServicesResponseViewUnion
+import chat.bsky.convo.ListConvosQueryParams
+import chat.bsky.convo.ListConvosResponse
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.ContentLabelPreferences
@@ -61,6 +66,7 @@ import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
+import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
@@ -68,6 +74,7 @@ import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
+import com.tunjid.heron.data.database.entities.PopulatedLabelerEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.PostEntity
@@ -189,7 +196,7 @@ interface TimelineRepository {
 
     fun preferences(): Flow<Preferences>
 
-    fun labelers(): Flow<List<Labeler>>
+    fun labelers(): Flow<CursorList<Labeler>>
 
     fun homeTimelines(): Flow<List<Timeline.Home>>
 
@@ -223,6 +230,7 @@ interface TimelineRepository {
 @Inject
 internal class OfflineTimelineRepository(
     private val postDao: PostDao,
+    private val labelDao: LabelDao,
     private val listDao: ListDao,
     private val profileDao: ProfileDao,
     private val timelineDao: TimelineDao,
@@ -239,9 +247,43 @@ internal class OfflineTimelineRepository(
         savedStateDataSource.savedState
             .map(SavedState::signedProfilePreferencesOrDefault)
 
-    override fun labelers(): Flow<List<Labeler>> =
-        // TODO: Get labeler from bluesky moderation service
-        flowOf(Collections.DefaultLabelers)
+    override fun labelers(): Flow<CursorList<Labeler>> =
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            combine(
+                flow = labelDao.labelers(
+                    viewingProfileId = signedInProfileId,
+                ).map { populatedLabelerEntities ->
+                    populatedLabelerEntities.map(PopulatedLabelerEntity::asExternalModel)
+                },
+                flow2 = networkService.nextCursorFlow(
+                    currentCursor = Cursor.Initial,
+                    currentRequestWithNextCursor = {
+                        getServices(
+                            params = GetServicesQueryParams(
+                                dids = emptyList(),
+                                detailed = true,
+                            ),
+                        )
+                    },
+                    nextCursor = { null },
+                    onResponse = {
+                        val detailedLabelers = views.mapNotNull { viewUnion ->
+                            (viewUnion as? GetServicesResponseViewUnion.LabelerViewDetailed)?.value
+                        }
+                        multipleEntitySaverProvider.saveInTransaction {
+                            detailedLabelers.forEach { labelerView ->
+                                add(
+                                    viewingProfileId = signedInProfileId,
+                                    labeler = labelerView,
+                                )
+                            }
+                        }
+                    },
+                ),
+                transform = ::CursorList,
+            )
+                .distinctUntilChanged()
+        }
 
     override fun timelineItems(
         query: TimelineQuery,
