@@ -17,13 +17,28 @@
 package com.tunjid.heron.data.database.daos
 
 import androidx.room.Dao
+import androidx.room.Query
 import androidx.room.Upsert
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.LabelDefinitionEntity
 import com.tunjid.heron.data.database.entities.LabelEntity
 import com.tunjid.heron.data.database.entities.LabelerEntity
+import com.tunjid.heron.data.database.entities.PopulatedLabelerEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface LabelDao {
+
+    @Query(
+        """
+        SELECT * FROM labelers
+        WHERE creatorId = :viewingProfileId
+        ORDER BY likeCount DESC
+    """,
+    )
+    fun labelers(
+        viewingProfileId: ProfileId?,
+    ): Flow<List<PopulatedLabelerEntity>>
 
     @Upsert
     suspend fun upsertLabels(
