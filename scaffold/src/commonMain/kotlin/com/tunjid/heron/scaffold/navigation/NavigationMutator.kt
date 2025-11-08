@@ -25,12 +25,9 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Start
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.tunjid.heron.data.core.models.Embed
-import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
-import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.UrlEncodableModel
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
@@ -230,7 +227,7 @@ fun pathDestination(
     miscQueryParams: Map<String, List<String>> = emptyMap(),
     referringRouteOption: ReferringRouteOption = ReferringRouteOption.Current,
 ): NavigationAction.Destination = NavigationAction.Destination.ToRawUrl(
-    path = path,
+    path = path.stripBeforePath(),
     models = models,
     sharedElementPrefix = sharedElementPrefix,
     avatarSharedElementKey = avatarSharedElementKey,
@@ -267,6 +264,28 @@ internal fun deepLinkTo(
         )
         else -> navState.push(deepLink.uri.toRoute)
     }
+}
+
+private fun String.stripBeforePath(): String {
+    // 1. Get the part after "://" or the whole string if "://" is not present.
+    // "https://example.com/path" -> "example.com/path"
+    // "example.com/path"         -> "example.com/path"
+    // "/path"                    -> "/path"
+    val authorityAndPath = this.substringAfter(
+        delimiter = "://",
+        missingDelimiterValue = this,
+    )
+
+    // 2. Find the first slash in that remaining part.
+    // "example.com/path" -> index 11
+    // "/path"            -> index 0
+    // "example.com"      -> index -1
+    val pathStartIndex = authorityAndPath.indexOf('/')
+
+    // 3. Return the substring from that slash.
+    // If no slash is found (index -1), return the home route.
+    return if (pathStartIndex != -1) authorityAndPath.substring(pathStartIndex)
+    else AppStack.Home.rootRoute.id
 }
 
 /**
