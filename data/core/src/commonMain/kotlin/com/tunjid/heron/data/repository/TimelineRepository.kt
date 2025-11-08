@@ -36,6 +36,8 @@ import app.bsky.feed.GetPostThreadResponseThreadUnion
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
 import app.bsky.feed.Token
+import app.bsky.labeler.GetServicesQueryParams
+import app.bsky.labeler.GetServicesResponseViewUnion
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.ContentLabelPreferences
@@ -44,6 +46,7 @@ import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
+import com.tunjid.heron.data.core.models.LabelerPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Record
@@ -61,6 +64,7 @@ import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
+import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
@@ -68,6 +72,7 @@ import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
+import com.tunjid.heron.data.database.entities.PopulatedLabelerEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.PostEntity
@@ -91,10 +96,13 @@ import com.tunjid.heron.data.utilities.toFlowOrEmpty
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.Named
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -106,11 +114,11 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -222,12 +230,14 @@ interface TimelineRepository {
 
 @Inject
 internal class OfflineTimelineRepository(
+    @Named("AppScope") appScope: CoroutineScope,
     private val postDao: PostDao,
     private val listDao: ListDao,
     private val profileDao: ProfileDao,
     private val timelineDao: TimelineDao,
     private val starterPackDao: StarterPackDao,
     private val feedGeneratorDao: FeedGeneratorDao,
+    private val labelDao: LabelDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateDataSource: SavedStateDataSource,
@@ -239,8 +249,56 @@ internal class OfflineTimelineRepository(
         get() = savedStateDataSource.savedState
             .map(SavedState::signedProfilePreferencesOrDefault)
 
-    override val labelers: Flow<List<Labeler>>
-        get() = flowOf(Collections.DefaultLabelers)
+    override val labelers: Flow<List<Labeler>> =
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            savedStateDataSource.savedState.map {
+                it.signedInProfileData
+                    ?.preferences
+                    ?.labelerPreferences
+                    ?.map(LabelerPreference::labelerId)
+                    ?.plus(Collections.DefaultLabelerProfileId)
+                    ?: listOf(Collections.DefaultLabelerProfileId)
+            }
+                .distinctUntilChanged()
+                .flatMapLatest { labelerIds ->
+                    labelDao.labelers(labelerIds)
+                        .map { it.map(PopulatedLabelerEntity::asExternalModel) }
+                        .withRefresh {
+                            networkService.runCatchingWithMonitoredNetworkRetry {
+                                getServices(
+                                    GetServicesQueryParams(
+                                        dids = labelerIds.map { Did(it.id) },
+                                        detailed = true,
+                                    ),
+                                )
+                            }
+                                .getOrNull()
+                                ?.views
+                                ?.let { responseViewUnionList ->
+                                    multipleEntitySaverProvider.saveInTransaction {
+                                        responseViewUnionList.forEach { responseViewUnion ->
+                                            when (responseViewUnion) {
+                                                is GetServicesResponseViewUnion.LabelerView -> add(
+                                                    viewingProfileId = signedInProfileId,
+                                                    labeler = responseViewUnion.value,
+                                                )
+                                                is GetServicesResponseViewUnion.LabelerViewDetailed -> add(
+                                                    viewingProfileId = signedInProfileId,
+                                                    labeler = responseViewUnion.value,
+                                                )
+                                                is GetServicesResponseViewUnion.Unknown -> Unit
+                                            }
+                                        }
+                                    }
+                                }
+                        }
+                }
+        }
+            .stateIn(
+                scope = appScope,
+                started = SharingStarted.WhileSubscribed(1_000),
+                initialValue = emptyList(),
+            )
 
     override fun timelineItems(
         query: TimelineQuery,

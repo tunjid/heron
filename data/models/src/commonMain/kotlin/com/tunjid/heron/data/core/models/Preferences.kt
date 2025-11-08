@@ -20,16 +20,23 @@ import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.protobuf.ProtoNumber
 
 typealias ContentLabelPreferences = List<ContentLabelPreference>
 
 @Serializable
 data class Preferences(
+    @ProtoNumber(1)
     val timelinePreferences: List<TimelinePreference>,
     // Needs default value for serialization to disk
+    @ProtoNumber(2)
     val contentLabelPreferences: ContentLabelPreferences = emptyList(),
+    @ProtoNumber(3)
     val lastViewedHomeTimelineUri: Uri? = null,
+    @ProtoNumber(4)
     val refreshHomeTimelineOnLaunch: Boolean = false,
+    @ProtoNumber(5)
+    val labelerPreferences: List<LabelerPreference> = emptyList(),
 ) : UrlEncodableModel {
     companion object {
         val EmptyPreferences = Preferences(
@@ -94,4 +101,9 @@ data class ContentLabelPreference(
     val labelerId: ProfileId?,
     val label: Label.Value,
     val visibility: Label.Visibility,
+)
+
+@Serializable
+data class LabelerPreference(
+    val labelerId: ProfileId,
 )

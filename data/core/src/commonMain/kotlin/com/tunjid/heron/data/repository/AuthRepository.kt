@@ -24,13 +24,13 @@ import app.bsky.feed.GetFeedGeneratorQueryParams
 import app.bsky.graph.GetListQueryParams
 import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.Label
+import com.tunjid.heron.data.core.models.LabelerPreference
 import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SessionRequest
 import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.ProfileDao
@@ -233,14 +233,25 @@ private fun Preferences.update(getPreferencesResponse: GetPreferencesResponse) =
                 is PreferencesUnion.AdultContentPref -> preferences
                 is PreferencesUnion.BskyAppStatePref -> preferences
                 is PreferencesUnion.ContentLabelPref -> preferences.copy(
-                    contentLabelPreferences = preferences.contentLabelPreferences +
-                        preferencesUnion.asExternalModel(),
+                    contentLabelPreferences = preferencesUnion.asExternalModel().let { newPref ->
+                        preferences.contentLabelPreferences
+                            .filterNot {
+                                it.label == newPref.label && it.labelerId == newPref.labelerId
+                            }
+                            .plus(newPref)
+                    },
                 )
 
                 is PreferencesUnion.FeedViewPref -> preferences
                 is PreferencesUnion.HiddenPostsPref -> preferences
                 is PreferencesUnion.InterestsPref -> preferences
-                is PreferencesUnion.LabelersPref -> preferences
+                is PreferencesUnion.LabelersPref -> preferences.copy(
+                    labelerPreferences = preferencesUnion.value.labelers.map {
+                        LabelerPreference(
+                            labelerId = it.did.did.let(::ProfileId),
+                        )
+                    },
+                )
                 is PreferencesUnion.MutedWordsPref -> preferences
                 is PreferencesUnion.PersonalDetailsPref -> preferences
                 is PreferencesUnion.SavedFeedsPref -> preferences
