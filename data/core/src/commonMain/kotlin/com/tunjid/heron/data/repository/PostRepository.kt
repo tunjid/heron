@@ -58,7 +58,6 @@ import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.partialUpsert
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.PostEntity
-import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
@@ -576,12 +575,12 @@ internal class OfflinePostRepository @Inject constructor(
                 viewingProfileId = signedInProfileId?.id,
                 postUris = setOf(
                     profileDao.profiles(listOf(profileId))
-                        .filter(List<ProfileEntity>::isNotEmpty)
-                        .map(List<ProfileEntity>::first)
+                        .filter(List<PopulatedProfileEntity>::isNotEmpty)
+                        .map(List<PopulatedProfileEntity>::first)
                         .distinctUntilChanged()
                         .map {
                             PostUri(
-                                profileId = it.did,
+                                profileId = it.entity.did,
                                 postRecordKey = postRecordKey,
                             )
                         }
@@ -607,7 +606,7 @@ internal class OfflinePostRepository @Inject constructor(
 private fun List<PopulatedProfileEntity>.asExternalModels() =
     map {
         ProfileWithViewerState(
-            profile = it.profileEntity.asExternalModel(),
+            profile = it.asExternalModel(),
             viewerState = it.relationship?.asExternalModel(),
         )
     }

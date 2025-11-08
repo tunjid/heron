@@ -24,6 +24,7 @@ import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.partial
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
@@ -42,7 +43,7 @@ interface ProfileDao {
     )
     fun profiles(
         ids: Collection<Id.Profile>,
-    ): Flow<List<ProfileEntity>>
+    ): Flow<List<PopulatedProfileEntity>>
 
     @Query(
         """
@@ -80,7 +81,7 @@ interface ProfileDao {
         profileId: String,
         otherProfileId: String,
         limit: Long,
-    ): Flow<List<ProfileEntity>>
+    ): Flow<List<PopulatedProfileEntity>>
 
     @Upsert
     suspend fun upsertProfiles(

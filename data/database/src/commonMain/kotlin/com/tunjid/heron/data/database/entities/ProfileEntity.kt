@@ -18,7 +18,10 @@ package com.tunjid.heron.data.database.entities
 
 import androidx.room.Embedded
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
+import androidx.room.Relation
+import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.ImageUri
@@ -29,6 +32,10 @@ import kotlinx.datetime.Instant
 
 @Entity(
     tableName = "profiles",
+    indices = [
+        Index(value = ["did"]),
+        Index(value = ["handle"]),
+    ],
 )
 data class ProfileEntity(
     @PrimaryKey
@@ -71,7 +78,9 @@ fun ProfileEntity.partial() = ProfileEntity.Partial(
     avatar = avatar,
 )
 
-fun ProfileEntity?.asExternalModel() =
+fun ProfileEntity?.asExternalModel(
+    labels: List<Label> = emptyList(),
+) =
     if (this == null) emptyProfile()
     else Profile(
         did = did,
@@ -91,14 +100,43 @@ fun ProfileEntity?.asExternalModel() =
             createdFeedGeneratorCount = associated.createdFeedGeneratorCount ?: 0,
             createdStarterPackCount = associated.createdStarterPackCount ?: 0,
         ),
+        labels = labels,
     )
 
 data class PopulatedProfileEntity(
     @Embedded
-    val profileEntity: ProfileEntity,
+    val entity: ProfileEntity,
     @Embedded
     val relationship: ProfileViewerStateEntity?,
+    @Relation(
+        parentColumn = "did",
+        entityColumn = "uri",
+    )
+    val labelEntities: List<LabelEntity>,
 )
+
+fun PopulatedProfileEntity.asExternalModel() = with(entity) {
+    Profile(
+        did = did,
+        handle = handle,
+        displayName = displayName,
+        description = description,
+        avatar = avatar,
+        banner = banner,
+        followersCount = followersCount,
+        followsCount = followsCount,
+        postsCount = postsCount,
+        joinedViaStarterPack = joinedViaStarterPack,
+        indexedAt = indexedAt,
+        createdAt = createdAt,
+        metadata = Profile.Metadata(
+            createdListCount = associated.createdListCount ?: 0,
+            createdFeedGeneratorCount = associated.createdFeedGeneratorCount ?: 0,
+            createdStarterPackCount = associated.createdStarterPackCount ?: 0,
+        ),
+        labels = labelEntities.map(LabelEntity::asExternalModel),
+    )
+}
 
 private fun emptyProfile() = Profile(
     did = ProfileId(""),
@@ -118,4 +156,5 @@ private fun emptyProfile() = Profile(
         createdFeedGeneratorCount = 0,
         createdStarterPackCount = 0,
     ),
+    labels = emptyList(),
 )

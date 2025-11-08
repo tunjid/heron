@@ -74,6 +74,7 @@ import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedLabelerEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
+import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
@@ -1090,7 +1091,9 @@ internal class OfflineTimelineRepository(
                                 val recordUrisToEmbeddedRecords = embeddedRecords.associateBy {
                                     it.reference.uri
                                 }
-                                val idsToRepostProfiles = repostProfiles.associateBy { it.did }
+                                val idsToRepostProfiles = repostProfiles.associateBy {
+                                    it.entity.did
+                                }
 
                                 itemEntities.mapNotNull { entity ->
                                     val mainPost = urisToPosts[entity.postUri]
@@ -1212,17 +1215,17 @@ internal class OfflineTimelineRepository(
     ): Flow<Timeline.Profile> = profileDao.profiles(
         ids = listOf(profileHandleOrDid),
     )
-        .mapNotNull(List<ProfileEntity>::firstOrNull)
-        .distinctUntilChangedBy(ProfileEntity::did)
-        .flatMapLatest { profile ->
+        .mapNotNull(List<PopulatedProfileEntity>::firstOrNull)
+        .distinctUntilChangedBy { it.entity.did }
+        .flatMapLatest { populatedProfileEntity ->
             timelineDao.lastFetchKey(
                 viewingProfileId = signedInProfileId?.id,
-                sourceId = type.sourceId(profile.did),
+                sourceId = type.sourceId(populatedProfileEntity.entity.did),
             )
                 .distinctUntilChanged()
                 .map { timelinePreferenceEntity ->
                     Timeline.Profile(
-                        profileId = profile.did,
+                        profileId = populatedProfileEntity.entity.did,
                         type = type,
                         lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
                         presentation = timelinePreferenceEntity.preferredPresentation(),

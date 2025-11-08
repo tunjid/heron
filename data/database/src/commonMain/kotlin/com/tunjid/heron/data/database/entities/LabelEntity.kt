@@ -39,6 +39,8 @@ import kotlinx.datetime.Instant
     ],
     indices = [
         Index(value = ["createdAt"]),
+        Index(value = ["uri"]),
+        Index(value = ["creatorId"]),
     ],
 )
 data class LabelEntity(

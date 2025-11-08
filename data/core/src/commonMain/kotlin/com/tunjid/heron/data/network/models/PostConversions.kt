@@ -413,12 +413,4 @@ private fun GeneratorView.asExternalModel() = FeedGenerator(
     labels = labels.map(com.atproto.label.Label::asExternalModel),
 )
 
-private fun com.atproto.label.Label.asExternalModel() = Label(
-    uri = uri.uri.let(::GenericUri),
-    creatorId = src.did.let(::ProfileId),
-    value = Label.Value(`val`),
-    version = ver,
-    createdAt = cts,
-)
-
 private fun Long?.orZero() = this ?: 0L

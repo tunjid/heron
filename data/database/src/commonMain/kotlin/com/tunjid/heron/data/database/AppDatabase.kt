@@ -83,7 +83,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 26,
+    version = 27,
     entities = [
         ExternalEmbedEntity::class,
         ImageEntity::class,
@@ -174,6 +174,8 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 24, to = 25),
         // Add LabelerEntity and LabelDefinitionEntity
         AutoMigration(from = 25, to = 26),
+        // Add indices to ProfileEntity and LabelEntity for did and uri
+        AutoMigration(from = 26, to = 27),
     ],
     exportSchema = true,
 )

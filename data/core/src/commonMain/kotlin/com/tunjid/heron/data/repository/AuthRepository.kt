@@ -34,7 +34,7 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.ProfileDao
-import com.tunjid.heron.data.database.entities.ProfileEntity
+import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.SessionManager
@@ -95,7 +95,7 @@ internal class AuthTokenRepository(
             val signedInUserFlow = signedInProfileId
                 ?.let(::listOf)
                 ?.let(profileDao::profiles)
-                ?.filter(List<ProfileEntity>::isNotEmpty)
+                ?.filter(List<PopulatedProfileEntity>::isNotEmpty)
                 ?.map { it.first().asExternalModel() }
                 ?: flowOf(null)
             signedInUserFlow.withRefresh {

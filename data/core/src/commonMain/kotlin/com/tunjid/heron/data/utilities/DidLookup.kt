@@ -26,7 +26,7 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.daos.ProfileDao
-import com.tunjid.heron.data.database.entities.ProfileEntity
+import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
@@ -34,7 +34,6 @@ import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
-import kotlin.collections.map
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -58,8 +57,9 @@ internal suspend fun lookupProfileDid(
             ids = listOf(ProfileHandleOrId(profileHandleOrId)),
         )
             .first()
-            .takeIf(List<ProfileEntity>::isNotEmpty)
+            .takeIf(List<PopulatedProfileEntity>::isNotEmpty)
             ?.first()
+            ?.entity
             ?.did
             ?.id
             ?.let(::Did)
