@@ -20,17 +20,18 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.SimpleDialog
+import com.tunjid.heron.ui.SimpleDialogConfirmButton
+import com.tunjid.heron.ui.SimpleDialogDismissButton
+import com.tunjid.heron.ui.SimpleDialogText
+import com.tunjid.heron.ui.SimpleDialogTitle
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.cancel
 import heron.feature.settings.generated.resources.sign_out
@@ -73,42 +74,29 @@ fun SignOutDialog(
 ) {
     if (!showSignOutDialog) return
 
-    AlertDialog(
+    SimpleDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(
+            SimpleDialogTitle(
                 text = stringResource(Res.string.sign_out),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
             )
         },
         text = {
-            Text(
+            SimpleDialogText(
                 text = stringResource(Res.string.sign_out_confirmation),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         },
         confirmButton = {
-            TextButton(onClick = onConfirmSignOut) {
-                Text(
-                    text = stringResource(Res.string.sign_out),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.labelLarge,
-                )
-            }
+            SimpleDialogConfirmButton(
+                text = stringResource(Res.string.sign_out),
+                onClick = onConfirmSignOut,
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(
-                    stringResource(Res.string.cancel),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.labelLarge,
-                )
-            }
+            SimpleDialogDismissButton(
+                text = stringResource(Res.string.cancel),
+                onClick = onDismiss,
+            )
         },
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = 6.dp,
-        shape = MaterialTheme.shapes.medium,
     )
 }

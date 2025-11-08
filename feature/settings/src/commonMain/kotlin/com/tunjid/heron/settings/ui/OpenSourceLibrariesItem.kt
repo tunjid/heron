@@ -29,10 +29,8 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Copyright
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,6 +45,9 @@ import com.mikepenz.aboutlibraries.ui.compose.m3.LicenseDialogBody
 import com.mikepenz.aboutlibraries.ui.compose.m3.libraryColors
 import com.mikepenz.aboutlibraries.ui.compose.util.author
 import com.mikepenz.aboutlibraries.ui.compose.util.htmlReadyLicenseContent
+import com.tunjid.heron.ui.SimpleDialog
+import com.tunjid.heron.ui.SimpleDialogConfirmButton
+import com.tunjid.heron.ui.SimpleDialogDismissButton
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.close
 import heron.feature.settings.generated.resources.open_source_licenses
@@ -161,7 +162,7 @@ private fun LicenseDialog(
 ) {
     val uriHandler = LocalUriHandler.current
 
-    AlertDialog(
+    SimpleDialog(
         onDismissRequest = onDismiss,
         text = {
             LicenseDialogBody(
@@ -172,33 +173,20 @@ private fun LicenseDialog(
         },
         confirmButton = {
             library.website?.let { website ->
-                TextButton(
+                SimpleDialogConfirmButton(
+                    text = stringResource(Res.string.view_website),
                     onClick = {
                         runCatching { uriHandler.openUri(website) }
                     },
-                ) {
-                    Text(
-                        text = stringResource(Res.string.view_website),
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                }
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-            ) {
-                Text(
-                    stringResource(Res.string.close),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.labelLarge,
                 )
             }
         },
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = 6.dp,
-        shape = MaterialTheme.shapes.medium,
+        dismissButton = {
+            SimpleDialogDismissButton(
+                stringResource(Res.string.close),
+                onClick = onDismiss,
+            )
+        },
     )
 }
 

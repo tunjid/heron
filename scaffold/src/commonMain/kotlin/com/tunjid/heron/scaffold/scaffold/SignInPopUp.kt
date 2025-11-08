@@ -16,17 +16,17 @@
 
 package com.tunjid.heron.scaffold.scaffold
 
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.SimpleDialog
+import com.tunjid.heron.ui.SimpleDialogConfirmButton
+import com.tunjid.heron.ui.SimpleDialogDismissButton
+import com.tunjid.heron.ui.SimpleDialogText
+import com.tunjid.heron.ui.SimpleDialogTitle
 import heron.scaffold.generated.resources.Res
 import heron.scaffold.generated.resources.dismiss
 import heron.scaffold.generated.resources.sign_in
@@ -65,52 +65,33 @@ private fun SignInPopUp(
 ) {
     if (!state.visible) return
 
-    AlertDialog(
+    SimpleDialog(
         onDismissRequest = {
             state.visible = false
         },
         title = {
-            Text(
+            SimpleDialogTitle(
                 text = stringResource(Res.string.signed_out),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
             )
         },
         text = {
-            Text(
+            SimpleDialogText(
                 text = stringResource(Res.string.sign_in_prompt),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         },
         confirmButton = {
-            TextButton(
+            SimpleDialogConfirmButton(
+                text = stringResource(Res.string.sign_in),
                 onClick = onSignInClicked,
-                content = {
-                    Text(
-                        text = stringResource(Res.string.sign_in),
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                },
             )
         },
         dismissButton = {
-            TextButton(
+            SimpleDialogDismissButton(
+                text = stringResource(Res.string.dismiss),
                 onClick = {
                     state.visible = false
                 },
-                content = {
-                    Text(
-                        text = stringResource(Res.string.dismiss),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                },
             )
         },
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = 6.dp,
-        shape = MaterialTheme.shapes.medium,
     )
 }
