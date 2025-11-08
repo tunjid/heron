@@ -82,7 +82,7 @@ fun SimpleDialogDismissButton(
 ) {
     StyledDialogButton(
         text = text,
-        color = MaterialTheme.colorScheme.primary,
+        color = MaterialTheme.colorScheme.error,
         onClick = onClick,
     )
 }
@@ -94,7 +94,7 @@ fun SimpleDialogConfirmButton(
 ) {
     StyledDialogButton(
         text = text,
-        color = MaterialTheme.colorScheme.error,
+        color = MaterialTheme.colorScheme.primary,
         onClick = onClick,
     )
 }
