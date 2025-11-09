@@ -58,6 +58,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.core.types.StarterPackUri
+import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
@@ -70,7 +71,6 @@ import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
-import com.tunjid.heron.data.utilities.asRecordUri
 import sh.christian.ozone.api.model.JsonContent
 
 internal fun PostEntity.postVideoEntity(
@@ -303,10 +303,10 @@ internal fun JsonContent.asPostEntityRecordData(): PostEntity.RecordData? =
 
         val embeddedUri: RecordUri? = when (val embed = bskyPost.embed) {
             is PostEmbedUnion.Record ->
-                embed.value.record.uri.atUri.asRecordUri()
+                embed.value.record.uri.atUri.asRecordUriOrNull()
 
             is PostEmbedUnion.RecordWithMedia ->
-                embed.value.record.record.uri.atUri.asRecordUri()
+                embed.value.record.record.uri.atUri.asRecordUriOrNull()
 
             else -> null
         }
