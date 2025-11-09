@@ -169,11 +169,7 @@ fun String.asRecordUriOrNull(): RecordUri? {
 }
 
 /**
- * Extracts the authority component from an AT URI string.
- *
- * @receiver The AT URI string to parse.
- * @return The authority string (e.g., "bsky.app") or `null` if parsing fails
- * or the string is not a valid AT URI.
+ * Extracts the [ProfileId] component from an AT URI string.
  */
 fun RecordUri.profileId(): ProfileId =
     ProfileId(requireNotNull(uri.toAtUriComponentsOrNull()).authority)
