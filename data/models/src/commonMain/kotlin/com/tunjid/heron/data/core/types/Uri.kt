@@ -159,6 +159,7 @@ fun String.asRecordUriOrNull(): RecordUri? {
 
     // We know 'this' is not null here because toAtUriComponentsOrNull would have returned null.
     return when (components.collection) {
+        PostUri.NAMESPACE -> PostUri(this)
         FeedGeneratorUri.NAMESPACE -> FeedGeneratorUri(this)
         ListUri.NAMESPACE -> ListUri(this)
         StarterPackUri.NAMESPACE -> StarterPackUri(this)
