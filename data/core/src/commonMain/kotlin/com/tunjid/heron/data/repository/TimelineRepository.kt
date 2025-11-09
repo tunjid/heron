@@ -1438,8 +1438,14 @@ internal class OfflineTimelineRepository(
                 .map { entities ->
                     entities.map(PopulatedStarterPackEntity::asExternalModel)
                 },
-        ) { feeds, lists, posts, starterPacks ->
-            feeds + lists + posts + starterPacks
+            labelerUris.list
+                .toFlowOrEmpty(labelDao::labelers)
+                .distinctUntilChanged()
+                .map { entities ->
+                    entities.map(PopulatedLabelerEntity::asExternalModel)
+                },
+        ) { feeds, lists, posts, starterPacks, labelers ->
+            feeds + lists + posts + starterPacks + labelers
         }
     }
 }
