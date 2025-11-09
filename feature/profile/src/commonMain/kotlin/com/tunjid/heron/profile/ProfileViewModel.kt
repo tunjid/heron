@@ -17,11 +17,13 @@
 package com.tunjid.heron.profile
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
+import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
@@ -31,10 +33,13 @@ import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.models.feedGeneratorUri
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.LabelerUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.ProfilesQuery
+import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.repository.recentConversations
@@ -76,6 +81,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Clock
@@ -93,6 +101,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 @Inject
 class ActualProfileViewModel(
     authRepository: AuthRepository,
+    recordRepository: RecordRepository,
     messageRepository: MessageRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
@@ -129,6 +138,7 @@ class ActualProfileViewModel(
                     profileId = route.profileHandleOrId,
                     scope = scope,
                     authRepository = authRepository,
+                    recordRepository = recordRepository,
                     profileRepository = profileRepository,
                     timelineRepository = timelineRepository,
                 ),
@@ -195,6 +205,7 @@ private fun loadProfileMutations(
     authRepository: AuthRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
+    recordRepository: RecordRepository,
 ): Flow<Mutation<State>> =
     combine(
         profileRepository.profile(profileId),
@@ -229,9 +240,9 @@ private fun loadProfileMutations(
                         when (it) {
                             Timeline.Profile.Type.Posts -> true
                             Timeline.Profile.Type.Replies -> isSignedIn
-                            Timeline.Profile.Type.Likes -> isSignedInProfile
-                            Timeline.Profile.Type.Media -> true
-                            Timeline.Profile.Type.Videos -> true
+                            Timeline.Profile.Type.Likes -> isSignedInProfile && !profile.isLabeler
+                            Timeline.Profile.Type.Media -> !profile.isLabeler
+                            Timeline.Profile.Type.Videos -> !profile.isLabeler
                         }
                     }
                     // Map to a list of flows for each timeline
@@ -255,19 +266,33 @@ private fun loadProfileMutations(
                         when {
                             stateHolders.isNotEmpty() -> this
                             else -> copy(
-                                stateHolders = timelines.map { timeline ->
-                                    ProfileScreenStateHolders.Timeline(
-                                        scope.timelineStateHolder(
-                                            refreshOnStart = true,
-                                            timeline = timeline,
-                                            startNumColumns = 1,
+                                stateHolders = buildList {
+                                    if (profile.isLabeler) addAll(
+                                        scope.labelerSettingsStateHolders(
+                                            profileId = profile.did,
                                             timelineRepository = timelineRepository,
+                                            recordRepository = recordRepository,
                                         ),
                                     )
-                                } + scope.recordStateHolders(
-                                    profileId = profileId,
-                                    profileRepository = profileRepository,
-                                ),
+                                    addAll(
+                                        timelines.map { timeline ->
+                                            ProfileScreenStateHolders.Timeline(
+                                                scope.timelineStateHolder(
+                                                    refreshOnStart = true,
+                                                    timeline = timeline,
+                                                    startNumColumns = 1,
+                                                    timelineRepository = timelineRepository,
+                                                ),
+                                            )
+                                        },
+                                    )
+                                    if (!profile.isLabeler) addAll(
+                                        scope.recordStateHolders(
+                                            profileId = profile.did,
+                                            profileRepository = profileRepository,
+                                        ),
+                                    )
+                                },
                             )
                         }
                     },
@@ -404,6 +429,55 @@ private fun CoroutineScope.recordStateHolders(
             ),
         ),
     )
+
+private fun CoroutineScope.labelerSettingsStateHolders(
+    profileId: ProfileId,
+    timelineRepository: TimelineRepository,
+    recordRepository: RecordRepository,
+): List<ProfileScreenStateHolders.LabelerSettings> =
+    listOfNotNull(
+        ProfileScreenStateHolders.LabelerSettings(
+            mutator = actionStateFlowMutator(
+                initialState = ProfileScreenStateHolders.LabelerSettings.Settings(),
+                actionTransform = { actions ->
+                    // TODO in follow up PR
+                    actions.toMutationStream {
+                        emptyFlow()
+                    }
+                },
+                inputs = listOf(
+                    combine(
+                        flow = timelineRepository.preferences
+                            .map { it.contentLabelPreferences }
+                            .distinctUntilChanged(),
+                        flow2 = recordRepository.record(
+                            uri = profileId.asSelfLabelerUri(),
+                        )
+                            .filterIsInstance<Labeler>()
+                            .distinctUntilChanged(),
+                        transform = ::Pair,
+                    ).mapToMutation { (contentLabelPreferences, labeler) ->
+                        val visibilityMap = contentLabelPreferences.associateBy(
+                            keySelector = ContentLabelPreference::label,
+                            valueTransform = ContentLabelPreference::visibility,
+                        )
+                        copy(
+                            labelSettings = labeler.definitions.map { definition ->
+                                ProfileScreenStateHolders.LabelerSettings.LabelSetting(
+                                    definition = definition,
+                                    visibility = visibilityMap[definition.identifier]
+                                        ?: definition.defaultSetting,
+                                )
+                            },
+                        )
+                    },
+                ),
+            ),
+        ),
+    )
+
+private fun ProfileId.asSelfLabelerUri() =
+    LabelerUri("at://$id/${LabelerUri.NAMESPACE}/self")
 
 private fun defaultQueryData() = CursorQuery.Data(
     page = 0,

@@ -46,6 +46,12 @@ data class Label(
             val Hide = Visibility("hide")
             val Warn = Visibility("warn") // Also show badge
             val Ignore = Visibility("ignore")
+
+            val all = listOf(
+                Ignore,
+                Warn,
+                Hide,
+            )
         }
     }
 
