@@ -43,6 +43,7 @@ data class Profile(
     val metadata: Metadata,
     // Stubbed for migrations
     val labels: List<Label> = emptyList(),
+    val isLabeler: Boolean = false,
 ) : UrlEncodableModel {
 
     @Serializable
@@ -148,4 +149,5 @@ fun stubProfile(
         createdStarterPackCount = 0,
     ),
     labels = emptyList(),
+    isLabeler = false,
 )

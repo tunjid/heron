@@ -101,6 +101,7 @@ fun ProfileEntity?.asExternalModel(
             createdStarterPackCount = associated.createdStarterPackCount ?: 0,
         ),
         labels = labels,
+        isLabeler = associated.labeler ?: false,
     )
 
 data class PopulatedProfileEntity(
@@ -135,6 +136,7 @@ fun PopulatedProfileEntity.asExternalModel() = with(entity) {
             createdStarterPackCount = associated.createdStarterPackCount ?: 0,
         ),
         labels = labelEntities.map(LabelEntity::asExternalModel),
+        isLabeler = associated.labeler ?: false,
     )
 }
 
@@ -157,4 +159,5 @@ private fun emptyProfile() = Profile(
         createdStarterPackCount = 0,
     ),
     labels = emptyList(),
+    isLabeler = false,
 )

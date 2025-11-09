@@ -25,5 +25,6 @@ fun sampleProfile(): Profile {
             createdStarterPackCount = 0,
         ),
         labels = emptyList(),
+        isLabeler = false,
     )
 }
