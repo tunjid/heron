@@ -184,6 +184,7 @@ internal fun ProfileViewBasic.profile() = Profile(
         createdStarterPackCount = associated?.starterPacks ?: 0,
     ),
     labels = labels.map(com.atproto.label.Label::asExternalModel),
+    isLabeler = associated?.labeler ?: false,
 )
 
 internal fun ProfileView.profile() = Profile(
@@ -205,6 +206,7 @@ internal fun ProfileView.profile() = Profile(
         createdStarterPackCount = associated?.starterPacks ?: 0,
     ),
     labels = labels.map(com.atproto.label.Label::asExternalModel),
+    isLabeler = associated?.labeler ?: false,
 )
 
 private fun profileViewerStateEntity(
