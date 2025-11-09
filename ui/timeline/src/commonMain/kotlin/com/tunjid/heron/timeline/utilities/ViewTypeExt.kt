@@ -68,6 +68,11 @@ internal val StarterPackCollectionShape = RoundedPolygonShape.Custom(
     polygon = MaterialShapes.Cookie9Sided,
 )
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+internal val LabelerCollectionShape = RoundedPolygonShape.Custom(
+    polygon = MaterialShapes.Gem,
+)
+
 internal val BlueskyClouds =
     ImageUri("https://cdn.bsky.app/img/banner/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreichzyovokfzmymz36p5jibbjrhsur6n7hjnzxrpbt5jaydp2szvna@jpeg")
 

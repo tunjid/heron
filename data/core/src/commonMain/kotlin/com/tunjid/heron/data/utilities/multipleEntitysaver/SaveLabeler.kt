@@ -3,6 +3,8 @@ package com.tunjid.heron.data.utilities.multipleEntitysaver
 import app.bsky.labeler.LabelerView
 import app.bsky.labeler.LabelerViewDetailed
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.LabelerId
+import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.LabelerEntity
 
@@ -16,8 +18,8 @@ internal fun MultipleEntitySaver.add(
 
     add(
         LabelerEntity(
-            cid = labeler.cid.cid,
-            uri = GenericUri(labeler.uri.atUri),
+            cid = LabelerId(labeler.cid.cid),
+            uri = LabelerUri(labeler.uri.atUri),
             creatorId = creatorId,
             likeCount = labeler.likeCount,
         ),
@@ -45,8 +47,8 @@ internal fun MultipleEntitySaver.add(
 
     add(
         LabelerEntity(
-            cid = labeler.cid.cid,
-            uri = GenericUri(labeler.uri.atUri),
+            cid = LabelerId(labeler.cid.cid),
+            uri = LabelerUri(labeler.uri.atUri),
             creatorId = creatorId,
             likeCount = labeler.likeCount,
         ),

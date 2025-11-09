@@ -19,6 +19,7 @@ package com.tunjid.heron.data.database.daos
 import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
+import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.LabelDefinitionEntity
 import com.tunjid.heron.data.database.entities.LabelEntity
@@ -32,11 +33,21 @@ interface LabelDao {
     @Query(
         """
             SELECT * FROM labelers
-            WHERE creatorId IN (:ids)
+            WHERE uri IN (:uris)
         """,
     )
     fun labelers(
-        ids: Collection<ProfileId>,
+        uris: Collection<LabelerUri>,
+    ): Flow<List<PopulatedLabelerEntity>>
+
+    @Query(
+        """
+            SELECT * FROM labelers
+            WHERE creatorId IN (:creatorIds)
+        """,
+    )
+    fun labelersByCreators(
+        creatorIds: Collection<ProfileId>,
     ): Flow<List<PopulatedLabelerEntity>>
 
     @Upsert

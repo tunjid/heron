@@ -29,12 +29,14 @@ import app.bsky.feed.ViewerState
 import app.bsky.graph.ListView
 import app.bsky.graph.StarterPackViewBasic
 import app.bsky.graph.Starterpack
+import app.bsky.labeler.LabelerView
 import app.bsky.richtext.Facet
 import app.bsky.richtext.FacetFeatureUnion
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Label
+import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
@@ -46,6 +48,8 @@ import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.LabelerId
+import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListId
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostId
@@ -359,9 +363,15 @@ private fun PostView.nonPostEmbeddedRecord(): Record? {
             recordUnion.value.asExternalModel()
         is RecordViewRecordUnion.GraphStarterPackViewBasic ->
             recordUnion.value.asExternalModel()
+        is RecordViewRecordUnion.LabelerLabelerView ->
+            recordUnion.value.asExternalModel()
         // This is a regular post, but we already handled the quotedPostEntity case above
-        is RecordViewRecordUnion.ViewRecord -> null
-        else -> null
+        is RecordViewRecordUnion.ViewNotFound,
+        is RecordViewRecordUnion.ViewRecord,
+        is RecordViewRecordUnion.Unknown,
+        is RecordViewRecordUnion.ViewBlocked,
+        is RecordViewRecordUnion.ViewDetached,
+        -> null
     }
 }
 
@@ -411,6 +421,15 @@ private fun GeneratorView.asExternalModel() = FeedGenerator(
     acceptsInteractions = acceptsInteractions,
     indexedAt = indexedAt,
     labels = labels.map(com.atproto.label.Label::asExternalModel),
+)
+
+private fun LabelerView.asExternalModel() = Labeler(
+    cid = LabelerId(cid.cid),
+    uri = LabelerUri(uri.atUri),
+    creator = creator.profileEntity().asExternalModel(),
+    likeCount = likeCount,
+    definitions = emptyList(),
+    values = labels.map { it.asExternalModel().value },
 )
 
 private fun Long?.orZero() = this ?: 0L

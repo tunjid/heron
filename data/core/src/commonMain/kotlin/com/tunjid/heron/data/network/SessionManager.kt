@@ -234,7 +234,7 @@ internal class PersistedSessionManager @Inject constructor(
             currentSavedState.signedInProfileData
                 ?.preferences
                 ?.labelerPreferences
-                ?.map { it.labelerId.id }
+                ?.map { it.labelerCreatorId.id }
                 ?.let { labelProfileIds ->
                     headers.appendAll(AtProtoLabelerHeader, labelProfileIds)
                 }

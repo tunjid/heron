@@ -42,6 +42,10 @@ value class PostUri(
 ) : Uri,
     RecordUri {
     override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.bsky.feed.post"
+    }
 }
 
 @Serializable
@@ -59,6 +63,10 @@ value class FeedGeneratorUri(
 ) : Uri,
     RecordUri {
     override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.bsky.feed.generator"
+    }
 }
 
 @Serializable
@@ -68,6 +76,10 @@ value class ListUri(
 ) : Uri,
     RecordUri {
     override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.bsky.graph.list"
+    }
 }
 
 @Serializable
@@ -77,6 +89,23 @@ value class StarterPackUri(
 ) : Uri,
     RecordUri {
     override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.bsky.graph.starterpack"
+    }
+}
+
+@Serializable
+@JvmInline
+value class LabelerUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.bsky.labeler.service"
+    }
 }
 
 @Serializable

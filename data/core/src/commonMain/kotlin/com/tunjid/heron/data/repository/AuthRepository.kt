@@ -248,7 +248,7 @@ private fun Preferences.update(getPreferencesResponse: GetPreferencesResponse) =
                 is PreferencesUnion.LabelersPref -> preferences.copy(
                     labelerPreferences = preferencesUnion.value.labelers.map {
                         LabelerPreference(
-                            labelerId = it.did.did.let(::ProfileId),
+                            labelerCreatorId = it.did.did.let(::ProfileId),
                         )
                     },
                 )

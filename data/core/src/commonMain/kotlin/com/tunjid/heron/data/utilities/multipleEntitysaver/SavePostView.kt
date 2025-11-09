@@ -80,7 +80,18 @@ internal fun MultipleEntitySaver.add(
             add(recordUnion.value)
         is RecordViewRecordUnion.GraphStarterPackViewBasic ->
             add(recordUnion.value)
-        else -> Unit
+        is RecordViewRecordUnion.LabelerLabelerView ->
+            add(
+                viewingProfileId = viewingProfileId,
+                labeler = recordUnion.value,
+            )
+        is RecordViewRecordUnion.Unknown,
+        is RecordViewRecordUnion.ViewBlocked,
+        is RecordViewRecordUnion.ViewDetached,
+        is RecordViewRecordUnion.ViewNotFound,
+        is RecordViewRecordUnion.ViewRecord,
+        null,
+        -> Unit
     }
     postView.quotedPostProfileEntity()?.let(::add)
 }

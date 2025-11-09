@@ -8,7 +8,8 @@ import androidx.room.Relation
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.stubProfile
-import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.LabelerId
+import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 
@@ -31,8 +32,8 @@ import com.tunjid.heron.data.core.types.ProfileId
     ],
 )
 data class LabelerEntity(
-    val cid: String,
-    val uri: GenericUri,
+    val cid: LabelerId,
+    val uri: LabelerUri,
     val creatorId: ProfileId,
     val likeCount: Long?,
 )
@@ -54,6 +55,8 @@ data class PopulatedLabelerEntity(
 
 fun PopulatedLabelerEntity.asExternalModel(): Labeler = Labeler(
     uri = entity.uri,
+    cid = entity.cid,
+    likeCount = entity.likeCount,
     creator = creator
         ?.asExternalModel()
         ?: stubProfile(
