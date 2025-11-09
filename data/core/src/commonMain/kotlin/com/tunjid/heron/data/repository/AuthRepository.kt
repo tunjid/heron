@@ -18,13 +18,9 @@ package com.tunjid.heron.data.repository
 
 import app.bsky.actor.GetPreferencesResponse
 import app.bsky.actor.GetProfileQueryParams
-import app.bsky.actor.PreferencesUnion
 import app.bsky.actor.Type
 import app.bsky.feed.GetFeedGeneratorQueryParams
 import app.bsky.graph.GetListQueryParams
-import com.tunjid.heron.data.core.models.ContentLabelPreference
-import com.tunjid.heron.data.core.models.Label
-import com.tunjid.heron.data.core.models.LabelerPreference
 import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
@@ -42,6 +38,7 @@ import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
@@ -81,6 +78,7 @@ internal class AuthTokenRepository(
     private val profileDao: ProfileDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
+    private val preferenceUpdater: PreferenceUpdater,
     private val savedStateDataSource: SavedStateDataSource,
     private val sessionManager: SessionManager,
 ) : AuthRepository {
@@ -178,10 +176,12 @@ internal class AuthTokenRepository(
     private suspend fun savePreferences(
         preferencesResponse: GetPreferencesResponse,
     ) = supervisorScope {
-        val preferences = savedStateDataSource.savedState
-            .map { it.signedInProfileData?.preferences ?: Preferences.EmptyPreferences }
-            .first()
-            .update(preferencesResponse)
+        val preferences = preferenceUpdater.update(
+            response = preferencesResponse,
+            preferences = savedStateDataSource.savedState
+                .map { it.signedInProfileData?.preferences ?: Preferences.EmptyPreferences }
+                .first(),
+        )
 
         val saveTimelinePreferences = async {
             savedStateDataSource.updateSignedInProfileData {
@@ -224,58 +224,3 @@ internal class AuthTokenRepository(
         }
     }
 }
-
-private fun Preferences.update(getPreferencesResponse: GetPreferencesResponse) =
-    getPreferencesResponse.preferences.fold(
-        initial = this,
-        operation = { preferences, preferencesUnion ->
-            when (preferencesUnion) {
-                is PreferencesUnion.AdultContentPref -> preferences
-                is PreferencesUnion.BskyAppStatePref -> preferences
-                is PreferencesUnion.ContentLabelPref -> preferences.copy(
-                    contentLabelPreferences = preferencesUnion.asExternalModel().let { newPref ->
-                        preferences.contentLabelPreferences
-                            .filterNot {
-                                it.label == newPref.label && it.labelerId == newPref.labelerId
-                            }
-                            .plus(newPref)
-                    },
-                )
-
-                is PreferencesUnion.FeedViewPref -> preferences
-                is PreferencesUnion.HiddenPostsPref -> preferences
-                is PreferencesUnion.InterestsPref -> preferences
-                is PreferencesUnion.LabelersPref -> preferences.copy(
-                    labelerPreferences = preferencesUnion.value.labelers.map {
-                        LabelerPreference(
-                            labelerCreatorId = it.did.did.let(::ProfileId),
-                        )
-                    },
-                )
-                is PreferencesUnion.MutedWordsPref -> preferences
-                is PreferencesUnion.PersonalDetailsPref -> preferences
-                is PreferencesUnion.SavedFeedsPref -> preferences
-                is PreferencesUnion.SavedFeedsPrefV2 -> preferences.copy(
-                    timelinePreferences = preferencesUnion.value.items.map {
-                        TimelinePreference(
-                            id = it.id,
-                            type = it.type.value,
-                            value = it.value,
-                            pinned = it.pinned,
-                        )
-                    },
-                )
-
-                is PreferencesUnion.ThreadViewPref -> preferences
-                is PreferencesUnion.Unknown -> preferences
-                is PreferencesUnion.PostInteractionSettingsPref -> preferences
-                is PreferencesUnion.VerificationPrefs -> preferences
-            }
-        },
-    )
-
-private fun PreferencesUnion.ContentLabelPref.asExternalModel() = ContentLabelPreference(
-    labelerId = value.labelerDid?.did?.let(::ProfileId),
-    label = Label.Value(value = value.label),
-    visibility = Label.Visibility(value = value.visibility.value),
-)

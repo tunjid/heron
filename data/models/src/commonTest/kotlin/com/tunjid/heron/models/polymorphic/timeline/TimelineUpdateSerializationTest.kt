@@ -16,7 +16,7 @@ class TimelineUpdateSerializationTest(
         SerializationTestHelper.Format.PROTOBUF,
     ),
     val original: Timeline.Update = burstValues(
-        Timeline.Update.Bulk(
+        Timeline.Update.OfFeedGenerator.Bulk(
             timelines = listOf(FakeTimeline.following),
         ),
         Timeline.Update.OfFeedGenerator.Pin(
