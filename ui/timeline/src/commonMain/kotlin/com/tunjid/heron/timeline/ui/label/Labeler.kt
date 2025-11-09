@@ -52,9 +52,9 @@ fun Labeler(
         sharedElementPrefix = sharedElementPrefix,
         sharedElementType = labeler.uri,
         avatar = {
-            val avatar = com.tunjid.heron.timeline.utilities.BlueskyClouds
+            val avatar = labeler.creator.avatar
             AsyncImage(
-                modifier = androidx.compose.ui.Modifier
+                modifier = Modifier
                     .paneStickySharedElement(
                         sharedContentState = rememberSharedContentState(
                             key = labeler.avatarSharedElementKey(sharedElementPrefix),
@@ -63,7 +63,7 @@ fun Labeler(
                     .size(44.dp),
                 args = remember(avatar) {
                     ImageArgs(
-                        url = avatar.uri,
+                        url = avatar?.uri,
                         contentScale = androidx.compose.ui.layout.ContentScale.Crop,
                         contentDescription = null,
                         shape = com.tunjid.heron.timeline.utilities.StarterPackCollectionShape,

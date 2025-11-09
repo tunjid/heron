@@ -178,12 +178,7 @@ internal suspend fun NetworkService.refresh(
         is LabelerUri -> runCatchingWithMonitoredNetworkRetry(times = 2) {
             getServices(
                 GetServicesQueryParams(
-                    dids = listOf(
-                        Url(uri.uri).fullPath
-                            .substringBefore(LabelerUri.NAMESPACE)
-                            .dropLast(1) // trailing slash
-                            .let(::Did),
-                    ),
+                    dids = listOf(Url(uri.uri).host.let(::Did)),
                     detailed = true,
                 ),
             )
