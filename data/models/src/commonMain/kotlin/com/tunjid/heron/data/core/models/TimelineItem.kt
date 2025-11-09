@@ -214,6 +214,7 @@ sealed interface Timeline {
 
         @Serializable
         sealed class OfContentLabel : Update() {
+            @Serializable
             data class VisibilityChange(
                 val value: Label.Value,
                 val labelCreatorId: ProfileId,
