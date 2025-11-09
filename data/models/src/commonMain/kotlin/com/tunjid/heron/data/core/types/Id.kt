@@ -85,6 +85,14 @@ value class StarterPackId(
 
 @Serializable
 @JvmInline
+value class LabelerId(
+    override val id: String,
+) : Id {
+    override fun toString(): String = id
+}
+
+@Serializable
+@JvmInline
 value class GenericId(
     override val id: String,
 ) : Id {

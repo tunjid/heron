@@ -55,10 +55,8 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.StarterPack
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.PostUri
@@ -442,17 +440,9 @@ private fun Modifier.timelineCardPresentationPadding(
     Timeline.Presentation.Media.Grid -> this
 }
 
-internal fun FeedGenerator.avatarSharedElementKey(
+internal fun Record.avatarSharedElementKey(
     prefix: String?,
-): String = "$prefix-${uri.uri}-avatar"
-
-internal fun FeedList.avatarSharedElementKey(
-    prefix: String?,
-): String = "$prefix-${uri.uri}-avatar"
-
-internal fun StarterPack.avatarSharedElementKey(
-    prefix: String?,
-): String = "$prefix-${uri.uri}-avatar"
+): String = "$prefix-${reference.uri.uri}-avatar"
 
 fun String.withQuotingPostUriPrefix(
     quotingPostUri: PostUri? = null,

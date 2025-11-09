@@ -60,6 +60,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
+import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
@@ -120,6 +121,7 @@ fun PaneScaffoldState.UserInput(
                     is FeedGenerator -> Unit
                     is FeedList -> Unit
                     is StarterPack -> Unit
+                    is Labeler -> Unit
                 }
 
                 FilledTonalIconButton(

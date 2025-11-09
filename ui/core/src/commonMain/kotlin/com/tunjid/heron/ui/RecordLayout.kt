@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -40,7 +41,7 @@ fun RecordLayout(
     description: String?,
     blurb: String?,
     sharedElementPrefix: String?,
-    sharedElementType: Any,
+    sharedElementType: RecordUri,
     avatar: @Composable () -> Unit,
     action: @Composable (() -> Unit)? = null,
 ) = with(movableElementSharedTransitionScope) {
@@ -105,10 +106,10 @@ fun RecordLayout(
 
 fun titleSharedElementKey(
     prefix: String?,
-    type: Any,
+    type: RecordUri,
 ): String = "$prefix-$type-title"
 
 fun subtitleSharedElementKey(
     prefix: String?,
-    type: Any,
+    type: RecordUri,
 ): String = "$prefix-$type-subtitle"

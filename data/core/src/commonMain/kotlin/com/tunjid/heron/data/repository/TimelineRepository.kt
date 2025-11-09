@@ -57,6 +57,7 @@ import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
@@ -255,19 +256,19 @@ internal class OfflineTimelineRepository(
                 it.signedInProfileData
                     ?.preferences
                     ?.labelerPreferences
-                    ?.map(LabelerPreference::labelerId)
+                    ?.map(LabelerPreference::labelerCreatorId)
                     ?.plus(Collections.DefaultLabelerProfileId)
                     ?: listOf(Collections.DefaultLabelerProfileId)
             }
                 .distinctUntilChanged()
-                .flatMapLatest { labelerIds ->
-                    labelDao.labelers(labelerIds)
+                .flatMapLatest { labelerCreatorIds ->
+                    labelDao.labelersByCreators(labelerCreatorIds)
                         .map { it.map(PopulatedLabelerEntity::asExternalModel) }
                         .withRefresh {
                             networkService.runCatchingWithMonitoredNetworkRetry {
                                 getServices(
                                     GetServicesQueryParams(
-                                        dids = labelerIds.map { Did(it.id) },
+                                        dids = labelerCreatorIds.map { Did(it.id) },
                                         detailed = true,
                                     ),
                                 )
@@ -1396,6 +1397,7 @@ internal class OfflineTimelineRepository(
         val listUris = LazyList<ListUri>()
         val postUris = LazyList<PostUri>()
         val starterPackUris = LazyList<StarterPackUri>()
+        val labelerUris = LazyList<LabelerUri>()
 
         uris.forEach { uri ->
             when (uri) {
@@ -1403,6 +1405,7 @@ internal class OfflineTimelineRepository(
                 is ListUri -> listUris.add(uri)
                 is PostUri -> postUris.add(uri)
                 is StarterPackUri -> starterPackUris.add(uri)
+                is LabelerUri -> labelerUris.add(uri)
             }
         }
 

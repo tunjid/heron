@@ -105,5 +105,5 @@ data class ContentLabelPreference(
 
 @Serializable
 data class LabelerPreference(
-    val labelerId: ProfileId,
+    val labelerCreatorId: ProfileId,
 )

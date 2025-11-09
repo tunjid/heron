@@ -17,6 +17,8 @@
 package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.LabelerId
+import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ProfileId
 import kotlin.jvm.JvmInline
 import kotlinx.datetime.Instant
@@ -42,8 +44,8 @@ data class Label(
     ) {
         companion object {
             val Hide = Visibility("hide")
-            val Show = Visibility("show")
-            val Warn = Visibility("warn")
+            val Warn = Visibility("warn") // Also show badge
+            val Ignore = Visibility("ignore")
         }
     }
 
@@ -77,11 +79,20 @@ data class Label(
 
 @Serializable
 data class Labeler(
-    val uri: GenericUri,
+    val uri: LabelerUri,
+    val cid: LabelerId,
     val creator: Profile,
+    val likeCount: Long?,
     val definitions: List<Label.Definition>,
     val values: List<Label.Value>,
-) {
+) : Record {
+
+    override val reference: Record.Reference =
+        Record.Reference(
+            id = cid,
+            uri = uri,
+        )
+
     @Serializable
     data class LocaleInfo(
         val lang: String,

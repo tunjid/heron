@@ -24,6 +24,8 @@ import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.LabelerId
+import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListId
 import com.tunjid.heron.data.core.types.ListMemberUri
 import com.tunjid.heron.data.core.types.ListUri
@@ -80,6 +82,10 @@ internal class UriConverters {
         value?.let(::StarterPackUri)
 
     @TypeConverter
+    fun labelerUriFromString(value: String?): LabelerUri? =
+        value?.let(::LabelerUri)
+
+    @TypeConverter
     fun listMemberUriFromString(value: String?): ListMemberUri? =
         value?.let(::ListMemberUri)
 
@@ -126,6 +132,10 @@ internal class IdConverters {
         value?.let(::StarterPackId)
 
     @TypeConverter
+    fun labelerIdFromString(value: String?): LabelerId? =
+        value?.let(::LabelerId)
+
+    @TypeConverter
     fun feedGeneratorIdFromString(value: String?): FeedGeneratorId? =
         value?.let(::FeedGeneratorId)
 
@@ -152,9 +162,10 @@ internal class IdConverters {
  * accordingly to stay consistent with the main implementation.
  */
 private fun String.asRecordUri(): RecordUri? = when {
-    contains("app.bsky.feed.generator") -> FeedGeneratorUri(this)
-    contains("app.bsky.graph.list") -> ListUri(this)
-    contains("app.bsky.graph.starterpack") -> StarterPackUri(this)
-    startsWith("at://") -> PostUri(this)
+    contains(FeedGeneratorUri.NAMESPACE) -> FeedGeneratorUri(this)
+    contains(ListUri.NAMESPACE) -> ListUri(this)
+    contains(StarterPackUri.NAMESPACE) -> StarterPackUri(this)
+    contains(LabelerUri.NAMESPACE) -> LabelerUri(this)
+    contains(PostUri.NAMESPACE) -> PostUri(this)
     else -> null
 }

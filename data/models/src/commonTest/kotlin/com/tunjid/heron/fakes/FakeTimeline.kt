@@ -7,12 +7,16 @@ import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.FeedGeneratorId
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.LabelerId
+import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListId
 import com.tunjid.heron.data.core.types.ListUri
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.core.types.StarterPackUri
@@ -62,8 +66,13 @@ object FakeTimeline {
     // Optional: corresponding labelers if you need them
     val sampleLabelers: Labelers = listOf(
         Labeler(
-            uri = GenericUri("at://labeler/1"),
-            creatorId = ProfileId("did:example:labeler-1"),
+            uri = LabelerUri("at://labeler/1"),
+            cid = LabelerId("bafyreiefgzsaskjfvsrs2ngyvreueldnavzuqlkb4rcdevbskpfpslderd"),
+            likeCount = 1,
+            creator = stubProfile(
+                ProfileId("did:example:labeler-1"),
+                ProfileHandle("labeler-1"),
+            ),
             definitions = listOf(
                 Label.Definition(
                     adultOnly = true,
@@ -76,8 +85,13 @@ object FakeTimeline {
             values = listOf(Label.Value("spoiler")),
         ),
         Labeler(
-            uri = GenericUri("at://labeler/2"),
-            creatorId = ProfileId("did:example:labeler-2"),
+            uri = LabelerUri("at://labeler/2"),
+            cid = LabelerId("bafyreiefgzsaskjfvsrs2ngyvreueldnavzuqlkb4rcdevbskpfpslderu"),
+            likeCount = null,
+            creator = stubProfile(
+                ProfileId("did:example:labeler-2"),
+                ProfileHandle("labeler-2"),
+            ),
             definitions = listOf(
                 Label.Definition(
                     adultOnly = true,

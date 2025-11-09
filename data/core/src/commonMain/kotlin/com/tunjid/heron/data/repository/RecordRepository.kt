@@ -20,13 +20,17 @@ import app.bsky.feed.GetFeedGeneratorQueryParams
 import app.bsky.feed.GetPostsQueryParams
 import app.bsky.graph.GetListQueryParams
 import app.bsky.graph.GetStarterPackQueryParams
+import app.bsky.labeler.GetServicesQueryParams
+import app.bsky.labeler.GetServicesResponseViewUnion
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
+import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
@@ -36,10 +40,13 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
+import io.ktor.http.Url
+import io.ktor.http.fullPath
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import sh.christian.ozone.api.AtUri
+import sh.christian.ozone.api.Did
 
 interface RecordRepository {
 
@@ -49,6 +56,7 @@ interface RecordRepository {
 internal class OfflineRecordRepository @Inject constructor(
     private val postDao: PostDao,
     private val listDao: ListDao,
+    private val labelDao: LabelDao,
     private val starterPackDao: StarterPackDao,
     private val feedGeneratorDao: FeedGeneratorDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
@@ -69,6 +77,10 @@ internal class OfflineRecordRepository @Inject constructor(
                 .map { it.firstOrNull()?.asExternalModel() }
 
             is StarterPackUri -> starterPackDao.starterPacks(
+                listOf(uri),
+            )
+                .map { it.firstOrNull()?.asExternalModel() }
+            is LabelerUri -> labelDao.labelers(
                 listOf(uri),
             )
                 .map { it.firstOrNull()?.asExternalModel() }
@@ -162,6 +174,38 @@ internal suspend fun NetworkService.refresh(
             ?.starterPack
             ?.let { starterPackView ->
                 multipleEntitySaverProvider.saveInTransaction { add(starterPackView) }
+            }
+        is LabelerUri -> runCatchingWithMonitoredNetworkRetry(times = 2) {
+            getServices(
+                GetServicesQueryParams(
+                    dids = listOf(
+                        Url(uri.uri).fullPath
+                            .substringBefore(LabelerUri.NAMESPACE)
+                            .dropLast(1) // trailing slash
+                            .let(::Did),
+                    ),
+                    detailed = true,
+                ),
+            )
+        }
+            .getOrNull()
+            ?.views
+            ?.let { responseViewUnionList ->
+                multipleEntitySaverProvider.saveInTransaction {
+                    responseViewUnionList.forEach { responseViewUnion ->
+                        when (responseViewUnion) {
+                            is GetServicesResponseViewUnion.LabelerView -> add(
+                                viewingProfileId = viewingProfileId,
+                                labeler = responseViewUnion.value,
+                            )
+                            is GetServicesResponseViewUnion.LabelerViewDetailed -> add(
+                                viewingProfileId = viewingProfileId,
+                                labeler = responseViewUnion.value,
+                            )
+                            is GetServicesResponseViewUnion.Unknown -> Unit
+                        }
+                    }
+                }
             }
     }
 }.let { }

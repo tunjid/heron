@@ -51,6 +51,7 @@ import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Label
+import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -61,6 +62,7 @@ import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.timeline.ui.feed.FeedGenerator
+import com.tunjid.heron.timeline.ui.label.Labeler
 import com.tunjid.heron.timeline.ui.list.FeedList
 import com.tunjid.heron.timeline.ui.list.StarterPack
 import com.tunjid.heron.timeline.ui.post.feature.BlockedPostPost
@@ -208,6 +210,14 @@ internal fun PostEmbed(
                             starterPack = embeddedRecord,
                         )
                     }
+                    is Labeler -> Labeler(
+                        modifier = Modifier.padding(12.dp),
+                        movableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                        sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
+                            quotingPostUri = postUri,
+                        ),
+                        labeler = embeddedRecord,
+                    )
                     null -> Unit
                 }
             }
