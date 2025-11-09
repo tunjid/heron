@@ -88,13 +88,13 @@ fun LabelerSettings(
                             modifier = Modifier,
                             horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
                         ) {
+                            val overrideColors = ButtonDefaults.filledTonalButtonColors()
                             Label.Visibility.all.forEachIndexed { index, visibility ->
-                                val overrideColors = ButtonDefaults.filledTonalButtonColors()
                                 ToggleButton(
                                     checked = labelSetting.visibility == visibility,
                                     onCheckedChange = { isChecked ->
                                         if (isChecked) stateHolder.accept(
-                                            labelSetting.copy(visibility = visibility)
+                                            labelSetting.copy(visibility = visibility),
                                         )
                                         // Do nothing, cannot uncheck a label setting
                                         else Unit

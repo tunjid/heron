@@ -439,7 +439,7 @@ private fun CoroutineScope.labelerSettingsStateHolders(
         ProfileScreenStateHolders.LabelerSettings(
             mutator = actionStateFlowMutator(
                 initialState = ProfileScreenStateHolders.LabelerSettings.Settings(),
-                actionTransform = transform@{ actions ->
+                actionTransform = { actions ->
                     // TODO in follow up PR
                     actions.toMutationStream {
                         emptyFlow()
