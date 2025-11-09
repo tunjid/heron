@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -74,3 +75,10 @@ fun Labeler(
         },
     )
 }
+
+fun Label.Definition.locale(
+    currentLanguageTag: String,
+) = locales.list
+    .firstOrNull { it.lang == currentLanguageTag }
+    ?: locales.list
+        .firstOrNull()

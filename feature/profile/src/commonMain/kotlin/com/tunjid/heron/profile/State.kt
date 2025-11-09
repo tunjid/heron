@@ -19,6 +19,7 @@ package com.tunjid.heron.profile
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
+import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -33,6 +34,9 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.ProfilesQuery
+import com.tunjid.heron.profile.ProfileScreenStateHolders.LabelerSettings
+import com.tunjid.heron.profile.ProfileScreenStateHolders.LabelerSettings.Settings
+import com.tunjid.heron.profile.ProfileScreenStateHolders.Records
 import com.tunjid.heron.profile.di.profileHandleOrId
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption
@@ -42,6 +46,7 @@ import com.tunjid.heron.scaffold.navigation.avatarSharedElementKey
 import com.tunjid.heron.scaffold.navigation.currentRoute
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.ui.text.Memo
@@ -50,6 +55,8 @@ import com.tunjid.treenav.push
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.routeString
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.compose.resources.StringResource
@@ -107,18 +114,28 @@ sealed class ProfileScreenStateHolders {
     ) : ProfileScreenStateHolders(),
         TimelineStateHolder by mutator
 
+    class LabelerSettings(
+        private val mutator: LabelerSettingsStateHolder,
+    ) : ProfileScreenStateHolders(),
+        LabelerSettingsStateHolder by mutator {
+
+        data class Settings(
+            val labelSettings: List<LabelSetting> = emptyList(),
+        )
+
+        data class LabelSetting(
+            val definition: Label.Definition,
+            val visibility: Label.Visibility,
+        )
+    }
+
     val key
         get() = when (this) {
             is Records.Feeds -> "Feeds"
             is Records.Lists -> "Lists"
             is Records.StarterPacks -> "StarterPacks"
             is Timeline -> state.value.timeline.sourceId
-        }
-
-    val tilingState: StateFlow<TilingState<*, *>>
-        get() = when (this) {
-            is Records<*> -> state
-            is Timeline -> state
+            is LabelerSettings -> "LabelerSettings"
         }
 
     fun refresh() = when (this) {
@@ -131,10 +148,31 @@ sealed class ProfileScreenStateHolders {
                 tilingAction = TilingState.Action.Refresh,
             ),
         )
+        is LabelerSettings -> Unit
     }
 }
 
+val ProfileScreenStateHolders?.isRefreshing
+    get() = when (this) {
+        is Records<*> -> state.map { it.isRefreshing }
+        is ProfileScreenStateHolders.Timeline -> state.map { it.isRefreshing }
+        is LabelerSettings,
+        null,
+        -> flowOf(false)
+    }
+
+val ProfileScreenStateHolders?.canRefresh
+    get() = when (this) {
+        is Records<*>,
+        is ProfileScreenStateHolders.Timeline,
+        -> true
+        is LabelerSettings,
+        null,
+        -> false
+    }
+
 typealias RecordStateHolder<T> = ActionStateMutator<TilingState.Action, StateFlow<RecordState<T>>>
+typealias LabelerSettingsStateHolder = ActionStateMutator<LabelerSettings.LabelSetting, StateFlow<Settings>>
 
 data class RecordState<T : Record>(
     val stringResource: StringResource,

@@ -74,6 +74,7 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.ui.label.locale
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
 import com.tunjid.heron.timeline.ui.post.threadtraversal.videoId
 import com.tunjid.heron.timeline.utilities.blurredMediaDefinitions
@@ -765,13 +766,6 @@ private class PostData(
     fun sharedElementKey(
         label: Label,
     ) = "$sharedElementPrefix-${post.uri.uri}-${label.creatorId}-${label.value}"
-
-    private fun Label.Definition.locale(
-        currentLanguageTag: String,
-    ) = locales.list
-        .firstOrNull { it.lang == currentLanguageTag }
-        ?: locales.list
-            .firstOrNull()
 }
 
 private sealed class PostContent(val key: String) {

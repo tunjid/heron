@@ -104,6 +104,7 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
+import com.tunjid.heron.profile.ui.LabelerSettings
 import com.tunjid.heron.profile.ui.ProfileCollectionSharedElementPrefix
 import com.tunjid.heron.profile.ui.RecordList
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -121,7 +122,6 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.tiling.TilingState
-import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
@@ -170,6 +170,7 @@ import heron.feature.profile.generated.resources.followed_by_profiles
 import heron.feature.profile.generated.resources.followers
 import heron.feature.profile.generated.resources.following
 import heron.feature.profile.generated.resources.follows_you
+import heron.feature.profile.generated.resources.labels
 import heron.feature.profile.generated.resources.posts
 import kotlin.math.floor
 import kotlin.math.max
@@ -215,11 +216,10 @@ internal fun ProfileScreen(
         key1 = pagerState.currentPage,
         key2 = updatedStateHolders.size,
     ) {
-        updatedStateHolders.getOrNull(pagerState.currentPage)
-            ?.tilingState
-            ?.collect {
-                value = it.isRefreshing
-            }
+        updatedStateHolders
+            .getOrNull(pagerState.currentPage)
+            .isRefreshing
+            .collect { value = it }
     }
 
     CollapsingHeaderLayout(
@@ -229,6 +229,9 @@ internal fun ProfileScreen(
                 headerState.width = with(density) { it.width.toDp() }
             }
             .pullToRefresh(
+                enabled = updatedStateHolders
+                    .getOrNull(pagerState.currentPage)
+                    .canRefresh,
                 isRefreshing = isRefreshing,
                 state = pullToRefreshState,
                 onRefresh = {
@@ -424,6 +427,9 @@ internal fun ProfileScreen(
                                 actions = actions,
                                 recentConversations = state.recentConversations,
                             )
+                            is ProfileScreenStateHolders.LabelerSettings -> LabelerSettings(
+                                stateHolder = stateHolder,
+                            )
                         }
                     },
                 )
@@ -446,6 +452,10 @@ private fun timelineTabs(
         is ProfileScreenStateHolders.Timeline -> Tab(
             title = holder.state.value.timeline.displayName(),
             hasUpdate = sourceIdsToHasUpdates[holder.state.value.timeline.sourceId] == true,
+        )
+        is ProfileScreenStateHolders.LabelerSettings -> Tab(
+            title = stringResource(Res.string.labels),
+            hasUpdate = false,
         )
     }
 }
