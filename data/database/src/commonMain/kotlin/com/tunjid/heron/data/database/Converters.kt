@@ -39,6 +39,7 @@ import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import kotlinx.datetime.Instant
 
 internal class DateConverters {
@@ -95,7 +96,7 @@ internal class UriConverters {
 
     @TypeConverter
     fun recordUriFromString(value: String?): RecordUri? =
-        value?.asRecordUri()
+        value?.asRecordUriOrNull()
 
     @TypeConverter
     fun toUriString(uri: Uri?): String? =
@@ -150,22 +151,4 @@ internal class IdConverters {
     @TypeConverter
     fun toIdString(id: Id?): String? =
         id?.id
-}
-
-/**
- * Local fallback mapping for converting a raw URI string to a [RecordUri].
- *
- * This is intentionally duplicated (lightweight version of core-data logic)
- * because data-database should not depend on core-data.
- *
- * If URI patterns change in core-data (Collections), please update this mapping
- * accordingly to stay consistent with the main implementation.
- */
-private fun String.asRecordUri(): RecordUri? = when {
-    contains(FeedGeneratorUri.NAMESPACE) -> FeedGeneratorUri(this)
-    contains(ListUri.NAMESPACE) -> ListUri(this)
-    contains(StarterPackUri.NAMESPACE) -> StarterPackUri(this)
-    contains(LabelerUri.NAMESPACE) -> LabelerUri(this)
-    contains(PostUri.NAMESPACE) -> PostUri(this)
-    else -> null
 }

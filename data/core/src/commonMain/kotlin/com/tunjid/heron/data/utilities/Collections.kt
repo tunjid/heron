@@ -16,18 +16,11 @@
 
 package com.tunjid.heron.data.utilities
 
-import com.tunjid.heron.data.core.models.Label
-import com.tunjid.heron.data.core.models.Labeler
-import com.tunjid.heron.data.core.models.stubProfile
-import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.data.core.types.ListUri
-import com.tunjid.heron.data.core.types.PostUri
-import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
-import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.network.BlueskyJson
 import kotlinx.datetime.Instant
@@ -83,32 +76,11 @@ val Uri.path: String
         .split(QueryDelimiter)
         .first()
 
-/**
- * Returns this [Uri] as a [RecordUri] if applicable.
- */
-fun Uri.asRecordUri(): RecordUri? = with(uri.split("/")) {
-    when {
-        contains(Collections.Post) -> PostUri(uri)
-        contains(Collections.List) -> ListUri(uri)
-        contains(Collections.StarterPack) -> StarterPackUri(uri)
-        contains(Collections.FeedGenerator) -> FeedGeneratorUri(uri)
-        else -> null
-    }
-}
-
 fun String.getAsRawUri(host: Uri.Host): String = host.prefix + split(LeadingSlash)
     .drop(1)
     .joinToString(separator = LeadingSlash)
     .split(QueryDelimiter)
     .first()
-
-internal fun String.asRecordUri(): RecordUri? = when {
-    contains(Collections.FeedGenerator) -> FeedGeneratorUri(this)
-    contains(Collections.List) -> ListUri(this)
-    contains(Collections.StarterPack) -> StarterPackUri(this)
-    startsWith(Uri.Host.AtProto.prefix) -> PostUri(this)
-    else -> null
-}
 
 internal fun <T> T.asJsonContent(
     serializer: KSerializer<T>,
