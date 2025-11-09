@@ -16,10 +16,7 @@
 
 package com.tunjid.heron.data.repository
 
-import app.bsky.actor.PreferencesUnion
 import app.bsky.actor.PutPreferencesRequest
-import app.bsky.actor.SavedFeed
-import app.bsky.actor.SavedFeedsPrefV2
 import app.bsky.actor.Type
 import app.bsky.feed.FeedViewPost
 import app.bsky.feed.GetActorLikesQueryParams
@@ -87,11 +84,11 @@ import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.LazyList
-import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.lookupProfileDid
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
+import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.toFlowOrEmpty
 import com.tunjid.heron.data.utilities.toOutcome
@@ -242,7 +239,7 @@ internal class OfflineTimelineRepository(
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateDataSource: SavedStateDataSource,
-    private val tidGenerator: TidGenerator,
+    private val preferenceUpdater: PreferenceUpdater,
     private val authRepository: AuthRepository,
 ) : TimelineRepository {
 
@@ -908,12 +905,10 @@ internal class OfflineTimelineRepository(
                 networkService.runCatchingWithMonitoredNetworkRetry {
                     putPreferences(
                         PutPreferencesRequest(
-                            preferences = preferencesResponse.preferences.updateFeed {
-                                updateFeedPreferencesFrom(
-                                    tidGenerator = tidGenerator,
-                                    update = update,
-                                )
-                            },
+                            preferences = preferencesResponse.preferences
+                                .map { preferencesUnion ->
+                                    preferenceUpdater.update(preferencesUnion, update)
+                                },
                         ),
                     )
                 }.fold(
@@ -1470,94 +1465,6 @@ private suspend fun TimelineDao.isFirstRequest(
     ).first()?.lastFetchedAt
     return lastFetchedAt?.toEpochMilliseconds() != query.data.cursorAnchor.toEpochMilliseconds()
 }
-
-private suspend fun PreferencesUnion.SavedFeedsPrefV2.updateFeedPreferencesFrom(
-    tidGenerator: TidGenerator,
-    update: Timeline.Update,
-): PreferencesUnion.SavedFeedsPrefV2 = PreferencesUnion.SavedFeedsPrefV2(
-    SavedFeedsPrefV2(
-        items = when (update) {
-            is Timeline.Update.Bulk -> value.items.associateBy(
-                keySelector = SavedFeed::value,
-                valueTransform = SavedFeed::id,
-            ).let { savedFeedValuesToIds ->
-                update.timelines.mapNotNull { timeline ->
-                    when (timeline) {
-                        is Timeline.Home.Feed -> savedFeedValuesToIds[
-                            timeline.feedGenerator.uri.uri,
-                        ]?.let { id ->
-                            SavedFeed(
-                                id = id,
-                                type = Type.Feed,
-                                value = timeline.feedGenerator.uri.uri,
-                                pinned = timeline.isPinned,
-                            )
-                        }
-
-                        is Timeline.Home.Following -> savedFeedValuesToIds[
-                            "following",
-                        ]?.let { id ->
-                            SavedFeed(
-                                id = id,
-                                type = Type.Timeline,
-                                value = "following",
-                                pinned = timeline.isPinned,
-                            )
-                        }
-
-                        is Timeline.Home.List -> savedFeedValuesToIds[
-                            timeline.feedList.uri.uri,
-                        ]?.let { id ->
-                            SavedFeed(
-                                id = id,
-                                type = Type.List,
-                                value = timeline.feedList.uri.uri,
-                                pinned = timeline.isPinned,
-                            )
-                        }
-                    }
-                }
-            }
-
-            is Timeline.Update.OfFeedGenerator.Pin -> value.items.filter {
-                it.value != update.uri.uri
-            }
-                .partition(SavedFeed::pinned)
-                .let { (pinned, saved) ->
-                    pinned + SavedFeed(
-                        id = tidGenerator.generate(),
-                        type = Type.Feed,
-                        value = update.uri.uri,
-                        pinned = true,
-                    ) + saved
-                }
-
-            is Timeline.Update.OfFeedGenerator.Remove -> value.items.filter { savedFeed ->
-                if (savedFeed.type != Type.Feed) return@filter true
-                savedFeed.value != update.uri.uri
-            }
-
-            is Timeline.Update.OfFeedGenerator.Save -> value.items.filter {
-                it.value != update.uri.uri
-            } + SavedFeed(
-                id = tidGenerator.generate(),
-                type = Type.Feed,
-                value = update.uri.uri,
-                pinned = false,
-            )
-        },
-    ),
-)
-
-private inline fun List<PreferencesUnion>.updateFeed(
-    block: PreferencesUnion.SavedFeedsPrefV2.() -> PreferencesUnion.SavedFeedsPrefV2,
-): List<PreferencesUnion> =
-    map { preference ->
-        when (preference) {
-            is PreferencesUnion.SavedFeedsPrefV2 -> preference.block()
-            else -> preference
-        }
-    }
 
 private fun FeedGeneratorEntity.supportsMediaPresentation() =
     when (contentMode) {

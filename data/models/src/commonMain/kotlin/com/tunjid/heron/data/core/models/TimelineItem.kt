@@ -172,6 +172,10 @@ sealed interface Timeline {
     @Serializable
     sealed class Update {
 
+        @Deprecated(
+            message = "Use the more targeted Update.OfFeedGenerator.Bulk instead",
+            replaceWith = ReplaceWith("Update.OfFeedGenerator.Bulk"),
+        )
         @Serializable
         data class Bulk(
             val timelines: List<Home>,
@@ -179,22 +183,43 @@ sealed interface Timeline {
 
         @Serializable
         sealed class OfFeedGenerator : Update() {
-            abstract val uri: FeedGeneratorUri
+
+            sealed interface Single {
+                val uri: FeedGeneratorUri
+            }
 
             @Serializable
             data class Pin(
                 override val uri: FeedGeneratorUri,
-            ) : OfFeedGenerator()
+            ) : OfFeedGenerator(),
+                Single
 
             @Serializable
             data class Save(
                 override val uri: FeedGeneratorUri,
-            ) : OfFeedGenerator()
+            ) : OfFeedGenerator(),
+                Single
 
             @Serializable
             data class Remove(
                 override val uri: FeedGeneratorUri,
+            ) : OfFeedGenerator(),
+                Single
+
+            @Serializable
+            data class Bulk(
+                val timelines: List<Home>,
             ) : OfFeedGenerator()
+        }
+
+        @Serializable
+        sealed class OfContentLabel : Update() {
+            @Serializable
+            data class VisibilityChange(
+                val value: Label.Value,
+                val labelCreatorId: ProfileId,
+                val visibility: Label.Visibility,
+            ) : OfContentLabel()
         }
     }
 
