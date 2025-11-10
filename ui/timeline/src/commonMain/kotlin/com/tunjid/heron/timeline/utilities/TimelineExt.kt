@@ -212,7 +212,7 @@ fun LazyStaggeredGridState.pendingOffsetFor(
     .toFloat()
 
 val TimelineItem.canAutoPlayVideo: Boolean
-    get() = labelVisibilitiesToDefinitions.canAutoPlayVideo
+    get() = appliedLabels.postLabelVisibilitiesToDefinitions.canAutoPlayVideo
 
 private val Timeline.avatar: ImageUri
     get() = when (this) {

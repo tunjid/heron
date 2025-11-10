@@ -19,7 +19,9 @@ package com.tunjid.heron.data.core.models
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.LabelerId
 import com.tunjid.heron.data.core.types.LabelerUri
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import kotlin.jvm.JvmInline
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
@@ -114,7 +116,37 @@ data class Labeler(
 
 typealias Labelers = List<Labeler>
 
-fun labelVisibilitiesToDefinitions(
+data class AppliedLabels(
+    val labels: Collection<Label>,
+    val labelers: Labelers,
+    val labelsVisibilityMap: Map<Label.Value, Label.Visibility>,
+) {
+    constructor(
+        labels: Collection<Label>,
+        labelers: Labelers,
+        contentLabelPreferences: ContentLabelPreferences,
+    ) : this(
+        labels = labels,
+        labelers = labelers,
+        labelsVisibilityMap = contentLabelPreferences.associateBy(
+            keySelector = ContentLabelPreference::label,
+            valueTransform = ContentLabelPreference::visibility,
+        ),
+    )
+
+    val postLabelVisibilitiesToDefinitions = labelVisibilitiesToDefinitions(
+        postLabels =
+        if (labels.isEmpty()) emptySet()
+        else labels.mapNotNullTo(mutableSetOf()) {
+            val isPostUri = it.uri.uri.asRecordUriOrNull() is PostUri
+            if (isPostUri) it.value else null
+        },
+        labelers = labelers,
+        labelsVisibilityMap = labelsVisibilityMap,
+    )
+}
+
+private fun labelVisibilitiesToDefinitions(
     postLabels: Set<Label.Value>,
     labelers: Labelers,
     labelsVisibilityMap: Map<Label.Value, Label.Visibility>,

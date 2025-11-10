@@ -79,8 +79,7 @@ internal fun PostSearchResult(
                 sharedElementPrefix = result.sharedElementPrefix,
                 createdAt = result.post.createdAt,
                 presentation = Timeline.Presentation.Text.WithEmbed,
-                labelers = result.labelers,
-                labelVisibilitiesToDefinitions = result.labelVisibilitiesToDefinitions,
+                appliedLabels = result.appliedLabels,
                 postActions = remember(result, onPostInteraction) {
                     postActions(
                         onLinkTargetClicked = { _, linkTarget ->

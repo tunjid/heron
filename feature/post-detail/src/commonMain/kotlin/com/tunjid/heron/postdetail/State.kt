@@ -19,6 +19,7 @@ package com.tunjid.heron.postdetail
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.appliedLabels
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.model
@@ -45,8 +46,10 @@ data class State(
                 posts = listOf(it),
                 generation = 0,
                 hasBreak = false,
-                labelers = emptyList(),
-                labelVisibilitiesToDefinitions = emptyMap(),
+                appliedLabels = it.appliedLabels(
+                    labelers = emptyList(),
+                    labelPreferences = emptyList(),
+                ),
             )
         },
     ),

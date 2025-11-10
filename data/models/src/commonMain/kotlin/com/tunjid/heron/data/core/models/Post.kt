@@ -219,23 +219,11 @@ data class Post(
     }
 }
 
-val Post.quotedPost: Post?
-    get() = embeddedRecord as? Post
-
-fun Post.labelVisibilitiesToDefinitions(
+fun Post.appliedLabels(
     labelers: List<Labeler>,
     labelPreferences: ContentLabelPreferences,
-): Map<Label.Visibility, List<Label.Definition>> = labelVisibilitiesToDefinitions(
-    postLabels = when {
-        labels.isEmpty() -> emptySet()
-        else -> labels.mapTo(
-            destination = mutableSetOf(),
-            transform = Label::value,
-        )
-    },
+) = AppliedLabels(
+    labels = labels + author.labels,
     labelers = labelers,
-    labelsVisibilityMap = labelPreferences.associateBy(
-        keySelector = ContentLabelPreference::label,
-        valueTransform = ContentLabelPreference::visibility,
-    ),
+    contentLabelPreferences = labelPreferences,
 )

@@ -21,8 +21,8 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelinePreference
+import com.tunjid.heron.data.core.models.appliedLabels
 import com.tunjid.heron.data.core.models.feedGeneratorUri
-import com.tunjid.heron.data.core.models.labelVisibilitiesToDefinitions
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.MessageRepository
@@ -499,8 +499,7 @@ private fun CoroutineScope.searchStateHolders(
                                             SearchResult.OfPost(
                                                 post = post,
                                                 sharedElementPrefix = searchState.tilingData.currentQuery.sourceId,
-                                                labelers = labelers,
-                                                labelVisibilitiesToDefinitions = post.labelVisibilitiesToDefinitions(
+                                                appliedLabels = post.appliedLabels(
                                                     labelers = labelers,
                                                     labelPreferences = contentLabelPreferences,
                                                 ),

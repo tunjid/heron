@@ -35,6 +35,7 @@ import app.bsky.feed.GetTimelineResponse
 import app.bsky.feed.Token
 import app.bsky.labeler.GetServicesQueryParams
 import app.bsky.labeler.GetServicesResponseViewUnion
+import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.ContentLabelPreferences
@@ -49,7 +50,6 @@ import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.core.models.labelVisibilitiesToDefinitions
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
@@ -1112,13 +1112,13 @@ internal class OfflineTimelineRepository(
                                     val isSignedIn = signedInProfileId != null
                                     if (!isSignedIn && postLabels.contains(Label.NonAuthenticated)) return@mapNotNull null
 
-                                    val visibilitiesToDefinitions = labelVisibilitiesToDefinitions(
-                                        postLabels = postLabels,
+                                    val appliedLabels = AppliedLabels(
+                                        labels = mainPost.labels + mainPost.author.labels,
                                         labelers = labelers,
                                         labelsVisibilityMap = labelsVisibilityMap,
                                     )
 
-                                    val shouldHide = visibilitiesToDefinitions.getOrElse(
+                                    val shouldHide = appliedLabels.postLabelVisibilitiesToDefinitions.getOrElse(
                                         key = Label.Visibility.Hide,
                                         defaultValue = ::emptyList,
                                     ).isNotEmpty()
@@ -1138,8 +1138,7 @@ internal class OfflineTimelineRepository(
                                             generation = null,
                                             anchorPostIndex = 2,
                                             hasBreak = entity.reply?.grandParentPostAuthorId != null,
-                                            labelers = labelers,
-                                            labelVisibilitiesToDefinitions = visibilitiesToDefinitions,
+                                            appliedLabels = appliedLabels,
                                             posts = listOf(
                                                 replyRoot.asExternalModel(
                                                     embeddedRecord = replyRoot.entity
@@ -1162,22 +1161,19 @@ internal class OfflineTimelineRepository(
                                             post = mainPost,
                                             by = repostedBy.asExternalModel(),
                                             at = entity.indexedAt,
-                                            labelers = labelers,
-                                            labelVisibilitiesToDefinitions = visibilitiesToDefinitions,
+                                            appliedLabels = appliedLabels,
                                         )
 
                                         entity.isPinned -> TimelineItem.Pinned(
                                             id = entity.id,
                                             post = mainPost,
-                                            labelers = labelers,
-                                            labelVisibilitiesToDefinitions = visibilitiesToDefinitions,
+                                            appliedLabels = appliedLabels,
                                         )
 
                                         else -> TimelineItem.Single(
                                             id = entity.id,
                                             post = mainPost,
-                                            labelers = labelers,
-                                            labelVisibilitiesToDefinitions = visibilitiesToDefinitions,
+                                            appliedLabels = appliedLabels,
                                         )
                                     }
                                 }
@@ -1353,10 +1349,10 @@ internal class OfflineTimelineRepository(
             anchorPostIndex = 0,
             hasBreak = false,
             posts = listOf(post),
-            labelers = labelers,
-            labelVisibilitiesToDefinitions = post.labelVisibilitiesToDefinitions(
+            appliedLabels = AppliedLabels(
+                labels = post.labels + post.author.labels,
                 labelers = labelers,
-                labelPreferences = labelPreferences,
+                contentLabelPreferences = labelPreferences,
             ),
         )
         // For parents, edit the head
@@ -1371,10 +1367,10 @@ internal class OfflineTimelineRepository(
             anchorPostIndex = 0,
             hasBreak = false,
             posts = listOf(post),
-            labelers = labelers,
-            labelVisibilitiesToDefinitions = post.labelVisibilitiesToDefinitions(
+            appliedLabels = AppliedLabels(
+                labels = post.labels + post.author.labels,
                 labelers = labelers,
-                labelPreferences = labelPreferences,
+                contentLabelPreferences = labelPreferences,
             ),
         )
 
