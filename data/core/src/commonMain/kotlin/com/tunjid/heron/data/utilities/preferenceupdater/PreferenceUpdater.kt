@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.utilities.preferenceupdater
 
 import app.bsky.actor.GetPreferencesResponse
+import app.bsky.actor.LabelerPrefItem
 import app.bsky.actor.PreferencesUnion
 import app.bsky.actor.SavedFeed
 import app.bsky.actor.SavedFeedsPrefV2
@@ -31,6 +32,7 @@ import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.utilities.TidGenerator
 import dev.zacsweers.metro.Inject
+import sh.christian.ozone.api.Did
 
 internal interface PreferenceUpdater {
     suspend fun update(
@@ -112,7 +114,10 @@ internal class ThingPreferenceUpdater @Inject constructor(
         is PreferencesUnion.FeedViewPref -> preferencesUnion
         is PreferencesUnion.HiddenPostsPref -> preferencesUnion
         is PreferencesUnion.InterestsPref -> preferencesUnion
-        is PreferencesUnion.LabelersPref -> preferencesUnion
+        is PreferencesUnion.LabelersPref -> preferencesUnion.targeting<Timeline.Update.OfLabeler>(
+            update = update,
+            block = { updateLabelerPreference(preferencesUnion, it) },
+        )
         is PreferencesUnion.MutedWordsPref -> preferencesUnion
         is PreferencesUnion.PersonalDetailsPref -> preferencesUnion
         is PreferencesUnion.PostInteractionSettingsPref -> preferencesUnion
@@ -216,6 +221,25 @@ internal class ThingPreferenceUpdater @Inject constructor(
             )
         }
     }
+
+    private fun updateLabelerPreference(
+        preferenceUnion: PreferencesUnion.LabelersPref,
+        update: Timeline.Update.OfLabeler,
+    ): PreferencesUnion.LabelersPref = PreferencesUnion.LabelersPref(
+        value = preferenceUnion.value.copy(
+            labelers = when (update) {
+                is Timeline.Update.OfLabeler.Subscription -> when {
+                    update.subscribed ->
+                        preferenceUnion.value.labelers
+                            .plus(LabelerPrefItem(did = update.labelCreatorId.id.let(::Did)))
+                            .distinctBy(LabelerPrefItem::did)
+                    else ->
+                        preferenceUnion.value.labelers
+                            .filter { it.did.did != update.labelCreatorId.id }
+                }
+            },
+        ),
+    )
 }
 
 private fun PreferencesUnion.ContentLabelPref.asExternalModel() = ContentLabelPreference(

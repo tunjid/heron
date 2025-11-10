@@ -95,6 +95,7 @@ import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.PostUri
@@ -313,8 +314,15 @@ internal fun ProfileScreen(
                         ),
                     )
                 },
-                onToggleLabelerSubscription = {
-                    // TODO: Follow up PR
+                onToggleLabelerSubscription = { labelerProfileId, isSubscribed ->
+                    actions(
+                        Action.UpdatePreferences(
+                            Timeline.Update.OfLabeler.Subscription(
+                                labelCreatorId = labelerProfileId,
+                                subscribed = !isSubscribed,
+                            ),
+                        ),
+                    )
                 },
             )
         },
@@ -490,7 +498,7 @@ private fun ProfileHeader(
     onProfileAvatarClicked: () -> Unit,
     onLinkTargetClicked: (LinkTarget) -> Unit,
     onEditClick: () -> Unit,
-    onToggleLabelerSubscription: (Boolean) -> Unit,
+    onToggleLabelerSubscription: (ProfileId, Boolean) -> Unit,
 ) = with(paneScaffoldState) {
     Box(
         modifier = modifier
@@ -754,7 +762,7 @@ private fun ProfileHeadline(
     viewerState: ProfileViewerState?,
     onEditClick: () -> Unit,
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
-    onToggleLabelerSubscription: (Boolean) -> Unit,
+    onToggleLabelerSubscription: (ProfileId, Boolean) -> Unit,
 ) {
     AttributionLayout(
         modifier = modifier,
@@ -774,13 +782,17 @@ private fun ProfileHeadline(
             }
         },
         action = {
+            val profileId = profile.did
             AnimatedVisibility(
                 visible = viewerState != null || isSignedInProfile || profile.isLabeler,
                 content = {
                     if (profile.isLabeler) LabelerState(
                         isSubscribed = isSubscribedToLabeler,
                         onClick = {
-                            onToggleLabelerSubscription(isSubscribedToLabeler)
+                            onToggleLabelerSubscription(
+                                profileId,
+                                isSubscribedToLabeler,
+                            )
                         },
                     )
                     else ProfileViewerState(

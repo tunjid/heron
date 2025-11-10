@@ -460,7 +460,6 @@ private fun CoroutineScope.labelerSettingsStateHolders(
             mutator = actionStateFlowMutator(
                 initialState = ProfileScreenStateHolders.LabelerSettings.Settings(),
                 actionTransform = { actions ->
-                    // TODO in follow up PR
                     actions.mapLatestToManyMutations { action ->
                         writeQueue.enqueue(
                             Writable.TimelineUpdate(
