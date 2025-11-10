@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.tunjid.composables.ui.skipIf
+import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
@@ -111,8 +112,7 @@ fun Post(
     sharedElementPrefix: String,
     createdAt: Instant,
     presentation: Timeline.Presentation,
-    labelers: List<Labeler>,
-    labelVisibilitiesToDefinitions: Map<Label.Visibility, List<Label.Definition>>,
+    appliedLabels: AppliedLabels,
     postActions: PostActions,
     timeline: @Composable (BoxScope.() -> Unit) = {},
 ) {
@@ -132,8 +132,7 @@ fun Post(
             presentationLookaheadScope = presentationLookaheadScope,
             post = post,
             presentation = presentation,
-            labelers = labelers,
-            labelVisibilitiesToDefinitions = labelVisibilitiesToDefinitions,
+            appliedLabels = appliedLabels,
             sharedElementPrefix = sharedElementPrefix,
             avatarShape = avatarShape,
             now = now,
@@ -655,8 +654,7 @@ private fun rememberUpdatedPostData(
     presentationLookaheadScope: LookaheadScope,
     post: Post,
     presentation: Timeline.Presentation,
-    labelers: List<Labeler>,
-    labelVisibilitiesToDefinitions: Map<Label.Visibility, List<Label.Definition>>,
+    appliedLabels: AppliedLabels,
     sharedElementPrefix: String,
     avatarShape: RoundedPolygonShape,
     now: Instant,
@@ -670,8 +668,7 @@ private fun rememberUpdatedPostData(
             presentationLookaheadScope = presentationLookaheadScope,
             post = post,
             presentation = presentation,
-            labelers = labelers,
-            labelVisibilitiesToDefinitions = labelVisibilitiesToDefinitions,
+            appliedLabels = appliedLabels,
             sharedElementPrefix = sharedElementPrefix,
             avatarShape = avatarShape,
             now = now,
@@ -685,8 +682,7 @@ private fun rememberUpdatedPostData(
         it.presentationLookaheadScope = presentationLookaheadScope
         it.post = post
         it.presentation = presentation
-        it.labelers = labelers
-        it.labelVisibilitiesToDefinitions = labelVisibilitiesToDefinitions
+        it.appliedLabels = appliedLabels
         it.sharedElementPrefix = sharedElementPrefix
         it.avatarShape = avatarShape
         it.now = now
@@ -702,8 +698,7 @@ private class PostData(
     presentationLookaheadScope: LookaheadScope,
     post: Post,
     presentation: Timeline.Presentation,
-    labelers: List<Labeler>,
-    labelVisibilitiesToDefinitions: Map<Label.Visibility, List<Label.Definition>>,
+    appliedLabels: AppliedLabels,
     sharedElementPrefix: String,
     avatarShape: RoundedPolygonShape,
     now: Instant,
@@ -717,8 +712,7 @@ private class PostData(
     var presentationLookaheadScope by mutableStateOf(presentationLookaheadScope)
     var post by mutableStateOf(post)
     var presentation by mutableStateOf(presentation)
-    var labelers by mutableStateOf(labelers)
-    var labelVisibilitiesToDefinitions by mutableStateOf(labelVisibilitiesToDefinitions)
+    var appliedLabels by mutableStateOf(appliedLabels)
     var sharedElementPrefix by mutableStateOf(sharedElementPrefix)
     var avatarShape by mutableStateOf(avatarShape)
     var now by mutableStateOf(now)
@@ -729,13 +723,13 @@ private class PostData(
     var selectedLabel by mutableStateOf<Label?>(null)
 
     val blurredMediaDefinitions by derivedStateOf {
-        labelVisibilitiesToDefinitions.blurredMediaDefinitions
+        appliedLabels.labelVisibilitiesToDefinitions.blurredMediaDefinitions
     }
 
     val hasLabels
         get() = post.labels.isNotEmpty() || post.author.labels.isNotEmpty()
     private val labelerDefinitionLookup by derivedStateOf {
-        labelers.associateBy(
+        appliedLabels.labelers.associateBy(
             keySelector = { it.creator.did },
             valueTransform = { labeler ->
                 labeler to labeler.definitions.associateBy(
