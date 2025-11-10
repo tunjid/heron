@@ -134,7 +134,7 @@ data class AppliedLabels(
         ),
     )
 
-    val labelVisibilitiesToDefinitions = labelVisibilitiesToDefinitions(
+    val postLabelVisibilitiesToDefinitions = labelVisibilitiesToDefinitions(
         postLabels =
         if (labels.isEmpty()) emptySet()
         else labels.mapNotNullTo(mutableSetOf()) {

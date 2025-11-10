@@ -723,7 +723,7 @@ private class PostData(
     var selectedLabel by mutableStateOf<Label?>(null)
 
     val blurredMediaDefinitions by derivedStateOf {
-        appliedLabels.labelVisibilitiesToDefinitions.blurredMediaDefinitions
+        appliedLabels.postLabelVisibilitiesToDefinitions.blurredMediaDefinitions
     }
 
     val hasLabels

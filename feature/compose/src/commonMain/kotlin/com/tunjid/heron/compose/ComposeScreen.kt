@@ -207,7 +207,7 @@ private fun Post(
                 labelers = labelers,
                 labelPreferences = labelPreferences,
             )
-                ?.labelVisibilitiesToDefinitions
+                ?.postLabelVisibilitiesToDefinitions
                 .orEmpty()
                 .blurredMediaDefinitions
                 .isNotEmpty()

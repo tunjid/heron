@@ -19,8 +19,6 @@ package com.tunjid.heron.search
 import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.Label
-import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
@@ -73,7 +71,7 @@ val SearchResult.OfPost.id: String
     get() = post.uri.uri
 
 val SearchResult.OfPost.canAutoPlayVideo: Boolean
-    get() = appliedLabels.labelVisibilitiesToDefinitions.canAutoPlayVideo
+    get() = appliedLabels.postLabelVisibilitiesToDefinitions.canAutoPlayVideo
 
 sealed class SearchState {
     data class OfPosts(
