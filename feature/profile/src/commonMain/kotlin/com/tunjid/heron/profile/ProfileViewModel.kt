@@ -59,6 +59,7 @@ import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
@@ -81,7 +82,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -130,6 +130,9 @@ class ActualProfileViewModel(
             recentConversationMutations(
                 messageRepository = messageRepository,
             ),
+            subscribedLabelerMutations(
+                timelineRepository = timelineRepository,
+            ),
         ),
         actionTransform = transform@{ actions ->
             merge(
@@ -137,6 +140,7 @@ class ActualProfileViewModel(
                     currentState = { state() },
                     profileId = route.profileHandleOrId,
                     scope = scope,
+                    writeQueue = writeQueue,
                     authRepository = authRepository,
                     recordRepository = recordRepository,
                     profileRepository = profileRepository,
@@ -156,7 +160,7 @@ class ActualProfileViewModel(
                             writeQueue = writeQueue,
                         )
 
-                        is Action.UpdateFeedGeneratorStatus -> action.flow.feedGeneratorStatusMutations(
+                        is Action.UpdatePreferences -> action.flow.feedGeneratorStatusMutations(
                             writeQueue = writeQueue,
                         )
 
@@ -187,6 +191,19 @@ fun recentConversationMutations(
             copy(recentConversations = conversations)
         }
 
+fun subscribedLabelerMutations(
+    timelineRepository: TimelineRepository,
+): Flow<Mutation<State>> =
+    timelineRepository.labelers
+        .mapToMutation { labelers ->
+            copy(
+                subscribedLabelerProfileIds = labelers.mapTo(
+                    destination = mutableSetOf(),
+                    transform = { it.creator.did },
+                ),
+            )
+        }
+
 private fun commonFollowerMutations(
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
@@ -202,6 +219,7 @@ private fun loadProfileMutations(
     currentState: suspend () -> State,
     profileId: Id.Profile,
     scope: CoroutineScope,
+    writeQueue: WriteQueue,
     authRepository: AuthRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
@@ -270,6 +288,7 @@ private fun loadProfileMutations(
                                     if (profile.isLabeler) addAll(
                                         scope.labelerSettingsStateHolders(
                                             profileId = profile.did,
+                                            writeQueue = writeQueue,
                                             timelineRepository = timelineRepository,
                                             recordRepository = recordRepository,
                                         ),
@@ -371,7 +390,7 @@ private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
         )
     }
 
-private fun Flow<Action.UpdateFeedGeneratorStatus>.feedGeneratorStatusMutations(
+private fun Flow<Action.UpdatePreferences>.feedGeneratorStatusMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
@@ -432,6 +451,7 @@ private fun CoroutineScope.recordStateHolders(
 
 private fun CoroutineScope.labelerSettingsStateHolders(
     profileId: ProfileId,
+    writeQueue: WriteQueue,
     timelineRepository: TimelineRepository,
     recordRepository: RecordRepository,
 ): List<ProfileScreenStateHolders.LabelerSettings> =
@@ -441,8 +461,16 @@ private fun CoroutineScope.labelerSettingsStateHolders(
                 initialState = ProfileScreenStateHolders.LabelerSettings.Settings(),
                 actionTransform = { actions ->
                     // TODO in follow up PR
-                    actions.toMutationStream {
-                        emptyFlow()
+                    actions.mapLatestToManyMutations { action ->
+                        writeQueue.enqueue(
+                            Writable.TimelineUpdate(
+                                Timeline.Update.OfContentLabel.VisibilityChange(
+                                    value = action.definition.identifier,
+                                    labelCreatorId = profileId,
+                                    visibility = action.visibility,
+                                ),
+                            ),
+                        )
                     }
                 },
                 inputs = listOf(

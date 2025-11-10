@@ -70,6 +70,7 @@ data class State(
     val avatarSharedElementKey: String,
     val commonFollowers: List<Profile> = emptyList(),
     val feedGeneratorUrisToPinnedStatus: Map<FeedGeneratorUri?, Boolean> = emptyMap(),
+    val subscribedLabelerProfileIds: Set<ProfileId> = emptySet(),
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
     @Transient
@@ -88,6 +89,9 @@ fun State(route: Route) = State(
         avatar = null,
     ),
 )
+
+val State.isSubscribedToLabeler
+    get() = profile.isLabeler && subscribedLabelerProfileIds.contains(profile.did)
 
 sealed class ProfileScreenStateHolders {
 
@@ -205,9 +209,9 @@ sealed class Action(val key: String) {
         val followedBy: GenericUri?,
     ) : Action(key = "ToggleViewerState")
 
-    data class UpdateFeedGeneratorStatus(
+    data class UpdatePreferences(
         val update: Timeline.Update,
-    ) : Action(key = "UpdateFeedGeneratorStatus")
+    ) : Action(key = "UpdatePreferences")
 
     sealed class Navigate :
         Action(key = "Navigate"),
