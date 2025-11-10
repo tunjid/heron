@@ -48,6 +48,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
@@ -105,6 +106,7 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.profile.ui.LabelerSettings
+import com.tunjid.heron.profile.ui.LabelerState
 import com.tunjid.heron.profile.ui.ProfileCollectionSharedElementPrefix
 import com.tunjid.heron.profile.ui.RecordList
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -258,6 +260,7 @@ internal fun ProfileScreen(
                 commonFollowers = state.commonFollowers,
                 isRefreshing = isRefreshing,
                 isSignedInProfile = state.isSignedInProfile,
+                isSubscribedToLabeler = state.isSubscribedToLabeler,
                 viewerState = state.viewerState,
                 timelineStateHolders = remember(updatedStateHolders) {
                     updatedStateHolders.filterIsInstance<ProfileScreenStateHolders.Timeline>()
@@ -310,6 +313,9 @@ internal fun ProfileScreen(
                         ),
                     )
                 },
+                onToggleLabelerSubscription = {
+                    // TODO: Follow up PR
+                },
             )
         },
         body = {
@@ -356,7 +362,7 @@ internal fun ProfileScreen(
                                         },
                                         onFeedGeneratorStatusUpdated = { update ->
                                             if (paneScaffoldState.isSignedOut) signInPopUpState.show()
-                                            else actions(Action.UpdateFeedGeneratorStatus(update))
+                                            else actions(Action.UpdatePreferences(update))
                                         },
                                     )
                                 },
@@ -474,6 +480,7 @@ private fun ProfileHeader(
     commonFollowers: List<Profile>,
     isRefreshing: Boolean,
     isSignedInProfile: Boolean,
+    isSubscribedToLabeler: Boolean,
     viewerState: ProfileViewerState?,
     timelineStateHolders: List<ProfileScreenStateHolders.Timeline>,
     avatarSharedElementKey: String,
@@ -483,6 +490,7 @@ private fun ProfileHeader(
     onProfileAvatarClicked: () -> Unit,
     onLinkTargetClicked: (LinkTarget) -> Unit,
     onEditClick: () -> Unit,
+    onToggleLabelerSubscription: (Boolean) -> Unit,
 ) = with(paneScaffoldState) {
     Box(
         modifier = modifier
@@ -539,9 +547,11 @@ private fun ProfileHeader(
                     modifier = Modifier.fillMaxWidth(),
                     profile = profile,
                     isSignedInProfile = isSignedInProfile,
+                    isSubscribedToLabeler = isSubscribedToLabeler,
                     viewerState = viewerState,
                     onViewerStateClicked = onViewerStateClicked,
                     onEditClick = onEditClick,
+                    onToggleLabelerSubscription = onToggleLabelerSubscription,
                 )
                 ProfileStats(
                     modifier = Modifier.fillMaxWidth(),
@@ -725,7 +735,7 @@ private fun ProfileAvatar(
                     url = profile.avatar?.uri,
                     contentScale = ContentScale.Crop,
                     contentDescription = profile.displayName ?: profile.handle.id,
-                    shape = RoundedPolygonShape.Circle,
+                    shape = if (profile.isLabeler) LabelerShape else RoundedPolygonShape.Circle,
                 )
             },
             sharedElement = { state, modifier ->
@@ -740,9 +750,11 @@ private fun ProfileHeadline(
     modifier: Modifier = Modifier,
     profile: Profile,
     isSignedInProfile: Boolean,
+    isSubscribedToLabeler: Boolean,
     viewerState: ProfileViewerState?,
-    onViewerStateClicked: (ProfileViewerState?) -> Unit,
     onEditClick: () -> Unit,
+    onViewerStateClicked: (ProfileViewerState?) -> Unit,
+    onToggleLabelerSubscription: (Boolean) -> Unit,
 ) {
     AttributionLayout(
         modifier = modifier,
@@ -763,9 +775,15 @@ private fun ProfileHeadline(
         },
         action = {
             AnimatedVisibility(
-                visible = viewerState != null || isSignedInProfile,
+                visible = viewerState != null || isSignedInProfile || profile.isLabeler,
                 content = {
-                    ProfileViewerState(
+                    if (profile.isLabeler) LabelerState(
+                        isSubscribed = isSubscribedToLabeler,
+                        onClick = {
+                            onToggleLabelerSubscription(isSubscribedToLabeler)
+                        },
+                    )
+                    else ProfileViewerState(
                         viewerState = viewerState,
                         isSignedInProfile = isSignedInProfile,
                         onClick = {
@@ -1279,6 +1297,11 @@ private class HeaderState(
     private val expandedToCollapsedAvatar
         get() = ExpandedProfilePhotoSize - CollapsedProfilePhotoSize
 }
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private val LabelerShape = RoundedPolygonShape.Custom(
+    polygon = MaterialShapes.Gem,
+)
 
 private val RecordShape = RoundedCornerShape(8.dp)
 

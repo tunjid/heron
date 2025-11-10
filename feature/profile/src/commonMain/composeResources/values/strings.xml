@@ -35,4 +35,6 @@
     <string name="starter_packs">Starter Packs</string>
     <string name="lists">Lists</string>
     <string name="labels">Labels</string>
+    <string name="subscribe">Subscribe</string>
+    <string name="subscribed">Subscribed</string>
 </resources>
