@@ -1115,7 +1115,7 @@ internal class OfflineTimelineRepository(
                                     val appliedLabels = AppliedLabels(
                                         labels = mainPost.labels + mainPost.author.labels,
                                         labelers = labelers,
-                                        labelsVisibilityMap = labelsVisibilityMap,
+                                        preferenceLabelsVisibilityMap = labelsVisibilityMap,
                                     )
 
                                     val shouldHide = appliedLabels.postLabelVisibilitiesToDefinitions.getOrElse(
