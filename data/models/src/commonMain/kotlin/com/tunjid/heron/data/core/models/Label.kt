@@ -151,19 +151,16 @@ data class AppliedLabels(
     }
 
     private val labelVisibilityMap: Map<Label.Value, Label.Visibility> by lazy {
-        labelers.fold(
-            mutableMapOf(),
-        ) { outerResult, label ->
-            label.definitions.fold(outerResult) { innerResult, definition ->
-                innerResult.apply {
-                    put(
+        labelers.flatMap(Labeler::definitions)
+            .associateBy(
+                keySelector = Label.Definition::identifier,
+                valueTransform = { definition ->
+                    preferenceLabelsVisibilityMap.getOrElse(
                         definition.identifier,
-                        preferenceLabelsVisibilityMap[definition.identifier]
-                            ?: definition.defaultSetting,
+                        definition::defaultSetting,
                     )
-                }
-            }
-        }
+                },
+            )
     }
 
     fun visibility(label: Label.Value) =
