@@ -241,7 +241,7 @@ private fun LabelContent(
             itemVerticalAlignment = Alignment.CenterVertically,
             content = {
                 data.post.author.labels.forEach { label ->
-                    data.withLabelerAndLocaleInfo(label) { labeler, localeInfo ->
+                    data.withPreferredLabelerAndLocaleInfo(label) { labeler, localeInfo ->
                         val authorLabelContentDescription = stringResource(
                             Res.string.post_author_label,
                             localeInfo.description,
@@ -288,7 +288,7 @@ private fun LabelContent(
                     }
                 }
                 data.selectedLabel?.let { selectedLabel ->
-                    data.withLabelerAndLocaleInfo(selectedLabel) { labeler, localeInfo ->
+                    data.withPreferredLabelerAndLocaleInfo(selectedLabel) { labeler, localeInfo ->
                         LabelDialog(
                             data = data,
                             localeInfo = localeInfo,
@@ -728,6 +728,7 @@ private class PostData(
 
     val hasLabels
         get() = post.labels.isNotEmpty() || post.author.labels.isNotEmpty()
+
     private val labelerDefinitionLookup by derivedStateOf {
         appliedLabels.labelers.associateBy(
             keySelector = { it.creator.did },
@@ -744,10 +745,13 @@ private class PostData(
         SpringSpec.skipIf { !presentationChanged }
     }
 
-    inline fun withLabelerAndLocaleInfo(
+    inline fun withPreferredLabelerAndLocaleInfo(
         label: Label,
         labeler: (Labeler, Labeler.LocaleInfo) -> Unit,
     ) {
+        val visibility = appliedLabels.visibility(label.value)
+        if (visibility != Label.Visibility.Warn) return
+
         labelerDefinitionLookup[label.creatorId]?.let { (labeler, definitionMap) ->
             definitionMap[label.value]?.let { definition ->
                 definition.locale(languageTag)?.let { localeInfo ->

@@ -116,10 +116,13 @@ data class Labeler(
 
 typealias Labelers = List<Labeler>
 
+/**
+ * A class holding metadata about a profile's preferences for labels.
+ */
 data class AppliedLabels(
     val labels: Collection<Label>,
     val labelers: Labelers,
-    val labelsVisibilityMap: Map<Label.Value, Label.Visibility>,
+    val preferenceLabelsVisibilityMap: Map<Label.Value, Label.Visibility>,
 ) {
     constructor(
         labels: Collection<Label>,
@@ -128,22 +131,40 @@ data class AppliedLabels(
     ) : this(
         labels = labels,
         labelers = labelers,
-        labelsVisibilityMap = contentLabelPreferences.associateBy(
+        preferenceLabelsVisibilityMap = contentLabelPreferences.associateBy(
             keySelector = ContentLabelPreference::label,
             valueTransform = ContentLabelPreference::visibility,
         ),
     )
 
-    val postLabelVisibilitiesToDefinitions = labelVisibilitiesToDefinitions(
-        postLabels =
-        if (labels.isEmpty()) emptySet()
-        else labels.mapNotNullTo(mutableSetOf()) {
-            val isPostUri = it.uri.uri.asRecordUriOrNull() is PostUri
-            if (isPostUri) it.value else null
-        },
-        labelers = labelers,
-        labelsVisibilityMap = labelsVisibilityMap,
-    )
+    val postLabelVisibilitiesToDefinitions by lazy {
+        labelVisibilitiesToDefinitions(
+            postLabels =
+            if (labels.isEmpty()) emptySet()
+            else labels.mapNotNullTo(mutableSetOf()) {
+                val isPostUri = it.uri.uri.asRecordUriOrNull() is PostUri
+                if (isPostUri) it.value else null
+            },
+            labelers = labelers,
+            labelsVisibilityMap = preferenceLabelsVisibilityMap,
+        )
+    }
+
+    private val labelVisibilityMap: Map<Label.Value, Label.Visibility> by lazy {
+        labelers.flatMap(Labeler::definitions)
+            .associateBy(
+                keySelector = Label.Definition::identifier,
+                valueTransform = { definition ->
+                    preferenceLabelsVisibilityMap.getOrElse(
+                        definition.identifier,
+                        definition::defaultSetting,
+                    )
+                },
+            )
+    }
+
+    fun visibility(label: Label.Value) =
+        labelVisibilityMap[label] ?: Label.Visibility.Ignore
 }
 
 private fun labelVisibilitiesToDefinitions(
