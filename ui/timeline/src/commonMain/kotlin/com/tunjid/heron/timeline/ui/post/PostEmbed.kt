@@ -184,6 +184,7 @@ internal fun PostEmbed(
                             feedGenerator = embeddedRecord,
                             status = null,
                             onFeedGeneratorStatusUpdated = {},
+                            onFeedGeneratorMoreOptionsClicked = {},
                         )
                     }
                     is FeedList -> FeatureContainer(

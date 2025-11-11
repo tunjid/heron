@@ -372,6 +372,7 @@ internal fun ProfileScreen(
                                             if (paneScaffoldState.isSignedOut) signInPopUpState.show()
                                             else actions(Action.UpdatePreferences(update))
                                         },
+                                        onFeedGeneratorMoreOptionsClicked = {},
                                     )
                                 },
                             )
