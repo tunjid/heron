@@ -130,12 +130,24 @@ private fun RecordOptionsBottomSheet(
     }
 }
 
-fun RecordUri.shareUri(): GenericUri = GenericUri(
-    when (this) {
-        is FeedGeneratorUri -> "https://bsky.app/feed/$uri"
-        is ListUri -> "https://bsky.app/list/$uri"
-        is StarterPackUri -> "https://bsky.app/starter-pack/$uri"
-        is LabelerUri -> "https://bsky.app/labeler/$uri"
-        else -> uri
-    },
-)
+fun RecordUri.shareUri(): GenericUri {
+    if (!uri.startsWith("at://")) return GenericUri(uri)
+
+    val parts = uri.substringAfter("at://").split('/')
+    if (parts.size < 3) return GenericUri(uri)
+
+    val did = parts[0]
+    val rkey = parts[2]
+
+    return GenericUri(
+        when (this) {
+            is FeedGeneratorUri -> "https://bsky.app/profile/$did/feed/$rkey"
+            is ListUri -> "https://bsky.app/profile/$did/list/$rkey"
+            // The rkey of a starter pack is the at-uri of the list it contains
+            is StarterPackUri -> "https://bsky.app/starter-pack/$rkey"
+            // The rkey for a labeler is 'self'
+            is LabelerUri -> "https://bsky.app/profile/$did"
+            else -> uri
+        },
+    )
+}
