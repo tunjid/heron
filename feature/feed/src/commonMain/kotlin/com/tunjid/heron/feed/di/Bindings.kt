@@ -35,6 +35,7 @@ import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.repository.TimelineRequest
+import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.getAsRawUri
 import com.tunjid.heron.feed.Action
 import com.tunjid.heron.feed.ActualFeedViewModel
@@ -42,8 +43,10 @@ import com.tunjid.heron.feed.FeedScreen
 import com.tunjid.heron.feed.RouteViewModelInitializer
 import com.tunjid.heron.feed.withFeedTimelineOrNull
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
+import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
@@ -56,6 +59,7 @@ import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.ui.feed.FeedGeneratorStatus
+import com.tunjid.heron.timeline.ui.feed.RecordOptionsSheetState.Companion.rememberUpdatedRecordOptionsState
 import com.tunjid.heron.timeline.utilities.TimelineTitle
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
@@ -188,6 +192,23 @@ class FeedBindings(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
+            val recordOptionsSheetState = rememberUpdatedRecordOptionsState(
+                signedInProfileId = state.signedInProfileId,
+                recentConversations = state.recentConversations,
+                onShareInConversationClicked = { recordUri, conversation ->
+                    viewModel.accept(
+                        Action.Navigate.To(
+                            conversationDestination(
+                                id = conversation.id,
+                                members = conversation.members,
+                                sharedElementPrefix = conversation.id.id,
+                                sharedUri = recordUri.asGenericUri(),
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            ),
+                        ),
+                    )
+                },
+            )
             val topAppBarNestedScrollConnection =
                 topAppBarNestedScrollConnection()
 
@@ -243,6 +264,9 @@ class FeedBindings(
                                         feedGenerator = feedTimeline.feedGenerator,
                                         onFeedGeneratorStatusUpdated = {
                                             viewModel.accept(Action.UpdateFeedGeneratorStatus(it))
+                                        },
+                                        onFeedGeneratorMoreOptionsClicked = { recordUri ->
+                                            recordOptionsSheetState.showOptions(recordUri)
                                         },
                                     )
                                 }
