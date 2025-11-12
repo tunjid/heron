@@ -58,12 +58,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.FeedList
-import com.tunjid.heron.data.core.models.Labeler
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Record
-import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.postActions
@@ -106,24 +101,19 @@ fun PaneScaffoldState.UserInput(
     ) {
         pendingRecord?.let { record ->
             Row(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.Top,
             ) {
-                when (record) {
-                    is Post -> PostRecord(
-                        modifier = Modifier
-                            .weight(1f),
-                        post = record,
-                        sharedElementPrefix = SharedRecordPrefix,
-                        paneScaffoldState = this@UserInput,
-                        postActions = NoOpPostActions,
-                    )
-                    is FeedGenerator -> Unit
-                    is FeedList -> Unit
-                    is StarterPack -> Unit
-                    is Labeler -> Unit
-                }
-
+                MessageRecord(
+                    modifier = Modifier
+                        .weight(1f),
+                    record = record,
+                    sharedElementPrefix = SharedRecordPrefix,
+                    paneScaffoldState = this@UserInput,
+                    postActions = NoOpPostActions,
+                )
                 FilledTonalIconButton(
                     onClick = removePendingRecordClicked,
                     content = {

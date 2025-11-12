@@ -65,11 +65,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tunjid.heron.conversation.ui.EmojiPickerBottomSheet
 import com.tunjid.heron.conversation.ui.EmojiPickerSheetState.Companion.rememberEmojiPickerState
-import com.tunjid.heron.conversation.ui.PostRecord
+import com.tunjid.heron.conversation.ui.MessageRecord
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.images.AsyncImage
@@ -261,8 +262,8 @@ private fun Message(
         when (item) {
             is MessageItem.Pending -> Unit
             is MessageItem.Sent -> item.message.post?.let { post ->
-                PostMessage(
-                    post = post,
+                MessageRecord(
+                    record = post,
                     item = item,
                     paneScaffoldState = paneScaffoldState,
                     actions = actions,
@@ -430,13 +431,13 @@ private fun ChatItemBubble(
 }
 
 @Composable
-private fun PostMessage(
-    post: Post,
+private fun MessageRecord(
+    record: Record,
     item: MessageItem,
     paneScaffoldState: PaneScaffoldState,
     actions: (Action) -> Unit,
 ) {
-    PostRecord(
+    MessageRecord(
         modifier = Modifier
             .padding(
                 top = 16.dp,
@@ -445,7 +446,7 @@ private fun PostMessage(
                 end = 16.dp,
             )
             .widthIn(max = 200.dp),
-        post = post,
+        record = record,
         sharedElementPrefix = item.id,
         paneScaffoldState = paneScaffoldState,
         postActions = remember(item.id, actions) {
