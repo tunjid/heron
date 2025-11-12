@@ -274,7 +274,7 @@ class FeedBindings(
                                         ?.let { recordUri ->
                                             recordOptionsSheetState.showOptions(recordUri)
                                         }
-                                }
+                                },
                             )
                             state.timelineState
                                 ?.timeline

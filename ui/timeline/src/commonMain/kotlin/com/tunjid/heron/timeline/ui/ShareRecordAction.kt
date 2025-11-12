@@ -19,11 +19,11 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun ShareRecordAction(
     onShareClicked: () -> Unit,
-){
+) {
     ElevatedCard(
         shape = CircleShape,
         modifier = Modifier
-            .padding(horizontal = 3.dp)
+            .padding(horizontal = 3.dp),
     ) {
         IconButton(
             onClick = onShareClicked,

@@ -312,7 +312,7 @@ class ListBindings(
                                         ?.let { recordUri ->
                                             recordOptionsSheetState.showOptions(recordUri)
                                         }
-                                }
+                                },
                             )
                         },
                     )
