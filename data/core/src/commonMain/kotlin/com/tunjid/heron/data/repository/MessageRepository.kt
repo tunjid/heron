@@ -184,7 +184,7 @@ internal class OfflineMessageRepository @Inject constructor(
                     .distinctUntilChanged()
                     .flatMapLatest { populatedMessageEntities ->
                         val embeddedRecordUris = populatedMessageEntities.flatMapTo(
-                            mutableSetOf()
+                            mutableSetOf(),
                         ) {
                             listOfNotNull(
                                 it.feed?.feedGeneratorUri,
