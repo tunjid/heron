@@ -576,7 +576,6 @@ private fun SuggestedContent(
                         null -> FeedGenerator.Status.None
                     },
                     onFeedGeneratorStatusUpdated = onUpdateTimelineClicked,
-                    onFeedGeneratorMoreOptionsClicked = {},
                 )
             },
         )
@@ -1024,7 +1023,6 @@ private fun FeedSearchResults(
                         null -> FeedGenerator.Status.None
                     },
                     onFeedGeneratorStatusUpdated = onTimelineUpdateClicked,
-                    onFeedGeneratorMoreOptionsClicked = {},
                 )
             },
         )

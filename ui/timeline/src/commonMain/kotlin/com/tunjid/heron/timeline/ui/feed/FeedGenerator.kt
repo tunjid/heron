@@ -64,7 +64,6 @@ fun FeedGenerator(
     feedGenerator: FeedGenerator,
     status: FeedGenerator.Status?,
     onFeedGeneratorStatusUpdated: (Update) -> Unit,
-    onFeedGeneratorMoreOptionsClicked: (Uri) -> Unit,
 ) = with(movableElementSharedTransitionScope) {
     RecordLayout(
         modifier = modifier,
@@ -107,7 +106,6 @@ fun FeedGenerator(
                     status = it,
                     feedGenerator = feedGenerator,
                     onFeedGeneratorStatusUpdated = onFeedGeneratorStatusUpdated,
-                    onFeedGeneratorMoreOptionsClicked = onFeedGeneratorMoreOptionsClicked,
                 )
             }
         },
@@ -119,7 +117,6 @@ fun FeedGeneratorStatus(
     status: FeedGenerator.Status,
     feedGenerator: FeedGenerator,
     onFeedGeneratorStatusUpdated: (Update) -> Unit,
-    onFeedGeneratorMoreOptionsClicked: (RecordUri) -> Unit,
 ) {
     ItemSelection(
         selectedItem = status,
@@ -128,16 +125,12 @@ fun FeedGeneratorStatus(
         icon = FeedGenerator.Status::icon,
         stringResource = FeedGenerator.Status::textResource,
         onItemSelected = { selectedStatus ->
-            when (selectedStatus) {
-                FeedGenerator.Status.Pinned ->
-                    onFeedGeneratorStatusUpdated(Pin(feedGenerator.uri))
-                FeedGenerator.Status.Saved ->
-                    onFeedGeneratorStatusUpdated(Save(feedGenerator.uri))
-                FeedGenerator.Status.None ->
-                    onFeedGeneratorStatusUpdated(Remove(feedGenerator.uri))
-                FeedGenerator.Status.MoreOptions ->
-                    onFeedGeneratorMoreOptionsClicked(feedGenerator.uri)
+            val update = when (selectedStatus) {
+                FeedGenerator.Status.Pinned -> Update.OfFeedGenerator.Pin(feedGenerator.uri)
+                FeedGenerator.Status.Saved -> Update.OfFeedGenerator.Save(feedGenerator.uri)
+                FeedGenerator.Status.None -> Update.OfFeedGenerator.Remove(feedGenerator.uri)
             }
+            onFeedGeneratorStatusUpdated(update)
         },
     )
 }
@@ -147,7 +140,6 @@ private fun FeedGenerator.Status.textResource(): StringResource =
         FeedGenerator.Status.Pinned -> Res.string.pin_feed
         FeedGenerator.Status.Saved -> Res.string.save_feed
         FeedGenerator.Status.None -> Res.string.remove_feed
-        FeedGenerator.Status.MoreOptions -> Res.string.more_options
     }
 
 private val FeedGenerator.Status.icon: ImageVector
@@ -155,5 +147,4 @@ private val FeedGenerator.Status.icon: ImageVector
         FeedGenerator.Status.Pinned -> Icons.Rounded.Star
         FeedGenerator.Status.Saved -> Icons.Rounded.Bookmark
         FeedGenerator.Status.None -> Icons.Outlined.BookmarkAdd
-        FeedGenerator.Status.MoreOptions -> Icons.Rounded.ArrowCircleUp
     }

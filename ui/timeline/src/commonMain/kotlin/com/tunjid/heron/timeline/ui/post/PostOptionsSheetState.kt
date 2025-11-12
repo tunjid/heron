@@ -163,7 +163,7 @@ private fun PostOptionsBottomSheet(
 }
 
 @Composable
-fun SendDirectMessageCard(
+private fun SendDirectMessageCard(
     signedInProfileId: ProfileId,
     recentConversations: List<Conversation>,
     onConversationClicked: (Conversation) -> Unit,
@@ -215,7 +215,7 @@ fun SendDirectMessageCard(
 }
 
 @Composable
-fun CopyToClipboardCard(
+private fun CopyToClipboardCard(
     uri: GenericUri,
 ) {
     val clipboard = LocalClipboard.current

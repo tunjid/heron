@@ -49,6 +49,5 @@ data class FeedGenerator(
         Pinned,
         Saved,
         None,
-        MoreOptions,
     }
 }

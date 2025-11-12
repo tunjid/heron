@@ -60,6 +60,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.timeline.state.TimelineState
+import com.tunjid.heron.timeline.ui.ShareRecordAction
 import com.tunjid.heron.timeline.ui.feed.RecordOptionsSheetState.Companion.rememberUpdatedRecordOptionsState
 import com.tunjid.heron.timeline.utilities.TimelineTitle
 import com.tunjid.treenav.compose.PaneEntry
@@ -304,27 +305,15 @@ class ListBindings(
                         },
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                         actions = {
-                            ElevatedCard(
-                                shape = CircleShape,
-                            ) {
-                                IconButton(
-                                    onClick = {
-                                        state.timelineState?.timeline?.uri
-                                            ?.asRecordUriOrNull()
-                                            ?.let { recordUri ->
-                                                recordOptionsSheetState.showOptions(recordUri)
-                                            }
-                                    },
-                                    modifier = Modifier
-                                        .size(40.dp),
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.ArrowCircleUp,
-                                        contentDescription = stringResource(Res.string.more_options),
-                                        tint = MaterialTheme.colorScheme.primary,
-                                    )
+                            ShareRecordAction(
+                                onShareClicked = {
+                                    state.timelineState?.timeline?.uri
+                                        ?.asRecordUriOrNull()
+                                        ?.let { recordUri ->
+                                            recordOptionsSheetState.showOptions(recordUri)
+                                        }
                                 }
-                            }
+                            )
                         },
                     )
                 },
