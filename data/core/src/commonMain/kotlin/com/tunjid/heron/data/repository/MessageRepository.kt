@@ -56,6 +56,7 @@ import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.PopulatedConversationEntity
+import com.tunjid.heron.data.database.entities.PopulatedMessageEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.LazyList
@@ -183,16 +184,10 @@ internal class OfflineMessageRepository @Inject constructor(
                 )
                     .distinctUntilChanged()
                     .flatMapLatest { populatedMessageEntities ->
-                        val embeddedRecordUris = populatedMessageEntities.flatMapTo(
-                            mutableSetOf(),
-                        ) {
-                            listOfNotNull(
-                                it.feed?.feedGeneratorUri,
-                                it.list?.listUri,
-                                it.post?.postUri,
-                                it.starterPack?.starterPackUri,
-                            )
-                        }
+                        val embeddedRecordUris = populatedMessageEntities.mapNotNullTo(
+                            destination = mutableSetOf(),
+                            transform = PopulatedMessageEntity::embeddedRecordUri,
+                        )
                         records(
                             uris = embeddedRecordUris,
                             viewingProfileId = signedInProfileId,
@@ -208,18 +203,8 @@ internal class OfflineMessageRepository @Inject constructor(
 
                             populatedMessageEntities.map { populatedMessageEntity ->
                                 populatedMessageEntity.asExternalModel(
-                                    embeddedRecord = populatedMessageEntity.feed
-                                        ?.feedGeneratorUri
-                                        ?.let(recordUrisToEmbeddedRecords::get)
-                                        ?: populatedMessageEntity.list
-                                            ?.listUri
-                                            ?.let(recordUrisToEmbeddedRecords::get)
-                                        ?: populatedMessageEntity.starterPack
-                                            ?.starterPackUri
-                                            ?.let(recordUrisToEmbeddedRecords::get)
-                                        ?: populatedMessageEntity.post
-                                            ?.postUri
-                                            ?.let(recordUrisToEmbeddedRecords::get),
+                                    embeddedRecord = populatedMessageEntity.embeddedRecordUri()
+                                        ?.let(recordUrisToEmbeddedRecords::get),
                                 )
                             }
                         }
@@ -497,3 +482,9 @@ private fun Log.RemoveReaction.maxCursor(
     }
     return maxOf(logRev, value.rev)
 }
+
+private fun PopulatedMessageEntity.embeddedRecordUri() =
+    feed?.feedGeneratorUri
+        ?: list?.listUri
+        ?: starterPack?.starterPackUri
+        ?: post?.postUri
