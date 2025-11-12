@@ -27,6 +27,7 @@ import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.profileId
@@ -35,13 +36,21 @@ import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
+import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
+import com.tunjid.heron.data.database.entities.PopulatedLabelerEntity
+import com.tunjid.heron.data.database.entities.PopulatedListEntity
+import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.utilities.LazyList
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import com.tunjid.heron.data.utilities.toFlowOrEmpty
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import sh.christian.ozone.api.AtUri
@@ -106,6 +115,71 @@ internal class OfflineRecordRepository @Inject constructor(
                     multipleEntitySaverProvider = multipleEntitySaverProvider,
                 )
             }
+}
+
+internal fun records(
+    uris: Set<RecordUri>,
+    viewingProfileId: ProfileId?,
+    feedGeneratorDao: FeedGeneratorDao,
+    labelDao: LabelDao,
+    listDao: ListDao,
+    postDao: PostDao,
+    starterPackDao: StarterPackDao,
+): Flow<List<Record>> {
+    val feedUris = LazyList<FeedGeneratorUri>()
+    val listUris = LazyList<ListUri>()
+    val postUris = LazyList<PostUri>()
+    val starterPackUris = LazyList<StarterPackUri>()
+    val labelerUris = LazyList<LabelerUri>()
+
+    uris.forEach { uri ->
+        when (uri) {
+            is FeedGeneratorUri -> feedUris.add(uri)
+            is ListUri -> listUris.add(uri)
+            is PostUri -> postUris.add(uri)
+            is StarterPackUri -> starterPackUris.add(uri)
+            is LabelerUri -> labelerUris.add(uri)
+        }
+    }
+
+    return combine(
+        feedUris.list
+            .toFlowOrEmpty(feedGeneratorDao::feedGenerators)
+            .distinctUntilChanged()
+            .map { entities ->
+                entities.map(PopulatedFeedGeneratorEntity::asExternalModel)
+            },
+        listUris.list
+            .toFlowOrEmpty(listDao::lists)
+            .distinctUntilChanged()
+            .map { entities ->
+                entities.map(PopulatedListEntity::asExternalModel)
+            },
+        postUris.list
+            .toFlowOrEmpty { postDao.posts(viewingProfileId?.id, it) }
+            .distinctUntilChanged()
+            .map { entities ->
+                entities.map {
+                    it.asExternalModel(
+                        embeddedRecord = null,
+                    )
+                }
+            },
+        starterPackUris.list
+            .toFlowOrEmpty(starterPackDao::starterPacks)
+            .distinctUntilChanged()
+            .map { entities ->
+                entities.map(PopulatedStarterPackEntity::asExternalModel)
+            },
+        labelerUris.list
+            .toFlowOrEmpty(labelDao::labelers)
+            .distinctUntilChanged()
+            .map { entities ->
+                entities.map(PopulatedLabelerEntity::asExternalModel)
+            },
+    ) { feeds, lists, posts, starterPacks, labelers ->
+        feeds + lists + posts + starterPacks + labelers
+    }
 }
 
 internal suspend fun NetworkService.refresh(

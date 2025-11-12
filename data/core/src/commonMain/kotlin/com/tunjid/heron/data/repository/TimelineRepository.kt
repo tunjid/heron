@@ -47,18 +47,15 @@ import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LabelerPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
-import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
@@ -73,7 +70,6 @@ import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedLabelerEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
-import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ThreadedPostEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
@@ -83,7 +79,6 @@ import com.tunjid.heron.data.database.entities.preferredPresentationPartial
 import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
-import com.tunjid.heron.data.utilities.LazyList
 import com.tunjid.heron.data.utilities.lookupProfileDid
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
@@ -639,6 +634,11 @@ internal class OfflineTimelineRepository(
                                     flow2 = records(
                                         uris = embeddedRecordUris,
                                         viewingProfileId = signedInProfileId,
+                                        feedGeneratorDao = feedGeneratorDao,
+                                        labelDao = labelDao,
+                                        listDao = listDao,
+                                        postDao = postDao,
+                                        starterPackDao = starterPackDao,
                                     ),
                                     flow3 = labelers,
                                     transform = { posts, embeddedRecords, labelers ->
@@ -1073,8 +1073,13 @@ internal class OfflineTimelineRepository(
                                     )
                                 },
                                 flow2 = records(
-                                    embeddedRecordUris,
-                                    signedInProfileId,
+                                    uris = embeddedRecordUris,
+                                    viewingProfileId = signedInProfileId,
+                                    feedGeneratorDao = feedGeneratorDao,
+                                    labelDao = labelDao,
+                                    listDao = listDao,
+                                    postDao = postDao,
+                                    starterPackDao = starterPackDao,
                                 ),
                                 flow3 = profileIds.toFlowOrEmpty(
                                     block = profileDao::profiles,
@@ -1377,66 +1382,6 @@ internal class OfflineTimelineRepository(
         // Just tack the post to the current thread
         else -> list.dropLast(1) + list.last().let {
             it.copy(posts = it.posts + post)
-        }
-    }
-
-    private fun records(
-        uris: Set<RecordUri>,
-        viewingProfileId: ProfileId?,
-    ): Flow<List<Record>> {
-        val feedUris = LazyList<FeedGeneratorUri>()
-        val listUris = LazyList<ListUri>()
-        val postUris = LazyList<PostUri>()
-        val starterPackUris = LazyList<StarterPackUri>()
-        val labelerUris = LazyList<LabelerUri>()
-
-        uris.forEach { uri ->
-            when (uri) {
-                is FeedGeneratorUri -> feedUris.add(uri)
-                is ListUri -> listUris.add(uri)
-                is PostUri -> postUris.add(uri)
-                is StarterPackUri -> starterPackUris.add(uri)
-                is LabelerUri -> labelerUris.add(uri)
-            }
-        }
-
-        return combine(
-            feedUris.list
-                .toFlowOrEmpty(feedGeneratorDao::feedGenerators)
-                .distinctUntilChanged()
-                .map { entities ->
-                    entities.map(PopulatedFeedGeneratorEntity::asExternalModel)
-                },
-            listUris.list
-                .toFlowOrEmpty(listDao::lists)
-                .distinctUntilChanged()
-                .map { entities ->
-                    entities.map(PopulatedListEntity::asExternalModel)
-                },
-            postUris.list
-                .toFlowOrEmpty { postDao.posts(viewingProfileId?.id, it) }
-                .distinctUntilChanged()
-                .map { entities ->
-                    entities.map {
-                        it.asExternalModel(
-                            embeddedRecord = null,
-                        )
-                    }
-                },
-            starterPackUris.list
-                .toFlowOrEmpty(starterPackDao::starterPacks)
-                .distinctUntilChanged()
-                .map { entities ->
-                    entities.map(PopulatedStarterPackEntity::asExternalModel)
-                },
-            labelerUris.list
-                .toFlowOrEmpty(labelDao::labelers)
-                .distinctUntilChanged()
-                .map { entities ->
-                    entities.map(PopulatedLabelerEntity::asExternalModel)
-                },
-        ) { feeds, lists, posts, starterPacks, labelers ->
-            feeds + lists + posts + starterPacks + labelers
         }
     }
 }

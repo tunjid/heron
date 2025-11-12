@@ -22,11 +22,8 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
-import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Message
-import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.StarterPack
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.core.types.ProfileId
@@ -110,10 +107,7 @@ data class PopulatedMessageEntity(
 )
 
 fun PopulatedMessageEntity.asExternalModel(
-    feedGenerator: FeedGenerator? = null,
-    list: FeedList? = null,
-    starterPack: StarterPack? = null,
-    post: Post? = null,
+    embeddedRecord: Record? = null,
 ) = Message(
     id = entity.id,
     conversationId = entity.conversationId,
@@ -121,10 +115,7 @@ fun PopulatedMessageEntity.asExternalModel(
     sentAt = entity.sentAt,
     isDeleted = entity.isDeleted,
     sender = sender.asExternalModel(),
-    feedGenerator = feedGenerator,
-    list = list,
-    starterPack = starterPack,
-    post = post,
+    embeddedRecord = embeddedRecord,
     reactions = reactions.map {
         Message.Reaction(
             value = it.value,
