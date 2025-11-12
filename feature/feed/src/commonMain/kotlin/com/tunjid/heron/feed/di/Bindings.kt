@@ -19,22 +19,32 @@ package com.tunjid.heron.feed.di
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowCircleUp
 import androidx.compose.material.icons.rounded.Straight
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.repository.TimelineRequest
+import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.getAsRawUri
 import com.tunjid.heron.feed.Action
 import com.tunjid.heron.feed.ActualFeedViewModel
@@ -42,8 +52,10 @@ import com.tunjid.heron.feed.FeedScreen
 import com.tunjid.heron.feed.RouteViewModelInitializer
 import com.tunjid.heron.feed.withFeedTimelineOrNull
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
+import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
@@ -55,7 +67,9 @@ import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
+import com.tunjid.heron.timeline.ui.ShareRecordAction
 import com.tunjid.heron.timeline.ui.feed.FeedGeneratorStatus
+import com.tunjid.heron.timeline.ui.feed.RecordOptionsSheetState.Companion.rememberUpdatedRecordOptionsState
 import com.tunjid.heron.timeline.utilities.TimelineTitle
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
@@ -78,6 +92,7 @@ import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.feature.feed.generated.resources.Res
+import heron.feature.feed.generated.resources.more_options
 import heron.feature.feed.generated.resources.scroll_to_top
 import org.jetbrains.compose.resources.stringResource
 
@@ -188,6 +203,23 @@ class FeedBindings(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
+            val recordOptionsSheetState = rememberUpdatedRecordOptionsState(
+                signedInProfileId = state.signedInProfileId,
+                recentConversations = state.recentConversations,
+                onShareInConversationClicked = { recordUri, conversation ->
+                    viewModel.accept(
+                        Action.Navigate.To(
+                            conversationDestination(
+                                id = conversation.id,
+                                members = conversation.members,
+                                sharedElementPrefix = conversation.id.id,
+                                sharedUri = recordUri.asGenericUri(),
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            ),
+                        ),
+                    )
+                },
+            )
             val topAppBarNestedScrollConnection =
                 topAppBarNestedScrollConnection()
 
@@ -246,6 +278,15 @@ class FeedBindings(
                                         },
                                     )
                                 }
+                            ShareRecordAction(
+                                onShareClicked = {
+                                    state.timelineState?.timeline?.uri
+                                        ?.asRecordUriOrNull()
+                                        ?.let { recordUri ->
+                                            recordOptionsSheetState.showOptions(recordUri)
+                                        }
+                                },
+                            )
                         },
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
