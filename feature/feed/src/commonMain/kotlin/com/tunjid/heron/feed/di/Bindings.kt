@@ -267,15 +267,6 @@ class FeedBindings(
                             )
                         },
                         actions = {
-                            ShareRecordAction(
-                                onShareClicked = {
-                                    state.timelineState?.timeline?.uri
-                                        ?.asRecordUriOrNull()
-                                        ?.let { recordUri ->
-                                            recordOptionsSheetState.showOptions(recordUri)
-                                        }
-                                },
-                            )
                             state.timelineState
                                 ?.timeline
                                 ?.withFeedTimelineOrNull { feedTimeline ->
@@ -287,6 +278,15 @@ class FeedBindings(
                                         },
                                     )
                                 }
+                            ShareRecordAction(
+                                onShareClicked = {
+                                    state.timelineState?.timeline?.uri
+                                        ?.asRecordUriOrNull()
+                                        ?.let { recordUri ->
+                                            recordOptionsSheetState.showOptions(recordUri)
+                                        }
+                                },
+                            )
                         },
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
