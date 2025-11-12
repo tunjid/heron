@@ -49,12 +49,14 @@ import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
+import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.PopulatedConversationEntity
+import com.tunjid.heron.data.database.entities.PopulatedMessageEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.LazyList
@@ -63,7 +65,6 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.resolveLinks
-import com.tunjid.heron.data.utilities.toFlowOrEmpty
 import com.tunjid.heron.data.utilities.toOutcome
 import dev.zacsweers.metro.Inject
 import kotlin.time.Duration.Companion.seconds
@@ -116,6 +117,7 @@ interface MessageRepository {
 }
 
 internal class OfflineMessageRepository @Inject constructor(
+    private val labelDao: LabelDao,
     private val messageDao: MessageDao,
     private val postDao: PostDao,
     private val feedDao: FeedGeneratorDao,
@@ -182,68 +184,27 @@ internal class OfflineMessageRepository @Inject constructor(
                 )
                     .distinctUntilChanged()
                     .flatMapLatest { populatedMessageEntities ->
-                        val feedUris = populatedMessageEntities.mapNotNull {
-                            it.feed?.feedGeneratorUri
-                        }
-                        val listUris = populatedMessageEntities.mapNotNull {
-                            it.list?.listUri
-                        }
-                        val starterPackUris = populatedMessageEntities.mapNotNull {
-                            it.starterPack?.starterPackUri
-                        }
-                        val postUris = populatedMessageEntities.mapNotNull {
-                            it.post?.postUri
-                        }
-                        combine(
-                            flow = feedUris.toFlowOrEmpty(feedDao::feedGenerators),
-                            flow2 = listUris.toFlowOrEmpty(listDao::lists),
-                            flow3 = starterPackUris.toFlowOrEmpty(starterPackDao::starterPacks),
-                            flow4 = postUris.toFlowOrEmpty { postIds ->
-                                postDao.posts(
-                                    viewingProfileId = signedInProfileId.id,
-                                    postUris = postIds,
-                                )
-                            },
-                            flow5 = postUris.toFlowOrEmpty { postIds ->
-                                postDao.embeddedPosts(
-                                    viewingProfileId = signedInProfileId.id,
-                                    postUris = postIds,
-                                )
-                            },
-                        ) { feeds, lists, starterPacks, posts, embeddedPosts ->
-                            val urisToFeeds = feeds.associateBy { it.entity.uri }
-                            val urisToLists = lists.associateBy { it.entity.uri }
-                            val urisToStarterPacks = starterPacks.associateBy { it.entity.uri }
-                            val urisToPosts = posts.associateBy { it.entity.uri }
-                            val urisToEmbeddedPosts =
-                                embeddedPosts.associateBy { it.parentPostUri }
+                        val embeddedRecordUris = populatedMessageEntities.mapNotNullTo(
+                            destination = mutableSetOf(),
+                            transform = PopulatedMessageEntity::embeddedRecordUri,
+                        )
+                        records(
+                            uris = embeddedRecordUris,
+                            viewingProfileId = signedInProfileId,
+                            feedGeneratorDao = feedDao,
+                            labelDao = labelDao,
+                            listDao = listDao,
+                            postDao = postDao,
+                            starterPackDao = starterPackDao,
+                        ).map { embeddedRecords ->
+                            val recordUrisToEmbeddedRecords = embeddedRecords.associateBy {
+                                it.reference.uri
+                            }
 
                             populatedMessageEntities.map { populatedMessageEntity ->
                                 populatedMessageEntity.asExternalModel(
-                                    feedGenerator = populatedMessageEntity.feed
-                                        ?.feedGeneratorUri
-                                        ?.let(urisToFeeds::get)
-                                        ?.asExternalModel(),
-                                    list = populatedMessageEntity.list
-                                        ?.listUri
-                                        ?.let(urisToLists::get)
-                                        ?.asExternalModel(),
-                                    starterPack = populatedMessageEntity.starterPack
-                                        ?.starterPackUri
-                                        ?.let(urisToStarterPacks::get)
-                                        ?.asExternalModel(),
-                                    post = populatedMessageEntity.post
-                                        ?.postUri
-                                        ?.let(urisToPosts::get)
-                                        ?.asExternalModel(
-                                            embeddedRecord = populatedMessageEntity.post
-                                                ?.postUri
-                                                ?.let(urisToEmbeddedPosts::get)
-                                                ?.entity
-                                                ?.asExternalModel(
-                                                    embeddedRecord = null,
-                                                ),
-                                        ),
+                                    embeddedRecord = populatedMessageEntity.embeddedRecordUri()
+                                        ?.let(recordUrisToEmbeddedRecords::get),
                                 )
                             }
                         }
@@ -521,3 +482,9 @@ private fun Log.RemoveReaction.maxCursor(
     }
     return maxOf(logRev, value.rev)
 }
+
+private fun PopulatedMessageEntity.embeddedRecordUri() =
+    feed?.feedGeneratorUri
+        ?: list?.listUri
+        ?: starterPack?.starterPackUri
+        ?: post?.postUri

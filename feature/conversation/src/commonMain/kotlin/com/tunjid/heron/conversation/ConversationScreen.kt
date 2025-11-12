@@ -261,9 +261,9 @@ private fun Message(
 
         when (item) {
             is MessageItem.Pending -> Unit
-            is MessageItem.Sent -> item.message.post?.let { post ->
+            is MessageItem.Sent -> item.message.embeddedRecord?.let { record ->
                 MessageRecord(
-                    record = post,
+                    record = record,
                     item = item,
                     paneScaffoldState = paneScaffoldState,
                     actions = actions,

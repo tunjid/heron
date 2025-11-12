@@ -21,7 +21,6 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.Junction
-import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Message
@@ -104,14 +103,11 @@ private fun PopulatedConversationEntity.conversationMessage(
                 sentAt = message.sentAt,
                 isDeleted = message.isDeleted,
                 sender = sender.asExternalModel(),
-                feedGenerator = null,
-                list = null,
-                starterPack = null,
-                post = null,
+                embeddedRecord = null,
                 reactions = listOfNotNull(
                     lastReactionEntity
                         ?.takeIf { message.id == lastMessageReactedToEntity?.id }
-                        ?.let { reactionValue ->
+                        ?.let { _ ->
                             Message.Reaction(
                                 value = lastReactionEntity.value,
                                 senderId = lastReactionEntity.senderId,
