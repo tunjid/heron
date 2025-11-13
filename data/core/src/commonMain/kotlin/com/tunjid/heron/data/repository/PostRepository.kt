@@ -48,6 +48,7 @@ import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.utilities.File
@@ -98,6 +99,14 @@ import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.model.Blob
+
+sealed class PostsRequest {
+    object Saved : PostsRequest()
+    data class Quotes(
+        val profileHandleOrId: ProfileHandleOrId,
+        val postRecordKey: RecordKey,
+    ) : PostsRequest()
+}
 
 @Serializable
 data class PostDataQuery(
