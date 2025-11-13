@@ -1,11 +1,10 @@
 package com.tunjid.heron.timeline.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowCircleUp
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -20,8 +19,7 @@ import org.jetbrains.compose.resources.stringResource
 fun ShareRecordAction(
     onShareClicked: () -> Unit,
 ) {
-    ElevatedCard(
-        shape = CircleShape,
+    Box(
         modifier = Modifier
             .padding(horizontal = 3.dp),
     ) {
