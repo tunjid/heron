@@ -18,9 +18,9 @@ package com.tunjid.heron.posts
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.repository.PostRepository
-import com.tunjid.heron.data.repository.PostsRequest
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
+import com.tunjid.heron.posts.di.PostsRequest
 import com.tunjid.heron.posts.di.postsRequest
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
@@ -94,8 +94,8 @@ private fun postsMutations(
     postsRepository: PostRepository,
 ): Flow<Mutation<State>> = flow {
     when (request) {
-        is PostsRequest.BookMarks -> {
-            // TODO: Fetch BookMarks posts
+        is PostsRequest.Saved -> {
+            // TODO: Fetch Saved posts
         }
         is PostsRequest.Quotes -> {
             // TODO: Fetch quotes

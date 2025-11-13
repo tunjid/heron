@@ -27,7 +27,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.di.DataBindings
-import com.tunjid.heron.data.repository.PostsRequest
 import com.tunjid.heron.posts.Action
 import com.tunjid.heron.posts.ActualPostsViewModel
 import com.tunjid.heron.posts.PostsScreen
@@ -65,7 +64,7 @@ import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 
-private const val BookMarksRoutePattern = "/BookMarks"
+private const val SavedRoutePattern = "/saved"
 private const val QuotesRoutePattern = "/profile/{profileHandleOrId}/post/{postRecordKey}/quotes"
 
 private fun createRoute(
@@ -76,6 +75,14 @@ private fun createRoute(
         routeParams.decodeReferringRoute(),
     ),
 )
+
+internal sealed class PostsRequest {
+    object Saved : PostsRequest()
+    data class Quotes(
+        val profileHandleOrId: ProfileHandleOrId,
+        val postRecordKey: RecordKey,
+    ) : PostsRequest()
+}
 
 private fun postsRouteMatcher(pattern: String) = urlRouteMatcher(
     routePattern = pattern,
@@ -90,8 +97,8 @@ private val Route.postRecordKey by mappedRoutePath(
 )
 
 private val RequestTrie = mapOf(
-    PathPattern(BookMarksRoutePattern) to { route: Route ->
-        PostsRequest.BookMarks
+    PathPattern(SavedRoutePattern) to { route: Route ->
+        PostsRequest.Saved
     },
     PathPattern(QuotesRoutePattern) to { route: Route ->
         PostsRequest.Quotes(
@@ -109,8 +116,8 @@ object PostsNavigationBindings {
 
     @Provides
     @IntoMap
-    @StringKey(BookMarksRoutePattern)
-    fun provideBookMarksRouteMatcher(): RouteMatcher = postsRouteMatcher(BookMarksRoutePattern)
+    @StringKey(SavedRoutePattern)
+    fun provideSavedRouteMatcher(): RouteMatcher = postsRouteMatcher(SavedRoutePattern)
 
     @Provides
     @IntoMap
@@ -126,8 +133,8 @@ class PostsBindings(
 
     @Provides
     @IntoMap
-    @StringKey(BookMarksRoutePattern)
-    fun provideBookMarksPaneEntry(
+    @StringKey(SavedRoutePattern)
+    fun provideSavedPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(

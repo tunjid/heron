@@ -16,16 +16,19 @@
 
 package com.tunjid.heron.posts
 
-import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.repository.PostDataQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
+import com.tunjid.tiler.TiledList
+import com.tunjid.tiler.emptyTiledList
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
     @Transient
-    val posts: List<Post> = emptyList(),
+    val posts: TiledList<PostDataQuery, TimelineItem> = emptyTiledList(),
     @Transient
     val messages: List<Memo> = emptyList(),
 )

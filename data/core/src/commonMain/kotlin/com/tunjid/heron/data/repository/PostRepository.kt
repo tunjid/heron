@@ -100,14 +100,6 @@ import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.model.Blob
 
-sealed class PostsRequest {
-    object BookMarks : PostsRequest()
-    data class Quotes(
-        val profileHandleOrId: ProfileHandleOrId,
-        val postRecordKey: RecordKey,
-    ) : PostsRequest()
-}
-
 @Serializable
 data class PostDataQuery(
     val profileId: Id.Profile,
