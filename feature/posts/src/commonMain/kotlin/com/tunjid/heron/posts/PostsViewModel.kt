@@ -17,8 +17,11 @@
 package com.tunjid.heron.posts
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
+import com.tunjid.heron.posts.di.PostsRequest
+import com.tunjid.heron.posts.di.postsRequest
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
@@ -34,6 +37,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flow
 
 internal typealias PostsStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -48,6 +52,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 @Inject
 class ActualPostsViewModel(
     navActions: (NavigationMutation) -> Unit,
+    postsRepository: PostRepository,
     @Assisted
     scope: CoroutineScope,
     @Suppress("UNUSED_PARAMETER")
@@ -57,6 +62,13 @@ class ActualPostsViewModel(
     PostsStateHolder by scope.actionStateFlowMutator(
         initialState = State(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        inputs = listOf(
+            postsMutations(
+                request = route.postsRequest,
+                scope = scope,
+                postsRepository = postsRepository,
+            ),
+        ),
         actionTransform = transform@{ actions ->
             actions.toMutationStream(
                 keySelector = Action::key,
@@ -75,3 +87,18 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
     mapToMutation { action ->
         copy(messages = messages - action.message)
     }
+
+private fun postsMutations(
+    request: PostsRequest,
+    scope: CoroutineScope,
+    postsRepository: PostRepository,
+): Flow<Mutation<State>> = flow {
+    when (request) {
+        is PostsRequest.Saved -> {
+            // TODO: Fetch Saved posts
+        }
+        is PostsRequest.Quotes -> {
+            // TODO: Fetch quotes
+        }
+    }
+}
