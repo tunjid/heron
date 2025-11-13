@@ -30,10 +30,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -51,40 +48,35 @@ import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
+import com.tunjid.heron.ui.sheets.BottomSheetScope
+import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
+import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
+import com.tunjid.heron.ui.sheets.BottomSheetState
 import com.tunjid.heron.ui.tabIndex
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Stable
 class EmojiPickerSheetState(
-    internal val sheetState: SheetState,
-    internal val scope: CoroutineScope,
-) {
+    scope: BottomSheetScope,
+) : BottomSheetState(scope) {
     var messageToReactTo by mutableStateOf<Message?>(null)
         internal set
 
     fun showSheet(message: Message) {
         messageToReactTo = message
+        show()
     }
 
-    fun hideSheet() {
-        scope.launch { sheetState.hide() }.invokeOnCompletion {
-            if (!sheetState.isVisible) {
-                messageToReactTo = null
-            }
-        }
+    override fun onHidden() {
+        messageToReactTo = null
     }
 
     companion object Companion {
         @Composable
         fun rememberEmojiPickerState(): EmojiPickerSheetState {
-            val sheetState = rememberModalBottomSheetState()
-            val scope = rememberCoroutineScope()
-
-            return remember(sheetState, scope) {
+            return rememberBottomSheetState {
                 EmojiPickerSheetState(
-                    sheetState = sheetState,
-                    scope = scope,
+                    scope = it,
                 )
             }
         }
@@ -111,81 +103,75 @@ fun EmojiPickerBottomSheet(
     val scope = rememberCoroutineScope()
 
     val messageToReactTo = state.messageToReactTo
-    if (messageToReactTo != null) ModalBottomSheet(
-        onDismissRequest = {
-            state.messageToReactTo = null
-        },
-        sheetState = state.sheetState,
-        content = {
-            Column(
+    if (messageToReactTo != null) state.ModalBottomSheet {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+        ) {
+            // TabRow to display the categories
+            Tabs(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-            ) {
-                // TabRow to display the categories
-                Tabs(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    tabsState = rememberTabsState(
-                        tabs = categories.map {
-                            Tab(
-                                title = emojiCategories[it]?.firstOrNull() ?: "X",
-                                hasUpdate = false,
-                            )
-                        },
-                        selectedTabIndex = pagerState::tabIndex,
-                        onTabSelected = {
-                            scope.launch {
-                                pagerState.animateScrollToPage(it)
-                            }
-                        },
-                        onTabReselected = { },
-                    ),
-                )
-
-                // HorizontalPager to swipe between emoji grids
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier.fillMaxWidth(),
-                ) { pageIndex ->
-                    val category = categories[pageIndex]
-                    val emojis = emojiCategories[category] ?: emptyList()
-
-                    // LazyVerticalGrid to display emojis efficiently
-                    LazyVerticalGrid(
-                        columns = GridCells.Adaptive(minSize = 48.dp),
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalArrangement = Arrangement.Center,
-                    ) {
-                        items(emojis) { emoji ->
-                            IconButton(
-                                modifier = Modifier
-                                    .padding(1.dp)
-                                    .aspectRatio(1f), // Make the emoji cell square
-                                colors = IconButtonDefaults.iconButtonColors(
-                                    containerColor = when {
-                                        messageToReactTo.hasEmojiReaction(emoji) -> MaterialTheme.colorScheme.primaryContainer
-                                        else -> Color.Unspecified
-                                    },
-                                ),
-                                onClick = {
-                                    onEmojiSelected(messageToReactTo, emoji)
-                                    state.hideSheet()
-                                },
-                                content = {
-                                    Text(
-                                        text = emoji,
-                                        textAlign = TextAlign.Center,
-                                        fontSize = 24.sp,
-                                    )
-                                },
-                            )
+                    .fillMaxWidth(),
+                tabsState = rememberTabsState(
+                    tabs = categories.map {
+                        Tab(
+                            title = emojiCategories[it]?.firstOrNull() ?: "X",
+                            hasUpdate = false,
+                        )
+                    },
+                    selectedTabIndex = pagerState::tabIndex,
+                    onTabSelected = {
+                        scope.launch {
+                            pagerState.animateScrollToPage(it)
                         }
+                    },
+                    onTabReselected = { },
+                ),
+            )
+
+            // HorizontalPager to swipe between emoji grids
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxWidth(),
+            ) { pageIndex ->
+                val category = categories[pageIndex]
+                val emojis = emojiCategories[category] ?: emptyList()
+
+                // LazyVerticalGrid to display emojis efficiently
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 48.dp),
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    items(emojis) { emoji ->
+                        IconButton(
+                            modifier = Modifier
+                                .padding(1.dp)
+                                .aspectRatio(1f), // Make the emoji cell square
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = when {
+                                    messageToReactTo.hasEmojiReaction(emoji) -> MaterialTheme.colorScheme.primaryContainer
+                                    else -> Color.Unspecified
+                                },
+                            ),
+                            onClick = {
+                                onEmojiSelected(messageToReactTo, emoji)
+                                state.hide()
+                            },
+                            content = {
+                                Text(
+                                    text = emoji,
+                                    textAlign = TextAlign.Center,
+                                    fontSize = 24.sp,
+                                )
+                            },
+                        )
                     }
                 }
             }
-        },
-    )
+        }
+    }
 }
 
 private val emojiCategories: Map<String, List<String>> = mapOf(
