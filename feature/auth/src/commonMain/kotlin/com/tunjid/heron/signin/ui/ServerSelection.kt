@@ -93,9 +93,6 @@ class ServerSelectionSheetState private constructor(
     var currentServer by mutableStateOf<Server?>(null)
         internal set
 
-    var showBottomSheet by mutableStateOf(false)
-        internal set
-
     fun onServer(interaction: Server) {
         currentServer = interaction
         show()
@@ -142,7 +139,7 @@ private fun ServerSelectionBottomSheet(
                 state.currentServer = null
             }
 
-            else -> state.showBottomSheet = true
+            else -> state.show()
         }
     }
 
