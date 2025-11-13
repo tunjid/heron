@@ -24,14 +24,10 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.RecordKey
-import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.repository.PostsRequest
-import com.tunjid.heron.data.repository.TimelineRequest
-import com.tunjid.heron.data.utilities.getAsRawUri
 import com.tunjid.heron.posts.Action
 import com.tunjid.heron.posts.ActualPostsViewModel
 import com.tunjid.heron.posts.PostsScreen
@@ -61,7 +57,6 @@ import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.routeOf
-import com.tunjid.treenav.strings.routePath
 import com.tunjid.treenav.strings.toRouteTrie
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
@@ -70,7 +65,7 @@ import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 
-private const val SavedRoutePattern = "/saved"
+private const val BookMarksRoutePattern = "/BookMarks"
 private const val QuotesRoutePattern = "/profile/{profileHandleOrId}/post/{postRecordKey}/quotes"
 
 private fun createRoute(
@@ -95,8 +90,8 @@ private val Route.postRecordKey by mappedRoutePath(
 )
 
 private val RequestTrie = mapOf(
-    PathPattern(SavedRoutePattern) to { route: Route ->
-        PostsRequest.Saved
+    PathPattern(BookMarksRoutePattern) to { route: Route ->
+        PostsRequest.BookMarks
     },
     PathPattern(QuotesRoutePattern) to { route: Route ->
         PostsRequest.Quotes(
@@ -114,8 +109,8 @@ object PostsNavigationBindings {
 
     @Provides
     @IntoMap
-    @StringKey(SavedRoutePattern)
-    fun provideSavedRouteMatcher(): RouteMatcher = postsRouteMatcher(SavedRoutePattern)
+    @StringKey(BookMarksRoutePattern)
+    fun provideBookMarksRouteMatcher(): RouteMatcher = postsRouteMatcher(BookMarksRoutePattern)
 
     @Provides
     @IntoMap
@@ -131,8 +126,8 @@ class PostsBindings(
 
     @Provides
     @IntoMap
-    @StringKey(SavedRoutePattern)
-    fun provideSavedPaneEntry(
+    @StringKey(BookMarksRoutePattern)
+    fun provideBookMarksPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(

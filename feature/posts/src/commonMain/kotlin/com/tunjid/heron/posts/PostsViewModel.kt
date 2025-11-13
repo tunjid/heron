@@ -37,7 +37,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 
 internal typealias PostsStateHolder = ActionStateMutator<Action, StateFlow<State>>
@@ -95,8 +94,8 @@ private fun postsMutations(
     postsRepository: PostRepository,
 ): Flow<Mutation<State>> = flow {
     when (request) {
-        is PostsRequest.Saved -> {
-            // TODO: Fetch saved posts
+        is PostsRequest.BookMarks -> {
+            // TODO: Fetch BookMarks posts
         }
         is PostsRequest.Quotes -> {
             // TODO: Fetch quotes

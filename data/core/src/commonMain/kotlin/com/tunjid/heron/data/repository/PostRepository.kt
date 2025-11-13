@@ -101,7 +101,7 @@ import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.model.Blob
 
 sealed class PostsRequest {
-    object Saved : PostsRequest()
+    object BookMarks : PostsRequest()
     data class Quotes(
         val profileHandleOrId: ProfileHandleOrId,
         val postRecordKey: RecordKey,
