@@ -44,7 +44,6 @@ abstract class BottomSheetState(
     fun hide() {
         scope.coroutineScope.launch {
             scope.sheetState.hide()
-            scope.showBottomSheet = false
         }
     }
 }
@@ -82,11 +81,13 @@ class BottomSheetScope(
         ) {
             if (scope.showBottomSheet) {
                 ModalBottomSheet(
-                    onDismissRequest = ::hide,
+                    onDismissRequest = {
+                        scope.showBottomSheet = false
+                    },
                     sheetState = scope.sheetState,
                     content = content,
                 )
-                DisposableEffect(Unit) {
+                DisposableEffect(this) {
                     onDispose(::onHidden)
                 }
             }
