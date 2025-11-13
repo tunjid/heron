@@ -82,6 +82,11 @@ private fun createRoute(
     ),
 )
 
+private fun postsRouteMatcher(pattern: String) = urlRouteMatcher(
+    routePattern = pattern,
+    routeMapper = ::createRoute,
+)
+
 private val Route.profileHandleOrId by mappedRoutePath(
     mapper = ::ProfileHandleOrId,
 )
@@ -110,20 +115,12 @@ object PostsNavigationBindings {
     @Provides
     @IntoMap
     @StringKey(SavedRoutePattern)
-    fun provideSavedRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = SavedRoutePattern,
-            routeMapper = ::createRoute,
-        )
+    fun provideSavedRouteMatcher(): RouteMatcher = postsRouteMatcher(SavedRoutePattern)
 
     @Provides
     @IntoMap
     @StringKey(QuotesRoutePattern)
-    fun provideQuotesRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = QuotesRoutePattern,
-            routeMapper = ::createRoute,
-        )
+    fun provideQuotesRouteMatcher(): RouteMatcher = postsRouteMatcher(QuotesRoutePattern)
 }
 
 @BindingContainer
