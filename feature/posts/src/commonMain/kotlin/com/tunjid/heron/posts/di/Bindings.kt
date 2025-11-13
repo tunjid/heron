@@ -24,7 +24,14 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.ProfileHandleOrId
+import com.tunjid.heron.data.core.types.RecordKey
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.di.DataBindings
+import com.tunjid.heron.data.repository.PostsRequest
+import com.tunjid.heron.data.repository.TimelineRequest
+import com.tunjid.heron.data.utilities.getAsRawUri
 import com.tunjid.heron.posts.Action
 import com.tunjid.heron.posts.ActualPostsViewModel
 import com.tunjid.heron.posts.PostsScreen
@@ -47,11 +54,15 @@ import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
+import com.tunjid.treenav.strings.PathPattern
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
+import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.routeOf
+import com.tunjid.treenav.strings.routePath
+import com.tunjid.treenav.strings.toRouteTrie
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Includes
@@ -59,7 +70,8 @@ import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 
-private const val RoutePattern = "/posts"
+private const val SavedRoutePattern = "/saved"
+private const val QuotesRoutePattern = "/profile/{profileHandleOrId}/post/{postRecordKey}/quotes"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -70,15 +82,46 @@ private fun createRoute(
     ),
 )
 
+private val Route.profileHandleOrId by mappedRoutePath(
+    mapper = ::ProfileHandleOrId,
+)
+private val Route.postRecordKey by mappedRoutePath(
+    mapper = ::RecordKey,
+)
+
+private val RequestTrie = mapOf(
+    PathPattern(SavedRoutePattern) to { route: Route ->
+        PostsRequest.Saved
+    },
+    PathPattern(QuotesRoutePattern) to { route: Route ->
+        PostsRequest.Quotes(
+            profileHandleOrId = route.profileHandleOrId,
+            postRecordKey = route.postRecordKey,
+        )
+    },
+).toRouteTrie()
+
+internal val Route.postsRequest: PostsRequest
+    get() = checkNotNull(RequestTrie[this]).invoke(this)
+
 @BindingContainer
 object PostsNavigationBindings {
 
     @Provides
     @IntoMap
-    @StringKey(RoutePattern)
-    fun provideRouteMatcher(): RouteMatcher =
+    @StringKey(SavedRoutePattern)
+    fun provideSavedRouteMatcher(): RouteMatcher =
         urlRouteMatcher(
-            routePattern = RoutePattern,
+            routePattern = SavedRoutePattern,
+            routeMapper = ::createRoute,
+        )
+
+    @Provides
+    @IntoMap
+    @StringKey(QuotesRoutePattern)
+    fun provideQuotesRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
+            routePattern = QuotesRoutePattern,
             routeMapper = ::createRoute,
         )
 }
@@ -91,8 +134,19 @@ class PostsBindings(
 
     @Provides
     @IntoMap
-    @StringKey(RoutePattern)
-    fun providePaneEntry(
+    @StringKey(SavedRoutePattern)
+    fun provideSavedPaneEntry(
+        routeParser: RouteParser,
+        viewModelInitializer: RouteViewModelInitializer,
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
+        routeParser = routeParser,
+        viewModelInitializer = viewModelInitializer,
+    )
+
+    @Provides
+    @IntoMap
+    @StringKey(QuotesRoutePattern)
+    fun provideQuotesPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
