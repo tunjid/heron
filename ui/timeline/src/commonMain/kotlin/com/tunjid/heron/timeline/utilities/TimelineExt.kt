@@ -47,6 +47,7 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.subtitleSharedElementKey
 import com.tunjid.heron.ui.titleSharedElementKey
@@ -101,6 +102,7 @@ fun TimelineTitle(
                     sharedContentState = rememberSharedContentState(
                         key = timeline.avatarSharedElementKey(sharedElementPrefix),
                     ),
+                    zIndexInOverlay = UiTokens.appBarSharedElementOverlayZIndex,
                 )
                 .size(44.dp),
             args = remember(avatar) {
@@ -123,6 +125,7 @@ fun TimelineTitle(
                             sharedContentState = rememberSharedContentState(
                                 key = timeline.titleSharedElementKey(sharedElementPrefix),
                             ),
+                            zIndexInOverlay = UiTokens.appBarSharedElementOverlayZIndex,
                         ),
                     text = timeline.displayName(),
                     overflow = TextOverflow.Ellipsis,
@@ -135,6 +138,7 @@ fun TimelineTitle(
                             sharedContentState = rememberSharedContentState(
                                 key = timeline.subtitleSharedElementKey(sharedElementPrefix),
                             ),
+                            zIndexInOverlay = UiTokens.appBarSharedElementOverlayZIndex,
                         ),
                     text = timeline.creator(),
                     overflow = TextOverflow.Ellipsis,

@@ -40,6 +40,8 @@ object UiTokens {
 
     val bottomNavHeight: Dp = 80.dp
 
+    const val appBarSharedElementOverlayZIndex = 12f
+
     val statusBarHeight: Dp
         @Composable get() = WindowInsets.statusBars.asPaddingValues().run {
             calculateTopPadding() + calculateBottomPadding()
