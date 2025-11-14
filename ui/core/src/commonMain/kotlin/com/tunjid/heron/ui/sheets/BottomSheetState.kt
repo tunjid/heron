@@ -45,9 +45,8 @@ abstract class BottomSheetState(
         scope.coroutineScope.launch {
             try {
                 scope.sheetState.hide()
-            }
-            finally {
-                scope.showBottomSheet = true
+            } finally {
+                scope.showBottomSheet = false
             }
         }
     }
