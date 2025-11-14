@@ -30,6 +30,7 @@ import com.tunjid.heron.images.ImageLoader
 import com.tunjid.heron.list.di.ListBindings
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.messages.di.MessagesBindings
+import com.tunjid.heron.moderation.di.ModerationBindings
 import com.tunjid.heron.notifications.di.NotificationsBindings
 import com.tunjid.heron.postdetail.di.PostDetailBindings
 import com.tunjid.heron.posts.di.PostsBindings
@@ -71,6 +72,7 @@ interface AppGraph {
             @Includes homeBindings: HomeBindings,
             @Includes listBindings: ListBindings,
             @Includes messagesBindings: MessagesBindings,
+            @Includes moderationBindings: ModerationBindings,
             @Includes notificationsBindings: NotificationsBindings,
             @Includes postDetailBindings: PostDetailBindings,
             @Includes postsBindings: PostsBindings,
