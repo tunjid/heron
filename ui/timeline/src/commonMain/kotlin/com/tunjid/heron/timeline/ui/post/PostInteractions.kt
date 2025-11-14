@@ -43,11 +43,8 @@ import androidx.compose.material.icons.rounded.FormatQuote
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -56,7 +53,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,6 +76,10 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.icon
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.stringResource
 import com.tunjid.heron.timeline.utilities.format
+import com.tunjid.heron.ui.sheets.BottomSheetScope
+import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
+import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
+import com.tunjid.heron.ui.sheets.BottomSheetState
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.bookmarked
@@ -90,8 +90,6 @@ import heron.ui.timeline.generated.resources.quote
 import heron.ui.timeline.generated.resources.reply
 import heron.ui.timeline.generated.resources.repost
 import heron.ui.timeline.generated.resources.sign_in
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -379,13 +377,9 @@ private fun PostInteractionElements(
 @Stable
 class PostInteractionsSheetState private constructor(
     isSignedIn: Boolean,
-    internal val sheetState: SheetState,
-    internal val scope: CoroutineScope,
-) {
+    scope: BottomSheetScope,
+) : BottomSheetState(scope) {
     var currentInteraction by mutableStateOf<Post.Interaction?>(null)
-        internal set
-
-    var showBottomSheet by mutableStateOf(false)
         internal set
 
     internal var isSignedIn by mutableStateOf(isSignedIn)
@@ -394,13 +388,8 @@ class PostInteractionsSheetState private constructor(
         currentInteraction = interaction
     }
 
-    internal fun hideSheet() {
-        scope.launch { sheetState.hide() }.invokeOnCompletion {
-            if (!sheetState.isVisible) {
-                showBottomSheet = false
-                currentInteraction = null
-            }
-        }
+    override fun onHidden() {
+        currentInteraction = null
     }
 
     companion object {
@@ -411,14 +400,10 @@ class PostInteractionsSheetState private constructor(
             onInteractionConfirmed: (Post.Interaction) -> Unit,
             onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
         ): PostInteractionsSheetState {
-            val sheetState = rememberModalBottomSheetState()
-            val scope = rememberCoroutineScope()
-
-            val state = remember(sheetState, scope) {
+            val state = rememberBottomSheetState {
                 PostInteractionsSheetState(
                     isSignedIn = isSignedIn,
-                    sheetState = sheetState,
-                    scope = scope,
+                    scope = it,
                 )
             }.also { it.isSignedIn = isSignedIn }
 
@@ -444,7 +429,7 @@ private fun PostInteractionsBottomSheet(
     LaunchedEffect(state.currentInteraction) {
         when (val interaction = state.currentInteraction) {
             null -> Unit
-            is Post.Interaction.Create.Repost -> state.showBottomSheet = true
+            is Post.Interaction.Create.Repost -> state.show()
             is Post.Interaction.Create.Like,
             is Post.Interaction.Delete.RemoveRepost,
             is Post.Interaction.Delete.Unlike,
@@ -455,100 +440,94 @@ private fun PostInteractionsBottomSheet(
                     onInteractionConfirmed(interaction)
                     state.currentInteraction = null
                 } else {
-                    state.showBottomSheet = true
+                    state.show()
                 }
             }
         }
     }
 
-    if (state.showBottomSheet) ModalBottomSheet(
-        onDismissRequest = {
-            state.showBottomSheet = false
-        },
-        sheetState = state.sheetState,
-        content = {
-            val currentInteraction = state.currentInteraction
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                when (currentInteraction) {
-                    is Post.Interaction.Create.Repost -> {
-                        if (state.isSignedIn) repeat(2) { index ->
-                            val contentDescription = stringResource(
-                                if (index == 0) Res.string.repost
-                                else Res.string.quote,
-                            ).capitalize(locale = Locale.current)
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(CircleShape)
-                                    .clickable {
-                                        when (index) {
-                                            0 ->
-                                                state.currentInteraction
-                                                    ?.let(onInteractionConfirmed)
+    state.ModalBottomSheet {
+        val currentInteraction = state.currentInteraction
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            when (currentInteraction) {
+                is Post.Interaction.Create.Repost -> {
+                    if (state.isSignedIn) repeat(2) { index ->
+                        val contentDescription = stringResource(
+                            if (index == 0) Res.string.repost
+                            else Res.string.quote,
+                        ).capitalize(locale = Locale.current)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(CircleShape)
+                                .clickable {
+                                    when (index) {
+                                        0 ->
+                                            state.currentInteraction
+                                                ?.let(onInteractionConfirmed)
 
-                                            else -> (state.currentInteraction as? Post.Interaction.Create.Repost)
-                                                ?.let(onQuotePostClicked)
-                                        }
-                                        state.hideSheet()
+                                        else -> (state.currentInteraction as? Post.Interaction.Create.Repost)
+                                            ?.let(onQuotePostClicked)
                                     }
-                                    .padding(
-                                        horizontal = 8.dp,
-                                        vertical = 8.dp,
-                                    )
-                                    .semantics {
-                                        this.contentDescription = contentDescription
-                                    },
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                content = {
-                                    Icon(
-                                        modifier = Modifier
-                                            .size(24.dp),
-                                        imageVector = if (index == 0) Icons.Rounded.Repeat
-                                        else Icons.Rounded.FormatQuote,
-                                        contentDescription = null,
-                                    )
-                                    Text(
-                                        modifier = Modifier,
-                                        text = contentDescription,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                    )
+                                    state.hide()
+                                }
+                                .padding(
+                                    horizontal = 8.dp,
+                                    vertical = 8.dp,
+                                )
+                                .semantics {
+                                    this.contentDescription = contentDescription
                                 },
-                            )
-                        }
-                    }
-                    else -> Unit
-                }
-
-                // Sheet content
-                OutlinedButton(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    onClick = {
-                        if (!state.isSignedIn) onSignInClicked()
-                        state.hideSheet()
-                    },
-                    content = {
-                        Text(
-                            text = stringResource(
-                                if (state.isSignedIn) Res.string.cancel
-                                else Res.string.sign_in,
-                            )
-                                .capitalize(Locale.current),
-                            style = MaterialTheme.typography.bodyLarge,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            content = {
+                                Icon(
+                                    modifier = Modifier
+                                        .size(24.dp),
+                                    imageVector = if (index == 0) Icons.Rounded.Repeat
+                                    else Icons.Rounded.FormatQuote,
+                                    contentDescription = null,
+                                )
+                                Text(
+                                    modifier = Modifier,
+                                    text = contentDescription,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                )
+                            },
                         )
-                    },
-                )
-                Spacer(
-                    Modifier.height(16.dp),
-                )
+                    }
+                }
+                else -> Unit
             }
-        },
-    )
+
+            // Sheet content
+            OutlinedButton(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                onClick = {
+                    if (!state.isSignedIn) onSignInClicked()
+                    state.hide()
+                },
+                content = {
+                    Text(
+                        text = stringResource(
+                            if (state.isSignedIn) Res.string.cancel
+                            else Res.string.sign_in,
+                        )
+                            .capitalize(Locale.current),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                },
+            )
+            Spacer(
+                Modifier.height(16.dp),
+            )
+        }
+    }
 }
 
 private val LikeRed = Color(0xFFE0245E)

@@ -26,18 +26,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -52,6 +48,10 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.signin.DomainRegex
 import com.tunjid.heron.ui.ItemSelection
+import com.tunjid.heron.ui.sheets.BottomSheetScope
+import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
+import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
+import com.tunjid.heron.ui.sheets.BottomSheetState
 import com.tunjid.heron.ui.text.FormField
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.Validator
@@ -66,8 +66,6 @@ import heron.feature.auth.generated.resources.custom_server
 import heron.feature.auth.generated.resources.empty_form
 import heron.feature.auth.generated.resources.invalid_domain
 import heron.feature.auth.generated.resources.submit
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -90,26 +88,17 @@ fun ServerSelection(
 
 @Stable
 class ServerSelectionSheetState private constructor(
-    internal val sheetState: SheetState,
-    internal val scope: CoroutineScope,
-) {
+    scope: BottomSheetScope,
+) : BottomSheetState(scope) {
     var currentServer by mutableStateOf<Server?>(null)
-        internal set
-
-    var showBottomSheet by mutableStateOf(false)
         internal set
 
     fun onServer(interaction: Server) {
         currentServer = interaction
     }
 
-    internal fun hideSheet() {
-        scope.launch { sheetState.hide() }.invokeOnCompletion {
-            if (!sheetState.isVisible) {
-                showBottomSheet = false
-                currentServer = null
-            }
-        }
+    override fun onHidden() {
+        currentServer = null
     }
 
     companion object {
@@ -117,13 +106,9 @@ class ServerSelectionSheetState private constructor(
         fun rememberUpdatedServerSelectionState(
             onServerConfirmed: (Server) -> Unit,
         ): ServerSelectionSheetState {
-            val sheetState = rememberModalBottomSheetState()
-            val scope = rememberCoroutineScope()
-
-            val state = remember(sheetState, scope) {
+            val state = rememberBottomSheetState {
                 ServerSelectionSheetState(
-                    sheetState = sheetState,
-                    scope = scope,
+                    scope = it,
                 )
             }
 
@@ -153,87 +138,81 @@ private fun ServerSelectionBottomSheet(
                 state.currentServer = null
             }
 
-            else -> state.showBottomSheet = true
+            else -> state.show()
         }
     }
 
-    if (state.showBottomSheet) ModalBottomSheet(
-        onDismissRequest = {
-            state.showBottomSheet = false
-        },
-        sheetState = state.sheetState,
-        content = {
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                val focusRequester = remember { FocusRequester() }
+    state.ModalBottomSheet {
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            val focusRequester = remember { FocusRequester() }
 
-                var customServerFormField by remember {
-                    mutableStateOf(CustomServerFormField)
-                }
-                val maybeSelectServer = {
-                    customServerFormField = customServerFormField.validated()
-                    if (customServerFormField.isValid) {
-                        onServerConfirmed(customServerFormField.asServer())
-                        state.hideSheet()
-                    }
-                }
-                FormField(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(focusRequester),
-                    field = customServerFormField,
-                    onValueChange = { _, newValue ->
-                        customServerFormField = customServerFormField.copyWithValidation(newValue)
-                    },
-                    keyboardActions = {
-                        maybeSelectServer()
-                    },
-                )
-
-                OutlinedButton(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    onClick = {
-                        maybeSelectServer()
-                    },
-                    content = {
-                        Text(
-                            text = stringResource(Res.string.submit)
-                                .capitalize(Locale.current),
-                            color = MaterialTheme.colorScheme.primary,
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                    },
-                )
-
-                OutlinedButton(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    onClick = {
-                        state.hideSheet()
-                    },
-                    content = {
-                        Text(
-                            text = stringResource(Res.string.cancel)
-                                .capitalize(Locale.current),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.labelLarge,
-                        )
-                    },
-                )
-                Spacer(
-                    Modifier.height(16.dp),
-                )
-
-                LaunchedEffect(Unit) {
-                    focusRequester.requestFocus()
+            var customServerFormField by remember {
+                mutableStateOf(CustomServerFormField)
+            }
+            val maybeSelectServer = {
+                customServerFormField = customServerFormField.validated()
+                if (customServerFormField.isValid) {
+                    onServerConfirmed(customServerFormField.asServer())
+                    state.hide()
                 }
             }
-        },
-    )
+            FormField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester),
+                field = customServerFormField,
+                onValueChange = { _, newValue ->
+                    customServerFormField = customServerFormField.copyWithValidation(newValue)
+                },
+                keyboardActions = {
+                    maybeSelectServer()
+                },
+            )
+
+            OutlinedButton(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                onClick = {
+                    maybeSelectServer()
+                },
+                content = {
+                    Text(
+                        text = stringResource(Res.string.submit)
+                            .capitalize(Locale.current),
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                },
+            )
+
+            OutlinedButton(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                onClick = {
+                    state.hide()
+                },
+                content = {
+                    Text(
+                        text = stringResource(Res.string.cancel)
+                            .capitalize(Locale.current),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                },
+            )
+            Spacer(
+                Modifier.height(16.dp),
+            )
+
+            LaunchedEffect(Unit) {
+                focusRequester.requestFocus()
+            }
+        }
+    }
 }
 
 private fun FormField.asServer() = Server(

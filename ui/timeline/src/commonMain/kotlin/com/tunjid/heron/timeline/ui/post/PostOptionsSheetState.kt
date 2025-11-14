@@ -20,10 +20,7 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -48,11 +45,14 @@ import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.sheets.BottomSheetScope
+import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
+import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
+import com.tunjid.heron.ui.sheets.BottomSheetState
 import com.tunjid.heron.ui.text.asClipEntry
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.copy_link_to_clipboard
 import heron.ui.timeline.generated.resources.send_via_direct_message
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -60,12 +60,8 @@ import org.jetbrains.compose.resources.stringResource
 class PostOptionsSheetState private constructor(
     signedInProfileId: ProfileId?,
     recentConversations: List<Conversation>,
-    internal val sheetState: SheetState,
-    internal val scope: CoroutineScope,
-) {
-
-    var showBottomSheet by mutableStateOf(false)
-        internal set
+    scope: BottomSheetScope,
+) : BottomSheetState(scope) {
 
     internal var signedInProfileId by mutableStateOf(signedInProfileId)
 
@@ -76,18 +72,13 @@ class PostOptionsSheetState private constructor(
     internal val isSignedIn
         get() = signedInProfileId != null
 
-    internal fun hideSheet() {
-        scope.launch { sheetState.hide() }.invokeOnCompletion {
-            if (!sheetState.isVisible) {
-                showBottomSheet = false
-                currentPost = null
-            }
-        }
+    override fun onHidden() {
+        currentPost = null
     }
 
     fun showOptions(post: Post) {
         currentPost = post
-        showBottomSheet = true
+        show()
     }
 
     companion object {
@@ -97,15 +88,11 @@ class PostOptionsSheetState private constructor(
             recentConversations: List<Conversation>,
             onShareInConversationClicked: (Post, Conversation) -> Unit,
         ): PostOptionsSheetState {
-            val sheetState = rememberModalBottomSheetState()
-            val scope = rememberCoroutineScope()
-
-            val state = remember(sheetState, scope) {
+            val state = rememberBottomSheetState {
                 PostOptionsSheetState(
                     signedInProfileId = signedInProfileId,
                     recentConversations = recentConversations,
-                    sheetState = sheetState,
-                    scope = scope,
+                    scope = it,
                 )
             }.also {
                 it.signedInProfileId = signedInProfileId
@@ -128,37 +115,27 @@ private fun PostOptionsBottomSheet(
     onShareInConversationClicked: (Post, Conversation) -> Unit,
 ) {
     val signedInProfileId = state.signedInProfileId
-    if (state.showBottomSheet && signedInProfileId != null) {
-        ModalBottomSheet(
-            onDismissRequest = {
-                state.showBottomSheet = false
-            },
-            sheetState = state.sheetState,
-            content = {
-                Column(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    SendDirectMessageCard(
-                        signedInProfileId = signedInProfileId,
-                        recentConversations = state.recentConversations,
-                        onConversationClicked = { conversation ->
-                            state.scope.launch {
-                                state.hideSheet()
-                                val currentPost = state.currentPost
-                                if (currentPost != null) {
-                                    onShareInConversationClicked(currentPost, conversation)
-                                }
-                            }
-                        },
-                    )
-                    state.currentPost?.let {
-                        CopyToClipboardCard(it.shareUri())
+    if (signedInProfileId != null) state.ModalBottomSheet {
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            SendDirectMessageCard(
+                signedInProfileId = signedInProfileId,
+                recentConversations = state.recentConversations,
+                onConversationClicked = { conversation ->
+                    val currentPost = state.currentPost
+                    if (currentPost != null) {
+                        onShareInConversationClicked(currentPost, conversation)
                     }
-                }
-            },
-        )
+                    state.hide()
+                },
+            )
+            state.currentPost?.let {
+                CopyToClipboardCard(it.shareUri())
+            }
+        }
     }
 }
 
