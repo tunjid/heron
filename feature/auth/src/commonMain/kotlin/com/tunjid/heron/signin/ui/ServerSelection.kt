@@ -95,7 +95,6 @@ class ServerSelectionSheetState private constructor(
 
     fun onServer(interaction: Server) {
         currentServer = interaction
-        show()
     }
 
     override fun onHidden() {
