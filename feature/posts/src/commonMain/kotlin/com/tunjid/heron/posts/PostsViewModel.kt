@@ -99,7 +99,6 @@ class ActualPostsViewModel(
             actions.toMutationStream(
                 keySelector = Action::key,
             ) {
-                han
                 when (val action = type()) {
                     is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
                     is Action.Navigate -> action.flow.consumeNavigationActions(
