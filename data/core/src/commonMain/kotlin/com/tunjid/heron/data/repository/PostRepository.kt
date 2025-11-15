@@ -56,6 +56,7 @@ import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.TransactionWriter
+import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.partialUpsert
@@ -141,6 +142,7 @@ interface PostRepository {
 }
 
 internal class OfflinePostRepository @Inject constructor(
+    private val labelDao: LabelDao,
     private val postDao: PostDao,
     private val profileDao: ProfileDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
@@ -149,7 +151,6 @@ internal class OfflinePostRepository @Inject constructor(
     private val transactionWriter: TransactionWriter,
     private val fileManager: FileManager,
     private val savedStateDataSource: SavedStateDataSource,
-    private val timelineRepository: TimelineRepository,
 ) : PostRepository {
 
     override fun likedBy(
@@ -252,7 +253,8 @@ internal class OfflinePostRepository @Inject constructor(
                 savedStateDataSource.savedState
                     .map { it.signedProfilePreferencesOrDefault().contentLabelPreferences }
                     .distinctUntilChanged(),
-                timelineRepository.labelers,
+                labelDao.labelers(emptyList())
+                    .map { labelers -> labelers.map { it.asExternalModel() } },
                 ::Pair,
             ).flatMapLatest { (contentLabelPreferences, labelers) ->
                 withPostEntity(
