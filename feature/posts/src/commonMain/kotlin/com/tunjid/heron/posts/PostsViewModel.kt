@@ -17,6 +17,12 @@
 package com.tunjid.heron.posts
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Cursor
+import com.tunjid.heron.data.core.models.CursorList
+import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.types.ProfileHandle
+import com.tunjid.heron.data.core.types.RecordKey
+import com.tunjid.heron.data.repository.PostDataQuery
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
@@ -24,8 +30,12 @@ import com.tunjid.heron.posts.di.PostsRequest
 import com.tunjid.heron.posts.di.postsRequest
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
+import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.reset
+import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
+import com.tunjid.mutator.coroutines.SuspendingStateHolder
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
@@ -37,7 +47,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.datetime.Clock
 
 internal typealias PostsStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -60,15 +72,29 @@ class ActualPostsViewModel(
     route: Route,
 ) : ViewModel(viewModelScope = scope),
     PostsStateHolder by scope.actionStateFlowMutator(
-        initialState = State(),
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = listOf(
-            postsMutations(
-                request = route.postsRequest,
-                scope = scope,
-                postsRepository = postsRepository,
+        initialState = State(
+            tilingData = TilingState.Data(
+                currentQuery = when (val request = route.postsRequest) {
+                    is PostsRequest.Quotes -> PostDataQuery(
+                        profileId = request.profileHandleOrId,
+                        postRecordKey = request.postRecordKey,
+                        data = CursorQuery.Data(
+                            page = 0,
+                            cursorAnchor = Clock.System.now(),
+                        ),
+                    )
+                    PostsRequest.Saved -> PostDataQuery(
+                        profileId = ProfileHandle(""),
+                        postRecordKey = RecordKey(""),
+                        data = CursorQuery.Data(
+                            page = 0,
+                            cursorAnchor = Clock.System.now(),
+                        ),
+                    )
+                },
             ),
         ),
+        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         actionTransform = transform@{ actions ->
             actions.toMutationStream(
                 keySelector = Action::key,
@@ -78,27 +104,48 @@ class ActualPostsViewModel(
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
+                    is Action.Tile -> action.flow.postsLoadMutations(
+                        request = route.postsRequest,
+                        stateHolder = this@transform,
+                        postsRepository = postsRepository,
+                    )
                 }
             }
         },
     )
+
+private suspend fun Flow<Action.Tile>.postsLoadMutations(
+    request: PostsRequest,
+    stateHolder: SuspendingStateHolder<State>,
+    postsRepository: PostRepository,
+): Flow<Mutation<State>> =
+    map { it.tilingAction }
+        .tilingMutations(
+            currentState = { stateHolder.state() },
+            updateQueryData = PostDataQuery::updateData,
+            refreshQuery = PostDataQuery::refresh,
+            cursorListLoader = { query, cursor ->
+                when (request) {
+                    is PostsRequest.Quotes -> {
+                        postsRepository.quotes(query, cursor)
+                    }
+                    PostsRequest.Saved -> {
+                        // TODO: Replace with saved posts implementation
+                        flowOf(CursorList(emptyList(), Cursor.Initial))
+                    }
+                }
+            },
+            onNewItems = { items -> items },
+            onTilingDataUpdated = { copy(tilingData = it) },
+        )
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(messages = messages - action.message)
     }
 
-private fun postsMutations(
-    request: PostsRequest,
-    scope: CoroutineScope,
-    postsRepository: PostRepository,
-): Flow<Mutation<State>> = flow {
-    when (request) {
-        is PostsRequest.Saved -> {
-            // TODO: Fetch Saved posts
-        }
-        is PostsRequest.Quotes -> {
-            // TODO: Fetch quotes
-        }
-    }
-}
+private fun PostDataQuery.updateData(newData: CursorQuery.Data): PostDataQuery =
+    copy(data = newData)
+
+private fun PostDataQuery.refresh(): PostDataQuery =
+    copy(data = data.reset())
