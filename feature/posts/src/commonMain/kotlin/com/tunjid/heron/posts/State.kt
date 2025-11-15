@@ -16,25 +16,38 @@
 
 package com.tunjid.heron.posts
 
+import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.types.ProfileHandle
+import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.repository.PostDataQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.text.Memo
-import com.tunjid.tiler.TiledList
-import com.tunjid.tiler.emptyTiledList
+import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
     @Transient
-    val posts: TiledList<PostDataQuery, TimelineItem> = emptyTiledList(),
+    override val tilingData: TilingState.Data<PostDataQuery, TimelineItem> = TilingState.Data(
+        currentQuery = PostDataQuery(
+            profileId = ProfileHandle(""),
+            postRecordKey = RecordKey(""),
+            data = CursorQuery.Data(
+                page = 0,
+                cursorAnchor = Clock.System.now(),
+            ),
+        ),
+    ),
     @Transient
     val messages: List<Memo> = emptyList(),
-)
+) : TilingState<PostDataQuery, TimelineItem>
 
 sealed class Action(val key: String) {
 
+    data class Tile(val tilingAction: TilingState.Action) : Action("Tile")
     data class SnackbarDismissed(
         val message: Memo,
     ) : Action(key = "SnackbarDismissed")
