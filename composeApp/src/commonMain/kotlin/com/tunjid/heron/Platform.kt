@@ -39,6 +39,8 @@ import com.tunjid.heron.list.di.ListNavigationBindings
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.messages.di.MessagesBindings
 import com.tunjid.heron.messages.di.MessagesNavigationBindings
+import com.tunjid.heron.moderation.di.ModerationBindings
+import com.tunjid.heron.moderation.di.ModerationNavigationBindings
 import com.tunjid.heron.notifications.di.NotificationsBindings
 import com.tunjid.heron.notifications.di.NotificationsNavigationBindings
 import com.tunjid.heron.postdetail.di.PostDetailBindings
@@ -90,6 +92,7 @@ fun createAppState(
         homeNavigationBindings = HomeNavigationBindings,
         listNavigationBindings = ListNavigationBindings,
         messagesNavigationBindings = MessagesNavigationBindings,
+        moderationNavigationBindings = ModerationNavigationBindings,
         notificationsNavigationBindings = NotificationsNavigationBindings,
         postDetailNavigationBindings = PostDetailNavigationBindings,
         postsNavigationBindings = PostsNavigationBindings,
@@ -151,6 +154,10 @@ fun createAppState(
             dataBindings = dataBindings,
         ),
         messagesBindings = MessagesBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
+        ),
+        moderationBindings = ModerationBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),

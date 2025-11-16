@@ -11,7 +11,7 @@ androidx-collections = "1.5.0"
 androidx-datastore = "1.1.7"
 androidx-graphics-core = "1.0.3"
 androidx-graphics-path = "1.0.1"
-androidx-graphics-shapes = "1.0.1"
+androidx-graphics-shapes = "1.1.0"
 androidx-media3 = "1.8.0"
 #noinspection NewerVersionAvailable; Need to be on CMP 1.8.2 for shared element transitions
 androidxNavigationEvent = "1.0.0-alpha02"

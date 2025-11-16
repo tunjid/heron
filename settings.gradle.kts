@@ -64,6 +64,7 @@ include(
     ":feature:home",
     ":feature:list",
     ":feature:messages",
+    ":feature:moderation",
     ":feature:notifications",
     ":feature:post-detail",
     ":feature:posts",

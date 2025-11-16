@@ -219,6 +219,11 @@ fun settingsDestination(): NavigationAction.Destination = pathDestination(
     referringRouteOption = ReferringRouteOption.Current,
 )
 
+fun moderationDestination(): NavigationAction.Destination = pathDestination(
+    path = "/moderation",
+    referringRouteOption = ReferringRouteOption.Current,
+)
+
 fun pathDestination(
     path: String,
     models: List<UrlEncodableModel> = emptyList(),

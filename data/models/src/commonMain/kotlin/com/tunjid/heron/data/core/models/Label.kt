@@ -79,6 +79,38 @@ data class Label(
         None,
     }
 
+    enum class Global(
+        val defaultVisibility: Visibility,
+        val keys: List<Value>,
+    ) {
+        AdultContent(
+            defaultVisibility = Visibility.Hide,
+            keys = listOf(
+                Value("porn"),
+            ),
+        ),
+        SexuallySuggestive(
+            defaultVisibility = Visibility.Warn,
+            keys = listOf(
+                Value("sexual"),
+                Value("suggestive"),
+            ),
+        ),
+        GraphicMedia(
+            defaultVisibility = Visibility.Warn,
+            keys = listOf(
+                Value("graphic-media"),
+                Value("gore"),
+            ),
+        ),
+        NonSexualNudity(
+            defaultVisibility = Visibility.Ignore,
+            keys = listOf(
+                Value("nudity"),
+            ),
+        ),
+    }
+
     companion object {
         val Hidden = Value("!hide")
         val NonAuthenticated = Value("!no-unauthenticated ")

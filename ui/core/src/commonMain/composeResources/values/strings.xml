@@ -26,4 +26,20 @@
     <string name="cancel">Cancel</string>
     <string name="go_back">Go Back</string>
     <string name="sign_in">Sign In</string>
+    <string name="hide_label">Content Blocked</string>
+    <string name="hide_label_description">This content has been hidden by the moderators.</string>
+    <string name="warn_label">Content Warning</string>
+    <string name="warn_label_description">This content has received a general warning from moderators.</string>
+    <string name="no_authenticated_media_label">Sign-in Required`</string>
+    <string name="no_authenticated_media_label_description">This user has requested that their content only be shown to signed-in users.</string>
+    <string name="porn_label">Adult Content</string>
+    <string name="porn_label_description">Explicit sexual images.</string>
+    <string name="sexual_label">Sexually Suggestive</string>
+    <string name="sexual_label_description">Does not include nudity.</string>
+    <string name="nudity_label">Non-sexual Nudity</string>
+    <string name="nudity_label_description">E.g. artistic nudes.</string>
+    <string name="graphic_media_label">Graphic Media</string>
+    <string name="graphic_media_label_description">Explicit or potentially disturbing media.</string>
+    <string name="gore_label">Graphic Media</string>
+    <string name="gore_label_description">Explicit or potentially disturbing media.</string>
 </resources>

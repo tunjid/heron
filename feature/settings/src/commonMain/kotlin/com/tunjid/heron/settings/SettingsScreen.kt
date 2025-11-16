@@ -26,9 +26,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.scaffold.navigation.moderationDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.settings.ui.ContentAndMediaItem
 import com.tunjid.heron.settings.ui.FeedbackItem
+import com.tunjid.heron.settings.ui.ModerationItem
 import com.tunjid.heron.settings.ui.OpenSourceLibrariesItem
 import com.tunjid.heron.settings.ui.SignOutItem
 
@@ -55,6 +57,12 @@ internal fun SettingsScreen(
                     actions(Action.SetRefreshHomeTimelinesOnLaunch(it))
                 },
             )
+            ModerationItem(
+                modifier = Modifier
+                    .animateBounds(paneScaffoldState),
+            ) {
+                actions(Action.Navigate.To(moderationDestination()))
+            }
         }
         FeedbackItem(
             modifier = Modifier

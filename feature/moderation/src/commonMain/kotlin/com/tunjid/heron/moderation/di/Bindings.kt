@@ -14,51 +14,36 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.profile.di
+package com.tunjid.heron.moderation.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Login
-import androidx.compose.material.icons.rounded.AlternateEmail
-import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.types.LabelerUri
-import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.di.DataBindings
-import com.tunjid.heron.profile.Action
-import com.tunjid.heron.profile.ActualProfileViewModel
-import com.tunjid.heron.profile.ProfileScreen
-import com.tunjid.heron.profile.RouteViewModelInitializer
+import com.tunjid.heron.moderation.Action
+import com.tunjid.heron.moderation.ActualModerationViewModel
+import com.tunjid.heron.moderation.ModerationScreen
+import com.tunjid.heron.moderation.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
-import com.tunjid.heron.scaffold.navigation.composePostDestination
-import com.tunjid.heron.scaffold.navigation.signInDestination
-import com.tunjid.heron.scaffold.scaffold.PaneFab
+import com.tunjid.heron.scaffold.scaffold.AppBarTitle
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.scaffold.scaffold.PaneSnackbarHost
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
-import com.tunjid.heron.scaffold.scaffold.fabOffset
-import com.tunjid.heron.scaffold.scaffold.fullAppbarTransparency
-import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -66,7 +51,6 @@ import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
-import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
@@ -74,14 +58,11 @@ import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
-import heron.feature.profile.generated.resources.Res
-import heron.feature.profile.generated.resources.mention
-import heron.feature.profile.generated.resources.post
-import heron.ui.core.generated.resources.sign_in
+import heron.feature.moderation.generated.resources.Res
+import heron.feature.moderation.generated.resources.moderation_settings
 import org.jetbrains.compose.resources.stringResource
 
-private const val RoutePattern = "/profile/{profileHandleOrId}"
-private const val LabelerPattern = "/{profileHandleOrId}/${LabelerUri.NAMESPACE}/self"
+private const val RoutePattern = "/moderation"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -92,12 +73,8 @@ private fun createRoute(
     ),
 )
 
-internal val Route.profileHandleOrId by mappedRoutePath(
-    mapper = ::ProfileHandleOrId,
-)
-
 @BindingContainer
-object ProfileNavigationBindings {
+object ModerationNavigationBindings {
 
     @Provides
     @IntoMap
@@ -107,19 +84,10 @@ object ProfileNavigationBindings {
             routePattern = RoutePattern,
             routeMapper = ::createRoute,
         )
-
-    @Provides
-    @IntoMap
-    @StringKey(LabelerPattern)
-    fun provideLabelerMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = LabelerPattern,
-            routeMapper = ::createRoute,
-        )
 }
 
 @BindingContainer
-class ProfileBindings(
+class ModerationBindings(
     @Includes dataBindings: DataBindings,
     @Includes scaffoldBindings: ScaffoldBindings,
 ) {
@@ -135,21 +103,10 @@ class ProfileBindings(
         viewModelInitializer = viewModelInitializer,
     )
 
-    @Provides
-    @IntoMap
-    @StringKey(LabelerPattern)
-    fun provideLabelerPaneEntry(
-        routeParser: RouteParser,
-        viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-    )
-
     private fun routePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = threePaneEntry(
+    ) = threePaneEntry<Route>(
         contentTransform = predictiveBackContentTransform,
         paneMapping = { route ->
             mapOf(
@@ -158,7 +115,7 @@ class ProfileBindings(
             )
         },
         render = { route ->
-            val viewModel = viewModel<ActualProfileViewModel> {
+            val viewModel = viewModel<ActualModerationViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
                     route = routeParser.hydrate(route),
@@ -175,56 +132,14 @@ class ProfileBindings(
                     .predictiveBackPlacement(paneScope = this)
                     .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
+                snackBarMessages = state.messages,
+                onSnackBarMessageConsumed = {
+                    viewModel.accept(Action.SnackbarDismissed(it))
+                },
                 topBar = {
                     PoppableDestinationTopAppBar(
-                        // Limit width so tabs may be tapped
-                        modifier = Modifier.width(72.dp),
-                        transparencyFactor = ::fullAppbarTransparency,
+                        title = { AppBarTitle(stringResource(Res.string.moderation_settings)) },
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
-                    )
-                },
-                snackBarHost = {
-                    PaneSnackbarHost(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
-                    )
-                },
-                floatingActionButton = {
-                    PaneFab(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
-                        text = stringResource(
-                            when {
-                                isSignedOut -> CommonStrings.sign_in
-                                state.isSignedInProfile -> Res.string.post
-                                else -> Res.string.mention
-                            },
-                        ),
-                        icon = when {
-                            isSignedOut -> Icons.AutoMirrored.Rounded.Login
-                            state.isSignedInProfile -> Icons.Rounded.Edit
-                            else -> Icons.Rounded.AlternateEmail
-                        },
-                        expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
-                        onClick = {
-                            viewModel.accept(
-                                Action.Navigate.To(
-                                    when {
-                                        isSignedOut -> signInDestination()
-                                        else -> composePostDestination(
-                                            type =
-                                            if (state.isSignedInProfile) Post.Create.Timeline
-                                            else Post.Create.Mention(state.profile),
-                                            sharedElementPrefix = null,
-                                        )
-                                    },
-                                ),
-                            )
-                        },
                     )
                 },
                 navigationBar = {
@@ -237,16 +152,15 @@ class ProfileBindings(
                 navigationRail = {
                     PaneNavigationRail()
                 },
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
-                },
-                content = {
-                    ProfileScreen(
+                content = { paddingValues ->
+                    ModerationScreen(
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
-                        modifier = Modifier,
+                        modifier = Modifier
+                            .padding(
+                                top = paddingValues.calculateTopPadding(),
+                            ),
                     )
                     SecondaryPaneCloseBackHandler()
                 },
