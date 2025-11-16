@@ -35,6 +35,7 @@ import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.ProfileUri.Companion.asSelfLabelerUri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
@@ -502,9 +503,6 @@ private fun CoroutineScope.labelerSettingsStateHolders(
             ),
         ),
     )
-
-private fun ProfileId.asSelfLabelerUri() =
-    LabelerUri("at://$id/${LabelerUri.NAMESPACE}/self")
 
 private fun defaultQueryData() = CursorQuery.Data(
     page = 0,
