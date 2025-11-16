@@ -65,6 +65,8 @@ import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.ThingPreferenceUpdater
+import com.tunjid.heron.data.utilities.recordResolver.OfflineRecordResolver
+import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.writequeue.PersistedWriteQueue
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import dev.jordond.connectivity.Connectivity
@@ -144,6 +146,12 @@ class DataBindings(
     ): PreferenceUpdater = ThingPreferenceUpdater(
         tidGenerator = tidGenerator,
     )
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideRecordResolver(
+        offlineRecordResolver: OfflineRecordResolver,
+    ): RecordResolver = offlineRecordResolver
 
     @SingleIn(AppScope::class)
     @Provides

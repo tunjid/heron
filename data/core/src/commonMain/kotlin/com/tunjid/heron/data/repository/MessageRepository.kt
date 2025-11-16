@@ -64,6 +64,7 @@ import com.tunjid.heron.data.utilities.facet
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
+import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.resolveLinks
 import com.tunjid.heron.data.utilities.toOutcome
 import dev.zacsweers.metro.Inject
@@ -127,6 +128,7 @@ internal class OfflineMessageRepository @Inject constructor(
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateDataSource: SavedStateDataSource,
+    private val recordResolver: RecordResolver,
 ) : MessageRepository {
 
     override fun conversations(
@@ -188,14 +190,9 @@ internal class OfflineMessageRepository @Inject constructor(
                             destination = mutableSetOf(),
                             transform = PopulatedMessageEntity::embeddedRecordUri,
                         )
-                        records(
+                        recordResolver.records(
                             uris = embeddedRecordUris,
                             viewingProfileId = signedInProfileId,
-                            feedGeneratorDao = feedDao,
-                            labelDao = labelDao,
-                            listDao = listDao,
-                            postDao = postDao,
-                            starterPackDao = starterPackDao,
                         ).map { embeddedRecords ->
                             val recordUrisToEmbeddedRecords = embeddedRecords.associateBy {
                                 it.reference.uri
