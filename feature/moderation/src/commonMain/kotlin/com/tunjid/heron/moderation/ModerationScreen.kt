@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ElevatedCard
@@ -37,6 +38,9 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Label
+import com.tunjid.heron.data.core.models.Labeler
+import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption
+import com.tunjid.heron.scaffold.navigation.recordDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.label.LabelSetting
 import com.tunjid.heron.timeline.ui.label.Labeler
@@ -61,99 +65,153 @@ internal fun ModerationScreen(
             horizontal = 16.dp,
         ),
     ) {
-        item {
-            SectionTitle(
-                title = stringResource(Res.string.content_filters),
-            )
-        }
-        item {
-            ElevatedItem(
-                shape = FirstCardShape,
-                showDivider = true,
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillParentMaxWidth()
-                        .padding(
-                            horizontal = 16.dp,
-                        ),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(stringResource(Res.string.enable_adult_content))
-                    Switch(
-                        checked = true,
-                        onCheckedChange = {},
-                    )
-                }
-            }
-        }
-        itemsIndexed(
-            items = state.globalLabels,
-            itemContent = { index, globalLabel ->
-                val isLastLabel = index == state.globalLabels.lastIndex
-                ElevatedItem(
-                    shape = if (isLastLabel) LastCardShape
-                    else RectangleShape,
-                    showDivider = !isLastLabel,
-                ) {
-                    LabelSetting(
-                        modifier = Modifier
-                            .padding(
-                                horizontal = 16.dp,
-                                vertical = 8.dp,
-                            ),
-                        labelName = stringResource(globalLabel.nameRes),
-                        labelDescription = stringResource(globalLabel.descriptionRes),
-                        selectedVisibility = globalLabel.visibility,
-                        visibilities = Label.Visibility.all,
-                        onVisibilityChanged = {
-                        },
-                    )
-                }
+        globalLabelsSection(
+            globalLabels = state.globalLabels,
+            onGlobalLabelVisibilityChanged = { globalLabel, visibility ->
+                // TODO: call to actions
+            },
+            onAdultPreferencesChecked = {
+                // TODO: call to actions
             },
         )
-
-        item {
-            SectionTitle(
-                title = stringResource(Res.string.labeler_subscriptions),
-            )
-        }
-
-        itemsIndexed(
-            items = state.subscribedLabelers,
-            itemContent = { index, labeler ->
-                val isLastLabel = index == state.subscribedLabelers.lastIndex
-                ElevatedItem(
-                    shape = if (index == 0) FirstCardShape
-                    else if (isLastLabel) LastCardShape
-                    else RectangleShape,
-                    showDivider = !isLastLabel,
-                ) {
-                    Labeler(
-                        modifier = Modifier
-                            .padding(
-                                horizontal = 16.dp,
-                                vertical = 8.dp,
-                            ),
-                        movableElementSharedTransitionScope = paneScaffoldState,
-                        sharedElementPrefix = Moderation,
-                        labeler = labeler,
-                    )
-                }
+        subscribedLabelersSection(
+            paneScaffoldState = paneScaffoldState,
+            labelers = state.subscribedLabelers,
+            onLabelerClicked = { labeler ->
+                println(labeler.reference.uri.uri)
+                actions(
+                    Action.Navigate.To(
+                        recordDestination(
+                            labeler,
+                            sharedElementPrefix = Moderation,
+                            referringRouteOption = ReferringRouteOption.Current,
+                        ),
+                    ),
+                )
             },
         )
     }
+}
+
+private fun LazyListScope.globalLabelsSection(
+    globalLabels: List<GlobalLabels>,
+    onGlobalLabelVisibilityChanged: (GlobalLabels, Label.Visibility) -> Unit,
+    onAdultPreferencesChecked: (Boolean) -> Unit,
+) {
+    item {
+        SectionTitle(
+            title = stringResource(Res.string.content_filters),
+        )
+    }
+    item {
+        ElevatedItem(
+            shape = FirstCardShape,
+            showDivider = true,
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillParentMaxWidth()
+                    .padding(
+                        horizontal = 16.dp,
+                    ),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(stringResource(Res.string.enable_adult_content))
+                Switch(
+                    checked = true,
+                    onCheckedChange = onAdultPreferencesChecked,
+                )
+            }
+        }
+    }
+    itemsIndexed(
+        items = globalLabels,
+        itemContent = { index, globalLabel ->
+            val isLastLabel = index == globalLabels.lastIndex
+            ElevatedItem(
+                shape = if (isLastLabel) LastCardShape
+                else RectangleShape,
+                showDivider = !isLastLabel,
+            ) {
+                LabelSetting(
+                    modifier = Modifier
+                        .padding(
+                            horizontal = 16.dp,
+                            vertical = 8.dp,
+                        ),
+                    labelName = stringResource(globalLabel.nameRes),
+                    labelDescription = stringResource(globalLabel.descriptionRes),
+                    selectedVisibility = globalLabel.visibility,
+                    visibilities = Label.Visibility.all,
+                    onVisibilityChanged = { visibility ->
+                        onGlobalLabelVisibilityChanged(globalLabel, visibility)
+                    },
+                )
+            }
+        },
+    )
+}
+
+private fun LazyListScope.subscribedLabelersSection(
+    paneScaffoldState: PaneScaffoldState,
+    labelers: List<Labeler>,
+    onLabelerClicked: (Labeler) -> Unit,
+) {
+    item {
+        SectionTitle(
+            title = stringResource(Res.string.labeler_subscriptions),
+        )
+    }
+
+    itemsIndexed(
+        items = labelers,
+        itemContent = { index, labeler ->
+            val isLastLabel = index == labelers.lastIndex
+            ElevatedItem(
+                shape = if (index == 0) FirstCardShape
+                else if (isLastLabel) LastCardShape
+                else RectangleShape,
+                showDivider = !isLastLabel,
+                onItemClicked = {
+                    onLabelerClicked(labeler)
+                },
+            ) {
+                Labeler(
+                    modifier = Modifier
+                        .padding(
+                            horizontal = 16.dp,
+                            vertical = 8.dp,
+                        ),
+                    movableElementSharedTransitionScope = paneScaffoldState,
+                    sharedElementPrefix = Moderation,
+                    labeler = labeler,
+                )
+            }
+        },
+    )
 }
 
 @Composable
 private fun ElevatedItem(
     shape: Shape,
     showDivider: Boolean,
+    onItemClicked: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
-    ElevatedCard(
+    if (onItemClicked == null) ElevatedCard(
         shape = shape,
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            content()
+            if (showDivider) HorizontalDivider()
+        }
+    }
+    else ElevatedCard(
+        shape = shape,
+        onClick = onItemClicked,
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(4.dp),

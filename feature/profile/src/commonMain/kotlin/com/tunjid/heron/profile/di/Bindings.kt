@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.profile.Action
@@ -80,6 +81,7 @@ import heron.ui.core.generated.resources.sign_in
 import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/profile/{profileHandleOrId}"
+private const val LabelerPattern = "/{profileHandleOrId}/${LabelerUri.NAMESPACE}/self"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -105,6 +107,15 @@ object ProfileNavigationBindings {
             routePattern = RoutePattern,
             routeMapper = ::createRoute,
         )
+
+    @Provides
+    @IntoMap
+    @StringKey(LabelerPattern)
+    fun provideLabelerMatcher(): RouteMatcher =
+        urlRouteMatcher(
+            routePattern = LabelerPattern,
+            routeMapper = ::createRoute,
+        )
 }
 
 @BindingContainer
@@ -117,6 +128,17 @@ class ProfileBindings(
     @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
+        routeParser: RouteParser,
+        viewModelInitializer: RouteViewModelInitializer,
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
+        routeParser = routeParser,
+        viewModelInitializer = viewModelInitializer,
+    )
+
+    @Provides
+    @IntoMap
+    @StringKey(LabelerPattern)
+    fun provideLabelerPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
