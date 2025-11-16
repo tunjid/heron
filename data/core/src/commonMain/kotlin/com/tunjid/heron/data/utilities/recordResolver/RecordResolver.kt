@@ -66,7 +66,7 @@ import kotlinx.coroutines.flow.stateIn
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 
-interface RecordResolver {
+internal interface RecordResolver {
     val labelers: Flow<List<Labeler>>
 
     fun records(
