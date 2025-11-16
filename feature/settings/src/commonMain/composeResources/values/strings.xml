@@ -29,4 +29,5 @@
     <string name="view_website">View website</string>
     <string name="content_and_media">Content and media</string>
     <string name="refresh_timelines_on_launch">Refresh timelines on launch</string>
+    <string name="moderation">Moderation</string>
 </resources>

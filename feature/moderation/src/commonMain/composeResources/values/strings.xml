@@ -17,4 +17,6 @@
 <resources>
     <string name="moderation_settings">Moderation Settings</string>
     <string name="labeler_subscriptions">Labeler subscriptions</string>
+    <string name="content_filters">Content Filters</string>
+    <string name="enable_adult_content">Enable adult content</string>
 </resources>

@@ -16,38 +16,23 @@
 
 package com.tunjid.heron.profile.ui
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ButtonGroupDefaults
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.ToggleButton
-import androidx.compose.material3.ToggleButtonDefaults
-import androidx.compose.material3.ToggleButtonShapes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.profile.LabelerSettingsStateHolder
+import com.tunjid.heron.timeline.ui.label.LabelSetting
 import com.tunjid.heron.timeline.ui.label.locale
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LabelerSettings(
     modifier: Modifier = Modifier,
@@ -58,94 +43,29 @@ fun LabelerSettings(
         modifier = modifier
             .fillMaxWidth(),
     ) {
+        val languageTag = Locale.current.toLanguageTag()
         items(
             items = state.labelSettings,
             itemContent = { labelSetting ->
                 Column {
-                    Column(
+                    val locale = labelSetting.definition.locale(languageTag)
+                    LabelSetting(
                         modifier = Modifier
                             .padding(
                                 horizontal = 16.dp,
                                 vertical = 8.dp,
                             ),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        val languageTag = Locale.current.toLanguageTag()
-                        val locale = labelSetting.definition.locale(languageTag)
-                        Text(
-                            text = locale?.name ?: labelSetting.definition.identifier.value,
-                            style = MaterialTheme.typography.bodySmallEmphasized,
-                        )
-                        locale?.description?.let {
-                            Text(
-                                text = it,
-                                color = MaterialTheme.colorScheme.outline,
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                        }
-
-                        Row(
-                            modifier = Modifier,
-                            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
-                        ) {
-                            val overrideColors = ButtonDefaults.filledTonalButtonColors()
-                            Label.Visibility.all.forEachIndexed { index, visibility ->
-                                ToggleButton(
-                                    checked = labelSetting.visibility == visibility,
-                                    onCheckedChange = { isChecked ->
-                                        if (isChecked) stateHolder.accept(
-                                            labelSetting.copy(visibility = visibility),
-                                        )
-                                        // Do nothing, cannot uncheck a label setting
-                                        else Unit
-                                    },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .semantics {
-                                            role = Role.RadioButton
-                                        },
-                                    colors = ToggleButtonDefaults.toggleButtonColors(
-                                        checkedContainerColor = overrideColors.containerColor,
-                                        checkedContentColor = overrideColors.contentColor,
-                                    ),
-                                    shapes = when (index) {
-                                        0 -> LeadingButtonShape
-                                        Label.Visibility.all.lastIndex -> TrailingButtonShape
-                                        else -> MiddleButtonShape
-                                    },
-                                ) {
-                                    Text(visibility.value)
-                                }
-                            }
-                        }
-                    }
+                        labelName = locale?.name ?: labelSetting.definition.identifier.value,
+                        labelDescription = locale?.description,
+                        selectedVisibility = labelSetting.visibility,
+                        visibilities = Label.Visibility.all,
+                        onVisibilityChanged = {
+                            stateHolder.accept(labelSetting.copy(visibility = it))
+                        },
+                    )
                     HorizontalDivider()
                 }
             },
         )
     }
 }
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private val LeadingButtonShape = RoundedCornerShape(
-    topStart = 8.dp,
-    topEnd = 0.dp,
-    bottomStart = 8.dp,
-    bottomEnd = 0.dp,
-).let { ToggleButtonShapes(it, it, it) }
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private val MiddleButtonShape = RoundedCornerShape(
-    topStart = 0.dp,
-    topEnd = 0.dp,
-    bottomStart = 0.dp,
-    bottomEnd = 0.dp,
-).let { ToggleButtonShapes(it, it, it) }
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private val TrailingButtonShape = RoundedCornerShape(
-    topStart = 0.dp,
-    topEnd = 8.dp,
-    bottomStart = 0.dp,
-    bottomEnd = 8.dp,
-).let { ToggleButtonShapes(it, it, it) }

@@ -16,21 +16,82 @@
 
 package com.tunjid.heron.moderation
 
+import com.tunjid.heron.data.core.models.ContentLabelPreference
+import com.tunjid.heron.data.core.models.ContentLabelPreferences
+import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
-import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.Memo
+import heron.ui.core.generated.resources.graphic_media_label
+import heron.ui.core.generated.resources.graphic_media_label_description
+import heron.ui.core.generated.resources.nudity_label
+import heron.ui.core.generated.resources.nudity_label_description
+import heron.ui.core.generated.resources.porn_label
+import heron.ui.core.generated.resources.porn_label_description
+import heron.ui.core.generated.resources.sexual_label
+import heron.ui.core.generated.resources.sexual_label_description
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import org.jetbrains.compose.resources.StringResource
 
 @Serializable
 data class State(
-    val signedInProfilePreferences: Preferences? = null,
+    @Transient
+    val globalLabels: List<GlobalLabels> = emptyList(),
     @Transient
     val subscribedLabelers: List<Labeler> = emptyList(),
     @Transient
     val messages: List<Memo> = emptyList(),
 )
+
+data class GlobalLabels(
+    val global: Label.Global,
+    val visibility: Label.Visibility,
+    val nameRes: StringResource,
+    val descriptionRes: StringResource,
+)
+
+fun globalLabels(
+    contentLabelPreferences: ContentLabelPreferences,
+): List<GlobalLabels> {
+    val visibilityMap = contentLabelPreferences.associateBy(
+        keySelector = ContentLabelPreference::label,
+        valueTransform = ContentLabelPreference::visibility,
+    )
+    return Label.Global.entries.map { globalLabel ->
+        val visibility = globalLabel.keys
+            .firstNotNullOfOrNull(visibilityMap::get)
+            ?: globalLabel.defaultVisibility
+
+        when (globalLabel) {
+            Label.Global.AdultContent -> GlobalLabels(
+                global = globalLabel,
+                visibility = visibility,
+                nameRes = CommonStrings.porn_label,
+                descriptionRes = CommonStrings.porn_label_description,
+            )
+            Label.Global.SexuallySuggestive -> GlobalLabels(
+                global = globalLabel,
+                visibility = visibility,
+                nameRes = CommonStrings.sexual_label,
+                descriptionRes = CommonStrings.sexual_label_description,
+            )
+            Label.Global.GraphicMedia -> GlobalLabels(
+                global = globalLabel,
+                visibility = visibility,
+                nameRes = CommonStrings.graphic_media_label,
+                descriptionRes = CommonStrings.graphic_media_label_description,
+            )
+            Label.Global.NonSexualNudity -> GlobalLabels(
+                global = globalLabel,
+                visibility = visibility,
+                nameRes = CommonStrings.nudity_label,
+                descriptionRes = CommonStrings.nudity_label_description,
+            )
+        }
+    }
+}
 
 sealed class Action(val key: String) {
 

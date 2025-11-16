@@ -20,7 +20,6 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.TimelineRepository
-import com.tunjid.heron.data.repository.signedInProfilePreferences
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -67,8 +66,8 @@ class ActualModerationViewModel(
         initialState = State(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         inputs = listOf(
-            signedInProfileSavedStateMutations(
-                savedStateDataSource = savedStateDataSource,
+            globalLabelMutations(
+                timelineRepository = timelineRepository,
             ),
             subscribedLabelerMutations(
                 timelineRepository = timelineRepository,
@@ -96,14 +95,14 @@ class ActualModerationViewModel(
         },
     )
 
-fun signedInProfileSavedStateMutations(
-    savedStateDataSource: SavedStateDataSource,
+fun globalLabelMutations(
+    timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> =
-    savedStateDataSource.savedState
-        .map { it.signedInProfilePreferences() }
+    timelineRepository.preferences
+        .map { it.contentLabelPreferences }
         .distinctUntilChanged()
-        .mapToMutation {
-            copy(signedInProfilePreferences = it)
+        .mapToMutation { contentLabelPreferences ->
+            copy(globalLabels = globalLabels(contentLabelPreferences))
         }
 
 fun subscribedLabelerMutations(
