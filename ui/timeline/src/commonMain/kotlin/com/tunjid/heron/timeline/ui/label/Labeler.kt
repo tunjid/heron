@@ -27,6 +27,7 @@ import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.BlueskyClouds
 import com.tunjid.heron.timeline.utilities.LabelerCollectionShape
 import com.tunjid.heron.ui.RecordLayout
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
@@ -54,7 +55,7 @@ fun Labeler(
         sharedElementPrefix = sharedElementPrefix,
         sharedElementType = labeler.uri,
         avatar = {
-            val avatar = labeler.creator.avatar
+            val avatar = labeler.creator.avatar ?: BlueskyClouds
             AsyncImage(
                 modifier = Modifier
                     .paneStickySharedElement(
@@ -65,7 +66,7 @@ fun Labeler(
                     .size(44.dp),
                 args = remember(avatar) {
                     ImageArgs(
-                        url = avatar?.uri,
+                        url = avatar.uri,
                         contentScale = androidx.compose.ui.layout.ContentScale.Crop,
                         contentDescription = null,
                         shape = LabelerCollectionShape,

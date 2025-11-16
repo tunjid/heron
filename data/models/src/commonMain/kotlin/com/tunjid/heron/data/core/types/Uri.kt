@@ -54,6 +54,11 @@ value class ProfileUri(
     override val uri: String,
 ) : Uri {
     override fun toString(): String = uri
+
+    companion object {
+        fun ProfileId.asSelfLabelerUri() =
+            LabelerUri("${Uri.Host.AtProto.prefix}$id/${LabelerUri.NAMESPACE}/self")
+    }
 }
 
 @Serializable

@@ -48,7 +48,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
@@ -100,6 +99,7 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.ProfileUri.Companion.asSelfLabelerUri
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.images.AsyncImage
@@ -145,6 +145,7 @@ import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
+import com.tunjid.heron.timeline.utilities.collectionShape
 import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
@@ -736,14 +737,16 @@ private fun ProfileAvatar(
                 .clickable { onProfileAvatarClicked() },
             state = remember(
                 key1 = profile.avatar?.uri,
-                key2 = profile.displayName,
-                key3 = profile.handle,
+                key2 = profile.displayName ?: profile.handle,
+                key3 = profile.isLabeler,
             ) {
                 ImageArgs(
                     url = profile.avatar?.uri,
                     contentScale = ContentScale.Crop,
                     contentDescription = profile.displayName ?: profile.handle.id,
-                    shape = if (profile.isLabeler) LabelerShape else RoundedPolygonShape.Circle,
+                    shape =
+                    if (profile.isLabeler) profile.did.asSelfLabelerUri().collectionShape()
+                    else RoundedPolygonShape.Circle,
                 )
             },
             sharedElement = { state, modifier ->
@@ -1309,11 +1312,6 @@ private class HeaderState(
     private val expandedToCollapsedAvatar
         get() = ExpandedProfilePhotoSize - CollapsedProfilePhotoSize
 }
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private val LabelerShape = RoundedPolygonShape.Custom(
-    polygon = MaterialShapes.Gem,
-)
 
 private val RecordShape = RoundedCornerShape(8.dp)
 
