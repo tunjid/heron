@@ -159,7 +159,7 @@ internal class OfflinePostRepository @Inject constructor(
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            resolvePostUri(
+            withResolvedPostUri(
                 profileId = query.profileId,
                 postRecordKey = query.postRecordKey,
             ) { postUri ->
@@ -207,7 +207,7 @@ internal class OfflinePostRepository @Inject constructor(
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            resolvePostUri(
+            withResolvedPostUri(
                 profileId = query.profileId,
                 postRecordKey = query.postRecordKey,
             ) { postUri ->
@@ -248,7 +248,7 @@ internal class OfflinePostRepository @Inject constructor(
         cursor: Cursor,
     ): Flow<CursorList<TimelineItem>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            resolvePostUri(
+            withResolvedPostUri(
                 profileId = query.profileId,
                 postRecordKey = query.postRecordKey,
             ) { postUri ->
@@ -622,7 +622,7 @@ internal class OfflinePostRepository @Inject constructor(
         )
     }
 
-    private fun <T> resolvePostUri(
+    private fun <T> withResolvedPostUri(
         profileId: Id.Profile,
         postRecordKey: RecordKey,
         block: (PostUri) -> Flow<T>,
