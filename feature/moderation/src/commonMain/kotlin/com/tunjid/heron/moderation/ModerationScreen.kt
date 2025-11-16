@@ -78,7 +78,6 @@ internal fun ModerationScreen(
             paneScaffoldState = paneScaffoldState,
             labelers = state.subscribedLabelers,
             onLabelerClicked = { labeler ->
-                println(labeler.reference.uri.uri)
                 actions(
                     Action.Navigate.To(
                         recordDestination(
