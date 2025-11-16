@@ -33,8 +33,6 @@ import app.bsky.feed.GetPostThreadResponseThreadUnion
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
 import app.bsky.feed.Token
-import app.bsky.labeler.GetServicesQueryParams
-import app.bsky.labeler.GetServicesResponseViewUnion
 import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.ContentLabelPreference
@@ -44,7 +42,6 @@ import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
-import com.tunjid.heron.data.core.models.LabelerPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Timeline
@@ -59,7 +56,6 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
-import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
@@ -67,7 +63,6 @@ import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
-import com.tunjid.heron.data.database.entities.PopulatedLabelerEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.PostEntity
@@ -84,18 +79,16 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
+import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.toFlowOrEmpty
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.Named
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -111,7 +104,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -223,18 +215,17 @@ interface TimelineRepository {
 
 @Inject
 internal class OfflineTimelineRepository(
-    @Named("AppScope") appScope: CoroutineScope,
     private val postDao: PostDao,
     private val listDao: ListDao,
     private val profileDao: ProfileDao,
     private val timelineDao: TimelineDao,
     private val starterPackDao: StarterPackDao,
     private val feedGeneratorDao: FeedGeneratorDao,
-    private val labelDao: LabelDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateDataSource: SavedStateDataSource,
     private val preferenceUpdater: PreferenceUpdater,
+    private val recordResolver: RecordResolver,
     private val authRepository: AuthRepository,
 ) : TimelineRepository {
 
@@ -243,55 +234,7 @@ internal class OfflineTimelineRepository(
             .map(SavedState::signedProfilePreferencesOrDefault)
 
     override val labelers: Flow<List<Labeler>> =
-        savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            savedStateDataSource.savedState.map {
-                it.signedInProfileData
-                    ?.preferences
-                    ?.labelerPreferences
-                    ?.map(LabelerPreference::labelerCreatorId)
-                    ?.plus(Collections.DefaultLabelerProfileId)
-                    ?: listOf(Collections.DefaultLabelerProfileId)
-            }
-                .distinctUntilChanged()
-                .flatMapLatest { labelerCreatorIds ->
-                    labelDao.labelersByCreators(labelerCreatorIds)
-                        .map { it.map(PopulatedLabelerEntity::asExternalModel) }
-                        .withRefresh {
-                            networkService.runCatchingWithMonitoredNetworkRetry {
-                                getServices(
-                                    GetServicesQueryParams(
-                                        dids = labelerCreatorIds.map { Did(it.id) },
-                                        detailed = true,
-                                    ),
-                                )
-                            }
-                                .getOrNull()
-                                ?.views
-                                ?.let { responseViewUnionList ->
-                                    multipleEntitySaverProvider.saveInTransaction {
-                                        responseViewUnionList.forEach { responseViewUnion ->
-                                            when (responseViewUnion) {
-                                                is GetServicesResponseViewUnion.LabelerView -> add(
-                                                    viewingProfileId = signedInProfileId,
-                                                    labeler = responseViewUnion.value,
-                                                )
-                                                is GetServicesResponseViewUnion.LabelerViewDetailed -> add(
-                                                    viewingProfileId = signedInProfileId,
-                                                    labeler = responseViewUnion.value,
-                                                )
-                                                is GetServicesResponseViewUnion.Unknown -> Unit
-                                            }
-                                        }
-                                    }
-                                }
-                        }
-                }
-        }
-            .stateIn(
-                scope = appScope,
-                started = SharingStarted.WhileSubscribed(1_000),
-                initialValue = emptyList(),
-            )
+        recordResolver.labelers
 
     override fun timelineItems(
         query: TimelineQuery,
@@ -631,14 +574,9 @@ internal class OfflineTimelineRepository(
                                         postUris = postUris,
                                     )
                                         .distinctUntilChanged(),
-                                    flow2 = records(
+                                    flow2 = recordResolver.records(
                                         uris = embeddedRecordUris,
                                         viewingProfileId = signedInProfileId,
-                                        feedGeneratorDao = feedGeneratorDao,
-                                        labelDao = labelDao,
-                                        listDao = listDao,
-                                        postDao = postDao,
-                                        starterPackDao = starterPackDao,
                                     ),
                                     flow3 = labelers,
                                     transform = { posts, embeddedRecords, labelers ->
@@ -1072,14 +1010,9 @@ internal class OfflineTimelineRepository(
                                         postUris = ids,
                                     )
                                 },
-                                flow2 = records(
+                                flow2 = recordResolver.records(
                                     uris = embeddedRecordUris,
                                     viewingProfileId = signedInProfileId,
-                                    feedGeneratorDao = feedGeneratorDao,
-                                    labelDao = labelDao,
-                                    listDao = listDao,
-                                    postDao = postDao,
-                                    starterPackDao = starterPackDao,
                                 ),
                                 flow3 = profileIds.toFlowOrEmpty(
                                     block = profileDao::profiles,
@@ -1271,10 +1204,8 @@ internal class OfflineTimelineRepository(
                 }
         }
         .withRefresh {
-            networkService.refresh(
+            recordResolver.refresh(
                 uri = uri,
-                savedStateDataSource = savedStateDataSource,
-                multipleEntitySaverProvider = multipleEntitySaverProvider,
             )
         }
 
@@ -1303,10 +1234,8 @@ internal class OfflineTimelineRepository(
                 }
         }
         .withRefresh {
-            networkService.refresh(
+            recordResolver.refresh(
                 uri = uri,
-                savedStateDataSource = savedStateDataSource,
-                multipleEntitySaverProvider = multipleEntitySaverProvider,
             )
         }
 
@@ -1333,10 +1262,8 @@ internal class OfflineTimelineRepository(
             }
         }
         .withRefresh {
-            networkService.refresh(
+            recordResolver.refresh(
                 uri = uri,
-                savedStateDataSource = savedStateDataSource,
-                multipleEntitySaverProvider = multipleEntitySaverProvider,
             )
         }
 
