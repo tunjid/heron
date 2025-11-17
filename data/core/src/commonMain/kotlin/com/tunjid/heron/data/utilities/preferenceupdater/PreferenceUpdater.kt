@@ -57,6 +57,7 @@ internal class ThingPreferenceUpdater @Inject constructor(
     ): Preferences = response.preferences.fold(
         // Reset values to be filled from network response
         initial = preferences.copy(
+            allowAdultContent = false,
             timelinePreferences = emptyList(),
             contentLabelPreferences = emptyList(),
             labelerPreferences = emptyList(),
@@ -108,65 +109,30 @@ internal class ThingPreferenceUpdater @Inject constructor(
         response: GetPreferencesResponse,
         update: Timeline.Update,
     ): List<PreferencesUnion> {
-        val existingContentLabelPrefs = mutableListOf<PreferencesUnion.ContentLabelPref>()
-        val updatedOtherPrefs = mutableListOf<PreferencesUnion>()
+        val (contentLabelPrefs, otherPrefs) = response.preferences
+            .partition { it is PreferencesUnion.ContentLabelPref }
 
-        response.preferences.forEach { preferencesUnion ->
+        val existingContentLabelPrefs = contentLabelPrefs
+            .filterIsInstance<PreferencesUnion.ContentLabelPref>()
+
+        val updatedOtherPrefs = otherPrefs.map { preferencesUnion ->
             when (preferencesUnion) {
-                is PreferencesUnion.AdultContentPref -> updatedOtherPrefs.add(
-                    preferencesUnion.targeting<Timeline.Update.OfAdultContent>(
-                        update = update,
-                        block = { updateAdultContentPreference(preferencesUnion, it) },
-                    ),
+                is PreferencesUnion.AdultContentPref -> preferencesUnion.targeting<Timeline.Update.OfAdultContent>(
+                    update = update,
+                    block = { updateAdultContentPreference(preferencesUnion, it) },
                 )
-                is PreferencesUnion.BskyAppStatePref -> updatedOtherPrefs.add(
-                    preferencesUnion,
+
+                is PreferencesUnion.LabelersPref -> preferencesUnion.targeting<Timeline.Update.OfLabeler>(
+                    update = update,
+                    block = { updateLabelerPreference(preferencesUnion, it) },
                 )
-                is PreferencesUnion.ContentLabelPref -> existingContentLabelPrefs.add(
-                    preferencesUnion,
+
+                is PreferencesUnion.SavedFeedsPrefV2 -> preferencesUnion.targeting<Timeline.Update.OfFeedGenerator>(
+                    update = update,
+                    block = { updateFeedPreference(preferencesUnion, it) },
                 )
-                is PreferencesUnion.FeedViewPref -> updatedOtherPrefs.add(
-                    preferencesUnion,
-                )
-                is PreferencesUnion.HiddenPostsPref -> updatedOtherPrefs.add(
-                    preferencesUnion,
-                )
-                is PreferencesUnion.InterestsPref -> updatedOtherPrefs.add(
-                    preferencesUnion,
-                )
-                is PreferencesUnion.LabelersPref -> updatedOtherPrefs.add(
-                    preferencesUnion.targeting<Timeline.Update.OfLabeler>(
-                        update = update,
-                        block = { updateLabelerPreference(preferencesUnion, it) },
-                    ),
-                )
-                is PreferencesUnion.MutedWordsPref -> updatedOtherPrefs.add(
-                    preferencesUnion,
-                )
-                is PreferencesUnion.PersonalDetailsPref -> updatedOtherPrefs.add(
-                    preferencesUnion,
-                )
-                is PreferencesUnion.PostInteractionSettingsPref -> updatedOtherPrefs.add(
-                    preferencesUnion,
-                )
-                is PreferencesUnion.SavedFeedsPref -> updatedOtherPrefs.add(
-                    preferencesUnion,
-                )
-                is PreferencesUnion.SavedFeedsPrefV2 -> updatedOtherPrefs.add(
-                    preferencesUnion.targeting<Timeline.Update.OfFeedGenerator>(
-                        update = update,
-                        block = { updateFeedPreference(preferencesUnion, it) },
-                    ),
-                )
-                is PreferencesUnion.ThreadViewPref -> updatedOtherPrefs.add(
-                    preferencesUnion,
-                )
-                is PreferencesUnion.Unknown -> updatedOtherPrefs.add(
-                    preferencesUnion,
-                )
-                is PreferencesUnion.VerificationPrefs -> updatedOtherPrefs.add(
-                    preferencesUnion,
-                )
+
+                else -> preferencesUnion
             }
         }
 
