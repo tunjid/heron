@@ -22,14 +22,20 @@ import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.RecordKey
+import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.PostDataQuery
 import com.tunjid.heron.data.repository.PostRepository
+import com.tunjid.heron.data.repository.recentConversations
+import com.tunjid.heron.data.utilities.writequeue.Writable
+import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.posts.di.PostsRequest
 import com.tunjid.heron.posts.di.postsRequest
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
+import com.tunjid.heron.scaffold.scaffold.duplicateWriteMessage
+import com.tunjid.heron.scaffold.scaffold.failedWriteMessage
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
@@ -37,6 +43,7 @@ import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
@@ -65,6 +72,8 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualPostsViewModel(
     navActions: (NavigationMutation) -> Unit,
     postsRepository: PostRepository,
+    messageRepository: MessageRepository,
+    writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
     @Suppress("UNUSED_PARAMETER")
@@ -94,6 +103,11 @@ class ActualPostsViewModel(
                 },
             ),
         ),
+        inputs = listOf(
+            recentConversationMutations(
+                messageRepository = messageRepository,
+            ),
+        ),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         actionTransform = transform@{ actions ->
             actions.toMutationStream(
@@ -108,6 +122,9 @@ class ActualPostsViewModel(
                         request = route.postsRequest,
                         stateHolder = this@transform,
                         postsRepository = postsRepository,
+                    )
+                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                        writeQueue = writeQueue,
                     )
                 }
             }
@@ -138,6 +155,29 @@ private suspend fun Flow<Action.Tile>.postsLoadMutations(
             onNewItems = { items -> items },
             onTilingDataUpdated = { copy(tilingData = it) },
         )
+
+fun recentConversationMutations(
+    messageRepository: MessageRepository,
+): Flow<Mutation<State>> =
+    messageRepository.recentConversations()
+        .mapToMutation { conversations ->
+            copy(recentConversations = conversations)
+        }
+
+private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        when (writeQueue.enqueue(Writable.Interaction(action.interaction))) {
+            WriteQueue.Status.Dropped -> emit {
+                copy(messages = messages + action.interaction.failedWriteMessage())
+            }
+            WriteQueue.Status.Duplicate -> emit {
+                copy(messages = messages + action.interaction.duplicateWriteMessage())
+            }
+            WriteQueue.Status.Enqueued -> Unit
+        }
+    }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
