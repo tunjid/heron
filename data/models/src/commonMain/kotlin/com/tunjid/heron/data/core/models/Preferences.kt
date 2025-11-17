@@ -37,6 +37,8 @@ data class Preferences(
     val refreshHomeTimelineOnLaunch: Boolean = false,
     @ProtoNumber(5)
     val labelerPreferences: List<LabelerPreference> = emptyList(),
+    @ProtoNumber(6)
+    val allowAdultContent: Boolean = false,
 ) : UrlEncodableModel {
     companion object {
         val EmptyPreferences = Preferences(

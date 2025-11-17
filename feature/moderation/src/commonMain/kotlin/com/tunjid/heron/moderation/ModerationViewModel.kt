@@ -68,7 +68,7 @@ class ActualModerationViewModel(
         initialState = State(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         inputs = listOf(
-            globalLabelMutations(
+            adultContentAndGlobalLabelPreferenceMutations(
                 timelineRepository = timelineRepository,
             ),
             subscribedLabelerMutations(
@@ -100,14 +100,17 @@ class ActualModerationViewModel(
         },
     )
 
-fun globalLabelMutations(
+fun adultContentAndGlobalLabelPreferenceMutations(
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> =
     timelineRepository.preferences
-        .map { it.contentLabelPreferences }
+        .map { it.allowAdultContent to it.contentLabelPreferences }
         .distinctUntilChanged()
-        .mapToMutation { contentLabelPreferences ->
-            copy(globalLabelItems = globalLabels(contentLabelPreferences))
+        .mapToMutation { (allowAdultContent, contentLabelPreferences) ->
+            copy(
+                adultContentEnabled = allowAdultContent,
+                globalLabelItems = globalLabels(contentLabelPreferences),
+            )
         }
 
 fun subscribedLabelerMutations(
@@ -135,8 +138,14 @@ private fun Flow<Action.UpdateGlobalLabelVisibility>.updateGlobalLabelMutations(
 private fun Flow<Action.UpdateAdultContentPreferences>.updateAdultContentPreferencesMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    mapToManyMutations {
-        // TODO: Save adult content preferences in follow up PR
+    mapToManyMutations { action ->
+        writeQueue.enqueue(
+            Writable.TimelineUpdate(
+                Timeline.Update.OfAdultContent(
+                    enabled = action.adultContentEnabled,
+                ),
+            ),
+        )
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =

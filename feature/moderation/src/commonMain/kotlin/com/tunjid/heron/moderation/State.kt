@@ -37,6 +37,7 @@ import org.jetbrains.compose.resources.StringResource
 
 @Serializable
 data class State(
+    val adultContentEnabled: Boolean = false,
     @Transient
     val globalLabelItems: List<GlobalLabelItem> = emptyList(),
     @Transient

@@ -63,7 +63,9 @@ internal class ThingPreferenceUpdater @Inject constructor(
         ),
         operation = { foldedPreferences, preferencesUnion ->
             when (preferencesUnion) {
-                is PreferencesUnion.AdultContentPref -> foldedPreferences
+                is PreferencesUnion.AdultContentPref -> foldedPreferences.copy(
+                    allowAdultContent = preferencesUnion.value.enabled,
+                )
                 is PreferencesUnion.BskyAppStatePref -> foldedPreferences
                 is PreferencesUnion.ContentLabelPref -> foldedPreferences.copy(
                     contentLabelPreferences = foldedPreferences.contentLabelPreferences
@@ -112,7 +114,10 @@ internal class ThingPreferenceUpdater @Inject constructor(
         response.preferences.forEach { preferencesUnion ->
             when (preferencesUnion) {
                 is PreferencesUnion.AdultContentPref -> updatedOtherPrefs.add(
-                    preferencesUnion,
+                    preferencesUnion.targeting<Timeline.Update.OfAdultContent>(
+                        update = update,
+                        block = { updateAdultContentPreference(preferencesUnion, it) },
+                    ),
                 )
                 is PreferencesUnion.BskyAppStatePref -> updatedOtherPrefs.add(
                     preferencesUnion,
@@ -129,10 +134,12 @@ internal class ThingPreferenceUpdater @Inject constructor(
                 is PreferencesUnion.InterestsPref -> updatedOtherPrefs.add(
                     preferencesUnion,
                 )
-                is PreferencesUnion.LabelersPref -> preferencesUnion.targeting<Timeline.Update.OfLabeler>(
-                    update = update,
-                    block = { updateLabelerPreference(preferencesUnion, it) },
-                ).let(updatedOtherPrefs::add)
+                is PreferencesUnion.LabelersPref -> updatedOtherPrefs.add(
+                    preferencesUnion.targeting<Timeline.Update.OfLabeler>(
+                        update = update,
+                        block = { updateLabelerPreference(preferencesUnion, it) },
+                    ),
+                )
                 is PreferencesUnion.MutedWordsPref -> updatedOtherPrefs.add(
                     preferencesUnion,
                 )
@@ -145,10 +152,12 @@ internal class ThingPreferenceUpdater @Inject constructor(
                 is PreferencesUnion.SavedFeedsPref -> updatedOtherPrefs.add(
                     preferencesUnion,
                 )
-                is PreferencesUnion.SavedFeedsPrefV2 -> preferencesUnion.targeting<Timeline.Update.OfFeedGenerator>(
-                    update = update,
-                    block = { updateFeedPreference(preferencesUnion, it) },
-                ).let(updatedOtherPrefs::add)
+                is PreferencesUnion.SavedFeedsPrefV2 -> updatedOtherPrefs.add(
+                    preferencesUnion.targeting<Timeline.Update.OfFeedGenerator>(
+                        update = update,
+                        block = { updateFeedPreference(preferencesUnion, it) },
+                    ),
+                )
                 is PreferencesUnion.ThreadViewPref -> updatedOtherPrefs.add(
                     preferencesUnion,
                 )
@@ -285,6 +294,15 @@ internal class ThingPreferenceUpdater @Inject constructor(
                             .filter { it.did.did != update.labelCreatorId.id }
                 }
             },
+        ),
+    )
+
+    private fun updateAdultContentPreference(
+        preferenceUnion: PreferencesUnion.AdultContentPref,
+        update: Timeline.Update.OfAdultContent,
+    ): PreferencesUnion.AdultContentPref = PreferencesUnion.AdultContentPref(
+        value = preferenceUnion.value.copy(
+            enabled = update.enabled,
         ),
     )
 }

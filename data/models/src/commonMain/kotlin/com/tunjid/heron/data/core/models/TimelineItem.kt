@@ -236,6 +236,11 @@ sealed interface Timeline {
                 val subscribed: Boolean,
             ) : OfLabeler()
         }
+
+        @Serializable
+        data class OfAdultContent(
+            val enabled: Boolean,
+        ) : Update()
     }
 
     @Serializable
