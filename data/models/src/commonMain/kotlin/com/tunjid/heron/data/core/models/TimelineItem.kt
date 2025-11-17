@@ -215,9 +215,15 @@ sealed interface Timeline {
         @Serializable
         sealed class OfContentLabel : Update() {
             @Serializable
-            data class VisibilityChange(
+            data class CustomVisibilityChange(
                 val value: Label.Value,
                 val labelCreatorId: ProfileId,
+                val visibility: Label.Visibility,
+            ) : OfContentLabel()
+
+            @Serializable
+            data class GlobalLabelVisibilityChange(
+                val label: Label.Global,
                 val visibility: Label.Visibility,
             ) : OfContentLabel()
         }
@@ -230,6 +236,11 @@ sealed interface Timeline {
                 val subscribed: Boolean,
             ) : OfLabeler()
         }
+
+        @Serializable
+        data class OfAdultContent(
+            val enabled: Boolean,
+        ) : Update()
     }
 
     @Serializable

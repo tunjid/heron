@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.utilities.preferenceupdater
 
+import app.bsky.actor.ContentLabelPref
 import app.bsky.actor.GetPreferencesResponse
 import app.bsky.actor.LabelerPrefItem
 import app.bsky.actor.PreferencesUnion
@@ -41,9 +42,9 @@ internal interface PreferenceUpdater {
     ): Preferences
 
     suspend fun update(
-        preferencesUnion: PreferencesUnion,
+        response: GetPreferencesResponse,
         update: Timeline.Update,
-    ): PreferencesUnion
+    ): List<PreferencesUnion>
 }
 
 internal class ThingPreferenceUpdater @Inject constructor(
@@ -54,19 +55,22 @@ internal class ThingPreferenceUpdater @Inject constructor(
         response: GetPreferencesResponse,
         preferences: Preferences,
     ): Preferences = response.preferences.fold(
-        initial = preferences,
+        // Reset values to be filled from network response
+        initial = preferences.copy(
+            allowAdultContent = false,
+            timelinePreferences = emptyList(),
+            contentLabelPreferences = emptyList(),
+            labelerPreferences = emptyList(),
+        ),
         operation = { foldedPreferences, preferencesUnion ->
             when (preferencesUnion) {
-                is PreferencesUnion.AdultContentPref -> foldedPreferences
+                is PreferencesUnion.AdultContentPref -> foldedPreferences.copy(
+                    allowAdultContent = preferencesUnion.value.enabled,
+                )
                 is PreferencesUnion.BskyAppStatePref -> foldedPreferences
                 is PreferencesUnion.ContentLabelPref -> foldedPreferences.copy(
-                    contentLabelPreferences = preferencesUnion.asExternalModel().let { newPref ->
-                        foldedPreferences.contentLabelPreferences
-                            .filterNot {
-                                it.label == newPref.label && it.labelerId == newPref.labelerId
-                            }
-                            .plus(newPref)
-                    },
+                    contentLabelPreferences = foldedPreferences.contentLabelPreferences
+                        .plus(preferencesUnion.asExternalModel()),
                 )
 
                 is PreferencesUnion.FeedViewPref -> foldedPreferences
@@ -102,33 +106,43 @@ internal class ThingPreferenceUpdater @Inject constructor(
     )
 
     override suspend fun update(
-        preferencesUnion: PreferencesUnion,
+        response: GetPreferencesResponse,
         update: Timeline.Update,
-    ) = when (preferencesUnion) {
-        is PreferencesUnion.AdultContentPref -> preferencesUnion
-        is PreferencesUnion.BskyAppStatePref -> preferencesUnion
-        is PreferencesUnion.ContentLabelPref -> preferencesUnion.targeting<Timeline.Update.OfContentLabel>(
-            update = update,
-            block = { updateContentLabelPreference(preferencesUnion, it) },
-        )
-        is PreferencesUnion.FeedViewPref -> preferencesUnion
-        is PreferencesUnion.HiddenPostsPref -> preferencesUnion
-        is PreferencesUnion.InterestsPref -> preferencesUnion
-        is PreferencesUnion.LabelersPref -> preferencesUnion.targeting<Timeline.Update.OfLabeler>(
-            update = update,
-            block = { updateLabelerPreference(preferencesUnion, it) },
-        )
-        is PreferencesUnion.MutedWordsPref -> preferencesUnion
-        is PreferencesUnion.PersonalDetailsPref -> preferencesUnion
-        is PreferencesUnion.PostInteractionSettingsPref -> preferencesUnion
-        is PreferencesUnion.SavedFeedsPref -> preferencesUnion
-        is PreferencesUnion.SavedFeedsPrefV2 -> preferencesUnion.targeting<Timeline.Update.OfFeedGenerator>(
-            update = update,
-            block = { updateFeedPreference(preferencesUnion, it) },
-        )
-        is PreferencesUnion.ThreadViewPref -> preferencesUnion
-        is PreferencesUnion.Unknown -> preferencesUnion
-        is PreferencesUnion.VerificationPrefs -> preferencesUnion
+    ): List<PreferencesUnion> {
+        val (contentLabelPrefs, otherPrefs) = response.preferences
+            .partition { it is PreferencesUnion.ContentLabelPref }
+
+        val existingContentLabelPrefs = contentLabelPrefs
+            .filterIsInstance<PreferencesUnion.ContentLabelPref>()
+
+        val updatedOtherPrefs = otherPrefs.map { preferencesUnion ->
+            when (preferencesUnion) {
+                is PreferencesUnion.AdultContentPref -> preferencesUnion.targeting<Timeline.Update.OfAdultContent>(
+                    update = update,
+                    block = { updateAdultContentPreference(preferencesUnion, it) },
+                )
+
+                is PreferencesUnion.LabelersPref -> preferencesUnion.targeting<Timeline.Update.OfLabeler>(
+                    update = update,
+                    block = { updateLabelerPreference(preferencesUnion, it) },
+                )
+
+                is PreferencesUnion.SavedFeedsPrefV2 -> preferencesUnion.targeting<Timeline.Update.OfFeedGenerator>(
+                    update = update,
+                    block = { updateFeedPreference(preferencesUnion, it) },
+                )
+
+                else -> preferencesUnion
+            }
+        }
+
+        val updatedContentLabelPrefs =
+            if (update is Timeline.Update.OfContentLabel) update.contentLabelPrefs()
+                .plus(existingContentLabelPrefs)
+                .distinctBy { "${it.value.label}-${it.value.labelerDid}" }
+            else existingContentLabelPrefs
+
+        return updatedOtherPrefs + updatedContentLabelPrefs
     }
 
     private suspend fun updateFeedPreference(
@@ -209,17 +223,25 @@ internal class ThingPreferenceUpdater @Inject constructor(
         ),
     )
 
-    private fun updateContentLabelPreference(
-        preferenceUnion: PreferencesUnion.ContentLabelPref,
-        update: Timeline.Update.OfContentLabel,
-    ): PreferencesUnion.ContentLabelPref = when (update) {
-        is Timeline.Update.OfContentLabel.VisibilityChange -> when {
-            preferenceUnion.value.label != update.value.value -> preferenceUnion
-            preferenceUnion.value.labelerDid?.did != update.labelCreatorId.id -> preferenceUnion
-            else -> PreferencesUnion.ContentLabelPref(
-                value = preferenceUnion.value.copy(visibility = Visibility.safeValueOf(update.visibility.value)),
+    private fun Timeline.Update.OfContentLabel.contentLabelPrefs() = when (this) {
+        is Timeline.Update.OfContentLabel.GlobalLabelVisibilityChange -> label.labelValues.map { label ->
+            PreferencesUnion.ContentLabelPref(
+                value = ContentLabelPref(
+                    labelerDid = null,
+                    label = label.value,
+                    visibility = Visibility.safeValueOf(visibility.value),
+                ),
             )
         }
+        is Timeline.Update.OfContentLabel.CustomVisibilityChange -> listOf(
+            PreferencesUnion.ContentLabelPref(
+                value = ContentLabelPref(
+                    labelerDid = labelCreatorId.id.let(::Did),
+                    label = value.value,
+                    visibility = Visibility.safeValueOf(visibility.value),
+                ),
+            ),
+        )
     }
 
     private fun updateLabelerPreference(
@@ -238,6 +260,15 @@ internal class ThingPreferenceUpdater @Inject constructor(
                             .filter { it.did.did != update.labelCreatorId.id }
                 }
             },
+        ),
+    )
+
+    private fun updateAdultContentPreference(
+        preferenceUnion: PreferencesUnion.AdultContentPref,
+        update: Timeline.Update.OfAdultContent,
+    ): PreferencesUnion.AdultContentPref = PreferencesUnion.AdultContentPref(
+        value = preferenceUnion.value.copy(
+            enabled = update.enabled,
         ),
     )
 }

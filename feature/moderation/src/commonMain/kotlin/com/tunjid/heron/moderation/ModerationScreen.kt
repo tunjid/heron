@@ -66,12 +66,22 @@ internal fun ModerationScreen(
         ),
     ) {
         globalLabelsSection(
-            globalLabels = state.globalLabels,
+            adultContentEnabled = state.adultContentEnabled,
+            globalLabelItems = state.globalLabelItems,
             onGlobalLabelVisibilityChanged = { globalLabel, visibility ->
-                // TODO: call to actions
+                actions(
+                    Action.UpdateGlobalLabelVisibility(
+                        globalLabel = globalLabel.global,
+                        visibility = visibility,
+                    ),
+                )
             },
-            onAdultPreferencesChecked = {
-                // TODO: call to actions
+            onAdultPreferencesChecked = { adultContentEnabled ->
+                actions(
+                    Action.UpdateAdultContentPreferences(
+                        adultContentEnabled = adultContentEnabled,
+                    ),
+                )
             },
         )
         subscribedLabelersSection(
@@ -93,19 +103,28 @@ internal fun ModerationScreen(
 }
 
 private fun LazyListScope.globalLabelsSection(
-    globalLabels: List<GlobalLabels>,
-    onGlobalLabelVisibilityChanged: (GlobalLabels, Label.Visibility) -> Unit,
+    adultContentEnabled: Boolean,
+    globalLabelItems: List<GlobalLabelItem>,
+    onGlobalLabelVisibilityChanged: (GlobalLabelItem, Label.Visibility) -> Unit,
     onAdultPreferencesChecked: (Boolean) -> Unit,
 ) {
-    item {
+    item(
+        key = Res.string.content_filters.key,
+    ) {
         SectionTitle(
+            modifier = Modifier
+                .animateItem(),
             title = stringResource(Res.string.content_filters),
         )
     }
-    item {
+    item(
+        key = Res.string.enable_adult_content.key,
+    ) {
         ElevatedItem(
-            shape = FirstCardShape,
-            showDivider = true,
+            modifier = Modifier
+                .animateItem(),
+            shape = if (adultContentEnabled) FirstCardShape else RoundCardShape,
+            showDivider = adultContentEnabled,
         ) {
             Row(
                 modifier = Modifier
@@ -118,19 +137,23 @@ private fun LazyListScope.globalLabelsSection(
             ) {
                 Text(stringResource(Res.string.enable_adult_content))
                 Switch(
-                    checked = true,
+                    checked = adultContentEnabled,
                     onCheckedChange = onAdultPreferencesChecked,
                 )
             }
         }
     }
-    itemsIndexed(
-        items = globalLabels,
+    if (adultContentEnabled) itemsIndexed(
+        items = globalLabelItems,
+        key = { _, label ->
+            label.nameRes.key
+        },
         itemContent = { index, globalLabel ->
-            val isLastLabel = index == globalLabels.lastIndex
+            val isLastLabel = index == globalLabelItems.lastIndex
             ElevatedItem(
-                shape = if (isLastLabel) LastCardShape
-                else RectangleShape,
+                modifier = Modifier
+                    .animateItem(),
+                shape = if (isLastLabel) LastCardShape else RectangleShape,
                 showDivider = !isLastLabel,
             ) {
                 LabelSetting(
@@ -157,20 +180,32 @@ private fun LazyListScope.subscribedLabelersSection(
     labelers: List<Labeler>,
     onLabelerClicked: (Labeler) -> Unit,
 ) {
-    item {
+    item(
+        key = Res.string.labeler_subscriptions.key,
+    ) {
         SectionTitle(
+            modifier = Modifier
+                .animateItem(),
             title = stringResource(Res.string.labeler_subscriptions),
         )
     }
 
     itemsIndexed(
         items = labelers,
+        key = { _, labeler ->
+            labeler.uri.uri
+        },
         itemContent = { index, labeler ->
             val isLastLabel = index == labelers.lastIndex
             ElevatedItem(
-                shape = if (index == 0) FirstCardShape
-                else if (isLastLabel) LastCardShape
-                else RectangleShape,
+                modifier = Modifier
+                    .animateItem(),
+                shape = when {
+                    index == 0 && isLastLabel -> RoundCardShape
+                    index == 0 -> FirstCardShape
+                    isLastLabel -> LastCardShape
+                    else -> RectangleShape
+                },
                 showDivider = !isLastLabel,
                 onItemClicked = {
                     onLabelerClicked(labeler)
@@ -193,12 +228,14 @@ private fun LazyListScope.subscribedLabelersSection(
 
 @Composable
 private fun ElevatedItem(
+    modifier: Modifier = Modifier,
     shape: Shape,
     showDivider: Boolean,
     onItemClicked: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
     if (onItemClicked == null) ElevatedCard(
+        modifier = modifier,
         shape = shape,
     ) {
         Column(
@@ -209,6 +246,7 @@ private fun ElevatedItem(
         }
     }
     else ElevatedCard(
+        modifier = modifier,
         shape = shape,
         onClick = onItemClicked,
     ) {
@@ -248,5 +286,7 @@ private val LastCardShape = RoundedCornerShape(
     bottomStart = 16.dp,
     bottomEnd = 16.dp,
 )
+
+private val RoundCardShape = RoundedCornerShape(16.dp)
 
 private const val Moderation = "moderation"
