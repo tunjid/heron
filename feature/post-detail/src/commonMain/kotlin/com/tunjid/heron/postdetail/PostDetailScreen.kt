@@ -51,6 +51,7 @@ import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.postLikesDestination
+import com.tunjid.heron.scaffold.navigation.postQuotesDestination
 import com.tunjid.heron.scaffold.navigation.postRepostsDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.recordDestination
@@ -243,7 +244,10 @@ internal fun PostDetailScreen(
                                                 postRecordKey = postMetadata.postRecordKey,
                                             )
 
-                                            is Post.Metadata.Quotes -> return@onPostMetadataClicked
+                                            is Post.Metadata.Quotes -> postQuotesDestination(
+                                                profileId = postMetadata.profileId,
+                                                postRecordKey = postMetadata.postRecordKey,
+                                            )
                                             is Post.Metadata.Reposts -> postRepostsDestination(
                                                 profileId = postMetadata.profileId,
                                                 postRecordKey = postMetadata.postRecordKey,
