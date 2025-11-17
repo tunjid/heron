@@ -173,7 +173,7 @@ internal class ThingPreferenceUpdater @Inject constructor(
         val updatedContentLabelPrefs =
             if (update is Timeline.Update.OfContentLabel) update.contentLabelPrefs()
                 .plus(existingContentLabelPrefs)
-                .distinctBy { it.value.label }
+                .distinctBy { "${it.value.label}-${it.value.labelerDid}" }
             else existingContentLabelPrefs
 
         return updatedOtherPrefs + updatedContentLabelPrefs

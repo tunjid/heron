@@ -201,6 +201,7 @@ private fun LazyListScope.subscribedLabelersSection(
                 modifier = Modifier
                     .animateItem(),
                 shape = when {
+                    index == 0 && isLastLabel -> RoundCardShape
                     index == 0 -> FirstCardShape
                     isLastLabel -> LastCardShape
                     else -> RectangleShape
@@ -286,11 +287,6 @@ private val LastCardShape = RoundedCornerShape(
     bottomEnd = 16.dp,
 )
 
-private val RoundCardShape = RoundedCornerShape(
-    topStart = 16.dp,
-    topEnd = 16.dp,
-    bottomStart = 16.dp,
-    bottomEnd = 16.dp,
-)
+private val RoundCardShape = RoundedCornerShape(16.dp)
 
 private const val Moderation = "moderation"
