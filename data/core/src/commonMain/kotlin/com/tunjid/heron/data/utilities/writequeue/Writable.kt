@@ -126,7 +126,7 @@ sealed interface Writable {
                 is Timeline.Update.OfFeedGenerator.Pin -> "pin-${update.uri}"
                 is Timeline.Update.OfFeedGenerator.Remove -> "remove-${update.uri}"
                 is Timeline.Update.OfFeedGenerator.Save -> "save-${update.uri}"
-                is Timeline.Update.OfContentLabel.VisibilityChange -> "visibility-change-$update"
+                is Timeline.Update.OfContentLabel -> "visibility-change-$update"
                 is Timeline.Update.OfLabeler.Subscription -> "labeler-subscription-$update"
             }
 

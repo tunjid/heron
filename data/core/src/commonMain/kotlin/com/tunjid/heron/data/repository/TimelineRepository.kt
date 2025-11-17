@@ -843,10 +843,10 @@ internal class OfflineTimelineRepository(
                 networkService.runCatchingWithMonitoredNetworkRetry {
                     putPreferences(
                         PutPreferencesRequest(
-                            preferences = preferencesResponse.preferences
-                                .map { preferencesUnion ->
-                                    preferenceUpdater.update(preferencesUnion, update)
-                                },
+                            preferences = preferenceUpdater.update(
+                                response = preferencesResponse,
+                                update = update,
+                            ),
                         ),
                     )
                 }.fold(

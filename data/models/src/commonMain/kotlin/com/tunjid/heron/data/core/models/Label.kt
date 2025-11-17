@@ -81,31 +81,32 @@ data class Label(
 
     enum class Global(
         val defaultVisibility: Visibility,
-        val keys: List<Value>,
+        val labelValues: List<Value>,
     ) {
         AdultContent(
             defaultVisibility = Visibility.Hide,
-            keys = listOf(
+            labelValues = listOf(
                 Value("porn"),
+                Value("nsfw"),
             ),
         ),
         SexuallySuggestive(
             defaultVisibility = Visibility.Warn,
-            keys = listOf(
+            labelValues = listOf(
                 Value("sexual"),
                 Value("suggestive"),
             ),
         ),
         GraphicMedia(
             defaultVisibility = Visibility.Warn,
-            keys = listOf(
+            labelValues = listOf(
                 Value("graphic-media"),
                 Value("gore"),
             ),
         ),
         NonSexualNudity(
             defaultVisibility = Visibility.Ignore,
-            keys = listOf(
+            labelValues = listOf(
                 Value("nudity"),
             ),
         ),

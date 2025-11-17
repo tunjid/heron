@@ -66,12 +66,21 @@ internal fun ModerationScreen(
         ),
     ) {
         globalLabelsSection(
-            globalLabels = state.globalLabels,
+            globalLabelItems = state.globalLabelItems,
             onGlobalLabelVisibilityChanged = { globalLabel, visibility ->
-                // TODO: call to actions
+                actions(
+                    Action.UpdateGlobalLabelVisibility(
+                        globalLabel = globalLabel.global,
+                        visibility = visibility,
+                    ),
+                )
             },
-            onAdultPreferencesChecked = {
-                // TODO: call to actions
+            onAdultPreferencesChecked = { adultContentEnabled ->
+                actions(
+                    Action.UpdateAdultContentPreferences(
+                        adultContentEnabled = adultContentEnabled,
+                    ),
+                )
             },
         )
         subscribedLabelersSection(
@@ -93,8 +102,8 @@ internal fun ModerationScreen(
 }
 
 private fun LazyListScope.globalLabelsSection(
-    globalLabels: List<GlobalLabels>,
-    onGlobalLabelVisibilityChanged: (GlobalLabels, Label.Visibility) -> Unit,
+    globalLabelItems: List<GlobalLabelItem>,
+    onGlobalLabelVisibilityChanged: (GlobalLabelItem, Label.Visibility) -> Unit,
     onAdultPreferencesChecked: (Boolean) -> Unit,
 ) {
     item {
@@ -125,9 +134,9 @@ private fun LazyListScope.globalLabelsSection(
         }
     }
     itemsIndexed(
-        items = globalLabels,
+        items = globalLabelItems,
         itemContent = { index, globalLabel ->
-            val isLastLabel = index == globalLabels.lastIndex
+            val isLastLabel = index == globalLabelItems.lastIndex
             ElevatedItem(
                 shape = if (isLastLabel) LastCardShape
                 else RectangleShape,

@@ -33,7 +33,6 @@ import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.models.feedGeneratorUri
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri.Companion.asSelfLabelerUri
 import com.tunjid.heron.data.repository.AuthRepository
@@ -464,7 +463,7 @@ private fun CoroutineScope.labelerSettingsStateHolders(
                     actions.mapLatestToManyMutations { action ->
                         writeQueue.enqueue(
                             Writable.TimelineUpdate(
-                                Timeline.Update.OfContentLabel.VisibilityChange(
+                                Timeline.Update.OfContentLabel.CustomVisibilityChange(
                                     value = action.definition.identifier,
                                     labelCreatorId = profileId,
                                     visibility = action.visibility,

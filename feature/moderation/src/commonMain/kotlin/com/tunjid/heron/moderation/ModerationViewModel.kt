@@ -17,9 +17,11 @@
 package com.tunjid.heron.moderation
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.utilities.writequeue.Writable
+import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -55,7 +57,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualModerationViewModel(
     authRepository: AuthRepository,
     timelineRepository: TimelineRepository,
-    savedStateDataSource: SavedStateDataSource,
+    writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
@@ -78,8 +80,11 @@ class ActualModerationViewModel(
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.SetRefreshHomeTimelinesOnLaunch -> action.flow.homeTimelineRefreshOnLaunchMutations(
-                        savedStateDataSource = savedStateDataSource,
+                    is Action.UpdateGlobalLabelVisibility -> action.flow.updateGlobalLabelMutations(
+                        writeQueue = writeQueue,
+                    )
+                    is Action.UpdateAdultContentPreferences -> action.flow.updateAdultContentPreferencesMutations(
+                        writeQueue = writeQueue,
                     )
                     is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 
@@ -102,7 +107,7 @@ fun globalLabelMutations(
         .map { it.contentLabelPreferences }
         .distinctUntilChanged()
         .mapToMutation { contentLabelPreferences ->
-            copy(globalLabels = globalLabels(contentLabelPreferences))
+            copy(globalLabelItems = globalLabels(contentLabelPreferences))
         }
 
 fun subscribedLabelerMutations(
@@ -113,11 +118,25 @@ fun subscribedLabelerMutations(
             copy(subscribedLabelers = it)
         }
 
-private fun Flow<Action.SetRefreshHomeTimelinesOnLaunch>.homeTimelineRefreshOnLaunchMutations(
-    savedStateDataSource: SavedStateDataSource,
+private fun Flow<Action.UpdateGlobalLabelVisibility>.updateGlobalLabelMutations(
+    writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    mapToManyMutations { (refreshOnLaunch) ->
-        savedStateDataSource.setRefreshedHomeTimelineOnLaunch(refreshOnLaunch)
+    mapToManyMutations { action ->
+        writeQueue.enqueue(
+            Writable.TimelineUpdate(
+                Timeline.Update.OfContentLabel.GlobalLabelVisibilityChange(
+                    label = action.globalLabel,
+                    visibility = action.visibility,
+                ),
+            ),
+        )
+    }
+
+private fun Flow<Action.UpdateAdultContentPreferences>.updateAdultContentPreferencesMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    mapToManyMutations {
+        // TODO: Save adult content preferences in follow up PR
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
