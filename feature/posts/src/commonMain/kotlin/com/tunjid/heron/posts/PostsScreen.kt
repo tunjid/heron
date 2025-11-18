@@ -97,7 +97,7 @@ internal fun PostsScreen(
     val density = LocalDensity.current
     var now by remember { mutableStateOf(Clock.System.now()) }
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
-    val presentation = remember { Timeline.Presentation.Text.WithEmbed } // Default presentation for quotes
+    val presentation = remember { Timeline.Presentation.Text.WithEmbed }
     val pullToRefreshState = rememberPullToRefreshState()
     val postInteractionState = rememberUpdatedPostInteractionState(
         isSignedIn = paneScaffoldState.isSignedIn,
@@ -191,7 +191,7 @@ internal fun PostsScreen(
                 userScrollEnabled = !paneScaffoldState.isTransitionActive,
             ) {
                 items(
-                    items = items.distinctBy(TimelineItem::id),
+                    items = items,
                     key = TimelineItem::id,
                     itemContent = { item ->
                         TimelineItem(
@@ -214,7 +214,7 @@ internal fun PostsScreen(
                                             Action.Navigate.To(
                                                 pathDestination(
                                                     path = linkTarget.path,
-                                                    referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                 ),
                                             ),
                                         )
@@ -225,7 +225,7 @@ internal fun PostsScreen(
                                         actions(
                                             Action.Navigate.To(
                                                 recordDestination(
-                                                    referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                     sharedElementPrefix = ShareElementPrefix,
                                                     record = post,
                                                 ),
@@ -238,7 +238,7 @@ internal fun PostsScreen(
                                         actions(
                                             Action.Navigate.To(
                                                 profileDestination(
-                                                    referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                     profile = profile,
                                                     avatarSharedElementKey = post
                                                         .avatarSharedElementKey(
@@ -256,7 +256,7 @@ internal fun PostsScreen(
                                         actions(
                                             Action.Navigate.To(
                                                 recordDestination(
-                                                    referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                     sharedElementPrefix = ShareElementPrefix,
                                                     record = record,
                                                 ),

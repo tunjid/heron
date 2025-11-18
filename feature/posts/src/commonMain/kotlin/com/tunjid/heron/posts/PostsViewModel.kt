@@ -20,6 +20,8 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.repository.MessageRepository
@@ -46,6 +48,9 @@ import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.tiler.TiledList
+import com.tunjid.tiler.distinctBy
+import com.tunjid.tiler.filter
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -152,7 +157,7 @@ private suspend fun Flow<Action.Tile>.postsLoadMutations(
                     }
                 }
             },
-            onNewItems = { items -> items },
+            onNewItems = { items -> items.filterDuplicates() },
             onTilingDataUpdated = { copy(tilingData = it) },
         )
 
@@ -189,3 +194,23 @@ private fun PostDataQuery.updateData(newData: CursorQuery.Data): PostDataQuery =
 
 private fun PostDataQuery.refresh(): PostDataQuery =
     copy(data = data.reset())
+
+private fun TiledList<PostDataQuery, TimelineItem>.filterDuplicates(): TiledList<PostDataQuery, TimelineItem> {
+    val threadRootIds = mutableSetOf<PostId>()
+    return filter { item ->
+        when (item) {
+            is TimelineItem.Pinned -> true
+            is TimelineItem.Thread -> !threadRootIds.contains(item.posts.first().cid)
+                .also { contains ->
+                    if (!contains) threadRootIds.add(item.posts.first().cid)
+                }
+
+            is TimelineItem.Repost -> !threadRootIds.contains(item.post.cid).also { contains ->
+                if (!contains) threadRootIds.add(item.post.cid)
+            }
+
+            is TimelineItem.Single -> !threadRootIds.contains(item.post.cid)
+        }
+    }
+        .distinctBy(TimelineItem::id)
+}
