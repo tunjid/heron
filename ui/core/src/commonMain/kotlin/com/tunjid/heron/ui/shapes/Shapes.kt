@@ -81,13 +81,16 @@ sealed class RoundedPolygonShape : Shape {
 
         matrix.apply {
             reset()
-            scale(x = size.width, y = size.height)
+            matrix.scale(
+                x = size.width / lastBounds.width,
+                y = size.height / lastBounds.height,
+            )
         }
 
         // Scale and translate the path to align its center with the available size
         // center.
         path.transform(matrix)
-        path.translate(size.center - path.getBounds().center)
+        path.translate(size.center - lastBounds.center)
         return Outline.Generic(path)
     }
 
