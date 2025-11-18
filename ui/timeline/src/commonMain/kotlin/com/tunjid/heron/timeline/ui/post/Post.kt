@@ -78,7 +78,6 @@ import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.label.locale
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
 import com.tunjid.heron.timeline.ui.post.threadtraversal.videoId
-import com.tunjid.heron.timeline.utilities.blurredMediaDefinitions
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.AttributionLayout
@@ -376,7 +375,7 @@ private fun EmbedContent(
         embed = data.post.embed,
         embeddedRecord = data.post.embeddedRecord,
         postUri = data.post.uri,
-        blurredMediaDefinitions = data.blurredMediaDefinitions,
+        appliedLabels = data.appliedLabels,
         presentation = data.presentation,
         sharedElementPrefix = data.sharedElementPrefix,
         paneMovableElementSharedTransitionScope = data.paneMovableElementSharedTransitionScope,
@@ -721,10 +720,6 @@ private class PostData(
 
     var presentationChanged by mutableStateOf(false)
     var selectedLabel by mutableStateOf<Label?>(null)
-
-    val blurredMediaDefinitions by derivedStateOf {
-        appliedLabels.postLabelVisibilitiesToDefinitions.blurredMediaDefinitions
-    }
 
     val hasLabels
         get() = post.labels.isNotEmpty() || post.author.labels.isNotEmpty()

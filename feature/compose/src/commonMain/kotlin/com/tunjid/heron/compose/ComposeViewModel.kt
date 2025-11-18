@@ -54,6 +54,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
@@ -156,7 +157,13 @@ private fun labelPreferencesMutations(
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> =
     timelineRepository.preferences
-        .mapToMutation { copy(labelPreferences = it.contentLabelPreferences) }
+        .distinctUntilChangedBy { it.allowAdultContent to it.contentLabelPreferences }
+        .mapToMutation {
+            copy(
+                adultContentEnabled = it.allowAdultContent,
+                labelPreferences = it.contentLabelPreferences,
+            )
+        }
 
 private fun labelerMutations(
     timelineRepository: TimelineRepository,

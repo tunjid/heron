@@ -544,9 +544,12 @@ internal class OfflineTimelineRepository(
         postUri: PostUri,
     ): Flow<List<TimelineItem>> = savedStateDataSource.singleSessionFlow { signedInProfileId ->
         savedStateDataSource.savedState
-            .map { it.signedProfilePreferencesOrDefault().contentLabelPreferences }
+            .map {
+                val preferences = it.signedProfilePreferencesOrDefault()
+                preferences.allowAdultContent to preferences.contentLabelPreferences
+            }
             .distinctUntilChanged()
-            .flatMapLatest { contentLabelPreferences ->
+            .flatMapLatest { (allowAdultContent, contentLabelPreferences) ->
                 postDao.postEntitiesByUri(
                     viewingProfileId = signedInProfileId?.id,
                     postUris = setOf(postUri),
@@ -602,6 +605,7 @@ internal class OfflineTimelineRepository(
                                                     list = list,
                                                     thread = thread,
                                                     post = post,
+                                                    adultContentEnabled = allowAdultContent,
                                                     labelers = labelers,
                                                     labelPreferences = contentLabelPreferences,
                                                 )
@@ -969,9 +973,12 @@ internal class OfflineTimelineRepository(
     ): Flow<List<TimelineItem>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
             savedStateDataSource.savedState
-                .map { it.signedProfilePreferencesOrDefault().contentLabelPreferences }
+                .map {
+                    val preferences = it.signedProfilePreferencesOrDefault()
+                    preferences.allowAdultContent to preferences.contentLabelPreferences
+                }
                 .distinctUntilChanged()
-                .flatMapLatest { contentLabelPreferences ->
+                .flatMapLatest { (allowAdultContent, contentLabelPreferences) ->
                     val labelsVisibilityMap = contentLabelPreferences.associateBy(
                         keySelector = ContentLabelPreference::label,
                         valueTransform = ContentLabelPreference::visibility,
@@ -1051,17 +1058,13 @@ internal class OfflineTimelineRepository(
                                     if (!isSignedIn && postLabels.contains(Label.NonAuthenticated)) return@mapNotNull null
 
                                     val appliedLabels = AppliedLabels(
+                                        adultContentEnabled = allowAdultContent,
                                         labels = mainPost.labels + mainPost.author.labels,
                                         labelers = labelers,
                                         preferenceLabelsVisibilityMap = labelsVisibilityMap,
                                     )
 
-                                    val shouldHide = appliedLabels.postLabelVisibilitiesToDefinitions.getOrElse(
-                                        key = Label.Visibility.Hide,
-                                        defaultValue = ::emptyList,
-                                    ).isNotEmpty()
-
-                                    if (shouldHide) return@mapNotNull null
+                                    if (appliedLabels.shouldHide) return@mapNotNull null
 
                                     val replyParent =
                                         entity.reply?.let { urisToPosts[it.parentPostUri] }
@@ -1268,6 +1271,7 @@ internal class OfflineTimelineRepository(
         }
 
     private fun spinThread(
+        adultContentEnabled: Boolean,
         labelers: List<Labeler>,
         labelPreferences: ContentLabelPreferences,
         list: List<TimelineItem.Thread>,
@@ -1282,6 +1286,7 @@ internal class OfflineTimelineRepository(
             hasBreak = false,
             posts = listOf(post),
             appliedLabels = AppliedLabels(
+                adultContentEnabled = adultContentEnabled,
                 labels = post.labels + post.author.labels,
                 labelers = labelers,
                 contentLabelPreferences = labelPreferences,
@@ -1300,6 +1305,7 @@ internal class OfflineTimelineRepository(
             hasBreak = false,
             posts = listOf(post),
             appliedLabels = AppliedLabels(
+                adultContentEnabled = adultContentEnabled,
                 labels = post.labels + post.author.labels,
                 labelers = labelers,
                 contentLabelPreferences = labelPreferences,

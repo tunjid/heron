@@ -47,6 +47,7 @@ data class State(
                 generation = 0,
                 hasBreak = false,
                 appliedLabels = it.appliedLabels(
+                    adultContentEnabled = false,
                     labelers = emptyList(),
                     labelPreferences = emptyList(),
                 ),

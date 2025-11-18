@@ -490,16 +490,19 @@ private fun CoroutineScope.searchStateHolders(
                                 combine(
                                     timelineRepository.labelers,
                                     timelineRepository.preferences
-                                        .map { it.contentLabelPreferences },
+                                        .map { it.allowAdultContent to it.contentLabelPreferences }
+                                        .distinctUntilChanged(),
                                     ::Pair,
                                 )
                                     .distinctUntilChanged()
-                                    .flatMapLatest { (labelers, contentLabelPreferences) ->
+                                    .flatMapLatest { (labelers, adultContentEnabledToContentLabelPreferences) ->
+                                        val (adultContentEnabled, contentLabelPreferences) = adultContentEnabledToContentLabelPreferences
                                         searchRepository::postSearch.mapCursorList { post ->
                                             SearchResult.OfPost(
                                                 post = post,
                                                 sharedElementPrefix = searchState.tilingData.currentQuery.sourceId,
                                                 appliedLabels = post.appliedLabels(
+                                                    adultContentEnabled = adultContentEnabled,
                                                     labelers = labelers,
                                                     labelPreferences = contentLabelPreferences,
                                                 ),

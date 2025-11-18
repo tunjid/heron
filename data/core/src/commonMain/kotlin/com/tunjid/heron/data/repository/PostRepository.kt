@@ -254,9 +254,12 @@ internal class OfflinePostRepository @Inject constructor(
             ) { postUri ->
                 combine(
                     savedStateDataSource.savedState
-                        .map { it.signedProfilePreferencesOrDefault().contentLabelPreferences }
+                        .map {
+                            val preferences = it.signedProfilePreferencesOrDefault()
+                            preferences.allowAdultContent to preferences.contentLabelPreferences
+                        }
                         .distinctUntilChanged()
-                        .flatMapLatest { contentLabelPreferences ->
+                        .flatMapLatest { (allowAdultContent, contentLabelPreferences) ->
                             val labelsVisibilityMap = contentLabelPreferences.associateBy(
                                 keySelector = ContentLabelPreference::label,
                                 valueTransform = ContentLabelPreference::visibility,
@@ -278,7 +281,9 @@ internal class OfflinePostRepository @Inject constructor(
 
                                     quotedPostEntities.mapNotNull { populatedPostEntity ->
                                         val mainPost = populatedPostEntity.asExternalModel(
-                                            embeddedRecord = parentPostEntity?.asExternalModel(embeddedRecord = null),
+                                            embeddedRecord = parentPostEntity?.asExternalModel(
+                                                embeddedRecord = null,
+                                            ),
                                         )
 
                                         val postLabels = when {
@@ -297,18 +302,13 @@ internal class OfflinePostRepository @Inject constructor(
                                         if (!isSignedIn && postLabels.contains(Label.NonAuthenticated)) return@mapNotNull null
 
                                         val appliedLabels = AppliedLabels(
+                                            adultContentEnabled = allowAdultContent,
                                             labels = mainPost.labels + mainPost.author.labels,
                                             labelers = labelers,
                                             preferenceLabelsVisibilityMap = labelsVisibilityMap,
                                         )
 
-                                        val shouldHide =
-                                            appliedLabels.postLabelVisibilitiesToDefinitions.getOrElse(
-                                                key = Label.Visibility.Hide,
-                                                defaultValue = ::emptyList,
-                                            ).isNotEmpty()
-
-                                        if (shouldHide) return@mapNotNull null
+                                        if (appliedLabels.shouldHide) return@mapNotNull null
 
                                         TimelineItem.Single(
                                             id = mainPost.uri.uri,

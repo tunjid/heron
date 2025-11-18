@@ -68,7 +68,6 @@ import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
-import com.tunjid.heron.timeline.utilities.blurredMediaDefinitions
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.AvatarSize
 import com.tunjid.heron.ui.UiTokens
@@ -107,6 +106,7 @@ internal fun ComposeScreen(
             signedInProfile = state.signedInProfile,
             postText = postText,
             quotedPost = state.quotedPost,
+            adultContentEnabled = state.adultContentEnabled,
             labelPreferences = state.labelPreferences,
             labelers = state.labelers,
             paneMovableElementSharedTransitionScope = paneScaffoldState,
@@ -162,6 +162,7 @@ private fun Post(
     signedInProfile: Profile?,
     postText: TextFieldValue,
     quotedPost: Post?,
+    adultContentEnabled: Boolean,
     labelPreferences: ContentLabelPreferences,
     labelers: List<Labeler>,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
@@ -199,18 +200,18 @@ private fun Post(
         )
 
         val isBlurred = remember(
-            key1 = quotedPost,
-            key2 = labelers,
-            key3 = labelPreferences,
+            quotedPost,
+            labelers,
+            labelPreferences,
+            adultContentEnabled,
         ) {
             quotedPost?.appliedLabels(
+                adultContentEnabled = adultContentEnabled,
                 labelers = labelers,
                 labelPreferences = labelPreferences,
             )
-                ?.postLabelVisibilitiesToDefinitions
-                .orEmpty()
-                .blurredMediaDefinitions
-                .isNotEmpty()
+                ?.shouldBlurMedia
+                ?: false
         }
         if (quotedPost != null) QuotedPost(
             modifier = Modifier.padding(
