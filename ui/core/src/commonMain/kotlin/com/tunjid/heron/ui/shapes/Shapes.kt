@@ -81,7 +81,7 @@ sealed class RoundedPolygonShape : Shape {
 
         matrix.apply {
             reset()
-            matrix.scale(
+            scale(
                 x = size.width / lastBounds.width,
                 y = size.height / lastBounds.height,
             )

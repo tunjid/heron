@@ -116,7 +116,7 @@ data class Label(
         val Hidden = Value("!hide")
         val Warn = Value("!warn")
 
-        val NonAuthenticated = Value("!no-unauthenticated ")
+        val NonAuthenticated = Value("!no-unauthenticated")
 
         internal val AdultLabels = Global.entries.flatMapTo(mutableSetOf(), Global::labelValues)
     }
