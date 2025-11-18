@@ -190,32 +190,28 @@ data class AppliedLabels(
         )
 
     private val labelVisibilityMap: Map<Label.Value, Label.Visibility> by lazy {
-        Label.Global.entries.fold(
-            initial = mutableMapOf<Label.Value, Label.Visibility>(),
-            operation = { result, globalLabel ->
+        buildMap {
+            Label.Global.entries.forEach { globalLabel ->
                 globalLabel.labelValues.forEach { labelValue ->
                     val isAdultLabel = Label.AdultLabels.contains(labelValue)
-                    result[labelValue] =
+                    this[labelValue] =
                         if (isAdultLabel && !adultContentEnabled) Label.Visibility.Hide
                         else preferenceLabelsVisibilityMap.getOrElse(
                             labelValue,
                             globalLabel::defaultVisibility,
                         )
                 }
-                result
-            },
-        ) +
+            }
             labelers.flatMap(Labeler::definitions)
-                .associateBy(
-                    keySelector = Label.Definition::identifier,
-                    valueTransform = { definition ->
+                .forEach { definition ->
+                    this[definition.identifier] =
                         if (definition.adultOnly && !adultContentEnabled) Label.Visibility.Hide
                         else preferenceLabelsVisibilityMap.getOrElse(
                             definition.identifier,
                             definition::defaultSetting,
                         )
-                    },
-                )
+                }
+        }
     }
 
     fun visibility(label: Label.Value) =
