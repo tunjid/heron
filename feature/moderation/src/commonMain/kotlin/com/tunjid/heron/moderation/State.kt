@@ -39,53 +39,53 @@ import org.jetbrains.compose.resources.StringResource
 data class State(
     val adultContentEnabled: Boolean = false,
     @Transient
-    val globalLabelItems: List<GlobalLabelItem> = emptyList(),
+    val adultLabelItems: List<AdultLabelItem> = emptyList(),
     @Transient
     val subscribedLabelers: List<Labeler> = emptyList(),
     @Transient
     val messages: List<Memo> = emptyList(),
 )
 
-data class GlobalLabelItem(
-    val global: Label.Global,
+data class AdultLabelItem(
+    val adult: Label.Adult,
     val visibility: Label.Visibility,
     val nameRes: StringResource,
     val descriptionRes: StringResource,
 )
 
-fun globalLabels(
+fun adultLabels(
     contentLabelPreferences: ContentLabelPreferences,
-): List<GlobalLabelItem> {
+): List<AdultLabelItem> {
     val visibilityMap = contentLabelPreferences.associateBy(
         keySelector = ContentLabelPreference::label,
         valueTransform = ContentLabelPreference::visibility,
     )
-    return Label.Global.entries.map { globalLabel ->
-        val visibility = globalLabel.labelValues
+    return Label.Adult.entries.map { adultLabel ->
+        val visibility = adultLabel.labelValues
             .firstNotNullOfOrNull(visibilityMap::get)
-            ?: globalLabel.defaultVisibility
+            ?: adultLabel.defaultVisibility
 
-        when (globalLabel) {
-            Label.Global.AdultContent -> GlobalLabelItem(
-                global = globalLabel,
+        when (adultLabel) {
+            Label.Adult.AdultContent -> AdultLabelItem(
+                adult = adultLabel,
                 visibility = visibility,
                 nameRes = CommonStrings.porn_label,
                 descriptionRes = CommonStrings.porn_label_description,
             )
-            Label.Global.SexuallySuggestive -> GlobalLabelItem(
-                global = globalLabel,
+            Label.Adult.SexuallySuggestive -> AdultLabelItem(
+                adult = adultLabel,
                 visibility = visibility,
                 nameRes = CommonStrings.sexual_label,
                 descriptionRes = CommonStrings.sexual_label_description,
             )
-            Label.Global.GraphicMedia -> GlobalLabelItem(
-                global = globalLabel,
+            Label.Adult.GraphicMedia -> AdultLabelItem(
+                adult = adultLabel,
                 visibility = visibility,
                 nameRes = CommonStrings.graphic_media_label,
                 descriptionRes = CommonStrings.graphic_media_label_description,
             )
-            Label.Global.NonSexualNudity -> GlobalLabelItem(
-                global = globalLabel,
+            Label.Adult.NonSexualNudity -> AdultLabelItem(
+                adult = adultLabel,
                 visibility = visibility,
                 nameRes = CommonStrings.nudity_label,
                 descriptionRes = CommonStrings.nudity_label_description,
@@ -97,7 +97,7 @@ fun globalLabels(
 sealed class Action(val key: String) {
 
     data class UpdateGlobalLabelVisibility(
-        val globalLabel: Label.Global,
+        val adultLabel: Label.Adult,
         val visibility: Label.Visibility,
     ) : Action(key = "UpdateGlobalLabelVisibility")
 

@@ -65,13 +65,13 @@ internal fun ModerationScreen(
             horizontal = 16.dp,
         ),
     ) {
-        globalLabelsSection(
+        adultLabelsSection(
             adultContentEnabled = state.adultContentEnabled,
-            globalLabelItems = state.globalLabelItems,
-            onGlobalLabelVisibilityChanged = { globalLabel, visibility ->
+            adultLabelItems = state.adultLabelItems,
+            onGlobalLabelVisibilityChanged = { adultLabel, visibility ->
                 actions(
                     Action.UpdateGlobalLabelVisibility(
-                        globalLabel = globalLabel.global,
+                        adultLabel = adultLabel.adult,
                         visibility = visibility,
                     ),
                 )
@@ -102,10 +102,10 @@ internal fun ModerationScreen(
     }
 }
 
-private fun LazyListScope.globalLabelsSection(
+private fun LazyListScope.adultLabelsSection(
     adultContentEnabled: Boolean,
-    globalLabelItems: List<GlobalLabelItem>,
-    onGlobalLabelVisibilityChanged: (GlobalLabelItem, Label.Visibility) -> Unit,
+    adultLabelItems: List<AdultLabelItem>,
+    onGlobalLabelVisibilityChanged: (AdultLabelItem, Label.Visibility) -> Unit,
     onAdultPreferencesChecked: (Boolean) -> Unit,
 ) {
     item(
@@ -144,12 +144,12 @@ private fun LazyListScope.globalLabelsSection(
         }
     }
     if (adultContentEnabled) itemsIndexed(
-        items = globalLabelItems,
+        items = adultLabelItems,
         key = { _, label ->
             label.nameRes.key
         },
-        itemContent = { index, globalLabel ->
-            val isLastLabel = index == globalLabelItems.lastIndex
+        itemContent = { index, item ->
+            val isLastLabel = index == adultLabelItems.lastIndex
             ElevatedItem(
                 modifier = Modifier
                     .animateItem(),
@@ -162,12 +162,12 @@ private fun LazyListScope.globalLabelsSection(
                             horizontal = 16.dp,
                             vertical = 8.dp,
                         ),
-                    labelName = stringResource(globalLabel.nameRes),
-                    labelDescription = stringResource(globalLabel.descriptionRes),
-                    selectedVisibility = globalLabel.visibility,
+                    labelName = stringResource(item.nameRes),
+                    labelDescription = stringResource(item.descriptionRes),
+                    selectedVisibility = item.visibility,
                     visibilities = Label.Visibility.all,
                     onVisibilityChanged = { visibility ->
-                        onGlobalLabelVisibilityChanged(globalLabel, visibility)
+                        onGlobalLabelVisibilityChanged(item, visibility)
                     },
                 )
             }

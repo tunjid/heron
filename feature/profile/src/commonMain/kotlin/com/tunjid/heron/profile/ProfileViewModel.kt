@@ -463,7 +463,7 @@ private fun CoroutineScope.labelerSettingsStateHolders(
                     actions.mapLatestToManyMutations { action ->
                         writeQueue.enqueue(
                             Writable.TimelineUpdate(
-                                Timeline.Update.OfContentLabel.CustomVisibilityChange(
+                                Timeline.Update.OfContentLabel.LabelVisibilityChange(
                                     value = action.definition.identifier,
                                     labelCreatorId = profileId,
                                     visibility = action.visibility,

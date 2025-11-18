@@ -109,7 +109,7 @@ fun adultContentAndGlobalLabelPreferenceMutations(
         .mapToMutation { (allowAdultContent, contentLabelPreferences) ->
             copy(
                 adultContentEnabled = allowAdultContent,
-                globalLabelItems = globalLabels(contentLabelPreferences),
+                adultLabelItems = adultLabels(contentLabelPreferences),
             )
         }
 
@@ -127,8 +127,8 @@ private fun Flow<Action.UpdateGlobalLabelVisibility>.updateGlobalLabelMutations(
     mapToManyMutations { action ->
         writeQueue.enqueue(
             Writable.TimelineUpdate(
-                Timeline.Update.OfContentLabel.GlobalLabelVisibilityChange(
-                    label = action.globalLabel,
+                Timeline.Update.OfContentLabel.AdultLabelVisibilityChange(
+                    label = action.adultLabel,
                     visibility = action.visibility,
                 ),
             ),
