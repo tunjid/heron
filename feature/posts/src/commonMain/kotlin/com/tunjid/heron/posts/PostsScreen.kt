@@ -32,8 +32,10 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LookaheadScope
@@ -93,6 +95,7 @@ internal fun PostsScreen(
 ) {
     val gridState = rememberLazyStaggeredGridState()
     val density = LocalDensity.current
+    var now by remember { mutableStateOf(Clock.System.now()) }
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
     val presentation = remember { Timeline.Presentation.Text.WithEmbed } // Default presentation for quotes
     val pullToRefreshState = rememberPullToRefreshState()
@@ -173,8 +176,8 @@ internal fun PostsScreen(
                         val itemWidth = with(density) {
                             presentation.cardSize.toPx()
                         }
-                        // Update grid size if needed
                         val numColumns = floor(it.width / itemWidth).roundToInt()
+                        if (numColumns > 0) actions(Action.Tile(TilingState.Action.GridSize(numColumns = numColumns)))
                     },
                 state = gridState,
                 columns = StaggeredGridCells.Adaptive(presentation.cardSize),
@@ -188,7 +191,7 @@ internal fun PostsScreen(
                 userScrollEnabled = !paneScaffoldState.isTransitionActive,
             ) {
                 items(
-                    items = items.distinctBy { it.id },
+                    items = items.distinctBy(TimelineItem::id),
                     key = TimelineItem::id,
                     itemContent = { item ->
                         TimelineItem(
@@ -200,7 +203,7 @@ internal fun PostsScreen(
                                 ),
                             paneMovableElementSharedTransitionScope = paneScaffoldState,
                             presentationLookaheadScope = this@LookaheadScope,
-                            now = remember { Clock.System.now() },
+                            now = now,
                             item = item,
                             sharedElementPrefix = ShareElementPrefix,
                             presentation = presentation,

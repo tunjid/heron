@@ -156,7 +156,7 @@ private suspend fun Flow<Action.Tile>.postsLoadMutations(
             onTilingDataUpdated = { copy(tilingData = it) },
         )
 
-fun recentConversationMutations(
+private fun recentConversationMutations(
     messageRepository: MessageRepository,
 ): Flow<Mutation<State>> =
     messageRepository.recentConversations()
