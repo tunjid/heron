@@ -147,8 +147,7 @@ interface PostDao {
         """
             SELECT
                 posts.*,
-                postViewerStatistics.*,
-                postPosts.postUri AS parentPostUri
+                postViewerStatistics.*
             FROM posts AS posts
             LEFT JOIN (
                 SELECT * FROM postViewerStatistics
@@ -156,7 +155,7 @@ interface PostDao {
             ) AS postViewerStatistics
             ON posts.uri = postViewerStatistics.postUri
             INNER JOIN postPosts AS postPosts
-            ON posts.uri = postPosts.embeddedPostUri
+            ON posts.uri = postPosts.postUri
 	        WHERE postPosts.embeddedPostUri = :quotedPostUri
             ORDER BY posts.indexedAt
         """,

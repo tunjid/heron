@@ -34,6 +34,7 @@ import com.tunjid.heron.posts.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
+import com.tunjid.heron.scaffold.scaffold.AppBarTitle
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
@@ -63,6 +64,10 @@ import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
+import heron.feature.posts.generated.resources.Res
+import heron.feature.posts.generated.resources.bookmarks
+import heron.feature.posts.generated.resources.quotes
+import org.jetbrains.compose.resources.stringResource
 
 private const val SavedRoutePattern = "/saved"
 private const val QuotesRoutePattern = "/profile/{profileHandleOrId}/post/{postRecordKey}/quotes"
@@ -77,7 +82,7 @@ private fun createRoute(
 )
 
 internal sealed class PostsRequest {
-    object Saved : PostsRequest()
+    data object Saved : PostsRequest()
     data class Quotes(
         val profileHandleOrId: ProfileHandleOrId,
         val postRecordKey: RecordKey,
@@ -192,6 +197,16 @@ class PostsBindings(
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
+                        title = {
+                            AppBarTitle(
+                                stringResource(
+                                    when (route.postsRequest) {
+                                        is PostsRequest.Quotes -> Res.string.quotes
+                                        PostsRequest.Saved -> Res.string.bookmarks
+                                    },
+                                ),
+                            )
+                        },
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                     )

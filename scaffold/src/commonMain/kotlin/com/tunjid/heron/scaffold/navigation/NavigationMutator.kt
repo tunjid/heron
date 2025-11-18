@@ -188,6 +188,14 @@ fun postLikesDestination(
     referringRouteOption = ReferringRouteOption.Current,
 )
 
+fun postQuotesDestination(
+    profileId: ProfileId,
+    postRecordKey: RecordKey,
+): NavigationAction.Destination = pathDestination(
+    path = "/profile/${profileId.id}/post/${postRecordKey.value}/quotes",
+    referringRouteOption = ReferringRouteOption.Current,
+)
+
 fun postRepostsDestination(
     profileId: ProfileId,
     postRecordKey: RecordKey,
