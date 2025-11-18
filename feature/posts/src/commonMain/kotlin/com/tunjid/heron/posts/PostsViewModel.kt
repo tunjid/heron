@@ -157,7 +157,7 @@ private suspend fun Flow<Action.Tile>.postsLoadMutations(
                     }
                 }
             },
-            onNewItems = { items -> items.filterDuplicates() },
+            onNewItems = { items -> items.distinctBy(TimelineItem::id) },
             onTilingDataUpdated = { copy(tilingData = it) },
         )
 
@@ -194,23 +194,3 @@ private fun PostDataQuery.updateData(newData: CursorQuery.Data): PostDataQuery =
 
 private fun PostDataQuery.refresh(): PostDataQuery =
     copy(data = data.reset())
-
-private fun TiledList<PostDataQuery, TimelineItem>.filterDuplicates(): TiledList<PostDataQuery, TimelineItem> {
-    val threadRootIds = mutableSetOf<PostId>()
-    return filter { item ->
-        when (item) {
-            is TimelineItem.Pinned -> true
-            is TimelineItem.Thread -> !threadRootIds.contains(item.posts.first().cid)
-                .also { contains ->
-                    if (!contains) threadRootIds.add(item.posts.first().cid)
-                }
-
-            is TimelineItem.Repost -> !threadRootIds.contains(item.post.cid).also { contains ->
-                if (!contains) threadRootIds.add(item.post.cid)
-            }
-
-            is TimelineItem.Single -> !threadRootIds.contains(item.post.cid)
-        }
-    }
-        .distinctBy(TimelineItem::id)
-}
