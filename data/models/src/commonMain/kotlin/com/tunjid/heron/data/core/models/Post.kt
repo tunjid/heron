@@ -220,9 +220,11 @@ data class Post(
 }
 
 fun Post.appliedLabels(
+    adultContentEnabled: Boolean,
     labelers: List<Labeler>,
     labelPreferences: ContentLabelPreferences,
 ) = AppliedLabels(
+    adultContentEnabled = adultContentEnabled,
     labels = labels + author.labels,
     labelers = labelers,
     contentLabelPreferences = labelPreferences,

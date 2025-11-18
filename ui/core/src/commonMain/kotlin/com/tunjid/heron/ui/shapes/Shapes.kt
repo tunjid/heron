@@ -79,15 +79,23 @@ sealed class RoundedPolygonShape : Shape {
 
         path.addPath(shapePath)
 
+        val scaleX = size.width / lastBounds.width
+        val scaleY = size.height / lastBounds.height
         matrix.apply {
             reset()
-            scale(x = size.width, y = size.height)
+            scale(
+                x = scaleX,
+                y = scaleY,
+            )
         }
 
         // Scale and translate the path to align its center with the available size
         // center.
         path.transform(matrix)
-        path.translate(size.center - path.getBounds().center)
+        val scaledCenter = lastBounds.center.let {
+            it.copy(x = it.x * scaleX, y = it.y * scaleY)
+        }
+        path.translate(size.center - scaledCenter)
         return Outline.Generic(path)
     }
 

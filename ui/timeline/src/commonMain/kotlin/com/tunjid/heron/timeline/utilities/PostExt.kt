@@ -16,28 +16,6 @@
 
 package com.tunjid.heron.timeline.utilities
 
-import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Post
 
 val Post.createdAt get() = record?.createdAt ?: indexedAt
-
-val Map<Label.Visibility, List<Label.Definition>>.blurredMediaDefinitions
-    get(): List<Label.Definition> = getOrElse(
-        key = Label.Visibility.Warn,
-        defaultValue = ::emptyList,
-    ).filter(Label.Definition::blursMedia) + getOrElse(
-        key = Label.Visibility.Hide,
-        defaultValue = ::emptyList,
-    ).filter(Label.Definition::blursMedia)
-
-val Map<Label.Visibility, List<Label.Definition>>.canAutoPlayVideo
-    get(): Boolean = getOrElse(
-        key = Label.Visibility.Warn,
-        defaultValue = ::emptyList,
-    ).none(Label.Definition::blursMedia) && getOrElse(
-        key = Label.Visibility.Hide,
-        defaultValue = ::emptyList,
-    ).none(Label.Definition::blursMedia)
-
-val Label.Definition.blursMedia
-    get() = adultOnly || blurs == Label.BlurTarget.Media

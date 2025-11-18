@@ -44,6 +44,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
@@ -85,7 +86,7 @@ internal fun PostEmbed(
     embeddedRecord: Record?,
     postUri: PostUri,
     sharedElementPrefix: String,
-    blurredMediaDefinitions: List<Label.Definition>,
+    appliedLabels: AppliedLabels,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onLinkTargetClicked: (Post, LinkTarget) -> Unit,
     onPostMediaClicked: (media: Embed.Media, index: Int, quote: Post?) -> Unit,
@@ -97,7 +98,7 @@ internal fun PostEmbed(
     SensitiveContentBox(
         modifier = modifier,
         postUri = postUri,
-        blurredMediaDefinitions = blurredMediaDefinitions,
+        appliedLabels = appliedLabels,
     ) { isBlurred ->
         Column(
             modifier = Modifier
@@ -162,7 +163,7 @@ internal fun PostEmbed(
                             sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
                                 quotingPostUri = postUri,
                             ),
-                            isBlurred = blurredMediaDefinitions.isNotEmpty(),
+                            isBlurred = appliedLabels.shouldBlurMedia,
                             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                             onLinkTargetClicked = onLinkTargetClicked,
                             onProfileClicked = onQuotedProfileClicked,
@@ -229,13 +230,13 @@ internal fun PostEmbed(
 private fun SensitiveContentBox(
     modifier: Modifier,
     postUri: PostUri,
-    blurredMediaDefinitions: List<Label.Definition>,
+    appliedLabels: AppliedLabels,
     content: @Composable (isBlurred: Boolean) -> Unit,
 ) {
     var hasClickedThroughBlurredMedia by rememberSaveable(postUri) {
         mutableStateOf(false)
     }
-    val isBlurred = blurredMediaDefinitions.isNotEmpty() && !hasClickedThroughBlurredMedia
+    val isBlurred = appliedLabels.shouldBlurMedia && !hasClickedThroughBlurredMedia
 
     Box(
         modifier = modifier,
@@ -251,14 +252,12 @@ private fun SensitiveContentBox(
                 },
             )
 
-            val canClickThrough = blurredMediaDefinitions.none {
-                it.severity == Label.Severity.None
-            }
+            val canClickThrough = appliedLabels.blurredMediaSeverity != Label.Severity.None
             if (isBlurred && canClickThrough && !hasClickedThroughBlurredMedia) {
                 SensitiveContentButton(
                     modifier = Modifier
                         .align(Alignment.Center),
-                    blurredMediaDefinitions = blurredMediaDefinitions,
+                    severity = appliedLabels.blurredMediaSeverity,
                     onClick = {
                         hasClickedThroughBlurredMedia = true
                     },
@@ -271,7 +270,7 @@ private fun SensitiveContentBox(
 @Composable
 private fun SensitiveContentButton(
     modifier: Modifier,
-    blurredMediaDefinitions: List<Label.Definition>,
+    severity: Label.Severity?,
     onClick: () -> Unit,
 ) {
     FilledTonalButton(
@@ -284,7 +283,7 @@ private fun SensitiveContentButton(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                when (blurredMediaDefinitions.firstOrNull()?.severity) {
+                when (severity) {
                     Label.Severity.Alert -> Icon(
                         imageVector = Icons.Rounded.Report,
                         contentDescription = "",

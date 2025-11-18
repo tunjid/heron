@@ -71,7 +71,7 @@ val SearchResult.OfPost.id: String
     get() = post.uri.uri
 
 val SearchResult.OfPost.canAutoPlayVideo: Boolean
-    get() = appliedLabels.postLabelVisibilitiesToDefinitions.canAutoPlayVideo
+    get() = appliedLabels.canAutoPlayVideo
 
 sealed class SearchState {
     data class OfPosts(

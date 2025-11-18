@@ -41,6 +41,7 @@ data class State(
     val signedInProfile: Profile? = null,
     val fabExpanded: Boolean = true,
     val quotedPost: Post? = null,
+    val adultContentEnabled: Boolean = false,
     val labelPreferences: ContentLabelPreferences,
     val labelers: List<Labeler>,
     @Transient // TODO: Write a custom serializer for this

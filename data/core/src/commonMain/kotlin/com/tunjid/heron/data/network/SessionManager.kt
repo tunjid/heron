@@ -37,6 +37,7 @@ import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.signedInAuth
 import com.tunjid.heron.data.utilities.AtProtoException
+import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.DeferredMutex
 import com.tunjid.heron.data.utilities.InvalidTokenException
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
@@ -235,6 +236,7 @@ internal class PersistedSessionManager @Inject constructor(
                 ?.preferences
                 ?.labelerPreferences
                 ?.map { it.labelerCreatorId.id }
+                ?.plus(Collections.DefaultLabelerProfileId.id)
                 ?.let { labelProfileIds ->
                     headers.appendAll(AtProtoLabelerHeader, labelProfileIds)
                 }

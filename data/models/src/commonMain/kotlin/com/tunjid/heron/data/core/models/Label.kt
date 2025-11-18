@@ -114,7 +114,11 @@ data class Label(
 
     companion object {
         val Hidden = Value("!hide")
-        val NonAuthenticated = Value("!no-unauthenticated ")
+        val Warn = Value("!warn")
+
+        val NonAuthenticated = Value("!no-unauthenticated")
+
+        internal val AdultLabels = Global.entries.flatMapTo(mutableSetOf(), Global::labelValues)
     }
 }
 
@@ -153,15 +157,18 @@ typealias Labelers = List<Labeler>
  * A class holding metadata about a profile's preferences for labels.
  */
 data class AppliedLabels(
+    val adultContentEnabled: Boolean,
     val labels: Collection<Label>,
     val labelers: Labelers,
     val preferenceLabelsVisibilityMap: Map<Label.Value, Label.Visibility>,
 ) {
     constructor(
+        adultContentEnabled: Boolean,
         labels: Collection<Label>,
         labelers: Labelers,
         contentLabelPreferences: ContentLabelPreferences,
     ) : this(
+        adultContentEnabled = adultContentEnabled,
         labels = labels,
         labelers = labelers,
         preferenceLabelsVisibilityMap = contentLabelPreferences.associateBy(
@@ -170,64 +177,69 @@ data class AppliedLabels(
         ),
     )
 
-    val postLabelVisibilitiesToDefinitions by lazy {
-        labelVisibilitiesToDefinitions(
-            postLabels =
-            if (labels.isEmpty()) emptySet()
-            else labels.mapNotNullTo(mutableSetOf()) {
-                val isPostUri = it.uri.uri.asRecordUriOrNull() is PostUri
-                if (isPostUri) it.value else null
-            },
-            labelers = labelers,
-            labelsVisibilityMap = preferenceLabelsVisibilityMap,
+    private val postLabels =
+        if (labels.isEmpty()) emptySet()
+        else labels.mapNotNullTo(mutableSetOf()) {
+            val isPostUri = it.uri.uri.asRecordUriOrNull() is PostUri
+            if (isPostUri) it.value else null
+        }
+
+    private val labelValuesToDefinitions = labelers.flatMap(Labeler::definitions)
+        .associateBy(
+            keySelector = Label.Definition::identifier,
         )
-    }
 
     private val labelVisibilityMap: Map<Label.Value, Label.Visibility> by lazy {
-        labelers.flatMap(Labeler::definitions)
-            .associateBy(
-                keySelector = Label.Definition::identifier,
-                valueTransform = { definition ->
-                    preferenceLabelsVisibilityMap.getOrElse(
-                        definition.identifier,
-                        definition::defaultSetting,
-                    )
-                },
-            )
+        buildMap {
+            Label.Global.entries.forEach { globalLabel ->
+                globalLabel.labelValues.forEach { labelValue ->
+                    val isAdultLabel = Label.AdultLabels.contains(labelValue)
+                    this[labelValue] =
+                        if (isAdultLabel && !adultContentEnabled) Label.Visibility.Hide
+                        else preferenceLabelsVisibilityMap.getOrElse(
+                            labelValue,
+                            globalLabel::defaultVisibility,
+                        )
+                }
+            }
+            labelers.flatMap(Labeler::definitions)
+                .forEach { definition ->
+                    this[definition.identifier] =
+                        if (definition.adultOnly && !adultContentEnabled) Label.Visibility.Hide
+                        else preferenceLabelsVisibilityMap.getOrElse(
+                            definition.identifier,
+                            definition::defaultSetting,
+                        )
+                }
+        }
     }
 
     fun visibility(label: Label.Value) =
         labelVisibilityMap[label] ?: Label.Visibility.Ignore
-}
 
-private fun labelVisibilitiesToDefinitions(
-    postLabels: Set<Label.Value>,
-    labelers: Labelers,
-    labelsVisibilityMap: Map<Label.Value, Label.Visibility>,
-): Map<Label.Visibility, List<Label.Definition>> = when {
-    postLabels.isEmpty() -> emptyMap()
-    else -> labelers.fold(
-        mutableMapOf<Label.Visibility, MutableList<Label.Definition>>(),
-    ) { destination, labeler ->
-        labeler.definitions.fold(destination) innerFold@{ innerDestination, definition ->
-            // Not applicable to this post
-            if (!postLabels.contains(definition.identifier)) return@innerFold innerDestination
-
-            val mayBlur = definition.adultOnly ||
-                definition.blurs == Label.BlurTarget.Media ||
-                definition.blurs == Label.BlurTarget.Content
-
-            if (!mayBlur) return@innerFold innerDestination
-
-            val visibility = labelsVisibilityMap[definition.identifier]
-                ?: definition.defaultSetting
-
-            innerDestination.getOrPut(
-                key = visibility,
-                defaultValue = ::mutableListOf,
-            ).add(definition)
-
-            innerDestination
+    val shouldHide: Boolean
+        get() = postLabels.any { labelValue ->
+            if (labelValue == Label.Hidden) return@any true
+            visibility(labelValue) == Label.Visibility.Hide
         }
-    }
+
+    val shouldBlurMedia: Boolean
+        get() = postLabels.any { labelValue ->
+            if (labelValue == Label.Warn) return@any true
+
+            val isBlurTarget = Label.AdultLabels.contains(labelValue) ||
+                labelValuesToDefinitions[labelValue]?.blurs == Label.BlurTarget.Media
+
+            isBlurTarget && visibility(labelValue) == Label.Visibility.Warn
+        }
+
+    val blurredMediaSeverity: Label.Severity
+        get() = postLabels.firstNotNullOfOrNull { labelValue ->
+            labelValuesToDefinitions[labelValue]
+                ?.takeIf { it.blurs == Label.BlurTarget.Media || it.adultOnly }
+                ?.severity
+        } ?: Label.Severity.Inform
+
+    val canAutoPlayVideo: Boolean
+        get() = !shouldBlurMedia
 }
