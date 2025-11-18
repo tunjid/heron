@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.posts
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,12 +29,10 @@ import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridS
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LookaheadScope
@@ -72,6 +69,7 @@ import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.remembe
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.postActions
+import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
@@ -85,7 +83,6 @@ import kotlin.math.floor
 import kotlin.math.roundToInt
 import kotlinx.datetime.Clock
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun PostsScreen(
     paneScaffoldState: PaneScaffoldState,
@@ -95,7 +92,7 @@ internal fun PostsScreen(
 ) {
     val gridState = rememberLazyStaggeredGridState()
     val density = LocalDensity.current
-    var now by remember { mutableStateOf(Clock.System.now()) }
+    val now by remember { mutableStateOf(Clock.System.now()) }
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
     val presentation = remember { Timeline.Presentation.Text.WithEmbed }
     val pullToRefreshState = rememberPullToRefreshState()
@@ -112,7 +109,7 @@ internal fun PostsScreen(
                 Action.Navigate.To(
                     composePostDestination(
                         type = Post.Create.Quote(repost),
-                        sharedElementPrefix = ShareElementPrefix,
+                        sharedElementPrefix = SharedElementPrefix,
                     ),
                 ),
             )
@@ -177,7 +174,9 @@ internal fun PostsScreen(
                             presentation.cardSize.toPx()
                         }
                         val numColumns = floor(it.width / itemWidth).roundToInt()
-                        if (numColumns > 0) actions(Action.Tile(TilingState.Action.GridSize(numColumns = numColumns)))
+                        if (numColumns > 0) actions(
+                            Action.Tile(TilingState.Action.GridSize(numColumns = numColumns)),
+                        )
                     },
                 state = gridState,
                 columns = StaggeredGridCells.Adaptive(presentation.cardSize),
@@ -205,7 +204,7 @@ internal fun PostsScreen(
                             presentationLookaheadScope = this@LookaheadScope,
                             now = now,
                             item = item,
-                            sharedElementPrefix = ShareElementPrefix,
+                            sharedElementPrefix = SharedElementPrefix,
                             presentation = presentation,
                             postActions = remember {
                                 postActions(
@@ -226,7 +225,7 @@ internal fun PostsScreen(
                                             Action.Navigate.To(
                                                 recordDestination(
                                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                    sharedElementPrefix = ShareElementPrefix,
+                                                    sharedElementPrefix = SharedElementPrefix,
                                                     record = post,
                                                 ),
                                             ),
@@ -242,7 +241,7 @@ internal fun PostsScreen(
                                                     profile = profile,
                                                     avatarSharedElementKey = post
                                                         .avatarSharedElementKey(
-                                                            prefix = ShareElementPrefix,
+                                                            prefix = SharedElementPrefix,
                                                             quotingPostUri = quotingPostUri,
                                                         )
                                                         .takeIf { post.author.did == profile.did },
@@ -257,7 +256,8 @@ internal fun PostsScreen(
                                             Action.Navigate.To(
                                                 recordDestination(
                                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                    sharedElementPrefix = ShareElementPrefix,
+                                                    sharedElementPrefix = SharedElementPrefix
+                                                        .withQuotingPostUriPrefix(owningPostUri),
                                                     record = record,
                                                 ),
                                             ),
@@ -272,7 +272,8 @@ internal fun PostsScreen(
                                                     post = post,
                                                     media = media,
                                                     startIndex = index,
-                                                    sharedElementPrefix = ShareElementPrefix,
+                                                    sharedElementPrefix = SharedElementPrefix
+                                                        .withQuotingPostUriPrefix(quotingPostUri),
                                                 ),
                                             ),
                                         )
@@ -287,7 +288,7 @@ internal fun PostsScreen(
                                                     type = Post.Create.Reply(
                                                         parent = post,
                                                     ),
-                                                    sharedElementPrefix = ShareElementPrefix,
+                                                    sharedElementPrefix = SharedElementPrefix,
                                                 ),
                                             ),
                                         )
@@ -335,4 +336,4 @@ internal fun PostsScreen(
     )
 }
 
-private const val ShareElementPrefix = "posts"
+private const val SharedElementPrefix = "posts"

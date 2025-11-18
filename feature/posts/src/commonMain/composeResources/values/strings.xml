@@ -15,6 +15,7 @@
   -->
 
 <resources>
-    <string name="back">Go back</string>
     <string name="reply">Reply</string>
+    <string name="quotes">Quotes</string>
+    <string name="bookmarks">Bookmarks</string>
 </resources>
