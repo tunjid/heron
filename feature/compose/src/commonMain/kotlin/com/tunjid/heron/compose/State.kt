@@ -24,6 +24,7 @@ import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -40,7 +41,7 @@ data class State(
     val postType: Post.Create? = null,
     val signedInProfile: Profile? = null,
     val fabExpanded: Boolean = true,
-    val quotedPost: Post? = null,
+    val embeddedRecord: Record? = null,
     val adultContentEnabled: Boolean = false,
     val labelPreferences: ContentLabelPreferences,
     val labelers: List<Labeler>,
@@ -107,6 +108,7 @@ sealed class Action(val key: String) {
         val text: String,
         val links: List<Link>,
         val media: List<RestrictedFile.Media>,
+        val embeddedRecordReference: Record.Reference?,
     ) : Action("CreatePost")
 
     data class SetFabExpanded(
@@ -144,4 +146,6 @@ sealed class Action(val key: String) {
     data class SearchProfiles(val query: String) : Action("SearchProfiles")
 
     data object ClearSuggestions : Action("ClearSuggestions")
+
+    data object RemoveEmbeddedRecord : Action("RemoveEmbeddedRecord")
 }

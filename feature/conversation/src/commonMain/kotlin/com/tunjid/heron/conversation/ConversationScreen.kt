@@ -65,7 +65,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tunjid.heron.conversation.ui.EmojiPickerBottomSheet
 import com.tunjid.heron.conversation.ui.EmojiPickerSheetState.Companion.rememberEmojiPickerState
-import com.tunjid.heron.conversation.ui.MessageRecord
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Message
@@ -85,6 +84,7 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.postActions
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
+import com.tunjid.heron.timeline.utilities.EmbeddedRecord
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -437,7 +437,7 @@ private fun MessageRecord(
     paneScaffoldState: PaneScaffoldState,
     actions: (Action) -> Unit,
 ) {
-    MessageRecord(
+    EmbeddedRecord(
         modifier = Modifier
             .padding(
                 top = 16.dp,
@@ -448,7 +448,7 @@ private fun MessageRecord(
             .widthIn(max = 200.dp),
         record = record,
         sharedElementPrefix = item.id,
-        paneScaffoldState = paneScaffoldState,
+        movableElementSharedTransitionScope = paneScaffoldState,
         postActions = remember(item.id, actions) {
             postActions(
                 onLinkTargetClicked = { _, linkTarget ->

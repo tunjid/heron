@@ -17,7 +17,6 @@
 package com.tunjid.heron.timeline.ui
 
 import androidx.compose.runtime.Stable
-import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
@@ -36,6 +35,10 @@ interface PostActions {
     fun onPostInteraction(interaction: Post.Interaction)
     fun onPostMetadataClicked(metadata: Post.Metadata)
     fun onPostOptionsClicked(post: Post)
+
+    companion object {
+        val NoOp: PostActions = NoOpPostActions
+    }
 }
 
 fun postActions(
@@ -112,4 +115,49 @@ fun postActions(
         post,
         linkTarget,
     )
+}
+
+private val NoOpPostActions = object : PostActions {
+    override fun onProfileClicked(
+        profile: Profile,
+        post: Post,
+        quotingPostUri: PostUri?,
+    ) = Unit
+
+    override fun onPostClicked(
+        post: Post,
+    ) = Unit
+
+    override fun onPostRecordClicked(
+        record: Record,
+        owningPostUri: PostUri,
+    ) = Unit
+
+    override fun onPostMediaClicked(
+        media: Embed.Media,
+        index: Int,
+        post: Post,
+        quotingPostUri: PostUri?,
+    ) = Unit
+
+    override fun onReplyToPost(
+        post: Post,
+    ) = Unit
+
+    override fun onPostInteraction(
+        interaction: Post.Interaction,
+    ) = Unit
+
+    override fun onPostMetadataClicked(
+        metadata: Post.Metadata,
+    ) = Unit
+
+    override fun onPostOptionsClicked(
+        post: Post,
+    ) = Unit
+
+    override fun onLinkTargetClicked(
+        post: Post,
+        linkTarget: LinkTarget,
+    ) = Unit
 }

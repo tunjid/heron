@@ -18,4 +18,6 @@
     <string name="heron">Heron</string>
     <string name="back">Back</string>
     <string name="post">Post</string>
+    <string name="remove_quoted_post">Remove quoted post.</string>
+    <string name="remove_shared_record">Remove shared %1$s.</string>
 </resources>

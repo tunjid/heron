@@ -16,10 +16,16 @@
 
 package com.tunjid.heron.timeline.utilities
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Matrix
+import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.CornerRounding
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.TransformResult
@@ -39,7 +45,85 @@ import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
+import com.tunjid.heron.timeline.ui.PostActions
+import com.tunjid.heron.timeline.ui.feed.FeedGenerator
+import com.tunjid.heron.timeline.ui.label.Labeler
+import com.tunjid.heron.timeline.ui.list.FeedList
+import com.tunjid.heron.timeline.ui.list.StarterPack
+import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
+import kotlinx.datetime.Clock
+
+@Composable
+fun EmbeddedRecord(
+    modifier: Modifier = Modifier,
+    record: Record,
+    sharedElementPrefix: String,
+    movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    postActions: PostActions,
+) {
+    OutlinedCard(
+        modifier = modifier,
+    ) {
+        when (record) {
+            is Labeler -> Labeler(
+                modifier = NonPostRecordModifier,
+                sharedElementPrefix = sharedElementPrefix,
+                movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+                labeler = record,
+            )
+            is Post -> QuotedPost(
+                paneMovableElementSharedTransitionScope = movableElementSharedTransitionScope,
+                now = remember { Clock.System.now() },
+                quotedPost = record,
+                isBlurred = false,
+                sharedElementPrefix = sharedElementPrefix,
+                onClick = {
+                    postActions.onPostClicked(post = record)
+                },
+                onLinkTargetClicked = postActions::onLinkTargetClicked,
+                onProfileClicked = { post, profile ->
+                    postActions.onProfileClicked(
+                        profile = profile,
+                        post = post,
+                        quotingPostUri = null,
+                    )
+                },
+                onPostMediaClicked = { mediaEmbed, index, post ->
+                    postActions.onPostMediaClicked(
+                        media = mediaEmbed,
+                        index = index,
+                        post = post,
+                        quotingPostUri = null,
+                    )
+                },
+            )
+            is FeedGenerator -> FeedGenerator(
+                modifier = NonPostRecordModifier,
+                sharedElementPrefix = sharedElementPrefix,
+                movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+                feedGenerator = record,
+                status = null,
+                onFeedGeneratorStatusUpdated = {},
+            )
+            is FeedList -> FeedList(
+                modifier = NonPostRecordModifier,
+                sharedElementPrefix = sharedElementPrefix,
+                movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+                list = record,
+                status = null,
+                onListStatusUpdated = {},
+            )
+            is StarterPack -> StarterPack(
+                modifier = NonPostRecordModifier,
+                sharedElementPrefix = sharedElementPrefix,
+                movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+                starterPack = record,
+            )
+        }
+    }
+}
 
 fun Record.avatarSharedElementKey(
     prefix: String?,
@@ -107,6 +191,9 @@ internal val LabelerCollectionShape by lazy {
         ).transformed(Matrix().apply { rotateZ(degrees = 45f) }),
     )
 }
+
+private val NonPostRecordModifier = Modifier
+    .padding(12.dp)
 
 internal val BlueskyClouds =
     ImageUri("https://cdn.bsky.app/img/banner/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreichzyovokfzmymz36p5jibbjrhsur6n7hjnzxrpbt5jaydp2szvna@jpeg")
