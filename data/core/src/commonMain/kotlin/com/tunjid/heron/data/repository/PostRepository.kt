@@ -40,10 +40,12 @@ import com.atproto.repo.StrongRef
 import com.atproto.repo.UploadBlobResponse
 import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.ContentLabelPreference
+import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Label
+import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
@@ -64,6 +66,7 @@ import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.partialUpsert
+import com.tunjid.heron.data.database.entities.PopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
@@ -268,65 +271,28 @@ internal class OfflinePostRepository @Inject constructor(
                         }
                         .distinctUntilChanged()
                         .flatMapLatest { (allowAdultContent, contentLabelPreferences) ->
-                            val labelsVisibilityMap = contentLabelPreferences.associateBy(
-                                keySelector = ContentLabelPreference::label,
-                                valueTransform = ContentLabelPreference::visibility,
-                            )
                             combine(
                                 flow = postDao.quotedPosts(
                                     viewingProfileId = signedInProfileId?.id,
                                     quotedPostUri = postUri.uri,
-                                )
-                                    .distinctUntilChanged(),
+                                ).distinctUntilChanged(),
                                 flow2 = postDao.posts(
                                     viewingProfileId = signedInProfileId?.id,
                                     postUris = listOf(postUri),
-                                )
-                                    .map { it.firstOrNull() },
+                                ).map { it.firstOrNull() },
                                 flow3 = recordResolver.labelers,
                                 transform = { quotedPostEntities, parentPostEntity, labelers ->
                                     if (quotedPostEntities.isEmpty()) return@combine emptyList()
 
-                                    quotedPostEntities.mapNotNull { populatedPostEntity ->
-                                        val mainPost = populatedPostEntity.asExternalModel(
-                                            embeddedRecord = parentPostEntity?.asExternalModel(
-                                                embeddedRecord = null,
-                                            ),
-                                        )
-
-                                        val postLabels = when {
-                                            mainPost.labels.isEmpty() -> emptySet()
-                                            else -> mainPost.labels.mapTo(
-                                                destination = mutableSetOf(),
-                                                transform = Label::value,
-                                            )
-                                        }
-
-                                        // Check for global hidden label
-                                        if (postLabels.contains(Label.Hidden)) return@mapNotNull null
-
-                                        // Check for global non authenticated label
-                                        val isSignedIn = signedInProfileId != null
-                                        if (!isSignedIn && postLabels.contains(Label.NonAuthenticated)) return@mapNotNull null
-
-                                        val appliedLabels = AppliedLabels(
-                                            adultContentEnabled = allowAdultContent,
-                                            labels = mainPost.labels + mainPost.author.labels,
-                                            labelers = labelers,
-                                            preferenceLabelsVisibilityMap = labelsVisibilityMap,
-                                        )
-
-                                        if (appliedLabels.shouldHide) return@mapNotNull null
-
-                                        TimelineItem.Single(
-                                            id = mainPost.uri.uri,
-                                            post = mainPost,
-                                            appliedLabels = appliedLabels,
-                                        )
-                                    }
+                                    quotedPostEntities.toTimelineItems(
+                                        signedInProfileId = signedInProfileId,
+                                        allowAdultContent = allowAdultContent,
+                                        contentLabelPreferences = contentLabelPreferences,
+                                        labelers = labelers,
+                                        embeddedRecord = parentPostEntity?.asExternalModel(embeddedRecord = null),
+                                    )
                                 },
-                            )
-                                .distinctUntilChanged()
+                            ).distinctUntilChanged()
                         },
                     networkService.nextCursorFlow(
                         currentCursor = cursor,
@@ -369,50 +335,18 @@ internal class OfflinePostRepository @Inject constructor(
                     }
                     .distinctUntilChanged()
                     .flatMapLatest { (allowAdultContent, contentLabelPreferences) ->
-                        val labelsVisibilityMap = contentLabelPreferences.associateBy(
-                            keySelector = ContentLabelPreference::label,
-                            valueTransform = ContentLabelPreference::visibility,
-                        )
-
                         combine(
                             flow = postDao.bookmarkedPosts(
                                 viewingProfileId = signedInProfileId,
                             ).distinctUntilChanged(),
                             flow2 = recordResolver.labelers,
                             transform = { bookmarkedPostEntities, labelers ->
-                                bookmarkedPostEntities.mapNotNull { populatedPostEntity ->
-                                    val post = populatedPostEntity.asExternalModel(embeddedRecord = null)
-
-                                    val postLabels = when {
-                                        post.labels.isEmpty() -> emptySet()
-                                        else -> post.labels.mapTo(
-                                            destination = mutableSetOf(),
-                                            transform = Label::value,
-                                        )
-                                    }
-
-                                    // Check for global hidden label
-                                    if (postLabels.contains(Label.Hidden)) return@mapNotNull null
-
-                                    // Check for global non authenticated label
-                                    val isSignedIn = signedInProfileId != null
-                                    if (!isSignedIn && postLabels.contains(Label.NonAuthenticated)) return@mapNotNull null
-
-                                    val appliedLabels = AppliedLabels(
-                                        adultContentEnabled = allowAdultContent,
-                                        labels = post.labels + post.author.labels,
-                                        labelers = labelers,
-                                        preferenceLabelsVisibilityMap = labelsVisibilityMap,
-                                    )
-
-                                    if (appliedLabels.shouldHide) return@mapNotNull null
-
-                                    TimelineItem.Single(
-                                        id = post.uri.uri,
-                                        post = post,
-                                        appliedLabels = appliedLabels,
-                                    )
-                                }
+                                bookmarkedPostEntities.toTimelineItems(
+                                    signedInProfileId = signedInProfileId,
+                                    allowAdultContent = allowAdultContent,
+                                    contentLabelPreferences = contentLabelPreferences,
+                                    labelers = labelers,
+                                )
                             },
                         ).distinctUntilChanged()
                     },
@@ -749,6 +683,50 @@ internal class OfflinePostRepository @Inject constructor(
                     )
                 },
         )
+    }
+
+    private fun List<PopulatedPostEntity>.toTimelineItems(
+        signedInProfileId: ProfileId?,
+        allowAdultContent: Boolean,
+        contentLabelPreferences: ContentLabelPreferences,
+        labelers: List<Labeler>,
+        embeddedRecord: Record? = null,
+    ): List<TimelineItem.Single> {
+        val labelsVisibilityMap = contentLabelPreferences.associateBy(
+            keySelector = ContentLabelPreference::label,
+            valueTransform = ContentLabelPreference::visibility,
+        )
+
+        return this.mapNotNull { populatedPostEntity ->
+            val post = populatedPostEntity.asExternalModel(embeddedRecord = embeddedRecord)
+
+            val postLabels = when {
+                post.labels.isEmpty() -> emptySet()
+                else -> post.labels.mapTo(mutableSetOf(), Label::value)
+            }
+
+            // Check for global hidden label
+            if (postLabels.contains(Label.Hidden)) return@mapNotNull null
+
+            // Check for global non authenticated label
+            val isSignedIn = signedInProfileId != null
+            if (!isSignedIn && postLabels.contains(Label.NonAuthenticated)) return@mapNotNull null
+
+            val appliedLabels = AppliedLabels(
+                adultContentEnabled = allowAdultContent,
+                labels = post.labels + post.author.labels,
+                labelers = labelers,
+                preferenceLabelsVisibilityMap = labelsVisibilityMap,
+            )
+
+            if (appliedLabels.shouldHide) return@mapNotNull null
+
+            TimelineItem.Single(
+                id = post.uri.uri,
+                post = post,
+                appliedLabels = appliedLabels,
+            )
+        }
     }
 }
 
