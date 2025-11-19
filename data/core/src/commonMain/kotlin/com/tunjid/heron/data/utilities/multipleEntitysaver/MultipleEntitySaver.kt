@@ -39,6 +39,7 @@ import com.tunjid.heron.data.database.entities.ListMemberEntity
 import com.tunjid.heron.data.database.entities.MessageEntity
 import com.tunjid.heron.data.database.entities.MessageReactionEntity
 import com.tunjid.heron.data.database.entities.NotificationEntity
+import com.tunjid.heron.data.database.entities.PostBookmarkEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
@@ -130,6 +131,7 @@ internal class MultipleEntitySaver(
     private val imageEntities = LazyList<ImageEntity>()
 
     private val postImageEntities = LazyList<PostImageEntity>()
+    private val postBookMarkEntities = LazyList<PostBookmarkEntity>()
 
     private val videoEntities = LazyList<VideoEntity>()
 
@@ -208,6 +210,7 @@ internal class MultipleEntitySaver(
         postDao.upsertPostThreads(postThreadEntities.list)
         postDao.upsertPostStatistics(postViewerStatisticsEntities.list)
         postDao.upsertPostLikes(postLikeEntities.list)
+        postDao.upsertBookmarks(postBookMarkEntities.list)
 
         val (fullProfileViewerEntities, partialProfileViewerEntities) = profileViewerEntities.list
             .partition {
@@ -289,6 +292,8 @@ internal class MultipleEntitySaver(
     fun add(entity: PostThreadEntity) = postThreadEntities.add(entity)
 
     fun add(entity: PostViewerStatisticsEntity) = postViewerStatisticsEntities.add(entity)
+
+    fun add(entity: PostBookmarkEntity) = postBookMarkEntities.add(entity)
 
     fun add(entity: PostLikeEntity) = postLikeEntities.add(entity)
 
