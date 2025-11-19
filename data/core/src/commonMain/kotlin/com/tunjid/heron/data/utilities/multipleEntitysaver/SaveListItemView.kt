@@ -17,7 +17,6 @@
 package com.tunjid.heron.data.utilities.multipleEntitysaver
 
 import app.bsky.graph.ListItemView
-import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ListMemberUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
@@ -29,7 +28,7 @@ internal fun MultipleEntitySaver.add(
     listUri: ListUri,
     listItemView: ListItemView,
 ) {
-    val createdAt = listItemView.uri.atUri.let(::GenericUri).tidInstant ?: return
+    val createdAt = listItemView.uri.tidInstant ?: return
     add(listItemView.subject.profileEntity())
     add(
         ListMemberEntity(

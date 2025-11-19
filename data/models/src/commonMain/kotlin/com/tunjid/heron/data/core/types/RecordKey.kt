@@ -24,9 +24,3 @@ import kotlinx.serialization.Serializable
 value class RecordKey(
     val value: String,
 )
-
-val PostUri.recordKey
-    get() = RecordKey(uri.split("/").last())
-
-val GenericUri.recordKey
-    get() = RecordKey(uri.split("/").last())

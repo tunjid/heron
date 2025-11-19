@@ -33,6 +33,18 @@ sealed interface Uri {
 @Serializable
 sealed interface RecordUri : Uri
 
+/**
+ * Extracts the [ProfileId] component from an AT URI string.
+ */
+fun RecordUri.profileId(): ProfileId =
+    ProfileId(requireNotNull(uri.toAtUriComponentsOrNull()).authority)
+
+val RecordUri.recordKey
+    get() = RecordKey(requireNotNull(uri.toAtUriComponentsOrNull()).rkey)
+
+fun GenericUri.recordKeyOrNull() =
+    uri.toAtUriComponentsOrNull()?.rkey?.let(::RecordKey)
+
 val Uri.domain get() = Url(uri).host.removePrefix("www.")
 
 @Serializable
@@ -172,12 +184,6 @@ fun String.asRecordUriOrNull(): RecordUri? {
         else -> null
     }
 }
-
-/**
- * Extracts the [ProfileId] component from an AT URI string.
- */
-fun RecordUri.profileId(): ProfileId =
-    ProfileId(requireNotNull(uri.toAtUriComponentsOrNull()).authority)
 
 /**
  * Internal function to parse a string into its raw components.
