@@ -59,10 +59,14 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.compose.ui.MediaUploadItems
+import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.FeedList
+import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.contentDescription
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -77,14 +81,23 @@ import com.tunjid.heron.ui.AvatarSize
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.detectActiveLink
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.formatTextPost
 import com.tunjid.heron.ui.text.insertMention
 import com.tunjid.heron.ui.text.links
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import heron.feature.compose.generated.resources.Res
+import heron.feature.compose.generated.resources.remove_quoted_post
+import heron.feature.compose.generated.resources.remove_shared_record
+import heron.ui.core.generated.resources.record_feed
+import heron.ui.core.generated.resources.record_labeler
+import heron.ui.core.generated.resources.record_list
+import heron.ui.core.generated.resources.record_starter_pack
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun ComposeScreen(
@@ -215,12 +228,31 @@ private fun Post(
                     movableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     postActions = PostActions.NoOp,
                 )
+                val contentDescription = when (it) {
+                    is Labeler -> stringResource(
+                        Res.string.remove_shared_record,
+                        stringResource(CommonStrings.record_labeler),
+                    )
+                    is Post -> stringResource(Res.string.remove_quoted_post)
+                    is FeedGenerator -> stringResource(
+                        Res.string.remove_shared_record,
+                        stringResource(CommonStrings.record_feed),
+                    )
+                    is FeedList -> stringResource(
+                        Res.string.remove_shared_record,
+                        stringResource(CommonStrings.record_list),
+                    )
+                    is StarterPack -> stringResource(
+                        Res.string.remove_shared_record,
+                        stringResource(CommonStrings.record_starter_pack),
+                    )
+                }
                 FilledTonalIconButton(
                     onClick = onRemoveEmbeddedRecordClicked,
                     content = {
                         Icon(
                             imageVector = Icons.Rounded.Close,
-                            contentDescription = null,
+                            contentDescription = contentDescription,
                         )
                     },
                 )
