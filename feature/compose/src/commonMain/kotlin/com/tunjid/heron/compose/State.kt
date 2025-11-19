@@ -31,6 +31,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.ui.text.Memo
+import com.tunjid.heron.ui.text.TextFieldValueSerializer
 import com.tunjid.treenav.strings.Route
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -45,7 +46,7 @@ data class State(
     val adultContentEnabled: Boolean = false,
     val labelPreferences: ContentLabelPreferences,
     val labelers: List<Labeler>,
-    @Transient // TODO: Write a custom serializer for this
+    @Serializable(with = TextFieldValueSerializer::class)
     val postText: TextFieldValue = TextFieldValue(),
     @Transient
     val photos: List<RestrictedFile.Media.Photo> = emptyList(),

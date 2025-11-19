@@ -349,8 +349,6 @@ private fun PostComposition(
             val annotated = formatTextPost(
                 text = it.text,
                 textLinks = links,
-                onLinkTargetClicked = {
-                },
             )
             onPostTextChanged(
                 it.copy(annotatedString = annotated),

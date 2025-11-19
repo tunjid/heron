@@ -38,7 +38,7 @@ fun rememberFormattedTextPost(
     text: String,
     textLinks: List<Link>,
     textLinkStyles: TextLinkStyles? = null,
-    onLinkTargetClicked: (LinkTarget) -> Unit,
+    onLinkTargetClicked: (LinkTarget) -> Unit = NoOpLinkTargetHandler,
 ): AnnotatedString = remember(text) {
     formatTextPost(
         text = text,
@@ -55,7 +55,7 @@ fun TextFieldValue.withFormattedTextPost(
         text = text,
         textLinks = annotatedString.links(),
         textLinkStyles = textLinkStyles,
-        onLinkTargetClicked = {},
+        onLinkTargetClicked = NoOpLinkTargetHandler,
     ),
 )
 
@@ -63,7 +63,7 @@ fun formatTextPost(
     text: String,
     textLinks: List<Link>,
     textLinkStyles: TextLinkStyles? = null,
-    onLinkTargetClicked: (LinkTarget) -> Unit,
+    onLinkTargetClicked: (LinkTarget) -> Unit = NoOpLinkTargetHandler,
 ): AnnotatedString = buildAnnotatedString {
     append(text)
 
@@ -183,3 +183,5 @@ internal fun String.byteOffsets(): List<Int> = buildList {
         if (lastWas4Bytes) add(i - 1) else add(i)
     }
 }
+
+private val NoOpLinkTargetHandler: (LinkTarget) -> Unit = {}

@@ -32,6 +32,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.models
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.text.Memo
+import com.tunjid.heron.ui.text.TextFieldValueSerializer
 import com.tunjid.treenav.strings.Route
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -48,7 +49,7 @@ data class State(
     val labelers: List<Labeler>,
     val pendingItems: List<MessageItem.Pending> = emptyList(),
     override val tilingData: TilingState.Data<MessageQuery, MessageItem>,
-    @Transient // TODO: Write a custom serializer for this
+    @Serializable(with = TextFieldValueSerializer::class)
     val inputText: TextFieldValue = TextFieldValue(),
     @Transient
     val sharedRecord: SharedRecord = SharedRecord.None,
