@@ -55,8 +55,12 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.FeedList
+import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.PostUri
@@ -401,16 +405,6 @@ private val ReplyThreadEndImageShape =
         bottomEndPercent = 1f,
     )
 
-fun Post.avatarSharedElementKey(
-    prefix: String?,
-    quotingPostUri: PostUri? = null,
-): String {
-    val finalPrefix = quotingPostUri
-        ?.let { "$prefix-$it" }
-        ?: prefix
-    return "$finalPrefix-${uri.uri}-${author.did.id}"
-}
-
 private val Timeline.Presentation.timelineCardPadding: Dp
     get() = when (this) {
         Timeline.Presentation.Text.WithEmbed -> 8.dp
@@ -438,9 +432,22 @@ private fun Modifier.timelineCardPresentationPadding(
     Timeline.Presentation.Media.Grid -> this
 }
 
-internal fun Record.avatarSharedElementKey(
+fun Record.avatarSharedElementKey(
     prefix: String?,
-): String = "$prefix-${reference.uri.uri}-avatar"
+    quotingPostUri: PostUri? = null,
+): String {
+    val finalPrefix = quotingPostUri
+        ?.let { "$prefix-$it" }
+        ?: prefix
+    val creator = when (this) {
+        is Labeler -> creator
+        is Post -> author
+        is FeedGenerator -> creator
+        is FeedList -> creator
+        is StarterPack -> creator
+    }
+    return "$finalPrefix-${reference.uri.uri}-${creator.did.id}-avatar"
+}
 
 fun String.withQuotingPostUriPrefix(
     quotingPostUri: PostUri? = null,

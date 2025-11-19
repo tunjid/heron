@@ -20,7 +20,6 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BookmarkAdd
-import androidx.compose.material.icons.rounded.ArrowCircleUp
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.runtime.Composable
@@ -31,11 +30,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Timeline.Update
-import com.tunjid.heron.data.core.models.Timeline.Update.OfFeedGenerator.Pin
-import com.tunjid.heron.data.core.models.Timeline.Update.OfFeedGenerator.Remove
-import com.tunjid.heron.data.core.models.Timeline.Update.OfFeedGenerator.Save
-import com.tunjid.heron.data.core.types.RecordUri
-import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.avatarSharedElementKey
@@ -48,7 +42,6 @@ import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.feed_by
 import heron.ui.timeline.generated.resources.liked_by
-import heron.ui.timeline.generated.resources.more_options
 import heron.ui.timeline.generated.resources.pin_feed
 import heron.ui.timeline.generated.resources.remove_feed
 import heron.ui.timeline.generated.resources.save_feed

@@ -40,8 +40,9 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption
-import com.tunjid.heron.scaffold.navigation.recordDestination
+import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.label.LabelSetting
 import com.tunjid.heron.timeline.ui.label.Labeler
 import com.tunjid.heron.ui.UiTokens
@@ -95,9 +96,9 @@ internal fun ModerationScreen(
             onLabelerClicked = { labeler ->
                 actions(
                     Action.Navigate.To(
-                        recordDestination(
-                            labeler,
-                            sharedElementPrefix = Moderation,
+                        profileDestination(
+                            profile = labeler.creator,
+                            avatarSharedElementKey = labeler.avatarSharedElementKey(Moderation),
                             referringRouteOption = ReferringRouteOption.Current,
                         ),
                     ),
