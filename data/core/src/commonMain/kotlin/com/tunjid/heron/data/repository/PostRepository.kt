@@ -18,6 +18,8 @@ package com.tunjid.heron.data.repository
 
 import app.bsky.bookmark.CreateBookmarkRequest
 import app.bsky.bookmark.DeleteBookmarkRequest
+import app.bsky.bookmark.GetBookmarksQueryParams
+import app.bsky.bookmark.GetBookmarksResponse
 import app.bsky.feed.GetLikesQueryParams
 import app.bsky.feed.GetLikesResponse
 import app.bsky.feed.GetQuotesQueryParams
@@ -125,6 +127,11 @@ interface PostRepository {
     ): Flow<CursorList<ProfileWithViewerState>>
 
     fun quotes(
+        query: PostDataQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<TimelineItem>>
+
+    fun saved(
         query: PostDataQuery,
         cursor: Cursor,
     ): Flow<CursorList<TimelineItem>>
@@ -347,6 +354,92 @@ internal class OfflinePostRepository @Inject constructor(
                     ::CursorList,
                 )
             }
+        }
+
+    override fun saved(
+        query: PostDataQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<TimelineItem>> =
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            combine(
+                savedStateDataSource.savedState
+                    .map {
+                        val preferences = it.signedProfilePreferencesOrDefault()
+                        preferences.allowAdultContent to preferences.contentLabelPreferences
+                    }
+                    .distinctUntilChanged()
+                    .flatMapLatest { (allowAdultContent, contentLabelPreferences) ->
+                        val labelsVisibilityMap = contentLabelPreferences.associateBy(
+                            keySelector = ContentLabelPreference::label,
+                            valueTransform = ContentLabelPreference::visibility,
+                        )
+
+                        combine(
+                            flow = postDao.bookmarkedPosts(
+                                viewingProfileId = signedInProfileId,
+                            ).distinctUntilChanged(),
+                            flow2 = recordResolver.labelers,
+                            transform = { bookmarkedPostEntities, labelers ->
+                                bookmarkedPostEntities.mapNotNull { populatedPostEntity ->
+                                    val post = populatedPostEntity.asExternalModel(embeddedRecord = null)
+
+                                    val postLabels = when {
+                                        post.labels.isEmpty() -> emptySet()
+                                        else -> post.labels.mapTo(
+                                            destination = mutableSetOf(),
+                                            transform = Label::value,
+                                        )
+                                    }
+
+                                    // Check for global hidden label
+                                    if (postLabels.contains(Label.Hidden)) return@mapNotNull null
+
+                                    // Check for global non authenticated label
+                                    val isSignedIn = signedInProfileId != null
+                                    if (!isSignedIn && postLabels.contains(Label.NonAuthenticated)) return@mapNotNull null
+
+                                    val appliedLabels = AppliedLabels(
+                                        adultContentEnabled = allowAdultContent,
+                                        labels = post.labels + post.author.labels,
+                                        labelers = labelers,
+                                        preferenceLabelsVisibilityMap = labelsVisibilityMap,
+                                    )
+
+                                    if (appliedLabels.shouldHide) return@mapNotNull null
+
+                                    TimelineItem.Single(
+                                        id = post.uri.uri,
+                                        post = post,
+                                        appliedLabels = appliedLabels,
+                                    )
+                                }
+                            },
+                        ).distinctUntilChanged()
+                    },
+                networkService.nextCursorFlow(
+                    currentCursor = cursor,
+                    currentRequestWithNextCursor = {
+                        getBookmarks(
+                            GetBookmarksQueryParams(
+                                limit = query.data.limit,
+                                cursor = cursor.value,
+                            ),
+                        )
+                    },
+                    nextCursor = GetBookmarksResponse::cursor,
+                    onResponse = {
+                        multipleEntitySaverProvider.saveInTransaction {
+                            bookmarks.forEach { bookmarkView ->
+                                add(
+                                    viewingProfileId = signedInProfileId,
+                                    bookmarkView = bookmarkView,
+                                )
+                            }
+                        }
+                    },
+                ),
+                ::CursorList,
+            )
         }
 
     override fun post(
