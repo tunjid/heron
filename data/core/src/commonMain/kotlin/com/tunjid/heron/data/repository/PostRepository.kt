@@ -550,14 +550,14 @@ internal class OfflinePostRepository @Inject constructor(
                         DeleteRecordRequest(
                             repo = signedInProfileId.id.let(::Did),
                             collection = Nsid(Collections.Repost),
-                            rkey = Collections.rKey(interaction.repostUri),
+                            rkey = Collections.requireRKey(interaction.repostUri),
                         ),
                     )
                     is Post.Interaction.Delete.Unlike -> deleteRecord(
                         DeleteRecordRequest(
                             repo = signedInProfileId.id.let(::Did),
                             collection = Nsid(Collections.Like),
-                            rkey = Collections.rKey(interaction.likeUri),
+                            rkey = Collections.requireRKey(interaction.likeUri),
                         ),
                     )
                 }

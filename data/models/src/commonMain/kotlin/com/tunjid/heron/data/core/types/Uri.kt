@@ -42,6 +42,9 @@ fun RecordUri.profileId(): ProfileId =
 val RecordUri.recordKey
     get() = RecordKey(requireNotNull(uri.toAtUriComponentsOrNull()).rkey)
 
+fun GenericUri.recordKeyOrNull() =
+    uri.toAtUriComponentsOrNull()?.rkey?.let(::RecordKey)
+
 val Uri.domain get() = Url(uri).host.removePrefix("www.")
 
 @Serializable

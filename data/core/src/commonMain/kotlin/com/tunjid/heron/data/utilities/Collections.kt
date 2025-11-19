@@ -19,7 +19,7 @@ package com.tunjid.heron.data.utilities
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.data.core.types.recordKey
+import com.tunjid.heron.data.core.types.recordKeyOrNull
 import com.tunjid.heron.data.network.BlueskyJson
 import kotlinx.datetime.Instant
 import kotlinx.serialization.KSerializer
@@ -40,21 +40,15 @@ internal object Collections {
 
     val SelfRecordKey = RKey("self")
 
-    // TODO: This should be more specific
-    fun rKey(uri: GenericUri) = RKey(
-        rkey = uri.recordKey.value,
+    // Internal method
+    fun requireRKey(uri: GenericUri) = RKey(
+        rkey = requireNotNull(uri.recordKeyOrNull()) {
+            "This uri does not have a record key"
+        }.value,
     )
 
     val DefaultLabelerProfileId = ProfileId(id = "did:plc:ar7c4by46qjdydhdevvrndac")
 }
-
-// TODO: This should be more specific
-val GenericUri.tidInstant: Instant?
-    get() = try {
-        Instant.fromEpochMilliseconds(tidTimestampFromBase32(recordKey.value))
-    } catch (e: IllegalArgumentException) {
-        null
-    }
 
 fun Uri.asGenericUri(): GenericUri = GenericUri(uri)
 
