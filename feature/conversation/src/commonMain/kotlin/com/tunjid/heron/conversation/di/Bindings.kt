@@ -87,10 +87,6 @@ internal val Route.conversationId by mappedRoutePath(
     mapper = ::ConversationId,
 )
 
-internal val Route.sharedUri by optionalMappedRouteQuery(
-    mapper = ::GenericUri,
-)
-
 @BindingContainer
 object ConversationNavigationBindings {
 

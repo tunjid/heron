@@ -30,6 +30,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -59,6 +60,7 @@ import com.tunjid.heron.ui.text.asClipEntry
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.copy_link_to_clipboard
 import heron.ui.timeline.generated.resources.send_via_direct_message
+import heron.ui.timeline.generated.resources.share_in_post
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -112,6 +114,39 @@ internal fun SendDirectMessageCard(
         bottomContent = {
         },
     )
+}
+
+@Composable
+internal fun ShareInPostCard(
+    onShareInPostClicked: () -> Unit,
+) {
+    val shareInPostDescription = stringResource(Res.string.share_in_post)
+
+    ShareActionCard(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onShareInPostClicked,
+    ) {
+        Row(
+            modifier = Modifier
+                .semantics {
+                    contentDescription = shareInPostDescription
+                }
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = shareInPostDescription,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.Article,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
 }
 
 @Composable

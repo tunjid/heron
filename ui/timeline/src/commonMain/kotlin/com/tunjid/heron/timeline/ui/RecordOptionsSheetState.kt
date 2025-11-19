@@ -31,6 +31,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.timeline.utilities.CopyToClipboardCard
 import com.tunjid.heron.timeline.utilities.SendDirectMessageCard
+import com.tunjid.heron.timeline.utilities.ShareInPostCard
 import com.tunjid.heron.timeline.utilities.shareUri
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
@@ -66,6 +67,7 @@ class RecordOptionsSheetState private constructor(
             signedInProfileId: ProfileId?,
             recentConversations: List<Conversation>,
             onShareInConversationClicked: (RecordUri, Conversation) -> Unit,
+            onShareInPostClicked: (RecordUri) -> Unit,
         ): RecordOptionsSheetState {
             val state = rememberBottomSheetState {
                 RecordOptionsSheetState(
@@ -81,6 +83,7 @@ class RecordOptionsSheetState private constructor(
             RecordOptionsBottomSheet(
                 state = state,
                 onShareInConversationClicked = onShareInConversationClicked,
+                onShareInPostClicked = onShareInPostClicked,
             )
 
             return state
@@ -92,6 +95,7 @@ class RecordOptionsSheetState private constructor(
 private fun RecordOptionsBottomSheet(
     state: RecordOptionsSheetState,
     onShareInConversationClicked: (RecordUri, Conversation) -> Unit,
+    onShareInPostClicked: (RecordUri) -> Unit,
 ) {
     val signedInProfileId = state.signedInProfileId
 
@@ -110,6 +114,13 @@ private fun RecordOptionsBottomSheet(
                     state.hide()
                 },
             )
+
+            ShareInPostCard {
+                state.currentRecordUri?.let { uri ->
+                    onShareInPostClicked(uri)
+                }
+                state.hide()
+            }
 
             state.currentRecordUri?.let { uri ->
                 CopyToClipboardCard(uri.shareUri())

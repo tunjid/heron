@@ -17,7 +17,6 @@
 package com.tunjid.heron.conversation
 
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.conversation.di.sharedUri
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.ProfileHandle
@@ -36,6 +35,7 @@ import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.navigation.removeQueryParamsFromCurrentRoute
+import com.tunjid.heron.scaffold.navigation.sharedUri
 import com.tunjid.heron.scaffold.scaffold.duplicateWriteMessage
 import com.tunjid.heron.scaffold.scaffold.failedWriteMessage
 import com.tunjid.heron.tiling.TilingState

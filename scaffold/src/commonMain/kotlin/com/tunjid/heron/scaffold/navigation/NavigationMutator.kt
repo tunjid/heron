@@ -94,6 +94,10 @@ val Route.model: UrlEncodableModel? by optionalMappedRouteQuery(
     mapper = String::fromBase64EncodedUrl,
 )
 
+val Route.sharedUri: GenericUri? by optionalMappedRouteQuery(
+    mapper = ::GenericUri,
+)
+
 inline fun <reified T> Route.model(): T? = model as? T
 
 val Route.models: List<UrlEncodableModel>
@@ -134,9 +138,11 @@ fun recordDestination(
 fun composePostDestination(
     type: Post.Create? = null,
     sharedElementPrefix: String? = null,
+    sharedUri: GenericUri? = null,
 ): NavigationAction.Destination = pathDestination(
     path = "/compose",
     models = listOfNotNull(type),
+    sharedUri = sharedUri,
     sharedElementPrefix = sharedElementPrefix,
 )
 
@@ -149,11 +155,9 @@ fun conversationDestination(
 ): NavigationAction.Destination = pathDestination(
     path = "/messages/${id.id}",
     models = members,
+    sharedUri = sharedUri,
     sharedElementPrefix = sharedElementPrefix,
     referringRouteOption = referringRouteOption,
-    miscQueryParams = sharedUri?.let {
-        mapOf("sharedUri" to listOf(it.uri))
-    } ?: emptyMap(),
 )
 
 fun editProfileDestination(
@@ -237,6 +241,7 @@ fun pathDestination(
     models: List<UrlEncodableModel> = emptyList(),
     sharedElementPrefix: String? = null,
     avatarSharedElementKey: String? = null,
+    sharedUri: GenericUri? = null,
     miscQueryParams: Map<String, List<String>> = emptyMap(),
     referringRouteOption: ReferringRouteOption = ReferringRouteOption.Current,
 ): NavigationAction.Destination = NavigationAction.Destination.ToRawUrl(
@@ -244,6 +249,7 @@ fun pathDestination(
     models = models,
     sharedElementPrefix = sharedElementPrefix,
     avatarSharedElementKey = avatarSharedElementKey,
+    sharedUri = sharedUri,
     miscQueries = miscQueryParams,
     referringRouteOption = referringRouteOption,
 )
@@ -319,6 +325,7 @@ interface NavigationAction {
             val path: String,
             val sharedElementPrefix: String? = null,
             val avatarSharedElementKey: String? = null,
+            val sharedUri: GenericUri? = null,
             val models: List<UrlEncodableModel> = emptyList(),
             val miscQueries: Map<String, List<String>> = emptyMap(),
             val referringRouteOption: ReferringRouteOption,
@@ -330,6 +337,7 @@ interface NavigationAction {
                         "model" to models.map(UrlEncodableModel::toUrlEncodedBase64),
                         "sharedElementPrefix" to listOfNotNull(sharedElementPrefix),
                         "avatarSharedElementKey" to listOfNotNull(avatarSharedElementKey),
+                        "sharedUri" to listOfNotNull(sharedUri?.uri),
                         referringRouteQueryParams(referringRouteOption),
                     ),
                 ).toRoute

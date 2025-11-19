@@ -17,7 +17,6 @@
 package com.tunjid.heron.compose
 
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.compose.di.sharedUri
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Post
@@ -39,6 +38,7 @@ import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.navigation.model
+import com.tunjid.heron.scaffold.navigation.sharedUri
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
