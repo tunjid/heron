@@ -224,7 +224,7 @@ internal class ThingPreferenceUpdater @Inject constructor(
     )
 
     private fun Timeline.Update.OfContentLabel.contentLabelPrefs() = when (this) {
-        is Timeline.Update.OfContentLabel.GlobalLabelVisibilityChange -> label.labelValues.map { label ->
+        is Timeline.Update.OfContentLabel.AdultLabelVisibilityChange -> label.labelValues.map { label ->
             PreferencesUnion.ContentLabelPref(
                 value = ContentLabelPref(
                     labelerDid = null,
@@ -233,7 +233,7 @@ internal class ThingPreferenceUpdater @Inject constructor(
                 ),
             )
         }
-        is Timeline.Update.OfContentLabel.CustomVisibilityChange -> listOf(
+        is Timeline.Update.OfContentLabel.LabelVisibilityChange -> listOf(
             PreferencesUnion.ContentLabelPref(
                 value = ContentLabelPref(
                     labelerDid = labelCreatorId.id.let(::Did),

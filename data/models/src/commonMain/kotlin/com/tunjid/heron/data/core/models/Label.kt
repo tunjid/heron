@@ -79,7 +79,7 @@ data class Label(
         None,
     }
 
-    enum class Global(
+    enum class Adult(
         val defaultVisibility: Visibility,
         val labelValues: List<Value>,
     ) {
@@ -115,10 +115,9 @@ data class Label(
     companion object {
         val Hidden = Value("!hide")
         val Warn = Value("!warn")
-
         val NonAuthenticated = Value("!no-unauthenticated")
 
-        internal val AdultLabels = Global.entries.flatMapTo(mutableSetOf(), Global::labelValues)
+        internal val AdultLabels = Adult.entries.flatMapTo(mutableSetOf(), Adult::labelValues)
     }
 }
 
@@ -191,14 +190,13 @@ data class AppliedLabels(
 
     private val labelVisibilityMap: Map<Label.Value, Label.Visibility> by lazy {
         buildMap {
-            Label.Global.entries.forEach { globalLabel ->
-                globalLabel.labelValues.forEach { labelValue ->
-                    val isAdultLabel = Label.AdultLabels.contains(labelValue)
+            Label.Adult.entries.forEach { adultLabel ->
+                adultLabel.labelValues.forEach { labelValue ->
                     this[labelValue] =
-                        if (isAdultLabel && !adultContentEnabled) Label.Visibility.Hide
+                        if (!adultContentEnabled) Label.Visibility.Hide
                         else preferenceLabelsVisibilityMap.getOrElse(
                             labelValue,
-                            globalLabel::defaultVisibility,
+                            adultLabel::defaultVisibility,
                         )
                 }
             }

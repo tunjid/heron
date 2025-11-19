@@ -32,6 +32,12 @@ import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.profile.LabelerSettingsStateHolder
 import com.tunjid.heron.timeline.ui.label.LabelSetting
 import com.tunjid.heron.timeline.ui.label.locale
+import com.tunjid.heron.ui.text.CommonStrings
+import heron.feature.profile.generated.resources.Res
+import heron.feature.profile.generated.resources.label_hide
+import heron.feature.profile.generated.resources.label_off
+import heron.feature.profile.generated.resources.label_show_badge
+import heron.ui.core.generated.resources.unknown_label
 
 @Composable
 fun LabelerSettings(
@@ -59,6 +65,7 @@ fun LabelerSettings(
                         labelDescription = locale?.description,
                         selectedVisibility = labelSetting.visibility,
                         visibilities = Label.Visibility.all,
+                        visibilityStringResource = Label.Visibility::stringRes,
                         onVisibilityChanged = {
                             stateHolder.accept(labelSetting.copy(visibility = it))
                         },
@@ -69,3 +76,11 @@ fun LabelerSettings(
         )
     }
 }
+
+private val Label.Visibility.stringRes
+    get() = when (this) {
+        Label.Visibility.Ignore -> Res.string.label_off
+        Label.Visibility.Warn -> Res.string.label_show_badge
+        Label.Visibility.Hide -> Res.string.label_hide
+        else -> CommonStrings.unknown_label
+    }

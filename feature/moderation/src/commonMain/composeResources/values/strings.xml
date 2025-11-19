@@ -19,4 +19,7 @@
     <string name="labeler_subscriptions">Labeler subscriptions</string>
     <string name="content_filters">Content Filters</string>
     <string name="enable_adult_content">Enable adult content</string>
+    <string name="label_show">Show</string>
+    <string name="label_warn">Warn</string>
+    <string name="label_hide">Hide</string>
 </resources>

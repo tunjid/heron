@@ -35,6 +35,8 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Label
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -44,6 +46,7 @@ fun LabelSetting(
     selectedVisibility: Label.Visibility,
     visibilities: List<Label.Visibility>,
     modifier: Modifier = Modifier,
+    visibilityStringResource: (Label.Visibility) -> StringResource,
     onVisibilityChanged: (Label.Visibility) -> Unit,
 ) {
     Column(
@@ -90,7 +93,7 @@ fun LabelSetting(
                         else -> MiddleButtonShape
                     },
                 ) {
-                    Text(visibility.value)
+                    Text(stringResource(visibilityStringResource(visibility)))
                 }
             }
         }
