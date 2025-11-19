@@ -118,13 +118,13 @@ import com.tunjid.heron.search.ui.Trend
 import com.tunjid.heron.search.ui.avatarSharedElementKey
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
-import com.tunjid.heron.timeline.ui.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.feed.FeedGenerator
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
 import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
+import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
 import com.tunjid.heron.ui.PagerTopGapCloseEffect
