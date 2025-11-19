@@ -192,9 +192,8 @@ data class AppliedLabels(
         buildMap {
             Label.Adult.entries.forEach { adultLabel ->
                 adultLabel.labelValues.forEach { labelValue ->
-                    val isAdultLabel = Label.AdultLabels.contains(labelValue)
                     this[labelValue] =
-                        if (isAdultLabel && !adultContentEnabled) Label.Visibility.Hide
+                        if (!adultContentEnabled) Label.Visibility.Hide
                         else preferenceLabelsVisibilityMap.getOrElse(
                             labelValue,
                             adultLabel::defaultVisibility,

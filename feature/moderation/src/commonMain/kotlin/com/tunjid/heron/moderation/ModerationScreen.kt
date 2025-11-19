@@ -73,9 +73,9 @@ internal fun ModerationScreen(
         adultLabelsSection(
             adultContentEnabled = state.adultContentEnabled,
             adultLabelItems = state.adultLabelItems,
-            onGlobalLabelVisibilityChanged = { adultLabel, visibility ->
+            onAdultLabelVisibilityChanged = { adultLabel, visibility ->
                 actions(
-                    Action.UpdateGlobalLabelVisibility(
+                    Action.UpdateAdultLabelVisibility(
                         adultLabel = adultLabel.adult,
                         visibility = visibility,
                     ),
@@ -110,7 +110,7 @@ internal fun ModerationScreen(
 private fun LazyListScope.adultLabelsSection(
     adultContentEnabled: Boolean,
     adultLabelItems: List<AdultLabelItem>,
-    onGlobalLabelVisibilityChanged: (AdultLabelItem, Label.Visibility) -> Unit,
+    onAdultLabelVisibilityChanged: (AdultLabelItem, Label.Visibility) -> Unit,
     onAdultPreferencesChecked: (Boolean) -> Unit,
 ) {
     item(
@@ -173,7 +173,7 @@ private fun LazyListScope.adultLabelsSection(
                     visibilities = Label.Visibility.all,
                     visibilityStringResource = Label.Visibility::stringRes,
                     onVisibilityChanged = { visibility ->
-                        onGlobalLabelVisibilityChanged(item, visibility)
+                        onAdultLabelVisibilityChanged(item, visibility)
                     },
                 )
             }

@@ -80,7 +80,7 @@ class ActualModerationViewModel(
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.UpdateGlobalLabelVisibility -> action.flow.updateGlobalLabelMutations(
+                    is Action.UpdateAdultLabelVisibility -> action.flow.updateGlobalLabelMutations(
                         writeQueue = writeQueue,
                     )
                     is Action.UpdateAdultContentPreferences -> action.flow.updateAdultContentPreferencesMutations(
@@ -121,7 +121,7 @@ fun subscribedLabelerMutations(
             copy(subscribedLabelers = it)
         }
 
-private fun Flow<Action.UpdateGlobalLabelVisibility>.updateGlobalLabelMutations(
+private fun Flow<Action.UpdateAdultLabelVisibility>.updateGlobalLabelMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->

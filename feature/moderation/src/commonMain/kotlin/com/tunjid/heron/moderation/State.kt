@@ -96,10 +96,10 @@ fun adultLabels(
 
 sealed class Action(val key: String) {
 
-    data class UpdateGlobalLabelVisibility(
+    data class UpdateAdultLabelVisibility(
         val adultLabel: Label.Adult,
         val visibility: Label.Visibility,
-    ) : Action(key = "UpdateGlobalLabelVisibility")
+    ) : Action(key = "UpdateAdultLabelVisibility")
 
     data class UpdateAdultContentPreferences(
         val adultContentEnabled: Boolean,
