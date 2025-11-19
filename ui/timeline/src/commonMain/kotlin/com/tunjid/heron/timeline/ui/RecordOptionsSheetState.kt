@@ -1,4 +1,20 @@
-package com.tunjid.heron.timeline.ui.post
+/*
+ *    Copyright 2024 Adetunji Dahunsi
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+package com.tunjid.heron.timeline.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,8 +27,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Conversation
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.timeline.utilities.CopyToClipboardCard
 import com.tunjid.heron.timeline.utilities.SendDirectMessageCard
 import com.tunjid.heron.timeline.utilities.shareUri
@@ -22,39 +38,37 @@ import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetState
 
 @Stable
-class PostOptionsSheetState private constructor(
+class RecordOptionsSheetState private constructor(
     signedInProfileId: ProfileId?,
     recentConversations: List<Conversation>,
     scope: BottomSheetScope,
 ) : BottomSheetState(scope) {
-
     internal var signedInProfileId by mutableStateOf(signedInProfileId)
 
     internal var recentConversations by mutableStateOf(recentConversations)
 
-    internal var currentPost: Post? by mutableStateOf(null)
+    internal var currentRecordUri: RecordUri? by mutableStateOf(null)
 
-    internal val isSignedIn
-        get() = signedInProfileId != null
+    internal val isSignedIn get() = signedInProfileId != null
 
     override fun onHidden() {
-        currentPost = null
+        currentRecordUri = null
     }
 
-    fun showOptions(post: Post) {
-        currentPost = post
+    fun showOptions(recordUri: RecordUri) {
+        currentRecordUri = recordUri
         show()
     }
 
     companion object {
         @Composable
-        fun rememberUpdatedPostOptionsState(
+        fun rememberUpdatedRecordOptionsState(
             signedInProfileId: ProfileId?,
             recentConversations: List<Conversation>,
-            onShareInConversationClicked: (Post, Conversation) -> Unit,
-        ): PostOptionsSheetState {
+            onShareInConversationClicked: (RecordUri, Conversation) -> Unit,
+        ): RecordOptionsSheetState {
             val state = rememberBottomSheetState {
-                PostOptionsSheetState(
+                RecordOptionsSheetState(
                     signedInProfileId = signedInProfileId,
                     recentConversations = recentConversations,
                     scope = it,
@@ -64,7 +78,7 @@ class PostOptionsSheetState private constructor(
                 it.recentConversations = recentConversations
             }
 
-            PostOptionsBottomSheet(
+            RecordOptionsBottomSheet(
                 state = state,
                 onShareInConversationClicked = onShareInConversationClicked,
             )
@@ -75,30 +89,30 @@ class PostOptionsSheetState private constructor(
 }
 
 @Composable
-private fun PostOptionsBottomSheet(
-    state: PostOptionsSheetState,
-    onShareInConversationClicked: (Post, Conversation) -> Unit,
+private fun RecordOptionsBottomSheet(
+    state: RecordOptionsSheetState,
+    onShareInConversationClicked: (RecordUri, Conversation) -> Unit,
 ) {
     val signedInProfileId = state.signedInProfileId
+
     if (signedInProfileId != null) state.ModalBottomSheet {
         Column(
-            modifier = Modifier
-                .padding(horizontal = 16.dp),
+            modifier = Modifier.padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             SendDirectMessageCard(
                 signedInProfileId = signedInProfileId,
                 recentConversations = state.recentConversations,
                 onConversationClicked = { conversation ->
-                    val currentPost = state.currentPost
-                    if (currentPost != null) {
-                        onShareInConversationClicked(currentPost, conversation)
+                    state.currentRecordUri?.let { uri ->
+                        onShareInConversationClicked(uri, conversation)
                     }
                     state.hide()
                 },
             )
-            state.currentPost?.let {
-                CopyToClipboardCard(it.uri.shareUri())
+
+            state.currentRecordUri?.let { uri ->
+                CopyToClipboardCard(uri.shareUri())
             }
         }
     }

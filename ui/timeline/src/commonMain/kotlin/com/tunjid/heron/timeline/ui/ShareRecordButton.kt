@@ -16,7 +16,7 @@ import heron.ui.timeline.generated.resources.more_options
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun ShareRecordAction(
+fun ShareRecordButton(
     onShareClicked: () -> Unit,
 ) {
     Box(

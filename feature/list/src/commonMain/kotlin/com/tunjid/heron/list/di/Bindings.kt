@@ -19,17 +19,9 @@ package com.tunjid.heron.list.di
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowCircleUp
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.uri
@@ -60,8 +52,8 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.timeline.state.TimelineState
-import com.tunjid.heron.timeline.ui.ShareRecordAction
-import com.tunjid.heron.timeline.ui.feed.RecordOptionsSheetState.Companion.rememberUpdatedRecordOptionsState
+import com.tunjid.heron.timeline.ui.RecordOptionsSheetState.Companion.rememberUpdatedRecordOptionsState
+import com.tunjid.heron.timeline.ui.ShareRecordButton
 import com.tunjid.heron.timeline.utilities.TimelineTitle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -81,9 +73,6 @@ import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
-import heron.feature.list.generated.resources.Res
-import heron.feature.list.generated.resources.more_options
-import org.jetbrains.compose.resources.stringResource
 
 private const val ListRoutePattern = "/profile/{profileId}/lists/{listUriSuffix}"
 private const val ListRouteUriPattern = "/{listUriPrefix}/app.bsky.graph.list/{listUriSuffix}"
@@ -305,7 +294,7 @@ class ListBindings(
                         },
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                         actions = {
-                            ShareRecordAction(
+                            ShareRecordButton(
                                 onShareClicked = {
                                     state.timelineState?.timeline?.uri
                                         ?.asRecordUriOrNull()

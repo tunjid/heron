@@ -19,22 +19,15 @@ package com.tunjid.heron.feed.di
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowCircleUp
 import androidx.compose.material.icons.rounded.Straight
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.uri
@@ -67,9 +60,9 @@ import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
-import com.tunjid.heron.timeline.ui.ShareRecordAction
+import com.tunjid.heron.timeline.ui.RecordOptionsSheetState.Companion.rememberUpdatedRecordOptionsState
+import com.tunjid.heron.timeline.ui.ShareRecordButton
 import com.tunjid.heron.timeline.ui.feed.FeedGeneratorStatus
-import com.tunjid.heron.timeline.ui.feed.RecordOptionsSheetState.Companion.rememberUpdatedRecordOptionsState
 import com.tunjid.heron.timeline.utilities.TimelineTitle
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
@@ -92,7 +85,6 @@ import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.feature.feed.generated.resources.Res
-import heron.feature.feed.generated.resources.more_options
 import heron.feature.feed.generated.resources.scroll_to_top
 import org.jetbrains.compose.resources.stringResource
 
@@ -278,7 +270,7 @@ class FeedBindings(
                                         },
                                     )
                                 }
-                            ShareRecordAction(
+                            ShareRecordButton(
                                 onShareClicked = {
                                     state.timelineState?.timeline?.uri
                                         ?.asRecordUriOrNull()
