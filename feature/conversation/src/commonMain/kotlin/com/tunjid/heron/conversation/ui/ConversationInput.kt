@@ -43,7 +43,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,24 +74,14 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun PaneScaffoldState.UserInput(
     modifier: Modifier = Modifier,
+    inputText: TextFieldValue,
     pendingRecord: Record?,
     sendMessage: (AnnotatedString) -> Unit,
     removePendingRecordClicked: () -> Unit,
+    onTextChanged: (TextFieldValue) -> Unit,
 ) {
-    var textState by rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(TextFieldValue())
-    }
-
     // Used to decide if the keyboard should be shown
     var textFieldFocusState by remember { mutableStateOf(false) }
-
-    val onSendMessage = remember {
-        { text: AnnotatedString ->
-            sendMessage(text)
-            // Reset text field and close keyboard
-            textState = TextFieldValue()
-        }
-    }
 
     Column(
         modifier = modifier
@@ -139,13 +128,15 @@ fun PaneScaffoldState.UserInput(
                     .padding(vertical = 16.dp)
                     .weight(1f)
                     .heightIn(max = 80.dp),
-                textFieldValue = textState,
+                textFieldValue = inputText,
                 onTextChanged = {
-                    textState = it.copy(
-                        annotatedString = formatTextPost(
-                            text = it.text,
-                            textLinks = it.annotatedString.links(),
-                            onLinkTargetClicked = {},
+                    onTextChanged(
+                        it.copy(
+                            annotatedString = formatTextPost(
+                                text = it.text,
+                                textLinks = it.annotatedString.links(),
+                                onLinkTargetClicked = {},
+                            ),
                         ),
                     )
                 },
@@ -160,9 +151,9 @@ fun PaneScaffoldState.UserInput(
             SendButton(
                 modifier = Modifier
                     .height(36.dp),
-                textFieldValue = textState,
+                textFieldValue = inputText,
                 hasPendingRecord = pendingRecord != null,
-                onMessageSent = onSendMessage,
+                onMessageSent = sendMessage,
             )
         }
     }

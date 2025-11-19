@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.conversation
 
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.stubProfile
@@ -46,6 +47,7 @@ import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapLatestToManyMutations
+import com.tunjid.mutator.coroutines.mapLatestToMutation
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
@@ -130,6 +132,7 @@ class ActualConversationViewModel(
                             writeQueue = writeQueue,
                             navActions = navActions,
                         )
+                        is Action.TextChanged -> action.flow.inputTextChangeMutations()
                         is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 
                         is Action.UpdateMessageReaction -> action.flow.updateMessageReactionMutations(
@@ -239,6 +242,11 @@ private fun Flow<Action.UpdateMessageReaction>.updateMessageReactionMutations(
         writeQueue.enqueue(Writable.Reaction(action.reaction))
     }
 
+private fun Flow<Action.TextChanged>.inputTextChangeMutations(): Flow<Mutation<State>> =
+    mapLatestToMutation { action ->
+        copy(inputText = action.inputText)
+    }
+
 private fun Flow<Action.SharedRecord>.recordSharingMutations(
     recordRepository: RecordRepository,
     navActions: (NavigationMutation) -> Unit,
@@ -286,6 +294,7 @@ private fun Flow<Action.SendMessage>.sendMessageMutations(
                     null -> sharedRecord
                     else -> SharedRecord.Consumed
                 },
+                inputText = TextFieldValue(),
                 pendingItems = pendingItems + pendingItem,
                 tilingData = tilingData.copy(
                     items = currentItems + tiledListOf(
