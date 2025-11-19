@@ -48,6 +48,7 @@ import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
+import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
@@ -207,6 +208,15 @@ class FeedBindings(
                                 sharedElementPrefix = conversation.id.id,
                                 sharedUri = recordUri.asGenericUri(),
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            ),
+                        ),
+                    )
+                },
+                onShareInPostClicked = { recordUri ->
+                    viewModel.accept(
+                        Action.Navigate.To(
+                            composePostDestination(
+                                sharedUri = recordUri.asGenericUri(),
                             ),
                         ),
                     )

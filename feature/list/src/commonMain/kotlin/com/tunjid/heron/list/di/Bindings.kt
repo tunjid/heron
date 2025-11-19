@@ -24,7 +24,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
@@ -45,6 +44,7 @@ import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
+import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
@@ -255,6 +255,15 @@ class ListBindings(
                                 sharedElementPrefix = conversation.id.id,
                                 sharedUri = recordUri.asGenericUri(),
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            ),
+                        ),
+                    )
+                },
+                onShareInPostClicked = { recordUri ->
+                    viewModel.accept(
+                        Action.Navigate.To(
+                            composePostDestination(
+                                sharedUri = recordUri.asGenericUri(),
                             ),
                         ),
                     )
