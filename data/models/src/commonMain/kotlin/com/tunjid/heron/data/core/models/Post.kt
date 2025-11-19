@@ -95,6 +95,9 @@ data class Post(
 
         @Serializable
         data class Metadata(
+            @Deprecated(
+                message = "Use the embeddedRecordReference field instead",
+            )
             @ProtoNumber(1)
             val quote: Quote? = null,
             @ProtoNumber(2)
@@ -110,6 +113,8 @@ data class Post(
             val mediaFiles: List<MediaFile> = emptyList(),
             @ProtoNumber(4)
             val embeddedMedia: List<File.Media> = emptyList(),
+            @ProtoNumber(5)
+            val embeddedRecordReference: com.tunjid.heron.data.core.models.Record.Reference? = null,
         ) {
             init {
                 @Suppress("DEPRECATION")

@@ -46,6 +46,7 @@ import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
@@ -437,7 +438,11 @@ internal class OfflinePostRepository @Inject constructor(
                 text = request.text,
                 reply = reply,
                 embed = postEmbedUnion(
-                    repost = request.metadata.quote?.interaction,
+                    embeddedRecordReference = request.metadata
+                        .quote
+                        ?.interaction
+                        ?.let { Record.Reference(it.postId, it.postUri) }
+                        ?: request.metadata.embeddedRecordReference,
                     mediaBlobs = blobs,
                 ),
                 facets = resolvedLinks.facet(),

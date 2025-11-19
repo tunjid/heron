@@ -19,7 +19,7 @@ package com.tunjid.heron.data.utilities
 import app.bsky.embed.AspectRatio
 import app.bsky.embed.Images as BskyImages
 import app.bsky.embed.ImagesImage
-import app.bsky.embed.Record
+import app.bsky.embed.Record as BskyRecord
 import app.bsky.embed.RecordWithMedia
 import app.bsky.embed.RecordWithMediaMediaUnion
 import app.bsky.embed.Video as BskyVideo
@@ -36,7 +36,7 @@ import com.atproto.repo.StrongRef
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.MediaFile
-import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.utilities.File
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Cid
@@ -98,10 +98,10 @@ internal fun File.Media.with(blob: Blob) = when (this) {
 }
 
 internal fun postEmbedUnion(
-    repost: Post.Interaction.Create.Repost?,
+    embeddedRecordReference: Record.Reference?,
     mediaBlobs: List<MediaBlob>,
 ): PostEmbedUnion? {
-    val record = repost?.toRecord()
+    val record = embeddedRecordReference?.toRecord()
     val video = mediaBlobs.video()
     val images = mediaBlobs.images()
 
@@ -150,11 +150,11 @@ internal fun List<Link>.facet(): List<Facet> = map { link ->
     )
 }
 
-private fun Post.Interaction.Create.Repost.toRecord(): Record =
-    Record(
+private fun Record.Reference.toRecord(): BskyRecord =
+    BskyRecord(
         record = StrongRef(
-            uri = AtUri(postUri.uri),
-            cid = Cid(postId.id),
+            uri = AtUri(uri.uri),
+            cid = Cid(id.id),
         ),
     )
 

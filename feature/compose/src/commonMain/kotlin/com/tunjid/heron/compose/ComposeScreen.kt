@@ -34,9 +34,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -45,6 +49,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -54,19 +59,18 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.compose.ui.MediaUploadItems
-import com.tunjid.heron.data.core.models.ContentLabelPreferences
-import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.appliedLabels
+import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.contentDescription
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
+import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
+import com.tunjid.heron.timeline.utilities.EmbeddedRecord
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.AvatarSize
@@ -81,7 +85,6 @@ import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickyShar
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 
 @Composable
 internal fun ComposeScreen(
@@ -105,14 +108,14 @@ internal fun ComposeScreen(
         Post(
             signedInProfile = state.signedInProfile,
             postText = postText,
-            quotedPost = state.quotedPost,
-            adultContentEnabled = state.adultContentEnabled,
-            labelPreferences = state.labelPreferences,
-            labelers = state.labelers,
+            embeddedRecord = state.embeddedRecord,
             paneMovableElementSharedTransitionScope = paneScaffoldState,
             onPostTextChanged = { actions(Action.PostTextChanged(it)) },
             onMentionDetected = {
                 actions(Action.SearchProfiles(it))
+            },
+            onRemoveEmbeddedRecordClicked = {
+                actions(Action.RemoveEmbeddedRecord)
             },
         )
         if (state.suggestedProfiles.isNotEmpty()) {
@@ -161,13 +164,11 @@ private fun Post(
     modifier: Modifier = Modifier,
     signedInProfile: Profile?,
     postText: TextFieldValue,
-    quotedPost: Post?,
-    adultContentEnabled: Boolean,
-    labelPreferences: ContentLabelPreferences,
-    labelers: List<Labeler>,
+    embeddedRecord: Record?,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onPostTextChanged: (TextFieldValue) -> Unit,
     onMentionDetected: (String) -> Unit,
+    onRemoveEmbeddedRecordClicked: () -> Unit,
 ) {
     Column(
         modifier = modifier,
@@ -199,34 +200,32 @@ private fun Post(
             },
         )
 
-        val isBlurred = remember(
-            quotedPost,
-            labelers,
-            labelPreferences,
-            adultContentEnabled,
-        ) {
-            quotedPost?.appliedLabels(
-                adultContentEnabled = adultContentEnabled,
-                labelers = labelers,
-                labelPreferences = labelPreferences,
-            )
-                ?.shouldBlurMedia
-                ?: false
+        embeddedRecord?.let {
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                EmbeddedRecord(
+                    modifier = Modifier
+                        .weight(1f),
+                    record = it,
+                    sharedElementPrefix = NeverMatchedSharedElementPrefix,
+                    movableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    postActions = PostActions.NoOp,
+                )
+                FilledTonalIconButton(
+                    onClick = onRemoveEmbeddedRecordClicked,
+                    content = {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = null,
+                        )
+                    },
+                )
+            }
         }
-        if (quotedPost != null) QuotedPost(
-            modifier = Modifier.padding(
-                horizontal = 24.dp,
-            ),
-            now = remember { Clock.System.now() },
-            quotedPost = quotedPost,
-            sharedElementPrefix = NeverMatchedSharedElementPrefix,
-            isBlurred = isBlurred,
-            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-            onClick = {},
-            onLinkTargetClicked = { _, _ -> },
-            onProfileClicked = { _, _ -> },
-            onPostMediaClicked = { _, _, _ -> },
-        )
     }
 }
 

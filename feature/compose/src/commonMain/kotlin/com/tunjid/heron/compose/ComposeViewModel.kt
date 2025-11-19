@@ -17,16 +17,18 @@
 package com.tunjid.heron.compose
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.compose.di.sharedUri
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
-import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.PostRepository
+import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
@@ -77,8 +79,8 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualComposeViewModel(
     navActions: (NavigationMutation) -> Unit,
     authRepository: AuthRepository,
-    postRepository: PostRepository,
     searchRepository: SearchRepository,
+    recordRepository: RecordRepository,
     timelineRepository: TimelineRepository,
     fileManager: FileManager,
     writeQueue: WriteQueue,
@@ -94,12 +96,12 @@ class ActualComposeViewModel(
             loadSignedInProfileMutations(
                 authRepository = authRepository,
             ),
-            quotedPostMutations(
-                quotedPostUri = when (val creationType = route.model) {
+            embeddedRecordMutations(
+                embeddedRecordUri = when (val creationType = route.model) {
                     is Post.Create.Quote -> creationType.interaction.postUri
-                    else -> null
+                    else -> route.sharedUri?.asRecordUriOrNull()
                 },
-                postRepository = postRepository,
+                recordRepository = recordRepository,
             ),
             labelPreferencesMutations(
                 timelineRepository = timelineRepository,
@@ -130,6 +132,7 @@ class ActualComposeViewModel(
                         searchRepository = searchRepository,
                     )
                     is Action.ClearSuggestions -> action.flow.clearSuggestionsMutations()
+                    is Action.RemoveEmbeddedRecord -> action.flow.removeEmbeddedMutations()
                 }
             }
         },
@@ -142,13 +145,13 @@ private fun loadSignedInProfileMutations(
         copy(signedInProfile = it)
     }
 
-private fun quotedPostMutations(
-    quotedPostUri: PostUri?,
-    postRepository: PostRepository,
+private fun embeddedRecordMutations(
+    embeddedRecordUri: RecordUri?,
+    recordRepository: RecordRepository,
 ): Flow<Mutation<State>> =
-    quotedPostUri?.let { postUri ->
-        postRepository.post(postUri).mapToMutation {
-            copy(quotedPost = it)
+    embeddedRecordUri?.let { uri ->
+        recordRepository.record(uri).mapToMutation {
+            copy(embeddedRecord = it)
         }
     }
         ?: emptyFlow()
@@ -184,6 +187,11 @@ private fun Flow<Action.SetFabExpanded>.fabExpansionMutations(): Flow<Mutation<S
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(messages = messages - action.message)
+    }
+
+private fun Flow<Action.RemoveEmbeddedRecord>.removeEmbeddedMutations(): Flow<Mutation<State>> =
+    mapToMutation {
+        copy(embeddedRecord = null)
     }
 
 private fun Flow<Action.EditMedia>.editMediaMutations(): Flow<Mutation<State>> =
@@ -243,7 +251,7 @@ private fun Flow<Action.CreatePost>.createPostMutations(
                 links = action.links,
                 metadata = Post.Create.Metadata(
                     reply = action.postType as? Post.Create.Reply,
-                    quote = action.postType as? Post.Create.Quote,
+                    embeddedRecordReference = action.embeddedRecordReference,
                     embeddedMedia = action.media.mapNotNull { item ->
                         when (item) {
                             is RestrictedFile.Media.Photo ->

@@ -61,7 +61,8 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.timeline.ui.postActions
+import com.tunjid.heron.timeline.ui.PostActions
+import com.tunjid.heron.timeline.utilities.EmbeddedRecord
 import com.tunjid.heron.ui.text.formatTextPost
 import com.tunjid.heron.ui.text.links
 import heron.feature.conversation.generated.resources.Res
@@ -106,13 +107,13 @@ fun PaneScaffoldState.UserInput(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.Top,
             ) {
-                MessageRecord(
+                EmbeddedRecord(
                     modifier = Modifier
                         .weight(1f),
                     record = record,
                     sharedElementPrefix = SharedRecordPrefix,
-                    paneScaffoldState = this@UserInput,
-                    postActions = NoOpPostActions,
+                    movableElementSharedTransitionScope = this@UserInput,
+                    postActions = PostActions.NoOp,
                 )
                 FilledTonalIconButton(
                     onClick = removePendingRecordClicked,
@@ -261,18 +262,6 @@ fun PaneScaffoldState.SendButton(
         },
     )
 }
-
-private val NoOpPostActions = postActions(
-    onLinkTargetClicked = { _, _ -> },
-    onProfileClicked = { _, _, _ -> },
-    onPostClicked = {},
-    onPostRecordClicked = { _, _ -> },
-    onPostMediaClicked = { _, _, _, _ -> },
-    onReplyToPost = {},
-    onPostInteraction = {},
-    onPostMetadataClicked = {},
-    onPostOptionsClicked = {},
-)
 
 private val UserInputShape = RoundedCornerShape(32.dp)
 
