@@ -17,7 +17,9 @@
 package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.Uri
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
@@ -92,9 +94,10 @@ data class TimelinePreference(
     val pinned: Boolean,
 )
 
-val TimelinePreference.feedGeneratorUri: FeedGeneratorUri?
+val TimelinePreference.timelineRecordUri: RecordUri?
     get() = when (type) {
         "feed" -> FeedGeneratorUri(value)
+        "list" -> ListUri(value)
         else -> null
     }
 

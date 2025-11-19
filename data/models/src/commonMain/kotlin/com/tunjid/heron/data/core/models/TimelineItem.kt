@@ -19,7 +19,9 @@ package com.tunjid.heron.data.core.models
 import com.tunjid.heron.data.core.models.Timeline.Presentation.Media
 import com.tunjid.heron.data.core.models.Timeline.Presentation.Text
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.Uri
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
@@ -117,6 +119,12 @@ sealed interface Timeline {
                 )
             }
         }
+
+        enum class Status {
+            Pinned,
+            Saved,
+            None,
+        }
     }
 
     @Serializable
@@ -170,50 +178,70 @@ sealed interface Timeline {
     }
 
     @Serializable
-    sealed class Update {
+    sealed interface Update {
 
-        @Deprecated(
-            message = "Use the more targeted Update.OfFeedGenerator.Bulk instead",
-            replaceWith = ReplaceWith("Update.OfFeedGenerator.Bulk"),
-        )
+        sealed interface HomeFeed : Update {
+            sealed interface Single : HomeFeed {
+                val uri: RecordUri
+            }
+
+            sealed interface Pin : Single
+            sealed interface Save : Single
+            sealed interface Remove : Single
+        }
+
         @Serializable
         data class Bulk(
             val timelines: List<Home>,
-        ) : Update()
+        ) : Update,
+            HomeFeed
 
         @Serializable
-        sealed class OfFeedGenerator : Update() {
-
-            sealed interface Single {
-                val uri: FeedGeneratorUri
-            }
+        sealed class OfFeedGenerator : Update {
 
             @Serializable
             data class Pin(
                 override val uri: FeedGeneratorUri,
             ) : OfFeedGenerator(),
-                Single
+                HomeFeed.Pin
 
             @Serializable
             data class Save(
                 override val uri: FeedGeneratorUri,
             ) : OfFeedGenerator(),
-                Single
+                HomeFeed.Save
 
             @Serializable
             data class Remove(
                 override val uri: FeedGeneratorUri,
             ) : OfFeedGenerator(),
-                Single
-
-            @Serializable
-            data class Bulk(
-                val timelines: List<Home>,
-            ) : OfFeedGenerator()
+                HomeFeed.Remove
         }
 
         @Serializable
-        sealed class OfContentLabel : Update() {
+        sealed class OfList : Update {
+
+            @Serializable
+            data class Pin(
+                override val uri: ListUri,
+            ) : OfList(),
+                HomeFeed.Pin
+
+            @Serializable
+            data class Save(
+                override val uri: ListUri,
+            ) : OfList(),
+                HomeFeed.Save
+
+            @Serializable
+            data class Remove(
+                override val uri: ListUri,
+            ) : OfList(),
+                HomeFeed.Remove
+        }
+
+        @Serializable
+        sealed class OfContentLabel : Update {
             @Serializable
             data class LabelVisibilityChange(
                 val value: Label.Value,
@@ -229,7 +257,7 @@ sealed interface Timeline {
         }
 
         @Serializable
-        sealed class OfLabeler : Update() {
+        sealed class OfLabeler : Update {
             @Serializable
             data class Subscription(
                 val labelCreatorId: ProfileId,
@@ -240,7 +268,7 @@ sealed interface Timeline {
         @Serializable
         data class OfAdultContent(
             val enabled: Boolean,
-        ) : Update()
+        ) : Update
     }
 
     @Serializable

@@ -44,10 +44,4 @@ data class FeedGenerator(
             id = cid,
             uri = uri,
         )
-
-    enum class Status {
-        Pinned,
-        Saved,
-        None,
-    }
 }

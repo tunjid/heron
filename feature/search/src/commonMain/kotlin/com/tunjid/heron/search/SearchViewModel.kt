@@ -22,7 +22,7 @@ import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.models.appliedLabels
-import com.tunjid.heron.data.core.models.feedGeneratorUri
+import com.tunjid.heron.data.core.models.timelineRecordUri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.MessageRepository
@@ -252,9 +252,9 @@ private fun feedGeneratorUrisToStatusMutations(
         .distinctUntilChangedBy { it.timelinePreferences }
         .mapToMutation { preferences ->
             copy(
-                feedGeneratorUrisToPinnedStatus = preferences.timelinePreferences
+                timelineRecordUrisToPinnedStatus = preferences.timelinePreferences
                     .associateBy(
-                        keySelector = TimelinePreference::feedGeneratorUri,
+                        keySelector = TimelinePreference::timelineRecordUri,
                         valueTransform = TimelinePreference::pinned,
                     ),
             )

@@ -200,7 +200,7 @@ private fun Flow<Action.UpdateTimeline>.saveTimelinePreferencesMutations(
             }
 
             is Action.UpdateTimeline.Update -> {
-                val writable = Writable.TimelineUpdate(Timeline.Update.OfFeedGenerator.Bulk(it.timelines))
+                val writable = Writable.TimelineUpdate(Timeline.Update.Bulk(it.timelines))
                 writeQueue.enqueue(writable)
                 writeQueue.awaitDequeue(writable)
                 emit {

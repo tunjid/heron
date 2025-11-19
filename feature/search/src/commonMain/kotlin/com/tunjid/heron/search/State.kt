@@ -24,14 +24,13 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Trend
-import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.search.ui.SuggestedStarterPack
 import com.tunjid.heron.tiling.TilingState
-import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
 import kotlinx.coroutines.flow.StateFlow
@@ -109,7 +108,7 @@ data class State(
     val trends: List<Trend> = emptyList(),
     val suggestedProfileCategory: String? = null,
     val isQueryEditable: Boolean = true,
-    val feedGeneratorUrisToPinnedStatus: Map<FeedGeneratorUri?, Boolean> = emptyMap(),
+    val timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean> = emptyMap(),
     @Transient
     val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>> = emptyMap(),
     @Transient

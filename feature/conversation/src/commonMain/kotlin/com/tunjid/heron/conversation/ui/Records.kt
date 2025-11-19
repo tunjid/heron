@@ -94,6 +94,8 @@ internal fun MessageRecord(
                 sharedElementPrefix = sharedElementPrefix,
                 movableElementSharedTransitionScope = paneScaffoldState,
                 list = record,
+                status = null,
+                onListStatusUpdated = {},
             )
             is StarterPack -> StarterPack(
                 modifier = NonPostRecordModifier,

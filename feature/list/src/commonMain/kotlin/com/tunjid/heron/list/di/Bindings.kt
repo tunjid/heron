@@ -24,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
@@ -39,6 +40,7 @@ import com.tunjid.heron.list.ActualListViewModel
 import com.tunjid.heron.list.ListScreen
 import com.tunjid.heron.list.ListScreenStateHolders
 import com.tunjid.heron.list.RouteViewModelInitializer
+import com.tunjid.heron.list.withListTimelineOrNull
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -54,6 +56,7 @@ import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.ui.RecordOptionsSheetState.Companion.rememberUpdatedRecordOptionsState
 import com.tunjid.heron.timeline.ui.ShareRecordButton
+import com.tunjid.heron.timeline.ui.list.FeedListStatus
 import com.tunjid.heron.timeline.utilities.TimelineTitle
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -294,6 +297,17 @@ class ListBindings(
                         },
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                         actions = {
+                            state.timelineState
+                                ?.timeline
+                                ?.withListTimelineOrNull { listTimeline ->
+                                    FeedListStatus(
+                                        status = state.listStatus,
+                                        uri = listTimeline.feedList.uri,
+                                        onListStatusUpdated = {
+                                            viewModel.accept(Action.UpdateFeedListStatus(it))
+                                        },
+                                    )
+                                }
                             ShareRecordButton(
                                 onShareClicked = {
                                     state.timelineState?.timeline?.uri

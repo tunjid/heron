@@ -112,20 +112,15 @@ sealed interface Writable {
     data class TimelineUpdate(
         val update: Timeline.Update,
     ) : Writable {
-        @Suppress("DEPRECATION")
         override val queueId: String
             get() = when (update) {
                 is Timeline.Update.Bulk -> update.timelines.joinToString(
                     separator = "-",
                     transform = Timeline.Home::sourceId,
                 )
-                is Timeline.Update.OfFeedGenerator.Bulk -> update.timelines.joinToString(
-                    separator = "-",
-                    transform = Timeline.Home::sourceId,
-                )
-                is Timeline.Update.OfFeedGenerator.Pin -> "pin-${update.uri}"
-                is Timeline.Update.OfFeedGenerator.Remove -> "remove-${update.uri}"
-                is Timeline.Update.OfFeedGenerator.Save -> "save-${update.uri}"
+                is Timeline.Update.HomeFeed.Pin -> "pin-${update.uri}"
+                is Timeline.Update.HomeFeed.Remove -> "remove-${update.uri}"
+                is Timeline.Update.HomeFeed.Save -> "save-${update.uri}"
                 is Timeline.Update.OfContentLabel -> "visibility-change-$update"
                 is Timeline.Update.OfLabeler.Subscription -> "labeler-subscription-$update"
                 is Timeline.Update.OfAdultContent -> "adult-content-change-$update"

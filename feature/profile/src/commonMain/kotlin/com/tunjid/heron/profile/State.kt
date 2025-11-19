@@ -29,10 +29,10 @@ import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
-import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.profile.ProfileScreenStateHolders.LabelerSettings
 import com.tunjid.heron.profile.ProfileScreenStateHolders.LabelerSettings.Settings
@@ -69,7 +69,7 @@ data class State(
     val viewerState: ProfileViewerState? = null,
     val avatarSharedElementKey: String,
     val commonFollowers: List<Profile> = emptyList(),
-    val feedGeneratorUrisToPinnedStatus: Map<FeedGeneratorUri?, Boolean> = emptyMap(),
+    val timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean> = emptyMap(),
     val subscribedLabelerProfileIds: Set<ProfileId> = emptySet(),
     @Transient
     val recentConversations: List<Conversation> = emptyList(),

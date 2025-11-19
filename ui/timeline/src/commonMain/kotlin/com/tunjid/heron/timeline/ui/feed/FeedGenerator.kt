@@ -18,34 +18,27 @@ package com.tunjid.heron.timeline.ui.feed
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.BookmarkAdd
-import androidx.compose.material.icons.rounded.Bookmark
-import androidx.compose.material.icons.rounded.Star
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Timeline.Update
+import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.BlueskyClouds
 import com.tunjid.heron.timeline.utilities.FeedGeneratorCollectionShape
+import com.tunjid.heron.timeline.utilities.TimelineStatusSelection
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.format
-import com.tunjid.heron.ui.ItemSelection
 import com.tunjid.heron.ui.RecordLayout
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.feed_by
 import heron.ui.timeline.generated.resources.liked_by
-import heron.ui.timeline.generated.resources.pin_feed
-import heron.ui.timeline.generated.resources.remove_feed
-import heron.ui.timeline.generated.resources.save_feed
-import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -55,8 +48,8 @@ fun FeedGenerator(
     movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     sharedElementPrefix: String,
     feedGenerator: FeedGenerator,
-    status: FeedGenerator.Status?,
-    onFeedGeneratorStatusUpdated: (Update) -> Unit,
+    status: Timeline.Home.Status?,
+    onFeedGeneratorStatusUpdated: (Update.OfFeedGenerator) -> Unit,
 ) = with(movableElementSharedTransitionScope) {
     RecordLayout(
         modifier = modifier,
@@ -94,10 +87,10 @@ fun FeedGenerator(
             )
         },
         action = {
-            status?.let {
+            status?.let { currentStatus ->
                 FeedGeneratorStatus(
-                    status = it,
-                    feedGenerator = feedGenerator,
+                    status = currentStatus,
+                    uri = feedGenerator.uri,
                     onFeedGeneratorStatusUpdated = onFeedGeneratorStatusUpdated,
                 )
             }
@@ -107,37 +100,19 @@ fun FeedGenerator(
 
 @Composable
 fun FeedGeneratorStatus(
-    status: FeedGenerator.Status,
-    feedGenerator: FeedGenerator,
-    onFeedGeneratorStatusUpdated: (Update) -> Unit,
+    status: Timeline.Home.Status,
+    uri: FeedGeneratorUri,
+    onFeedGeneratorStatusUpdated: (Update.OfFeedGenerator) -> Unit,
 ) {
-    ItemSelection(
-        selectedItem = status,
-        availableItems = remember { FeedGenerator.Status.entries },
-        key = FeedGenerator.Status::name,
-        icon = FeedGenerator.Status::icon,
-        stringResource = FeedGenerator.Status::textResource,
-        onItemSelected = { selectedStatus ->
+    TimelineStatusSelection(
+        currentStatus = status,
+        onStatusSelected = { selectedStatus ->
             val update = when (selectedStatus) {
-                FeedGenerator.Status.Pinned -> Update.OfFeedGenerator.Pin(feedGenerator.uri)
-                FeedGenerator.Status.Saved -> Update.OfFeedGenerator.Save(feedGenerator.uri)
-                FeedGenerator.Status.None -> Update.OfFeedGenerator.Remove(feedGenerator.uri)
+                Timeline.Home.Status.Pinned -> Update.OfFeedGenerator.Pin(uri)
+                Timeline.Home.Status.Saved -> Update.OfFeedGenerator.Save(uri)
+                Timeline.Home.Status.None -> Update.OfFeedGenerator.Remove(uri)
             }
             onFeedGeneratorStatusUpdated(update)
         },
     )
 }
-
-private fun FeedGenerator.Status.textResource(): StringResource =
-    when (this) {
-        FeedGenerator.Status.Pinned -> Res.string.pin_feed
-        FeedGenerator.Status.Saved -> Res.string.save_feed
-        FeedGenerator.Status.None -> Res.string.remove_feed
-    }
-
-private val FeedGenerator.Status.icon: ImageVector
-    get() = when (this) {
-        FeedGenerator.Status.Pinned -> Icons.Rounded.Star
-        FeedGenerator.Status.Saved -> Icons.Rounded.Bookmark
-        FeedGenerator.Status.None -> Icons.Outlined.BookmarkAdd
-    }

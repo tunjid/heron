@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.timelineRecordUri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.MessageRepository
@@ -57,6 +58,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterIsInstance
@@ -127,7 +129,9 @@ class ActualListViewModel(
                         is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
                             writeQueue = writeQueue,
                         )
-
+                        is Action.UpdateFeedListStatus -> action.flow.feedListStatusMutations(
+                            writeQueue = writeQueue,
+                        )
                         is Action.Navigate -> action.flow.consumeNavigationActions(
                             navigationMutationConsumer = navActions,
                         )
@@ -145,6 +149,14 @@ fun signedInProfileIdMutations(
             copy(signedInProfileId = signedInProfile?.did)
         }
 
+private fun recentConversationMutations(
+    messageRepository: MessageRepository,
+): Flow<Mutation<State>> =
+    messageRepository.recentConversations()
+        .mapToMutation { conversations ->
+            copy(recentConversations = conversations)
+        }
+
 private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
     request: TimelineRequest.OfList,
     scope: CoroutineScope,
@@ -157,7 +169,13 @@ private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
 
     if (existingHolder != null) return@flow emitAll(
         merge(
-            existingHolder.state.mapToMutation { copy(timelineState = it) },
+            existingHolder.state.mapToMutation {
+                copy(timelineState = it)
+            },
+            listStatusMutations(
+                timeline = existingHolder.state.value.timeline,
+                timelineRepository = timelineRepository,
+            ),
             timelineCreatorMutations(
                 timeline = existingHolder.state.value.timeline,
                 profileRepository = profileRepository,
@@ -183,7 +201,13 @@ private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
     }
     emitAll(
         merge(
-            createdHolder.state.mapToMutation { copy(timelineState = it) },
+            createdHolder.state.mapToMutation {
+                copy(timelineState = it)
+            },
+            listStatusMutations(
+                timeline = timeline,
+                timelineRepository = timelineRepository,
+            ),
             timelineCreatorMutations(
                 timeline = timeline,
                 profileRepository = profileRepository,
@@ -297,13 +321,37 @@ private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
         )
     }
 
-fun recentConversationMutations(
-    messageRepository: MessageRepository,
+private fun Flow<Action.UpdateFeedListStatus>.feedListStatusMutations(
+    writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    messageRepository.recentConversations()
-        .mapToMutation { conversations ->
-            copy(recentConversations = conversations)
-        }
+    mapToManyMutations { action ->
+        writeQueue.enqueue(Writable.TimelineUpdate(action.update))
+    }
+
+private fun listStatusMutations(
+    timeline: Timeline,
+    timelineRepository: TimelineRepository,
+): Flow<Mutation<State>> =
+    timeline.withListTimelineOrNull { listTimeline ->
+        timelineRepository.preferences
+            .distinctUntilChangedBy { it.timelinePreferences }
+            .mapToMutation { preferences ->
+                val pinned =
+                    preferences.timelinePreferences.firstOrNull {
+                        it.timelineRecordUri == listTimeline.feedList.uri
+                    }
+                        ?.pinned
+
+                copy(
+                    listStatus = when (pinned) {
+                        true -> Timeline.Home.Status.Pinned
+                        false -> Timeline.Home.Status.Saved
+                        null -> Timeline.Home.Status.None
+                    },
+                )
+            }
+    }
+        ?: emptyFlow()
 
 private fun timelineCreatorMutations(
     timeline: Timeline,
@@ -332,3 +380,9 @@ private fun defaultQueryData() = CursorQuery.Data(
     cursorAnchor = Clock.System.now(),
     limit = 15,
 )
+
+internal inline fun <T> Timeline.withListTimelineOrNull(
+    block: (Timeline.Home.List) -> T,
+) =
+    if (this is Timeline.Home.List) block(this)
+    else null

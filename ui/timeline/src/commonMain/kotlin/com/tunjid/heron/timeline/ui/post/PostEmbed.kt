@@ -197,6 +197,8 @@ internal fun PostEmbed(
                                 quotingPostUri = postUri,
                             ),
                             list = embeddedRecord,
+                            status = null,
+                            onListStatusUpdated = {},
                         )
                     }
                     is StarterPack -> FeatureContainer(
