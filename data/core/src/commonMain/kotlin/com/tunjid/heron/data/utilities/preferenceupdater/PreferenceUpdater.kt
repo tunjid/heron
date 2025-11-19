@@ -210,7 +210,6 @@ internal class ThingPreferenceUpdater @Inject constructor(
                     }
 
                 is Timeline.Update.HomeFeed.Remove -> preferenceUnion.value.items.filter { savedFeed ->
-                    if (savedFeed.type != Type.Feed) return@filter true
                     savedFeed.value != update.uri.uri
                 }
 
