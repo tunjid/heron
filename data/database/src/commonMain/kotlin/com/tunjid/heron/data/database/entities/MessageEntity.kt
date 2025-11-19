@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.database.entities
 
+import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -24,6 +25,7 @@ import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.core.types.ProfileId
@@ -69,6 +71,8 @@ data class MessageEntity(
     val conversationOwnerId: ProfileId,
     val isDeleted: Boolean,
     val sentAt: Instant,
+    @ColumnInfo(defaultValue = "NULL")
+    val base64EncodedMetadata: String?,
 )
 
 data class PopulatedMessageEntity(
@@ -123,4 +127,12 @@ fun PopulatedMessageEntity.asExternalModel(
             createdAt = it.createdAt,
         )
     },
+    metadata = entity.metadata(),
 )
+
+internal fun MessageEntity.metadata() =
+    try {
+        base64EncodedMetadata?.fromBase64EncodedUrl<Message.Metadata>()
+    } catch (_: Exception) {
+        null
+    }

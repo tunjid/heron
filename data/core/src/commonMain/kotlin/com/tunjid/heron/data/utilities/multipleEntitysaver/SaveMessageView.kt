@@ -20,9 +20,12 @@ import app.bsky.embed.RecordViewRecordEmbedUnion as MessagePost
 import app.bsky.embed.RecordViewRecordUnion
 import app.bsky.feed.PostView
 import app.bsky.feed.PostViewEmbedUnion as TimelinePost
+import app.bsky.richtext.Facet
 import chat.bsky.convo.DeletedMessageView
 import chat.bsky.convo.MessageView
 import chat.bsky.convo.MessageViewEmbedUnion
+import com.tunjid.heron.data.core.models.Message
+import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ListUri
@@ -36,6 +39,7 @@ import com.tunjid.heron.data.database.entities.messageembeds.MessageFeedGenerato
 import com.tunjid.heron.data.database.entities.messageembeds.MessageListEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessagePostEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessageStarterPackEntity
+import com.tunjid.heron.data.network.models.toLinkOrNull
 
 internal fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId?,
@@ -57,6 +61,7 @@ internal fun MultipleEntitySaver.add(
             conversationOwnerId = viewingProfileId,
             isDeleted = false,
             sentAt = messageView.sentAt,
+            base64EncodedMetadata = messageView.metadata().toUrlEncodedBase64(),
         ),
     )
     messageView.reactions.forEach { reactionView ->
@@ -193,6 +198,12 @@ internal fun MultipleEntitySaver.add(
             conversationId = conversationId,
             conversationOwnerId = viewingProfileId,
             sentAt = deletedMessageView.sentAt,
+            base64EncodedMetadata = null,
         ),
     )
 }
+
+private fun MessageView.metadata(): Message.Metadata =
+    Message.Metadata(
+        links = facets.mapNotNull(Facet::toLinkOrNull),
+    )

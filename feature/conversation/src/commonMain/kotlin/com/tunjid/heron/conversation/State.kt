@@ -129,6 +129,12 @@ val MessageItem.text
         is MessageItem.Sent -> message.text
     }
 
+val MessageItem.links
+    get() = when (this) {
+        is MessageItem.Pending -> emptyList()
+        is MessageItem.Sent -> message.metadata?.links.orEmpty()
+    }
+
 val MessageItem.conversationId
     get() = when (this) {
         is MessageItem.Pending -> message.conversationId

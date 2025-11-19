@@ -115,5 +115,6 @@ private fun PopulatedConversationEntity.conversationMessage(
                             )
                         },
                 ),
+                metadata = message.metadata(),
             )
         }

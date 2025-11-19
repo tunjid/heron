@@ -64,6 +64,7 @@ import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.utilities.EmbeddedRecord
 import com.tunjid.heron.ui.text.formatTextPost
 import com.tunjid.heron.ui.text.links
+import com.tunjid.heron.ui.text.withFormattedTextPost
 import heron.feature.conversation.generated.resources.Res
 import heron.feature.conversation.generated.resources.textfield_desc
 import heron.feature.conversation.generated.resources.textfield_hint
@@ -129,15 +130,9 @@ fun PaneScaffoldState.UserInput(
                     .weight(1f)
                     .heightIn(max = 80.dp),
                 textFieldValue = inputText,
-                onTextChanged = {
+                onTextChanged = { value ->
                     onTextChanged(
-                        it.copy(
-                            annotatedString = formatTextPost(
-                                text = it.text,
-                                textLinks = it.annotatedString.links(),
-                                onLinkTargetClicked = {},
-                            ),
-                        ),
+                        value.withFormattedTextPost(),
                     )
                 },
                 // Only show the keyboard if there's no input selector and text field has focus

@@ -142,7 +142,7 @@ fun Record.avatarSharedElementKey(
     return "$finalPrefix-${reference.uri.uri}-${creator.did.id}-avatar"
 }
 
-internal fun RecordUri.shareUri(): GenericUri =
+fun RecordUri.shareUri(): GenericUri =
     GenericUri(
         when (this) {
             is FeedGeneratorUri -> "https://bsky.app/profile/${profileId().id}/feed/${recordKey.value}"

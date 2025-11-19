@@ -59,6 +59,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -88,6 +91,7 @@ import com.tunjid.heron.timeline.utilities.EmbeddedRecord
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.text.rememberFormattedTextPost
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
 import kotlinx.coroutines.flow.drop
@@ -141,6 +145,16 @@ internal fun ConversationScreen(
                         is MessageItem.Pending -> Unit
                         is MessageItem.Sent -> emojiPickerSheetState.showSheet(item.message)
                     }
+                },
+                onLinkTargetClicked = { linkTarget ->
+                    if (linkTarget is LinkTarget.Navigable) actions(
+                        Action.Navigate.To(
+                            pathDestination(
+                                path = linkTarget.path,
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            ),
+                        ),
+                    )
                 },
             )
         }
@@ -206,6 +220,7 @@ private fun Message(
     paneScaffoldState: PaneScaffoldState,
     actions: (Action) -> Unit,
     onMessageLongPressed: (MessageItem) -> Unit,
+    onLinkTargetClicked: (LinkTarget) -> Unit,
 ) {
     val borderColor = when (side) {
         Side.Sender -> MaterialTheme.colorScheme.primary
@@ -257,6 +272,7 @@ private fun Message(
             modifier = Modifier,
             onMessageLongPressed = onMessageLongPressed,
             paneScaffoldState = paneScaffoldState,
+            onLinkTargetClicked = onLinkTargetClicked,
         )
 
         when (item) {
@@ -312,6 +328,7 @@ private fun AuthorAndTextMessage(
     isLastMessageByAuthor: Boolean,
     paneScaffoldState: PaneScaffoldState,
     onMessageLongPressed: (MessageItem) -> Unit,
+    onLinkTargetClicked: (LinkTarget) -> Unit,
 ) {
     if (item.text.isNotBlank()) Column(
         modifier = modifier,
@@ -332,6 +349,7 @@ private fun AuthorAndTextMessage(
             message = item,
             side = side,
             paneScaffoldState = paneScaffoldState,
+            onLinkTargetClicked = onLinkTargetClicked,
         )
         if (isFirstMessageByAuthor) {
             // Last bubble before next author
@@ -373,6 +391,7 @@ private fun ChatItemBubble(
     message: MessageItem,
     side: Side,
     paneScaffoldState: PaneScaffoldState,
+    onLinkTargetClicked: (LinkTarget) -> Unit,
 ) {
     val backgroundBubbleColor = when (side) {
         Side.Sender -> MaterialTheme.colorScheme.primary
@@ -387,7 +406,12 @@ private fun ChatItemBubble(
             shape = side.bubbleShape,
         ) {
             Text(
-                text = message.text,
+                text = rememberFormattedTextPost(
+                    text = message.text,
+                    textLinks = message.links,
+                    textLinkStyles = side.rememberTextLinkStyle(),
+                    onLinkTargetClicked = onLinkTargetClicked,
+                ),
                 style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
                 modifier = Modifier.padding(
                     vertical = 8.dp,
@@ -597,6 +621,22 @@ private sealed interface Side :
             bottomEnd = 20.dp,
             bottomStart = 20.dp,
         )
+    }
+}
+
+@Composable
+private fun Side.rememberTextLinkStyle() = when (this) {
+    Side.Receiver -> null
+    Side.Sender -> {
+        val color = MaterialTheme.colorScheme.onPrimary
+        remember(color) {
+            TextLinkStyles(
+                style = SpanStyle(
+                    color = color,
+                    textDecoration = TextDecoration.Underline,
+                ),
+            )
+        }
     }
 }
 
