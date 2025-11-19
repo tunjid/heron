@@ -21,12 +21,14 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 
 @Entity(
     tableName = "postBookmark",
     primaryKeys = [
         "postUri",
+        "viewingProfileId",
     ],
     foreignKeys = [
         ForeignKey(
@@ -39,10 +41,12 @@ import kotlinx.datetime.Instant
     indices = [
         Index(value = ["postId"]),
         Index(value = ["createdAt"]),
+        Index(value = ["viewingProfileId", "createdAt"]),
     ],
 )
 data class PostBookmarkEntity(
     val postUri: PostUri,
+    val viewingProfileId: ProfileId,
     val postId: PostId,
     val createdAt: Instant,
 )
