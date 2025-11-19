@@ -62,10 +62,8 @@ internal fun RecordUri.shareUri(): GenericUri =
     GenericUri(
         when (this) {
             is FeedGeneratorUri -> "https://bsky.app/profile/${profileId().id}/feed/${recordKey.value}"
-            is ListUri -> "https://bsky.app/profile/${profileId().id}/list/${recordKey.value}"
-            // The rkey of a starter pack is the at-uri of the list it contains
-            is StarterPackUri -> "https://bsky.app/starter-pack/${recordKey.value}"
-            // The rkey for a labeler is 'self'
+            is ListUri -> "https://bsky.app/profile/${profileId().id}/lists/${recordKey.value}"
+            is StarterPackUri -> "https://bsky.app/starter-pack/${profileId().id}/${recordKey.value}"
             is LabelerUri -> "https://bsky.app/profile/${profileId().id}"
             is PostUri -> "https://bsky.app/profile/${profileId().id}/post/${recordKey.value}"
         },
