@@ -25,11 +25,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.StarterPack
+import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.Timeline.Update
+import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.BlueskyClouds
 import com.tunjid.heron.timeline.utilities.ListCollectionShape
 import com.tunjid.heron.timeline.utilities.StarterPackCollectionShape
+import com.tunjid.heron.timeline.utilities.TimelineStatusSelection
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.RecordLayout
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
@@ -45,6 +49,8 @@ fun FeedList(
     movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     sharedElementPrefix: String,
     list: FeedList,
+    status: Timeline.Home.Status?,
+    onListStatusUpdated: (Update.OfList) -> Unit,
 ) = with(movableElementSharedTransitionScope) {
     RecordLayout(
         modifier = modifier,
@@ -77,6 +83,15 @@ fun FeedList(
                     )
                 },
             )
+        },
+        action = {
+            status?.let { currentStatus ->
+                FeedListStatus(
+                    status = currentStatus,
+                    uri = list.uri,
+                    onListStatusUpdated = onListStatusUpdated,
+                )
+            }
         },
     )
 }
@@ -120,6 +135,25 @@ fun StarterPack(
                     )
                 },
             )
+        },
+    )
+}
+
+@Composable
+fun FeedListStatus(
+    status: Timeline.Home.Status,
+    uri: ListUri,
+    onListStatusUpdated: (Update.OfList) -> Unit,
+) {
+    TimelineStatusSelection(
+        currentStatus = status,
+        onStatusSelected = { selectedStatus ->
+            val update = when (selectedStatus) {
+                Timeline.Home.Status.Pinned -> Update.OfList.Pin(uri)
+                Timeline.Home.Status.Saved -> Update.OfList.Save(uri)
+                Timeline.Home.Status.None -> Update.OfList.Remove(uri)
+            }
+            onListStatusUpdated(update)
         },
     )
 }

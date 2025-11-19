@@ -30,8 +30,8 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelinePreference
-import com.tunjid.heron.data.core.models.feedGeneratorUri
 import com.tunjid.heron.data.core.models.path
+import com.tunjid.heron.data.core.models.timelineRecordUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri.Companion.asSelfLabelerUri
@@ -333,9 +333,9 @@ private fun feedGeneratorUrisToStatusMutations(
         .distinctUntilChangedBy { it.timelinePreferences }
         .mapToMutation { preferences ->
             copy(
-                feedGeneratorUrisToPinnedStatus = preferences.timelinePreferences
+                timelineRecordUrisToPinnedStatus = preferences.timelinePreferences
                     .associateBy(
-                        keySelector = TimelinePreference::feedGeneratorUri,
+                        keySelector = TimelinePreference::timelineRecordUri,
                         valueTransform = TimelinePreference::pinned,
                     ),
             )

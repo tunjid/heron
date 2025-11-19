@@ -264,7 +264,7 @@ class FeedBindings(
                                 ?.withFeedTimelineOrNull { feedTimeline ->
                                     FeedGeneratorStatus(
                                         status = state.feedStatus,
-                                        feedGenerator = feedTimeline.feedGenerator,
+                                        uri = feedTimeline.feedGenerator.uri,
                                         onFeedGeneratorStatusUpdated = {
                                             viewModel.accept(Action.UpdateFeedGeneratorStatus(it))
                                         },

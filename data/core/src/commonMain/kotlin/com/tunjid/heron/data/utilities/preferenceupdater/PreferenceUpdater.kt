@@ -127,9 +127,9 @@ internal class ThingPreferenceUpdater @Inject constructor(
                     block = { updateLabelerPreference(preferencesUnion, it) },
                 )
 
-                is PreferencesUnion.SavedFeedsPrefV2 -> preferencesUnion.targeting<Timeline.Update.OfFeedGenerator>(
+                is PreferencesUnion.SavedFeedsPrefV2 -> preferencesUnion.targeting<Timeline.Update.HomeFeed>(
                     update = update,
-                    block = { updateFeedPreference(preferencesUnion, it) },
+                    block = { updateHomeTimelinePreference(preferencesUnion, it) },
                 )
 
                 else -> preferencesUnion
@@ -145,13 +145,13 @@ internal class ThingPreferenceUpdater @Inject constructor(
         return updatedOtherPrefs + updatedContentLabelPrefs
     }
 
-    private suspend fun updateFeedPreference(
+    private suspend fun updateHomeTimelinePreference(
         preferenceUnion: PreferencesUnion.SavedFeedsPrefV2,
-        update: Timeline.Update.OfFeedGenerator,
+        update: Timeline.Update.HomeFeed,
     ): PreferencesUnion.SavedFeedsPrefV2 = PreferencesUnion.SavedFeedsPrefV2(
         SavedFeedsPrefV2(
             items = when (update) {
-                is Timeline.Update.OfFeedGenerator.Bulk -> preferenceUnion.value.items.associateBy(
+                is Timeline.Update.Bulk -> preferenceUnion.value.items.associateBy(
                     keySelector = SavedFeed::value,
                     valueTransform = SavedFeed::id,
                 ).let { savedFeedValuesToIds ->
@@ -193,29 +193,34 @@ internal class ThingPreferenceUpdater @Inject constructor(
                     }
                 }
 
-                is Timeline.Update.OfFeedGenerator.Pin -> preferenceUnion.value.items.filter {
+                is Timeline.Update.HomeFeed.Pin -> preferenceUnion.value.items.filter {
                     it.value != update.uri.uri
                 }
                     .partition(SavedFeed::pinned)
                     .let { (pinned, saved) ->
                         pinned + SavedFeed(
                             id = tidGenerator.generate(),
-                            type = Type.Feed,
+                            type = when (update) {
+                                is Timeline.Update.OfFeedGenerator.Pin -> Type.Feed
+                                is Timeline.Update.OfList.Pin -> Type.List
+                            },
                             value = update.uri.uri,
                             pinned = true,
                         ) + saved
                     }
 
-                is Timeline.Update.OfFeedGenerator.Remove -> preferenceUnion.value.items.filter { savedFeed ->
-                    if (savedFeed.type != Type.Feed) return@filter true
+                is Timeline.Update.HomeFeed.Remove -> preferenceUnion.value.items.filter { savedFeed ->
                     savedFeed.value != update.uri.uri
                 }
 
-                is Timeline.Update.OfFeedGenerator.Save -> preferenceUnion.value.items.filter {
+                is Timeline.Update.HomeFeed.Save -> preferenceUnion.value.items.filter {
                     it.value != update.uri.uri
                 } + SavedFeed(
                     id = tidGenerator.generate(),
-                    type = Type.Feed,
+                    type = when (update) {
+                        is Timeline.Update.OfFeedGenerator.Save -> Type.Feed
+                        is Timeline.Update.OfList.Save -> Type.List
+                    },
                     value = update.uri.uri,
                     pinned = false,
                 )

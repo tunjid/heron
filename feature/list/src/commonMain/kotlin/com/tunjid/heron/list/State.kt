@@ -47,6 +47,8 @@ data class State(
     val creator: Profile? = null,
     val sharedElementPrefix: String? = null,
     @Transient
+    val listStatus: Timeline.Home.Status = Timeline.Home.Status.None,
+    @Transient
     val signedInProfileId: ProfileId? = null,
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
@@ -169,6 +171,10 @@ sealed class Action(val key: String) {
         val following: GenericUri?,
         val followedBy: GenericUri?,
     ) : Action(key = "ToggleViewerState")
+
+    data class UpdateFeedListStatus(
+        val update: Timeline.Update,
+    ) : Action(key = "UpdateFeedGeneratorStatus")
 
     sealed class Navigate :
         Action(key = "Navigate"),

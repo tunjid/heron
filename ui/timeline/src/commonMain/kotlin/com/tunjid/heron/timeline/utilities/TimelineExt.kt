@@ -25,6 +25,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.BookmarkAdd
+import androidx.compose.material.icons.rounded.Bookmark
+import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.Badge
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
@@ -46,6 +51,7 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
+import com.tunjid.heron.ui.ItemSelection
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.subtitleSharedElementKey
@@ -56,10 +62,14 @@ import heron.ui.timeline.generated.resources.feed_by
 import heron.ui.timeline.generated.resources.likes
 import heron.ui.timeline.generated.resources.list_by
 import heron.ui.timeline.generated.resources.media
+import heron.ui.timeline.generated.resources.pin_feed
 import heron.ui.timeline.generated.resources.posts
+import heron.ui.timeline.generated.resources.remove_feed
 import heron.ui.timeline.generated.resources.replies
+import heron.ui.timeline.generated.resources.save_feed
 import heron.ui.timeline.generated.resources.starter_pack_by
 import heron.ui.timeline.generated.resources.videos
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -164,6 +174,21 @@ fun TimelineTitle(
     }
 }
 
+@Composable
+internal fun TimelineStatusSelection(
+    currentStatus: Timeline.Home.Status,
+    onStatusSelected: (Timeline.Home.Status) -> Unit,
+) {
+    ItemSelection(
+        selectedItem = currentStatus,
+        availableItems = remember { Timeline.Home.Status.entries },
+        key = Timeline.Home.Status::name,
+        icon = Timeline.Home.Status::icon,
+        stringResource = Timeline.Home.Status::textResource,
+        onItemSelected = onStatusSelected,
+    )
+}
+
 val Timeline.description: String
     get() = when (this) {
         is Timeline.Home.Feed -> feedGenerator.description
@@ -216,6 +241,20 @@ fun LazyStaggeredGridState.pendingOffsetFor(
 
 val TimelineItem.canAutoPlayVideo: Boolean
     get() = appliedLabels.canAutoPlayVideo
+
+private fun Timeline.Home.Status.textResource(): StringResource =
+    when (this) {
+        Timeline.Home.Status.Pinned -> Res.string.pin_feed
+        Timeline.Home.Status.Saved -> Res.string.save_feed
+        Timeline.Home.Status.None -> Res.string.remove_feed
+    }
+
+private val Timeline.Home.Status.icon: ImageVector
+    get() = when (this) {
+        Timeline.Home.Status.Pinned -> Icons.Rounded.Star
+        Timeline.Home.Status.Saved -> Icons.Rounded.Bookmark
+        Timeline.Home.Status.None -> Icons.Outlined.BookmarkAdd
+    }
 
 private val Timeline.avatar: ImageUri
     get() = when (this) {

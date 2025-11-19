@@ -96,7 +96,7 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.path
-import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.interpolatedVisibleIndexEffect
@@ -389,7 +389,7 @@ internal fun SearchScreen(
                     ?: emptyList(),
                 starterPacksWithMembers = state.starterPacksWithMembers,
                 feedGenerators = state.feedGenerators,
-                feedGeneratorUrisToPinnedStatus = state.feedGeneratorUrisToPinnedStatus,
+                timelineRecordUrisToPinnedStatus = state.timelineRecordUrisToPinnedStatus,
                 onProfileClicked = onProfileClicked,
                 onViewerStateClicked = onViewerStateClicked,
                 onListMemberClicked = onListMemberClicked,
@@ -449,7 +449,7 @@ private fun SuggestedContent(
     suggestedProfiles: List<ProfileWithViewerState>,
     starterPacksWithMembers: List<SuggestedStarterPack>,
     feedGenerators: List<FeedGenerator>,
-    feedGeneratorUrisToPinnedStatus: Map<FeedGeneratorUri?, Boolean>,
+    timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean>,
     onTrendClicked: (Trend) -> Unit,
     onProfileClicked: (ProfileWithViewerState) -> Unit,
     onViewerStateClicked: (ProfileWithViewerState) -> Unit,
@@ -570,10 +570,10 @@ private fun SuggestedContent(
                     movableElementSharedTransitionScope = movableElementSharedTransitionScope,
                     sharedElementPrefix = SearchFeedGeneratorSharedElementPrefix,
                     feedGenerator = feedGenerator,
-                    status = when (feedGeneratorUrisToPinnedStatus[feedGenerator.uri]) {
-                        true -> FeedGenerator.Status.Pinned
-                        false -> FeedGenerator.Status.Saved
-                        null -> FeedGenerator.Status.None
+                    status = when (timelineRecordUrisToPinnedStatus[feedGenerator.uri]) {
+                        true -> Timeline.Home.Status.Pinned
+                        false -> Timeline.Home.Status.Saved
+                        null -> Timeline.Home.Status.None
                     },
                     onFeedGeneratorStatusUpdated = onUpdateTimelineClicked,
                 )
@@ -808,7 +808,7 @@ private fun TabbedSearchResults(
                             listState = listState,
                             modifier = modifier,
                             paneScaffoldState = paneScaffoldState,
-                            feedGeneratorUrisToPinnedStatus = state.feedGeneratorUrisToPinnedStatus,
+                            timelineRecordUrisToPinnedStatus = state.timelineRecordUrisToPinnedStatus,
                             onFeedGeneratorClicked = onFeedGeneratorClicked,
                             onTimelineUpdateClicked = onTimelineUpdateClicked,
                             searchResultActions = searchResultStateHolder.accept,
@@ -988,7 +988,7 @@ private fun FeedSearchResults(
     listState: LazyListState,
     modifier: Modifier,
     paneScaffoldState: PaneScaffoldState,
-    feedGeneratorUrisToPinnedStatus: Map<FeedGeneratorUri?, Boolean>,
+    timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean>,
     onFeedGeneratorClicked: (FeedGenerator) -> Unit,
     onTimelineUpdateClicked: (Timeline.Update) -> Unit,
     searchResultActions: (SearchState.Tile) -> Unit,
@@ -1017,10 +1017,10 @@ private fun FeedSearchResults(
                     movableElementSharedTransitionScope = paneScaffoldState,
                     sharedElementPrefix = SearchFeedGeneratorSharedElementPrefix,
                     feedGenerator = result.feedGenerator,
-                    status = when (feedGeneratorUrisToPinnedStatus[result.feedGenerator.uri]) {
-                        true -> FeedGenerator.Status.Pinned
-                        false -> FeedGenerator.Status.Saved
-                        null -> FeedGenerator.Status.None
+                    status = when (timelineRecordUrisToPinnedStatus[result.feedGenerator.uri]) {
+                        true -> Timeline.Home.Status.Pinned
+                        false -> Timeline.Home.Status.Saved
+                        null -> Timeline.Home.Status.None
                     },
                     onFeedGeneratorStatusUpdated = onTimelineUpdateClicked,
                 )

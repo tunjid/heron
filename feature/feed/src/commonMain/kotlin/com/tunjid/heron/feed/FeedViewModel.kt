@@ -17,9 +17,8 @@
 package com.tunjid.heron.feed
 
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.data.core.models.feedGeneratorUri
+import com.tunjid.heron.data.core.models.timelineRecordUri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
@@ -132,6 +131,14 @@ fun signedInProfileIdMutations(
             copy(signedInProfileId = signedInProfile?.did)
         }
 
+fun recentConversationMutations(
+    messageRepository: MessageRepository,
+): Flow<Mutation<State>> =
+    messageRepository.recentConversations()
+        .mapToMutation { conversations ->
+            copy(recentConversations = conversations)
+        }
+
 private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
     request: TimelineRequest.OfFeed,
     scope: CoroutineScope,
@@ -242,28 +249,20 @@ private fun feedStatusMutations(
             .mapToMutation { preferences ->
                 val pinned =
                     preferences.timelinePreferences.firstOrNull {
-                        it.feedGeneratorUri == feedTimeline.feedGenerator.uri
+                        it.timelineRecordUri == feedTimeline.feedGenerator.uri
                     }
                         ?.pinned
 
                 copy(
                     feedStatus = when (pinned) {
-                        true -> FeedGenerator.Status.Pinned
-                        false -> FeedGenerator.Status.Saved
-                        null -> FeedGenerator.Status.None
+                        true -> Timeline.Home.Status.Pinned
+                        false -> Timeline.Home.Status.Saved
+                        null -> Timeline.Home.Status.None
                     },
                 )
             }
     }
         ?: emptyFlow()
-
-fun recentConversationMutations(
-    messageRepository: MessageRepository,
-): Flow<Mutation<State>> =
-    messageRepository.recentConversations()
-        .mapToMutation { conversations ->
-            copy(recentConversations = conversations)
-        }
 
 internal inline fun <T> Timeline.withFeedTimelineOrNull(
     block: (Timeline.Home.Feed) -> T,

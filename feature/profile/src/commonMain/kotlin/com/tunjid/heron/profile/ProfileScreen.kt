@@ -89,7 +89,6 @@ import com.tunjid.composables.lazy.pendingScrollOffsetState
 import com.tunjid.composables.ui.lerp
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Embed
-import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -100,6 +99,7 @@ import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri.Companion.asSelfLabelerUri
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.images.AsyncImage
@@ -364,11 +364,7 @@ internal fun ProfileScreen(
                                         movableElementSharedTransitionScope = paneScaffoldState,
                                         sharedElementPrefix = ProfileCollectionSharedElementPrefix,
                                         feedGenerator = feedGenerator,
-                                        status = when (state.feedGeneratorUrisToPinnedStatus[feedGenerator.uri]) {
-                                            true -> FeedGenerator.Status.Pinned
-                                            false -> FeedGenerator.Status.Saved
-                                            null -> FeedGenerator.Status.None
-                                        },
+                                        status = state.timelineRecordUrisToPinnedStatus.status(feedGenerator.uri),
                                         onFeedGeneratorStatusUpdated = { update ->
                                             if (paneScaffoldState.isSignedOut) signInPopUpState.show()
                                             else actions(Action.UpdatePreferences(update))
@@ -431,6 +427,11 @@ internal fun ProfileScreen(
                                         movableElementSharedTransitionScope = paneScaffoldState,
                                         sharedElementPrefix = ProfileCollectionSharedElementPrefix,
                                         list = list,
+                                        status = state.timelineRecordUrisToPinnedStatus.status(list.uri),
+                                        onListStatusUpdated = { update ->
+                                            if (paneScaffoldState.isSignedOut) signInPopUpState.show()
+                                            else actions(Action.UpdatePreferences(update))
+                                        },
                                     )
                                 },
                             )
@@ -1262,6 +1263,14 @@ private fun TimelinePresentationSelector(
                 )
         },
     )
+}
+
+private fun Map<RecordUri?, Boolean>.status(
+    recordUri: RecordUri,
+) = when (this[recordUri]) {
+    true -> Timeline.Home.Status.Pinned
+    false -> Timeline.Home.Status.Saved
+    null -> Timeline.Home.Status.None
 }
 
 @Stable

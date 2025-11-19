@@ -42,7 +42,7 @@ data class State(
     val sharedElementPrefix: String? = null,
     val scrollToTopRequestId: String? = null,
     @Transient
-    val feedStatus: FeedGenerator.Status = FeedGenerator.Status.None,
+    val feedStatus: Timeline.Home.Status = Timeline.Home.Status.None,
     @Transient
     val signedInProfileId: ProfileId? = null,
     @Transient
