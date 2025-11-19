@@ -45,10 +45,15 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.label.LabelSetting
 import com.tunjid.heron.timeline.ui.label.Labeler
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.moderation.generated.resources.Res
 import heron.feature.moderation.generated.resources.content_filters
 import heron.feature.moderation.generated.resources.enable_adult_content
+import heron.feature.moderation.generated.resources.label_hide
+import heron.feature.moderation.generated.resources.label_show
+import heron.feature.moderation.generated.resources.label_warn
 import heron.feature.moderation.generated.resources.labeler_subscriptions
+import heron.ui.core.generated.resources.unknown_label
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -166,6 +171,7 @@ private fun LazyListScope.adultLabelsSection(
                     labelDescription = stringResource(item.descriptionRes),
                     selectedVisibility = item.visibility,
                     visibilities = Label.Visibility.all,
+                    visibilityStringResource = Label.Visibility::stringRes,
                     onVisibilityChanged = { visibility ->
                         onGlobalLabelVisibilityChanged(item, visibility)
                     },
@@ -286,6 +292,14 @@ private val LastCardShape = RoundedCornerShape(
     bottomStart = 16.dp,
     bottomEnd = 16.dp,
 )
+
+private val Label.Visibility.stringRes
+    get() = when (this) {
+        Label.Visibility.Ignore -> Res.string.label_show
+        Label.Visibility.Warn -> Res.string.label_warn
+        Label.Visibility.Hide -> Res.string.label_hide
+        else -> CommonStrings.unknown_label
+    }
 
 private val RoundCardShape = RoundedCornerShape(16.dp)
 

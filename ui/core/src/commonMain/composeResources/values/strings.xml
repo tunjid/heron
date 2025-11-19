@@ -42,4 +42,5 @@
     <string name="graphic_media_label_description">Explicit or potentially disturbing media.</string>
     <string name="gore_label">Graphic Media</string>
     <string name="gore_label_description">Explicit or potentially disturbing media.</string>
+    <string name="unknown_label">Unknown</string>
 </resources>
