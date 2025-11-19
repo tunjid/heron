@@ -438,11 +438,11 @@ internal class OfflinePostRepository @Inject constructor(
                 text = request.text,
                 reply = reply,
                 embed = postEmbedUnion(
-                    embeddedRecordReference = request.metadata
-                        .quote
-                        ?.interaction
-                        ?.let { Record.Reference(it.postId, it.postUri) }
-                        ?: request.metadata.embeddedRecordReference,
+                    embeddedRecordReference = request.metadata.embeddedRecordReference
+                        ?: request.metadata
+                            .quote
+                            ?.interaction
+                            ?.let { Record.Reference(it.postId, it.postUri) },
                     mediaBlobs = blobs,
                 ),
                 facets = resolvedLinks.facet(),
