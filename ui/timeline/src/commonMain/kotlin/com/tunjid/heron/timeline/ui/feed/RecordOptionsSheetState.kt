@@ -38,15 +38,12 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Conversation
-import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.data.core.types.LabelerUri
-import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
-import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.timeline.utilities.shareUri
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
@@ -300,26 +297,4 @@ private fun ShareActionCard(
             content()
         }
     }
-}
-
-fun RecordUri.shareUri(): GenericUri {
-    if (!uri.startsWith("at://")) return GenericUri(uri)
-
-    val parts = uri.substringAfter("at://").split('/')
-    if (parts.size < 3) return GenericUri(uri)
-
-    val did = parts[0]
-    val rkey = parts[2]
-
-    return GenericUri(
-        when (this) {
-            is FeedGeneratorUri -> "https://bsky.app/profile/$did/feed/$rkey"
-            is ListUri -> "https://bsky.app/profile/$did/list/$rkey"
-            // The rkey of a starter pack is the at-uri of the list it contains
-            is StarterPackUri -> "https://bsky.app/starter-pack/$rkey"
-            // The rkey for a labeler is 'self'
-            is LabelerUri -> "https://bsky.app/profile/$did"
-            else -> uri
-        },
-    )
 }

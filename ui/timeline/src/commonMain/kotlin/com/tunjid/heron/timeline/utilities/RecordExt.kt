@@ -30,12 +30,15 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackUri
+import com.tunjid.heron.data.core.types.profileId
+import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
 fun Record.avatarSharedElementKey(
@@ -54,6 +57,19 @@ fun Record.avatarSharedElementKey(
     }
     return "$finalPrefix-${reference.uri.uri}-${creator.did.id}-avatar"
 }
+
+internal fun RecordUri.shareUri(): GenericUri =
+    GenericUri(
+        when (this) {
+            is FeedGeneratorUri -> "https://bsky.app/profile/${profileId().id}/feed/${recordKey.value}"
+            is ListUri -> "https://bsky.app/profile/${profileId().id}/list/${recordKey.value}"
+            // The rkey of a starter pack is the at-uri of the list it contains
+            is StarterPackUri -> "https://bsky.app/starter-pack/${recordKey.value}"
+            // The rkey for a labeler is 'self'
+            is LabelerUri -> "https://bsky.app/profile/${profileId().id}"
+            is PostUri -> "https://bsky.app/profile/${profileId().id}/post/${recordKey.value}"
+        },
+    )
 
 fun RecordUri.collectionShape() = when (this) {
     is FeedGeneratorUri -> FeedGeneratorCollectionShape

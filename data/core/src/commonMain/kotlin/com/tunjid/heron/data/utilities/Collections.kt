@@ -18,9 +18,7 @@ package com.tunjid.heron.data.utilities
 
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.network.BlueskyJson
 import kotlinx.datetime.Instant

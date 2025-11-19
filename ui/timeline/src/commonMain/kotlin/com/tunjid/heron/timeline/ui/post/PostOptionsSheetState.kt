@@ -41,9 +41,9 @@ import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.timeline.utilities.shareUri
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
@@ -133,7 +133,7 @@ private fun PostOptionsBottomSheet(
                 },
             )
             state.currentPost?.let {
-                CopyToClipboardCard(it.shareUri())
+                CopyToClipboardCard(it.uri.shareUri())
             }
         }
     }
@@ -300,6 +300,3 @@ private fun ShareActionCard(
         }
     }
 }
-
-private fun Post.shareUri() =
-    GenericUri("https://bsky.app/profile/${author.handle.id}/post/${uri.recordKey.value}")
