@@ -98,9 +98,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.datetime.Clock
@@ -329,7 +329,7 @@ internal class OfflinePostRepository @Inject constructor(
     ): Flow<CursorList<TimelineItem>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
             if (signedInProfileId == null) {
-                return@singleSessionFlow flowOf(CursorList(emptyList(), Cursor.Initial))
+                return@singleSessionFlow emptyFlow()
             }
 
             combine(
@@ -342,7 +342,7 @@ internal class OfflinePostRepository @Inject constructor(
                     .flatMapLatest { (allowAdultContent, contentLabelPreferences) ->
                         combine(
                             flow = postDao.bookmarkedPosts(
-                                viewingProfileId = signedInProfileId,
+                                viewingProfileId = signedInProfileId.id,
                             ).distinctUntilChanged(),
                             flow2 = recordResolver.labelers,
                             transform = { bookmarkedPostEntities, labelers ->

@@ -24,12 +24,11 @@ import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.PostUri
-import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.EmbeddedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
-import com.tunjid.heron.data.database.entities.PostBookmarkEntity
+import com.tunjid.heron.data.database.entities.BookmarkEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
@@ -148,14 +147,18 @@ interface PostDao {
     @Query(
         """
         SELECT * FROM posts
-        INNER JOIN postBookmarks
-        ON posts.uri = postBookmarks.postUri
-        WHERE postBookmarks.viewingProfileId = :viewingProfileId
-        ORDER BY postBookmarks.createdAt DESC
+        LEFT JOIN (
+            SELECT * FROM postViewerStatistics
+            WHERE viewingProfileId = :viewingProfileId
+        ) AS postViewerStatistics
+        INNER JOIN bookmarks
+        ON posts.uri = bookmarks.bookmarkedUri
+        WHERE bookmarks.viewingProfileId = :viewingProfileId
+        ORDER BY bookmarks.createdAt DESC
         """,
     )
     fun bookmarkedPosts(
-        viewingProfileId: ProfileId,
+        viewingProfileId: String,
     ): Flow<List<PopulatedPostEntity>>
 
     @Transaction
@@ -314,7 +317,7 @@ interface PostDao {
 
     @Upsert
     suspend fun upsertBookmarks(
-        entities: List<PostBookmarkEntity>,
+        entities: List<BookmarkEntity>,
     )
 
     @Upsert

@@ -46,7 +46,7 @@ import com.tunjid.heron.data.database.entities.MessageEntity
 import com.tunjid.heron.data.database.entities.MessageReactionEntity
 import com.tunjid.heron.data.database.entities.NotificationEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
-import com.tunjid.heron.data.database.entities.PostBookmarkEntity
+import com.tunjid.heron.data.database.entities.BookmarkEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostRepostEntity
@@ -100,7 +100,7 @@ import kotlinx.coroutines.IO
         PostViewerStatisticsEntity::class,
         ProfileViewerStateEntity::class,
         ProfileEntity::class,
-        PostBookmarkEntity::class,
+        BookmarkEntity::class,
         PostLikeEntity::class,
         PostRepostEntity::class,
         LabelEntity::class,

@@ -2,9 +2,9 @@ package com.tunjid.heron.data.utilities.multipleEntitysaver
 
 import app.bsky.bookmark.BookmarkView
 import app.bsky.bookmark.BookmarkViewItemUnion
+import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.database.entities.PostBookmarkEntity
-import com.tunjid.heron.data.network.models.postEntity
+import com.tunjid.heron.data.database.entities.BookmarkEntity
 import kotlinx.datetime.Clock
 
 internal fun MultipleEntitySaver.add(
@@ -24,10 +24,9 @@ internal fun MultipleEntitySaver.add(
         postView = postView,
     )
 
-    val postEntity = postView.postEntity()
     add(
-        PostBookmarkEntity(
-            postUri = postEntity.uri,
+        BookmarkEntity(
+            bookmarkedUri = bookmarkView.subject.uri.atUri.let(::GenericUri),
             createdAt = bookmarkView.createdAt ?: Clock.System.now(),
             viewingProfileId = viewingProfileId,
         ),

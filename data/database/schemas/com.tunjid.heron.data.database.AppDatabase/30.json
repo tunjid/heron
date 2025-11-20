@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 30,
-    "identityHash": "31ade9b148c017ffacde355b0350a339",
+    "identityHash": "7bcb8dc76ff90d8e02e6cfe463f9ea2a",
     "entities": [
       {
         "tableName": "externalEmbeds",
@@ -981,12 +981,12 @@
         ]
       },
       {
-        "tableName": "postBookmarks",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`postUri` TEXT NOT NULL, `viewingProfileId` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`postUri`, `viewingProfileId`), FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "tableName": "bookmarks",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`bookmarkedUri` TEXT NOT NULL, `viewingProfileId` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`bookmarkedUri`, `viewingProfileId`))",
         "fields": [
           {
-            "fieldPath": "postUri",
-            "columnName": "postUri",
+            "fieldPath": "bookmarkedUri",
+            "columnName": "bookmarkedUri",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -1006,42 +1006,29 @@
         "primaryKey": {
           "autoGenerate": false,
           "columnNames": [
-            "postUri",
+            "bookmarkedUri",
             "viewingProfileId"
           ]
         },
         "indices": [
           {
-            "name": "index_postBookmarks_createdAt",
+            "name": "index_bookmarks_createdAt",
             "unique": false,
             "columnNames": [
               "createdAt"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_postBookmarks_createdAt` ON `${TABLE_NAME}` (`createdAt`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_bookmarks_createdAt` ON `${TABLE_NAME}` (`createdAt`)"
           },
           {
-            "name": "index_postBookmarks_viewingProfileId_createdAt",
+            "name": "index_bookmarks_viewingProfileId_createdAt",
             "unique": false,
             "columnNames": [
               "viewingProfileId",
               "createdAt"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_postBookmarks_viewingProfileId_createdAt` ON `${TABLE_NAME}` (`viewingProfileId`, `createdAt`)"
-          }
-        ],
-        "foreignKeys": [
-          {
-            "table": "posts",
-            "onDelete": "CASCADE",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "postUri"
-            ],
-            "referencedColumns": [
-              "uri"
-            ]
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_bookmarks_viewingProfileId_createdAt` ON `${TABLE_NAME}` (`viewingProfileId`, `createdAt`)"
           }
         ]
       },
@@ -2955,7 +2942,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '31ade9b148c017ffacde355b0350a339')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7bcb8dc76ff90d8e02e6cfe463f9ea2a')"
     ]
   }
 }
