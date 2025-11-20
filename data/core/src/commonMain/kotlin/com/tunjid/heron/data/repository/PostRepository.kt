@@ -100,6 +100,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.datetime.Clock
@@ -327,6 +328,10 @@ internal class OfflinePostRepository @Inject constructor(
         cursor: Cursor,
     ): Flow<CursorList<TimelineItem>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            if (signedInProfileId == null) {
+                return@singleSessionFlow flowOf(CursorList(emptyList(), Cursor.Initial))
+            }
+
             combine(
                 savedStateDataSource.savedState
                     .map {
