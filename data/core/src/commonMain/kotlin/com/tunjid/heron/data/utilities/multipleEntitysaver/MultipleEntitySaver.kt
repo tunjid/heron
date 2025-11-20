@@ -131,7 +131,7 @@ internal class MultipleEntitySaver(
     private val imageEntities = LazyList<ImageEntity>()
 
     private val postImageEntities = LazyList<PostImageEntity>()
-    private val postBookMarkEntities = LazyList<PostBookmarkEntity>()
+    private val postBookmarkEntities = LazyList<PostBookmarkEntity>()
 
     private val videoEntities = LazyList<VideoEntity>()
 
@@ -210,7 +210,7 @@ internal class MultipleEntitySaver(
         postDao.upsertPostThreads(postThreadEntities.list)
         postDao.upsertPostStatistics(postViewerStatisticsEntities.list)
         postDao.upsertPostLikes(postLikeEntities.list)
-        postDao.upsertBookmarks(postBookMarkEntities.list)
+        postDao.upsertBookmarks(postBookmarkEntities.list)
 
         val (fullProfileViewerEntities, partialProfileViewerEntities) = profileViewerEntities.list
             .partition {
@@ -293,7 +293,7 @@ internal class MultipleEntitySaver(
 
     fun add(entity: PostViewerStatisticsEntity) = postViewerStatisticsEntities.add(entity)
 
-    fun add(entity: PostBookmarkEntity) = postBookMarkEntities.add(entity)
+    fun add(entity: PostBookmarkEntity) = postBookmarkEntities.add(entity)
 
     fun add(entity: PostLikeEntity) = postLikeEntities.add(entity)
 
