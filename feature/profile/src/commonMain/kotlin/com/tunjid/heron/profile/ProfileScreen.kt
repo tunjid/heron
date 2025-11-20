@@ -1073,6 +1073,7 @@ private fun ProfileTimeline(
                 },
             state = gridState,
             columns = StaggeredGridCells.Adaptive(presentation.cardSize),
+            contentPadding = UiTokens.bottomNavAndInsetPaddingValues(),
             verticalItemSpacing = presentation.lazyGridVerticalItemSpacing,
             horizontalArrangement = Arrangement.spacedBy(
                 presentation.lazyGridHorizontalItemSpacing,

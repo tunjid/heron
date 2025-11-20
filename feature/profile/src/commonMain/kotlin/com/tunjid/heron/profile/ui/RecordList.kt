@@ -17,7 +17,6 @@
 package com.tunjid.heron.profile.ui
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
@@ -33,6 +32,7 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.profile.ProfileScreenStateHolders
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.tiler.compose.PivotedTilingEffect
 
 @Composable
@@ -49,7 +49,9 @@ internal fun <T : Record> RecordList(
         modifier = Modifier
             .fillMaxSize(),
         state = listState,
-        contentPadding = RecordContentPadding,
+        contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
+            horizontal = 8.dp,
+        ),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(
@@ -70,9 +72,5 @@ internal fun <T : Record> RecordList(
         },
     )
 }
-
-private val RecordContentPadding = PaddingValues(
-    horizontal = 8.dp,
-)
 
 internal const val ProfileCollectionSharedElementPrefix = "profile-collection"
