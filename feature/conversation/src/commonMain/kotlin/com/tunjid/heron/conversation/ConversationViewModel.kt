@@ -16,9 +16,11 @@
 
 package com.tunjid.heron.conversation
 
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.stubProfile
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
@@ -42,10 +44,13 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.mapCursorList
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
+import com.tunjid.heron.timeline.utilities.shareUri
+import com.tunjid.heron.ui.text.withFormattedTextPost
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapLatestToManyMutations
+import com.tunjid.mutator.coroutines.mapLatestToMutation
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
@@ -130,6 +135,7 @@ class ActualConversationViewModel(
                             writeQueue = writeQueue,
                             navActions = navActions,
                         )
+                        is Action.TextChanged -> action.flow.inputTextChangeMutations()
                         is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 
                         is Action.UpdateMessageReaction -> action.flow.updateMessageReactionMutations(
@@ -202,7 +208,16 @@ private fun sharedRecordMutations(
         }
         if (!shouldFetch) return@flow
 
-        emitAll(
+        // There's a server side bug where non post record embeds aren't resolved
+        // to their actual types. For these, just send a link to the record in the message.
+        if (recordUri !is PostUri) emit {
+            copy(
+                inputText = TextFieldValue(recordUri.shareUri().uri)
+                    .withFormattedTextPost(),
+                sharedRecord = SharedRecord.Consumed,
+            )
+        }
+        else emitAll(
             recordRepository.record(recordUri)
                 // Take only one emission so user changes do not override it
                 .take(1)
@@ -237,6 +252,11 @@ private fun Flow<Action.UpdateMessageReaction>.updateMessageReactionMutations(
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
         writeQueue.enqueue(Writable.Reaction(action.reaction))
+    }
+
+private fun Flow<Action.TextChanged>.inputTextChangeMutations(): Flow<Mutation<State>> =
+    mapLatestToMutation { action ->
+        copy(inputText = action.inputText)
     }
 
 private fun Flow<Action.SharedRecord>.recordSharingMutations(
@@ -286,6 +306,7 @@ private fun Flow<Action.SendMessage>.sendMessageMutations(
                     null -> sharedRecord
                     else -> SharedRecord.Consumed
                 },
+                inputText = TextFieldValue(),
                 pendingItems = pendingItems + pendingItem,
                 tilingData = tilingData.copy(
                     items = currentItems + tiledListOf(

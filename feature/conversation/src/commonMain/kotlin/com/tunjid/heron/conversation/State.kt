@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.conversation
 
+import androidx.compose.ui.text.input.TextFieldValue
 import com.tunjid.heron.conversation.di.conversationId
 import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -31,6 +32,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.models
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.text.Memo
+import com.tunjid.heron.ui.text.TextFieldValueSerializer
 import com.tunjid.treenav.strings.Route
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -47,6 +49,8 @@ data class State(
     val labelers: List<Labeler>,
     val pendingItems: List<MessageItem.Pending> = emptyList(),
     override val tilingData: TilingState.Data<MessageQuery, MessageItem>,
+    @Serializable(with = TextFieldValueSerializer::class)
+    val inputText: TextFieldValue = TextFieldValue(),
     @Transient
     val sharedRecord: SharedRecord = SharedRecord.None,
     @Transient
@@ -126,6 +130,12 @@ val MessageItem.text
         is MessageItem.Sent -> message.text
     }
 
+val MessageItem.links
+    get() = when (this) {
+        is MessageItem.Pending -> emptyList()
+        is MessageItem.Sent -> message.metadata?.links.orEmpty()
+    }
+
 val MessageItem.conversationId
     get() = when (this) {
         is MessageItem.Pending -> message.conversationId
@@ -167,6 +177,10 @@ sealed class Action(val key: String) {
     data class SendMessage(
         val message: Message.Create,
     ) : Action(key = "SendMessage")
+
+    data class TextChanged(
+        val inputText: TextFieldValue,
+    ) : Action(key = "TextChanged")
 
     data class UpdateMessageReaction(
         val reaction: Message.UpdateReaction,

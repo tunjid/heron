@@ -31,14 +31,11 @@ import app.bsky.graph.StarterPackViewBasic
 import app.bsky.graph.Starterpack
 import app.bsky.labeler.LabelerView
 import app.bsky.richtext.Facet
-import app.bsky.richtext.FacetFeatureUnion
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
-import com.tunjid.heron.data.core.models.Link
-import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
@@ -335,21 +332,6 @@ private fun BskyPost.toPostRecord() =
         },
     )
 
-private fun Facet.toLinkOrNull(): Link? {
-    return if (features.isEmpty()) null else Link(
-        start = index.byteStart.toInt(),
-        end = index.byteEnd.toInt(),
-        target = when (val feature = features.first()) {
-            is FacetFeatureUnion.Link -> LinkTarget.ExternalLink(feature.value.uri.uri.let(::GenericUri))
-            is FacetFeatureUnion.Mention -> LinkTarget.UserDidMention(
-                feature.value.did.did.let(::ProfileId),
-            )
-
-            is FacetFeatureUnion.Tag -> LinkTarget.Hashtag(feature.value.tag)
-            is FacetFeatureUnion.Unknown -> return null
-        },
-    )
-}
 private fun PostView.nonPostEmbeddedRecord(): Record? {
     val recordUnion = when (val embed = embed) {
         is PostViewEmbedUnion.RecordView -> embed.value.record

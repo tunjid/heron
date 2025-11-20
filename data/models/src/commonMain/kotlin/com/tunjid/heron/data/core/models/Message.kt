@@ -32,7 +32,13 @@ data class Message(
     val sentAt: Instant,
     val embeddedRecord: Record?,
     val reactions: List<Reaction>,
+    val metadata: Metadata?,
 ) {
+    @Serializable
+    data class Metadata(
+        val links: List<Link>,
+    ) : UrlEncodableModel
+
     @Serializable
     data class Create(
         val conversationId: ConversationId,

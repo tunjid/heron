@@ -43,7 +43,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -65,6 +64,7 @@ import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.utilities.EmbeddedRecord
 import com.tunjid.heron.ui.text.formatTextPost
 import com.tunjid.heron.ui.text.links
+import com.tunjid.heron.ui.text.withFormattedTextPost
 import heron.feature.conversation.generated.resources.Res
 import heron.feature.conversation.generated.resources.textfield_desc
 import heron.feature.conversation.generated.resources.textfield_hint
@@ -75,24 +75,14 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun PaneScaffoldState.UserInput(
     modifier: Modifier = Modifier,
+    inputText: TextFieldValue,
     pendingRecord: Record?,
     sendMessage: (AnnotatedString) -> Unit,
     removePendingRecordClicked: () -> Unit,
+    onTextChanged: (TextFieldValue) -> Unit,
 ) {
-    var textState by rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(TextFieldValue())
-    }
-
     // Used to decide if the keyboard should be shown
     var textFieldFocusState by remember { mutableStateOf(false) }
-
-    val onSendMessage = remember {
-        { text: AnnotatedString ->
-            sendMessage(text)
-            // Reset text field and close keyboard
-            textState = TextFieldValue()
-        }
-    }
 
     Column(
         modifier = modifier
@@ -139,14 +129,10 @@ fun PaneScaffoldState.UserInput(
                     .padding(vertical = 16.dp)
                     .weight(1f)
                     .heightIn(max = 80.dp),
-                textFieldValue = textState,
-                onTextChanged = {
-                    textState = it.copy(
-                        annotatedString = formatTextPost(
-                            text = it.text,
-                            textLinks = it.annotatedString.links(),
-                            onLinkTargetClicked = {},
-                        ),
+                textFieldValue = inputText,
+                onTextChanged = { value ->
+                    onTextChanged(
+                        value.withFormattedTextPost(),
                     )
                 },
                 // Only show the keyboard if there's no input selector and text field has focus
@@ -160,9 +146,9 @@ fun PaneScaffoldState.UserInput(
             SendButton(
                 modifier = Modifier
                     .height(36.dp),
-                textFieldValue = textState,
+                textFieldValue = inputText,
                 hasPendingRecord = pendingRecord != null,
-                onMessageSent = onSendMessage,
+                onMessageSent = sendMessage,
             )
         }
     }

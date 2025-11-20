@@ -180,6 +180,7 @@ class ConversationBindings(
                             .imePadding()
                             .windowInsetsPadding(WindowInsets.navigationBars)
                             .bottomNavigationSharedBounds(this),
+                        inputText = state.inputText,
                         pendingRecord = state.sharedRecord.pendingRecord,
                         sendMessage = remember(viewModel, state.id, state.sharedRecord) {
                             { annotatedString: AnnotatedString ->
@@ -199,6 +200,9 @@ class ConversationBindings(
                         },
                         removePendingRecordClicked = {
                             viewModel.accept(Action.SharedRecord.Remove)
+                        },
+                        onTextChanged = {
+                            viewModel.accept(Action.TextChanged(it))
                         },
                     )
                 },

@@ -23,7 +23,9 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.em
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkTarget
@@ -35,19 +37,33 @@ typealias CommonStrings = Res.string
 fun rememberFormattedTextPost(
     text: String,
     textLinks: List<Link>,
-    onLinkTargetClicked: (LinkTarget) -> Unit,
+    textLinkStyles: TextLinkStyles? = null,
+    onLinkTargetClicked: (LinkTarget) -> Unit = NoOpLinkTargetHandler,
 ): AnnotatedString = remember(text) {
     formatTextPost(
         text = text,
         textLinks = textLinks,
+        textLinkStyles = textLinkStyles,
         onLinkTargetClicked = onLinkTargetClicked,
     )
 }
 
+fun TextFieldValue.withFormattedTextPost(
+    textLinkStyles: TextLinkStyles? = null,
+) = copy(
+    annotatedString = formatTextPost(
+        text = text,
+        textLinks = annotatedString.links(),
+        textLinkStyles = textLinkStyles,
+        onLinkTargetClicked = NoOpLinkTargetHandler,
+    ),
+)
+
 fun formatTextPost(
     text: String,
     textLinks: List<Link>,
-    onLinkTargetClicked: (LinkTarget) -> Unit,
+    textLinkStyles: TextLinkStyles? = null,
+    onLinkTargetClicked: (LinkTarget) -> Unit = NoOpLinkTargetHandler,
 ): AnnotatedString = buildAnnotatedString {
     append(text)
 
@@ -80,7 +96,10 @@ fun formatTextPost(
             when (val target = link.target) {
                 is LinkTarget.ExternalLink -> {
                     addLink(
-                        url = LinkAnnotation.Url(target.uri.uri),
+                        url = LinkAnnotation.Url(
+                            url = target.uri.uri,
+                            styles = textLinkStyles,
+                        ),
                         start = start,
                         end = end,
                     )
@@ -164,3 +183,5 @@ internal fun String.byteOffsets(): List<Int> = buildList {
         if (lastWas4Bytes) add(i - 1) else add(i)
     }
 }
+
+private val NoOpLinkTargetHandler: (LinkTarget) -> Unit = {}
