@@ -51,7 +51,7 @@ fun Labeler(
             labeler.creator.handle.id,
         ),
         description = labeler.creator.description,
-        blurb = "",
+        blurb = null,
         sharedElementPrefix = sharedElementPrefix,
         sharedElementType = labeler.uri,
         avatar = {

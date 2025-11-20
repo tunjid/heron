@@ -36,7 +36,7 @@ typealias CommonStrings = Res.string
 @Composable
 fun rememberFormattedTextPost(
     text: String,
-    textLinks: List<Link>,
+    textLinks: List<Link> = emptyList(),
     textLinkStyles: TextLinkStyles? = null,
     onLinkTargetClicked: (LinkTarget) -> Unit = NoOpLinkTargetHandler,
 ): AnnotatedString = remember(text) {
@@ -61,7 +61,7 @@ fun TextFieldValue.withFormattedTextPost(
 
 fun formatTextPost(
     text: String,
-    textLinks: List<Link>,
+    textLinks: List<Link> = emptyList(),
     textLinkStyles: TextLinkStyles? = null,
     onLinkTargetClicked: (LinkTarget) -> Unit = NoOpLinkTargetHandler,
 ): AnnotatedString = buildAnnotatedString {

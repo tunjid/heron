@@ -33,7 +33,7 @@ fun AttributionLayout(
 ) {
     Row(
         modifier = modifier,
-        horizontalArrangement = spacedBy(16.dp),
+        horizontalArrangement = spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         avatar?.invoke()
