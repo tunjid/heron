@@ -32,6 +32,7 @@ import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.profile.LabelerSettingsStateHolder
 import com.tunjid.heron.timeline.ui.label.LabelSetting
 import com.tunjid.heron.timeline.ui.label.locale
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.profile.generated.resources.Res
 import heron.feature.profile.generated.resources.label_hide
@@ -48,6 +49,7 @@ fun LabelerSettings(
     LazyColumn(
         modifier = modifier
             .fillMaxWidth(),
+        contentPadding = UiTokens.bottomNavAndInsetPaddingValues(),
     ) {
         val languageTag = Locale.current.toLanguageTag()
         items(

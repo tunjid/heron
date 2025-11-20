@@ -336,7 +336,6 @@ internal fun ProfileScreen(
                         .paneClip(),
                     state = pagerState,
                     key = { page -> updatedStateHolders[page].key },
-                    contentPadding = UiTokens.bottomNavAndInsetPaddingValues(),
                     pageContent = { page ->
                         when (val stateHolder = updatedStateHolders[page]) {
                             is ProfileScreenStateHolders.Records.Feeds -> RecordList(
@@ -1073,6 +1072,7 @@ private fun ProfileTimeline(
                 },
             state = gridState,
             columns = StaggeredGridCells.Adaptive(presentation.cardSize),
+            contentPadding = UiTokens.bottomNavAndInsetPaddingValues(),
             verticalItemSpacing = presentation.lazyGridVerticalItemSpacing,
             horizontalArrangement = Arrangement.spacedBy(
                 presentation.lazyGridHorizontalItemSpacing,
