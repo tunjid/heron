@@ -133,9 +133,10 @@ internal class ThingPreferenceUpdater @Inject constructor(
      * Exclusively operates on the existing saved feed preferences.
      */
     private suspend fun Timeline.Update.HomeFeed.updateHomeTimelinePreferences(
-        preferenceUnionList: List<PreferencesUnion.SavedFeedsPrefV2>,
+        existingPreferences: List<PreferencesUnion.SavedFeedsPrefV2>,
     ): List<PreferencesUnion.SavedFeedsPrefV2> {
-        val preferenceUnion = preferenceUnionList.firstOrNull() ?: return emptyList()
+        // Do not edit preferences if none exist. The baseline is always defined serverside.
+        val preferenceUnion = existingPreferences.firstOrNull() ?: return emptyList()
         // Return a singleton list
         return listOf(
             PreferencesUnion.SavedFeedsPrefV2(
@@ -225,7 +226,7 @@ internal class ThingPreferenceUpdater @Inject constructor(
      * unconditionally creates the preference, and filters out an existing one if present.
      */
     private fun Timeline.Update.OfContentLabel.updateContentLabelPreferences(
-        preferenceUnionList: List<PreferencesUnion.ContentLabelPref>,
+        existingPreferences: List<PreferencesUnion.ContentLabelPref>,
     ): List<PreferencesUnion.ContentLabelPref> = when (this) {
         is Timeline.Update.OfContentLabel.AdultLabelVisibilityChange -> label.labelValues.map { label ->
             PreferencesUnion.ContentLabelPref(
@@ -246,7 +247,7 @@ internal class ThingPreferenceUpdater @Inject constructor(
             ),
         )
     }
-        .plus(preferenceUnionList)
+        .plus(existingPreferences)
         .distinctBy { "${it.value.label}-${it.value.labelerDid}" }
 
     /**
@@ -256,9 +257,9 @@ internal class ThingPreferenceUpdater @Inject constructor(
      * If not subscribed, the existing one is simply removed.
      */
     private fun Timeline.Update.OfLabeler.updateLabelerPreferences(
-        preferenceUnionList: List<PreferencesUnion.LabelersPref>,
+        existingPreferences: List<PreferencesUnion.LabelersPref>,
     ): List<PreferencesUnion.LabelersPref> {
-        val labelers = preferenceUnionList
+        val labelers = existingPreferences
             .flatMap { it.value.labelers }
         // Return a singleton list
         return listOf(
@@ -297,14 +298,14 @@ internal class ThingPreferenceUpdater @Inject constructor(
     ): List<PreferencesUnion> =
         when (this) {
             is Timeline.Update.HomeFeed -> updateHomeTimelinePreferences(
-                preferenceUnionList = existingPreferences.filterIsInstance<PreferencesUnion.SavedFeedsPrefV2>(),
+                existingPreferences = existingPreferences.filterIsInstance<PreferencesUnion.SavedFeedsPrefV2>(),
             )
             is Timeline.Update.OfAdultContent -> updateAdultContentPreferences()
             is Timeline.Update.OfContentLabel -> updateContentLabelPreferences(
-                preferenceUnionList = existingPreferences.filterIsInstance<PreferencesUnion.ContentLabelPref>(),
+                existingPreferences = existingPreferences.filterIsInstance<PreferencesUnion.ContentLabelPref>(),
             )
             is Timeline.Update.OfLabeler -> updateLabelerPreferences(
-                preferenceUnionList = existingPreferences.filterIsInstance<PreferencesUnion.LabelersPref>(),
+                existingPreferences = existingPreferences.filterIsInstance<PreferencesUnion.LabelersPref>(),
             )
         }
 }
