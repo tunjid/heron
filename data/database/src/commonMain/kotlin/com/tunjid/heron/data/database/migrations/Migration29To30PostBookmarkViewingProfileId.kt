@@ -13,7 +13,7 @@ internal object Migration29To30PostBookmarkViewingProfileId : Migration(28, 29) 
             """
             CREATE TABLE postBookmarks (
                 viewingProfileId TEXT NOT NULL,
-                postUri TEXT NOT NULL,t
+                postUri TEXT NOT NULL,
                 createdAt INTEGER NOT NULL,
                 PRIMARY KEY(viewingProfileId, postUri),
                 FOREIGN KEY(postUri) REFERENCES posts(uri) ON DELETE CASCADE
@@ -21,7 +21,6 @@ internal object Migration29To30PostBookmarkViewingProfileId : Migration(28, 29) 
             """.trimIndent(),
         )
 
-        // Create indices for query performance
         connection.execSQL("CREATE INDEX IF NOT EXISTS index_postBookmarks_createdAt ON postBookmarks (createdAt)")
         connection.execSQL("CREATE INDEX IF NOT EXISTS index_postBookmarks_viewingProfileId_createdAt ON postBookmarks (viewingProfileId, createdAt)")
     }
