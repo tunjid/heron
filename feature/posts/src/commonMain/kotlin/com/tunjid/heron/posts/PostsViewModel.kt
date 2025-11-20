@@ -21,7 +21,6 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.repository.MessageRepository
@@ -48,9 +47,7 @@ import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
-import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.distinctBy
-import com.tunjid.tiler.filter
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -81,7 +78,6 @@ class ActualPostsViewModel(
     writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
     @Assisted
     route: Route,
 ) : ViewModel(viewModelScope = scope),

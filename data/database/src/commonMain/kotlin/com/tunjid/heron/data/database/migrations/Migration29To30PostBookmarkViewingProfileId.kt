@@ -9,10 +9,10 @@ internal object Migration29To30PostBookmarkViewingProfileId : Migration(29, 30) 
         connection.execSQL(
             """
             CREATE TABLE bookmarks (
-                viewingProfileId TEXT NOT NULL,
                 bookmarkedUri TEXT NOT NULL,
+                viewingProfileId TEXT NOT NULL,
                 createdAt INTEGER NOT NULL,
-                PRIMARY KEY(viewingProfileId, bookmarkedUri)
+                PRIMARY KEY(bookmarkedUri, viewingProfileId)
             )
             """.trimIndent(),
         )

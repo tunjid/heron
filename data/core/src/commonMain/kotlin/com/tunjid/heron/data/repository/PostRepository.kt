@@ -136,7 +136,7 @@ interface PostRepository {
     ): Flow<CursorList<TimelineItem>>
 
     fun saved(
-        query: PostDataQuery,
+        query: CursorQuery,
         cursor: Cursor,
     ): Flow<CursorList<TimelineItem>>
 
@@ -324,7 +324,7 @@ internal class OfflinePostRepository @Inject constructor(
         }
 
     override fun saved(
-        query: PostDataQuery,
+        query: CursorQuery,
         cursor: Cursor,
     ): Flow<CursorList<TimelineItem>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
