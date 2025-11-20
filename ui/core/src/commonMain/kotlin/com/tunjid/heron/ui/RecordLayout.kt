@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.ui.text.rememberFormattedTextPost
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -90,15 +91,19 @@ fun RecordLayout(
         )
         description.takeUnless(String?::isNullOrEmpty)?.let {
             Text(
-                text = it,
+                text = rememberFormattedTextPost(it),
                 style = MaterialTheme.typography.bodySmall,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
             )
         }
         blurb.takeUnless(String?::isNullOrEmpty)?.let {
             Text(
-                text = it,
+                text = rememberFormattedTextPost(it),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.outline,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }

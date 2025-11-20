@@ -61,7 +61,7 @@ fun FeedList(
             list.creator.handle.id,
         ),
         description = list.description,
-        blurb = "",
+        blurb = null,
         sharedElementPrefix = sharedElementPrefix,
         sharedElementType = list.uri,
         avatar = {
