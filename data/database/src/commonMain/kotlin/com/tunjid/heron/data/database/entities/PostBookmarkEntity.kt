@@ -25,7 +25,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 
 @Entity(
-    tableName = "postBookmark",
+    tableName = "postBookmarks",
     primaryKeys = [
         "postUri",
         "viewingProfileId",
@@ -39,7 +39,6 @@ import kotlinx.datetime.Instant
         ),
     ],
     indices = [
-        Index(value = ["postId"]),
         Index(value = ["createdAt"]),
         Index(value = ["viewingProfileId", "createdAt"]),
     ],
@@ -47,6 +46,5 @@ import kotlinx.datetime.Instant
 data class PostBookmarkEntity(
     val postUri: PostUri,
     val viewingProfileId: ProfileId,
-    val postId: PostId,
     val createdAt: Instant,
 )
