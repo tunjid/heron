@@ -12,7 +12,7 @@ internal object Migration29To30PostBookmarkViewingProfileId : Migration(29, 30) 
                 viewingProfileId TEXT NOT NULL,
                 bookmarkedUri TEXT NOT NULL,
                 createdAt INTEGER NOT NULL,
-                PRIMARY KEY(viewingProfileId, postUri)
+                PRIMARY KEY(viewingProfileId, bookmarkedUri)
             )
             """.trimIndent(),
         )
@@ -22,6 +22,7 @@ internal object Migration29To30PostBookmarkViewingProfileId : Migration(29, 30) 
         connection.execSQL("DROP TABLE postBookmark")
 
         connection.execSQL("CREATE INDEX IF NOT EXISTS index_bookmarks_createdAt ON bookmarks (createdAt)")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS index_bookmarks_bookmarkedUri ON bookmarks (bookmarkedUri)")
         connection.execSQL("CREATE INDEX IF NOT EXISTS index_bookmarks_viewingProfileId_createdAt ON bookmarks (viewingProfileId, createdAt)")
     }
 }

@@ -30,6 +30,7 @@ import kotlinx.datetime.Instant
     ],
     indices = [
         Index(value = ["createdAt"]),
+        Index(value = ["bookmarkedUri"]),
         Index(value = ["viewingProfileId", "createdAt"]),
     ],
 )

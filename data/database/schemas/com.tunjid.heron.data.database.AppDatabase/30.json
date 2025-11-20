@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 30,
-    "identityHash": "7bcb8dc76ff90d8e02e6cfe463f9ea2a",
+    "identityHash": "59c940eba710d96f965d30c3fcd5bf56",
     "entities": [
       {
         "tableName": "externalEmbeds",
@@ -1019,6 +1019,15 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_bookmarks_createdAt` ON `${TABLE_NAME}` (`createdAt`)"
+          },
+          {
+            "name": "index_bookmarks_bookmarkedUri",
+            "unique": false,
+            "columnNames": [
+              "bookmarkedUri"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_bookmarks_bookmarkedUri` ON `${TABLE_NAME}` (`bookmarkedUri`)"
           },
           {
             "name": "index_bookmarks_viewingProfileId_createdAt",
@@ -2942,7 +2951,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7bcb8dc76ff90d8e02e6cfe463f9ea2a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '59c940eba710d96f965d30c3fcd5bf56')"
     ]
   }
 }
