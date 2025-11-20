@@ -8,18 +8,6 @@ import com.tunjid.heron.data.network.models.postEntity
 import kotlinx.datetime.Clock
 
 internal fun MultipleEntitySaver.add(
-    viewingProfileId: ProfileId?,
-    bookmarkView: BookmarkView,
-) {
-    viewingProfileId?.let { profileId ->
-        addBookmark(
-            viewingProfileId = profileId,
-            bookmarkView = bookmarkView,
-        )
-    }
-}
-
-internal fun MultipleEntitySaver.addBookmark(
     viewingProfileId: ProfileId,
     bookmarkView: BookmarkView,
 ) {
@@ -39,7 +27,6 @@ internal fun MultipleEntitySaver.addBookmark(
     val postEntity = postView.postEntity()
     add(
         PostBookmarkEntity(
-            postId = postEntity.cid,
             postUri = postEntity.uri,
             createdAt = bookmarkView.createdAt ?: Clock.System.now(),
             viewingProfileId = viewingProfileId,
