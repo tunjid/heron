@@ -473,6 +473,9 @@ private fun CoroutineScope.labelerSettingsStateHolders(
                     }
                 },
                 inputs = listOf(
+                    timelineRepository.labelers.mapToMutation { labelers ->
+                        copy(subscribed = labelers.any { it.creator.did == profileId })
+                    },
                     combine(
                         flow = timelineRepository.preferences
                             .map { it.contentLabelPreferences }

@@ -124,6 +124,7 @@ sealed class ProfileScreenStateHolders {
         LabelerSettingsStateHolder by mutator {
 
         data class Settings(
+            val subscribed: Boolean = false,
             val labelSettings: List<LabelSetting> = emptyList(),
         )
 

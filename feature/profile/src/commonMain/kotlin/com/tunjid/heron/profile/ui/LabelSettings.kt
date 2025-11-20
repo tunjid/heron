@@ -63,6 +63,7 @@ fun LabelerSettings(
                                 horizontal = 16.dp,
                                 vertical = 8.dp,
                             ),
+                        enabled = state.subscribed,
                         labelName = locale?.name ?: labelSetting.definition.identifier.value,
                         labelDescription = locale?.description,
                         selectedVisibility = labelSetting.visibility,
