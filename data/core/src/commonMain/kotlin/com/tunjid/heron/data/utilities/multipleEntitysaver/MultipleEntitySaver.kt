@@ -28,6 +28,7 @@ import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.TimelineDao
+import com.tunjid.heron.data.database.entities.BookmarkEntity
 import com.tunjid.heron.data.database.entities.ConversationEntity
 import com.tunjid.heron.data.database.entities.ConversationMembersEntity
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
@@ -39,7 +40,6 @@ import com.tunjid.heron.data.database.entities.ListMemberEntity
 import com.tunjid.heron.data.database.entities.MessageEntity
 import com.tunjid.heron.data.database.entities.MessageReactionEntity
 import com.tunjid.heron.data.database.entities.NotificationEntity
-import com.tunjid.heron.data.database.entities.BookmarkEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity

@@ -24,11 +24,11 @@ import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.database.entities.BookmarkEntity
 import com.tunjid.heron.data.database.entities.EmbeddedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
-import com.tunjid.heron.data.database.entities.BookmarkEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
