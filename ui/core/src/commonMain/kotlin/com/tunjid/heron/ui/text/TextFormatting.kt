@@ -17,7 +17,9 @@
 package com.tunjid.heron.ui.text
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
@@ -39,13 +41,18 @@ fun rememberFormattedTextPost(
     textLinks: List<Link> = emptyList(),
     textLinkStyles: TextLinkStyles? = null,
     onLinkTargetClicked: (LinkTarget) -> Unit = NoOpLinkTargetHandler,
-): AnnotatedString = remember(text) {
-    formatTextPost(
-        text = text,
-        textLinks = textLinks,
-        textLinkStyles = textLinkStyles,
-        onLinkTargetClicked = onLinkTargetClicked,
-    )
+): AnnotatedString {
+    val updatedOnLinkTargetClicked by rememberUpdatedState(onLinkTargetClicked)
+    return remember(text, textLinks, textLinkStyles) {
+        formatTextPost(
+            text = text,
+            textLinks = textLinks,
+            textLinkStyles = textLinkStyles,
+            onLinkTargetClicked = {
+                updatedOnLinkTargetClicked(it)
+            },
+        )
+    }
 }
 
 fun TextFieldValue.withFormattedTextPost(
