@@ -16,9 +16,11 @@
 
 package com.tunjid.heron.data.utilities.preferenceupdater
 
+import app.bsky.actor.AdultContentPref
 import app.bsky.actor.ContentLabelPref
 import app.bsky.actor.GetPreferencesResponse
 import app.bsky.actor.LabelerPrefItem
+import app.bsky.actor.LabelersPref
 import app.bsky.actor.PreferencesUnion
 import app.bsky.actor.SavedFeed
 import app.bsky.actor.SavedFeedsPrefV2
@@ -33,6 +35,7 @@ import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.utilities.TidGenerator
 import dev.zacsweers.metro.Inject
+import kotlin.reflect.KClass
 import sh.christian.ozone.api.Did
 
 internal interface PreferenceUpdater {
@@ -109,126 +112,121 @@ internal class ThingPreferenceUpdater @Inject constructor(
         response: GetPreferencesResponse,
         update: Timeline.Update,
     ): List<PreferencesUnion> {
-        val (contentLabelPrefs, otherPrefs) = response.preferences
-            .partition { it is PreferencesUnion.ContentLabelPref }
-
-        val existingContentLabelPrefs = contentLabelPrefs
-            .filterIsInstance<PreferencesUnion.ContentLabelPref>()
-
-        val updatedOtherPrefs = otherPrefs.map { preferencesUnion ->
-            when (preferencesUnion) {
-                is PreferencesUnion.AdultContentPref -> preferencesUnion.targeting<Timeline.Update.OfAdultContent>(
-                    update = update,
-                    block = { updateAdultContentPreference(preferencesUnion, it) },
-                )
-
-                is PreferencesUnion.LabelersPref -> preferencesUnion.targeting<Timeline.Update.OfLabeler>(
-                    update = update,
-                    block = { updateLabelerPreference(preferencesUnion, it) },
-                )
-
-                is PreferencesUnion.SavedFeedsPrefV2 -> preferencesUnion.targeting<Timeline.Update.HomeFeed>(
-                    update = update,
-                    block = { updateHomeTimelinePreference(preferencesUnion, it) },
-                )
-
-                else -> preferencesUnion
-            }
-        }
-
-        val updatedContentLabelPrefs =
-            if (update is Timeline.Update.OfContentLabel) update.contentLabelPrefs()
-                .plus(existingContentLabelPrefs)
-                .distinctBy { "${it.value.label}-${it.value.labelerDid}" }
-            else existingContentLabelPrefs
-
-        return updatedOtherPrefs + updatedContentLabelPrefs
+        val groupedPreferences = response.preferences.groupBy(
+            keySelector = { it::class },
+        )
+        val targetClass = update.targetClass()
+        val targetPreferences = groupedPreferences.getOrElse(
+            key = targetClass,
+            defaultValue = ::emptyList,
+        )
+        val updatedPreferences = update.updatePreferences(
+            existingPreferences = targetPreferences,
+        )
+        return groupedPreferences
+            // Replace the existing value with the updates
+            .plus(targetClass to updatedPreferences)
+            .flatMap(Map.Entry<KClass<out PreferencesUnion>, List<PreferencesUnion>>::value)
     }
 
-    private suspend fun updateHomeTimelinePreference(
-        preferenceUnion: PreferencesUnion.SavedFeedsPrefV2,
-        update: Timeline.Update.HomeFeed,
-    ): PreferencesUnion.SavedFeedsPrefV2 = PreferencesUnion.SavedFeedsPrefV2(
-        SavedFeedsPrefV2(
-            items = when (update) {
-                is Timeline.Update.Bulk -> preferenceUnion.value.items.associateBy(
-                    keySelector = SavedFeed::value,
-                    valueTransform = SavedFeed::id,
-                ).let { savedFeedValuesToIds ->
-                    update.timelines.mapNotNull { timeline ->
-                        when (timeline) {
-                            is Timeline.Home.Feed -> savedFeedValuesToIds[
-                                timeline.feedGenerator.uri.uri,
-                            ]?.let { id ->
-                                SavedFeed(
-                                    id = id,
-                                    type = Type.Feed,
-                                    value = timeline.feedGenerator.uri.uri,
-                                    pinned = timeline.isPinned,
-                                )
-                            }
+    /**
+     * Exclusively operates on the existing saved feed preferences.
+     */
+    private suspend fun Timeline.Update.HomeFeed.updateHomeTimelinePreferences(
+        preferenceUnionList: List<PreferencesUnion.SavedFeedsPrefV2>,
+    ): List<PreferencesUnion.SavedFeedsPrefV2> {
+        val preferenceUnion = preferenceUnionList.firstOrNull() ?: return emptyList()
+        // Return a singleton list
+        return listOf(
+            PreferencesUnion.SavedFeedsPrefV2(
+                SavedFeedsPrefV2(
+                    items = when (this) {
+                        is Timeline.Update.Bulk -> preferenceUnion.value.items.associateBy(
+                            keySelector = SavedFeed::value,
+                            valueTransform = SavedFeed::id,
+                        ).let { savedFeedValuesToIds ->
+                            timelines.mapNotNull { timeline ->
+                                when (timeline) {
+                                    is Timeline.Home.Feed -> savedFeedValuesToIds[
+                                        timeline.feedGenerator.uri.uri,
+                                    ]?.let { id ->
+                                        SavedFeed(
+                                            id = id,
+                                            type = Type.Feed,
+                                            value = timeline.feedGenerator.uri.uri,
+                                            pinned = timeline.isPinned,
+                                        )
+                                    }
 
-                            is Timeline.Home.Following -> savedFeedValuesToIds[
-                                "following",
-                            ]?.let { id ->
-                                SavedFeed(
-                                    id = id,
-                                    type = Type.Timeline,
-                                    value = "following",
-                                    pinned = timeline.isPinned,
-                                )
-                            }
+                                    is Timeline.Home.Following -> savedFeedValuesToIds[
+                                        "following",
+                                    ]?.let { id ->
+                                        SavedFeed(
+                                            id = id,
+                                            type = Type.Timeline,
+                                            value = "following",
+                                            pinned = timeline.isPinned,
+                                        )
+                                    }
 
-                            is Timeline.Home.List -> savedFeedValuesToIds[
-                                timeline.feedList.uri.uri,
-                            ]?.let { id ->
-                                SavedFeed(
-                                    id = id,
-                                    type = Type.List,
-                                    value = timeline.feedList.uri.uri,
-                                    pinned = timeline.isPinned,
-                                )
+                                    is Timeline.Home.List -> savedFeedValuesToIds[
+                                        timeline.feedList.uri.uri,
+                                    ]?.let { id ->
+                                        SavedFeed(
+                                            id = id,
+                                            type = Type.List,
+                                            value = timeline.feedList.uri.uri,
+                                            pinned = timeline.isPinned,
+                                        )
+                                    }
+                                }
                             }
                         }
-                    }
-                }
 
-                is Timeline.Update.HomeFeed.Pin -> preferenceUnion.value.items.filter {
-                    it.value != update.uri.uri
-                }
-                    .partition(SavedFeed::pinned)
-                    .let { (pinned, saved) ->
-                        pinned + SavedFeed(
+                        is Timeline.Update.HomeFeed.Pin -> preferenceUnion.value.items.filter {
+                            it.value != uri.uri
+                        }
+                            .partition(SavedFeed::pinned)
+                            .let { (pinned, saved) ->
+                                pinned + SavedFeed(
+                                    id = tidGenerator.generate(),
+                                    type = when (this) {
+                                        is Timeline.Update.OfFeedGenerator.Pin -> Type.Feed
+                                        is Timeline.Update.OfList.Pin -> Type.List
+                                    },
+                                    value = uri.uri,
+                                    pinned = true,
+                                ) + saved
+                            }
+
+                        is Timeline.Update.HomeFeed.Remove -> preferenceUnion.value.items.filter { savedFeed ->
+                            savedFeed.value != uri.uri
+                        }
+
+                        is Timeline.Update.HomeFeed.Save -> preferenceUnion.value.items.filter {
+                            it.value != uri.uri
+                        } + SavedFeed(
                             id = tidGenerator.generate(),
-                            type = when (update) {
-                                is Timeline.Update.OfFeedGenerator.Pin -> Type.Feed
-                                is Timeline.Update.OfList.Pin -> Type.List
+                            type = when (this) {
+                                is Timeline.Update.OfFeedGenerator.Save -> Type.Feed
+                                is Timeline.Update.OfList.Save -> Type.List
                             },
-                            value = update.uri.uri,
-                            pinned = true,
-                        ) + saved
-                    }
-
-                is Timeline.Update.HomeFeed.Remove -> preferenceUnion.value.items.filter { savedFeed ->
-                    savedFeed.value != update.uri.uri
-                }
-
-                is Timeline.Update.HomeFeed.Save -> preferenceUnion.value.items.filter {
-                    it.value != update.uri.uri
-                } + SavedFeed(
-                    id = tidGenerator.generate(),
-                    type = when (update) {
-                        is Timeline.Update.OfFeedGenerator.Save -> Type.Feed
-                        is Timeline.Update.OfList.Save -> Type.List
+                            value = uri.uri,
+                            pinned = false,
+                        )
                     },
-                    value = update.uri.uri,
-                    pinned = false,
-                )
-            },
-        ),
-    )
+                ),
+            ),
+        )
+    }
 
-    private fun Timeline.Update.OfContentLabel.contentLabelPrefs() = when (this) {
+    /**
+     * A content label preference may or may not already exist for a particular update. This method
+     * unconditionally creates the preference, and filters out an existing one if present.
+     */
+    private fun Timeline.Update.OfContentLabel.updateContentLabelPreferences(
+        preferenceUnionList: List<PreferencesUnion.ContentLabelPref>,
+    ): List<PreferencesUnion.ContentLabelPref> = when (this) {
         is Timeline.Update.OfContentLabel.AdultLabelVisibilityChange -> label.labelValues.map { label ->
             PreferencesUnion.ContentLabelPref(
                 value = ContentLabelPref(
@@ -248,47 +246,79 @@ internal class ThingPreferenceUpdater @Inject constructor(
             ),
         )
     }
+        .plus(preferenceUnionList)
+        .distinctBy { "${it.value.label}-${it.value.labelerDid}" }
 
-    private fun updateLabelerPreference(
-        preferenceUnion: PreferencesUnion.LabelersPref,
-        update: Timeline.Update.OfLabeler,
-    ): PreferencesUnion.LabelersPref = PreferencesUnion.LabelersPref(
-        value = preferenceUnion.value.copy(
-            labelers = when (update) {
-                is Timeline.Update.OfLabeler.Subscription -> when {
-                    update.subscribed ->
-                        preferenceUnion.value.labelers
-                            .plus(LabelerPrefItem(did = update.labelCreatorId.id.let(::Did)))
-                            .distinctBy(LabelerPrefItem::did)
-                    else ->
-                        preferenceUnion.value.labelers
-                            .filter { it.did.did != update.labelCreatorId.id }
-                }
-            },
-        ),
-    )
+    /**
+     * A labeler preference may or may not already exist for a particular update.
+     * If subscribed, this method unconditionally creates the preference, and filters out an
+     * existing one if present.
+     * If not subscribed, the existing one is simply removed.
+     */
+    private fun Timeline.Update.OfLabeler.updateLabelerPreferences(
+        preferenceUnionList: List<PreferencesUnion.LabelersPref>,
+    ): List<PreferencesUnion.LabelersPref> {
+        val labelers = preferenceUnionList
+            .flatMap { it.value.labelers }
+        // Return a singleton list
+        return listOf(
+            PreferencesUnion.LabelersPref(
+                value = LabelersPref(
+                    labelers = when (this) {
+                        is Timeline.Update.OfLabeler.Subscription -> when {
+                            subscribed ->
+                                labelers
+                                    .plus(LabelerPrefItem(did = labelCreatorId.id.let(::Did)))
+                                    .distinctBy(LabelerPrefItem::did)
+                            else ->
+                                labelers
+                                    .filter { it.did.did != labelCreatorId.id }
+                        }
+                    },
+                ),
+            ),
+        )
+    }
 
-    private fun updateAdultContentPreference(
-        preferenceUnion: PreferencesUnion.AdultContentPref,
-        update: Timeline.Update.OfAdultContent,
-    ): PreferencesUnion.AdultContentPref = PreferencesUnion.AdultContentPref(
-        value = preferenceUnion.value.copy(
-            enabled = update.enabled,
-        ),
-    )
+    /**
+     * Unconditionally creates the adult content preference and returns it
+     */
+    private fun Timeline.Update.OfAdultContent.updateAdultContentPreferences(): List<PreferencesUnion.AdultContentPref> =
+        // Return a singleton list
+
+        listOf(
+            PreferencesUnion.AdultContentPref(
+                AdultContentPref(enabled = enabled),
+            ),
+        )
+
+    private suspend fun Timeline.Update.updatePreferences(
+        existingPreferences: List<PreferencesUnion>,
+    ): List<PreferencesUnion> =
+        when (this) {
+            is Timeline.Update.HomeFeed -> updateHomeTimelinePreferences(
+                preferenceUnionList = existingPreferences.filterIsInstance<PreferencesUnion.SavedFeedsPrefV2>(),
+            )
+            is Timeline.Update.OfAdultContent -> updateAdultContentPreferences()
+            is Timeline.Update.OfContentLabel -> updateContentLabelPreferences(
+                preferenceUnionList = existingPreferences.filterIsInstance<PreferencesUnion.ContentLabelPref>(),
+            )
+            is Timeline.Update.OfLabeler -> updateLabelerPreferences(
+                preferenceUnionList = existingPreferences.filterIsInstance<PreferencesUnion.LabelersPref>(),
+            )
+        }
 }
+
+private fun Timeline.Update.targetClass() =
+    when (this) {
+        is Timeline.Update.HomeFeed -> PreferencesUnion.SavedFeedsPrefV2::class
+        is Timeline.Update.OfAdultContent -> PreferencesUnion.AdultContentPref::class
+        is Timeline.Update.OfContentLabel -> PreferencesUnion.ContentLabelPref::class
+        is Timeline.Update.OfLabeler -> PreferencesUnion.LabelersPref::class
+    }
 
 private fun PreferencesUnion.ContentLabelPref.asExternalModel() = ContentLabelPreference(
     labelerId = value.labelerDid?.did?.let(::ProfileId),
     label = Label.Value(value = value.label),
     visibility = Label.Visibility(value = value.visibility.value),
 )
-
-private inline fun <
-    reified T : Timeline.Update,
-    > PreferencesUnion.targeting(
-    update: Timeline.Update,
-    block: (T) -> PreferencesUnion,
-): PreferencesUnion =
-    if (update is T) block(update)
-    else this
