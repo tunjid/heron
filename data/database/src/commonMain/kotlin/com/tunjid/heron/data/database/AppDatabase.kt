@@ -34,6 +34,7 @@ import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.TimelineDao
+import com.tunjid.heron.data.database.entities.BookmarkEntity
 import com.tunjid.heron.data.database.entities.ConversationEntity
 import com.tunjid.heron.data.database.entities.ConversationMembersEntity
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
@@ -46,7 +47,6 @@ import com.tunjid.heron.data.database.entities.MessageEntity
 import com.tunjid.heron.data.database.entities.MessageReactionEntity
 import com.tunjid.heron.data.database.entities.NotificationEntity
 import com.tunjid.heron.data.database.entities.PostAuthorsEntity
-import com.tunjid.heron.data.database.entities.PostBookmarkEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostRepostEntity
@@ -76,6 +76,7 @@ import com.tunjid.heron.data.database.migrations.Migration21To22NotificationsOwn
 import com.tunjid.heron.data.database.migrations.Migration22To23ConversationOwnerIds
 import com.tunjid.heron.data.database.migrations.Migration23To24NotificationAndConversationCompositePrimaryKeys
 import com.tunjid.heron.data.database.migrations.Migration27To28LabelEntityPrimaryKeys
+import com.tunjid.heron.data.database.migrations.Migration29To30PostBookmarkViewingProfileId
 import com.tunjid.heron.data.database.migrations.Migration5To6NonNullPostUriAndAuthor
 import com.tunjid.heron.data.database.migrations.Migration6To7PostViewerStatisticsAutoMigration
 import com.tunjid.heron.data.database.migrations.Migration8To9ProfileViewersAutoMigration
@@ -84,7 +85,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 29,
+    version = 30,
     entities = [
         ExternalEmbedEntity::class,
         ImageEntity::class,
@@ -99,7 +100,7 @@ import kotlinx.coroutines.IO
         PostViewerStatisticsEntity::class,
         ProfileViewerStateEntity::class,
         ProfileEntity::class,
-        PostBookmarkEntity::class,
+        BookmarkEntity::class,
         PostLikeEntity::class,
         PostRepostEntity::class,
         LabelEntity::class,
@@ -180,6 +181,7 @@ import kotlinx.coroutines.IO
         // Migration 27 - 28 is a manual migration
         // Add message metadata to message
         AutoMigration(from = 28, to = 29),
+        // Migration 29 - 30 is a manual migration
     ],
     exportSchema = true,
 )
@@ -227,6 +229,7 @@ fun RoomDatabase.Builder<AppDatabase>.configureAndBuild() =
             Migration22To23ConversationOwnerIds,
             Migration23To24NotificationAndConversationCompositePrimaryKeys,
             Migration27To28LabelEntityPrimaryKeys,
+            Migration29To30PostBookmarkViewingProfileId,
         )
         .addCallback(UnknownProfileInsertionCallback)
         .setDriver(BundledSQLiteDriver())

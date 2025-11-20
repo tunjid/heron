@@ -17,32 +17,25 @@
 package com.tunjid.heron.data.database.entities
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
 import androidx.room.Index
-import com.tunjid.heron.data.core.types.PostId
-import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.datetime.Instant
 
 @Entity(
-    tableName = "postBookmark",
+    tableName = "bookmarks",
     primaryKeys = [
-        "postUri",
-    ],
-    foreignKeys = [
-        ForeignKey(
-            entity = PostEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["postUri"],
-            onDelete = ForeignKey.CASCADE,
-        ),
+        "bookmarkedUri",
+        "viewingProfileId",
     ],
     indices = [
-        Index(value = ["postId"]),
         Index(value = ["createdAt"]),
+        Index(value = ["bookmarkedUri"]),
+        Index(value = ["viewingProfileId", "createdAt"]),
     ],
 )
-data class PostBookmarkEntity(
-    val postUri: PostUri,
-    val postId: PostId,
+data class BookmarkEntity(
+    val bookmarkedUri: GenericUri,
+    val viewingProfileId: ProfileId,
     val createdAt: Instant,
 )

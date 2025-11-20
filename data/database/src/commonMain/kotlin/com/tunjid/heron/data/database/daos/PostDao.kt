@@ -24,6 +24,7 @@ import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.database.entities.BookmarkEntity
 import com.tunjid.heron.data.database.entities.EmbeddedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
@@ -88,11 +89,8 @@ interface PostDao {
     @Query(
         """
             SELECT * FROM posts
-            LEFT JOIN (
-                SELECT * FROM postViewerStatistics
-                WHERE viewingProfileId = :viewingProfileId
-            )
-            ON uri = postUri
+            LEFT JOIN postViewerStatistics
+                ON posts.uri = postViewerStatistics.postUri AND postViewerStatistics.viewingProfileId = :viewingProfileId
             WHERE uri IN (:postUris)
         """,
     )
@@ -105,11 +103,8 @@ interface PostDao {
     @Query(
         """
             SELECT * FROM posts
-            LEFT JOIN (
-                SELECT * FROM postViewerStatistics
-                WHERE viewingProfileId = :viewingProfileId
-            )
-            ON uri = postUri
+            LEFT JOIN postViewerStatistics
+                ON posts.uri = postViewerStatistics.postUri AND postViewerStatistics.viewingProfileId = :viewingProfileId
 	        WHERE uri IN (:postUris)
         """,
     )
@@ -127,13 +122,10 @@ interface PostDao {
                 postPosts.postUri AS parentPostUri,
                 postPosts.embeddedPostUri AS embeddedPostUri
             FROM posts AS posts
-            LEFT JOIN (
-                SELECT * FROM postViewerStatistics
-                WHERE viewingProfileId = :viewingProfileId
-            ) AS postViewerStatistics
-            ON posts.uri = postViewerStatistics.postUri
+            LEFT JOIN postViewerStatistics
+                ON posts.uri = postViewerStatistics.postUri AND postViewerStatistics.viewingProfileId = :viewingProfileId
             INNER JOIN postPosts AS postPosts
-            ON posts.uri = postPosts.embeddedPostUri
+                ON posts.uri = postPosts.embeddedPostUri
 	        WHERE postPosts.postUri IN (:postUris)
         """,
     )
@@ -145,17 +137,30 @@ interface PostDao {
     @Transaction
     @Query(
         """
+        SELECT * FROM posts
+        LEFT JOIN postViewerStatistics
+            ON posts.uri = postViewerStatistics.postUri AND postViewerStatistics.viewingProfileId = :viewingProfileId
+        INNER JOIN bookmarks
+            ON posts.uri = bookmarks.bookmarkedUri
+        WHERE bookmarks.viewingProfileId = :viewingProfileId
+        ORDER BY bookmarks.createdAt DESC
+        """,
+    )
+    fun bookmarkedPosts(
+        viewingProfileId: String,
+    ): Flow<List<PopulatedPostEntity>>
+
+    @Transaction
+    @Query(
+        """
             SELECT
                 posts.*,
                 postViewerStatistics.*
             FROM posts AS posts
-            LEFT JOIN (
-                SELECT * FROM postViewerStatistics
-                WHERE viewingProfileId = :viewingProfileId
-            ) AS postViewerStatistics
-            ON posts.uri = postViewerStatistics.postUri
+            LEFT JOIN postViewerStatistics
+                ON posts.uri = postViewerStatistics.postUri AND postViewerStatistics.viewingProfileId = :viewingProfileId
             INNER JOIN postPosts AS postPosts
-            ON posts.uri = postPosts.postUri
+                ON posts.uri = postPosts.postUri
 	        WHERE postPosts.embeddedPostUri = :quotedPostUri
             ORDER BY posts.indexedAt
         """,
@@ -294,6 +299,11 @@ interface PostDao {
     @Update(entity = PostViewerStatisticsEntity::class)
     suspend fun updatePostStatisticsBookmarks(
         entities: List<PostViewerStatisticsEntity.Partial.Bookmark>,
+    )
+
+    @Upsert
+    suspend fun upsertBookmarks(
+        entities: List<BookmarkEntity>,
     )
 
     @Upsert
