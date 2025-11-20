@@ -89,11 +89,8 @@ interface PostDao {
     @Query(
         """
             SELECT * FROM posts
-            LEFT JOIN (
-                SELECT * FROM postViewerStatistics
-                WHERE viewingProfileId = :viewingProfileId
-            )
-            ON uri = postUri
+            LEFT JOIN postViewerStatistics
+                ON posts.uri = postViewerStatistics.postUri AND postViewerStatistics.viewingProfileId = :viewingProfileId
             WHERE uri IN (:postUris)
         """,
     )
@@ -106,11 +103,8 @@ interface PostDao {
     @Query(
         """
             SELECT * FROM posts
-            LEFT JOIN (
-                SELECT * FROM postViewerStatistics
-                WHERE viewingProfileId = :viewingProfileId
-            )
-            ON uri = postUri
+            LEFT JOIN postViewerStatistics
+                ON posts.uri = postViewerStatistics.postUri AND postViewerStatistics.viewingProfileId = :viewingProfileId
 	        WHERE uri IN (:postUris)
         """,
     )
@@ -128,13 +122,10 @@ interface PostDao {
                 postPosts.postUri AS parentPostUri,
                 postPosts.embeddedPostUri AS embeddedPostUri
             FROM posts AS posts
-            LEFT JOIN (
-                SELECT * FROM postViewerStatistics
-                WHERE viewingProfileId = :viewingProfileId
-            ) AS postViewerStatistics
-            ON posts.uri = postViewerStatistics.postUri
+            LEFT JOIN postViewerStatistics
+                ON posts.uri = postViewerStatistics.postUri AND postViewerStatistics.viewingProfileId = :viewingProfileId
             INNER JOIN postPosts AS postPosts
-            ON posts.uri = postPosts.embeddedPostUri
+                ON posts.uri = postPosts.embeddedPostUri
 	        WHERE postPosts.postUri IN (:postUris)
         """,
     )
@@ -147,12 +138,10 @@ interface PostDao {
     @Query(
         """
         SELECT * FROM posts
-        LEFT JOIN (
-            SELECT * FROM postViewerStatistics
-            WHERE viewingProfileId = :viewingProfileId
-        ) AS postViewerStatistics
+        LEFT JOIN postViewerStatistics
+            ON posts.uri = postViewerStatistics.postUri AND postViewerStatistics.viewingProfileId = :viewingProfileId
         INNER JOIN bookmarks
-        ON posts.uri = bookmarks.bookmarkedUri
+            ON posts.uri = bookmarks.bookmarkedUri
         WHERE bookmarks.viewingProfileId = :viewingProfileId
         ORDER BY bookmarks.createdAt DESC
         """,
@@ -168,13 +157,10 @@ interface PostDao {
                 posts.*,
                 postViewerStatistics.*
             FROM posts AS posts
-            LEFT JOIN (
-                SELECT * FROM postViewerStatistics
-                WHERE viewingProfileId = :viewingProfileId
-            ) AS postViewerStatistics
-            ON posts.uri = postViewerStatistics.postUri
+            LEFT JOIN postViewerStatistics
+                ON posts.uri = postViewerStatistics.postUri AND postViewerStatistics.viewingProfileId = :viewingProfileId
             INNER JOIN postPosts AS postPosts
-            ON posts.uri = postPosts.postUri
+                ON posts.uri = postPosts.postUri
 	        WHERE postPosts.embeddedPostUri = :quotedPostUri
             ORDER BY posts.indexedAt
         """,
