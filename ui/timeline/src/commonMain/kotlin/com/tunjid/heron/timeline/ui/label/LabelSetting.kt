@@ -41,6 +41,7 @@ import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LabelSetting(
+    enabled: Boolean,
     labelName: String,
     labelDescription: String?,
     selectedVisibility: Label.Visibility,
@@ -72,6 +73,7 @@ fun LabelSetting(
             val overrideColors = ButtonDefaults.filledTonalButtonColors()
             visibilities.forEachIndexed { index, visibility ->
                 ToggleButton(
+                    enabled = enabled,
                     checked = selectedVisibility == visibility,
                     onCheckedChange = { isChecked ->
                         if (isChecked) onVisibilityChanged(visibility)

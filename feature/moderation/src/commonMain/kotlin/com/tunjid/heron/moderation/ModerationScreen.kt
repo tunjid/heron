@@ -168,6 +168,7 @@ private fun LazyListScope.adultLabelsSection(
                             horizontal = 16.dp,
                             vertical = 8.dp,
                         ),
+                    enabled = true,
                     labelName = stringResource(item.nameRes),
                     labelDescription = stringResource(item.descriptionRes),
                     selectedVisibility = item.visibility,
