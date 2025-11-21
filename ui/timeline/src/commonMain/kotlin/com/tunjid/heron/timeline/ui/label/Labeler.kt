@@ -26,9 +26,9 @@ import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.timeline.utilities.BlueskyClouds
 import com.tunjid.heron.timeline.utilities.LabelerCollectionShape
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.orDefault
 import com.tunjid.heron.ui.RecordLayout
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.timeline.generated.resources.labeling_service_by
@@ -55,7 +55,7 @@ fun Labeler(
         sharedElementPrefix = sharedElementPrefix,
         sharedElementType = labeler.uri,
         avatar = {
-            val avatar = labeler.creator.avatar ?: BlueskyClouds
+            val avatar = labeler.creator.avatar.orDefault
             AsyncImage(
                 modifier = Modifier
                     .paneStickySharedElement(
