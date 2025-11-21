@@ -150,6 +150,7 @@ import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
 import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
+import com.tunjid.heron.timeline.utilities.orDefault
 import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
@@ -741,7 +742,7 @@ private fun ProfileAvatar(
                 key3 = profile.isLabeler,
             ) {
                 ImageArgs(
-                    url = profile.avatar?.uri,
+                    url = profile.avatar.orDefault.uri,
                     contentScale = ContentScale.Crop,
                     contentDescription = profile.displayName ?: profile.handle.id,
                     shape =

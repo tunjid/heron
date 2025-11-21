@@ -29,11 +29,11 @@ import com.tunjid.heron.data.core.models.Timeline.Update
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.timeline.utilities.BlueskyClouds
 import com.tunjid.heron.timeline.utilities.FeedGeneratorCollectionShape
 import com.tunjid.heron.timeline.utilities.TimelineStatusSelection
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.format
+import com.tunjid.heron.timeline.utilities.orDefault
 import com.tunjid.heron.ui.RecordLayout
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.timeline.generated.resources.Res
@@ -67,7 +67,7 @@ fun FeedGenerator(
             format(feedGenerator.likeCount ?: 0L),
         ),
         avatar = {
-            val avatar = feedGenerator.avatar ?: BlueskyClouds
+            val avatar = feedGenerator.avatar.orDefault
             AsyncImage(
                 modifier = Modifier
                     .paneStickySharedElement(

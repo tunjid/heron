@@ -192,6 +192,9 @@ internal val LabelerCollectionShape by lazy {
     )
 }
 
+val ImageUri?.orDefault
+    get() = this ?: BlueskyClouds
+
 private val NonPostRecordModifier = Modifier
     .padding(12.dp)
 
