@@ -29,8 +29,8 @@ import app.bsky.unspecced.GetPopularFeedGeneratorsResponse
 import app.bsky.unspecced.GetSuggestedStarterPacksQueryParams
 import app.bsky.unspecced.GetSuggestedUsersQueryParams
 import app.bsky.unspecced.GetTrendsQueryParams
-import app.bsky.unspecced.Status
 import app.bsky.unspecced.TrendView
+import app.bsky.unspecced.TrendViewStatus
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -475,8 +475,8 @@ internal class OfflineSearchRepository @Inject constructor(
 private fun TrendView.trend() = Trend(
     topic = topic,
     status = when (status) {
-        Status.Hot -> Trend.Status.Hot
-        is Status.Unknown,
+        TrendViewStatus.Hot -> Trend.Status.Hot
+        is TrendViewStatus.Unknown,
         null,
         -> null
     },

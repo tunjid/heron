@@ -17,7 +17,7 @@
 package com.tunjid.heron.data.repository
 
 import app.bsky.actor.PutPreferencesRequest
-import app.bsky.actor.Type
+import app.bsky.actor.SavedFeedType
 import app.bsky.feed.FeedViewPost
 import app.bsky.feed.GetActorLikesQueryParams
 import app.bsky.feed.GetActorLikesResponse
@@ -653,29 +653,29 @@ internal class OfflineTimelineRepository(
                 .distinctUntilChanged()
                 .flatMapLatest { timelinePreferences ->
                     timelinePreferences.mapIndexed { index, preference ->
-                        when (Type.safeValueOf(preference.type)) {
-                            Type.Feed -> feedGeneratorTimeline(
+                        when (SavedFeedType.safeValueOf(preference.type)) {
+                            SavedFeedType.Feed -> feedGeneratorTimeline(
                                 signedInProfileId = signedInProfileId,
                                 uri = FeedGeneratorUri(preference.value),
                                 position = index,
                                 isPinned = preference.pinned,
                             )
 
-                            Type.List -> listTimeline(
+                            SavedFeedType.List -> listTimeline(
                                 signedInProfileId = signedInProfileId,
                                 uri = ListUri(preference.value),
                                 position = index,
                                 isPinned = preference.pinned,
                             )
 
-                            Type.Timeline -> followingTimeline(
+                            SavedFeedType.Timeline -> followingTimeline(
                                 signedInProfileId = signedInProfileId,
                                 name = preference.value.replaceFirstChar(Char::titlecase),
                                 position = index,
                                 isPinned = preference.pinned,
                             )
 
-                            is Type.Unknown -> emptyFlow()
+                            is SavedFeedType.Unknown -> emptyFlow()
                         }
                     }
                         .merge()
@@ -813,7 +813,7 @@ internal class OfflineTimelineRepository(
                                 signedInProfileId = signedInProfileId,
                                 position = 0,
                                 isPinned = preferences.firstOrNull {
-                                    Type.safeValueOf(it.type) is Type.Timeline
+                                    SavedFeedType.safeValueOf(it.type) is SavedFeedType.Timeline
                                 }?.pinned ?: false,
                             ),
                         )

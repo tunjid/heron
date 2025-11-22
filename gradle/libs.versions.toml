@@ -44,7 +44,7 @@ ktlint-cli = "1.7.1"
 ktor = "3.3.1"
 metro = "0.6.9"
 okio = "3.16.0"
-ozone-atproto = "0.3.3"
+ozone-atproto = "0.3.4"
 #noinspection NewerVersionAvailable; Need to be on CMP 1.8.2 for shared element transitions
 savedstate-multiplatform = "1.3.2"
 spotless = "8.0.0"
@@ -157,7 +157,7 @@ ktor-io-core = { group = "io.ktor", name = "ktor-io", version.ref = "ktor" }
 ktor-io-jvm = { group = "io.ktor", name = "ktor-io-jvm", version.ref = "ktor" }
 metro-gradlePlugin = { group = "dev.zacsweers.metro", name = "gradle-plugin", version.ref = "metro" }
 okio = { group = "com.squareup.okio", name = "okio", version.ref = "okio" }
-ozone-atproto-runtime = { group = "sh.christian.ozone", name = "api-gen-runtime", version.ref = "ozone-atproto" }
+ozone-atproto-runtime = { group = "com.tunjid", name = "api-gen-runtime", version.ref = "ozone-atproto" }
 tunjid-composables = { group = "com.tunjid.composables", name = "composables", version.ref = "tunjid-composables" }
 tunjid-mutator-core-common = { group = "com.tunjid.mutator", name = "core", version.ref = "tunjid-state-holder" }
 tunjid-mutator-core-jvm = { group = "com.tunjid.mutator", name = "core-jvm", version.ref = "tunjid-state-holder" }
@@ -181,7 +181,7 @@ kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref =
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
-ozoneLexiconGenerator = { id = "sh.christian.ozone.generator", version.ref = "ozone-atproto" }
+ozoneLexiconGenerator = { id = "com.tunjid.ozone.generator", version.ref = "ozone-atproto" }
 aboutLibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutLibraries" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 burst = { id = "app.cash.burst", version.ref = "burst" }
