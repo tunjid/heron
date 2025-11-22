@@ -18,7 +18,7 @@ package com.tunjid.heron.data.utilities.multipleEntitysaver
 
 import app.bsky.feed.PostView
 import app.bsky.notification.ListNotificationsNotification
-import app.bsky.notification.ListNotificationsReason
+import app.bsky.notification.ListNotificationsNotificationReason
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.GenericUri
@@ -54,16 +54,16 @@ internal fun MultipleEntitySaver.add(
                 authorId = notification.author.did.did.let(::ProfileId),
                 ownerId = viewingProfileId,
                 reason = when (notification.reason) {
-                    ListNotificationsReason.Follow -> Notification.Reason.Follow
-                    ListNotificationsReason.Like -> Notification.Reason.Like
-                    ListNotificationsReason.Mention -> Notification.Reason.Mention
-                    ListNotificationsReason.Quote -> Notification.Reason.Quote
-                    ListNotificationsReason.Reply -> Notification.Reason.Reply
-                    ListNotificationsReason.Repost -> Notification.Reason.Repost
-                    ListNotificationsReason.StarterpackJoined -> Notification.Reason.JoinedStarterPack
-                    is ListNotificationsReason.Unknown -> Notification.Reason.Unknown
-                    ListNotificationsReason.Verified -> Notification.Reason.Verified
-                    ListNotificationsReason.Unverified -> Notification.Reason.Unverified
+                    ListNotificationsNotificationReason.Follow -> Notification.Reason.Follow
+                    ListNotificationsNotificationReason.Like -> Notification.Reason.Like
+                    ListNotificationsNotificationReason.Mention -> Notification.Reason.Mention
+                    ListNotificationsNotificationReason.Quote -> Notification.Reason.Quote
+                    ListNotificationsNotificationReason.Reply -> Notification.Reason.Reply
+                    ListNotificationsNotificationReason.Repost -> Notification.Reason.Repost
+                    ListNotificationsNotificationReason.StarterpackJoined -> Notification.Reason.JoinedStarterPack
+                    is ListNotificationsNotificationReason.Unknown -> Notification.Reason.Unknown
+                    ListNotificationsNotificationReason.Verified -> Notification.Reason.Verified
+                    ListNotificationsNotificationReason.Unverified -> Notification.Reason.Unverified
                 },
                 reasonSubject = notification.reasonSubject?.atUri?.let(::GenericUri),
                 associatedPostUri = notification.associatedPostUri()
@@ -78,14 +78,14 @@ internal fun MultipleEntitySaver.add(
 }
 
 internal fun ListNotificationsNotification.associatedPostUri(): AtUri? = when (reason) {
-    is ListNotificationsReason.Unknown -> null
-    is ListNotificationsReason.Like -> reasonSubject
-    is ListNotificationsReason.Repost -> reasonSubject
-    is ListNotificationsReason.Mention -> uri
-    is ListNotificationsReason.Reply -> uri
-    is ListNotificationsReason.Quote -> uri
-    is ListNotificationsReason.Follow -> null
-    is ListNotificationsReason.StarterpackJoined -> null
-    ListNotificationsReason.Unverified -> null
-    ListNotificationsReason.Verified -> null
+    is ListNotificationsNotificationReason.Unknown -> null
+    is ListNotificationsNotificationReason.Like -> reasonSubject
+    is ListNotificationsNotificationReason.Repost -> reasonSubject
+    is ListNotificationsNotificationReason.Mention -> uri
+    is ListNotificationsNotificationReason.Reply -> uri
+    is ListNotificationsNotificationReason.Quote -> uri
+    is ListNotificationsNotificationReason.Follow -> null
+    is ListNotificationsNotificationReason.StarterpackJoined -> null
+    ListNotificationsNotificationReason.Unverified -> null
+    ListNotificationsNotificationReason.Verified -> null
 }

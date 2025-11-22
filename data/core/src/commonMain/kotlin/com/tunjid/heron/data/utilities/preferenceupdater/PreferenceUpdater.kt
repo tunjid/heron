@@ -18,14 +18,14 @@ package com.tunjid.heron.data.utilities.preferenceupdater
 
 import app.bsky.actor.AdultContentPref
 import app.bsky.actor.ContentLabelPref
+import app.bsky.actor.ContentLabelPrefVisibility
 import app.bsky.actor.GetPreferencesResponse
 import app.bsky.actor.LabelerPrefItem
 import app.bsky.actor.LabelersPref
 import app.bsky.actor.PreferencesUnion
 import app.bsky.actor.SavedFeed
+import app.bsky.actor.SavedFeedType
 import app.bsky.actor.SavedFeedsPrefV2
-import app.bsky.actor.Type
-import app.bsky.actor.Visibility
 import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.LabelerPreference
@@ -153,7 +153,7 @@ internal class ThingPreferenceUpdater @Inject constructor(
                                     ]?.let { id ->
                                         SavedFeed(
                                             id = id,
-                                            type = Type.Feed,
+                                            type = SavedFeedType.Feed,
                                             value = timeline.feedGenerator.uri.uri,
                                             pinned = timeline.isPinned,
                                         )
@@ -164,7 +164,7 @@ internal class ThingPreferenceUpdater @Inject constructor(
                                     ]?.let { id ->
                                         SavedFeed(
                                             id = id,
-                                            type = Type.Timeline,
+                                            type = SavedFeedType.Timeline,
                                             value = "following",
                                             pinned = timeline.isPinned,
                                         )
@@ -175,7 +175,7 @@ internal class ThingPreferenceUpdater @Inject constructor(
                                     ]?.let { id ->
                                         SavedFeed(
                                             id = id,
-                                            type = Type.List,
+                                            type = SavedFeedType.List,
                                             value = timeline.feedList.uri.uri,
                                             pinned = timeline.isPinned,
                                         )
@@ -192,8 +192,8 @@ internal class ThingPreferenceUpdater @Inject constructor(
                                 pinned + SavedFeed(
                                     id = tidGenerator.generate(),
                                     type = when (this) {
-                                        is Timeline.Update.OfFeedGenerator.Pin -> Type.Feed
-                                        is Timeline.Update.OfList.Pin -> Type.List
+                                        is Timeline.Update.OfFeedGenerator.Pin -> SavedFeedType.Feed
+                                        is Timeline.Update.OfList.Pin -> SavedFeedType.List
                                     },
                                     value = uri.uri,
                                     pinned = true,
@@ -209,8 +209,8 @@ internal class ThingPreferenceUpdater @Inject constructor(
                         } + SavedFeed(
                             id = tidGenerator.generate(),
                             type = when (this) {
-                                is Timeline.Update.OfFeedGenerator.Save -> Type.Feed
-                                is Timeline.Update.OfList.Save -> Type.List
+                                is Timeline.Update.OfFeedGenerator.Save -> SavedFeedType.Feed
+                                is Timeline.Update.OfList.Save -> SavedFeedType.List
                             },
                             value = uri.uri,
                             pinned = false,
@@ -233,7 +233,7 @@ internal class ThingPreferenceUpdater @Inject constructor(
                 value = ContentLabelPref(
                     labelerDid = null,
                     label = label.value,
-                    visibility = Visibility.safeValueOf(visibility.value),
+                    visibility = ContentLabelPrefVisibility.safeValueOf(visibility.value),
                 ),
             )
         }
@@ -242,7 +242,7 @@ internal class ThingPreferenceUpdater @Inject constructor(
                 value = ContentLabelPref(
                     labelerDid = labelCreatorId.id.let(::Did),
                     label = value.value,
-                    visibility = Visibility.safeValueOf(visibility.value),
+                    visibility = ContentLabelPrefVisibility.safeValueOf(visibility.value),
                 ),
             ),
         )

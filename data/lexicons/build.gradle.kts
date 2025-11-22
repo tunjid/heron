@@ -4,7 +4,7 @@ plugins {
     id("android-library-convention")
     id("kotlin-library-convention")
     id("ksp-convention")
-    id("sh.christian.ozone.generator")
+    id("com.tunjid.ozone.generator")
     kotlin("plugin.serialization")
 }
 
