@@ -56,6 +56,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDropDown
+import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.ElevatedCard
@@ -85,6 +86,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -98,14 +100,17 @@ import com.tunjid.heron.home.ui.EditableTimelineState.Companion.timelineEditDrop
 import com.tunjid.heron.home.ui.JiggleBox
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import heron.feature.home.generated.resources.Res
+import heron.feature.home.generated.resources.bookmark
 import heron.feature.home.generated.resources.pinned
 import heron.feature.home.generated.resources.saved
+import heron.feature.home.generated.resources.settings
 import heron.feature.home.generated.resources.timeline_drop_target_hint
 import heron.feature.home.generated.resources.timeline_preferences
 import kotlin.math.roundToInt
@@ -138,6 +143,7 @@ internal fun HomeTabs(
     onTimelinePresentationUpdated: (Int, Timeline.Presentation) -> Unit,
     onTimelinePreferencesSaved: (List<Timeline.Home>) -> Unit,
     onSettingsIconClick: () -> Unit,
+    onBookmarkIconClick: () -> Unit,
 ) = with(sharedTransitionScope) {
     val isExpanded = tabLayout is TabLayout.Expanded
     val collapsedTabsState = rememberTabsState(
@@ -239,11 +245,23 @@ internal fun HomeTabs(
             AnimatedVisibility(
                 visible = isExpanded,
             ) {
-                SettingsIconButton(
-                    onActionClick = {
-                        onSettingsIconClick()
-                    },
-                )
+                Row {
+                    HomeTimelineAction(
+                        onActionClick = {
+                            onSettingsIconClick()
+                        },
+                        icon = Icons.Rounded.Settings,
+                        iconDescription = stringResource(Res.string.settings),
+                    )
+
+                    HomeTimelineAction(
+                        onActionClick = {
+                            onBookmarkIconClick()
+                        },
+                        icon = Icons.Rounded.Bookmark,
+                        iconDescription = stringResource(Res.string.bookmark),
+                    )
+                }
             }
 
             ExpandButton(
@@ -341,7 +359,7 @@ private fun ExpandedTabs(
                 )
             }
         }
-        androidx.compose.animation.AnimatedVisibility(
+        AnimatedVisibility(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 24.dp),
@@ -604,9 +622,11 @@ private fun DropTargetBox(
 }
 
 @Composable
-private fun SettingsIconButton(
-    onActionClick: () -> Unit,
+fun HomeTimelineAction(
     modifier: Modifier = Modifier,
+    icon: ImageVector,
+    iconDescription: String,
+    onActionClick: () -> Unit,
 ) {
     ElevatedCard(
         modifier = modifier
@@ -622,8 +642,8 @@ private fun SettingsIconButton(
                 .size(40.dp),
         ) {
             Icon(
-                imageVector = Icons.Rounded.Settings,
-                contentDescription = "",
+                imageVector = icon,
+                contentDescription = iconDescription,
                 tint = MaterialTheme.colorScheme.primary,
             )
         }
@@ -661,7 +681,7 @@ private fun TimelinePresentationSelector(
         modifier = modifier.wrapContentWidth(),
         horizontalArrangement = Arrangement.aligned(Alignment.End),
     ) {
-        com.tunjid.heron.timeline.ui.TimelinePresentationSelector(
+        TimelinePresentationSelector(
             selected = timeline.presentation,
             available = timeline.supportedPresentations,
             onPresentationSelected = { presentation ->
