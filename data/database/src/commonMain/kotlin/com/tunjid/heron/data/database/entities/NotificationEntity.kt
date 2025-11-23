@@ -97,7 +97,7 @@ fun PopulatedNotificationEntity.asExternalModel(
             uri = entity.uri,
             indexedAt = entity.indexedAt,
             author = author.asExternalModel(),
-            reasonSubject = entity.uri,
+            reasonSubject = entity.reasonSubject,
             isRead = entity.isRead,
             associatedPost = associatedPost,
         )
@@ -109,7 +109,7 @@ fun PopulatedNotificationEntity.asExternalModel(
             uri = entity.uri,
             indexedAt = entity.indexedAt,
             author = author.asExternalModel(),
-            reasonSubject = entity.uri,
+            reasonSubject = entity.reasonSubject,
             isRead = entity.isRead,
             associatedPost = associatedPost,
         )
@@ -121,7 +121,7 @@ fun PopulatedNotificationEntity.asExternalModel(
             uri = entity.uri,
             indexedAt = entity.indexedAt,
             author = author.asExternalModel(),
-            reasonSubject = entity.uri,
+            reasonSubject = entity.reasonSubject,
             isRead = entity.isRead,
             associatedPost = associatedPost,
         )
@@ -133,7 +133,7 @@ fun PopulatedNotificationEntity.asExternalModel(
             uri = entity.uri,
             indexedAt = entity.indexedAt,
             author = author.asExternalModel(),
-            reasonSubject = entity.uri,
+            reasonSubject = entity.reasonSubject,
             isRead = entity.isRead,
             associatedPost = associatedPost,
         )
@@ -143,7 +143,7 @@ fun PopulatedNotificationEntity.asExternalModel(
         uri = entity.uri,
         indexedAt = entity.indexedAt,
         author = author.asExternalModel(),
-        reasonSubject = entity.uri,
+        reasonSubject = entity.reasonSubject,
         isRead = entity.isRead,
     )
 
@@ -154,7 +154,7 @@ fun PopulatedNotificationEntity.asExternalModel(
             uri = entity.uri,
             indexedAt = entity.indexedAt,
             author = author.asExternalModel(),
-            reasonSubject = entity.uri,
+            reasonSubject = entity.reasonSubject,
             isRead = entity.isRead,
             associatedPost = associatedPost,
         )
@@ -166,7 +166,7 @@ fun PopulatedNotificationEntity.asExternalModel(
             uri = entity.uri,
             indexedAt = entity.indexedAt,
             author = author.asExternalModel(),
-            reasonSubject = entity.uri,
+            reasonSubject = entity.reasonSubject,
             isRead = entity.isRead,
             associatedPost = associatedPost,
         )
@@ -178,7 +178,7 @@ fun PopulatedNotificationEntity.asExternalModel(
             uri = entity.uri,
             indexedAt = entity.indexedAt,
             author = author.asExternalModel(),
-            reasonSubject = entity.uri,
+            reasonSubject = entity.reasonSubject,
             isRead = entity.isRead,
             associatedPost = associatedPost,
         )
@@ -188,7 +188,7 @@ fun PopulatedNotificationEntity.asExternalModel(
         uri = entity.uri,
         indexedAt = entity.indexedAt,
         author = author.asExternalModel(),
-        reasonSubject = entity.uri,
+        reasonSubject = entity.reasonSubject,
         isRead = entity.isRead,
     )
 
@@ -199,7 +199,7 @@ fun PopulatedNotificationEntity.asExternalModel(
             uri = entity.uri,
             indexedAt = entity.indexedAt,
             author = author.asExternalModel(),
-            reasonSubject = entity.uri,
+            reasonSubject = entity.reasonSubject,
             isRead = entity.isRead,
             associatedPost = associatedPost,
         )
@@ -209,7 +209,7 @@ fun PopulatedNotificationEntity.asExternalModel(
         uri = entity.uri,
         indexedAt = entity.indexedAt,
         author = author.asExternalModel(),
-        reasonSubject = entity.uri,
+        reasonSubject = entity.reasonSubject,
         isRead = entity.isRead,
     )
 
@@ -218,7 +218,7 @@ fun PopulatedNotificationEntity.asExternalModel(
         uri = entity.uri,
         indexedAt = entity.indexedAt,
         author = author.asExternalModel(),
-        reasonSubject = entity.uri,
+        reasonSubject = entity.reasonSubject,
         isRead = entity.isRead,
     )
 }
@@ -229,6 +229,6 @@ private fun PopulatedNotificationEntity.unknown() =
         uri = entity.uri,
         indexedAt = entity.indexedAt,
         author = author.asExternalModel(),
-        reasonSubject = entity.uri,
+        reasonSubject = entity.reasonSubject,
         isRead = entity.isRead,
     )
