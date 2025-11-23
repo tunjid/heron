@@ -83,7 +83,7 @@ internal fun <T> T.asJsonContent(
 internal inline fun <reified T : Any> JsonContent.safeDecodeAs(): T? =
     try {
         decodeAs<T>()
-    } catch (_: Exception) {
+    } catch (_: kotlinx.serialization.SerializationException) {
         null
     }
 
