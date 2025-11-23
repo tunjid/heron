@@ -38,8 +38,11 @@ import com.tunjid.heron.timeline.ui.TimeDelta
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.feature.notifications.generated.resources.Res
 import heron.feature.notifications.generated.resources.multiple_reposted_your_post
+import heron.feature.notifications.generated.resources.multiple_reposted_your_repost
 import heron.feature.notifications.generated.resources.reposted_your_post
 import heron.feature.notifications.generated.resources.reposted_your_post_description
+import heron.feature.notifications.generated.resources.reposted_your_repost
+import heron.feature.notifications.generated.resources.reposted_your_repost_description
 import kotlinx.datetime.Instant
 import org.jetbrains.compose.resources.stringResource
 
@@ -67,7 +70,12 @@ fun RepostRow(
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.Repeat),
                 tint = Color.Green,
-                contentDescription = stringResource(Res.string.reposted_your_post_description),
+                contentDescription = stringResource(
+                    when (notification) {
+                        is Notification.Reposted.Post -> Res.string.reposted_your_post_description
+                        is Notification.Reposted.Repost -> Res.string.reposted_your_repost_description
+                    },
+                ),
             )
         },
         content = {
@@ -78,8 +86,14 @@ fun RepostRow(
                         text = notificationText(
                             notification = notification,
                             aggregatedSize = aggregatedProfiles.size,
-                            singularResource = Res.string.reposted_your_post,
-                            pluralResource = Res.string.multiple_reposted_your_post,
+                            singularResource = when (notification) {
+                                is Notification.Reposted.Post -> Res.string.reposted_your_post
+                                is Notification.Reposted.Repost -> Res.string.reposted_your_repost
+                            },
+                            pluralResource = when (notification) {
+                                is Notification.Reposted.Post -> Res.string.multiple_reposted_your_post
+                                is Notification.Reposted.Repost -> Res.string.multiple_reposted_your_repost
+                            },
                         ),
                     )
 

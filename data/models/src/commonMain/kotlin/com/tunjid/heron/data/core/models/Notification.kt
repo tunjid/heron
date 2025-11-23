@@ -21,6 +21,8 @@ import com.tunjid.heron.data.core.types.GenericUri
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
+private typealias ExportedPost = Post
+
 @Serializable
 sealed class Notification {
 
@@ -35,25 +37,49 @@ sealed class Notification {
     abstract val isRead: Boolean
     abstract val indexedAt: Instant
 
-    data class Liked(
-        override val uri: GenericUri,
-        override val cid: GenericId,
-        override val author: Profile,
-        override val reasonSubject: GenericUri?,
-        override val isRead: Boolean,
-        override val indexedAt: Instant,
-        override val associatedPost: Post,
-    ) : PostAssociated()
+    sealed class Liked : PostAssociated() {
+        data class Post(
+            override val uri: GenericUri,
+            override val cid: GenericId,
+            override val author: Profile,
+            override val reasonSubject: GenericUri?,
+            override val isRead: Boolean,
+            override val indexedAt: Instant,
+            override val associatedPost: ExportedPost,
+        ) : Liked()
 
-    data class Reposted(
-        override val uri: GenericUri,
-        override val cid: GenericId,
-        override val author: Profile,
-        override val reasonSubject: GenericUri?,
-        override val isRead: Boolean,
-        override val indexedAt: Instant,
-        override val associatedPost: Post,
-    ) : PostAssociated()
+        data class Repost(
+            override val uri: GenericUri,
+            override val cid: GenericId,
+            override val author: Profile,
+            override val reasonSubject: GenericUri?,
+            override val isRead: Boolean,
+            override val indexedAt: Instant,
+            override val associatedPost: ExportedPost,
+        ) : Liked()
+    }
+
+    sealed class Reposted : PostAssociated() {
+        data class Post(
+            override val uri: GenericUri,
+            override val cid: GenericId,
+            override val author: Profile,
+            override val reasonSubject: GenericUri?,
+            override val isRead: Boolean,
+            override val indexedAt: Instant,
+            override val associatedPost: ExportedPost,
+        ) : Reposted()
+
+        data class Repost(
+            override val uri: GenericUri,
+            override val cid: GenericId,
+            override val author: Profile,
+            override val reasonSubject: GenericUri?,
+            override val isRead: Boolean,
+            override val indexedAt: Instant,
+            override val associatedPost: ExportedPost,
+        ) : Reposted()
+    }
 
     data class Followed(
         override val uri: GenericUri,
@@ -103,6 +129,16 @@ sealed class Notification {
         override val indexedAt: Instant,
     ) : Notification()
 
+    data class SubscribedPost(
+        override val uri: GenericUri,
+        override val cid: GenericId,
+        override val author: Profile,
+        override val reasonSubject: GenericUri?,
+        override val isRead: Boolean,
+        override val indexedAt: Instant,
+        override val associatedPost: Post,
+    ) : PostAssociated()
+
     data class Unknown(
         override val uri: GenericUri,
         override val cid: GenericId,
@@ -141,6 +177,9 @@ sealed class Notification {
         JoinedStarterPack,
         Verified,
         Unverified,
+        LikeViaRepost,
+        RepostViaRepost,
+        SubscribedPost,
     }
 }
 
@@ -153,6 +192,7 @@ val Notification.associatedPostUri
         is Notification.Quoted -> null
         is Notification.RepliedTo -> null
         is Notification.Reposted -> associatedPost.uri
+        is Notification.SubscribedPost -> associatedPost.uri
         is Notification.Unknown -> null
         is Notification.Unverified -> null
         is Notification.Verified -> null

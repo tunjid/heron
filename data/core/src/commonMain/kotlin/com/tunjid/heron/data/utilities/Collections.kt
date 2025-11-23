@@ -80,6 +80,13 @@ internal fun <T> T.asJsonContent(
     BlueskyJson.encodeToString(serializer, this),
 )
 
+internal inline fun <reified T : Any> JsonContent.safeDecodeAs(): T? =
+    try {
+        decodeAs<T>()
+    } catch (_: kotlinx.serialization.SerializationException) {
+        null
+    }
+
 private fun tidTimestampFromBase32(base32Tid: String): Long {
     val tidLong = base32ToLong(base32Tid)
     return extractTimestampFromTid(tidLong)
