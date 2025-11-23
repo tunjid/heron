@@ -16,7 +16,9 @@
 
 package com.tunjid.heron.data.utilities.multipleEntitysaver
 
+import app.bsky.feed.Like
 import app.bsky.feed.PostView
+import app.bsky.feed.Repost
 import app.bsky.notification.ListNotificationsNotification
 import app.bsky.notification.ListNotificationsNotificationReason
 import com.tunjid.heron.data.core.models.Notification
@@ -25,6 +27,7 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.NotificationEntity
+import com.tunjid.heron.data.utilities.safeDecodeAs
 import sh.christian.ozone.api.AtUri
 
 internal fun MultipleEntitySaver.add(
@@ -64,6 +67,9 @@ internal fun MultipleEntitySaver.add(
                     is ListNotificationsNotificationReason.Unknown -> Notification.Reason.Unknown
                     ListNotificationsNotificationReason.Verified -> Notification.Reason.Verified
                     ListNotificationsNotificationReason.Unverified -> Notification.Reason.Unverified
+                    ListNotificationsNotificationReason.LikeViaRepost -> Notification.Reason.LikeViaRepost
+                    ListNotificationsNotificationReason.RepostViaRepost -> Notification.Reason.RepostViaRepost
+                    ListNotificationsNotificationReason.SubscribedPost -> Notification.Reason.SubscribedPost
                 },
                 reasonSubject = notification.reasonSubject?.atUri?.let(::GenericUri),
                 associatedPostUri = notification.associatedPostUri()
@@ -88,4 +94,7 @@ internal fun ListNotificationsNotification.associatedPostUri(): AtUri? = when (r
     is ListNotificationsNotificationReason.StarterpackJoined -> null
     ListNotificationsNotificationReason.Unverified -> null
     ListNotificationsNotificationReason.Verified -> null
+    ListNotificationsNotificationReason.LikeViaRepost -> record.safeDecodeAs<Like>()?.subject?.uri
+    ListNotificationsNotificationReason.RepostViaRepost -> record.safeDecodeAs<Repost>()?.subject?.uri
+    ListNotificationsNotificationReason.SubscribedPost -> reasonSubject
 }

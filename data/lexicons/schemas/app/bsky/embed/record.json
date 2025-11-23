@@ -51,7 +51,6 @@
         "repostCount": { "type": "integer" },
         "likeCount": { "type": "integer" },
         "quoteCount": { "type": "integer" },
-        "bookmarkCount": { "type": "integer" },
         "embeds": {
           "type": "array",
           "items": {

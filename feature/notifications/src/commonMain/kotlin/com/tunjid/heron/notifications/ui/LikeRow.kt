@@ -39,7 +39,10 @@ import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.feature.notifications.generated.resources.Res
 import heron.feature.notifications.generated.resources.liked_your_post
 import heron.feature.notifications.generated.resources.liked_your_post_description
+import heron.feature.notifications.generated.resources.liked_your_repost
+import heron.feature.notifications.generated.resources.liked_your_repost_description
 import heron.feature.notifications.generated.resources.multiple_liked_your_post
+import heron.feature.notifications.generated.resources.multiple_liked_your_repost
 import kotlinx.datetime.Instant
 import org.jetbrains.compose.resources.stringResource
 
@@ -67,7 +70,12 @@ fun LikeRow(
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.Favorite),
                 tint = Color.Red,
-                contentDescription = stringResource(Res.string.liked_your_post_description),
+                contentDescription = stringResource(
+                    when (notification) {
+                        is Notification.Liked.Post -> Res.string.liked_your_post_description
+                        is Notification.Liked.Repost -> Res.string.liked_your_repost_description
+                    },
+                ),
             )
         },
         content = {
@@ -78,8 +86,14 @@ fun LikeRow(
                         text = notificationText(
                             notification = notification,
                             aggregatedSize = aggregatedProfiles.size,
-                            singularResource = Res.string.liked_your_post,
-                            pluralResource = Res.string.multiple_liked_your_post,
+                            singularResource = when (notification) {
+                                is Notification.Liked.Post -> Res.string.liked_your_post
+                                is Notification.Liked.Repost -> Res.string.liked_your_repost
+                            },
+                            pluralResource = when (notification) {
+                                is Notification.Liked.Post -> Res.string.multiple_liked_your_post
+                                is Notification.Liked.Repost -> Res.string.multiple_liked_your_repost
+                            },
                         ),
                     )
 

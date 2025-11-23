@@ -163,7 +163,7 @@ internal class AuthTokenRepository(
             },
             async {
                 networkService.runCatchingWithMonitoredNetworkRetry {
-                    getPreferences()
+                    getPreferencesForActor()
                 }
                     .getOrNull()
                     ?.let { savePreferences(it) } != null

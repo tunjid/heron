@@ -53,6 +53,7 @@ import com.tunjid.heron.notifications.ui.ProfileVerificationRow
 import com.tunjid.heron.notifications.ui.QuoteRow
 import com.tunjid.heron.notifications.ui.ReplyRow
 import com.tunjid.heron.notifications.ui.RepostRow
+import com.tunjid.heron.notifications.ui.SubscribedRow
 import com.tunjid.heron.notifications.ui.avatarSharedElementKey
 import com.tunjid.heron.notifications.ui.sharedElementPrefix
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -341,6 +342,16 @@ internal fun NotificationsScreen(
                             isVerified = true,
                             notification = notification,
                             onProfileClicked = onAggregatedProfileClicked,
+                        )
+                        is Notification.SubscribedPost -> SubscribedRow(
+                            modifier = itemModifier,
+                            paneMovableElementSharedTransitionScope = paneScaffoldState,
+                            now = now,
+                            isRead = item.isRead,
+                            notification = notification,
+                            aggregatedProfiles = item.aggregatedProfiles,
+                            onProfileClicked = onAggregatedProfileClicked,
+                            onPostClicked = onPostClicked,
                         )
                     }
                 },

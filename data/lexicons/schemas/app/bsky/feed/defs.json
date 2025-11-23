@@ -23,18 +23,22 @@
             "app.bsky.embed.recordWithMedia#view"
           ]
         },
+        "bookmarkCount": { "type": "integer" },
         "replyCount": { "type": "integer" },
         "repostCount": { "type": "integer" },
         "likeCount": { "type": "integer" },
         "quoteCount": { "type": "integer" },
-        "bookmarkCount": { "type": "integer" },
         "indexedAt": { "type": "string", "format": "datetime" },
         "viewer": { "type": "ref", "ref": "#viewerState" },
         "labels": {
           "type": "array",
           "items": { "type": "ref", "ref": "com.atproto.label.defs#label" }
         },
-        "threadgate": { "type": "ref", "ref": "#threadgateView" }
+        "threadgate": { "type": "ref", "ref": "#threadgateView" },
+        "debug": {
+          "type": "unknown",
+          "description": "Debug information for internal development"
+        }
       }
     },
     "viewerState": {

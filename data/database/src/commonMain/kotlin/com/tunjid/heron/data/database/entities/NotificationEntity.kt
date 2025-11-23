@@ -92,7 +92,19 @@ fun PopulatedNotificationEntity.asExternalModel(
 
     Notification.Reason.Like ->
         if (associatedPost == null) unknown()
-        else Notification.Liked(
+        else Notification.Liked.Post(
+            cid = entity.cid,
+            uri = entity.uri,
+            indexedAt = entity.indexedAt,
+            author = author.asExternalModel(),
+            reasonSubject = entity.uri,
+            isRead = entity.isRead,
+            associatedPost = associatedPost,
+        )
+
+    Notification.Reason.LikeViaRepost ->
+        if (associatedPost == null) unknown()
+        else Notification.Liked.Repost(
             cid = entity.cid,
             uri = entity.uri,
             indexedAt = entity.indexedAt,
@@ -104,7 +116,19 @@ fun PopulatedNotificationEntity.asExternalModel(
 
     Notification.Reason.Repost ->
         if (associatedPost == null) unknown()
-        else Notification.Reposted(
+        else Notification.Reposted.Post(
+            cid = entity.cid,
+            uri = entity.uri,
+            indexedAt = entity.indexedAt,
+            author = author.asExternalModel(),
+            reasonSubject = entity.uri,
+            isRead = entity.isRead,
+            associatedPost = associatedPost,
+        )
+
+    Notification.Reason.RepostViaRepost ->
+        if (associatedPost == null) unknown()
+        else Notification.Reposted.Repost(
             cid = entity.cid,
             uri = entity.uri,
             indexedAt = entity.indexedAt,
@@ -167,6 +191,18 @@ fun PopulatedNotificationEntity.asExternalModel(
         reasonSubject = entity.uri,
         isRead = entity.isRead,
     )
+
+    Notification.Reason.SubscribedPost ->
+        if (associatedPost == null) unknown()
+        else Notification.SubscribedPost(
+            cid = entity.cid,
+            uri = entity.uri,
+            indexedAt = entity.indexedAt,
+            author = author.asExternalModel(),
+            reasonSubject = entity.uri,
+            isRead = entity.isRead,
+            associatedPost = associatedPost,
+        )
 
     Notification.Reason.Verified -> Notification.Verified(
         cid = entity.cid,
