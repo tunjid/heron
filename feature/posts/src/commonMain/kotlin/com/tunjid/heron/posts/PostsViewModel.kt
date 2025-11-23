@@ -148,8 +148,7 @@ private suspend fun Flow<Action.Tile>.postsLoadMutations(
                         postsRepository.quotes(query, cursor)
                     }
                     PostsRequest.Saved -> {
-                        // TODO: Replace with saved posts implementation
-                        flowOf(CursorList(emptyList(), Cursor.Initial))
+                        postsRepository.saved(query, cursor)
                     }
                 }
             },
