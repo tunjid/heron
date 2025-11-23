@@ -208,7 +208,7 @@ fun postRepostsDestination(
     referringRouteOption = ReferringRouteOption.Current,
 )
 
-fun postBookmarkedDestination(): NavigationAction.Destination = pathDestination(
+fun bookmarksDestination(): NavigationAction.Destination = pathDestination(
     path = "/saved",
 )
 

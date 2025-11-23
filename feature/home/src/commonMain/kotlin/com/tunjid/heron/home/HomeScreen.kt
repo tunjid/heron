@@ -72,11 +72,11 @@ import com.tunjid.heron.home.ui.TabsExpansionEffect
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.bookmarksDestination
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
-import com.tunjid.heron.scaffold.navigation.postBookmarkedDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.recordDestination
 import com.tunjid.heron.scaffold.navigation.settingsDestination
@@ -245,7 +245,7 @@ internal fun HomeScreen(
                 )
             },
             onBookmarkIconClick = {
-                actions(Action.Navigate.To(postBookmarkedDestination()))
+                actions(Action.Navigate.To(bookmarksDestination()))
             },
         )
 

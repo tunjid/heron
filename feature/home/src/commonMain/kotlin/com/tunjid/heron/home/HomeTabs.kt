@@ -247,17 +247,13 @@ internal fun HomeTabs(
             ) {
                 Row {
                     HomeTimelineAction(
-                        onActionClick = {
-                            onSettingsIconClick()
-                        },
+                        onActionClick = onSettingsIconClick,
                         icon = Icons.Rounded.Settings,
                         iconDescription = stringResource(Res.string.settings),
                     )
 
                     HomeTimelineAction(
-                        onActionClick = {
-                            onBookmarkIconClick()
-                        },
+                        onActionClick = onBookmarkIconClick,
                         icon = Icons.Rounded.Bookmark,
                         iconDescription = stringResource(Res.string.bookmark),
                     )
@@ -622,7 +618,7 @@ private fun DropTargetBox(
 }
 
 @Composable
-fun HomeTimelineAction(
+private fun HomeTimelineAction(
     modifier: Modifier = Modifier,
     icon: ImageVector,
     iconDescription: String,
