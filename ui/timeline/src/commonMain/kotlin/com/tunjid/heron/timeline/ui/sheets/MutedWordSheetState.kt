@@ -2,17 +2,13 @@ package com.tunjid.heron.timeline.ui.sheets
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
@@ -20,13 +16,9 @@ import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetState
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 data class MutedWord(
     val id: String,
@@ -47,46 +39,29 @@ data class MutedWordState(
     val mutedWords: List<MutedWord> = emptyList(),
 )
 
-class MutedWordMutator : MutedWordStateHolder {
-
-    private val _state = MutableStateFlow(MutedWordState())
-    override val state: StateFlow<MutedWordState> = _state
-
-    override val accept: (MutedWordAction) -> Unit = { action ->
-        when (action) {
-            MutedWordAction.Load -> loadWords()
-            is MutedWordAction.Add -> addWord(action.word)
-            is MutedWordAction.Remove -> removeWord(action.id)
-        }
-    }
-
-    private fun loadWords() {
-        _state.update { it.copy(isLoading = true) }
-        // TODO: real API call
-        _state.update {
-            it.copy(
-                isLoading = false,
-                mutedWords = emptyList(),
-            )
-        }
-    }
-
-    private fun addWord(word: String) {
-        // TODO: API call
-        val newItem = MutedWord(id = word.hashCode().toString(), word = word)
-        _state.update { it.copy(mutedWords = it.mutedWords + newItem) }
-    }
-
-    private fun removeWord(id: String) {
-        _state.update {
-            it.copy(mutedWords = it.mutedWords.filterNot { w -> w.id == id })
-        }
-    }
-}
+fun CoroutineScope.mutedWordMutator(): MutedWordStateHolder =
+    actionStateFlowMutator(
+        initialState = MutedWordState(),
+        actionTransform = { actions ->
+            actions.toMutationStream {
+                when (val action = type()) {
+                    MutedWordAction.Load -> {
+                        TODO("Implement Load action")
+                    }
+                    is MutedWordAction.Add -> {
+                        TODO("Implement Add action")
+                    }
+                    is MutedWordAction.Remove -> {
+                        TODO("Implement Remove action")
+                    }
+                }
+            }
+        },
+    )
 
 @Stable
 class MutedWordsSheetState private constructor(
-    val mutator: MutedWordMutator,
+    val mutator: MutedWordStateHolder,
     scope: BottomSheetScope,
 ) : BottomSheetState(scope) {
 
@@ -112,7 +87,7 @@ class MutedWordsSheetState private constructor(
     companion object {
         @Composable
         fun rememberMutedWordsSheetState(
-            mutator: MutedWordMutator,
+            mutator: MutedWordStateHolder,
         ): MutedWordsSheetState {
             val state = rememberBottomSheetState {
                 MutedWordsSheetState(
@@ -136,8 +111,3 @@ private fun MutedWordsBottomSheet(state: MutedWordsSheetState) {
         }
     }
 }
-
-/** Usage  in UI **/
-// val mutator = remember { MutedWordMutator() }
-// val mutedSheet = rememberMutedWordsSheetState(mutator)
-//
