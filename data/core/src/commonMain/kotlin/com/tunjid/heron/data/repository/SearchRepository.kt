@@ -38,12 +38,15 @@ import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.StarterPack
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.Trend
+import com.tunjid.heron.data.core.models.emptyCursorList
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
+import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
@@ -53,16 +56,20 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.post
 import com.tunjid.heron.data.network.models.profile
 import com.tunjid.heron.data.network.models.profileViewerStateEntities
+import com.tunjid.heron.data.utilities.mapNotNullPreferredTimelineItems
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.observeProfileWithViewerStates
+import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.sortedWithNetworkList
 import com.tunjid.heron.data.utilities.toProfileWithViewerStates
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
@@ -115,7 +122,7 @@ interface SearchRepository {
     fun postSearch(
         query: SearchQuery.OfPosts,
         cursor: Cursor,
-    ): Flow<CursorList<Post>>
+    ): Flow<CursorList<TimelineItem>>
 
     fun profileSearch(
         query: SearchQuery.OfProfiles,
@@ -148,16 +155,18 @@ internal class OfflineSearchRepository @Inject constructor(
     private val networkService: NetworkService,
     private val savedStateDataSource: SavedStateDataSource,
     private val profileDao: ProfileDao,
+    private val postDao: PostDao,
     private val starterPackDao: StarterPackDao,
     private val feedGeneratorDao: FeedGeneratorDao,
+    private val recordResolver: RecordResolver,
 ) : SearchRepository {
 
     override fun postSearch(
         query: SearchQuery.OfPosts,
         cursor: Cursor,
-    ): Flow<CursorList<Post>> = savedStateDataSource.singleSessionFlow { signedInProfileId ->
-        if (query.query.isBlank()) emptyFlow()
-        else flow {
+    ): Flow<CursorList<TimelineItem>> =
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            if (query.query.isBlank()) return@singleSessionFlow emptyFlow()
             val response = networkService.runCatchingWithMonitoredNetworkRetry {
                 searchPosts(
                     params = SearchPostsQueryParams(
@@ -176,7 +185,7 @@ internal class OfflineSearchRepository @Inject constructor(
                 )
             }
                 .getOrNull()
-                ?: return@flow
+                ?: return@singleSessionFlow emptyFlow()
 
             multipleEntitySaverProvider.saveInTransaction {
                 response.posts.forEach { postView ->
@@ -187,16 +196,60 @@ internal class OfflineSearchRepository @Inject constructor(
                 }
             }
 
-            emit(
-                CursorList(
-                    items = response.posts.map { postView ->
-                        postView.post(signedInProfileId)
-                    },
-                    nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending,
-                ),
-            )
+            val posts = response.posts.map { postView ->
+                postView.post(signedInProfileId)
+            }
+            val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
+
+            // Using the network call as a base, observe the db for user interactions
+            savedStateDataSource.adultContentAndLabelVisibilities()
+                .flatMapLatest { (allowAdultContent, labelsVisibilityMap) ->
+                    combine(
+                        flow = postDao.posts(
+                            viewingProfileId = signedInProfileId?.id,
+                            postUris = posts.map(Post::uri),
+                        ).distinctUntilChanged(),
+                        flow2 = recordResolver.records(
+                            uris = posts.mapNotNullTo(mutableSetOf()) {
+                                it.embeddedRecord?.reference?.uri
+                            },
+                            viewingProfileId = signedInProfileId,
+                        ),
+                        flow3 = recordResolver.labelers,
+                        transform = { populatedPostEntities, embeddedRecords, labelers ->
+                            if (populatedPostEntities.isEmpty()) return@combine emptyCursorList<TimelineItem>()
+                            val recordUrisToEmbeddedRecords = embeddedRecords.associateBy {
+                                it.reference.uri
+                            }
+
+                            CursorList(
+                                items = populatedPostEntities.mapNotNullPreferredTimelineItems(
+                                    signedInProfileId = signedInProfileId,
+                                    labelers = labelers,
+                                    allowAdultContent = allowAdultContent,
+                                    labelsVisibilityMap = labelsVisibilityMap,
+                                    itemPost = { populatedPostEntity ->
+                                        populatedPostEntity.asExternalModel(
+                                            embeddedRecord = populatedPostEntity.entity
+                                                .record
+                                                ?.embeddedRecordUri
+                                                .let(recordUrisToEmbeddedRecords::get),
+                                        )
+                                    },
+                                    block = { entity, post, appliedLabels ->
+                                        TimelineItem.Single(
+                                            id = entity.entity.uri.uri,
+                                            post = post,
+                                            appliedLabels = appliedLabels,
+                                        )
+                                    },
+                                ),
+                                nextCursor = nextCursor,
+                            )
+                        },
+                    ).distinctUntilChanged()
+                }
         }
-    }
 
     override fun profileSearch(
         query: SearchQuery.OfProfiles,

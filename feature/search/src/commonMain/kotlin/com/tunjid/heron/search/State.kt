@@ -23,6 +23,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
@@ -60,17 +61,16 @@ sealed interface SearchResult {
     ) : SearchResult
 
     data class OfPost(
-        val post: Post,
-        val appliedLabels: AppliedLabels,
+        val timelineItem: TimelineItem,
         override val sharedElementPrefix: String,
     ) : SearchResult
 }
 
 val SearchResult.OfPost.id: String
-    get() = post.uri.uri
+    get() = timelineItem.id
 
 val SearchResult.OfPost.canAutoPlayVideo: Boolean
-    get() = appliedLabels.canAutoPlayVideo
+    get() = timelineItem.appliedLabels.canAutoPlayVideo
 
 sealed class SearchState {
     data class OfPosts(

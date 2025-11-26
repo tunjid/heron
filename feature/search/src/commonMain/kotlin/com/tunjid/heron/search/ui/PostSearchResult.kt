@@ -30,11 +30,9 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.search.SearchResult
-import com.tunjid.heron.timeline.ui.post.Post
+import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.postActions
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
-import com.tunjid.heron.timeline.utilities.createdAt
-import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import kotlinx.datetime.Instant
 
@@ -58,12 +56,12 @@ internal fun PostSearchResult(
         modifier = modifier,
         onClick = {
             onPostClicked(
-                result.post,
+                result.timelineItem.post,
                 sharedElementPrefix,
             )
         },
         content = {
-            Post(
+            TimelineItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
@@ -73,13 +71,9 @@ internal fun PostSearchResult(
                 paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                 presentationLookaheadScope = paneMovableElementSharedTransitionScope,
                 now = now,
-                post = result.post,
-                isAnchoredInTimeline = false,
-                avatarShape = RoundedPolygonShape.Circle,
+                item = result.timelineItem,
                 sharedElementPrefix = result.sharedElementPrefix,
-                createdAt = result.post.createdAt,
                 presentation = Timeline.Presentation.Text.WithEmbed,
-                appliedLabels = result.appliedLabels,
                 postActions = remember(result, onPostInteraction) {
                     postActions(
                         onLinkTargetClicked = { _, linkTarget ->

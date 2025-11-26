@@ -337,7 +337,7 @@ internal fun SearchScreen(
                     if (paneScaffoldState.isSignedOut) signInDestination()
                     else composePostDestination(
                         type = Post.Create.Reply(
-                            parent = result.post,
+                            parent = result.timelineItem.post,
                         ),
                         sharedElementPrefix = result.sharedElementPrefix,
                     ),
@@ -883,7 +883,7 @@ private fun PostSearchResults(
     ) {
         items(
             items = results,
-            key = { it.post.cid.id },
+            key = { it.id },
             itemContent = { result ->
                 PostSearchResult(
                     modifier = Modifier
