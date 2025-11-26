@@ -25,6 +25,7 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ThreadGateId
 import com.tunjid.heron.data.core.types.ThreadGateUri
 import com.tunjid.heron.data.core.types.profileId
+import com.tunjid.heron.data.database.entities.ThreadGateAllowedListEntity
 import com.tunjid.heron.data.database.entities.ThreadGateEntity
 import com.tunjid.heron.data.database.entities.ThreadGateHiddenPostEntity
 import com.tunjid.heron.data.database.entities.stubPostEntity
@@ -41,15 +42,20 @@ internal fun MultipleEntitySaver.add(
     val gatedPostUri = threadGate.post.atUri.let(::PostUri)
 
     threadGateView.lists.forEach { listViewBasic ->
+        val allowedListUri = listViewBasic.uri.atUri.let(::ListUri)
         add(
             listView = listViewBasic,
             creator = {
                 stubProfileEntity(
-                    listViewBasic.uri.atUri.let(::ListUri).profileId()
-                        .id
-                        .let(::Did),
+                    allowedListUri.profileId().id.let(::Did),
                 )
             },
+        )
+        add(
+            ThreadGateAllowedListEntity(
+                threadGateUri = threadGateUri,
+                allowedListUri = allowedListUri,
+            ),
         )
     }
     add(
@@ -64,6 +70,7 @@ internal fun MultipleEntitySaver.add(
                     threadGate.allow
                         .groupBy { it::class }
                         .let { grouped ->
+                            // ThreadgateAllowUnion.ListRule is handled with the list views above
                             ThreadGateEntity.Allowed(
                                 allowsFollowing = grouped[ThreadgateAllowUnion.FollowingRule::class]
                                     .orEmpty()
@@ -82,22 +89,23 @@ internal fun MultipleEntitySaver.add(
 
     threadGate.hiddenReplies.forEach { hiddenPostAtUri ->
         val hiddenPostUri = PostUri(hiddenPostAtUri.atUri)
+        val hiddenPostAuthorId = hiddenPostUri.profileId()
         add(
             stubProfileEntity(
-                hiddenPostUri.profileId().id.let(::Did),
+                hiddenPostAuthorId.id.let(::Did),
             ),
         )
         add(
             stubPostEntity(
                 id = Collections.stubbedId(::PostId),
                 uri = hiddenPostUri,
-                authorId = hiddenPostUri.profileId(),
+                authorId = hiddenPostAuthorId,
             ),
         )
         add(
             ThreadGateHiddenPostEntity(
                 threadGateUri = threadGateUri,
-                hiddenPostUri = hiddenPostAtUri.atUri.let(::PostUri),
+                hiddenPostUri = hiddenPostUri,
             ),
         )
     }
