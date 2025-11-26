@@ -72,15 +72,9 @@ internal fun MultipleEntitySaver.add(
                         .let { grouped ->
                             // ThreadgateAllowUnion.ListRule is handled with the list views above
                             ThreadGateEntity.Allowed(
-                                allowsFollowing = grouped[ThreadgateAllowUnion.FollowingRule::class]
-                                    .orEmpty()
-                                    .isNotEmpty(),
-                                allowsFollowers = grouped[ThreadgateAllowUnion.FollowerRule::class]
-                                    .orEmpty()
-                                    .isNotEmpty(),
-                                allowsMentioned = grouped[ThreadgateAllowUnion.MentionRule::class]
-                                    .orEmpty()
-                                    .isNotEmpty(),
+                                allowsFollowing = ThreadgateAllowUnion.FollowingRule::class in grouped,
+                                allowsFollowers = ThreadgateAllowUnion.FollowerRule::class in grouped,
+                                allowsMentioned = ThreadgateAllowUnion.MentionRule::class in grouped,
                             )
                         }
             },
