@@ -207,7 +207,7 @@ internal class OfflineSearchRepository @Inject constructor(
                     combine(
                         flow = postDao.posts(
                             viewingProfileId = signedInProfileId?.id,
-                            postUris = posts.map(Post::uri) ,
+                            postUris = posts.map(Post::uri),
                         ).distinctUntilChanged(),
                         flow2 = recordResolver.records(
                             uris = posts.mapNotNullTo(mutableSetOf()) {
