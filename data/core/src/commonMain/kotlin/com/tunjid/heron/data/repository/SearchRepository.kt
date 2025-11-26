@@ -204,19 +204,15 @@ internal class OfflineSearchRepository @Inject constructor(
             // Using the network call as a base, observe the db for user interactions
             savedStateDataSource.adultContentAndLabelVisibilities()
                 .flatMapLatest { (allowAdultContent, labelsVisibilityMap) ->
-                    val postUrisToEmbeddedRecordUris = posts.associateBy(Post::uri) {
-                        it.embeddedRecord?.reference?.uri
-                    }
-                    val embeddedRecordUris = posts.mapNotNullTo(mutableSetOf()) {
-                        it.embeddedRecord?.reference?.uri
-                    }
                     combine(
                         flow = postDao.posts(
                             viewingProfileId = signedInProfileId?.id,
-                            postUris = postUrisToEmbeddedRecordUris.keys,
+                            postUris = posts.map(Post::uri) ,
                         ).distinctUntilChanged(),
                         flow2 = recordResolver.records(
-                            uris = embeddedRecordUris,
+                            uris = posts.mapNotNullTo(mutableSetOf()) {
+                                it.embeddedRecord?.reference?.uri
+                            },
                             viewingProfileId = signedInProfileId,
                         ),
                         flow3 = recordResolver.labelers,
