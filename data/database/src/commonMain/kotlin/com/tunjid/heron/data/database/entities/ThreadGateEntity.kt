@@ -22,8 +22,9 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.Junction
 import androidx.room.Relation
-import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.ThreadGate
+import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ThreadGateId
 import com.tunjid.heron.data.core.types.ThreadGateUri
@@ -88,9 +89,7 @@ data class PopulatedThreadGateEntity(
     val hiddenPosts: List<PostEntity>,
 )
 
-fun PopulatedThreadGateEntity.asExternalModel(
-    creator: Profile,
-) = ThreadGate(
+fun PopulatedThreadGateEntity.asExternalModel() = ThreadGate(
     uri = entity.uri,
     gatedPostUri = entity.gatedPostUri,
     allowed = entity.allowed?.let { allowed ->
@@ -100,7 +99,10 @@ fun PopulatedThreadGateEntity.asExternalModel(
             allowsMentioned = allowed.allowsMentioned,
             allowedLists = allowedLists.map { listEntity ->
                 listEntity.asExternalModel(
-                    creator = creator,
+                    creator = stubProfile(
+                        did = listEntity.creatorId,
+                        handle = Constants.unknownAuthorHandle,
+                    ),
                     labels = emptyList(),
                 )
             },
