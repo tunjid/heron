@@ -60,27 +60,22 @@ internal fun MultipleEntitySaver.add(
             createdAt = threadGate.createdAt,
             allowed = when {
                 threadGate.allow.isEmpty() -> null
-                else -> {
-                    var allowsFollowing = false
-                    var allowsFollowers = false
-                    var allowsMentioned = false
-                    threadGate.allow.forEach { union ->
-                        when (union) {
-                            is ThreadgateAllowUnion.FollowerRule -> allowsFollowers = true
-                            is ThreadgateAllowUnion.FollowingRule -> allowsFollowing = true
-                            // Do nothing. Only save lists in the hydrated response in
-                            // ThreadgateView.lists
-                            is ThreadgateAllowUnion.ListRule -> Unit
-                            is ThreadgateAllowUnion.MentionRule -> allowsMentioned = true
-                            is ThreadgateAllowUnion.Unknown -> Unit
+                else ->
+                    threadGate.allow
+                        .groupBy { it::class }
+                        .let { grouped ->
+                            ThreadGateEntity.Allowed(
+                                allowsFollowing = grouped[ThreadgateAllowUnion.FollowingRule::class]
+                                    .orEmpty()
+                                    .isNotEmpty(),
+                                allowsFollowers = grouped[ThreadgateAllowUnion.FollowerRule::class]
+                                    .orEmpty()
+                                    .isNotEmpty(),
+                                allowsMentioned = grouped[ThreadgateAllowUnion.MentionRule::class]
+                                    .orEmpty()
+                                    .isNotEmpty(),
+                            )
                         }
-                    }
-                    ThreadGateEntity.Allowed(
-                        allowsFollowing = allowsFollowing,
-                        allowsFollowers = allowsFollowers,
-                        allowsMentioned = allowsMentioned,
-                    )
-                }
             },
         ),
     )
