@@ -33,6 +33,7 @@ import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
+import com.tunjid.heron.data.database.daos.ThreadGateDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.BookmarkEntity
 import com.tunjid.heron.data.database.entities.ConversationEntity
@@ -53,6 +54,9 @@ import com.tunjid.heron.data.database.entities.PostRepostEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.StarterPackEntity
+import com.tunjid.heron.data.database.entities.ThreadGateAllowedListEntity
+import com.tunjid.heron.data.database.entities.ThreadGateEntity
+import com.tunjid.heron.data.database.entities.ThreadGateHiddenPostEntity
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessageFeedGeneratorEntity
@@ -77,6 +81,7 @@ import com.tunjid.heron.data.database.migrations.Migration22To23ConversationOwne
 import com.tunjid.heron.data.database.migrations.Migration23To24NotificationAndConversationCompositePrimaryKeys
 import com.tunjid.heron.data.database.migrations.Migration27To28LabelEntityPrimaryKeys
 import com.tunjid.heron.data.database.migrations.Migration29To30PostBookmarkViewingProfileId
+import com.tunjid.heron.data.database.migrations.Migration30To31ThreadGateAutoMigration
 import com.tunjid.heron.data.database.migrations.Migration5To6NonNullPostUriAndAuthor
 import com.tunjid.heron.data.database.migrations.Migration6To7PostViewerStatisticsAutoMigration
 import com.tunjid.heron.data.database.migrations.Migration8To9ProfileViewersAutoMigration
@@ -85,8 +90,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 30,
+    version = 31,
     entities = [
+        BookmarkEntity::class,
         ExternalEmbedEntity::class,
         ImageEntity::class,
         VideoEntity::class,
@@ -100,7 +106,6 @@ import kotlinx.coroutines.IO
         PostViewerStatisticsEntity::class,
         ProfileViewerStateEntity::class,
         ProfileEntity::class,
-        BookmarkEntity::class,
         PostLikeEntity::class,
         PostRepostEntity::class,
         LabelEntity::class,
@@ -121,6 +126,9 @@ import kotlinx.coroutines.IO
         MessagePostEntity::class,
         MessageReactionEntity::class,
         MessageStarterPackEntity::class,
+        ThreadGateEntity::class,
+        ThreadGateAllowedListEntity::class,
+        ThreadGateHiddenPostEntity::class,
     ],
     autoMigrations = [
         // firstMigration
@@ -182,6 +190,12 @@ import kotlinx.coroutines.IO
         // Add message metadata to message
         AutoMigration(from = 28, to = 29),
         // Migration 29 - 30 is a manual migration
+        // Remove bookmarkCount from posts and and add PostGate models
+        AutoMigration(
+            from = 30,
+            to = 31,
+            spec = Migration30To31ThreadGateAutoMigration::class,
+        ),
     ],
     exportSchema = true,
 )
@@ -201,8 +215,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun feedGeneratorDao(): FeedGeneratorDao
     abstract fun notificationsDao(): NotificationsDao
     abstract fun starterPackDao(): StarterPackDao
-
     abstract fun messagesDao(): MessageDao
+    abstract fun threadGateDao(): ThreadGateDao
 }
 
 // The Room compiler generates the `actual` implementations.

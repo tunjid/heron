@@ -19,6 +19,7 @@ package com.tunjid.heron.data.utilities.multipleEntitysaver
 import app.bsky.embed.RecordViewRecordUnion
 import app.bsky.feed.PostView
 import app.bsky.feed.PostViewEmbedUnion
+import app.bsky.feed.ThreadgateView
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.network.models.embedEntities
@@ -50,6 +51,8 @@ internal fun MultipleEntitySaver.add(
         postUri = postEntity.uri,
         viewingProfileId = viewingProfileId,
     )?.let(::add)
+
+    postView.threadgate?.let(::add)
 
     postView.quotedPostEntity()?.let { embeddedPostEntity ->
         add(embeddedPostEntity)

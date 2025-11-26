@@ -24,7 +24,6 @@ import androidx.room.Junction
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.tunjid.heron.data.core.models.ImageList
-import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
@@ -68,11 +67,25 @@ data class PostEntity(
     val repostCount: Long?,
     val likeCount: Long?,
     val quoteCount: Long?,
-    val bookmarkCount: Long?,
+    // Note: This absence of this flag is an unknown status of the thread gate.
+    // Only its explicit availability indicates whether one exists or not
+    val hasThreadGate: Boolean?,
     val indexedAt: Instant,
     @Embedded
     val record: RecordData?,
 ) {
+    data class Partial(
+        val cid: PostId,
+        val uri: PostUri,
+        val authorId: ProfileId,
+        val replyCount: Long?,
+        val repostCount: Long?,
+        val likeCount: Long?,
+        val quoteCount: Long?,
+        val indexedAt: Instant,
+        @Embedded
+        val record: RecordData?,
+    )
     data class RecordData(
         val text: String,
         val base64EncodedRecord: String?,
@@ -81,7 +94,19 @@ data class PostEntity(
     )
 }
 
-fun emptyPostEntity(
+fun PostEntity.partial() = PostEntity.Partial(
+    cid = cid,
+    uri = uri,
+    authorId = authorId,
+    replyCount = replyCount,
+    repostCount = replyCount,
+    likeCount = likeCount,
+    quoteCount = quoteCount,
+    indexedAt = indexedAt,
+    record = record,
+)
+
+fun stubPostEntity(
     id: PostId,
     uri: PostUri,
     authorId: ProfileId,
@@ -93,8 +118,8 @@ fun emptyPostEntity(
     repostCount = null,
     likeCount = null,
     quoteCount = null,
-    bookmarkCount = null,
     indexedAt = Clock.System.now(),
+    hasThreadGate = null,
     record = null,
 )
 
@@ -178,7 +203,6 @@ fun PopulatedPostEntity.asExternalModel(
     repostCount = entity.repostCount.orZero(),
     likeCount = entity.likeCount.orZero(),
     quoteCount = entity.quoteCount.orZero(),
-    bookmarkCount = entity.bookmarkCount.orZero(),
     indexedAt = entity.indexedAt,
     author = author.asExternalModel(
         labels = authorLabelEntities.map(LabelEntity::asExternalModel),

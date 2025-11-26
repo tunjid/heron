@@ -135,6 +135,18 @@ value class ListMemberUri(
 
 @Serializable
 @JvmInline
+value class ThreadGateUri(
+    override val uri: String,
+) : Uri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.bsky.feed.threadgate"
+    }
+}
+
+@Serializable
+@JvmInline
 value class ImageUri(
     override val uri: String,
 ) : Uri {

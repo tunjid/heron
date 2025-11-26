@@ -24,7 +24,7 @@ import com.tunjid.heron.data.database.entities.LabelEntity
 internal fun MultipleEntitySaver.add(
     label: Label,
 ) {
-    emptyProfileEntity(label.src).let(::add)
+    stubProfileEntity(label.src).let(::add)
     add(
         LabelEntity(
             cid = label.cid?.cid,

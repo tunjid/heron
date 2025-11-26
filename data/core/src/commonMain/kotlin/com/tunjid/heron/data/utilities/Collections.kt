@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.utilities
 
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.recordKeyOrNull
@@ -48,6 +49,12 @@ internal object Collections {
     )
 
     val DefaultLabelerProfileId = ProfileId(id = "did:plc:ar7c4by46qjdydhdevvrndac")
+
+    fun Id.isStubbedId() = id == StubbedId
+
+    inline fun <reified T : Id> stubbedId(
+        constructor: (String) -> T,
+    ) = constructor(StubbedId)
 }
 
 fun Uri.asGenericUri(): GenericUri = GenericUri(uri)
@@ -119,3 +126,4 @@ private const val QueryDelimiter = "?"
 private const val LeadingSlash = "/"
 
 private const val Alphabet = "234567abcdefghijklmnopqrstuvwxyz"
+internal const val StubbedId = "bafyreipendingunknownstub2222222222222222222222222222222222"

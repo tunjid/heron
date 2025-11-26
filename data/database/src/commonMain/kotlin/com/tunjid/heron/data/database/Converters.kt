@@ -38,6 +38,8 @@ import com.tunjid.heron.data.core.types.ProfileUri
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.core.types.StarterPackUri
+import com.tunjid.heron.data.core.types.ThreadGateId
+import com.tunjid.heron.data.core.types.ThreadGateUri
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import kotlinx.datetime.Instant
@@ -91,6 +93,10 @@ internal class UriConverters {
         value?.let(::ListMemberUri)
 
     @TypeConverter
+    fun threadGateUriFromString(value: String?): ThreadGateUri? =
+        value?.let(::ThreadGateUri)
+
+    @TypeConverter
     fun imageUriFromString(value: String?): ImageUri? =
         value?.let(::ImageUri)
 
@@ -139,6 +145,10 @@ internal class IdConverters {
     @TypeConverter
     fun feedGeneratorIdFromString(value: String?): FeedGeneratorId? =
         value?.let(::FeedGeneratorId)
+
+    @TypeConverter
+    fun threadGateIdFromString(value: String?): ThreadGateId? =
+        value?.let(::ThreadGateId)
 
     @TypeConverter
     fun conversationIdFromString(value: String?): ConversationId? =

@@ -123,6 +123,28 @@ internal value class LazyList<T>(
         lazyList.value.add(element)
 }
 
+internal inline fun <T> Iterable<T>.triage(
+    crossinline firstPredicate: (T) -> Boolean,
+    crossinline secondPredicate: (T) -> Boolean,
+): Triple<List<T>, List<T>, List<T>> {
+    var first: ArrayList<T>? = null
+    var second: ArrayList<T>? = null
+    var third: ArrayList<T>? = null
+
+    for (element in this) {
+        when {
+            firstPredicate(element) -> first ?: ArrayList<T>().also { first = it }
+            secondPredicate(element) -> second ?: ArrayList<T>().also { second = it }
+            else -> third ?: ArrayList<T>().also { third = it }
+        }.add(element)
+    }
+    return Triple(
+        first = first ?: emptyList(),
+        second = second ?: emptyList(),
+        third = third ?: emptyList(),
+    )
+}
+
 internal inline fun <T, R> Collection<T>.toFlowOrEmpty(
     crossinline block: (Collection<T>) -> Flow<List<R>>,
 ): Flow<List<R>> =

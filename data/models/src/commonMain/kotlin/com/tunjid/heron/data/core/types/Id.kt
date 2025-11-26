@@ -93,6 +93,14 @@ value class LabelerId(
 
 @Serializable
 @JvmInline
+value class ThreadGateId(
+    override val id: String,
+) : Id {
+    override fun toString(): String = id
+}
+
+@Serializable
+@JvmInline
 value class GenericId(
     override val id: String,
 ) : Id {

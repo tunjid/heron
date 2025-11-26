@@ -39,8 +39,8 @@ internal fun MultipleEntitySaver.add(
     starterPack.labels.forEach(::add)
     starterPack.list?.let { listView ->
         add(
-            creator = starterPack.creator,
             listView = listView,
+            creator = starterPack.creator::profileEntity,
         )
         starterPack.listItemsSample.forEach { listItemView ->
             add(

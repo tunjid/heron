@@ -113,8 +113,9 @@ internal fun MultipleEntitySaver.add(
         }
 }
 
+// This should only be used in the context of saving entities
 @Suppress("UnusedReceiverParameter")
-internal fun MultipleEntitySaver.emptyProfileEntity(
+internal fun MultipleEntitySaver.stubProfileEntity(
     did: Did,
 ) = ProfileEntity(
     did = ProfileId(did.did),
