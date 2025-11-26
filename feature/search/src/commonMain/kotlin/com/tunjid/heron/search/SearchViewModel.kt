@@ -21,7 +21,6 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelinePreference
-import com.tunjid.heron.data.core.models.appliedLabels
 import com.tunjid.heron.data.core.models.timelineRecordUri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
@@ -61,9 +60,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
@@ -109,7 +106,6 @@ class SearchViewModel(
             searchStateHolders = scope.searchStateHolders(
                 initialQuery = route.query,
                 searchRepository = searchRepository,
-                timelineRepository = timelineRepository,
             ),
         ),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
@@ -419,7 +415,6 @@ private fun Flow<Action.UpdateFeedGeneratorStatus>.feedGeneratorStatusMutations(
 private fun CoroutineScope.searchStateHolders(
     initialQuery: String,
     searchRepository: SearchRepository,
-    timelineRepository: TimelineRepository,
 ): List<SearchResultStateHolder> = buildList {
     add(
         SearchState.OfPosts(
@@ -487,31 +482,15 @@ private fun CoroutineScope.searchStateHolders(
                                 }
                             },
                             cursorListLoader = { query, cursor ->
-                                combine(
-                                    timelineRepository.labelers,
-                                    timelineRepository.preferences
-                                        .map { it.allowAdultContent to it.contentLabelPreferences }
-                                        .distinctUntilChanged(),
-                                    ::Pair,
-                                )
-                                    .distinctUntilChanged()
-                                    .flatMapLatest { (labelers, adultContentEnabledToContentLabelPreferences) ->
-                                        val (adultContentEnabled, contentLabelPreferences) = adultContentEnabledToContentLabelPreferences
-                                        searchRepository::postSearch.mapCursorList { post ->
-                                            SearchResult.OfPost(
-                                                post = post,
-                                                sharedElementPrefix = searchState.tilingData.currentQuery.sourceId,
-                                                appliedLabels = post.appliedLabels(
-                                                    adultContentEnabled = adultContentEnabled,
-                                                    labelers = labelers,
-                                                    labelPreferences = contentLabelPreferences,
-                                                ),
-                                            )
-                                        }.invoke(query, cursor)
-                                    }
+                                searchRepository::postSearch.mapCursorList { post ->
+                                    SearchResult.OfPost(
+                                        timelineItem = post,
+                                        sharedElementPrefix = searchState.tilingData.currentQuery.sourceId,
+                                    )
+                                }.invoke(query, cursor)
                             },
                             onNewItems = { items ->
-                                items.distinctBy { it.post.cid }
+                                items.distinctBy { it.timelineItem.id }
                             },
                             queryRefreshBy = {
                                 it.query to it.data.cursorAnchor

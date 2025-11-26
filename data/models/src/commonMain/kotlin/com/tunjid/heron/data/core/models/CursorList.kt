@@ -26,6 +26,8 @@ data class CursorList<out T>(
     val nextCursor: Cursor,
 ) : List<T> by items
 
+fun <T> emptyCursorList(): CursorList<T> = EmptyCursorList
+
 inline fun <T, R> CursorList<T>.mapCursorList(
     mapper: (T) -> R,
 ) = CursorList(
@@ -56,3 +58,8 @@ val Cursor.value
 
         is Cursor.Next -> cursor
     }
+
+private val EmptyCursorList = CursorList<Nothing>(
+    items = emptyList(),
+    nextCursor = Cursor.Pending,
+)

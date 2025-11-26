@@ -20,6 +20,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.okio.OkioStorage
 import com.tunjid.heron.data.core.models.Constants
+import com.tunjid.heron.data.core.models.ContentLabelPreference
+import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.types.ProfileId
@@ -308,6 +310,17 @@ internal class DataStoreSavedStateDataSource(
         dataStore.updateData(update)
     }
 }
+
+internal fun SavedStateDataSource.adultContentAndLabelVisibilities(): Flow<Pair<Boolean, Map<Label.Value, Label.Visibility>>> = savedState
+    .map {
+        val preferences = it.signedProfilePreferencesOrDefault()
+        val labelVisibilityMap = preferences.contentLabelPreferences.associateBy(
+            keySelector = ContentLabelPreference::label,
+            valueTransform = ContentLabelPreference::visibility,
+        )
+        preferences.allowAdultContent to labelVisibilityMap
+    }
+    .distinctUntilChanged()
 
 internal suspend fun SavedStateDataSource.updateSignedInUserNotifications(
     block: SavedState.Notifications.() -> SavedState.Notifications,

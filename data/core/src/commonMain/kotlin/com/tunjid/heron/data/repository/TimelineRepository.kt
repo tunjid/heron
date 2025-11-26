@@ -35,8 +35,6 @@ import app.bsky.feed.GetTimelineResponse
 import app.bsky.feed.Token
 import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Constants
-import com.tunjid.heron.data.core.models.ContentLabelPreference
-import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -75,6 +73,7 @@ import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.lookupProfileDid
+import com.tunjid.heron.data.utilities.mapNotNullPreferredTimelineItems
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
@@ -543,13 +542,8 @@ internal class OfflineTimelineRepository(
     override fun postThreadedItems(
         postUri: PostUri,
     ): Flow<List<TimelineItem>> = savedStateDataSource.singleSessionFlow { signedInProfileId ->
-        savedStateDataSource.savedState
-            .map {
-                val preferences = it.signedProfilePreferencesOrDefault()
-                preferences.allowAdultContent to preferences.contentLabelPreferences
-            }
-            .distinctUntilChanged()
-            .flatMapLatest { (allowAdultContent, contentLabelPreferences) ->
+        savedStateDataSource.adultContentAndLabelVisibilities()
+            .flatMapLatest { (allowAdultContent, labelsVisibilityMap) ->
                 postDao.postEntitiesByUri(
                     viewingProfileId = signedInProfileId?.id,
                     postUris = setOf(postUri),
@@ -607,7 +601,7 @@ internal class OfflineTimelineRepository(
                                                     post = post,
                                                     adultContentEnabled = allowAdultContent,
                                                     labelers = labelers,
-                                                    labelPreferences = contentLabelPreferences,
+                                                    labelsVisibilityMap = labelsVisibilityMap,
                                                 )
                                             },
                                         )
@@ -972,17 +966,8 @@ internal class OfflineTimelineRepository(
         query: TimelineQuery,
     ): Flow<List<TimelineItem>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            savedStateDataSource.savedState
-                .map {
-                    val preferences = it.signedProfilePreferencesOrDefault()
-                    preferences.allowAdultContent to preferences.contentLabelPreferences
-                }
-                .distinctUntilChanged()
-                .flatMapLatest { (allowAdultContent, contentLabelPreferences) ->
-                    val labelsVisibilityMap = contentLabelPreferences.associateBy(
-                        keySelector = ContentLabelPreference::label,
-                        valueTransform = ContentLabelPreference::visibility,
-                    )
+            savedStateDataSource.adultContentAndLabelVisibilities()
+                .flatMapLatest { (allowAdultContent, labelsVisibilityMap) ->
                     timelineDao.feedItems(
                         viewingProfileId = signedInProfileId?.id,
                         sourceId = query.timeline.sourceId,
@@ -1035,89 +1020,72 @@ internal class OfflineTimelineRepository(
                                     it.entity.did
                                 }
 
-                                itemEntities.mapNotNull { entity ->
-                                    val mainPost = urisToPosts[entity.postUri]
-                                        ?.asExternalModel(
-                                            embeddedRecord = entity.embeddedRecordUri
-                                                ?.let(recordUrisToEmbeddedRecords::get),
-                                        ) ?: return@mapNotNull null
+                                itemEntities.mapNotNullPreferredTimelineItems(
+                                    signedInProfileId = signedInProfileId,
+                                    labelers = labelers,
+                                    allowAdultContent = allowAdultContent,
+                                    labelsVisibilityMap = labelsVisibilityMap,
+                                    itemPost = { entity ->
+                                        urisToPosts[entity.postUri]
+                                            ?.asExternalModel(
+                                                embeddedRecord = entity.embeddedRecordUri
+                                                    ?.let(recordUrisToEmbeddedRecords::get),
+                                            )
+                                    },
+                                    block = { entity, mainPost, appliedLabels ->
+                                        val replyParent =
+                                            entity.reply?.let { urisToPosts[it.parentPostUri] }
+                                        val replyRoot =
+                                            entity.reply?.let { urisToPosts[it.rootPostUri] }
+                                        val repostedBy =
+                                            entity.reposter?.let { idsToRepostProfiles[it] }
 
-                                    val postLabels = when {
-                                        mainPost.labels.isEmpty() -> emptySet()
-                                        else -> mainPost.labels.mapTo(
-                                            destination = mutableSetOf(),
-                                            transform = Label::value,
-                                        )
-                                    }
-
-                                    // Check for global hidden label
-                                    if (postLabels.contains(Label.Hidden)) return@mapNotNull null
-
-                                    // Check for global non authenticated label
-                                    val isSignedIn = signedInProfileId != null
-                                    if (!isSignedIn && postLabels.contains(Label.NonAuthenticated)) return@mapNotNull null
-
-                                    val appliedLabels = AppliedLabels(
-                                        adultContentEnabled = allowAdultContent,
-                                        labels = mainPost.labels + mainPost.author.labels,
-                                        labelers = labelers,
-                                        preferenceLabelsVisibilityMap = labelsVisibilityMap,
-                                    )
-
-                                    if (appliedLabels.shouldHide) return@mapNotNull null
-
-                                    val replyParent =
-                                        entity.reply?.let { urisToPosts[it.parentPostUri] }
-                                    val replyRoot =
-                                        entity.reply?.let { urisToPosts[it.rootPostUri] }
-                                    val repostedBy =
-                                        entity.reposter?.let { idsToRepostProfiles[it] }
-
-                                    when {
-                                        replyRoot != null && replyParent != null -> TimelineItem.Thread(
-                                            id = entity.id,
-                                            generation = null,
-                                            anchorPostIndex = 2,
-                                            hasBreak = entity.reply?.grandParentPostAuthorId != null,
-                                            appliedLabels = appliedLabels,
-                                            posts = listOf(
-                                                replyRoot.asExternalModel(
-                                                    embeddedRecord = replyRoot.entity
-                                                        .record
-                                                        ?.embeddedRecordUri
-                                                        ?.let(recordUrisToEmbeddedRecords::get),
+                                        when {
+                                            replyRoot != null && replyParent != null -> TimelineItem.Thread(
+                                                id = entity.id,
+                                                generation = null,
+                                                anchorPostIndex = 2,
+                                                hasBreak = entity.reply?.grandParentPostAuthorId != null,
+                                                appliedLabels = appliedLabels,
+                                                posts = listOf(
+                                                    replyRoot.asExternalModel(
+                                                        embeddedRecord = replyRoot.entity
+                                                            .record
+                                                            ?.embeddedRecordUri
+                                                            ?.let(recordUrisToEmbeddedRecords::get),
+                                                    ),
+                                                    replyParent.asExternalModel(
+                                                        embeddedRecord = replyParent.entity
+                                                            .record
+                                                            ?.embeddedRecordUri
+                                                            ?.let(recordUrisToEmbeddedRecords::get),
+                                                    ),
+                                                    mainPost,
                                                 ),
-                                                replyParent.asExternalModel(
-                                                    embeddedRecord = replyParent.entity
-                                                        .record
-                                                        ?.embeddedRecordUri
-                                                        ?.let(recordUrisToEmbeddedRecords::get),
-                                                ),
-                                                mainPost,
-                                            ),
-                                        )
+                                            )
 
-                                        repostedBy != null -> TimelineItem.Repost(
-                                            id = entity.id,
-                                            post = mainPost,
-                                            by = repostedBy.asExternalModel(),
-                                            at = entity.indexedAt,
-                                            appliedLabels = appliedLabels,
-                                        )
+                                            repostedBy != null -> TimelineItem.Repost(
+                                                id = entity.id,
+                                                post = mainPost,
+                                                by = repostedBy.asExternalModel(),
+                                                at = entity.indexedAt,
+                                                appliedLabels = appliedLabels,
+                                            )
 
-                                        entity.isPinned -> TimelineItem.Pinned(
-                                            id = entity.id,
-                                            post = mainPost,
-                                            appliedLabels = appliedLabels,
-                                        )
+                                            entity.isPinned -> TimelineItem.Pinned(
+                                                id = entity.id,
+                                                post = mainPost,
+                                                appliedLabels = appliedLabels,
+                                            )
 
-                                        else -> TimelineItem.Single(
-                                            id = entity.id,
-                                            post = mainPost,
-                                            appliedLabels = appliedLabels,
-                                        )
-                                    }
-                                }
+                                            else -> TimelineItem.Single(
+                                                id = entity.id,
+                                                post = mainPost,
+                                                appliedLabels = appliedLabels,
+                                            )
+                                        }
+                                    },
+                                )
                             }
                                 .filter(List<TimelineItem>::isNotEmpty)
                         }
@@ -1273,7 +1241,7 @@ internal class OfflineTimelineRepository(
     private fun spinThread(
         adultContentEnabled: Boolean,
         labelers: List<Labeler>,
-        labelPreferences: ContentLabelPreferences,
+        labelsVisibilityMap: Map<Label.Value, Label.Visibility>,
         list: List<TimelineItem.Thread>,
         thread: ThreadedPostEntity,
         post: Post,
@@ -1289,7 +1257,7 @@ internal class OfflineTimelineRepository(
                 adultContentEnabled = adultContentEnabled,
                 labels = post.labels + post.author.labels,
                 labelers = labelers,
-                contentLabelPreferences = labelPreferences,
+                preferenceLabelsVisibilityMap = labelsVisibilityMap,
             ),
         )
         // For parents, edit the head
@@ -1308,7 +1276,7 @@ internal class OfflineTimelineRepository(
                 adultContentEnabled = adultContentEnabled,
                 labels = post.labels + post.author.labels,
                 labelers = labelers,
-                contentLabelPreferences = labelPreferences,
+                preferenceLabelsVisibilityMap = labelsVisibilityMap,
             ),
         )
 
