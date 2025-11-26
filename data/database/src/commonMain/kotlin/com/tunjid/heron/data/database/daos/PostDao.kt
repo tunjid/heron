@@ -33,6 +33,7 @@ import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ThreadedPostEntity
+import com.tunjid.heron.data.database.entities.partial
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
@@ -47,6 +48,26 @@ interface PostDao {
     @Upsert
     suspend fun upsertPosts(
         entities: List<PostEntity>,
+    )
+
+    @Transaction
+    suspend fun insertOrPartiallyUpdatePosts(
+        entities: List<PostEntity>,
+    ) = partialUpsert(
+        items = entities,
+        partialMapper = PostEntity::partial,
+        insertEntities = ::insertOrIgnorePosts,
+        updatePartials = ::updatePartialPosts,
+    )
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertOrIgnorePosts(
+        entities: List<PostEntity>,
+    ): List<Long>
+
+    @Update(entity = PostEntity::class)
+    suspend fun updatePartialPosts(
+        entities: List<PostEntity.Partial>,
     )
 
     @Transaction
@@ -231,26 +252,6 @@ interface PostDao {
     suspend fun updateRepostCount(
         postUri: String,
         isIncrement: Boolean,
-    )
-
-    @Transaction
-    @Query(
-        """
-    UPDATE posts
-    SET bookmarkCount =
-        CASE
-            WHEN :isBookmarked THEN COALESCE(bookmarkCount, 0) + 1
-            ELSE CASE
-                     WHEN COALESCE(bookmarkCount, 0) > 0 THEN bookmarkCount - 1
-                     ELSE 0
-                 END
-        END
-    WHERE uri = :postUri
-    """,
-    )
-    suspend fun updateBookmarkCount(
-        postUri: String,
-        isBookmarked: Boolean,
     )
 
     @Transaction

@@ -31,6 +31,7 @@ import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
+import com.tunjid.heron.data.database.daos.ThreadGateDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.createFileManager
@@ -243,6 +244,12 @@ class DataBindings(
     fun provideMessageDao(
         database: AppDatabase,
     ): MessageDao = database.messagesDao()
+
+    @SingleIn(AppScope::class)
+    @Provides
+    fun provideThreadGateDao(
+        database: AppDatabase,
+    ): ThreadGateDao = database.threadGateDao()
 
     @SingleIn(AppScope::class)
     @Provides

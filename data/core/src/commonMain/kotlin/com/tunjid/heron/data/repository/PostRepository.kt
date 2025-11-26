@@ -569,10 +569,6 @@ internal class OfflinePostRepository @Inject constructor(
                                     viewingProfileId = signedInProfileId,
                                 ),
                             )
-                            postDao.updateBookmarkCount(
-                                postUri = interaction.postUri.uri,
-                                isBookmarked = true,
-                            )
                         }
                     }
                 }
@@ -629,7 +625,6 @@ internal class OfflinePostRepository @Inject constructor(
                                     viewingProfileId = signedInProfileId,
                                 ),
                             )
-                            postDao.updateBookmarkCount(interaction.postUri.uri, false)
                         }
                     }
                 }

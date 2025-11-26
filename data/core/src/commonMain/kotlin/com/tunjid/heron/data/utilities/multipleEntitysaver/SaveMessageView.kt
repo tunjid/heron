@@ -48,7 +48,7 @@ internal fun MultipleEntitySaver.add(
 ) {
     viewingProfileId ?: return
     add(
-        entity = emptyProfileEntity(messageView.sender.did),
+        entity = stubProfileEntity(messageView.sender.did),
     )
 
     add(
@@ -185,7 +185,7 @@ internal fun MultipleEntitySaver.add(
     viewingProfileId ?: return
 
     add(
-        entity = emptyProfileEntity(deletedMessageView.sender.did),
+        entity = stubProfileEntity(deletedMessageView.sender.did),
     )
 
     add(

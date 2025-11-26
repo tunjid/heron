@@ -143,7 +143,6 @@ private fun post(
     repostCount = postEntity.repostCount.orZero(),
     likeCount = postEntity.likeCount.orZero(),
     quoteCount = postEntity.quoteCount.orZero(),
-    bookmarkCount = postEntity.bookmarkCount.orZero(),
     indexedAt = postEntity.indexedAt,
     record = postEntity.record?.asExternalModel(),
     embed = when (val embedEntity = embeds.firstOrNull()) {
@@ -171,8 +170,8 @@ internal fun PostView.postEntity() =
         repostCount = repostCount,
         likeCount = likeCount,
         quoteCount = quoteCount,
-        bookmarkCount = bookmarkCount,
         indexedAt = indexedAt,
+        hasThreadGate = threadgate?.uri != null,
         record = record.asPostEntityRecordData(),
     )
 
