@@ -80,14 +80,6 @@ sealed class SearchQuery : CursorQuery {
     abstract val query: String
     abstract val isLocalOnly: Boolean
 
-    val sourceId
-        get() = when (this) {
-            is OfPosts.Latest -> "latest-posts"
-            is OfPosts.Top -> "top-posts"
-            is OfProfiles -> "profiles"
-            is OfFeedGenerators -> "feed-generators"
-        }
-
     @Serializable
     sealed class OfPosts : SearchQuery() {
         data class Top(

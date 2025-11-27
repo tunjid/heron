@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.search.ui
+package com.tunjid.heron.search.ui.suggestions
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
@@ -45,6 +45,7 @@ import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.search.ui.searchresults.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.OverlappingAvatarRow
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -166,10 +167,12 @@ fun SuggestedStarterPack(
 }
 
 internal fun ListMember.avatarSharedElementKey(): String =
-    "suggested-list-member-${subject.did.id}"
+    subject.avatarSharedElementKey(SuggestedMemberSharedElementPrefix)
 
 private fun profilesLeftInStarterPack(itemsLeft: Long) = "+${format(itemsLeft)}"
 
 private val AvatarOverlap = 16.dp
+
+private const val SuggestedMemberSharedElementPrefix = "suggested-list-member"
 
 private const val MaxAvatars = 10

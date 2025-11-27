@@ -39,7 +39,7 @@ import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.scaffold.duplicateWriteMessage
 import com.tunjid.heron.scaffold.scaffold.failedWriteMessage
 import com.tunjid.heron.search.di.query
-import com.tunjid.heron.search.ui.SuggestedStarterPack
+import com.tunjid.heron.search.ui.suggestions.SuggestedStarterPack
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.mapCursorList
 import com.tunjid.heron.tiling.reset
@@ -350,12 +350,8 @@ private fun Flow<Action.Search>.searchQueryMutations(
             }
             .mapToMutation { profileWithViewerStates ->
                 copy(
-                    autoCompletedProfiles = profileWithViewerStates.map { profileWithViewerState ->
-                        SearchResult.OfProfile(
-                            profileWithViewerState = profileWithViewerState,
-                            sharedElementPrefix = "auto-complete-results",
-                        )
-                    },
+                    autoCompletedProfiles = profileWithViewerStates
+                        .map(SearchResult::OfProfile),
                 )
             },
     )
@@ -485,7 +481,6 @@ private fun CoroutineScope.searchStateHolders(
                                 searchRepository::postSearch.mapCursorList { post ->
                                     SearchResult.OfPost(
                                         timelineItem = post,
-                                        sharedElementPrefix = searchState.tilingData.currentQuery.sourceId,
                                     )
                                 }.invoke(query, cursor)
                             },
@@ -510,12 +505,8 @@ private fun CoroutineScope.searchStateHolders(
                             currentState = { this@transform.state() },
                             updateQueryData = { copy(data = it) },
                             refreshQuery = { copy(data = data.reset()) },
-                            cursorListLoader = searchRepository::profileSearch.mapCursorList {
-                                SearchResult.OfProfile(
-                                    profileWithViewerState = it,
-                                    sharedElementPrefix = searchState.tilingData.currentQuery.sourceId,
-                                )
-                            },
+                            cursorListLoader = searchRepository::profileSearch
+                                .mapCursorList(SearchResult::OfProfile),
                             onNewItems = { items ->
                                 items.distinctBy { it.profileWithViewerState.profile.did }
                             },
@@ -537,12 +528,8 @@ private fun CoroutineScope.searchStateHolders(
                             currentState = { this@transform.state() },
                             updateQueryData = { copy(data = it) },
                             refreshQuery = { copy(data = data.reset()) },
-                            cursorListLoader = searchRepository::feedGeneratorSearch.mapCursorList {
-                                SearchResult.OfFeedGenerator(
-                                    feedGenerator = it,
-                                    sharedElementPrefix = searchState.tilingData.currentQuery.sourceId,
-                                )
-                            },
+                            cursorListLoader = searchRepository::feedGeneratorSearch
+                                .mapCursorList(SearchResult::OfFeedGenerator),
                             onNewItems = { items ->
                                 items.distinctBy { it.feedGenerator.cid }
                             },
