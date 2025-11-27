@@ -83,7 +83,17 @@ internal fun PostSearchResults(
     val now = remember { Clock.System.now() }
     val results by rememberUpdatedState(state.tiledItems)
     val sharedElementPrefix = state.sharedElementPrefix
-    val postActions = remember(sharedElementPrefix, onPostInteraction) {
+    val postActions = remember(
+        sharedElementPrefix,
+        onLinkTargetClicked,
+        onPostSearchResultClicked,
+        onPostSearchResultProfileClicked,
+        onPostRecordClicked,
+        onMediaClicked,
+        onReplyToPost,
+        onPostInteraction,
+        onPostOptionsClicked,
+    ) {
         postActions(
             onLinkTargetClicked = { _, linkTarget ->
                 onLinkTargetClicked(linkTarget)
