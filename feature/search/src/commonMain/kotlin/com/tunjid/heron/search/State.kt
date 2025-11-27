@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.search
 
-import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
@@ -29,8 +28,9 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.SearchQuery
+import com.tunjid.heron.data.repository.SearchQuery.OfPosts
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.search.ui.SuggestedStarterPack
+import com.tunjid.heron.search.ui.suggestions.SuggestedStarterPack
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
@@ -48,21 +48,16 @@ internal typealias SearchResultStateHolder = ActionStateMutator<SearchState.Tile
 
 sealed interface SearchResult {
 
-    val sharedElementPrefix: String
-
     data class OfProfile(
         val profileWithViewerState: ProfileWithViewerState,
-        override val sharedElementPrefix: String,
     ) : SearchResult
 
     data class OfFeedGenerator(
         val feedGenerator: FeedGenerator,
-        override val sharedElementPrefix: String,
     ) : SearchResult
 
     data class OfPost(
         val timelineItem: TimelineItem,
-        override val sharedElementPrefix: String,
     ) : SearchResult
 }
 
@@ -95,10 +90,16 @@ sealed class SearchState {
 
 val SearchState.key
     get() = when (this) {
-        is SearchState.OfFeedGenerators -> tilingData.currentQuery.sourceId
-        is SearchState.OfPosts -> tilingData.currentQuery.sourceId
-        is SearchState.OfProfiles -> tilingData.currentQuery.sourceId
+        is SearchState.OfFeedGenerators -> "feed-generators"
+        is SearchState.OfPosts -> when (tilingData.currentQuery) {
+            is OfPosts.Latest -> "latest-posts"
+            is OfPosts.Top -> "top-posts"
+        }
+        is SearchState.OfProfiles -> "profiles"
     }
+
+val SearchState.sharedElementPrefix
+    get() = key
 
 @Serializable
 data class State(
