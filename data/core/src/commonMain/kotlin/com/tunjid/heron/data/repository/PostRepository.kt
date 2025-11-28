@@ -59,7 +59,6 @@ import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
-import com.tunjid.heron.data.database.daos.ThreadGateDao
 import com.tunjid.heron.data.database.daos.partialUpsert
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.PostEntity

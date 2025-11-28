@@ -56,7 +56,6 @@ import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
-import com.tunjid.heron.data.database.daos.ThreadGateDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
