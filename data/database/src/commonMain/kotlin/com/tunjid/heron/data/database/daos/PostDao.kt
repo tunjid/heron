@@ -163,31 +163,33 @@ interface PostDao {
             ON posts.uri = bookmarks.bookmarkedUri
         WHERE bookmarks.viewingProfileId = :viewingProfileId
         ORDER BY bookmarks.createdAt DESC
+        LIMIT :limit
+        OFFSET :offset
         """,
     )
     fun bookmarkedPostUriAndEmbeddedRecordUris(
         viewingProfileId: String,
+        limit: Long,
+        offset: Long,
     ): Flow<List<PostEntity.UriWithEmbeddedRecordUri>>
 
     @Transaction
     @Query(
         """
-            SELECT
-                posts.*,
-                postViewerStatistics.*
-            FROM posts AS posts
-            LEFT JOIN postViewerStatistics
-                ON posts.uri = postViewerStatistics.postUri AND postViewerStatistics.viewingProfileId = :viewingProfileId
+            SELECT uri, embeddedRecordUri FROM posts
             INNER JOIN postPosts AS postPosts
                 ON posts.uri = postPosts.postUri
 	        WHERE postPosts.embeddedPostUri = :quotedPostUri
-            ORDER BY posts.indexedAt
+            ORDER BY posts.indexedAt DESC
+            LIMIT :limit
+            OFFSET :offset
         """,
     )
-    fun quotedPosts(
-        viewingProfileId: String?,
+    fun quotedPostUriAndEmbeddedRecordUris(
         quotedPostUri: String,
-    ): Flow<List<PopulatedPostEntity>>
+        limit: Long,
+        offset: Long,
+    ): Flow<List<PostEntity.UriWithEmbeddedRecordUri>>
 
     @Transaction
     @Query(

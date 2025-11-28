@@ -17,12 +17,6 @@
 package com.tunjid.heron.data.utilities
 
 import androidx.collection.MutableObjectIntMap
-import com.tunjid.heron.data.core.models.AppliedLabels
-import com.tunjid.heron.data.core.models.Label
-import com.tunjid.heron.data.core.models.Labelers
-import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.network.NetworkMonitor
 import io.ktor.client.plugins.ResponseException
@@ -188,43 +182,6 @@ internal inline fun <T> Result<T>.toOutcome(
     },
     onFailure = Outcome::Failure,
 )
-
-internal inline fun <T : Any> List<T>.mapNotNullPreferredTimelineItems(
-    signedInProfileId: ProfileId?,
-    labelers: Labelers,
-    allowAdultContent: Boolean,
-    labelsVisibilityMap: Map<Label.Value, Label.Visibility>,
-    itemPost: (T) -> Post?,
-    block: (T, Post, AppliedLabels) -> TimelineItem,
-) = mapNotNull { item ->
-    val mainPost = itemPost(item) ?: return@mapNotNull null
-
-    val postLabels = when {
-        mainPost.labels.isEmpty() -> emptySet()
-        else -> mainPost.labels.mapTo(
-            destination = mutableSetOf(),
-            transform = Label::value,
-        )
-    }
-
-    // Check for global hidden label
-    if (postLabels.contains(Label.Hidden)) return@mapNotNull null
-
-    // Check for global non authenticated label
-    val isSignedIn = signedInProfileId != null
-    if (!isSignedIn && postLabels.contains(Label.NonAuthenticated)) return@mapNotNull null
-
-    val appliedLabels = AppliedLabels(
-        adultContentEnabled = allowAdultContent,
-        labels = mainPost.labels + mainPost.author.labels,
-        labelers = labelers,
-        preferenceLabelsVisibilityMap = labelsVisibilityMap,
-    )
-
-    if (appliedLabels.shouldHide) return@mapNotNull null
-
-    block(item, mainPost, appliedLabels)
-}
 
 internal class InvalidTokenException : Exception("Invalid tokens")
 

@@ -30,6 +30,7 @@ import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ListId
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 import kotlinx.datetime.Instant
 
 @Entity(
@@ -87,7 +88,10 @@ data class PopulatedListEntity(
         entityColumn = "uri",
     )
     val labelEntities: List<LabelEntity>,
-)
+) : PopulatedRecordEntity {
+    override val recordUri: RecordUri
+        get() = entity.uri
+}
 
 fun ListEntity.partial() =
     ListEntity.Partial(

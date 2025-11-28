@@ -54,7 +54,6 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
-import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.TransactionWriter
@@ -63,6 +62,7 @@ import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.ThreadGateDao
 import com.tunjid.heron.data.database.daos.partialUpsert
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
+import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
@@ -74,7 +74,6 @@ import com.tunjid.heron.data.utilities.MediaBlob
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.facet
 import com.tunjid.heron.data.utilities.lookupProfileDid
-import com.tunjid.heron.data.utilities.mapNotNullPreferredTimelineItems
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
@@ -83,7 +82,6 @@ import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.refreshProfile
 import com.tunjid.heron.data.utilities.resolveLinks
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
-import com.tunjid.heron.data.utilities.toFlowOrEmpty
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.with
 import com.tunjid.heron.data.utilities.withRefresh
@@ -262,49 +260,32 @@ internal class OfflinePostRepository @Inject constructor(
                 postRecordKey = query.postRecordKey,
             ) { postUri ->
                 combine(
-                    savedStateDataSource.adultContentAndLabelVisibilities()
-                        .flatMapLatest { (allowAdultContent, labelsVisibilityMap) ->
-                            val postUriSingletonList = listOf(postUri)
-                            combine(
-                                flow = postDao.quotedPosts(
-                                    viewingProfileId = signedInProfileId?.id,
-                                    quotedPostUri = postUri.uri,
-                                ).distinctUntilChanged(),
-                                flow2 = postDao.posts(
-                                    viewingProfileId = signedInProfileId?.id,
-                                    postUris = postUriSingletonList,
-                                ).map { it.firstOrNull() },
-                                flow3 = threadGateDao.threadGates(
-                                    postUris = postUriSingletonList,
-                                ),
-                                flow4 = recordResolver.labelers,
-                                transform = { quotedPostEntities, parentPostEntity, threadGateEntities, labelers ->
-                                    if (quotedPostEntities.isEmpty()) return@combine emptyList()
-
-                                    quotedPostEntities.mapNotNullPreferredTimelineItems(
-                                        signedInProfileId = signedInProfileId,
-                                        labelers = labelers,
-                                        allowAdultContent = allowAdultContent,
-                                        labelsVisibilityMap = labelsVisibilityMap,
-                                        itemPost = { populatedPostEntity ->
-                                            populatedPostEntity.asExternalModel(
-                                                embeddedRecord = parentPostEntity?.asExternalModel(
-                                                    embeddedRecord = null,
-                                                ),
-                                            )
-                                        },
-                                        block = { entity, post, appliedLabels ->
-                                            TimelineItem.Single(
-                                                id = entity.entity.uri.uri,
-                                                post = post,
-                                                threadGate = threadGateEntities.firstOrNull()
-                                                    ?.asExternalModel(),
-                                                appliedLabels = appliedLabels,
-                                            )
-                                        },
+                    postDao.quotedPostUriAndEmbeddedRecordUris(
+                        quotedPostUri = postUri.uri,
+                        offset = query.data.offset,
+                        limit = query.data.limit,
+                    )
+                        .distinctUntilChanged()
+                        .flatMapLatest { bookmarkedPostUriAndEmbeddedRecordUris ->
+                            recordResolver.timelineItems(
+                                items = bookmarkedPostUriAndEmbeddedRecordUris,
+                                signedInProfileId = signedInProfileId,
+                                postUri = PostEntity.UriWithEmbeddedRecordUri::uri,
+                                associatedRecordUris = {
+                                    listOfNotNull(it.embeddedRecordUri)
+                                },
+                                associatedProfileIds = {
+                                    emptyList()
+                                },
+                                block = { item ->
+                                    list += TimelineItem.Single(
+                                        id = item.uri.uri,
+                                        post = post,
+                                        threadGate = threadGate(item.uri),
+                                        appliedLabels = appliedLabels,
                                     )
                                 },
-                            ).distinctUntilChanged()
+                            )
                         },
                     networkService.nextCursorFlow(
                         currentCursor = cursor,
@@ -344,67 +325,32 @@ internal class OfflinePostRepository @Inject constructor(
             }
 
             combine(
-                savedStateDataSource.adultContentAndLabelVisibilities()
-                    .flatMapLatest { (allowAdultContent, labelsVisibilityMap) ->
-                        postDao.bookmarkedPostUriAndEmbeddedRecordUris(
-                            viewingProfileId = signedInProfileId.id,
+                postDao.bookmarkedPostUriAndEmbeddedRecordUris(
+                    viewingProfileId = signedInProfileId.id,
+                    offset = query.data.offset,
+                    limit = query.data.limit,
+                )
+                    .distinctUntilChanged()
+                    .flatMapLatest { bookmarkedPostUriAndEmbeddedRecordUris ->
+                        recordResolver.timelineItems(
+                            items = bookmarkedPostUriAndEmbeddedRecordUris,
+                            signedInProfileId = signedInProfileId,
+                            postUri = PostEntity.UriWithEmbeddedRecordUri::uri,
+                            associatedRecordUris = {
+                                listOfNotNull(it.embeddedRecordUri)
+                            },
+                            associatedProfileIds = {
+                                emptyList()
+                            },
+                            block = { item ->
+                                list += TimelineItem.Single(
+                                    id = item.uri.uri,
+                                    post = post,
+                                    threadGate = threadGate(item.uri),
+                                    appliedLabels = appliedLabels,
+                                )
+                            },
                         )
-                            .distinctUntilChanged()
-                            .flatMapLatest { bookmarkedPostUriAndEmbeddedRecordUris ->
-                                val bookmarkedPostUris = mutableListOf<PostUri>()
-                                val embeddedRecordUris = mutableSetOf<RecordUri>()
-                                bookmarkedPostUriAndEmbeddedRecordUris.forEach { (postUri, embeddedRecordUri) ->
-                                    bookmarkedPostUris.add(postUri)
-                                    embeddedRecordUri?.let(embeddedRecordUris::add)
-                                }
-                                combine(
-                                    flow = postDao.posts(
-                                        viewingProfileId = signedInProfileId.id,
-                                        postUris = bookmarkedPostUris,
-                                    )
-                                        .distinctUntilChanged(),
-                                    flow2 = recordResolver.records(
-                                        uris = embeddedRecordUris,
-                                        viewingProfileId = signedInProfileId,
-                                    ),
-                                    flow3 = bookmarkedPostUris.toFlowOrEmpty(threadGateDao::threadGates),
-                                    flow4 = recordResolver.labelers,
-                                    transform = { bookmarkedPostEntities, embeddedRecords, threadGateEntities, labelers ->
-                                        val recordUrisToEmbeddedRecords =
-                                            embeddedRecords.associateBy {
-                                                it.reference.uri
-                                            }
-                                        val postUrisToThreadGateEntities =
-                                            threadGateEntities.associateBy {
-                                                it.entity.gatedPostUri
-                                            }
-                                        bookmarkedPostEntities.mapNotNullPreferredTimelineItems(
-                                            signedInProfileId = signedInProfileId,
-                                            labelers = labelers,
-                                            allowAdultContent = allowAdultContent,
-                                            labelsVisibilityMap = labelsVisibilityMap,
-                                            itemPost = { populatedPostEntity ->
-                                                postUrisToThreadGateEntities[populatedPostEntity.entity.uri]
-                                                populatedPostEntity.asExternalModel(
-                                                    embeddedRecord = populatedPostEntity.entity
-                                                        .record
-                                                        ?.embeddedRecordUri
-                                                        .let(recordUrisToEmbeddedRecords::get),
-                                                )
-                                            },
-                                            block = { entity, post, appliedLabels ->
-                                                TimelineItem.Single(
-                                                    id = entity.entity.uri.uri,
-                                                    post = post,
-                                                    threadGate = postUrisToThreadGateEntities[post.uri]
-                                                        ?.asExternalModel(),
-                                                    appliedLabels = appliedLabels,
-                                                )
-                                            },
-                                        )
-                                    },
-                                ).distinctUntilChanged()
-                            }
                     },
                 networkService.nextCursorFlow(
                     currentCursor = cursor,

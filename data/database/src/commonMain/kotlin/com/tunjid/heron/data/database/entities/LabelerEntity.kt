@@ -12,6 +12,7 @@ import com.tunjid.heron.data.core.types.LabelerId
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 
 @Entity(
     tableName = "labelers",
@@ -51,7 +52,10 @@ data class PopulatedLabelerEntity(
         entityColumn = "creatorId",
     )
     val definitions: List<LabelDefinitionEntity>,
-)
+) : PopulatedRecordEntity {
+    override val recordUri: RecordUri
+        get() = entity.uri
+}
 
 fun PopulatedLabelerEntity.asExternalModel(): Labeler = Labeler(
     uri = entity.uri,

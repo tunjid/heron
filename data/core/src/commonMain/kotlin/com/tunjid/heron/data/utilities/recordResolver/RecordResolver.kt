@@ -22,9 +22,15 @@ import app.bsky.graph.GetListQueryParams
 import app.bsky.graph.GetStarterPackQueryParams
 import app.bsky.labeler.GetServicesQueryParams
 import app.bsky.labeler.GetServicesResponseViewUnion
+import com.tunjid.heron.data.core.models.AppliedLabels
+import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LabelerPreference
+import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.ThreadGate
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListUri
@@ -37,20 +43,27 @@ import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
+import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
+import com.tunjid.heron.data.database.daos.ThreadGateDao
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedLabelerEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
+import com.tunjid.heron.data.database.entities.PopulatedPostEntity
+import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
+import com.tunjid.heron.data.database.entities.PopulatedThreadGateEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.repository.SavedStateDataSource
+import com.tunjid.heron.data.repository.adultContentAndLabelVisibilities
 import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.repository.singleSessionFlow
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.LazyList
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import com.tunjid.heron.data.utilities.recordResolver.RecordResolver.TimelineItemCreationContext
 import com.tunjid.heron.data.utilities.toFlowOrEmpty
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
@@ -74,9 +87,28 @@ internal interface RecordResolver {
         viewingProfileId: ProfileId?,
     ): Flow<List<Record>>
 
+    fun <T> timelineItems(
+        items: List<T>,
+        signedInProfileId: ProfileId?,
+        postUri: (T) -> PostUri,
+        associatedRecordUris: (T) -> List<RecordUri>,
+        associatedProfileIds: (T) -> List<ProfileId>,
+        block: TimelineItemCreationContext.(T) -> Unit,
+    ): Flow<List<TimelineItem>>
+
     suspend fun refresh(
         uri: RecordUri,
     )
+
+    interface TimelineItemCreationContext {
+        val list: MutableList<TimelineItem>
+        val post: Post
+        val appliedLabels: AppliedLabels
+
+        fun record(recordUri: RecordUri): Record?
+        fun profile(profileId: ProfileId): Profile?
+        fun threadGate(postUri: PostUri): ThreadGate?
+    }
 }
 
 internal class OfflineRecordResolver @Inject constructor(
@@ -85,6 +117,8 @@ internal class OfflineRecordResolver @Inject constructor(
     private val labelDao: LabelDao,
     private val listDao: ListDao,
     private val postDao: PostDao,
+    private val profileDao: ProfileDao,
+    private val threadGateDao: ThreadGateDao,
     private val starterPackDao: StarterPackDao,
     private val savedStateDataSource: SavedStateDataSource,
     private val networkService: NetworkService,
@@ -164,41 +198,46 @@ internal class OfflineRecordResolver @Inject constructor(
 
         return combine(
             feedUris.list
-                .toFlowOrEmpty(feedGeneratorDao::feedGenerators)
-                .distinctUntilChanged()
-                .map { entities ->
-                    entities.map(PopulatedFeedGeneratorEntity::asExternalModel)
-                },
+                .toFlowOrEmpty(feedGeneratorDao::feedGenerators),
             listUris.list
-                .toFlowOrEmpty(listDao::lists)
-                .distinctUntilChanged()
-                .map { entities ->
-                    entities.map(PopulatedListEntity::asExternalModel)
-                },
+                .toFlowOrEmpty(listDao::lists),
             postUris.list
-                .toFlowOrEmpty { postDao.posts(viewingProfileId?.id, it) }
-                .distinctUntilChanged()
-                .map { entities ->
-                    entities.map {
-                        it.asExternalModel(
-                            embeddedRecord = null,
-                        )
-                    }
-                },
+                .toFlowOrEmpty { postDao.posts(viewingProfileId?.id, it) },
             starterPackUris.list
-                .toFlowOrEmpty(starterPackDao::starterPacks)
-                .distinctUntilChanged()
-                .map { entities ->
-                    entities.map(PopulatedStarterPackEntity::asExternalModel)
-                },
+                .toFlowOrEmpty(starterPackDao::starterPacks),
             labelerUris.list
-                .toFlowOrEmpty(labelDao::labelers)
-                .distinctUntilChanged()
-                .map { entities ->
-                    entities.map(PopulatedLabelerEntity::asExternalModel)
-                },
+                .toFlowOrEmpty(labelDao::labelers),
         ) { feeds, lists, posts, starterPacks, labelers ->
-            feeds + lists + posts + starterPacks + labelers
+            val associatedRecords = buildMap {
+                feeds.forEach { put(it.recordUri, it) }
+                lists.forEach { put(it.recordUri, it) }
+                posts.forEach { put(it.recordUri, it) }
+                starterPacks.forEach { put(it.recordUri, it) }
+                labelers.forEach { put(it.recordUri, it) }
+            }
+            associatedRecords.values.map { recordEntity ->
+                when (recordEntity) {
+                    is PopulatedFeedGeneratorEntity -> recordEntity.asExternalModel()
+                    is PopulatedLabelerEntity -> recordEntity.asExternalModel()
+                    is PopulatedListEntity -> recordEntity.asExternalModel()
+                    is PopulatedPostEntity -> recordEntity.asExternalModel(
+                        embeddedRecord = when (
+                            val embeddedRecordEntity =
+                                associatedRecords[recordEntity.entity.record?.embeddedRecordUri]
+                        ) {
+                            is PopulatedFeedGeneratorEntity -> embeddedRecordEntity.asExternalModel()
+                            is PopulatedLabelerEntity -> embeddedRecordEntity.asExternalModel()
+                            is PopulatedListEntity -> embeddedRecordEntity.asExternalModel()
+                            is PopulatedPostEntity -> embeddedRecordEntity.asExternalModel(
+                                embeddedRecord = null,
+                            )
+                            is PopulatedStarterPackEntity -> embeddedRecordEntity.asExternalModel()
+                            null -> null
+                        },
+                    )
+                    is PopulatedStarterPackEntity -> recordEntity.asExternalModel()
+                }
+            }
         }
     }
 
@@ -295,4 +334,153 @@ internal class OfflineRecordResolver @Inject constructor(
                 }
         }
     }.let { }
+
+    override fun <T> timelineItems(
+        items: List<T>,
+        signedInProfileId: ProfileId?,
+        postUri: (T) -> PostUri,
+        associatedRecordUris: (T) -> List<RecordUri>,
+        associatedProfileIds: (T) -> List<ProfileId>,
+        block: TimelineItemCreationContext.(T) -> Unit,
+    ): Flow<List<TimelineItem>> =
+        savedStateDataSource.adultContentAndLabelVisibilities()
+            .flatMapLatest { (allowAdultContent, labelsVisibilityMap) ->
+                val postUris = items.map(postUri)
+                val recordUris = items.flatMapTo(mutableSetOf(), associatedRecordUris)
+                val profileIds = items.flatMapTo(mutableSetOf(), associatedProfileIds)
+
+                combine(
+                    flow = postDao.posts(
+                        viewingProfileId = signedInProfileId?.id,
+                        postUris = postUris,
+                    )
+                        .distinctUntilChanged(),
+                    flow2 = records(
+                        uris = recordUris,
+                        viewingProfileId = signedInProfileId,
+                    )
+                        .distinctUntilChanged(),
+                    flow3 = postUris
+                        .toFlowOrEmpty(threadGateDao::threadGates),
+                    flow4 = profileIds
+                        .toFlowOrEmpty(profileDao::profiles),
+                    flow5 = labelers,
+                    transform = { postEntities, associatedRecords, threadGateEntities, profiles, labelers ->
+                        if (postEntities.isEmpty()) return@combine emptyList()
+
+                        val postUrisToPopulatedPosts = postEntities.associateBy {
+                            it.entity.uri
+                        }
+
+                        items.fold(
+                            MutableTimelineItemCreationContext(
+                                associatedRecords = associatedRecords,
+                                associatedThreadGateEntities = threadGateEntities,
+                                associatedProfileEntities = profiles,
+                            ),
+                        ) { context, item ->
+                            val postEntity =
+                                postUrisToPopulatedPosts[postUri(item)] ?: return@fold context
+
+                            val embeddedRecord = postEntity.entity
+                                .record
+                                ?.embeddedRecordUri
+                                ?.let(context::record)
+
+                            val post = postEntity.asExternalModel(embeddedRecord)
+
+                            val postLabels = when {
+                                post.labels.isEmpty() -> emptySet()
+                                else -> post.labels.mapTo(
+                                    destination = mutableSetOf(),
+                                    transform = Label::value,
+                                )
+                            }
+
+                            // Check for global hidden label
+                            if (postLabels.contains(Label.Hidden)) return@fold context
+
+                            // Check for global non authenticated label
+                            val isSignedIn = signedInProfileId != null
+                            if (!isSignedIn && postLabels.contains(Label.NonAuthenticated)) return@fold context
+
+                            val appliedLabels = AppliedLabels(
+                                adultContentEnabled = allowAdultContent,
+                                labels = post.labels + post.author.labels,
+                                labelers = labelers,
+                                preferenceLabelsVisibilityMap = labelsVisibilityMap,
+                            )
+
+                            if (appliedLabels.shouldHide) return@fold context
+
+                            context.apply {
+                                update(
+                                    currentPost = post,
+                                    appliedLabels = appliedLabels,
+                                )
+                                block(item)
+                            }
+                        }
+                    },
+                ).distinctUntilChanged()
+            }
+
+    private class MutableTimelineItemCreationContext(
+        associatedRecords: List<Record>,
+        associatedThreadGateEntities: List<PopulatedThreadGateEntity>,
+        associatedProfileEntities: List<PopulatedProfileEntity>,
+    ) : TimelineItemCreationContext,
+        MutableList<TimelineItem> by mutableListOf() {
+
+        override var list: MutableList<TimelineItem> = this
+
+        override val post: Post
+            get() = requireNotNull(currentPost)
+
+        override var appliedLabels: AppliedLabels = AppliedLabels(
+            adultContentEnabled = false,
+            labels = emptyList(),
+            labelers = emptyList(),
+            contentLabelPreferences = emptyList(),
+        )
+
+        private var currentPost: Post? = null
+
+        private val recordUrisToRecords =
+            if (associatedRecords.isEmpty()) emptyMap()
+            else associatedRecords.associateBy {
+                it.reference.uri
+            }
+
+        private val postUrisToThreadGateEntities =
+            if (associatedThreadGateEntities.isEmpty()) emptyMap()
+            else associatedThreadGateEntities.associateBy(
+                keySelector = { it.entity.gatedPostUri },
+                valueTransform = PopulatedThreadGateEntity::asExternalModel,
+            )
+
+        private val profileIdsToProfiles =
+            if (associatedProfileEntities.isEmpty()) emptyMap()
+            else associatedProfileEntities.associateBy(
+                keySelector = { it.entity.did },
+                valueTransform = PopulatedProfileEntity::asExternalModel,
+            )
+
+        override fun record(recordUri: RecordUri): Record? =
+            recordUrisToRecords[recordUri]
+
+        override fun threadGate(postUri: PostUri): ThreadGate? =
+            postUrisToThreadGateEntities[postUri]
+
+        override fun profile(profileId: ProfileId): Profile? =
+            profileIdsToProfiles[profileId]
+
+        fun update(
+            currentPost: Post,
+            appliedLabels: AppliedLabels,
+        ) {
+            this.currentPost = currentPost
+            this.appliedLabels = appliedLabels
+        }
+    }
 }

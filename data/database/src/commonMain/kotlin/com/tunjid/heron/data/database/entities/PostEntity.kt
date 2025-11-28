@@ -184,7 +184,10 @@ data class PopulatedPostEntity(
         ),
     )
     val authorLabelEntities: List<LabelEntity>,
-)
+) : PopulatedRecordEntity {
+    override val recordUri: RecordUri
+        get() = entity.uri
+}
 
 data class EmbeddedPopulatedPostEntity(
     @Embedded
