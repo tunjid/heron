@@ -40,13 +40,11 @@ import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.Trend
-import com.tunjid.heron.data.core.models.emptyCursorList
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
-import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
@@ -56,7 +54,6 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.post
 import com.tunjid.heron.data.network.models.profile
 import com.tunjid.heron.data.network.models.profileViewerStateEntities
-import com.tunjid.heron.data.utilities.mapNotNullPreferredTimelineItems
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.observeProfileWithViewerStates
@@ -65,11 +62,9 @@ import com.tunjid.heron.data.utilities.sortedWithNetworkList
 import com.tunjid.heron.data.utilities.toProfileWithViewerStates
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
@@ -147,7 +142,6 @@ internal class OfflineSearchRepository @Inject constructor(
     private val networkService: NetworkService,
     private val savedStateDataSource: SavedStateDataSource,
     private val profileDao: ProfileDao,
-    private val postDao: PostDao,
     private val starterPackDao: StarterPackDao,
     private val feedGeneratorDao: FeedGeneratorDao,
     private val recordResolver: RecordResolver,
@@ -194,53 +188,30 @@ internal class OfflineSearchRepository @Inject constructor(
             val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
 
             // Using the network call as a base, observe the db for user interactions
-            savedStateDataSource.adultContentAndLabelVisibilities()
-                .flatMapLatest { (allowAdultContent, labelsVisibilityMap) ->
-                    combine(
-                        flow = postDao.posts(
-                            viewingProfileId = signedInProfileId?.id,
-                            postUris = posts.map(Post::uri),
-                        ).distinctUntilChanged(),
-                        flow2 = recordResolver.records(
-                            uris = posts.mapNotNullTo(mutableSetOf()) {
-                                it.embeddedRecord?.reference?.uri
-                            },
-                            viewingProfileId = signedInProfileId,
-                        ),
-                        flow3 = recordResolver.labelers,
-                        transform = { populatedPostEntities, embeddedRecords, labelers ->
-                            if (populatedPostEntities.isEmpty()) return@combine emptyCursorList<TimelineItem>()
-                            val recordUrisToEmbeddedRecords = embeddedRecords.associateBy {
-                                it.reference.uri
-                            }
-
-                            CursorList(
-                                items = populatedPostEntities.mapNotNullPreferredTimelineItems(
-                                    signedInProfileId = signedInProfileId,
-                                    labelers = labelers,
-                                    allowAdultContent = allowAdultContent,
-                                    labelsVisibilityMap = labelsVisibilityMap,
-                                    itemPost = { populatedPostEntity ->
-                                        populatedPostEntity.asExternalModel(
-                                            embeddedRecord = populatedPostEntity.entity
-                                                .record
-                                                ?.embeddedRecordUri
-                                                .let(recordUrisToEmbeddedRecords::get),
-                                        )
-                                    },
-                                    block = { entity, post, appliedLabels ->
-                                        TimelineItem.Single(
-                                            id = entity.entity.uri.uri,
-                                            post = post,
-                                            appliedLabels = appliedLabels,
-                                        )
-                                    },
-                                ),
-                                nextCursor = nextCursor,
-                            )
-                        },
-                    ).distinctUntilChanged()
-                }
+            recordResolver.timelineItems(
+                items = posts,
+                signedInProfileId = signedInProfileId,
+                postUri = Post::uri,
+                associatedRecordUris = {
+                    listOf(it.reference.uri)
+                },
+                associatedProfileIds = {
+                    emptyList()
+                },
+                block = { item ->
+                    list += TimelineItem.Single(
+                        id = item.uri.uri,
+                        post = post,
+                        threadGate = threadGate(item.uri),
+                        appliedLabels = appliedLabels,
+                    )
+                },
+            ).map {
+                CursorList(
+                    items = it,
+                    nextCursor = nextCursor,
+                )
+            }
         }
 
     override fun profileSearch(

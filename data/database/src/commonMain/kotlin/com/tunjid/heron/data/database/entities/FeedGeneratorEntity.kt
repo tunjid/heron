@@ -27,6 +27,7 @@ import com.tunjid.heron.data.core.types.FeedGeneratorId
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 import kotlinx.datetime.Instant
 
 @Entity(
@@ -76,7 +77,10 @@ data class PopulatedFeedGeneratorEntity(
         entityColumn = "uri",
     )
     val labelEntities: List<LabelEntity>,
-)
+) : PopulatedRecordEntity {
+    override val recordUri: RecordUri
+        get() = entity.uri
+}
 
 fun PopulatedFeedGeneratorEntity.asExternalModel() =
     FeedGenerator(

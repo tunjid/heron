@@ -41,8 +41,6 @@ import com.atproto.repo.UploadBlobResponse
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
-import com.tunjid.heron.data.core.models.Label
-import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
@@ -62,8 +60,8 @@ import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.partialUpsert
-import com.tunjid.heron.data.database.entities.PopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
+import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
@@ -75,7 +73,6 @@ import com.tunjid.heron.data.utilities.MediaBlob
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.facet
 import com.tunjid.heron.data.utilities.lookupProfileDid
-import com.tunjid.heron.data.utilities.mapNotNullPreferredTimelineItems
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
@@ -261,32 +258,32 @@ internal class OfflinePostRepository @Inject constructor(
                 postRecordKey = query.postRecordKey,
             ) { postUri ->
                 combine(
-                    savedStateDataSource.adultContentAndLabelVisibilities()
-                        .flatMapLatest { (allowAdultContent, labelsVisibilityMap) ->
-                            combine(
-                                flow = postDao.quotedPosts(
-                                    viewingProfileId = signedInProfileId?.id,
-                                    quotedPostUri = postUri.uri,
-                                ).distinctUntilChanged(),
-                                flow2 = postDao.posts(
-                                    viewingProfileId = signedInProfileId?.id,
-                                    postUris = listOf(postUri),
-                                ).map { it.firstOrNull() },
-                                flow3 = recordResolver.labelers,
-                                transform = { quotedPostEntities, parentPostEntity, labelers ->
-                                    if (quotedPostEntities.isEmpty()) return@combine emptyList()
-
-                                    quotedPostEntities.mapNotNullPreferredTimelineItems(
-                                        signedInProfileId = signedInProfileId,
-                                        labelers = labelers,
-                                        allowAdultContent = allowAdultContent,
-                                        labelsVisibilityMap = labelsVisibilityMap,
-                                        embeddedRecord = parentPostEntity?.asExternalModel(
-                                            embeddedRecord = null,
-                                        ),
+                    postDao.quotedPostUriAndEmbeddedRecordUris(
+                        quotedPostUri = postUri.uri,
+                        offset = query.data.offset,
+                        limit = query.data.limit,
+                    )
+                        .distinctUntilChanged()
+                        .flatMapLatest { bookmarkedPostUriAndEmbeddedRecordUris ->
+                            recordResolver.timelineItems(
+                                items = bookmarkedPostUriAndEmbeddedRecordUris,
+                                signedInProfileId = signedInProfileId,
+                                postUri = PostEntity.UriWithEmbeddedRecordUri::uri,
+                                associatedRecordUris = {
+                                    listOfNotNull(it.embeddedRecordUri)
+                                },
+                                associatedProfileIds = {
+                                    emptyList()
+                                },
+                                block = { item ->
+                                    list += TimelineItem.Single(
+                                        id = item.uri.uri,
+                                        post = post,
+                                        threadGate = threadGate(item.uri),
+                                        appliedLabels = appliedLabels,
                                     )
                                 },
-                            ).distinctUntilChanged()
+                            )
                         },
                     networkService.nextCursorFlow(
                         currentCursor = cursor,
@@ -326,22 +323,32 @@ internal class OfflinePostRepository @Inject constructor(
             }
 
             combine(
-                savedStateDataSource.adultContentAndLabelVisibilities()
-                    .flatMapLatest { (allowAdultContent, labelsVisibilityMap) ->
-                        combine(
-                            flow = postDao.bookmarkedPosts(
-                                viewingProfileId = signedInProfileId.id,
-                            ).distinctUntilChanged(),
-                            flow2 = recordResolver.labelers,
-                            transform = { bookmarkedPostEntities, labelers ->
-                                bookmarkedPostEntities.mapNotNullPreferredTimelineItems(
-                                    signedInProfileId = signedInProfileId,
-                                    allowAdultContent = allowAdultContent,
-                                    labelsVisibilityMap = labelsVisibilityMap,
-                                    labelers = labelers,
+                postDao.bookmarkedPostUriAndEmbeddedRecordUris(
+                    viewingProfileId = signedInProfileId.id,
+                    offset = query.data.offset,
+                    limit = query.data.limit,
+                )
+                    .distinctUntilChanged()
+                    .flatMapLatest { bookmarkedPostUriAndEmbeddedRecordUris ->
+                        recordResolver.timelineItems(
+                            items = bookmarkedPostUriAndEmbeddedRecordUris,
+                            signedInProfileId = signedInProfileId,
+                            postUri = PostEntity.UriWithEmbeddedRecordUri::uri,
+                            associatedRecordUris = {
+                                listOfNotNull(it.embeddedRecordUri)
+                            },
+                            associatedProfileIds = {
+                                emptyList()
+                            },
+                            block = { item ->
+                                list += TimelineItem.Single(
+                                    id = item.uri.uri,
+                                    post = post,
+                                    threadGate = threadGate(item.uri),
+                                    appliedLabels = appliedLabels,
                                 )
                             },
-                        ).distinctUntilChanged()
+                        )
                     },
                 networkService.nextCursorFlow(
                     currentCursor = cursor,
@@ -673,31 +680,6 @@ internal class OfflinePostRepository @Inject constructor(
         )
     }
 }
-
-private fun List<PopulatedPostEntity>.mapNotNullPreferredTimelineItems(
-    signedInProfileId: ProfileId?,
-    allowAdultContent: Boolean,
-    labelsVisibilityMap: Map<Label.Value, Label.Visibility>,
-    labelers: List<Labeler>,
-    embeddedRecord: Record? = null,
-) = mapNotNullPreferredTimelineItems(
-    signedInProfileId = signedInProfileId,
-    labelers = labelers,
-    allowAdultContent = allowAdultContent,
-    labelsVisibilityMap = labelsVisibilityMap,
-    itemPost = { populatedPostEntity ->
-        populatedPostEntity.asExternalModel(
-            embeddedRecord = embeddedRecord,
-        )
-    },
-    block = { entity, post, appliedLabels ->
-        TimelineItem.Single(
-            id = entity.entity.uri.uri,
-            post = post,
-            appliedLabels = appliedLabels,
-        )
-    },
-)
 
 private fun List<PopulatedProfileEntity>.asExternalModels() =
     map {

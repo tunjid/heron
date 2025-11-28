@@ -46,6 +46,7 @@ data class State(
                 posts = listOf(it),
                 generation = 0,
                 hasBreak = false,
+                threadGate = null,
                 appliedLabels = it.appliedLabels(
                     adultContentEnabled = false,
                     labelers = emptyList(),

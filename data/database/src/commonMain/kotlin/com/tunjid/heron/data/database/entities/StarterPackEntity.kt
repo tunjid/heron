@@ -25,6 +25,7 @@ import androidx.room.Relation
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.core.types.StarterPackUri
 import kotlinx.datetime.Instant
@@ -79,7 +80,10 @@ data class PopulatedStarterPackEntity(
         entityColumn = "uri",
     )
     val labelEntities: List<LabelEntity>,
-)
+) : PopulatedRecordEntity {
+    override val recordUri: RecordUri
+        get() = entity.uri
+}
 
 fun PopulatedStarterPackEntity.asExternalModel() =
     StarterPack(
