@@ -345,32 +345,24 @@ internal class OfflineRecordResolver @Inject constructor(
     ): Flow<List<TimelineItem>> =
         savedStateDataSource.adultContentAndLabelVisibilities()
             .flatMapLatest { (allowAdultContent, labelsVisibilityMap) ->
-                val postUris = items.map(postUri)
-                val recordUris = items.flatMapTo(mutableSetOf(), associatedRecordUris)
+                val itemPostUris = items.map(postUri)
+                val recordUris = items.flatMapTo(mutableSetOf(), associatedRecordUris) + itemPostUris
+                val threadGatePostUris = recordUris.filterIsInstance<PostUri>()
                 val profileIds = items.flatMapTo(mutableSetOf(), associatedProfileIds)
 
                 combine(
-                    flow = postDao.posts(
-                        viewingProfileId = signedInProfileId?.id,
-                        postUris = postUris,
-                    )
-                        .distinctUntilChanged(),
-                    flow2 = records(
+                    flow = records(
                         uris = recordUris,
                         viewingProfileId = signedInProfileId,
                     )
                         .distinctUntilChanged(),
-                    flow3 = postUris
+                    flow2 = threadGatePostUris
                         .toDistinctUntilChangedFlowOrEmpty(threadGateDao::threadGates),
-                    flow4 = profileIds
+                    flow3 = profileIds
                         .toDistinctUntilChangedFlowOrEmpty(profileDao::profiles),
-                    flow5 = labelers,
-                    transform = { postEntities, associatedRecords, threadGateEntities, profiles, labelers ->
-                        if (postEntities.isEmpty()) return@combine emptyList()
-
-                        val postUrisToPopulatedPosts = postEntities.associateBy {
-                            it.entity.uri
-                        }
+                    flow4 = labelers,
+                    transform = { associatedRecords, threadGateEntities, profiles, labelers ->
+                        if (associatedRecords.isEmpty()) return@combine emptyList()
 
                         items.fold(
                             MutableTimelineItemCreationContext(
@@ -379,15 +371,8 @@ internal class OfflineRecordResolver @Inject constructor(
                                 associatedProfileEntities = profiles,
                             ),
                         ) { context, item ->
-                            val postEntity =
-                                postUrisToPopulatedPosts[postUri(item)] ?: return@fold context
-
-                            val embeddedRecord = postEntity.entity
-                                .record
-                                ?.embeddedRecordUri
-                                ?.let(context::record)
-
-                            val post = postEntity.asExternalModel(embeddedRecord)
+                            val post = context.record(postUri(item)) as? Post
+                                ?: return@fold context
 
                             val postLabels = when {
                                 post.labels.isEmpty() -> emptySet()
