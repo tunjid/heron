@@ -145,7 +145,7 @@ internal inline fun <T> Iterable<T>.triage(
     )
 }
 
-internal inline fun <T, R> Collection<T>.toFlowOrEmpty(
+internal inline fun <T, R> Collection<T>.toDistinctUntilChangedFlowOrEmpty(
     crossinline block: (Collection<T>) -> Flow<List<R>>,
 ): Flow<List<R>> =
     when {

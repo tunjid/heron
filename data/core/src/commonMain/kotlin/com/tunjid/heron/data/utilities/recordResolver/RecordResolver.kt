@@ -64,7 +64,7 @@ import com.tunjid.heron.data.utilities.LazyList
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver.TimelineItemCreationContext
-import com.tunjid.heron.data.utilities.toFlowOrEmpty
+import com.tunjid.heron.data.utilities.toDistinctUntilChangedFlowOrEmpty
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Named
@@ -198,15 +198,15 @@ internal class OfflineRecordResolver @Inject constructor(
 
         return combine(
             feedUris.list
-                .toFlowOrEmpty(feedGeneratorDao::feedGenerators),
+                .toDistinctUntilChangedFlowOrEmpty(feedGeneratorDao::feedGenerators),
             listUris.list
-                .toFlowOrEmpty(listDao::lists),
+                .toDistinctUntilChangedFlowOrEmpty(listDao::lists),
             postUris.list
-                .toFlowOrEmpty { postDao.posts(viewingProfileId?.id, it) },
+                .toDistinctUntilChangedFlowOrEmpty { postDao.posts(viewingProfileId?.id, it) },
             starterPackUris.list
-                .toFlowOrEmpty(starterPackDao::starterPacks),
+                .toDistinctUntilChangedFlowOrEmpty(starterPackDao::starterPacks),
             labelerUris.list
-                .toFlowOrEmpty(labelDao::labelers),
+                .toDistinctUntilChangedFlowOrEmpty(labelDao::labelers),
         ) { feeds, lists, posts, starterPacks, labelers ->
             val associatedRecords = buildMap {
                 feeds.forEach { put(it.recordUri, it) }
@@ -361,9 +361,9 @@ internal class OfflineRecordResolver @Inject constructor(
                     )
                         .distinctUntilChanged(),
                     flow3 = postUris
-                        .toFlowOrEmpty(threadGateDao::threadGates),
+                        .toDistinctUntilChangedFlowOrEmpty(threadGateDao::threadGates),
                     flow4 = profileIds
-                        .toFlowOrEmpty(profileDao::profiles),
+                        .toDistinctUntilChangedFlowOrEmpty(profileDao::profiles),
                     flow5 = labelers,
                     transform = { postEntities, associatedRecords, threadGateEntities, profiles, labelers ->
                         if (postEntities.isEmpty()) return@combine emptyList()

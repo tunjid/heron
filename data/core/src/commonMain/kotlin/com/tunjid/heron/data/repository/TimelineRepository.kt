@@ -1137,9 +1137,10 @@ internal class OfflineTimelineRepository(
         context: RecordResolver.TimelineItemCreationContext,
         thread: ThreadedPostEntity,
     ) = with(context) {
+        val lastItem = list.lastOrNull()
         when {
             // To start or for the OP, start a new thread
-            list.isEmpty() || thread.generation == 0L -> list += TimelineItem.Thread(
+            lastItem == null || thread.generation == 0L -> list += TimelineItem.Thread(
                 id = thread.entity.uri.uri,
                 generation = thread.generation,
                 anchorPostIndex = 0,
@@ -1149,14 +1150,13 @@ internal class OfflineTimelineRepository(
                 appliedLabels = appliedLabels,
             )
             // For parents, edit the head
-            thread.generation <= -1L -> list.last().let {
-                if (it is TimelineItem.Thread) list
-                    .also(MutableList<TimelineItem>::removeLast) += it.copy(posts = it.posts + post)
-            }
+            thread.generation <= -1L -> if (lastItem is TimelineItem.Thread) {
+                list.removeLast()
+                list.add(lastItem.copy(posts = lastItem.posts + post))
+            } else Unit
 
             // New reply to the OP, start its own thread
-            list.last()
-                .let { it is TimelineItem.Thread && it.posts.first().uri != thread.rootPostUri } -> list += TimelineItem.Thread(
+            lastItem is TimelineItem.Thread && lastItem.posts.first().uri != thread.rootPostUri -> list += TimelineItem.Thread(
                 id = thread.entity.uri.uri,
                 generation = thread.generation,
                 anchorPostIndex = 0,
@@ -1167,10 +1167,11 @@ internal class OfflineTimelineRepository(
             )
 
             // Just tack the post to the current thread
-            else -> list.last().let {
-                if (it is TimelineItem.Thread) list
-                    .also(MutableList<TimelineItem>::removeLast) += it.copy(posts = it.posts + post)
+            lastItem is TimelineItem.Thread -> {
+                list.removeLast()
+                list.add(lastItem.copy(posts = lastItem.posts + post))
             }
+            else -> Unit
         }
     }
 }
