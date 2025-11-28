@@ -144,10 +144,8 @@ internal class OfflineSearchRepository @Inject constructor(
     private val networkService: NetworkService,
     private val savedStateDataSource: SavedStateDataSource,
     private val profileDao: ProfileDao,
-    private val postDao: PostDao,
     private val starterPackDao: StarterPackDao,
     private val feedGeneratorDao: FeedGeneratorDao,
-    private val threadGateDao: ThreadGateDao,
     private val recordResolver: RecordResolver,
 ) : SearchRepository {
 

@@ -215,7 +215,6 @@ internal class OfflineTimelineRepository(
     private val timelineDao: TimelineDao,
     private val starterPackDao: StarterPackDao,
     private val feedGeneratorDao: FeedGeneratorDao,
-    private val threadGateDao: ThreadGateDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateDataSource: SavedStateDataSource,
@@ -940,12 +939,9 @@ internal class OfflineTimelineRepository(
                             listOfNotNull(it.reposter)
                         },
                         block = { entity ->
-                            val replyParent =
-                                entity.reply?.parentPostUri?.let(::record)
-                            val replyRoot =
-                                entity.reply?.rootPostUri?.let(::record)
-                            val repostedBy =
-                                entity.reposter?.let(::profile)
+                            val replyParent = entity.reply?.parentPostUri?.let(::record)
+                            val replyRoot = entity.reply?.rootPostUri?.let(::record)
+                            val repostedBy = entity.reposter?.let(::profile)
 
                             list += when {
                                 replyRoot != null && replyParent != null -> TimelineItem.Thread(
@@ -1153,8 +1149,9 @@ internal class OfflineTimelineRepository(
                 appliedLabels = appliedLabels,
             )
             // For parents, edit the head
-            thread.generation <= -1L -> list.removeLast().let {
-                if (it is TimelineItem.Thread) list += it.copy(posts = it.posts + post)
+            thread.generation <= -1L -> list.last().let {
+                if (it is TimelineItem.Thread) list
+                    .also(MutableList<TimelineItem>::removeLast) += it.copy(posts = it.posts + post)
             }
 
             // New reply to the OP, start its own thread
@@ -1170,8 +1167,9 @@ internal class OfflineTimelineRepository(
             )
 
             // Just tack the post to the current thread
-            else -> list.removeLast().let {
-                if (it is TimelineItem.Thread) list += it.copy(posts = it.posts + post)
+            else -> list.last().let {
+                if (it is TimelineItem.Thread) list
+                    .also(MutableList<TimelineItem>::removeLast) += it.copy(posts = it.posts + post)
             }
         }
     }

@@ -151,7 +151,6 @@ interface PostRepository {
 internal class OfflinePostRepository @Inject constructor(
     private val postDao: PostDao,
     private val profileDao: ProfileDao,
-    private val threadGateDao: ThreadGateDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val videoUploadService: VideoUploadService,
