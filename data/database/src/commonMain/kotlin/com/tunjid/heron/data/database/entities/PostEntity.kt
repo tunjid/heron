@@ -74,6 +74,11 @@ data class PostEntity(
     @Embedded
     val record: RecordData?,
 ) {
+    data class UriWithEmbeddedRecordUri(
+        val uri: PostUri,
+        val embeddedRecordUri: RecordUri?,
+    )
+
     data class Partial(
         val cid: PostId,
         val uri: PostUri,
@@ -86,6 +91,7 @@ data class PostEntity(
         @Embedded
         val record: RecordData?,
     )
+
     data class RecordData(
         val text: String,
         val base64EncodedRecord: String?,

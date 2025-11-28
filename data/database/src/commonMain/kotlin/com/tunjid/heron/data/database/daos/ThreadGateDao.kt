@@ -64,9 +64,9 @@ interface ThreadGateDao {
         WHERE gatedPostUri IN (:postUris)
     """,
     )
-    suspend fun threadGates(
+    fun threadGates(
         postUris: Collection<PostUri>,
-    ): List<PopulatedThreadGateEntity>
+    ): Flow<List<PopulatedThreadGateEntity>>
 
     @Transaction
     @Query(

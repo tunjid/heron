@@ -49,6 +49,7 @@ import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
+import com.tunjid.heron.data.database.daos.ThreadGateDao
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
@@ -62,6 +63,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.observeProfileWithViewerStates
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.sortedWithNetworkList
+import com.tunjid.heron.data.utilities.toFlowOrEmpty
 import com.tunjid.heron.data.utilities.toProfileWithViewerStates
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
@@ -150,6 +152,7 @@ internal class OfflineSearchRepository @Inject constructor(
     private val postDao: PostDao,
     private val starterPackDao: StarterPackDao,
     private val feedGeneratorDao: FeedGeneratorDao,
+    private val threadGateDao: ThreadGateDao,
     private val recordResolver: RecordResolver,
 ) : SearchRepository {
 
@@ -196,10 +199,11 @@ internal class OfflineSearchRepository @Inject constructor(
             // Using the network call as a base, observe the db for user interactions
             savedStateDataSource.adultContentAndLabelVisibilities()
                 .flatMapLatest { (allowAdultContent, labelsVisibilityMap) ->
+                    val postUris = posts.map(Post::uri)
                     combine(
                         flow = postDao.posts(
                             viewingProfileId = signedInProfileId?.id,
-                            postUris = posts.map(Post::uri),
+                            postUris = postUris,
                         ).distinctUntilChanged(),
                         flow2 = recordResolver.records(
                             uris = posts.mapNotNullTo(mutableSetOf()) {
@@ -207,11 +211,15 @@ internal class OfflineSearchRepository @Inject constructor(
                             },
                             viewingProfileId = signedInProfileId,
                         ),
-                        flow3 = recordResolver.labelers,
-                        transform = { populatedPostEntities, embeddedRecords, labelers ->
+                        flow3 = postUris.toFlowOrEmpty(threadGateDao::threadGates),
+                        flow4 = recordResolver.labelers,
+                        transform = { populatedPostEntities, embeddedRecords, threadGateEntities, labelers ->
                             if (populatedPostEntities.isEmpty()) return@combine emptyCursorList<TimelineItem>()
                             val recordUrisToEmbeddedRecords = embeddedRecords.associateBy {
                                 it.reference.uri
+                            }
+                            val postUrisToThreadGateEntities = threadGateEntities.associateBy {
+                                it.entity.gatedPostUri
                             }
 
                             CursorList(
@@ -232,6 +240,8 @@ internal class OfflineSearchRepository @Inject constructor(
                                         TimelineItem.Single(
                                             id = entity.entity.uri.uri,
                                             post = post,
+                                            threadGate = postUrisToThreadGateEntities[post.uri]
+                                                ?.asExternalModel(),
                                             appliedLabels = appliedLabels,
                                         )
                                     },

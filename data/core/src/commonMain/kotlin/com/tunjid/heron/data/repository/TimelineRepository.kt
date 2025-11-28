@@ -42,6 +42,7 @@ import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
+import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.offset
@@ -58,6 +59,7 @@ import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
+import com.tunjid.heron.data.database.daos.ThreadGateDao
 import com.tunjid.heron.data.database.daos.TimelineDao
 import com.tunjid.heron.data.database.entities.FeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
@@ -220,6 +222,7 @@ internal class OfflineTimelineRepository(
     private val timelineDao: TimelineDao,
     private val starterPackDao: StarterPackDao,
     private val feedGeneratorDao: FeedGeneratorDao,
+    private val threadGateDao: ThreadGateDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateDataSource: SavedStateDataSource,
@@ -544,70 +547,68 @@ internal class OfflineTimelineRepository(
     ): Flow<List<TimelineItem>> = savedStateDataSource.singleSessionFlow { signedInProfileId ->
         savedStateDataSource.adultContentAndLabelVisibilities()
             .flatMapLatest { (allowAdultContent, labelsVisibilityMap) ->
-                postDao.postEntitiesByUri(
-                    viewingProfileId = signedInProfileId?.id,
-                    postUris = setOf(postUri),
+                postDao.postThread(
+                    postUri = postUri.uri,
                 )
-                    .mapNotNull(List<PostEntity>::firstOrNull)
-                    .take(1)
-                    .flatMapLatest { postEntity ->
-                        postDao.postThread(
-                            postUri = postEntity.uri.uri,
+                    .flatMapLatest { postThread ->
+                        val postUris = postThread.mapTo(
+                            destination = mutableSetOf(),
+                            transform = { it.entity.uri },
                         )
-                            .flatMapLatest { postThread ->
-                                val postUris = postThread.mapTo(
-                                    destination = mutableSetOf(),
-                                    transform = { it.entity.uri },
-                                )
-                                val embeddedRecordUris = postThread.mapNotNullTo(
-                                    destination = mutableSetOf(),
-                                    transform = {
-                                        it.entity.record?.embeddedRecordUri
-                                    },
-                                )
-                                combine(
-                                    flow = postDao.posts(
-                                        viewingProfileId = signedInProfileId?.id,
-                                        postUris = postUris,
-                                    )
-                                        .distinctUntilChanged(),
-                                    flow2 = recordResolver.records(
-                                        uris = embeddedRecordUris,
-                                        viewingProfileId = signedInProfileId,
-                                    ),
-                                    flow3 = labelers,
-                                    transform = { posts, embeddedRecords, labelers ->
-                                        val urisToPosts = posts.associateBy { it.entity.uri }
-                                        val recordUrisToEmbeddedRecords =
-                                            embeddedRecords.associateBy {
-                                                it.reference.uri
-                                            }
+                        val embeddedRecordUris = postThread.mapNotNullTo(
+                            destination = mutableSetOf(),
+                            transform = {
+                                it.entity.record?.embeddedRecordUri
+                            },
+                        )
+                        combine(
+                            flow = postDao.posts(
+                                viewingProfileId = signedInProfileId?.id,
+                                postUris = postUris,
+                            )
+                                .distinctUntilChanged(),
+                            flow2 = recordResolver.records(
+                                uris = embeddedRecordUris,
+                                viewingProfileId = signedInProfileId,
+                            ),
+                            flow3 = postUris.toFlowOrEmpty(threadGateDao::threadGates),
+                            flow4 = labelers,
+                            transform = { postEntities, embeddedRecords, threadGateEntities, labelers ->
+                                val urisToPosts = postEntities.associateBy { it.entity.uri }
+                                val recordUrisToEmbeddedRecords =
+                                    embeddedRecords.associateBy {
+                                        it.reference.uri
+                                    }
+                                val postUrisToThreadGateEntities = threadGateEntities.associateBy {
+                                    it.entity.gatedPostUri
+                                }
 
-                                        postThread.fold(
-                                            initial = emptyList<TimelineItem.Thread>(),
-                                            operation = { list, thread ->
-                                                val populatedPostEntity =
-                                                    urisToPosts.getValue(thread.entity.uri)
-                                                val embeddedRecord = thread.entity
-                                                    .record
-                                                    ?.embeddedRecordUri
-                                                    ?.let(recordUrisToEmbeddedRecords::get)
-                                                val post = populatedPostEntity.asExternalModel(
-                                                    embeddedRecord = embeddedRecord,
-                                                )
-                                                spinThread(
-                                                    list = list,
-                                                    thread = thread,
-                                                    post = post,
-                                                    adultContentEnabled = allowAdultContent,
-                                                    labelers = labelers,
-                                                    labelsVisibilityMap = labelsVisibilityMap,
-                                                )
-                                            },
+                                postThread.fold(
+                                    initial = emptyList<TimelineItem.Thread>(),
+                                    operation = { list, thread ->
+                                        val populatedPostEntity =
+                                            urisToPosts.getValue(thread.entity.uri)
+                                        val embeddedRecord = thread.entity
+                                            .record
+                                            ?.embeddedRecordUri
+                                            ?.let(recordUrisToEmbeddedRecords::get)
+                                        val post = populatedPostEntity.asExternalModel(
+                                            embeddedRecord = embeddedRecord,
+                                        )
+                                        spinThread(
+                                            list = list,
+                                            thread = thread,
+                                            post = post,
+                                            threadGate = postUrisToThreadGateEntities[post.uri]
+                                                ?.asExternalModel(),
+                                            adultContentEnabled = allowAdultContent,
+                                            labelers = labelers,
+                                            labelsVisibilityMap = labelsVisibilityMap,
                                         )
                                     },
                                 )
-                            }
+                            },
+                        )
                     }
                     .withRefresh {
                         networkService.runCatchingWithMonitoredNetworkRetry {
@@ -1009,8 +1010,9 @@ internal class OfflineTimelineRepository(
                                 flow3 = profileIds.toFlowOrEmpty(
                                     block = profileDao::profiles,
                                 ),
-                                flow4 = labelers,
-                            ) { posts, embeddedRecords, repostProfiles, labelers ->
+                                flow4 = postIds.toFlowOrEmpty(threadGateDao::threadGates),
+                                flow5 = labelers,
+                            ) { posts, embeddedRecords, repostProfiles, threadGates, labelers ->
                                 if (posts.isEmpty()) return@combine emptyList()
                                 val urisToPosts = posts.associateBy { it.entity.uri }
                                 val recordUrisToEmbeddedRecords = embeddedRecords.associateBy {
@@ -1018,6 +1020,9 @@ internal class OfflineTimelineRepository(
                                 }
                                 val idsToRepostProfiles = repostProfiles.associateBy {
                                     it.entity.did
+                                }
+                                val postUrisToThreadGateEntities = threadGates.associateBy {
+                                    it.entity.gatedPostUri
                                 }
 
                                 itemEntities.mapNotNullPreferredTimelineItems(
@@ -1046,6 +1051,8 @@ internal class OfflineTimelineRepository(
                                                 generation = null,
                                                 anchorPostIndex = 2,
                                                 hasBreak = entity.reply?.grandParentPostAuthorId != null,
+                                                threadGate = postUrisToThreadGateEntities[entity.postUri]
+                                                    ?.asExternalModel(),
                                                 appliedLabels = appliedLabels,
                                                 posts = listOf(
                                                     replyRoot.asExternalModel(
@@ -1069,18 +1076,24 @@ internal class OfflineTimelineRepository(
                                                 post = mainPost,
                                                 by = repostedBy.asExternalModel(),
                                                 at = entity.indexedAt,
+                                                threadGate = postUrisToThreadGateEntities[entity.postUri]
+                                                    ?.asExternalModel(),
                                                 appliedLabels = appliedLabels,
                                             )
 
                                             entity.isPinned -> TimelineItem.Pinned(
                                                 id = entity.id,
                                                 post = mainPost,
+                                                threadGate = postUrisToThreadGateEntities[entity.postUri]
+                                                    ?.asExternalModel(),
                                                 appliedLabels = appliedLabels,
                                             )
 
                                             else -> TimelineItem.Single(
                                                 id = entity.id,
                                                 post = mainPost,
+                                                threadGate = postUrisToThreadGateEntities[entity.postUri]
+                                                    ?.asExternalModel(),
                                                 appliedLabels = appliedLabels,
                                             )
                                         }
@@ -1244,6 +1257,7 @@ internal class OfflineTimelineRepository(
         labelsVisibilityMap: Map<Label.Value, Label.Visibility>,
         list: List<TimelineItem.Thread>,
         thread: ThreadedPostEntity,
+        threadGate: ThreadGate?,
         post: Post,
     ) = when {
         // To start or for the OP, start a new thread
@@ -1253,6 +1267,7 @@ internal class OfflineTimelineRepository(
             anchorPostIndex = 0,
             hasBreak = false,
             posts = listOf(post),
+            threadGate = threadGate,
             appliedLabels = AppliedLabels(
                 adultContentEnabled = adultContentEnabled,
                 labels = post.labels + post.author.labels,
@@ -1272,6 +1287,7 @@ internal class OfflineTimelineRepository(
             anchorPostIndex = 0,
             hasBreak = false,
             posts = listOf(post),
+            threadGate = threadGate,
             appliedLabels = AppliedLabels(
                 adultContentEnabled = adultContentEnabled,
                 labels = post.labels + post.author.labels,

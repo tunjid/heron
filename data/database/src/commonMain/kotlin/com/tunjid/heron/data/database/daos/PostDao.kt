@@ -158,18 +158,16 @@ interface PostDao {
     @Transaction
     @Query(
         """
-        SELECT * FROM posts
-        LEFT JOIN postViewerStatistics
-            ON posts.uri = postViewerStatistics.postUri AND postViewerStatistics.viewingProfileId = :viewingProfileId
+        SELECT uri, embeddedRecordUri FROM posts
         INNER JOIN bookmarks
             ON posts.uri = bookmarks.bookmarkedUri
         WHERE bookmarks.viewingProfileId = :viewingProfileId
         ORDER BY bookmarks.createdAt DESC
         """,
     )
-    fun bookmarkedPosts(
+    fun bookmarkedPostUriAndEmbeddedRecordUris(
         viewingProfileId: String,
-    ): Flow<List<PopulatedPostEntity>>
+    ): Flow<List<PostEntity.UriWithEmbeddedRecordUri>>
 
     @Transaction
     @Query(
