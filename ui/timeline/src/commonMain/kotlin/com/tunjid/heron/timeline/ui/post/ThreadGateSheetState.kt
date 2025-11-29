@@ -68,6 +68,7 @@ import heron.ui.timeline.generated.resources.thread_gate_info
 import heron.ui.timeline.generated.resources.thread_gate_nobody
 import heron.ui.timeline.generated.resources.thread_gate_people_you_follow
 import heron.ui.timeline.generated.resources.thread_gate_people_you_mention
+import heron.ui.timeline.generated.resources.thread_gate_post_reply_settings
 import heron.ui.timeline.generated.resources.thread_gate_save
 import heron.ui.timeline.generated.resources.thread_gate_select_from_your_lists
 import heron.ui.timeline.generated.resources.thread_gate_who_can_reply
@@ -82,6 +83,8 @@ class ThreadGateSheetState private constructor(
     private var timelineItem by mutableStateOf<TimelineItem?>(null)
     internal var allowed by mutableStateOf<ThreadGate.Allowed?>(null)
         private set
+
+    internal val isForSinglePost get() = timelineItem != null
 
     fun show(
         item: TimelineItem,
@@ -142,13 +145,6 @@ class ThreadGateSheetState private constructor(
     }
 }
 
-private val NoneAllowed = ThreadGate.Allowed(
-    allowsFollowing = false,
-    allowsFollowers = false,
-    allowsMentioned = false,
-    allowedLists = emptyList(),
-)
-
 @Composable
 private fun ThreadGateBottomSheet(
     state: ThreadGateSheetState,
@@ -161,13 +157,16 @@ private fun ThreadGateBottomSheet(
                 .padding(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            // Info Box
-            InfoBanner()
+            if (state.isForSinglePost) Text(
+                text = stringResource(Res.string.thread_gate_post_reply_settings),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            else InfoBanner()
 
             Text(
                 text = stringResource(Res.string.thread_gate_who_can_reply),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleSmall,
             )
 
             // Anyone / Nobody Toggles
@@ -249,38 +248,38 @@ private fun ThreadGateBottomSheet(
 
             // Quote Posts Toggle
             /** Comment out for now, out of scope
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.3f)) // Darker blue in screenshot
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.FormatQuote,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                    )
-                    Text(
-                        text = stringResource(Res.string.thread_gate_allow_quote_posts),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
-                    )
-                }
-                Switch(
-                    checked = true,
-                    onCheckedChange = {
+             Row(
+             modifier = Modifier
+             .fillMaxWidth()
+             .clip(RoundedCornerShape(8.dp))
+             .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.3f)) // Darker blue in screenshot
+             .padding(horizontal = 16.dp, vertical = 12.dp),
+             horizontalArrangement = Arrangement.SpaceBetween,
+             verticalAlignment = Alignment.CenterVertically,
+             ) {
+             Row(
+             verticalAlignment = Alignment.CenterVertically,
+             horizontalArrangement = Arrangement.spacedBy(12.dp),
+             ) {
+             Icon(
+             imageVector = Icons.Rounded.FormatQuote,
+             contentDescription = null,
+             modifier = Modifier.size(20.dp),
+             )
+             Text(
+             text = stringResource(Res.string.thread_gate_allow_quote_posts),
+             style = MaterialTheme.typography.bodyMedium,
+             fontWeight = FontWeight.Medium,
+             )
+             }
+             Switch(
+             checked = true,
+             onCheckedChange = {
 
-                    },
-                )
-            }
-            */
+             },
+             )
+             }
+             */
             Spacer(Modifier.height(8.dp))
 
             // Save Button
@@ -406,3 +405,10 @@ private fun SettingsCheckboxRow(
         )
     }
 }
+
+private val NoneAllowed = ThreadGate.Allowed(
+    allowsFollowing = false,
+    allowsFollowers = false,
+    allowsMentioned = false,
+    allowedLists = emptyList(),
+)
