@@ -32,22 +32,22 @@ class ThreadGate(
     )
 }
 
-val ThreadGate.allowsFollowing
-    get() = allowed == null || allowed.allowsFollowing
+val ThreadGate?.allowsFollowing
+    get() = this == null || allowed == null || allowed.allowsFollowing
 
-val ThreadGate.allowsFollowers
-    get() = allowed == null || allowed.allowsFollowers
+val ThreadGate?.allowsFollowers
+    get() = this == null || allowed == null || allowed.allowsFollowers
 
-val ThreadGate.allowsMentioned
-    get() = allowed == null || allowed.allowsMentioned
+val ThreadGate?.allowsMentioned
+    get() = this == null || allowed == null || allowed.allowsMentioned
 
-val ThreadGate.allowsLists
-    get() = allowed != null && allowed.allowedLists.isNotEmpty()
+val ThreadGate?.allowsLists
+    get() = this != null && allowed != null && allowed.allowedLists.isNotEmpty()
 
-val ThreadGate.allowsAll
-    get() = allowed == null
+val ThreadGate?.allowsAll
+    get() = this == null || allowed == null
 
-val ThreadGate.allowsNone
+val ThreadGate?.allowsNone
     get() = !allowsFollowing &&
         !allowsFollowers &&
         !allowsMentioned &&
