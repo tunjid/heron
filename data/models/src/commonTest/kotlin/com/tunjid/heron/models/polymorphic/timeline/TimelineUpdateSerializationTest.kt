@@ -10,7 +10,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 @Burst
-class TimelineSummarySerializationTest(
+class TimelineUpdateSerializationTest(
     val format: SerializationTestHelper.Format = burstValues(
         SerializationTestHelper.Format.CBOR,
         SerializationTestHelper.Format.PROTOBUF,
