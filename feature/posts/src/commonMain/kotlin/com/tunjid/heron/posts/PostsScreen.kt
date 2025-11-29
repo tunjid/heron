@@ -66,6 +66,7 @@ import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
 import com.tunjid.heron.timeline.ui.post.PostOption
 import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsState
+import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberThreadGateSheetState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.postActions
@@ -92,6 +93,7 @@ internal fun PostsScreen(
     modifier: Modifier = Modifier,
 ) {
     val gridState = rememberLazyStaggeredGridState()
+    val items by rememberUpdatedState(state.tilingData.items)
     val density = LocalDensity.current
     val now by remember { mutableStateOf(Clock.System.now()) }
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
@@ -116,7 +118,10 @@ internal fun PostsScreen(
             )
         },
     )
-
+    val threadGateSheetState = rememberThreadGateSheetState(
+        onThreadGateUpdated = {
+        },
+    )
     val postOptionsState = rememberUpdatedPostOptionsState(
         signedInProfileId = state.signedInProfileId,
         recentConversations = state.recentConversations,
@@ -135,13 +140,14 @@ internal fun PostsScreen(
                         ),
                     )
 
-                is PostOption.ThreadGate -> Unit
+                is PostOption.ThreadGate ->
+                    items.firstOrNull { it.post.uri == option.postUri }
+                        ?.let(threadGateSheetState::show)
             }
         },
     )
 
     val pendingScrollOffsetState = gridState.pendingScrollOffsetState()
-    val items by rememberUpdatedState(state.tilingData.items)
 
     PullToRefreshBox(
         modifier = modifier

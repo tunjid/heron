@@ -155,7 +155,6 @@ internal fun GalleryScreen(
             )
         },
     )
-
     val postOptionsState = rememberUpdatedPostOptionsState(
         signedInProfileId = state.signedInProfileId,
         recentConversations = state.recentConversations,
@@ -174,6 +173,7 @@ internal fun GalleryScreen(
                         ),
                     )
 
+                // TODO
                 is PostOption.ThreadGate -> Unit
             }
         },

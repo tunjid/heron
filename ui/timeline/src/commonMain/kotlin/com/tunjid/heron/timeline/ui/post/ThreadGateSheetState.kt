@@ -52,7 +52,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import app.bsky.graph.Block
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.allowsAll
@@ -107,7 +106,7 @@ class ThreadGateSheetState private constructor(
         allowed = null
     }
 
-    companion object Companion {
+    companion object {
         @Composable
         fun rememberThreadGateSheetState(
             onThreadGateUpdated: (ThreadGate.Update) -> Unit,

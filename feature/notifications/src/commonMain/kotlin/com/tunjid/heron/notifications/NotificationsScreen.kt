@@ -123,6 +123,7 @@ internal fun NotificationsScreen(
                         ),
                     )
 
+                // Notifications UI does not present thread gate options
                 is PostOption.ThreadGate -> Unit
             }
         },

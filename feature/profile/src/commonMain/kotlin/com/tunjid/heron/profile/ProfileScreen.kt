@@ -137,6 +137,7 @@ import com.tunjid.heron.timeline.ui.list.StarterPack
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
 import com.tunjid.heron.timeline.ui.post.PostOption
 import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsState
+import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberThreadGateSheetState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.postActions
@@ -1032,7 +1033,10 @@ private fun ProfileTimeline(
             )
         },
     )
-
+    val threadGateSheetState = rememberThreadGateSheetState(
+        onThreadGateUpdated = {
+        },
+    )
     val postOptionsState = rememberUpdatedPostOptionsState(
         signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
@@ -1051,7 +1055,9 @@ private fun ProfileTimeline(
                         ),
                     )
 
-                is PostOption.ThreadGate -> Unit
+                is PostOption.ThreadGate ->
+                    items.firstOrNull { it.post.uri == option.postUri }
+                        ?.let(threadGateSheetState::show)
             }
         },
     )
