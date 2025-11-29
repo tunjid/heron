@@ -31,14 +31,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.rounded.FormatQuote
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -52,6 +50,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.allowsAll
@@ -63,6 +62,17 @@ import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
+import heron.ui.timeline.generated.resources.Res
+import heron.ui.timeline.generated.resources.thread_gate_anyone
+import heron.ui.timeline.generated.resources.thread_gate_info
+import heron.ui.timeline.generated.resources.thread_gate_nobody
+import heron.ui.timeline.generated.resources.thread_gate_people_you_follow
+import heron.ui.timeline.generated.resources.thread_gate_people_you_mention
+import heron.ui.timeline.generated.resources.thread_gate_save
+import heron.ui.timeline.generated.resources.thread_gate_select_from_your_lists
+import heron.ui.timeline.generated.resources.thread_gate_who_can_reply
+import heron.ui.timeline.generated.resources.thread_gate_your_followers
+import org.jetbrains.compose.resources.stringResource
 
 @Stable
 class ThreadGateSheetState private constructor(
@@ -94,10 +104,15 @@ class ThreadGateSheetState private constructor(
     }
 
     internal fun update() = timelineItem?.let {
-        ThreadGate.Update(
+        ThreadGate.Summary(
             gatedPostUri = it.post.uri,
             threadGateUri = it.threadGate?.uri,
-            allowed = allowed,
+            allowsFollowing = allowed.allowsFollowing,
+            allowsFollowers = allowed.allowsFollowers,
+            allowsMentioned = allowed.allowsMentioned,
+            allowedListUris = allowed?.allowedLists
+                ?.map(FeedList::uri)
+                .orEmpty(),
         )
     }
 
@@ -109,7 +124,7 @@ class ThreadGateSheetState private constructor(
     companion object {
         @Composable
         fun rememberThreadGateSheetState(
-            onThreadGateUpdated: (ThreadGate.Update) -> Unit,
+            onThreadGateUpdated: (ThreadGate.Summary) -> Unit,
         ): ThreadGateSheetState {
             val state = rememberBottomSheetState {
                 ThreadGateSheetState(
@@ -137,7 +152,7 @@ private val NoneAllowed = ThreadGate.Allowed(
 @Composable
 private fun ThreadGateBottomSheet(
     state: ThreadGateSheetState,
-    onThreadGateUpdated: (ThreadGate.Update) -> Unit,
+    onThreadGateUpdated: (ThreadGate.Summary) -> Unit,
 ) {
     state.ModalBottomSheet {
         Column(
@@ -150,7 +165,7 @@ private fun ThreadGateBottomSheet(
             InfoBanner()
 
             Text(
-                text = "Who can reply",
+                text = stringResource(Res.string.thread_gate_who_can_reply),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )
@@ -161,7 +176,7 @@ private fun ThreadGateBottomSheet(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 SelectionCard(
-                    text = "Anyone",
+                    text = stringResource(Res.string.thread_gate_anyone),
                     selected = state.allowed.allowsAll,
                     modifier = Modifier.weight(1f),
                     onClick = {
@@ -169,7 +184,7 @@ private fun ThreadGateBottomSheet(
                     },
                 )
                 SelectionCard(
-                    text = "Nobody",
+                    text = stringResource(Res.string.thread_gate_nobody),
                     selected = state.allowed.allowsNone,
                     modifier = Modifier.weight(1f),
                     onClick = {
@@ -178,36 +193,33 @@ private fun ThreadGateBottomSheet(
                 )
             }
 
-            // Specific Group Checkboxes
-            // These are typically disabled if "Nobody" is selected,
-            // but functionally accessible if we treat clicking them as switching to "Specific" mode.
             Column(
                 verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
                 val isCustomOrAnyone = !state.allowed.allowsNone
 
                 SettingsCheckboxRow(
-                    text = "Your followers",
+                    text = stringResource(Res.string.thread_gate_your_followers),
                     checked = state.allowed.allowsFollowers,
                     enabled = isCustomOrAnyone,
                     onClick = {
-                        state.updateAllowed { copy(allowsFollowers = true) }
+                        state.updateAllowed { copy(allowsFollowers = !allowsFollowers) }
                     },
                 )
                 SettingsCheckboxRow(
-                    text = "People you follow",
+                    text = stringResource(Res.string.thread_gate_people_you_follow),
                     checked = state.allowed.allowsFollowing,
                     enabled = isCustomOrAnyone,
                     onClick = {
-                        state.updateAllowed { copy(allowsFollowing = true) }
+                        state.updateAllowed { copy(allowsFollowing = !allowsFollowing) }
                     },
                 )
                 SettingsCheckboxRow(
-                    text = "People you mention",
+                    text = stringResource(Res.string.thread_gate_people_you_mention),
                     checked = state.allowed.allowsMentioned,
                     enabled = isCustomOrAnyone,
                     onClick = {
-                        state.updateAllowed { copy(allowsMentioned = true) }
+                        state.updateAllowed { copy(allowsMentioned = !allowsMentioned) }
                     },
                 )
             }
@@ -224,7 +236,7 @@ private fun ThreadGateBottomSheet(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "Select from your lists",
+                    text = stringResource(Res.string.thread_gate_select_from_your_lists),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -236,37 +248,38 @@ private fun ThreadGateBottomSheet(
             }
 
             // Quote Posts Toggle
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.3f)) // Darker blue in screenshot
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.FormatQuote,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                    )
-                    Text(
-                        text = "Allow quote posts",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
-                    )
-                }
-                Switch(
-                    checked = true,
-                    onCheckedChange = {
-                        // TODO
-                    },
-                )
-            }
+            // Comment out for now, out of scope
+//            Row(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .clip(RoundedCornerShape(8.dp))
+//                    .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.3f)) // Darker blue in screenshot
+//                    .padding(horizontal = 16.dp, vertical = 12.dp),
+//                horizontalArrangement = Arrangement.SpaceBetween,
+//                verticalAlignment = Alignment.CenterVertically,
+//            ) {
+//                Row(
+//                    verticalAlignment = Alignment.CenterVertically,
+//                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+//                ) {
+//                    Icon(
+//                        imageVector = Icons.Rounded.FormatQuote,
+//                        contentDescription = null,
+//                        modifier = Modifier.size(20.dp),
+//                    )
+//                    Text(
+//                        text = stringResource(Res.string.thread_gate_allow_quote_posts),
+//                        style = MaterialTheme.typography.bodyMedium,
+//                        fontWeight = FontWeight.Medium,
+//                    )
+//                }
+//                Switch(
+//                    checked = true,
+//                    onCheckedChange = {
+//                        // TODO
+//                    },
+//                )
+//            }
 
             Spacer(Modifier.height(8.dp))
 
@@ -278,7 +291,7 @@ private fun ThreadGateBottomSheet(
                     state.hide()
                 },
             ) {
-                Text("Save")
+                Text(stringResource(Res.string.thread_gate_save))
             }
         }
     }
@@ -309,7 +322,7 @@ private fun InfoBanner() {
             modifier = Modifier.size(20.dp),
         )
         Text(
-            text = "The following settings will be used as your defaults when creating new posts. You can edit these for a specific post from the composer.",
+            text = stringResource(Res.string.thread_gate_info),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             lineHeight = 16.sp,

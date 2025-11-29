@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ThreadGateUri
 import kotlinx.serialization.Serializable
@@ -34,10 +35,13 @@ class ThreadGate(
     )
 
     @Serializable
-    data class Update(
+    data class Summary(
         val gatedPostUri: PostUri,
         val threadGateUri: ThreadGateUri?,
-        val allowed: Allowed?,
+        val allowsFollowing: Boolean,
+        val allowsFollowers: Boolean,
+        val allowsMentioned: Boolean,
+        val allowedListUris: List<ListUri>,
     )
 }
 
