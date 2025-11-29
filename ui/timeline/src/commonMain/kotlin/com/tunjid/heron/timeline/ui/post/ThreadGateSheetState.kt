@@ -248,39 +248,39 @@ private fun ThreadGateBottomSheet(
             }
 
             // Quote Posts Toggle
-            // Comment out for now, out of scope
-//            Row(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .clip(RoundedCornerShape(8.dp))
-//                    .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.3f)) // Darker blue in screenshot
-//                    .padding(horizontal = 16.dp, vertical = 12.dp),
-//                horizontalArrangement = Arrangement.SpaceBetween,
-//                verticalAlignment = Alignment.CenterVertically,
-//            ) {
-//                Row(
-//                    verticalAlignment = Alignment.CenterVertically,
-//                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-//                ) {
-//                    Icon(
-//                        imageVector = Icons.Rounded.FormatQuote,
-//                        contentDescription = null,
-//                        modifier = Modifier.size(20.dp),
-//                    )
-//                    Text(
-//                        text = stringResource(Res.string.thread_gate_allow_quote_posts),
-//                        style = MaterialTheme.typography.bodyMedium,
-//                        fontWeight = FontWeight.Medium,
-//                    )
-//                }
-//                Switch(
-//                    checked = true,
-//                    onCheckedChange = {
-//                        // TODO
-//                    },
-//                )
-//            }
+            /** Comment out for now, out of scope
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.3f)) // Darker blue in screenshot
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.FormatQuote,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Text(
+                        text = stringResource(Res.string.thread_gate_allow_quote_posts),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+                Switch(
+                    checked = true,
+                    onCheckedChange = {
 
+                    },
+                )
+            }
+            */
             Spacer(Modifier.height(8.dp))
 
             // Save Button

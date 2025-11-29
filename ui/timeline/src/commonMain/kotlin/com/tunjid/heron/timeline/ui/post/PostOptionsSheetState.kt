@@ -26,6 +26,9 @@ import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
+import heron.ui.timeline.generated.resources.Res
+import heron.ui.timeline.generated.resources.thread_gate_post_reply_settings
+import org.jetbrains.compose.resources.stringResource
 
 @Stable
 class PostOptionsSheetState private constructor(
@@ -120,7 +123,7 @@ private fun PostOptionsBottomSheet(
                             modifier = Modifier
                                 .fillMaxWidth(),
                             icon = Icons.Rounded.EditAttributes,
-                            text = "",
+                            text = stringResource(Res.string.thread_gate_post_reply_settings),
                         )
                     },
                 )
