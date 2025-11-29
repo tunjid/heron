@@ -36,11 +36,9 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.path
-import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
-import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
@@ -53,8 +51,6 @@ import com.tunjid.heron.search.ui.searchresults.GeneralSearchResults
 import com.tunjid.heron.search.ui.searchresults.avatarSharedElementKey
 import com.tunjid.heron.search.ui.suggestions.SuggestedContent
 import com.tunjid.heron.search.ui.suggestions.avatarSharedElementKey
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
-import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 
 @Composable
@@ -64,57 +60,23 @@ internal fun SearchScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val signInPopUpState = rememberSignInPopUpState {
-        actions(Action.Navigate.To(signInDestination()))
+    val navigateTo = remember {
+        { destination: NavigationAction.Destination ->
+            actions(Action.Navigate.To(destination))
+        }
     }
-    val postInteractionState = rememberUpdatedPostInteractionState(
-        isSignedIn = paneScaffoldState.isSignedIn,
-        onSignInClicked = {
-            actions(Action.Navigate.To(signInDestination()))
-        },
-        onInteractionConfirmed = {
-            actions(Action.SendPostInteraction(it))
-        },
-        onQuotePostClicked = { repost ->
-            actions(
-                Action.Navigate.To(
-                    composePostDestination(
-                        type = Post.Create.Quote(repost),
-                        sharedElementPrefix = null,
-                    ),
-                ),
-            )
-        },
-    )
-
-    val postOptionsState = rememberUpdatedPostOptionsState(
-        signedInProfileId = state.signedInProfile?.did,
-        recentConversations = state.recentConversations,
-        onShareInConversationClicked = { currentPost, conversation ->
-            actions(
-                Action.Navigate.To(
-                    conversationDestination(
-                        id = conversation.id,
-                        members = conversation.members,
-                        sharedElementPrefix = conversation.id.id,
-                        sharedUri = currentPost.uri.asGenericUri(),
-                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                    ),
-                ),
-            )
-        },
-    )
+    val signInPopUpState = rememberSignInPopUpState {
+        navigateTo(signInDestination())
+    }
 
     val pagerState = rememberPagerState { state.searchStateHolders.size }
-    val onProfileClicked: (Profile, String) -> Unit = remember {
+    val onProfileClicked: (Profile, String) -> Unit = remember(navigateTo) {
         { profile, sharedElementPrefix ->
-            actions(
-                Action.Navigate.To(
-                    profileDestination(
-                        profile = profile,
-                        avatarSharedElementKey = profile.avatarSharedElementKey(sharedElementPrefix),
-                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                    ),
+            navigateTo(
+                profileDestination(
+                    profile = profile,
+                    avatarSharedElementKey = profile.avatarSharedElementKey(sharedElementPrefix),
+                    referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                 ),
             )
         }
@@ -134,68 +96,58 @@ internal fun SearchScreen(
                 }
             }
         }
-    val onLinkTargetClicked = remember {
+    val onLinkTargetClicked = remember(navigateTo) {
         { linkTarget: LinkTarget ->
-            if (linkTarget is LinkTarget.Navigable) actions(
-                Action.Navigate.To(
-                    pathDestination(
-                        path = linkTarget.path,
-                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                    ),
+            if (linkTarget is LinkTarget.Navigable) navigateTo(
+                pathDestination(
+                    path = linkTarget.path,
+                    referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                 ),
             )
         }
     }
-    val onPostSearchResultProfileClicked = remember {
+    val onPostSearchResultProfileClicked = remember(navigateTo) {
         { profile: Profile, post: Post, sharedElementPrefix: String ->
-            actions(
-                Action.Navigate.To(
-                    profileDestination(
-                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                        profile = profile,
-                        avatarSharedElementKey = post.avatarSharedElementKey(
-                            sharedElementPrefix,
-                        ),
+            navigateTo(
+                profileDestination(
+                    referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                    profile = profile,
+                    avatarSharedElementKey = post.avatarSharedElementKey(
+                        sharedElementPrefix,
                     ),
                 ),
             )
         }
     }
-    val onListMemberClicked = remember {
+    val onListMemberClicked = remember(navigateTo) {
         { listMember: ListMember ->
-            actions(
-                Action.Navigate.To(
-                    profileDestination(
-                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                        profile = listMember.subject,
-                        avatarSharedElementKey = listMember.avatarSharedElementKey(),
-                    ),
+            navigateTo(
+                profileDestination(
+                    referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                    profile = listMember.subject,
+                    avatarSharedElementKey = listMember.avatarSharedElementKey(),
                 ),
             )
         }
     }
-    val onTrendClicked = remember {
+    val onTrendClicked = remember(navigateTo) {
         { trend: Trend ->
-            actions(
-                Action.Navigate.To(
-                    pathDestination(
-                        path = trend.link,
-                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                    ),
+            navigateTo(
+                pathDestination(
+                    path = trend.link,
+                    referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                 ),
             )
         }
     }
-    val onFeedGeneratorClicked = remember {
+    val onFeedGeneratorClicked = remember(navigateTo) {
         { feedGenerator: FeedGenerator, sharedElementPrefix: String ->
-            actions(
-                Action.Navigate.To(
-                    pathDestination(
-                        path = feedGenerator.uri.path,
-                        models = listOf(feedGenerator),
-                        sharedElementPrefix = sharedElementPrefix,
-                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                    ),
+            navigateTo(
+                pathDestination(
+                    path = feedGenerator.uri.path,
+                    models = listOf(feedGenerator),
+                    sharedElementPrefix = sharedElementPrefix,
+                    referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                 ),
             )
         }
@@ -206,63 +158,58 @@ internal fun SearchScreen(
             else actions(Action.UpdateFeedGeneratorStatus(update))
         }
     }
-    val onPostSearchResultClicked = remember {
+    val onPostSearchResultClicked = remember(navigateTo) {
         { post: Post, sharedElementPrefix: String ->
-            actions(
-                Action.Navigate.To(
-                    recordDestination(
-                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                        sharedElementPrefix = sharedElementPrefix,
-                        record = post,
-                    ),
+            navigateTo(
+                recordDestination(
+                    referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                    sharedElementPrefix = sharedElementPrefix,
+                    record = post,
                 ),
             )
         }
     }
-    val onReplyToPost = remember {
+    val onReplyToPost = remember(navigateTo) {
         { post: Post, sharedElementPrefix: String ->
-            actions(
-                Action.Navigate.To(
-                    if (paneScaffoldState.isSignedOut) signInDestination()
-                    else composePostDestination(
-                        type = Post.Create.Reply(
-                            parent = post,
-                        ),
-                        sharedElementPrefix = sharedElementPrefix,
+            navigateTo(
+                if (paneScaffoldState.isSignedOut) signInDestination()
+                else composePostDestination(
+                    type = Post.Create.Reply(
+                        parent = post,
                     ),
+                    sharedElementPrefix = sharedElementPrefix,
                 ),
             )
         }
     }
-    val onPostRecordClicked = remember {
+    val onPostRecordClicked = remember(navigateTo) {
         { record: Record, sharedElementPrefix: String ->
-            actions(
-                Action.Navigate.To(
-                    recordDestination(
-                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                        sharedElementPrefix = sharedElementPrefix,
-                        record = record,
-                    ),
+            navigateTo(
+                recordDestination(
+                    referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                    sharedElementPrefix = sharedElementPrefix,
+                    record = record,
                 ),
             )
         }
     }
-    val onMediaClicked = remember {
+    val onMediaClicked = remember(navigateTo) {
         { media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String ->
-            actions(
-                Action.Navigate.To(
-                    galleryDestination(
-                        post = post,
-                        media = media,
-                        startIndex = index,
-                        sharedElementPrefix = sharedElementPrefix,
-                    ),
+            navigateTo(
+                galleryDestination(
+                    post = post,
+                    media = media,
+                    startIndex = index,
+                    sharedElementPrefix = sharedElementPrefix,
                 ),
             )
         }
     }
-    val onPostInteraction = postInteractionState::onInteraction
-    val onPostOptionsClicked = postOptionsState::showOptions
+    val sendPostInteraction = remember {
+        { interaction: Post.Interaction ->
+            actions(Action.SendPostInteraction(interaction))
+        }
+    }
 
     AnimatedContent(
         targetState = state.layout,
@@ -312,10 +259,10 @@ internal fun SearchScreen(
                 onReplyToPost = onReplyToPost,
                 onPostRecordClicked = onPostRecordClicked,
                 onMediaClicked = onMediaClicked,
-                onPostInteraction = onPostInteraction,
+                onNavigate = navigateTo,
+                onSendPostInteraction = sendPostInteraction,
                 onFeedGeneratorClicked = onFeedGeneratorClicked,
                 onTimelineUpdateClicked = onTimelineUpdateClicked,
-                onPostOptionsClicked = onPostOptionsClicked,
             )
         }
     }

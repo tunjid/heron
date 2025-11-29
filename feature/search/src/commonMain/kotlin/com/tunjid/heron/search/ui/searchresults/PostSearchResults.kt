@@ -30,14 +30,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
+import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.composePostDestination
+import com.tunjid.heron.scaffold.navigation.conversationDestination
+import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.search.SearchResult
 import com.tunjid.heron.search.SearchState
@@ -48,6 +55,10 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
+import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostOption
+import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsState
+import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberThreadGateSheetState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.postActions
@@ -68,6 +79,8 @@ internal fun PostSearchResults(
     state: SearchState.OfPosts,
     gridState: LazyStaggeredGridState,
     modifier: Modifier,
+    signedInProfileId: ProfileId?,
+    recentConversations: List<Conversation>,
     videoStates: ThreadedVideoPositionStates<SearchResult.OfPost>,
     paneScaffoldState: PaneScaffoldState,
     onLinkTargetClicked: (LinkTarget) -> Unit,
@@ -76,13 +89,55 @@ internal fun PostSearchResults(
     onReplyToPost: (post: Post, sharedElementPrefix: String) -> Unit,
     onPostRecordClicked: (record: Record, sharedElementPrefix: String) -> Unit,
     onMediaClicked: (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
-    onPostInteraction: (Post.Interaction) -> Unit,
-    onPostOptionsClicked: (Post) -> Unit,
+    onNavigate: (NavigationAction.Destination) -> Unit,
+    onSendPostInteraction: (Post.Interaction) -> Unit,
     searchResultActions: (SearchState.Tile) -> Unit,
 ) {
     val now = remember { Clock.System.now() }
     val results by rememberUpdatedState(state.tiledItems)
     val sharedElementPrefix = state.sharedElementPrefix
+    val postInteractionState = rememberUpdatedPostInteractionState(
+        isSignedIn = paneScaffoldState.isSignedIn,
+        onSignInClicked = {
+            onNavigate(signInDestination())
+        },
+        onInteractionConfirmed = onSendPostInteraction,
+        onQuotePostClicked = { repost ->
+            onNavigate(
+                composePostDestination(
+                    type = Post.Create.Quote(repost),
+                    sharedElementPrefix = null,
+                ),
+            )
+        },
+    )
+    val threadGateSheetState = rememberThreadGateSheetState(
+        onThreadGateUpdated = {
+        },
+    )
+    val postOptionsState = rememberUpdatedPostOptionsState(
+        signedInProfileId = signedInProfileId,
+        recentConversations = recentConversations,
+        onOptionClicked = { option ->
+            when (option) {
+                is PostOption.ShareInConversation ->
+                    onNavigate(
+                        conversationDestination(
+                            id = option.conversation.id,
+                            members = option.conversation.members,
+                            sharedElementPrefix = option.conversation.id.id,
+                            sharedUri = option.post.uri.asGenericUri(),
+                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                        ),
+                    )
+
+                is PostOption.ThreadGate ->
+                    results.firstOrNull { it.timelineItem.post.uri == option.postUri }
+                        ?.timelineItem
+                        ?.let(threadGateSheetState::show)
+            }
+        },
+    )
     val postActions = remember(
         sharedElementPrefix,
         onLinkTargetClicked,
@@ -91,8 +146,6 @@ internal fun PostSearchResults(
         onPostRecordClicked,
         onMediaClicked,
         onReplyToPost,
-        onPostInteraction,
-        onPostOptionsClicked,
     ) {
         postActions(
             onLinkTargetClicked = { _, linkTarget ->
@@ -125,8 +178,8 @@ internal fun PostSearchResults(
             onReplyToPost = { post ->
                 onReplyToPost(post, sharedElementPrefix)
             },
-            onPostInteraction = onPostInteraction,
-            onPostOptionsClicked = onPostOptionsClicked,
+            onPostInteraction = postInteractionState::onInteraction,
+            onPostOptionsClicked = postOptionsState::showOptions,
         )
     }
     LazyVerticalStaggeredGrid(
