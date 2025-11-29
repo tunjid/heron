@@ -135,6 +135,7 @@ import com.tunjid.heron.timeline.ui.feed.FeedGenerator
 import com.tunjid.heron.timeline.ui.list.FeedList
 import com.tunjid.heron.timeline.ui.list.StarterPack
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostOption
 import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
@@ -1035,18 +1036,23 @@ private fun ProfileTimeline(
     val postOptionsState = rememberUpdatedPostOptionsState(
         signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
-        onShareInConversationClicked = { currentPost, conversation ->
-            actions(
-                Action.Navigate.To(
-                    conversationDestination(
-                        id = conversation.id,
-                        members = conversation.members,
-                        sharedElementPrefix = conversation.id.id,
-                        sharedUri = currentPost.uri.asGenericUri(),
-                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                    ),
-                ),
-            )
+        onOptionClicked = { option ->
+            when (option) {
+                is PostOption.ShareInConversation ->
+                    actions(
+                        Action.Navigate.To(
+                            conversationDestination(
+                                id = option.conversation.id,
+                                members = option.conversation.members,
+                                sharedElementPrefix = option.conversation.id.id,
+                                sharedUri = option.post.uri.asGenericUri(),
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            ),
+                        ),
+                    )
+
+                is PostOption.ThreadGate -> Unit
+            }
         },
     )
 

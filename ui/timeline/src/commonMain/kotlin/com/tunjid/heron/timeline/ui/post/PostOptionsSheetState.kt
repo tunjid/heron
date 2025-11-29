@@ -2,7 +2,10 @@ package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.EditAttributes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -12,7 +15,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.timeline.utilities.BottomSheetItemCard
+import com.tunjid.heron.timeline.utilities.BottomSheetItemCardRow
 import com.tunjid.heron.timeline.utilities.CopyToClipboardCard
 import com.tunjid.heron.timeline.utilities.SendDirectMessageCard
 import com.tunjid.heron.timeline.utilities.shareUri
@@ -51,7 +57,7 @@ class PostOptionsSheetState private constructor(
         fun rememberUpdatedPostOptionsState(
             signedInProfileId: ProfileId?,
             recentConversations: List<Conversation>,
-            onShareInConversationClicked: (Post, Conversation) -> Unit,
+            onOptionClicked: (PostOption) -> Unit,
         ): PostOptionsSheetState {
             val state = rememberBottomSheetState {
                 PostOptionsSheetState(
@@ -66,7 +72,7 @@ class PostOptionsSheetState private constructor(
 
             PostOptionsBottomSheet(
                 state = state,
-                onShareInConversationClicked = onShareInConversationClicked,
+                onOptionClicked = onOptionClicked,
             )
 
             return state
@@ -77,7 +83,7 @@ class PostOptionsSheetState private constructor(
 @Composable
 private fun PostOptionsBottomSheet(
     state: PostOptionsSheetState,
-    onShareInConversationClicked: (Post, Conversation) -> Unit,
+    onOptionClicked: (PostOption) -> Unit,
 ) {
     val signedInProfileId = state.signedInProfileId
     if (signedInProfileId != null) state.ModalBottomSheet {
@@ -92,14 +98,45 @@ private fun PostOptionsBottomSheet(
                 onConversationClicked = { conversation ->
                     val currentPost = state.currentPost
                     if (currentPost != null) {
-                        onShareInConversationClicked(currentPost, conversation)
+                        onOptionClicked(
+                            PostOption.ShareInConversation(
+                                post = currentPost,
+                                conversation = conversation,
+                            ),
+                        )
                     }
                     state.hide()
                 },
             )
             state.currentPost?.let {
+                if (it.author.did == signedInProfileId) BottomSheetItemCard(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    onClick = {
+                        onOptionClicked(PostOption.ThreadGate(it.uri))
+                    },
+                    content = {
+                        BottomSheetItemCardRow(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            icon = Icons.Rounded.EditAttributes,
+                            text = "",
+                        )
+                    },
+                )
                 CopyToClipboardCard(it.uri.shareUri())
             }
         }
     }
+}
+
+sealed class PostOption {
+    data class ShareInConversation(
+        val post: Post,
+        val conversation: Conversation,
+    ) : PostOption()
+
+    data class ThreadGate(
+        val postUri: PostUri,
+    ) : PostOption()
 }

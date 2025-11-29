@@ -54,6 +54,7 @@ import com.tunjid.heron.search.ui.searchresults.avatarSharedElementKey
 import com.tunjid.heron.search.ui.suggestions.SuggestedContent
 import com.tunjid.heron.search.ui.suggestions.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostOption
 import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 
@@ -90,18 +91,23 @@ internal fun SearchScreen(
     val postOptionsState = rememberUpdatedPostOptionsState(
         signedInProfileId = state.signedInProfile?.did,
         recentConversations = state.recentConversations,
-        onShareInConversationClicked = { currentPost, conversation ->
-            actions(
-                Action.Navigate.To(
-                    conversationDestination(
-                        id = conversation.id,
-                        members = conversation.members,
-                        sharedElementPrefix = conversation.id.id,
-                        sharedUri = currentPost.uri.asGenericUri(),
-                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                    ),
-                ),
-            )
+        onOptionClicked = { option ->
+            when (option) {
+                is PostOption.ShareInConversation ->
+                    actions(
+                        Action.Navigate.To(
+                            conversationDestination(
+                                id = option.conversation.id,
+                                members = option.conversation.members,
+                                sharedElementPrefix = option.conversation.id.id,
+                                sharedUri = option.post.uri.asGenericUri(),
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            ),
+                        ),
+                    )
+
+                is PostOption.ThreadGate -> Unit
+            }
         },
     )
 
