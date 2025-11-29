@@ -87,15 +87,10 @@ class ThreadGateSheetState private constructor(
     internal val isForSinglePost get() = timelineItem != null
 
     fun show(
-        item: TimelineItem,
+        timelineItem: TimelineItem,
     ) {
-        timelineItem = item
-        allowed = ThreadGate.Allowed(
-            allowsFollowing = item.threadGate?.allowed.allowsFollowing,
-            allowsFollowers = item.threadGate?.allowed.allowsFollowers,
-            allowsMentioned = item.threadGate?.allowed.allowsMentioned,
-            allowedLists = item.threadGate?.allowed?.allowedLists.orEmpty(),
-        )
+        this.timelineItem = timelineItem
+        this.allowed = timelineItem.threadGate?.allowed
 
         show()
     }
