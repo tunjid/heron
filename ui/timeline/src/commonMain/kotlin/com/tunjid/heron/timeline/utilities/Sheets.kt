@@ -34,7 +34,6 @@ import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -45,6 +44,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.semantics.contentDescription
@@ -70,9 +70,8 @@ internal fun SendDirectMessageCard(
     recentConversations: List<Conversation>,
     onConversationClicked: (Conversation) -> Unit,
 ) {
-    ShareActionCard(
-        showDivider = false,
-        topContent = {
+    BottomSheetItemCard(
+        content = {
             Text(
                 modifier = Modifier
                     .padding(
@@ -111,8 +110,6 @@ internal fun SendDirectMessageCard(
                 }
             }
         },
-        bottomContent = {
-        },
     )
 }
 
@@ -122,30 +119,18 @@ internal fun ShareInPostCard(
 ) {
     val shareInPostDescription = stringResource(Res.string.share_in_post)
 
-    ShareActionCard(
+    BottomSheetItemCard(
         modifier = Modifier.fillMaxWidth(),
         onClick = onShareInPostClicked,
     ) {
-        Row(
+        BottomSheetItemCardRow(
             modifier = Modifier
                 .semantics {
                     contentDescription = shareInPostDescription
-                }
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = shareInPostDescription,
-                style = MaterialTheme.typography.bodyLarge,
-            )
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.Article,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+                },
+            icon = Icons.AutoMirrored.Rounded.Article,
+            text = shareInPostDescription,
+        )
     }
 }
 
@@ -157,7 +142,7 @@ internal fun CopyToClipboardCard(
     val scope = rememberCoroutineScope()
     val copyToClipboardDescription = stringResource(Res.string.copy_link_to_clipboard)
 
-    ShareActionCard(
+    BottomSheetItemCard(
         modifier = Modifier.fillMaxWidth(),
         onClick = {
             scope.launch {
@@ -165,66 +150,22 @@ internal fun CopyToClipboardCard(
             }
         },
     ) {
-        Row(
+        BottomSheetItemCardRow(
             modifier = Modifier
                 .semantics {
                     contentDescription = copyToClipboardDescription
-                }
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = copyToClipboardDescription,
-                style = MaterialTheme.typography.bodyLarge,
-            )
-            Icon(
-                imageVector = Icons.Rounded.ContentCopy,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+                },
+            icon = Icons.Rounded.ContentCopy,
+            text = copyToClipboardDescription,
+        )
     }
 }
 
 @Composable
-private fun ShareActionCard(
+internal fun BottomSheetItemCard(
     modifier: Modifier = Modifier,
-    showDivider: Boolean = false,
-    topContent: (@Composable ColumnScope.() -> Unit)? = null,
-    bottomContent: @Composable ColumnScope.() -> Unit,
-) {
-    ShareActionCard(
-        modifier = modifier,
-        onClick = null,
-        content = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                topContent?.invoke(this)
-
-                if (showDivider) {
-                    HorizontalDivider(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                        thickness = 0.6.dp,
-                    )
-                }
-                bottomContent()
-            }
-        },
-    )
-}
-
-@Composable
-private fun ShareActionCard(
-    modifier: Modifier = Modifier,
-    onClick: (() -> Unit)?,
-    content: @Composable () -> Unit,
+    onClick: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     val cardColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
 
@@ -234,13 +175,7 @@ private fun ShareActionCard(
         colors = CardDefaults.elevatedCardColors(containerColor = cardColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-        ) {
-            content()
-        }
+        BottomSheetItemCardColumn(content)
     }
     else ElevatedCard(
         modifier = modifier.fillMaxWidth(),
@@ -249,10 +184,51 @@ private fun ShareActionCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         onClick = onClick,
     ) {
-        Box(
+        BottomSheetItemCardColumn(content)
+    }
+}
+
+@Composable
+internal inline fun BottomSheetItemCardRow(
+    modifier: Modifier = Modifier,
+    icon: ImageVector,
+    text: String,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+        )
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private inline fun BottomSheetItemCardColumn(
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = 16.dp,
+                vertical = 8.dp,
+            ),
+    ) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             content()
         }
