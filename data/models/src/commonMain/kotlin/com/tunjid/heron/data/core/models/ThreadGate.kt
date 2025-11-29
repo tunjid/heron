@@ -18,36 +18,45 @@ package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ThreadGateUri
+import kotlinx.serialization.Serializable
 
 class ThreadGate(
     val uri: ThreadGateUri,
     val gatedPostUri: PostUri,
     val allowed: Allowed?,
 ) {
+    @Serializable
     data class Allowed(
         val allowsFollowing: Boolean,
         val allowsFollowers: Boolean,
         val allowsMentioned: Boolean,
         val allowedLists: List<FeedList>,
     )
+
+    @Serializable
+    data class Update(
+        val gatedPostUri: PostUri,
+        val threadGateUri: ThreadGateUri?,
+        val allowed: Allowed?,
+    )
 }
 
-val ThreadGate?.allowsFollowing
-    get() = this == null || allowed == null || allowed.allowsFollowing
+val ThreadGate.Allowed?.allowsFollowing
+    get() = this == null || allowsFollowing
 
-val ThreadGate?.allowsFollowers
-    get() = this == null || allowed == null || allowed.allowsFollowers
+val ThreadGate.Allowed?.allowsFollowers
+    get() = this == null || allowsFollowers
 
-val ThreadGate?.allowsMentioned
-    get() = this == null || allowed == null || allowed.allowsMentioned
+val ThreadGate.Allowed?.allowsMentioned
+    get() = this == null || allowsMentioned
 
-val ThreadGate?.allowsLists
-    get() = this != null && allowed != null && allowed.allowedLists.isNotEmpty()
+val ThreadGate.Allowed?.allowsLists
+    get() = this != null && allowedLists.isNotEmpty()
 
-val ThreadGate?.allowsAll
-    get() = this == null || allowed == null
+val ThreadGate.Allowed?.allowsAll
+    get() = this == null
 
-val ThreadGate?.allowsNone
+val ThreadGate.Allowed?.allowsNone
     get() = !allowsFollowing &&
         !allowsFollowers &&
         !allowsMentioned &&

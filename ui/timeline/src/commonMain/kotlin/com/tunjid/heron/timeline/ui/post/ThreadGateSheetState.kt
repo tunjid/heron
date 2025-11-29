@@ -52,10 +52,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.bsky.graph.Block
 import com.tunjid.heron.data.core.models.ThreadGate
+import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.allowsAll
 import com.tunjid.heron.data.core.models.allowsFollowers
 import com.tunjid.heron.data.core.models.allowsFollowing
 import com.tunjid.heron.data.core.models.allowsMentioned
+import com.tunjid.heron.data.core.models.allowsNone
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
@@ -63,116 +67,78 @@ import com.tunjid.heron.ui.sheets.BottomSheetState
 
 @Stable
 class ThreadGateSheetState private constructor(
-    threadGate: ThreadGate?,
     scope: BottomSheetScope,
 ) : BottomSheetState(scope) {
 
-    // UI State for the settings
-    var replyPolicy by mutableStateOf<ReplyPolicy>(ReplyPolicy.Anyone)
-    var allowQuotePosts by mutableStateOf(true)
+    private var timelineItem by mutableStateOf<TimelineItem?>(null)
+    internal var allowed by mutableStateOf<ThreadGate.Allowed?>(null)
+        private set
 
-    // Specific boolean flags for the custom policy
-    var allowFollowers by mutableStateOf(threadGate.allowsFollowers)
-    var allowFollows by mutableStateOf(threadGate.allowsFollowing)
-    var allowMentions by mutableStateOf(threadGate.allowsMentioned)
-
-    var threadGate by mutableStateOf(false)
-
-    // Callback for when the user clicks Save
-    internal var onSave: ((ReplyPolicy, Boolean) -> Unit)? = null
-
-    fun showSettings(
-        currentPolicy: ReplyPolicy = ReplyPolicy.Anyone,
-        currentAllowQuotePosts: Boolean = true,
-        onSave: (ReplyPolicy, Boolean) -> Unit,
+    fun show(
+        item: TimelineItem,
     ) {
-        this.replyPolicy = currentPolicy
-        this.allowQuotePosts = currentAllowQuotePosts
-        this.onSave = onSave
-
-        // Initialize checkboxes based on policy if it's custom
-        if (currentPolicy is ReplyPolicy.Specific) {
-            allowFollowers = currentPolicy.followers
-            allowFollows = currentPolicy.follows
-            allowMentions = currentPolicy.mentions
-        } else {
-            allowFollowers = false
-            allowFollows = false
-            allowMentions = false
-        }
+        timelineItem = item
+        allowed = ThreadGate.Allowed(
+            allowsFollowing = item.threadGate?.allowed.allowsFollowing,
+            allowsFollowers = item.threadGate?.allowed.allowsFollowers,
+            allowsMentioned = item.threadGate?.allowed.allowsMentioned,
+            allowedLists = item.threadGate?.allowed?.allowedLists.orEmpty(),
+        )
 
         show()
     }
 
-    override fun onHidden() {
-        onSave = null
+    internal inline fun updateAllowed(
+        block: ThreadGate.Allowed.() -> ThreadGate.Allowed?,
+    ) {
+        allowed = (allowed ?: NoneAllowed).block()
     }
 
-    fun setPolicy(newPolicy: ReplyPolicy) {
-        replyPolicy = newPolicy
-        // Reset specific toggles if moving to a preset
-        if (newPolicy is ReplyPolicy.Anyone || newPolicy is ReplyPolicy.Nobody) {
-            allowFollowers = false
-            allowFollows = false
-            allowMentions = false
-        }
-    }
-
-    fun toggleSpecific(type: SpecificType) {
-        // If we were on Anyone/Nobody, switch to Specific
-        if (replyPolicy !is ReplyPolicy.Specific) {
-            replyPolicy = ReplyPolicy.Specific()
-        }
-
-        when (type) {
-            SpecificType.Followers -> allowFollowers = !allowFollowers
-            SpecificType.Follows -> allowFollows = !allowFollows
-            SpecificType.Mentions -> allowMentions = !allowMentions
-        }
-
-        // Update the main policy object to reflect changes
-        replyPolicy = ReplyPolicy.Specific(
-            followers = allowFollowers,
-            follows = allowFollows,
-            mentions = allowMentions,
+    internal fun update() = timelineItem?.let {
+        ThreadGate.Update(
+            gatedPostUri = it.post.uri,
+            threadGateUri = it.threadGate?.uri,
+            allowed = allowed,
         )
+    }
+
+    override fun onHidden() {
+        timelineItem = null
+        allowed = null
     }
 
     companion object Companion {
         @Composable
-        fun rememberPostRepliesSheetState(
-            threadGate: ThreadGate?,
+        fun rememberThreadGateSheetState(
+            onThreadGateUpdated: (ThreadGate.Update) -> Unit,
         ): ThreadGateSheetState {
             val state = rememberBottomSheetState {
                 ThreadGateSheetState(
-                    threadGate = threadGate,
                     scope = it,
                 )
             }
 
-            PostRepliesBottomSheet(state = state)
+            ThreadGateBottomSheet(
+                state = state,
+                onThreadGateUpdated = onThreadGateUpdated,
+            )
 
             return state
         }
     }
-
-    enum class SpecificType { Followers, Follows, Mentions }
 }
 
-sealed interface ReplyPolicy {
-    data object Anyone : ReplyPolicy
-    data object Nobody : ReplyPolicy
-    data class Specific(
-        val followers: Boolean = false,
-        val follows: Boolean = false,
-        val mentions: Boolean = false,
-        // Lists logic omitted for brevity, consistent with screenshot scaffold
-    ) : ReplyPolicy
-}
+private val NoneAllowed = ThreadGate.Allowed(
+    allowsFollowing = false,
+    allowsFollowers = false,
+    allowsMentioned = false,
+    allowedLists = emptyList(),
+)
 
 @Composable
-private fun PostRepliesBottomSheet(
+private fun ThreadGateBottomSheet(
     state: ThreadGateSheetState,
+    onThreadGateUpdated: (ThreadGate.Update) -> Unit,
 ) {
     state.ModalBottomSheet {
         Column(
@@ -197,15 +163,19 @@ private fun PostRepliesBottomSheet(
             ) {
                 SelectionCard(
                     text = "Anyone",
-                    selected = state.replyPolicy is ReplyPolicy.Anyone,
+                    selected = state.allowed.allowsAll,
                     modifier = Modifier.weight(1f),
-                    onClick = { state.setPolicy(ReplyPolicy.Anyone) },
+                    onClick = {
+                        state.updateAllowed { null }
+                    },
                 )
                 SelectionCard(
                     text = "Nobody",
-                    selected = state.replyPolicy is ReplyPolicy.Nobody,
+                    selected = state.allowed.allowsNone,
                     modifier = Modifier.weight(1f),
-                    onClick = { state.setPolicy(ReplyPolicy.Nobody) },
+                    onClick = {
+                        state.updateAllowed { NoneAllowed }
+                    },
                 )
             }
 
@@ -215,25 +185,31 @@ private fun PostRepliesBottomSheet(
             Column(
                 verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
-                val isCustomOrAnyone = state.replyPolicy !is ReplyPolicy.Nobody
+                val isCustomOrAnyone = !state.allowed.allowsNone
 
                 SettingsCheckboxRow(
                     text = "Your followers",
-                    checked = state.allowFollowers,
+                    checked = state.allowed.allowsFollowers,
                     enabled = isCustomOrAnyone,
-                    onClick = { state.toggleSpecific(ThreadGateSheetState.SpecificType.Followers) },
+                    onClick = {
+                        state.updateAllowed { copy(allowsFollowers = true) }
+                    },
                 )
                 SettingsCheckboxRow(
                     text = "People you follow",
-                    checked = state.allowFollows,
+                    checked = state.allowed.allowsFollowing,
                     enabled = isCustomOrAnyone,
-                    onClick = { state.toggleSpecific(ThreadGateSheetState.SpecificType.Follows) },
+                    onClick = {
+                        state.updateAllowed { copy(allowsFollowing = true) }
+                    },
                 )
                 SettingsCheckboxRow(
                     text = "People you mention",
-                    checked = state.allowMentions,
+                    checked = state.allowed.allowsMentioned,
                     enabled = isCustomOrAnyone,
-                    onClick = { state.toggleSpecific(ThreadGateSheetState.SpecificType.Mentions) },
+                    onClick = {
+                        state.updateAllowed { copy(allowsMentioned = true) }
+                    },
                 )
             }
 
@@ -286,8 +262,10 @@ private fun PostRepliesBottomSheet(
                     )
                 }
                 Switch(
-                    checked = state.allowQuotePosts,
-                    onCheckedChange = { state.allowQuotePosts = it },
+                    checked = true,
+                    onCheckedChange = {
+                        // TODO
+                    },
                 )
             }
 
@@ -297,7 +275,7 @@ private fun PostRepliesBottomSheet(
             Button(
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 onClick = {
-                    state.onSave?.invoke(state.replyPolicy, state.allowQuotePosts)
+                    state.update()?.let(onThreadGateUpdated)
                     state.hide()
                 },
             ) {
@@ -410,7 +388,9 @@ private fun SettingsCheckboxRow(
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,
-            color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+            color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
+                alpha = 0.38f,
+            ),
         )
     }
 }
