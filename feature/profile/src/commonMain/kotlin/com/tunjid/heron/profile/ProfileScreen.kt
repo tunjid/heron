@@ -1035,6 +1035,7 @@ private fun ProfileTimeline(
     )
     val threadGateSheetState = rememberThreadGateSheetState(
         onThreadGateUpdated = {
+            actions(Action.UpdateThreadGate(it))
         },
     )
     val postOptionsState = rememberUpdatedPostOptionsState(
