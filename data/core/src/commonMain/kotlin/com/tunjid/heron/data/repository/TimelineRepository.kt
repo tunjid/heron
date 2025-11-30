@@ -35,8 +35,7 @@ import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
 import app.bsky.feed.PostView
 import app.bsky.feed.Token
-import com.atproto.repo.CreateRecordRequest
-import com.atproto.repo.CreateRecordResponse
+import com.atproto.repo.GetRecordQueryParams
 import com.atproto.repo.PutRecordRequest
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
@@ -51,7 +50,6 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
-import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
@@ -79,6 +77,7 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.toNetworkRecord
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.Collections.requireRKey
+import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.lookupProfileDid
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
@@ -115,7 +114,6 @@ import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.response.AtpResponse
-import tools.ozone.moderation.GetRecordQueryParams
 
 sealed interface TimelineRequest {
 
@@ -826,55 +824,62 @@ internal class OfflineTimelineRepository(
         val repo = signedInProfileId.id.let(::Did)
         val collection = Nsid(ThreadGateUri.NAMESPACE)
         val record = summary.toNetworkRecord()
+        val recordKey = summary.gatedPostUri
+            .asGenericUri()
+            .let(::requireRKey)
 
-        val currentRecordResponse = summary.threadGateUri?.let {
-            networkService.runCatchingWithMonitoredNetworkRetry {
-                getRecord(GetRecordQueryParams(AtUri(it.uri)))
-            }
+        // The existence of this record indicates that a thread gate has been created previously
+        val currentRecordResponse = networkService.runCatchingWithMonitoredNetworkRetry {
+            getRecord(
+                GetRecordQueryParams(
+                    repo = repo,
+                    collection = collection,
+                    rkey = recordKey,
+                ),
+            )
         }
 
-        // Updating a thread gate and the current threadgate was not fetched
-        if (currentRecordResponse != null && currentRecordResponse.isFailure)
-            return@inCurrentProfileSession currentRecordResponse.toOutcome()
-
         networkService.runCatchingWithMonitoredNetworkRetry {
-            when (val currentRecord = currentRecordResponse?.getOrThrow()) {
-                null -> createRecord(
-                    CreateRecordRequest(
-                        repo = repo,
-                        collection = collection,
-                        record = record,
-                    ),
-                ).map(CreateRecordResponse::uri)
-                else -> putRecord(
-                    PutRecordRequest(
-                        repo = repo,
-                        collection = collection,
-                        record = record,
-                        rkey = requireRKey(GenericUri(currentRecord.uri.atUri)),
-                    ),
-                ).map { it.uri }
-            }
+            putRecord(
+                PutRecordRequest(
+                    repo = repo,
+                    collection = collection,
+                    record = record,
+                    rkey = recordKey,
+                ),
+            )
         }
             .mapCatchingUnlessCancelled {
                 // Initialize with starting record cid
-                val updatedRecordCid = currentRecordResponse?.getOrThrow()?.cid
+                val currentRecordCid = currentRecordResponse.getOrNull()?.cid
+                var updatedPostView: PostView? = null
 
-                val updatedPostView: PostView
-                while (true) {
+                for (i in 0 until MaxThreadGateUpdateAttempts) {
                     val fetchedPostView = networkService.runCatchingWithMonitoredNetworkRetry {
-                        getPosts(GetPostsQueryParams(listOf(summary.gatedPostUri.uri.let(::AtUri))))
+                        getPosts(
+                            GetPostsQueryParams(listOf(summary.gatedPostUri.uri.let(::AtUri))),
+                        )
                     }
-                        .getOrThrow()
-                        .posts
-                        .first()
-                    if (updatedRecordCid != fetchedPostView.threadgate?.cid) {
-                        updatedPostView = fetchedPostView
-                        break
+                        .getOrNull()
+                        ?.posts
+                        ?.firstOrNull()
+
+                    when {
+                        fetchedPostView == null -> {
+                            delay(ThreadGateUpsertPollDelay)
+                            continue
+                        }
+                        currentRecordCid != fetchedPostView.threadgate?.cid -> {
+                            updatedPostView = fetchedPostView
+                            break
+                        }
+                        else -> delay(ThreadGateUpsertPollDelay)
                     }
-                    delay(1.seconds)
                 }
-                updatedPostView
+
+                requireNotNull(updatedPostView) {
+                    "Failed to update thread gate"
+                }
             }
             .toOutcome { postView ->
                 multipleEntitySaverProvider.saveInTransaction {
@@ -1293,3 +1298,6 @@ private fun FeedGeneratorEntity.supportsMediaPresentation() =
 
         else -> false
     }
+
+private val ThreadGateUpsertPollDelay = 2.seconds
+private const val MaxThreadGateUpdateAttempts = 4
