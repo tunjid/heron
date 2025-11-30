@@ -66,7 +66,9 @@ class BottomSheetScope(
         fun <T : BottomSheetState> rememberBottomSheetState(
             block: (BottomSheetScope) -> T,
         ): T {
-            val sheetState = rememberModalBottomSheetState()
+            val sheetState = rememberModalBottomSheetState(
+                skipPartiallyExpanded = true,
+            )
             val scope = rememberCoroutineScope()
 
             return remember(sheetState, scope) {
