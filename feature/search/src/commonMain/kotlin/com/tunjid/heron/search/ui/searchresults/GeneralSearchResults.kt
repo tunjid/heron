@@ -59,6 +59,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.search.SearchResult
 import com.tunjid.heron.search.SearchState
@@ -96,8 +97,8 @@ internal fun GeneralSearchResults(
     onReplyToPost: (post: Post, sharedElementPrefix: String) -> Unit,
     onPostRecordClicked: (record: Record, sharedElementPrefix: String) -> Unit,
     onMediaClicked: (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
-    onPostInteraction: (Post.Interaction) -> Unit,
-    onPostOptionsClicked: (Post) -> Unit,
+    onNavigate: (NavigationAction.Destination) -> Unit,
+    onSendPostInteraction: (Post.Interaction) -> Unit,
     onFeedGeneratorClicked: (FeedGenerator, String) -> Unit,
     onTimelineUpdateClicked: (Timeline.Update) -> Unit,
 ) {
@@ -190,6 +191,8 @@ internal fun GeneralSearchResults(
                             state = resultState,
                             gridState = gridState,
                             modifier = modifier,
+                            signedInProfileId = state.signedInProfile?.did,
+                            recentConversations = state.recentConversations,
                             videoStates = videoStates,
                             paneScaffoldState = paneScaffoldState,
                             onLinkTargetClicked = onLinkTargetClicked,
@@ -198,8 +201,8 @@ internal fun GeneralSearchResults(
                             onReplyToPost = onReplyToPost,
                             onPostRecordClicked = onPostRecordClicked,
                             onMediaClicked = onMediaClicked,
-                            onPostInteraction = onPostInteraction,
-                            onPostOptionsClicked = onPostOptionsClicked,
+                            onNavigate = onNavigate,
+                            onSendPostInteraction = onSendPostInteraction,
                             searchResultActions = searchResultStateHolder.accept,
                         )
                         tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(

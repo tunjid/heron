@@ -87,7 +87,9 @@ import com.tunjid.heron.timeline.ui.DismissableRefreshIndicator
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostOption
 import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsState
+import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberThreadGateSheetState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.postActions
@@ -389,22 +391,32 @@ private fun ListTimeline(
             )
         },
     )
-
+    val threadGateSheetState = rememberThreadGateSheetState(
+        onThreadGateUpdated = {
+        },
+    )
     val postOptionsState = rememberUpdatedPostOptionsState(
         signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
-        onShareInConversationClicked = { currentPost, conversation ->
-            actions(
-                Action.Navigate.To(
-                    conversationDestination(
-                        id = conversation.id,
-                        members = conversation.members,
-                        sharedElementPrefix = conversation.id.id,
-                        sharedUri = currentPost.uri.asGenericUri(),
-                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                    ),
-                ),
-            )
+        onOptionClicked = { option ->
+            when (option) {
+                is PostOption.ShareInConversation ->
+                    actions(
+                        Action.Navigate.To(
+                            conversationDestination(
+                                id = option.conversation.id,
+                                members = option.conversation.members,
+                                sharedElementPrefix = option.conversation.id.id,
+                                sharedUri = option.post.uri.asGenericUri(),
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            ),
+                        ),
+                    )
+
+                is PostOption.ThreadGate ->
+                    items.firstOrNull { it.post.uri == option.postUri }
+                        ?.let(threadGateSheetState::show)
+            }
         },
     )
 
