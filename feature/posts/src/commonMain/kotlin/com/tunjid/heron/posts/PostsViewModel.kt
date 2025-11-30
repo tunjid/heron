@@ -128,7 +128,7 @@ class ActualPostsViewModel(
                         writeQueue = writeQueue,
                     )
                     is Action.UpdateThreadGate -> action.flow.updateThreadGateMutations(
-                        writeQueue = writeQueue
+                        writeQueue = writeQueue,
                     )
                 }
             }

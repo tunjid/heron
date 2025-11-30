@@ -99,7 +99,7 @@ class ActualPostDetailViewModel(
                         writeQueue = writeQueue,
                     )
                     is Action.UpdateThreadGate -> action.flow.updateThreadGateMutations(
-                        writeQueue = writeQueue
+                        writeQueue = writeQueue,
                     )
                     is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 

@@ -149,7 +149,7 @@ sealed interface Writable {
     ) : Writable {
 
         override val queueId: String
-            get() = "update-thread-gate-${summary}"
+            get() = "update-thread-gate-$summary"
 
         override suspend fun WriteQueue.write(): Outcome =
             timelineRepository.updateThreadGate(summary)

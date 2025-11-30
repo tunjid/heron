@@ -110,7 +110,7 @@ class ActualFeedViewModel(
                         )
 
                         is Action.UpdateThreadGate -> action.flow.updateThreadGateMutations(
-                            writeQueue = writeQueue
+                            writeQueue = writeQueue,
                         )
 
                         is Action.UpdateFeedGeneratorStatus -> action.flow.feedGeneratorStatusMutations(
