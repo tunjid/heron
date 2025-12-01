@@ -70,6 +70,7 @@ import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
+import com.tunjid.heron.data.core.models.allowsAll
 import com.tunjid.heron.data.core.models.allowsNone
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.recordKey
@@ -737,7 +738,11 @@ private class PostData(
     val replyStatus
         get() = when (val gate = threadGate) {
             null -> PostReplyStatus.All
-            else -> if (gate.allowed.allowsNone) PostReplyStatus.None else PostReplyStatus.Some
+            else -> when {
+                gate.allowed.allowsAll -> PostReplyStatus.All
+                gate.allowed.allowsNone -> PostReplyStatus.None
+                else -> PostReplyStatus.Some
+            }
         }
 
     private val labelerDefinitionLookup by derivedStateOf {

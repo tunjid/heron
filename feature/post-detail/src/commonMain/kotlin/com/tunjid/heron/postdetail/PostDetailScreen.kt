@@ -42,7 +42,6 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.PostUri
-import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
@@ -262,9 +261,8 @@ internal fun PostDetailScreen(
                                         ),
                                     )
                                     is PostMetadata.Gate ->
-                                        if (state.signedInProfileId == postMetadata.postUri.profileId()) {
-                                            items.firstOrNull { it.post.uri == postMetadata.postUri }
-                                                ?.let(threadGateSheetState::show)
+                                        if (state.signedInProfileId == item.post.author.did) {
+                                            threadGateSheetState.show(item)
                                         }
                                 }
                             },
