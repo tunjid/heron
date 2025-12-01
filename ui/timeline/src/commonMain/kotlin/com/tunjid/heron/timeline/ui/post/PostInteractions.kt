@@ -435,6 +435,7 @@ private fun PostInteractionsBottomSheet(
             is Post.Interaction.Delete.Unlike,
             is Post.Interaction.Create.Bookmark,
             is Post.Interaction.Delete.RemoveBookmark,
+            is Post.Interaction.Upsert.Gate,
             -> {
                 if (state.isSignedIn) {
                     onInteractionConfirmed(interaction)

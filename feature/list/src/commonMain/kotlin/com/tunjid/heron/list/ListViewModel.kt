@@ -124,9 +124,6 @@ class ActualListViewModel(
                         is Action.SendPostInteraction -> action.flow.postInteractionMutations(
                             writeQueue = writeQueue,
                         )
-                        is Action.UpdateThreadGate -> action.flow.updateThreadGateMutations(
-                            writeQueue = writeQueue,
-                        )
                         is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 
                         is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
@@ -293,13 +290,6 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
             }
             WriteQueue.Status.Enqueued -> Unit
         }
-    }
-
-private fun Flow<Action.UpdateThreadGate>.updateThreadGateMutations(
-    writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        writeQueue.enqueue(Writable.ThreadGateUpdate(action.summary))
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =

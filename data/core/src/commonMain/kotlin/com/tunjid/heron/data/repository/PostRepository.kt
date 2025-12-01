@@ -22,6 +22,7 @@ import app.bsky.bookmark.GetBookmarksQueryParams
 import app.bsky.bookmark.GetBookmarksResponse
 import app.bsky.feed.GetLikesQueryParams
 import app.bsky.feed.GetLikesResponse
+import app.bsky.feed.GetPostsQueryParams
 import app.bsky.feed.GetQuotesQueryParams
 import app.bsky.feed.GetQuotesResponse
 import app.bsky.feed.GetRepostedByQueryParams
@@ -30,12 +31,15 @@ import app.bsky.feed.Like
 import app.bsky.feed.Like as BskyLike
 import app.bsky.feed.Post as BskyPost
 import app.bsky.feed.PostReplyRef
+import app.bsky.feed.PostView
 import app.bsky.feed.Repost
 import app.bsky.feed.Repost as BskyRepost
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.CreateRecordResponse
 import com.atproto.repo.CreateRecordValidationStatus
 import com.atproto.repo.DeleteRecordRequest
+import com.atproto.repo.GetRecordQueryParams
+import com.atproto.repo.PutRecordRequest
 import com.atproto.repo.StrongRef
 import com.atproto.repo.UploadBlobResponse
 import com.tunjid.heron.data.core.models.Cursor
@@ -54,6 +58,7 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
+import com.tunjid.heron.data.core.types.ThreadGateUri
 import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.TransactionWriter
@@ -68,11 +73,14 @@ import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.VideoUploadService
+import com.tunjid.heron.data.network.models.toNetworkRecord
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.MediaBlob
+import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.facet
 import com.tunjid.heron.data.utilities.lookupProfileDid
+import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
@@ -85,9 +93,11 @@ import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.with
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -624,6 +634,78 @@ internal class OfflinePostRepository @Inject constructor(
                     }
                 }
             }
+            is Post.Interaction.Upsert.Gate -> {
+                val repo = signedInProfileId.id.let(::Did)
+                val collection = Nsid(ThreadGateUri.NAMESPACE)
+                val record = interaction.toNetworkRecord()
+                val recordKey = interaction.postUri
+                    .asGenericUri()
+                    .let(Collections::requireRKey)
+
+                // The existence of this record indicates that a thread gate has been created previously
+                val currentRecordResponse = networkService.runCatchingWithMonitoredNetworkRetry {
+                    getRecord(
+                        GetRecordQueryParams(
+                            repo = repo,
+                            collection = collection,
+                            rkey = recordKey,
+                        ),
+                    )
+                }
+
+                networkService.runCatchingWithMonitoredNetworkRetry {
+                    putRecord(
+                        PutRecordRequest(
+                            repo = repo,
+                            collection = collection,
+                            record = record,
+                            rkey = recordKey,
+                        ),
+                    )
+                }
+                    .mapCatchingUnlessCancelled {
+                        // Initialize with starting record cid
+                        val currentRecordCid = currentRecordResponse.getOrNull()?.cid
+                        var updatedPostView: PostView? = null
+
+                        for (i in 0 until MaxThreadGateUpdateAttempts) {
+                            val fetchedPostView = networkService.runCatchingWithMonitoredNetworkRetry {
+                                getPosts(
+                                    GetPostsQueryParams(
+                                        listOf(interaction.postUri.uri.let(::AtUri)),
+                                    ),
+                                )
+                            }
+                                .getOrNull()
+                                ?.posts
+                                ?.firstOrNull()
+
+                            when {
+                                fetchedPostView == null -> {
+                                    delay(ThreadGateUpsertPollDelay)
+                                    continue
+                                }
+                                currentRecordCid != fetchedPostView.threadgate?.cid -> {
+                                    updatedPostView = fetchedPostView
+                                    break
+                                }
+                                else -> delay(ThreadGateUpsertPollDelay)
+                            }
+                        }
+
+                        requireNotNull(updatedPostView) {
+                            "Failed to update thread gate"
+                        }
+                    }
+                    .toOutcome { postView ->
+                        multipleEntitySaverProvider.saveInTransaction {
+                            add(
+                                viewingProfileId = signedInProfileId,
+                                postView = postView,
+                            )
+                        }
+                    }
+            }
         }
     } ?: expiredSessionOutcome()
 
@@ -698,3 +780,6 @@ private suspend fun NetworkService.uploadImageBlob(
     api.uploadBlob(data)
         .map(UploadBlobResponse::blob)
 }
+
+private val ThreadGateUpsertPollDelay = 2.seconds
+private const val MaxThreadGateUpdateAttempts = 4

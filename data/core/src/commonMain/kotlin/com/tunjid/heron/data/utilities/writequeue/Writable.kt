@@ -19,7 +19,6 @@ package com.tunjid.heron.data.utilities.writequeue
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.utilities.Outcome
 import kotlinx.datetime.Instant
@@ -52,6 +51,7 @@ sealed interface Writable {
                 is Post.Interaction.Delete.Unlike -> "remove-like-${interaction.postUri}"
                 is Post.Interaction.Create.Bookmark -> "bookmark-${interaction.postUri}"
                 is Post.Interaction.Delete.RemoveBookmark -> "remove-bookmark-${interaction.postUri}"
+                is Post.Interaction.Upsert.Gate -> "update-thread-gate-$interaction"
             }
 
         override suspend fun WriteQueue.write(): Outcome =
@@ -141,18 +141,6 @@ sealed interface Writable {
 
         override suspend fun WriteQueue.write(): Outcome =
             profileRepository.updateProfile(update)
-    }
-
-    @Serializable
-    data class ThreadGateUpdate(
-        val summary: ThreadGate.Summary,
-    ) : Writable {
-
-        override val queueId: String
-            get() = "update-thread-gate-$summary"
-
-        override suspend fun WriteQueue.write(): Outcome =
-            timelineRepository.updateThreadGate(summary)
     }
 }
 

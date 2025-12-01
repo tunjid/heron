@@ -17,10 +17,12 @@
 package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
+import com.tunjid.heron.data.core.types.ThreadGateUri
 import com.tunjid.heron.data.core.utilities.File
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
@@ -199,6 +201,19 @@ data class Post(
             data class RemoveBookmark(
                 override val postUri: PostUri,
             ) : Delete()
+        }
+
+        @Serializable
+        sealed class Upsert : Interaction() {
+            @Serializable
+            data class Gate(
+                override val postUri: PostUri,
+                val threadGateUri: ThreadGateUri?,
+                val allowsFollowing: Boolean,
+                val allowsFollowers: Boolean,
+                val allowsMentioned: Boolean,
+                val allowedListUris: List<ListUri>,
+            ) : Upsert()
         }
     }
 

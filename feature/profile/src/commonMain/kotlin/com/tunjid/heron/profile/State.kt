@@ -26,7 +26,6 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
-import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
@@ -203,10 +202,6 @@ sealed class Action(val key: String) {
         val sourceId: String,
         val hasUpdates: Boolean,
     ) : Action(key = "UpdatePageWithUpdates")
-
-    data class UpdateThreadGate(
-        val summary: ThreadGate.Summary,
-    ) : Action(key = "UpdateThreadGate")
 
     data class ToggleViewerState(
         val signedInProfileId: ProfileId,

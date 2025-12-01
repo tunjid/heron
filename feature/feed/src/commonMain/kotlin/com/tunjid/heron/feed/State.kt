@@ -21,7 +21,6 @@ import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.TimelineQuery
@@ -84,10 +83,6 @@ sealed class Action(val key: String) {
     data class SendPostInteraction(
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")
-
-    data class UpdateThreadGate(
-        val summary: ThreadGate.Summary,
-    ) : Action(key = "UpdateThreadGate")
 
     data class SnackbarDismissed(
         val message: Memo,

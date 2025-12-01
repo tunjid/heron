@@ -161,7 +161,7 @@ private fun FeedTimeline(
     )
     val threadGateSheetState = rememberThreadGateSheetState(
         onThreadGateUpdated = {
-            actions(Action.UpdateThreadGate(it))
+            actions(Action.SendPostInteraction(it))
         },
     )
     val postOptionsState = rememberUpdatedPostOptionsState(
