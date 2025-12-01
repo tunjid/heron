@@ -51,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tunjid.heron.data.core.models.FeedList
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.allowsAll
@@ -102,8 +103,8 @@ class ThreadGateSheetState private constructor(
     }
 
     internal fun update() = timelineItem?.let {
-        ThreadGate.Summary(
-            gatedPostUri = it.post.uri,
+        Post.Interaction.Upsert.Gate(
+            postUri = it.post.uri,
             threadGateUri = it.threadGate?.uri,
             allowsFollowing = allowed.allowsFollowing,
             allowsFollowers = allowed.allowsFollowers,
@@ -122,7 +123,7 @@ class ThreadGateSheetState private constructor(
     companion object {
         @Composable
         fun rememberThreadGateSheetState(
-            onThreadGateUpdated: (ThreadGate.Summary) -> Unit,
+            onThreadGateUpdated: (Post.Interaction.Upsert.Gate) -> Unit,
         ): ThreadGateSheetState {
             val state = rememberBottomSheetState {
                 ThreadGateSheetState(
@@ -143,7 +144,7 @@ class ThreadGateSheetState private constructor(
 @Composable
 private fun ThreadGateBottomSheet(
     state: ThreadGateSheetState,
-    onThreadGateUpdated: (ThreadGate.Summary) -> Unit,
+    onThreadGateUpdated: (Post.Interaction.Upsert.Gate) -> Unit,
 ) {
     state.ModalBottomSheet {
         Column(

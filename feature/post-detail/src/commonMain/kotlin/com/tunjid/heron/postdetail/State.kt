@@ -18,7 +18,6 @@ package com.tunjid.heron.postdetail
 
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.appliedLabels
 import com.tunjid.heron.data.core.types.ProfileId
@@ -70,10 +69,6 @@ sealed class Action(val key: String) {
     data class SendPostInteraction(
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")
-
-    data class UpdateThreadGate(
-        val summary: ThreadGate.Summary,
-    ) : Action(key = "UpdateThreadGate")
 
     data class SnackbarDismissed(
         val message: Memo,

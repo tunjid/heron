@@ -109,10 +109,6 @@ class ActualFeedViewModel(
                             writeQueue = writeQueue,
                         )
 
-                        is Action.UpdateThreadGate -> action.flow.updateThreadGateMutations(
-                            writeQueue = writeQueue,
-                        )
-
                         is Action.UpdateFeedGeneratorStatus -> action.flow.feedGeneratorStatusMutations(
                             writeQueue = writeQueue,
                         )
@@ -212,13 +208,6 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
             }
             WriteQueue.Status.Enqueued -> Unit
         }
-    }
-
-private fun Flow<Action.UpdateThreadGate>.updateThreadGateMutations(
-    writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        writeQueue.enqueue(Writable.ThreadGateUpdate(action.summary))
     }
 
 @OptIn(ExperimentalUuidApi::class)

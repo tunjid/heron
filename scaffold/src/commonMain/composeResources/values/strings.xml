@@ -34,4 +34,5 @@
     <string name="repost">repost</string>
     <string name="share">Share</string>
     <string name="repost_removal">repost removal</string>
+    <string name="thread_gate_update">post reply update</string>
 </resources>

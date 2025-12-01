@@ -22,14 +22,14 @@ import app.bsky.feed.ThreadgateFollowerRule
 import app.bsky.feed.ThreadgateFollowingRule
 import app.bsky.feed.ThreadgateListRule
 import app.bsky.feed.ThreadgateMentionRule
-import com.tunjid.heron.data.core.models.ThreadGate
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.utilities.asJsonContent
 import kotlinx.datetime.Clock
 import sh.christian.ozone.api.AtUri
 
-fun ThreadGate.Summary.toNetworkRecord() = BskyThreadGate(
+fun Post.Interaction.Upsert.Gate.toNetworkRecord() = BskyThreadGate(
     createdAt = Clock.System.now(),
-    post = gatedPostUri.uri.let(::AtUri),
+    post = postUri.uri.let(::AtUri),
     allow = buildList {
         if (allowsFollowers) add(
             ThreadgateAllowUnion.FollowerRule(ThreadgateFollowerRule),

@@ -30,13 +30,9 @@ import app.bsky.feed.GetListFeedQueryParams
 import app.bsky.feed.GetListFeedResponse
 import app.bsky.feed.GetPostThreadQueryParams
 import app.bsky.feed.GetPostThreadResponseThreadUnion
-import app.bsky.feed.GetPostsQueryParams
 import app.bsky.feed.GetTimelineQueryParams
 import app.bsky.feed.GetTimelineResponse
-import app.bsky.feed.PostView
 import app.bsky.feed.Token
-import com.atproto.repo.GetRecordQueryParams
-import com.atproto.repo.PutRecordRequest
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
@@ -44,7 +40,6 @@ import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
-import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.offset
@@ -55,7 +50,6 @@ import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StarterPackUri
-import com.tunjid.heron.data.core.types.ThreadGateUri
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ListDao
@@ -74,12 +68,8 @@ import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.preferredPresentationPartial
 import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.network.models.toNetworkRecord
 import com.tunjid.heron.data.utilities.Collections
-import com.tunjid.heron.data.utilities.Collections.requireRKey
-import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.lookupProfileDid
-import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
@@ -112,7 +102,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
-import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.response.AtpResponse
 
 sealed interface TimelineRequest {
@@ -214,10 +203,6 @@ interface TimelineRepository {
 
     suspend fun updateHomeTimelines(
         update: Timeline.Update,
-    ): Outcome
-
-    suspend fun updateThreadGate(
-        summary: ThreadGate.Summary,
     ): Outcome
 }
 
@@ -816,81 +801,6 @@ internal class OfflineTimelineRepository(
             onFailure = Outcome::Failure,
         )
 
-    override suspend fun updateThreadGate(
-        summary: ThreadGate.Summary,
-    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-        signedInProfileId ?: return@inCurrentProfileSession expiredSessionOutcome()
-
-        val repo = signedInProfileId.id.let(::Did)
-        val collection = Nsid(ThreadGateUri.NAMESPACE)
-        val record = summary.toNetworkRecord()
-        val recordKey = summary.gatedPostUri
-            .asGenericUri()
-            .let(::requireRKey)
-
-        // The existence of this record indicates that a thread gate has been created previously
-        val currentRecordResponse = networkService.runCatchingWithMonitoredNetworkRetry {
-            getRecord(
-                GetRecordQueryParams(
-                    repo = repo,
-                    collection = collection,
-                    rkey = recordKey,
-                ),
-            )
-        }
-
-        networkService.runCatchingWithMonitoredNetworkRetry {
-            putRecord(
-                PutRecordRequest(
-                    repo = repo,
-                    collection = collection,
-                    record = record,
-                    rkey = recordKey,
-                ),
-            )
-        }
-            .mapCatchingUnlessCancelled {
-                // Initialize with starting record cid
-                val currentRecordCid = currentRecordResponse.getOrNull()?.cid
-                var updatedPostView: PostView? = null
-
-                for (i in 0 until MaxThreadGateUpdateAttempts) {
-                    val fetchedPostView = networkService.runCatchingWithMonitoredNetworkRetry {
-                        getPosts(
-                            GetPostsQueryParams(listOf(summary.gatedPostUri.uri.let(::AtUri))),
-                        )
-                    }
-                        .getOrNull()
-                        ?.posts
-                        ?.firstOrNull()
-
-                    when {
-                        fetchedPostView == null -> {
-                            delay(ThreadGateUpsertPollDelay)
-                            continue
-                        }
-                        currentRecordCid != fetchedPostView.threadgate?.cid -> {
-                            updatedPostView = fetchedPostView
-                            break
-                        }
-                        else -> delay(ThreadGateUpsertPollDelay)
-                    }
-                }
-
-                requireNotNull(updatedPostView) {
-                    "Failed to update thread gate"
-                }
-            }
-            .toOutcome { postView ->
-                multipleEntitySaverProvider.saveInTransaction {
-                    add(
-                        viewingProfileId = signedInProfileId,
-                        postView = postView,
-                    )
-                }
-            }
-    } ?: expiredSessionOutcome()
-
     private fun <NetworkResponse : Any> NetworkService.nextTimelineCursorFlow(
         query: TimelineQuery,
         currentCursor: Cursor,
@@ -1298,6 +1208,3 @@ private fun FeedGeneratorEntity.supportsMediaPresentation() =
 
         else -> false
     }
-
-private val ThreadGateUpsertPollDelay = 2.seconds
-private const val MaxThreadGateUpdateAttempts = 4

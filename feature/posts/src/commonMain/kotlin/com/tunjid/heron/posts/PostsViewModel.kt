@@ -17,8 +17,6 @@
 package com.tunjid.heron.posts
 
 import androidx.lifecycle.ViewModel
-import com.tunjid.heron.data.core.models.Cursor
-import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.ProfileHandle
@@ -56,7 +54,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 
@@ -127,9 +124,6 @@ class ActualPostsViewModel(
                     is Action.SendPostInteraction -> action.flow.postInteractionMutations(
                         writeQueue = writeQueue,
                     )
-                    is Action.UpdateThreadGate -> action.flow.updateThreadGateMutations(
-                        writeQueue = writeQueue,
-                    )
                 }
             }
         },
@@ -180,13 +174,6 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
             }
             WriteQueue.Status.Enqueued -> Unit
         }
-    }
-
-private fun Flow<Action.UpdateThreadGate>.updateThreadGateMutations(
-    writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        writeQueue.enqueue(Writable.ThreadGateUpdate(action.summary))
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
