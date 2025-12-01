@@ -66,9 +66,11 @@ import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
+import com.tunjid.heron.data.core.models.allowsNone
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.images.AsyncImage
@@ -100,12 +102,13 @@ import kotlinx.datetime.Instant
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun Post(
+internal fun Post(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     presentationLookaheadScope: LookaheadScope,
     modifier: Modifier = Modifier,
     now: Instant,
     post: Post,
+    threadGate: ThreadGate?,
     isAnchoredInTimeline: Boolean,
     avatarShape: RoundedPolygonShape,
     sharedElementPrefix: String,
@@ -130,6 +133,7 @@ fun Post(
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
             presentationLookaheadScope = presentationLookaheadScope,
             post = post,
+            threadGate = threadGate,
             presentation = presentation,
             appliedLabels = appliedLabels,
             sharedElementPrefix = sharedElementPrefix,
@@ -460,7 +464,8 @@ private fun MetadataContent(
                 vertical = 4.dp,
             ),
         time = data.post.createdAt,
-        postRecordKey = data.post.uri.recordKey,
+        replyStatus = data.replyStatus,
+        postUri = data.post.uri,
         profileId = data.post.author.did,
         reposts = data.post.repostCount,
         quotes = data.post.quoteCount,
@@ -652,6 +657,7 @@ private fun rememberUpdatedPostData(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     presentationLookaheadScope: LookaheadScope,
     post: Post,
+    threadGate: ThreadGate?,
     presentation: Timeline.Presentation,
     appliedLabels: AppliedLabels,
     sharedElementPrefix: String,
@@ -666,6 +672,7 @@ private fun rememberUpdatedPostData(
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
             presentationLookaheadScope = presentationLookaheadScope,
             post = post,
+            threadGate = threadGate,
             presentation = presentation,
             appliedLabels = appliedLabels,
             sharedElementPrefix = sharedElementPrefix,
@@ -680,6 +687,7 @@ private fun rememberUpdatedPostData(
         it.paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope
         it.presentationLookaheadScope = presentationLookaheadScope
         it.post = post
+        it.threadGate = threadGate
         it.presentation = presentation
         it.appliedLabels = appliedLabels
         it.sharedElementPrefix = sharedElementPrefix
@@ -696,6 +704,7 @@ private class PostData(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     presentationLookaheadScope: LookaheadScope,
     post: Post,
+    threadGate: ThreadGate?,
     presentation: Timeline.Presentation,
     appliedLabels: AppliedLabels,
     sharedElementPrefix: String,
@@ -710,6 +719,7 @@ private class PostData(
     )
     var presentationLookaheadScope by mutableStateOf(presentationLookaheadScope)
     var post by mutableStateOf(post)
+    var threadGate by mutableStateOf(threadGate)
     var presentation by mutableStateOf(presentation)
     var appliedLabels by mutableStateOf(appliedLabels)
     var sharedElementPrefix by mutableStateOf(sharedElementPrefix)
@@ -723,6 +733,12 @@ private class PostData(
 
     val hasLabels
         get() = post.labels.isNotEmpty() || post.author.labels.isNotEmpty()
+
+    val replyStatus
+        get() = when (val gate = threadGate) {
+            null -> PostReplyStatus.All
+            else -> if (gate.allowed.allowsNone) PostReplyStatus.None else PostReplyStatus.Some
+        }
 
     private val labelerDefinitionLookup by derivedStateOf {
         appliedLabels.labelers.associateBy(

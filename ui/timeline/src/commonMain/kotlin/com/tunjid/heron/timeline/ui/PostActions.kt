@@ -23,6 +23,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.timeline.ui.post.PostMetadata
 
 @Stable
 interface PostActions {
@@ -33,7 +34,7 @@ interface PostActions {
     fun onPostMediaClicked(media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri?)
     fun onReplyToPost(post: Post)
     fun onPostInteraction(interaction: Post.Interaction)
-    fun onPostMetadataClicked(metadata: Post.Metadata)
+    fun onPostMetadataClicked(metadata: PostMetadata)
     fun onPostOptionsClicked(post: Post)
 
     companion object {
@@ -49,7 +50,7 @@ fun postActions(
     onPostMediaClicked: (media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri?) -> Unit,
     onReplyToPost: (post: Post) -> Unit,
     onPostInteraction: (interaction: Post.Interaction) -> Unit,
-    onPostMetadataClicked: (metadata: Post.Metadata) -> Unit = {},
+    onPostMetadataClicked: (metadata: PostMetadata) -> Unit = {},
     onPostOptionsClicked: (post: Post) -> Unit,
 ) = object : PostActions {
     override fun onProfileClicked(
@@ -99,7 +100,7 @@ fun postActions(
     )
 
     override fun onPostMetadataClicked(
-        metadata: Post.Metadata,
+        metadata: PostMetadata,
     ) = onPostMetadataClicked(
         metadata,
     )
@@ -149,7 +150,7 @@ private val NoOpPostActions = object : PostActions {
     ) = Unit
 
     override fun onPostMetadataClicked(
-        metadata: Post.Metadata,
+        metadata: PostMetadata,
     ) = Unit
 
     override fun onPostOptionsClicked(
