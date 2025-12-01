@@ -112,8 +112,7 @@ internal fun PostSearchResults(
         },
     )
     val threadGateSheetState = rememberThreadGateSheetState(
-        onThreadGateUpdated = {
-        },
+        onThreadGateUpdated = onSendPostInteraction,
     )
     val postOptionsState = rememberUpdatedPostOptionsState(
         signedInProfileId = signedInProfileId,
