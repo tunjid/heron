@@ -680,17 +680,11 @@ internal class OfflinePostRepository @Inject constructor(
                                 ?.posts
                                 ?.firstOrNull()
 
-                            when {
-                                fetchedPostView == null -> {
-                                    delay(ThreadGateUpsertPollDelay)
-                                    continue
-                                }
-                                currentRecordCid != fetchedPostView.threadgate?.cid -> {
-                                    updatedPostView = fetchedPostView
-                                    break
-                                }
-                                else -> delay(ThreadGateUpsertPollDelay)
+                            if (fetchedPostView != null && currentRecordCid != fetchedPostView.threadgate?.cid) {
+                                updatedPostView = fetchedPostView
+                                break
                             }
+                            delay(ThreadGateUpsertPollDelay)
                         }
 
                         requireNotNull(updatedPostView) {
