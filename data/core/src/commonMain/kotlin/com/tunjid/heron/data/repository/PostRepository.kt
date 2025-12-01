@@ -38,7 +38,6 @@ import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.CreateRecordResponse
 import com.atproto.repo.CreateRecordValidationStatus
 import com.atproto.repo.DeleteRecordRequest
-import com.atproto.repo.GetRecordQueryParams
 import com.atproto.repo.PutRecordRequest
 import com.atproto.repo.StrongRef
 import com.atproto.repo.UploadBlobResponse
@@ -642,17 +641,6 @@ internal class OfflinePostRepository @Inject constructor(
                     .asGenericUri()
                     .let(Collections::requireRKey)
 
-                // The existence of this record indicates that a thread gate has been created previously
-                val currentRecordResponse = networkService.runCatchingWithMonitoredNetworkRetry {
-                    getRecord(
-                        GetRecordQueryParams(
-                            repo = repo,
-                            collection = collection,
-                            rkey = recordKey,
-                        ),
-                    )
-                }
-
                 networkService.runCatchingWithMonitoredNetworkRetry {
                     putRecord(
                         PutRecordRequest(
@@ -663,9 +651,9 @@ internal class OfflinePostRepository @Inject constructor(
                         ),
                     )
                 }
-                    .mapCatchingUnlessCancelled {
+                    .mapCatchingUnlessCancelled { response ->
                         // Initialize with starting record cid
-                        val currentRecordCid = currentRecordResponse.getOrNull()?.cid
+                        val updatedRecordId = response.cid
                         var updatedPostView: PostView? = null
 
                         for (i in 0 until MaxThreadGateUpdateAttempts) {
@@ -680,7 +668,7 @@ internal class OfflinePostRepository @Inject constructor(
                                 ?.posts
                                 ?.firstOrNull()
 
-                            if (fetchedPostView != null && currentRecordCid != fetchedPostView.threadgate?.cid) {
+                            if (fetchedPostView != null && updatedRecordId == fetchedPostView.threadgate?.cid) {
                                 updatedPostView = fetchedPostView
                                 break
                             }
