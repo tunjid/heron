@@ -79,4 +79,7 @@
     <string name="thread_gate_post_reply_settings">Post reply settings</string>
     <string name="thread_gate_save">Save</string>
     <string name="thread_gate_info">The following settings will be used as your defaults when creating new posts. You can edit these for a specific post from the composer.</string>
+    <string name="post_replies_all">Everybody can reply</string>
+    <string name="post_replies_some">Some people can reply</string>
+    <string name="post_replies_none">Replies Disabled</string>
 </resources>

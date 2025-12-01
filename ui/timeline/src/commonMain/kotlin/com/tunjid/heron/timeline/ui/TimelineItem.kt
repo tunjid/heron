@@ -132,6 +132,7 @@ fun TimelineItem(
                         presentationLookaheadScope = presentationLookaheadScope,
                         now = now,
                         post = item.post,
+                        threadGate = item.threadGate,
                         isAnchoredInTimeline = false,
                         avatarShape = RoundedPolygonShape.Circle,
                         sharedElementPrefix = sharedElementPrefix,
@@ -175,6 +176,7 @@ private fun ThreadedPost(
                         presentationLookaheadScope = presentationLookaheadScope,
                         now = now,
                         post = post,
+                        threadGate = item.threadGate,
                         isAnchoredInTimeline = item.generation == 0L,
                         avatarShape = when {
                             item.isThreadedAnchor -> RoundedPolygonShape.Circle

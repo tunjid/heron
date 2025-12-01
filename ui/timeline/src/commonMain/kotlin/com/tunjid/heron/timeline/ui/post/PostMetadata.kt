@@ -21,18 +21,28 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.Groups
+import androidx.compose.material.icons.rounded.Public
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
+import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.timeline.ui.post.PostMetadataText.Companion.pluralStringResource
 import com.tunjid.heron.timeline.ui.post.PostMetadataText.Companion.singularStringResource
 import com.tunjid.heron.timeline.utilities.formatDate
@@ -40,6 +50,9 @@ import com.tunjid.heron.timeline.utilities.formatTime
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.like
 import heron.ui.timeline.generated.resources.likes
+import heron.ui.timeline.generated.resources.post_replies_all
+import heron.ui.timeline.generated.resources.post_replies_none
+import heron.ui.timeline.generated.resources.post_replies_some
 import heron.ui.timeline.generated.resources.quote
 import heron.ui.timeline.generated.resources.quotes
 import heron.ui.timeline.generated.resources.repost
@@ -52,25 +65,53 @@ import org.jetbrains.compose.resources.stringResource
 internal fun PostMetadata(
     modifier: Modifier = Modifier,
     time: Instant,
-    postRecordKey: RecordKey,
+    replyStatus: PostReplyStatus,
+    postUri: PostUri,
     profileId: ProfileId,
     reposts: Long,
     quotes: Long,
     likes: Long,
-    onMetadataClicked: (Post.Metadata) -> Unit,
+    onMetadataClicked: (PostMetadata) -> Unit,
 ) {
+    val textColor = MaterialTheme.colorScheme.outline
     val textStyle = MaterialTheme.typography.bodySmall.copy(
-        color = MaterialTheme.colorScheme.outline,
+        color = textColor,
     )
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text(
-            modifier = Modifier,
-            text = "${time.formatDate()} • ${time.formatTime()}",
-            style = textStyle,
-        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                modifier = Modifier,
+                text = "${time.formatDate()} • ${time.formatTime()}",
+                style = textStyle,
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .clickable {
+                        onMetadataClicked(PostMetadata.Gate(postUri))
+                    },
+            ) {
+                Icon(
+                    modifier = Modifier.size(16.dp),
+                    imageVector = replyStatus.icon,
+                    contentDescription = null,
+                    tint = textColor,
+                )
+                Text(
+                    modifier = Modifier,
+                    text = stringResource(replyStatus.stringRes),
+                    style = textStyle,
+                )
+            }
+        }
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -83,19 +124,19 @@ internal fun PostMetadata(
                             onClick = {
                                 onMetadataClicked(
                                     when (metadataText) {
-                                        PostMetadataText.Likes -> Post.Metadata.Likes(
+                                        PostMetadataText.Likes -> PostMetadata.Likes(
                                             profileId = profileId,
-                                            postRecordKey = postRecordKey,
+                                            postRecordKey = postUri.recordKey,
                                         )
 
-                                        PostMetadataText.Quotes -> Post.Metadata.Quotes(
+                                        PostMetadataText.Quotes -> PostMetadata.Quotes(
                                             profileId = profileId,
-                                            postRecordKey = postRecordKey,
+                                            postRecordKey = postUri.recordKey,
                                         )
 
-                                        PostMetadataText.Reposts -> Post.Metadata.Reposts(
+                                        PostMetadataText.Reposts -> PostMetadata.Reposts(
                                             profileId = profileId,
-                                            postRecordKey = postRecordKey,
+                                            postRecordKey = postUri.recordKey,
                                         )
                                     },
                                 )
@@ -141,6 +182,48 @@ internal fun MetadataText(
             style = textStyle,
         )
     }
+}
+
+internal enum class PostReplyStatus {
+    All,
+    Some,
+    None,
+}
+
+private val PostReplyStatus.stringRes
+    get() = when (this) {
+        PostReplyStatus.All -> Res.string.post_replies_all
+        PostReplyStatus.Some -> Res.string.post_replies_some
+        PostReplyStatus.None -> Res.string.post_replies_none
+    }
+
+private val PostReplyStatus.icon
+    get() = when (this) {
+        PostReplyStatus.All -> Icons.Rounded.Public
+        PostReplyStatus.Some -> Icons.Rounded.Groups
+        PostReplyStatus.None -> Icons.Rounded.Block
+    }
+
+sealed class PostMetadata {
+
+    data class Likes(
+        val profileId: ProfileId,
+        val postRecordKey: RecordKey,
+    ) : PostMetadata()
+
+    data class Reposts(
+        val profileId: ProfileId,
+        val postRecordKey: RecordKey,
+    ) : PostMetadata()
+
+    data class Quotes(
+        val profileId: ProfileId,
+        val postRecordKey: RecordKey,
+    ) : PostMetadata()
+
+    data class Gate(
+        val postUri: PostUri,
+    ) : PostMetadata()
 }
 
 private sealed class PostMetadataText {

@@ -21,7 +21,6 @@ import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.ThreadGateUri
 import com.tunjid.heron.data.core.utilities.File
 import kotlinx.datetime.Instant
@@ -215,27 +214,6 @@ data class Post(
                 val allowedListUris: List<ListUri>,
             ) : Upsert()
         }
-    }
-
-    @Serializable
-    sealed class Metadata {
-        @Serializable
-        data class Likes(
-            val profileId: ProfileId,
-            val postRecordKey: RecordKey,
-        ) : Metadata()
-
-        @Serializable
-        data class Reposts(
-            val profileId: ProfileId,
-            val postRecordKey: RecordKey,
-        ) : Metadata()
-
-        @Serializable
-        data class Quotes(
-            val profileId: ProfileId,
-            val postRecordKey: RecordKey,
-        ) : Metadata()
     }
 }
 
