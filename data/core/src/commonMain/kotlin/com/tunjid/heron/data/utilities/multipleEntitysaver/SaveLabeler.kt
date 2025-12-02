@@ -30,7 +30,7 @@ internal fun MultipleEntitySaver.add(
         profileView = creator,
     )
 
-    labelValueDefinitions.forEach { def ->
+    labelValueDefinitions?.forEach { def ->
         add(
             creatorId = creatorId,
             labelValueDefinition = def,

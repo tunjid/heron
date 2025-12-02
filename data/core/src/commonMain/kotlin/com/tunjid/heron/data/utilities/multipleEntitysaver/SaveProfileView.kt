@@ -32,7 +32,7 @@ internal fun MultipleEntitySaver.add(
     profileView: ProfileViewBasic,
 ) {
     add(profileView.profileEntity())
-    profileView.labels.forEach(::add)
+    profileView.labels?.forEach(::add)
 
     if (viewingProfileId != null) profileView.profileViewerStateEntities(
         viewingProfileId = viewingProfileId,

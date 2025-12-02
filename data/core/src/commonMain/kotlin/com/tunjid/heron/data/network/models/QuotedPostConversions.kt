@@ -129,7 +129,7 @@ private fun RecordViewRecordUnion.embedEntities() =
         -> emptyList()
 
         is RecordViewRecordUnion.ViewRecord ->
-            value.embeds.map<RecordViewRecordEmbedUnion, List<PostEmbed>> { innerRecord ->
+            value.embeds?.map<RecordViewRecordEmbedUnion, List<PostEmbed>> { innerRecord ->
                 when (innerRecord) {
                     is RecordViewRecordEmbedUnion.ExternalView -> listOf(
                         ExternalEmbedEntity(
@@ -164,7 +164,7 @@ private fun RecordViewRecordUnion.embedEntities() =
                         ),
                     )
                 }
-            }
+            } ?: emptyList()
     }.flatten()
 
 private fun RecordViewRecordUnion.postEntity() =

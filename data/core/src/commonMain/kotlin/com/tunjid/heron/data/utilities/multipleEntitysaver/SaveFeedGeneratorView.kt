@@ -29,7 +29,7 @@ internal fun MultipleEntitySaver.add(
     feedGeneratorView: GeneratorView,
 ) {
     feedGeneratorView.creator.profileEntity().let(::add)
-    feedGeneratorView.labels.forEach(::add)
+    feedGeneratorView.labels?.forEach(::add)
     add(
         FeedGeneratorEntity(
             cid = feedGeneratorView.cid.cid.let(::FeedGeneratorId),

@@ -35,14 +35,14 @@ internal fun MultipleEntitySaver.add(
         return
     }
     starterPack.creator.profileEntity().let(::add)
-    starterPack.feeds.forEach(::add)
-    starterPack.labels.forEach(::add)
+    starterPack.feeds?.forEach(::add)
+    starterPack.labels?.forEach(::add)
     starterPack.list?.let { listView ->
         add(
             listView = listView,
             creator = starterPack.creator::profileEntity,
         )
-        starterPack.listItemsSample.forEach { listItemView ->
+        starterPack.listItemsSample?.forEach { listItemView ->
             add(
                 listUri = listView.uri.atUri.let(::ListUri),
                 listItemView = listItemView,

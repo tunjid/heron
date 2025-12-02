@@ -34,7 +34,7 @@ internal fun MultipleEntitySaver.add(
     postView: PostView,
 ) {
     val postEntity = postView.postEntity().also(::add)
-    postView.labels.forEach(::add)
+    postView.labels?.forEach(::add)
 
     add(
         viewingProfileId = viewingProfileId,

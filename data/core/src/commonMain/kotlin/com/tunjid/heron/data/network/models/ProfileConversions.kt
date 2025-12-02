@@ -183,7 +183,7 @@ internal fun ProfileViewBasic.profile() = Profile(
         createdFeedGeneratorCount = associated?.feedgens ?: 0,
         createdStarterPackCount = associated?.starterPacks ?: 0,
     ),
-    labels = labels.map(com.atproto.label.Label::asExternalModel),
+    labels = labels?.map(com.atproto.label.Label::asExternalModel) ?: emptyList(),
     isLabeler = associated?.labeler ?: false,
 )
 
@@ -205,7 +205,7 @@ internal fun ProfileView.profile() = Profile(
         createdFeedGeneratorCount = associated?.feedgens ?: 0,
         createdStarterPackCount = associated?.starterPacks ?: 0,
     ),
-    labels = labels.map(com.atproto.label.Label::asExternalModel),
+    labels = labels?.map(com.atproto.label.Label::asExternalModel) ?: emptyList(),
     isLabeler = associated?.labeler ?: false,
 )
 

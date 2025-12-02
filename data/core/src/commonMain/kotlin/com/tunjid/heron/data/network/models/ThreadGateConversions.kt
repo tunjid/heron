@@ -30,23 +30,30 @@ import sh.christian.ozone.api.AtUri
 fun Post.Interaction.Upsert.Gate.toNetworkRecord() = BskyThreadGate(
     createdAt = Clock.System.now(),
     post = postUri.uri.let(::AtUri),
-    allow = buildList {
-        if (allowsFollowers) add(
-            ThreadgateAllowUnion.FollowerRule(ThreadgateFollowerRule),
-        )
-        if (allowsFollowing) add(
-            ThreadgateAllowUnion.FollowingRule(ThreadgateFollowingRule),
-        )
-        if (allowsMentioned) add(
-            ThreadgateAllowUnion.MentionRule(ThreadgateMentionRule),
-        )
-        addAll(
-            allowedListUris.map {
-                ThreadgateAllowUnion.ListRule(
-                    ThreadgateListRule(it.uri.let(::AtUri)),
-                )
-            },
-        )
+    allow = when {
+        // Everyone can reply
+        allowedListUris.isEmpty() &&
+            allowsFollowers &&
+            allowsFollowing &&
+            allowsMentioned -> null
+        else -> buildList {
+            if (allowsFollowers) add(
+                ThreadgateAllowUnion.FollowerRule(ThreadgateFollowerRule),
+            )
+            if (allowsFollowing) add(
+                ThreadgateAllowUnion.FollowingRule(ThreadgateFollowingRule),
+            )
+            if (allowsMentioned) add(
+                ThreadgateAllowUnion.MentionRule(ThreadgateMentionRule),
+            )
+            addAll(
+                allowedListUris.map {
+                    ThreadgateAllowUnion.ListRule(
+                        ThreadgateListRule(it.uri.let(::AtUri)),
+                    )
+                },
+            )
+        }
     },
     hiddenReplies = emptyList(),
 )
