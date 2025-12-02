@@ -62,8 +62,8 @@ internal fun MultipleEntitySaver.add(
 
     threadViewPost.replies
         // TODO: Handle blocks and deletions
-        .filterIsInstance<ThreadViewPostReplieUnion.ThreadViewPost>()
-        .forEach {
+        ?.filterIsInstance<ThreadViewPostReplieUnion.ThreadViewPost>()
+        ?.forEach {
             addThreadReply(
                 viewingProfileId = viewingProfileId,
                 parent = threadViewPost,
@@ -89,8 +89,8 @@ private fun MultipleEntitySaver.addThreadParent(
     )
     parentPost.replies
         // TODO: Deal with deleted, blocked or removed posts
-        .filterIsInstance<ThreadViewPostReplieUnion.ThreadViewPost>()
-        .forEach {
+        ?.filterIsInstance<ThreadViewPostReplieUnion.ThreadViewPost>()
+        ?.forEach {
             addThreadReply(
                 viewingProfileId = viewingProfileId,
                 parent = parentPost,
@@ -116,8 +116,8 @@ private fun MultipleEntitySaver.addThreadReply(
     )
     reply.replies
         // TODO: Deal with deleted, blocked or removed posts
-        .filterIsInstance<ThreadViewPostReplieUnion.ThreadViewPost>()
-        .forEach {
+        ?.filterIsInstance<ThreadViewPostReplieUnion.ThreadViewPost>()
+        ?.forEach {
             addThreadReply(
                 viewingProfileId = viewingProfileId,
                 parent = reply,

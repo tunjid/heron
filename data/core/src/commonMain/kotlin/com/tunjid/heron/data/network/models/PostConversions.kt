@@ -122,7 +122,7 @@ internal fun PostView.post(
                 viewingProfileId = viewingProfileId,
             ),
         quote = quotedPost,
-        labels = labels.map(com.atproto.label.Label::asExternalModel),
+        labels = labels?.map(com.atproto.label.Label::asExternalModel) ?: emptyList(),
         embeddedRecord = embeddedRecord,
     )
 }
@@ -320,7 +320,7 @@ private fun BskyPost.toPostRecord() =
     Post.Record(
         text = text,
         createdAt = createdAt,
-        links = facets.mapNotNull(Facet::toLinkOrNull),
+        links = facets?.mapNotNull(Facet::toLinkOrNull) ?: emptyList(),
         replyRef = reply?.let {
             Post.ReplyRef(
                 rootCid = it.root.cid.cid.let(::PostId),
@@ -372,7 +372,7 @@ private fun StarterPackViewBasic.asExternalModel(): StarterPack {
         joinedWeekCount = joinedWeekCount,
         joinedAllTimeCount = joinedAllTimeCount,
         indexedAt = indexedAt,
-        labels = labels.map(com.atproto.label.Label::asExternalModel),
+        labels = labels?.map(com.atproto.label.Label::asExternalModel) ?: emptyList(),
     )
 }
 
@@ -386,7 +386,7 @@ private fun ListView.asExternalModel() = FeedList(
     listItemCount = listItemCount,
     purpose = purpose.toString(),
     indexedAt = indexedAt,
-    labels = labels.map(com.atproto.label.Label::asExternalModel),
+    labels = labels?.map(com.atproto.label.Label::asExternalModel) ?: emptyList(),
 )
 
 private fun GeneratorView.asExternalModel() = FeedGenerator(
@@ -401,7 +401,7 @@ private fun GeneratorView.asExternalModel() = FeedGenerator(
     contentMode = contentMode,
     acceptsInteractions = acceptsInteractions,
     indexedAt = indexedAt,
-    labels = labels.map(com.atproto.label.Label::asExternalModel),
+    labels = labels?.map(com.atproto.label.Label::asExternalModel) ?: emptyList(),
 )
 
 private fun LabelerView.asExternalModel() = Labeler(
@@ -410,7 +410,7 @@ private fun LabelerView.asExternalModel() = Labeler(
     creator = creator.profileEntity().asExternalModel(),
     likeCount = likeCount,
     definitions = emptyList(),
-    values = labels.map { it.asExternalModel().value },
+    values = labels?.map { it.asExternalModel().value } ?: emptyList(),
 )
 
 private fun Long?.orZero() = this ?: 0L

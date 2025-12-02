@@ -64,7 +64,7 @@ internal fun MultipleEntitySaver.add(
             base64EncodedMetadata = messageView.metadata().toUrlEncodedBase64(),
         ),
     )
-    messageView.reactions.forEach { reactionView ->
+    messageView.reactions?.forEach { reactionView ->
         add(
             MessageReactionEntity(
                 value = reactionView.value,
@@ -141,7 +141,7 @@ private fun MultipleEntitySaver.add(
     messageId: MessageId,
     record: RecordViewRecordUnion.ViewRecord,
 ) {
-    record.value.embeds.forEach { embed ->
+    record.value.embeds?.forEach { embed ->
         val postView = PostView(
             uri = record.value.uri,
             cid = record.value.cid,
@@ -205,5 +205,5 @@ internal fun MultipleEntitySaver.add(
 
 private fun MessageView.metadata(): Message.Metadata =
     Message.Metadata(
-        links = facets.mapNotNull(Facet::toLinkOrNull),
+        links = facets?.mapNotNull(Facet::toLinkOrNull) ?: emptyList(),
     )

@@ -32,7 +32,7 @@ internal fun MultipleEntitySaver.add(
     listView: ListView,
 ) {
     listView.creator.profileEntity().let(::add)
-    listView.labels.forEach(::add)
+    listView.labels?.forEach(::add)
     add(
         ListEntity(
             cid = listView.cid.cid.let(::ListId),

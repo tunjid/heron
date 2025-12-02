@@ -41,7 +41,7 @@ internal fun MultipleEntitySaver.add(
     val threadGate = threadGateView.record?.safeDecodeAs<Threadgate>() ?: return
     val gatedPostUri = threadGate.post.atUri.let(::PostUri)
 
-    threadGateView.lists.forEach { listViewBasic ->
+    threadGateView.lists?.forEach { listViewBasic ->
         val allowedListUri = listViewBasic.uri.atUri.let(::ListUri)
         add(
             listView = listViewBasic,
@@ -64,10 +64,17 @@ internal fun MultipleEntitySaver.add(
             uri = threadGateUri,
             gatedPostUri = gatedPostUri,
             createdAt = threadGate.createdAt,
-            allowed = when {
-                threadGate.allow.isEmpty() -> null
+            allowed = when (val allow = threadGate.allow) {
+                // All can reply
+                null -> null
+                // None can reply
+                emptyList<ThreadgateAllowUnion>() -> ThreadGateEntity.Allowed(
+                    allowsFollowing = false,
+                    allowsFollowers = false,
+                    allowsMentioned = false,
+                )
                 else ->
-                    threadGate.allow
+                    allow
                         .groupBy { it::class }
                         .let { grouped ->
                             // ThreadgateAllowUnion.ListRule is handled with the list views above
@@ -81,7 +88,7 @@ internal fun MultipleEntitySaver.add(
         ),
     )
 
-    threadGate.hiddenReplies.forEach { hiddenPostAtUri ->
+    threadGate.hiddenReplies?.forEach { hiddenPostAtUri ->
         val hiddenPostUri = PostUri(hiddenPostAtUri.atUri)
         val hiddenPostAuthorId = hiddenPostUri.profileId()
         add(
