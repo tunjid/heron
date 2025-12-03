@@ -22,7 +22,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.time.Instant
-import kotlinx.datetime.toJavaInstant
+import kotlin.time.toJavaInstant
 
 @Composable
 actual fun Instant.formatDate(): String {
