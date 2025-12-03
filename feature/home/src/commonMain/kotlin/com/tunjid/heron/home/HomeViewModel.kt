@@ -47,7 +47,7 @@ import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.AssistedInject
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -69,7 +69,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualHomeViewModel
 }
 
-@Inject
+@AssistedInject
 class ActualHomeViewModel(
     authRepository: AuthRepository,
     messageRepository: MessageRepository,

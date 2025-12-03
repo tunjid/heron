@@ -45,7 +45,7 @@ import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.AssistedInject
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
@@ -69,7 +69,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualFeedViewModel
 }
 
-@Inject
+@AssistedInject
 class ActualFeedViewModel(
     navActions: (NavigationMutation) -> Unit,
     writeQueue: WriteQueue,

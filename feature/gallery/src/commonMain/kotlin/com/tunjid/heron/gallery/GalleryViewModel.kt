@@ -44,7 +44,7 @@ import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -63,7 +63,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualGalleryViewModel
 }
 
-@Inject
+@AssistedInject
 class ActualGalleryViewModel(
     navActions: (NavigationMutation) -> Unit,
     authRepository: AuthRepository,
