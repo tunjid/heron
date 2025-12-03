@@ -243,7 +243,7 @@ private fun ThreadGateBottomSheet(
             }
 
             // Quote Posts Toggle
-            /** Comment out for now, out of scope
+            /* Comment out for now, out of scope
              Row(
              modifier = Modifier
              .fillMaxWidth()
