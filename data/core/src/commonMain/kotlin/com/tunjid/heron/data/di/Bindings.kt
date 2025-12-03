@@ -73,6 +73,7 @@ import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import dev.jordond.connectivity.Connectivity
 import dev.whyoleg.cryptography.CryptographyProvider
 import dev.whyoleg.cryptography.CryptographyProviderApi
+import dev.whyoleg.cryptography.CryptographySystem
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Named
@@ -171,7 +172,7 @@ class DataBindings(
     @Provides
     internal fun provideCryptographyProvider(): CryptographyProvider =
         platformCryptographyProvider()
-            .also(CryptographyProvider.Registry::registerProvider)
+            .also { CryptographySystem.registerProvider(lazyOf(it), 0) }
 
     @SingleIn(AppScope::class)
     @Provides

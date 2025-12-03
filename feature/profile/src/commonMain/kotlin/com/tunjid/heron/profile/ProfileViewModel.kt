@@ -69,7 +69,7 @@ import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.routeString
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.AssistedInject
 import heron.feature.profile.generated.resources.Res
 import heron.feature.profile.generated.resources.feeds
 import heron.feature.profile.generated.resources.lists
@@ -98,7 +98,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualProfileViewModel
 }
 
-@Inject
+@AssistedInject
 class ActualProfileViewModel(
     authRepository: AuthRepository,
     recordRepository: RecordRepository,

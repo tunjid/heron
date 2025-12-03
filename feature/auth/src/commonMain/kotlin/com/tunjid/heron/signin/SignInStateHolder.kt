@@ -42,7 +42,7 @@ import com.tunjid.mutator.mutationOf
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.AssistedInject
 import heron.feature.auth.generated.resources.Res
 import heron.feature.auth.generated.resources.oauth_flow_failed
 import heron.feature.auth.generated.resources.oauth_start_error
@@ -65,7 +65,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualSignInViewModel
 }
 
-@Inject
+@AssistedInject
 class ActualSignInViewModel(
     authRepository: AuthRepository,
     navActions: (NavigationMutation) -> Unit,

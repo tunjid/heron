@@ -61,7 +61,7 @@ import com.tunjid.tiler.tiledListOf
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.AssistedInject
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -84,7 +84,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
     ): ActualConversationViewModel
 }
 
-@Inject
+@AssistedInject
 class ActualConversationViewModel(
     authRepository: AuthRepository,
     recordRepository: RecordRepository,
