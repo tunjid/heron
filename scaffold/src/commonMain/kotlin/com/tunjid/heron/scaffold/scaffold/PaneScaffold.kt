@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.scaffold.scaffold
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.gestures.Orientation
@@ -129,7 +128,6 @@ fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(): PaneScaffoldState {
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun PaneScaffoldState.PaneScaffold(
     modifier: Modifier = Modifier,
@@ -159,9 +157,11 @@ fun PaneScaffoldState.PaneScaffold(
                 modifier = if (splitPaneState.paneAnchorState.hasInteractions) Modifier
                 else when (dismissBehavior) {
                     AppState.DismissBehavior.None,
-                    AppState.DismissBehavior.Gesture.Drag,
+                    AppState.DismissBehavior.Gesture.DragToPop,
                     -> Modifier.animateBounds(lookaheadScope = this)
-                    AppState.DismissBehavior.Gesture.Slide -> Modifier
+                    AppState.DismissBehavior.Gesture.SlideToPop,
+                    AppState.DismissBehavior.Gesture.ScaleToPop,
+                    -> Modifier
                 }
                     .padding(
                         horizontal = if (hasSiblings) 8.dp else 0.dp,

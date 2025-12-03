@@ -283,7 +283,7 @@ fun PaneScaffoldState.SecondaryPaneCloseBackHandler() {
         derivedStateOf {
             paneState.pane == ThreePane.Primary &&
                 splitPaneState.filteredPaneOrder.size > 1 &&
-                appState.dismissBehavior != AppState.DismissBehavior.Gesture.Drag &&
+                appState.dismissBehavior != AppState.DismissBehavior.Gesture.DragToPop &&
                 // Only enable if going back to a single pane layout
                 appState.navigation.pop().current?.children?.isEmpty() ?: false
         }
@@ -319,7 +319,7 @@ fun PaneScaffoldState.SecondaryPaneCloseBackHandler() {
                 when (state) {
                     NavigationEventTransitionState.Idle -> wasIdle = true
                     is NavigationEventTransitionState.InProgress -> if (currentlyEnabled.value) {
-                        check(appState.dismissBehavior != AppState.DismissBehavior.Gesture.Drag) {
+                        check(appState.dismissBehavior != AppState.DismissBehavior.Gesture.DragToPop) {
                             "The secondary pane close back handler should not run when dragging to dismiss"
                         }
                         if (wasIdle) {

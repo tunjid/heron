@@ -39,7 +39,7 @@ fun Modifier.predictiveBackPlacement(
     val shouldDrawBackground = paneState.pane == ThreePane.Primary &&
         inPredictiveBack &&
         isActive &&
-        appState.dismissBehavior != AppState.DismissBehavior.Gesture.Drag
+        appState.dismissBehavior != AppState.DismissBehavior.Gesture.DragToPop
 
     val clipRadius by animateDpAsState(
         if (shouldDrawBackground) 16.dp
