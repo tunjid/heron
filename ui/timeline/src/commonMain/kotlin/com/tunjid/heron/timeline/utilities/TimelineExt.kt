@@ -237,7 +237,6 @@ fun LazyStaggeredGridState.pendingOffsetFor(
     .first { it.key == item.id }
     .offset
     .y
-    .toFloat()
 
 val TimelineItem.canAutoPlayVideo: Boolean
     get() = appliedLabels.canAutoPlayVideo

@@ -33,7 +33,7 @@ import com.tunjid.heron.data.database.entities.messageembeds.MessageFeedGenerato
 import com.tunjid.heron.data.database.entities.messageembeds.MessageListEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessagePostEntity
 import com.tunjid.heron.data.database.entities.messageembeds.MessageStarterPackEntity
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 @Entity(
     tableName = "messages",

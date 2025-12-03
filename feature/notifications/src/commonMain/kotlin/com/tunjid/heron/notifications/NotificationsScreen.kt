@@ -74,8 +74,8 @@ import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.tiler.compose.PivotedTilingEffect
+import kotlin.time.Clock
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.datetime.Clock
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable

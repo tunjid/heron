@@ -36,7 +36,7 @@ import heron.feature.notifications.generated.resources.Res
 import heron.feature.notifications.generated.resources.joined_from_your_started_pack_description
 import heron.feature.notifications.generated.resources.joined_from_your_starter_pack
 import heron.feature.notifications.generated.resources.multiple_joined_from_your_starter_pack
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

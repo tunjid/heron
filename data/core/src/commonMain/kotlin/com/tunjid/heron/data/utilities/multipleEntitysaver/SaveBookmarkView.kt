@@ -5,7 +5,7 @@ import app.bsky.bookmark.BookmarkViewItemUnion
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.BookmarkEntity
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 
 internal fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId,

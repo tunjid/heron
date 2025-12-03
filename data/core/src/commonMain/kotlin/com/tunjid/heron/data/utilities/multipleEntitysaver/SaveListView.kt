@@ -26,7 +26,7 @@ import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.utilities.tidInstant
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 internal fun MultipleEntitySaver.add(
     listView: ListView,

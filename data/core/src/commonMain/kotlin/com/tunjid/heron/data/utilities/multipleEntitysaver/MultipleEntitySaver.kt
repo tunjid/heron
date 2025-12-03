@@ -71,7 +71,7 @@ import com.tunjid.heron.data.utilities.Collections.isStubbedId
 import com.tunjid.heron.data.utilities.LazyList
 import com.tunjid.heron.data.utilities.triage
 import dev.zacsweers.metro.Inject
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 class MultipleEntitySaverProvider @Inject constructor(
     private val postDao: PostDao,

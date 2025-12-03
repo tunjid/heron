@@ -21,7 +21,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import com.tunjid.heron.data.core.types.MessageId
 import com.tunjid.heron.data.core.types.ProfileId
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 @Entity(
     tableName = "messageReactions",

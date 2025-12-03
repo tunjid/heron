@@ -31,7 +31,7 @@ import com.tunjid.heron.timeline.ui.TimeDelta
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable

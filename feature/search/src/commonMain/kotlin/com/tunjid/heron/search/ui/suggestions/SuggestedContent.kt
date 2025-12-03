@@ -79,8 +79,8 @@ import heron.feature.search.generated.resources.starter_packs
 import heron.feature.search.generated.resources.suggested_accounts
 import heron.feature.search.generated.resources.trend_started
 import heron.feature.search.generated.resources.trending_title
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Clock
+import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

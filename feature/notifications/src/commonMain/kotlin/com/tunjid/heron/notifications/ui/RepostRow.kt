@@ -43,7 +43,7 @@ import heron.feature.notifications.generated.resources.reposted_your_post
 import heron.feature.notifications.generated.resources.reposted_your_post_description
 import heron.feature.notifications.generated.resources.reposted_your_repost
 import heron.feature.notifications.generated.resources.reposted_your_repost_description
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

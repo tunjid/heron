@@ -62,18 +62,5 @@ fun org.gradle.api.Project.configureUiModule(
                 api(libs.tunjid.treenav.strings)
             }
         }
-        named("androidMain") {
-            dependencies {
-            }
-        }
-        named("desktopMain") {
-            dependencies {
-            }
-        }
-//        named("commonTest") {
-//            dependencies {
-//                implementation(kotlin("test"))
-//            }
-//        }
     }
 }

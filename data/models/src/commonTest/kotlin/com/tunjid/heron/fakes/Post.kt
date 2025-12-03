@@ -3,7 +3,7 @@ package com.tunjid.heron.fakes
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 fun samplePost(): Post {
     return Post(

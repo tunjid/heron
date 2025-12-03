@@ -43,7 +43,7 @@ import heron.feature.notifications.generated.resources.liked_your_repost
 import heron.feature.notifications.generated.resources.liked_your_repost_description
 import heron.feature.notifications.generated.resources.multiple_liked_your_post
 import heron.feature.notifications.generated.resources.multiple_liked_your_repost
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

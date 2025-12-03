@@ -46,9 +46,9 @@ import io.ktor.http.buildUrl
 import io.ktor.http.isSuccess
 import io.ktor.http.takeFrom
 import kotlin.random.Random
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.coroutineScope
-import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive

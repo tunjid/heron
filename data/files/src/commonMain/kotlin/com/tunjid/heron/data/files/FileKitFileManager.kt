@@ -33,7 +33,7 @@ import io.github.vinceglb.filekit.readBytes
 import io.github.vinceglb.filekit.size
 import io.github.vinceglb.filekit.source
 import io.github.vinceglb.filekit.write
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.io.IOException
 import kotlinx.io.Source
 import kotlinx.io.buffered

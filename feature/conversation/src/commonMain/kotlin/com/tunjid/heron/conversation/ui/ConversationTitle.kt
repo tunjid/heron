@@ -45,8 +45,8 @@ import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableSharedElementOf
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableSharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableStickySharedElementOf
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -93,7 +93,7 @@ private fun MultipleParticipantTitle(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         participants.forEachIndexed { index, participant ->
-            updatedMovableSharedElementOf(
+            UpdatedMovableSharedElementOf(
                 sharedContentState = rememberSharedContentState(
                     key = participant.conversationSharedElementKey(conversationId),
                 ),
@@ -140,7 +140,7 @@ private fun SingleMemberTitle(
         modifier = Modifier
             .clickable { onProfileClicked(profile) },
         avatar = {
-            updatedMovableStickySharedElementOf(
+            UpdatedMovableStickySharedElementOf(
                 modifier = Modifier
                     .size(UiTokens.avatarSize)
                     .clickable { onProfileClicked(profile) },

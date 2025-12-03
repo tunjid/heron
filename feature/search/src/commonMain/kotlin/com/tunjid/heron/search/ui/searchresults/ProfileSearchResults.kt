@@ -51,7 +51,7 @@ import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.updatedMovableStickySharedElementOf
+import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableStickySharedElementOf
 
 @Composable
 internal fun AutoCompleteProfileSearchResults(
@@ -150,7 +150,7 @@ private fun ProfileSearchResult(
                 )
             },
         avatar = {
-            updatedMovableStickySharedElementOf(
+            UpdatedMovableStickySharedElementOf(
                 modifier = Modifier
                     .size(UiTokens.avatarSize)
                     .clickable {

@@ -38,7 +38,7 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.PostStatistics
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 @Composable
 fun FeedThreadItem(

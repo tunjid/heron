@@ -34,6 +34,8 @@ import com.tunjid.tiler.toTiledList
 import com.tunjid.tiler.utilities.NeighboredFetchResult
 import com.tunjid.tiler.utilities.neighboredQueryFetcher
 import kotlin.math.max
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -43,8 +45,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.update
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 

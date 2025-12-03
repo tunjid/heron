@@ -60,6 +60,10 @@ kotlin {
         androidMain {
             dependencies {
                 implementation(libs.ktor.client.android)
+                api(libs.compose.android.animation)
+                api(libs.compose.android.foundation.foundation)
+                api(libs.compose.android.foundation.layout)
+                api(libs.compose.android.ui.ui)
             }
         }
         desktopMain {

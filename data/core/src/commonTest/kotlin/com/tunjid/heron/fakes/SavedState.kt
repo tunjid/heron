@@ -7,7 +7,7 @@ import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.SavedState
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 fun sampleProfileData() = SavedState.ProfileData(
     preferences = samplePreferences(),

@@ -37,6 +37,7 @@ fun Project.configureKotlinMultiplatform(
                     optIn("androidx.compose.material3.ExperimentalMaterial3Api")
                     optIn("androidx.compose.material.ExperimentalMaterialApi")
                     optIn("androidx.compose.ui.ExperimentalComposeUiApi")
+                    optIn("kotlin.time.ExperimentalTime")
                     optIn("kotlinx.serialization.ExperimentalSerializationApi")
                     optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
                     optIn("kotlinx.coroutines.FlowPreview")

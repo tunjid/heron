@@ -42,8 +42,6 @@ kotlin {
                 implementation(project(":ui:core"))
                 implementation(project(":ui:media"))
 
-                implementation(libs.androidx.navigation.event)
-
                 implementation(libs.compose.multiplatform.animation)
                 implementation(libs.compose.multiplatform.components.resources)
                 implementation(libs.compose.multiplatform.foundation.foundation)
@@ -59,6 +57,12 @@ kotlin {
                 implementation(libs.kotlinx.serialization.cbor)
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.kotlinx.serialization.protobuf)
+
+                implementation(libs.lifecycle.multiplatform.viewmodel.navigation3)
+
+                implementation(libs.navigation.event)
+                implementation(libs.navigation.event.compose)
+                implementation(libs.navigation3.runtime)
 
                 implementation(libs.okio)
 

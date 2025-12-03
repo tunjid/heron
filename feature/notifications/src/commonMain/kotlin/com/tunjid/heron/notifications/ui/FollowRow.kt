@@ -36,7 +36,7 @@ import heron.feature.notifications.generated.resources.Res
 import heron.feature.notifications.generated.resources.followed_you
 import heron.feature.notifications.generated.resources.followed_you_description
 import heron.feature.notifications.generated.resources.multiple_followed
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

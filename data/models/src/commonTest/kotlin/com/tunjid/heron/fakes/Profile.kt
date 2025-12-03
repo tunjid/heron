@@ -3,7 +3,7 @@ package com.tunjid.heron.fakes
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 fun sampleProfile(): Profile {
     return Profile(

@@ -53,7 +53,7 @@ import com.tunjid.heron.timeline.ui.list.StarterPack
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 
 @Composable
 fun EmbeddedRecord(

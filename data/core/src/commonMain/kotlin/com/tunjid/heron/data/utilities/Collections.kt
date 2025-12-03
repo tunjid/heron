@@ -22,7 +22,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.recordKeyOrNull
 import com.tunjid.heron.data.network.BlueskyJson
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.serialization.KSerializer
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.RKey

@@ -18,7 +18,7 @@ package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.GenericUri
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
 private typealias ExportedPost = Post
