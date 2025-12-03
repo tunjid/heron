@@ -30,7 +30,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -71,6 +70,7 @@ import com.tunjid.treenav.strings.toRouteTrie
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 @Stable
@@ -183,22 +183,22 @@ class AppState(
             .navigationEventDispatcher
 
         LaunchedEffect(navigationEventDispatcher) {
-            navigationEventDispatcher
-                .transitionState
-                .collectLatest { state ->
-                    when (state) {
-                        NavigationEventTransitionState.Idle -> DismissBehavior.None
-                        is NavigationEventTransitionState.InProgress -> {
-                            val history = navigationEventDispatcher.history.value
-                            val info = history.mergedHistory.getOrNull(history.currentIndex)
-                            when {
-                                info is SecondaryPaneCloseNavigationEventInfo -> DismissBehavior.Gesture.Slide
-                                state.direction == NavigationEvent.EDGE_NONE -> DismissBehavior.Gesture.Drag
-                                else -> DismissBehavior.None
-                            }
-                        }
+            combine(
+                navigationEventDispatcher.transitionState,
+                navigationEventDispatcher.history,
+            ) { transitionState, navigationEventHistory ->
+                val navigationEventInfo = navigationEventHistory.mergedHistory
+                    .getOrNull(navigationEventHistory.currentIndex)
+                when (transitionState) {
+                    NavigationEventTransitionState.Idle -> DismissBehavior.None
+                    is NavigationEventTransitionState.InProgress -> when {
+                        navigationEventInfo is SecondaryPaneCloseNavigationEventInfo -> DismissBehavior.Gesture.SlideToPop
+                        transitionState.latestEvent.swipeEdge == NavigationEvent.EDGE_NONE -> DismissBehavior.Gesture.DragToPop
+                        else -> DismissBehavior.Gesture.ScaleToPop
                     }
                 }
+            }
+                .collectLatest(::dismissBehavior::set)
         }
 
         return displayState
@@ -244,8 +244,9 @@ class AppState(
     sealed class DismissBehavior {
         data object None : DismissBehavior()
         sealed class Gesture : DismissBehavior() {
-            data object Drag : Gesture()
-            data object Slide : Gesture()
+            data object DragToPop : Gesture()
+            data object SlideToPop : Gesture()
+            data object ScaleToPop : Gesture()
         }
     }
 }
