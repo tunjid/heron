@@ -50,9 +50,7 @@ data class Post(
     val quote: Post?,
     val record: Record?,
     val viewerStats: ViewerStats?,
-//    public val viewer: ViewerState? = null,
     val labels: List<Label>,
-//    public val threadgate: ThreadgateView? = null,
     val embeddedRecord: com.tunjid.heron.data.core.models.Record?,
 ) : UrlEncodableModel,
     Record {

@@ -193,7 +193,7 @@ internal class OfflineSearchRepository @Inject constructor(
                 signedInProfileId = signedInProfileId,
                 postUri = Post::uri,
                 associatedRecordUris = {
-                    listOf(it.reference.uri)
+                    listOfNotNull(it.embeddedRecord?.reference?.uri)
                 },
                 associatedProfileIds = {
                     emptyList()
@@ -204,6 +204,8 @@ internal class OfflineSearchRepository @Inject constructor(
                         post = post,
                         threadGate = threadGate(item.uri),
                         appliedLabels = appliedLabels,
+                        signedInProfileId = signedInProfileId,
+                        profileViewerState = viewerState(post.author.did),
                     )
                 },
             ).map {
