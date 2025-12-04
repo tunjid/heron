@@ -29,9 +29,6 @@ interface NotificationsDao {
     @Query(
         """
             SELECT * FROM notifications
-            LEFT JOIN profileViewerStates
-            ON notifications.authorId = profileViewerStates.otherProfileId
-            AND ownerId = profileViewerStates.profileId
             WHERE ownerId = :ownerId
             AND indexedAt < :before
             ORDER BY indexedAt
