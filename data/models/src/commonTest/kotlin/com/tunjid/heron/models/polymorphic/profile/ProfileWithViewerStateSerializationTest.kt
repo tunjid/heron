@@ -31,6 +31,11 @@ class ProfileWithViewerStateSerializationTest(
                 displayName = "Viewer User",
             ),
             viewerState = ProfileViewerState(
+                muted = false,
+                mutedByList = null,
+                blockedBy = false,
+                blocking = null,
+                blockingByList = null,
                 following = GenericUri("at://profile/following/1"),
                 followedBy = GenericUri("at://profile/followedby/2"),
                 commonFollowersCount = 60L,

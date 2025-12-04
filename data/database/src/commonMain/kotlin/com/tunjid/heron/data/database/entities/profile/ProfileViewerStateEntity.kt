@@ -75,6 +75,11 @@ internal fun ProfileViewerStateEntity.partial() =
 
 fun ProfileViewerStateEntity.asExternalModel() =
     ProfileViewerState(
+        muted = muted,
+        mutedByList = mutedByList,
+        blockedBy = blockedBy,
+        blocking = blocking,
+        blockingByList = blockingByList,
         following = following,
         followedBy = followedBy,
         commonFollowersCount = commonFollowersCount,
