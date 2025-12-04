@@ -362,7 +362,7 @@ sealed class TimelineItem {
         val anchorPostIndex: Int,
         val posts: List<Post>,
         val postUrisToThreadGates: Map<PostUri, ThreadGate?>,
-        val profileIdsToViewerStates: Map<PostUri, ProfileViewerState?>,
+        val postUrisToViewerStates: Map<PostUri, ProfileViewerState?>,
         val generation: Long?,
         val hasBreak: Boolean,
     ) : TimelineItem() {

@@ -49,7 +49,7 @@ data class State(
                 signedInProfileId = null,
                 profileViewerState = null,
                 postUrisToThreadGates = emptyMap(),
-                profileIdsToViewerStates = emptyMap(),
+                postUrisToViewerStates = emptyMap(),
                 appliedLabels = it.appliedLabels(
                     adultContentEnabled = false,
                     labelers = emptyList(),

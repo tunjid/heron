@@ -955,7 +955,7 @@ internal class OfflineTimelineRepository(
                                         put(replyParent.uri, threadGate(replyParent.uri))
                                         put(post.uri, threadGate(post.uri))
                                     },
-                                    profileIdsToViewerStates = buildMap {
+                                    postUrisToViewerStates = buildMap {
                                         put(replyRoot.uri, viewerState(replyRoot.author.did))
                                         put(replyParent.uri, viewerState(replyParent.author.did))
                                         put(post.uri, viewerState(post.author.did))
@@ -1160,7 +1160,7 @@ internal class OfflineTimelineRepository(
                 signedInProfileId = signedInProfileId,
                 profileViewerState = viewerState(post.author.did),
                 postUrisToThreadGates = mapOf(post.uri to threadGate(post.uri)),
-                profileIdsToViewerStates = mapOf(post.uri to viewerState(post.author.did)),
+                postUrisToViewerStates = mapOf(post.uri to viewerState(post.author.did)),
             )
             // For parents, edit the head
             thread.generation <= -1L -> if (lastItem is TimelineItem.Thread) {
@@ -1169,7 +1169,7 @@ internal class OfflineTimelineRepository(
                     lastItem.copy(
                         posts = lastItem.posts + post,
                         postUrisToThreadGates = lastItem.postUrisToThreadGates + (post.uri to threadGate(post.uri)),
-                        profileIdsToViewerStates = lastItem.profileIdsToViewerStates + (post.uri to viewerState(post.author.did)),
+                        postUrisToViewerStates = lastItem.postUrisToViewerStates + (post.uri to viewerState(post.author.did)),
                     ),
                 )
             } else Unit
@@ -1185,13 +1185,19 @@ internal class OfflineTimelineRepository(
                 signedInProfileId = signedInProfileId,
                 profileViewerState = viewerState(post.author.did),
                 postUrisToThreadGates = mapOf(post.uri to threadGate(post.uri)),
-                profileIdsToViewerStates = mapOf(post.uri to viewerState(post.author.did)),
+                postUrisToViewerStates = mapOf(post.uri to viewerState(post.author.did)),
             )
 
             // Just tack the post to the current thread
             lastItem is TimelineItem.Thread -> {
                 list.removeLast()
-                list.add(lastItem.copy(posts = lastItem.posts + post))
+                list.add(
+                    lastItem.copy(
+                        posts = lastItem.posts + post,
+                        postUrisToThreadGates = lastItem.postUrisToThreadGates + (post.uri to threadGate(post.uri)),
+                        postUrisToViewerStates = lastItem.postUrisToViewerStates + (post.uri to viewerState(post.author.did)),
+                    ),
+                )
             }
             else -> Unit
         }
