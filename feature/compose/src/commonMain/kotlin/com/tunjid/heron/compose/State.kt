@@ -20,7 +20,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import com.tunjid.heron.data.core.models.ContentLabelPreferences
-import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -45,7 +44,6 @@ data class State(
     val embeddedRecord: Record? = null,
     val adultContentEnabled: Boolean = false,
     val labelPreferences: ContentLabelPreferences,
-    val labelers: List<Labeler>,
     @Serializable(with = TextFieldValueSerializer::class)
     val postText: TextFieldValue = TextFieldValue(),
     @Transient
@@ -76,14 +74,12 @@ fun State(route: Route): State = when (val model = route.model) {
             ),
         ),
         sharedElementPrefix = route.sharedElementPrefix,
-        labelers = emptyList(),
         labelPreferences = emptyList(),
         postType = model,
     )
 
     else -> State(
         sharedElementPrefix = route.sharedElementPrefix,
-        labelers = emptyList(),
         labelPreferences = emptyList(),
     )
 }

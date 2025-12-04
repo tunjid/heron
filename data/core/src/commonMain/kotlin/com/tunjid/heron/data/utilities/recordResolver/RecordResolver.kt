@@ -80,7 +80,7 @@ import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 
 internal interface RecordResolver {
-    val labelers: Flow<List<Labeler>>
+    val subscribedLabelers: Flow<List<Labeler>>
 
     fun records(
         uris: Set<RecordUri>,
@@ -125,7 +125,7 @@ internal class OfflineRecordResolver @Inject constructor(
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
 ) : RecordResolver {
 
-    override val labelers: Flow<List<Labeler>> =
+    override val subscribedLabelers: Flow<List<Labeler>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
             savedStateDataSource.savedState.map {
                 it.signedInProfileData
@@ -360,7 +360,7 @@ internal class OfflineRecordResolver @Inject constructor(
                         .toDistinctUntilChangedFlowOrEmpty(threadGateDao::threadGates),
                     flow3 = profileIds
                         .toDistinctUntilChangedFlowOrEmpty(profileDao::profiles),
-                    flow4 = labelers,
+                    flow4 = subscribedLabelers,
                     transform = { associatedRecords, threadGateEntities, profiles, labelers ->
                         if (associatedRecords.isEmpty()) return@combine emptyList()
 

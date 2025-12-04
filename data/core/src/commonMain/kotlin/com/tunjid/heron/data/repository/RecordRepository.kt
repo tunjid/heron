@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.repository
 
+import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.LabelerUri
@@ -29,8 +30,6 @@ import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.asExternalModel
-import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
@@ -39,6 +38,8 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 
 interface RecordRepository {
+
+    val subscribedLabelers: Flow<List<Labeler>>
 
     fun record(uri: RecordUri): Flow<Record>
 }
@@ -52,6 +53,9 @@ internal class OfflineRecordRepository @Inject constructor(
     private val savedStateDataSource: SavedStateDataSource,
     private val recordResolver: RecordResolver,
 ) : RecordRepository {
+
+    override val subscribedLabelers: Flow<List<Labeler>> =
+        recordResolver.subscribedLabelers
 
     override fun record(uri: RecordUri): Flow<Record> =
         when (uri) {

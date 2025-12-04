@@ -131,7 +131,7 @@ class ActualProfileViewModel(
                 messageRepository = messageRepository,
             ),
             subscribedLabelerMutations(
-                timelineRepository = timelineRepository,
+                recordRepository = recordRepository,
             ),
         ),
         actionTransform = transform@{ actions ->
@@ -192,9 +192,9 @@ fun recentConversationMutations(
         }
 
 fun subscribedLabelerMutations(
-    timelineRepository: TimelineRepository,
+    recordRepository: RecordRepository,
 ): Flow<Mutation<State>> =
-    timelineRepository.labelers
+    recordRepository.subscribedLabelers
         .mapToMutation { labelers ->
             copy(
                 subscribedLabelerProfileIds = labelers.mapTo(
@@ -473,7 +473,7 @@ private fun CoroutineScope.labelerSettingsStateHolders(
                     }
                 },
                 inputs = listOf(
-                    timelineRepository.labelers.mapToMutation { labelers ->
+                    recordRepository.subscribedLabelers.mapToMutation { labelers ->
                         copy(subscribed = labelers.any { it.creator.did == profileId })
                     },
                     combine(

@@ -30,7 +30,6 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
-import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -57,7 +56,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
@@ -81,7 +79,6 @@ class ActualComposeViewModel(
     authRepository: AuthRepository,
     searchRepository: SearchRepository,
     recordRepository: RecordRepository,
-    timelineRepository: TimelineRepository,
     fileManager: FileManager,
     writeQueue: WriteQueue,
     @Assisted
@@ -102,12 +99,6 @@ class ActualComposeViewModel(
                     else -> route.sharedUri?.asRecordUriOrNull()
                 },
                 recordRepository = recordRepository,
-            ),
-            labelPreferencesMutations(
-                timelineRepository = timelineRepository,
-            ),
-            labelerMutations(
-                timelineRepository = timelineRepository,
             ),
         ),
         actionTransform = transform@{ actions ->
@@ -155,24 +146,6 @@ private fun embeddedRecordMutations(
         }
     }
         ?: emptyFlow()
-
-private fun labelPreferencesMutations(
-    timelineRepository: TimelineRepository,
-): Flow<Mutation<State>> =
-    timelineRepository.preferences
-        .distinctUntilChangedBy { it.allowAdultContent to it.contentLabelPreferences }
-        .mapToMutation {
-            copy(
-                adultContentEnabled = it.allowAdultContent,
-                labelPreferences = it.contentLabelPreferences,
-            )
-        }
-
-private fun labelerMutations(
-    timelineRepository: TimelineRepository,
-): Flow<Mutation<State>> =
-    timelineRepository.labelers
-        .mapToMutation { copy(labelers = it) }
 
 private fun Flow<Action.PostTextChanged>.postTextMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
