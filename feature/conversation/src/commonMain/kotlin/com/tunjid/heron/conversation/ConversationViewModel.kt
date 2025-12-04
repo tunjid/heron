@@ -29,7 +29,6 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageQuery
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.RecordRepository
-import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -89,7 +88,6 @@ class ActualConversationViewModel(
     authRepository: AuthRepository,
     recordRepository: RecordRepository,
     messagesRepository: MessageRepository,
-    timelineRepository: TimelineRepository,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
@@ -104,12 +102,6 @@ class ActualConversationViewModel(
             loadProfileMutations(authRepository),
             pendingMessageFlushMutations(writeQueue),
             flow { messagesRepository.monitorConversationLogs() },
-            labelPreferencesMutations(
-                timelineRepository = timelineRepository,
-            ),
-            labelerMutations(
-                timelineRepository = timelineRepository,
-            ),
         ),
         actionTransform = transform@{ actions ->
             merge(
@@ -178,18 +170,6 @@ private fun pendingMessageFlushMutations(
             tilingData = tilingData.updatePendingMessages(updatedPendingMessages),
         )
     }
-
-private fun labelPreferencesMutations(
-    timelineRepository: TimelineRepository,
-): Flow<Mutation<State>> =
-    timelineRepository.preferences
-        .mapToMutation { copy(labelPreferences = it.contentLabelPreferences) }
-
-private fun labelerMutations(
-    timelineRepository: TimelineRepository,
-): Flow<Mutation<State>> =
-    timelineRepository.labelers
-        .mapToMutation { copy(labelers = it) }
 
 private fun sharedRecordMutations(
     sharedUri: Uri?,

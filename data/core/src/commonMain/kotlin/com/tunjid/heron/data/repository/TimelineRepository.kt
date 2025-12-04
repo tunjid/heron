@@ -37,7 +37,6 @@ import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
-import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Timeline
@@ -175,8 +174,6 @@ interface TimelineRepository {
 
     val preferences: Flow<Preferences>
 
-    val labelers: Flow<List<Labeler>>
-
     val homeTimelines: Flow<List<Timeline.Home>>
 
     fun timeline(
@@ -225,9 +222,6 @@ internal class OfflineTimelineRepository(
     override val preferences: Flow<Preferences>
         get() = savedStateDataSource.savedState
             .map(SavedState::signedProfilePreferencesOrDefault)
-
-    override val labelers: Flow<List<Labeler>> =
-        recordResolver.labelers
 
     override fun timelineItems(
         query: TimelineQuery,

@@ -19,6 +19,7 @@ package com.tunjid.heron.moderation
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -57,6 +58,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualModerationViewModel(
     authRepository: AuthRepository,
     timelineRepository: TimelineRepository,
+    recordRepository: RecordRepository,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
@@ -72,7 +74,7 @@ class ActualModerationViewModel(
                 timelineRepository = timelineRepository,
             ),
             subscribedLabelerMutations(
-                timelineRepository = timelineRepository,
+                recordRepository = recordRepository,
             ),
         ),
         actionTransform = transform@{ actions ->
@@ -114,9 +116,9 @@ fun adultContentAndGlobalLabelPreferenceMutations(
         }
 
 fun subscribedLabelerMutations(
-    timelineRepository: TimelineRepository,
+    recordRepository: RecordRepository,
 ): Flow<Mutation<State>> =
-    timelineRepository.labelers
+    recordRepository.subscribedLabelers
         .mapToMutation {
             copy(subscribedLabelers = it)
         }

@@ -45,8 +45,6 @@ data class State(
     val signedInProfile: Profile? = null,
     val id: ConversationId,
     val members: List<Profile> = emptyList(),
-    val labelPreferences: ContentLabelPreferences,
-    val labelers: List<Labeler>,
     val pendingItems: List<MessageItem.Pending> = emptyList(),
     override val tilingData: TilingState.Data<MessageQuery, MessageItem>,
     @Serializable(with = TextFieldValueSerializer::class)
@@ -62,8 +60,6 @@ fun State(
 ) = State(
     id = route.conversationId,
     members = route.models.filterIsInstance<Profile>(),
-    labelPreferences = emptyList(),
-    labelers = emptyList(),
     tilingData = TilingState.Data(
         currentQuery = MessageQuery(
             conversationId = route.conversationId,
