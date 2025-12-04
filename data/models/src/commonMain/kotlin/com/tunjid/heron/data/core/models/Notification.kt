@@ -36,6 +36,7 @@ sealed class Notification {
     abstract val reasonSubject: GenericUri?
     abstract val isRead: Boolean
     abstract val indexedAt: Instant
+    abstract val viewerState: ProfileViewerState?
 
     sealed class Liked : PostAssociated() {
         data class Post(
@@ -46,6 +47,7 @@ sealed class Notification {
             override val isRead: Boolean,
             override val indexedAt: Instant,
             override val associatedPost: ExportedPost,
+            override val viewerState: ProfileViewerState?,
         ) : Liked()
 
         data class Repost(
@@ -56,6 +58,7 @@ sealed class Notification {
             override val isRead: Boolean,
             override val indexedAt: Instant,
             override val associatedPost: ExportedPost,
+            override val viewerState: ProfileViewerState?,
         ) : Liked()
     }
 
@@ -68,6 +71,7 @@ sealed class Notification {
             override val isRead: Boolean,
             override val indexedAt: Instant,
             override val associatedPost: ExportedPost,
+            override val viewerState: ProfileViewerState?,
         ) : Reposted()
 
         data class Repost(
@@ -78,6 +82,7 @@ sealed class Notification {
             override val isRead: Boolean,
             override val indexedAt: Instant,
             override val associatedPost: ExportedPost,
+            override val viewerState: ProfileViewerState?,
         ) : Reposted()
     }
 
@@ -88,6 +93,7 @@ sealed class Notification {
         override val reasonSubject: GenericUri?,
         override val isRead: Boolean,
         override val indexedAt: Instant,
+        override val viewerState: ProfileViewerState?,
     ) : Notification()
 
     data class Mentioned(
@@ -98,6 +104,7 @@ sealed class Notification {
         override val isRead: Boolean,
         override val indexedAt: Instant,
         override val associatedPost: Post,
+        override val viewerState: ProfileViewerState?,
     ) : PostAssociated()
 
     data class RepliedTo(
@@ -108,6 +115,7 @@ sealed class Notification {
         override val isRead: Boolean,
         override val indexedAt: Instant,
         override val associatedPost: Post,
+        override val viewerState: ProfileViewerState?,
     ) : PostAssociated()
 
     data class Quoted(
@@ -118,6 +126,7 @@ sealed class Notification {
         override val isRead: Boolean,
         override val indexedAt: Instant,
         override val associatedPost: Post,
+        override val viewerState: ProfileViewerState?,
     ) : PostAssociated()
 
     data class JoinedStarterPack(
@@ -127,6 +136,7 @@ sealed class Notification {
         override val reasonSubject: GenericUri?,
         override val isRead: Boolean,
         override val indexedAt: Instant,
+        override val viewerState: ProfileViewerState?,
     ) : Notification()
 
     data class SubscribedPost(
@@ -137,6 +147,7 @@ sealed class Notification {
         override val isRead: Boolean,
         override val indexedAt: Instant,
         override val associatedPost: Post,
+        override val viewerState: ProfileViewerState?,
     ) : PostAssociated()
 
     data class Unknown(
@@ -146,6 +157,7 @@ sealed class Notification {
         override val reasonSubject: GenericUri?,
         override val isRead: Boolean,
         override val indexedAt: Instant,
+        override val viewerState: ProfileViewerState?,
     ) : Notification()
 
     data class Verified(
@@ -155,6 +167,7 @@ sealed class Notification {
         override val reasonSubject: GenericUri?,
         override val isRead: Boolean,
         override val indexedAt: Instant,
+        override val viewerState: ProfileViewerState?,
     ) : Notification()
 
     data class Unverified(
@@ -164,6 +177,7 @@ sealed class Notification {
         override val reasonSubject: GenericUri?,
         override val isRead: Boolean,
         override val indexedAt: Instant,
+        override val viewerState: ProfileViewerState?,
     ) : Notification()
 
     enum class Reason {

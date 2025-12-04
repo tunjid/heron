@@ -27,6 +27,8 @@ import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
+import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import kotlin.time.Instant
 
 @Entity(
@@ -78,6 +80,8 @@ data class NotificationEntity(
 data class PopulatedNotificationEntity(
     @Embedded
     val entity: NotificationEntity,
+    @Embedded
+    val viewerState: ProfileViewerStateEntity?,
     @Relation(
         parentColumn = "authorId",
         entityColumn = "did",
@@ -100,6 +104,7 @@ fun PopulatedNotificationEntity.asExternalModel(
             reasonSubject = entity.reasonSubject,
             isRead = entity.isRead,
             associatedPost = associatedPost,
+            viewerState = viewerState?.asExternalModel(),
         )
 
     Notification.Reason.LikeViaRepost ->
@@ -112,6 +117,7 @@ fun PopulatedNotificationEntity.asExternalModel(
             reasonSubject = entity.reasonSubject,
             isRead = entity.isRead,
             associatedPost = associatedPost,
+            viewerState = viewerState?.asExternalModel(),
         )
 
     Notification.Reason.Repost ->
@@ -124,6 +130,7 @@ fun PopulatedNotificationEntity.asExternalModel(
             reasonSubject = entity.reasonSubject,
             isRead = entity.isRead,
             associatedPost = associatedPost,
+            viewerState = viewerState?.asExternalModel(),
         )
 
     Notification.Reason.RepostViaRepost ->
@@ -136,6 +143,7 @@ fun PopulatedNotificationEntity.asExternalModel(
             reasonSubject = entity.reasonSubject,
             isRead = entity.isRead,
             associatedPost = associatedPost,
+            viewerState = viewerState?.asExternalModel(),
         )
 
     Notification.Reason.Follow -> Notification.Followed(
@@ -145,6 +153,7 @@ fun PopulatedNotificationEntity.asExternalModel(
         author = author.asExternalModel(),
         reasonSubject = entity.reasonSubject,
         isRead = entity.isRead,
+        viewerState = viewerState?.asExternalModel(),
     )
 
     Notification.Reason.Mention ->
@@ -157,6 +166,7 @@ fun PopulatedNotificationEntity.asExternalModel(
             reasonSubject = entity.reasonSubject,
             isRead = entity.isRead,
             associatedPost = associatedPost,
+            viewerState = viewerState?.asExternalModel(),
         )
 
     Notification.Reason.Reply ->
@@ -169,6 +179,7 @@ fun PopulatedNotificationEntity.asExternalModel(
             reasonSubject = entity.reasonSubject,
             isRead = entity.isRead,
             associatedPost = associatedPost,
+            viewerState = viewerState?.asExternalModel(),
         )
 
     Notification.Reason.Quote ->
@@ -181,6 +192,7 @@ fun PopulatedNotificationEntity.asExternalModel(
             reasonSubject = entity.reasonSubject,
             isRead = entity.isRead,
             associatedPost = associatedPost,
+            viewerState = viewerState?.asExternalModel(),
         )
 
     Notification.Reason.JoinedStarterPack -> Notification.JoinedStarterPack(
@@ -190,6 +202,7 @@ fun PopulatedNotificationEntity.asExternalModel(
         author = author.asExternalModel(),
         reasonSubject = entity.reasonSubject,
         isRead = entity.isRead,
+        viewerState = viewerState?.asExternalModel(),
     )
 
     Notification.Reason.SubscribedPost ->
@@ -202,6 +215,7 @@ fun PopulatedNotificationEntity.asExternalModel(
             reasonSubject = entity.reasonSubject,
             isRead = entity.isRead,
             associatedPost = associatedPost,
+            viewerState = viewerState?.asExternalModel(),
         )
 
     Notification.Reason.Verified -> Notification.Verified(
@@ -211,6 +225,7 @@ fun PopulatedNotificationEntity.asExternalModel(
         author = author.asExternalModel(),
         reasonSubject = entity.reasonSubject,
         isRead = entity.isRead,
+        viewerState = viewerState?.asExternalModel(),
     )
 
     Notification.Reason.Unverified -> Notification.Unverified(
@@ -220,6 +235,7 @@ fun PopulatedNotificationEntity.asExternalModel(
         author = author.asExternalModel(),
         reasonSubject = entity.reasonSubject,
         isRead = entity.isRead,
+        viewerState = viewerState?.asExternalModel(),
     )
 }
 
@@ -231,4 +247,5 @@ private fun PopulatedNotificationEntity.unknown() =
         author = author.asExternalModel(),
         reasonSubject = entity.reasonSubject,
         isRead = entity.isRead,
+        viewerState = viewerState?.asExternalModel(),
     )
