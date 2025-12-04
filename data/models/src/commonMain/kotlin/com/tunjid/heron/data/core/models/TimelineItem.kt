@@ -20,6 +20,7 @@ import com.tunjid.heron.data.core.models.Timeline.Presentation.Media
 import com.tunjid.heron.data.core.models.Timeline.Presentation.Text
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ListUri
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.Uri
@@ -319,8 +320,9 @@ sealed class TimelineItem {
     abstract val id: String
     abstract val post: Post
     abstract val threadGate: ThreadGate?
-
     abstract val appliedLabels: AppliedLabels
+    abstract val signedInProfileId: ProfileId?
+    abstract val profileViewerState: ProfileViewerState?
 
     val indexedAt
         get() = when (this) {
@@ -337,6 +339,8 @@ sealed class TimelineItem {
         override val post: Post,
         override val threadGate: ThreadGate?,
         override val appliedLabels: AppliedLabels,
+        override val signedInProfileId: ProfileId?,
+        override val profileViewerState: ProfileViewerState?,
     ) : TimelineItem()
 
     data class Repost(
@@ -344,21 +348,28 @@ sealed class TimelineItem {
         override val post: Post,
         override val threadGate: ThreadGate?,
         override val appliedLabels: AppliedLabels,
+        override val signedInProfileId: ProfileId?,
+        override val profileViewerState: ProfileViewerState?,
         val by: Profile,
         val at: Instant,
     ) : TimelineItem()
 
     data class Thread(
         override val id: String,
-        override val threadGate: ThreadGate?,
         override val appliedLabels: AppliedLabels,
+        override val signedInProfileId: ProfileId?,
+        override val profileViewerState: ProfileViewerState?,
         val anchorPostIndex: Int,
         val posts: List<Post>,
+        val postUrisToThreadGates: Map<PostUri, ThreadGate?>,
+        val profileIdsToViewerStates: Map<PostUri, ProfileViewerState?>,
         val generation: Long?,
         val hasBreak: Boolean,
     ) : TimelineItem() {
         override val post: Post
             get() = posts[anchorPostIndex]
+        override val threadGate: ThreadGate?
+            get() = postUrisToThreadGates[post.uri]
     }
 
     data class Single(
@@ -366,6 +377,8 @@ sealed class TimelineItem {
         override val post: Post,
         override val threadGate: ThreadGate?,
         override val appliedLabels: AppliedLabels,
+        override val signedInProfileId: ProfileId?,
+        override val profileViewerState: ProfileViewerState?,
     ) : TimelineItem()
 }
 

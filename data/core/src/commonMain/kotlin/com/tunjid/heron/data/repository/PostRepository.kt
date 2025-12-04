@@ -290,6 +290,8 @@ internal class OfflinePostRepository @Inject constructor(
                                         post = post,
                                         threadGate = threadGate(item.uri),
                                         appliedLabels = appliedLabels,
+                                        signedInProfileId = signedInProfileId,
+                                        profileViewerState = viewerState(post.author.did),
                                     )
                                 },
                             )
@@ -355,6 +357,8 @@ internal class OfflinePostRepository @Inject constructor(
                                     post = post,
                                     threadGate = threadGate(item.uri),
                                     appliedLabels = appliedLabels,
+                                    signedInProfileId = signedInProfileId,
+                                    profileViewerState = viewerState(post.author.did),
                                 )
                             },
                         )

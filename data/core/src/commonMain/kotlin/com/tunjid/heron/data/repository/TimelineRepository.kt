@@ -932,8 +932,8 @@ internal class OfflineTimelineRepository(
                             listOfNotNull(it.reposter)
                         },
                         block = { entity ->
-                            val replyParent = entity.reply?.parentPostUri?.let(::record)
-                            val replyRoot = entity.reply?.rootPostUri?.let(::record)
+                            val replyParent = entity.reply?.parentPostUri?.let(::record) as? Post
+                            val replyRoot = entity.reply?.rootPostUri?.let(::record) as? Post
                             val repostedBy = entity.reposter?.let(::profile)
 
                             list += when {
@@ -942,13 +942,24 @@ internal class OfflineTimelineRepository(
                                     generation = null,
                                     anchorPostIndex = 2,
                                     hasBreak = entity.reply?.grandParentPostAuthorId != null,
-                                    threadGate = threadGate(post.uri),
                                     appliedLabels = appliedLabels,
+                                    signedInProfileId = signedInProfileId,
+                                    profileViewerState = viewerState(post.author.did),
                                     posts = listOfNotNull(
-                                        replyRoot as? Post,
-                                        replyParent as? Post,
+                                        replyRoot,
+                                        replyParent,
                                         post,
                                     ),
+                                    postUrisToThreadGates = buildMap {
+                                        put(replyRoot.uri, threadGate(replyRoot.uri))
+                                        put(replyParent.uri, threadGate(replyParent.uri))
+                                        put(post.uri, threadGate(post.uri))
+                                    },
+                                    profileIdsToViewerStates = buildMap {
+                                        put(replyRoot.uri, viewerState(replyRoot.author.did))
+                                        put(replyParent.uri, viewerState(replyParent.author.did))
+                                        put(post.uri, viewerState(post.author.did))
+                                    },
                                 )
 
                                 repostedBy != null -> TimelineItem.Repost(
@@ -958,6 +969,8 @@ internal class OfflineTimelineRepository(
                                     at = entity.indexedAt,
                                     threadGate = threadGate(post.uri),
                                     appliedLabels = appliedLabels,
+                                    signedInProfileId = signedInProfileId,
+                                    profileViewerState = viewerState(post.author.did),
                                 )
 
                                 entity.isPinned -> TimelineItem.Pinned(
@@ -965,6 +978,8 @@ internal class OfflineTimelineRepository(
                                     post = post,
                                     threadGate = threadGate(post.uri),
                                     appliedLabels = appliedLabels,
+                                    signedInProfileId = signedInProfileId,
+                                    profileViewerState = viewerState(post.author.did),
                                 )
 
                                 else -> TimelineItem.Single(
@@ -972,6 +987,8 @@ internal class OfflineTimelineRepository(
                                     post = post,
                                     threadGate = threadGate(post.uri),
                                     appliedLabels = appliedLabels,
+                                    signedInProfileId = signedInProfileId,
+                                    profileViewerState = viewerState(post.author.did),
                                 )
                             }
                         },
@@ -1139,13 +1156,22 @@ internal class OfflineTimelineRepository(
                 anchorPostIndex = 0,
                 hasBreak = false,
                 posts = listOf(post),
-                threadGate = threadGate(post.uri),
                 appliedLabels = appliedLabels,
+                signedInProfileId = signedInProfileId,
+                profileViewerState = viewerState(post.author.did),
+                postUrisToThreadGates = mapOf(post.uri to threadGate(post.uri)),
+                profileIdsToViewerStates = mapOf(post.uri to viewerState(post.author.did)),
             )
             // For parents, edit the head
             thread.generation <= -1L -> if (lastItem is TimelineItem.Thread) {
                 list.removeLast()
-                list.add(lastItem.copy(posts = lastItem.posts + post))
+                list.add(
+                    lastItem.copy(
+                        posts = lastItem.posts + post,
+                        postUrisToThreadGates = lastItem.postUrisToThreadGates + (post.uri to threadGate(post.uri)),
+                        profileIdsToViewerStates = lastItem.profileIdsToViewerStates + (post.uri to viewerState(post.author.did)),
+                    ),
+                )
             } else Unit
 
             // New reply to the OP, start its own thread
@@ -1155,8 +1181,11 @@ internal class OfflineTimelineRepository(
                 anchorPostIndex = 0,
                 hasBreak = false,
                 posts = listOf(post),
-                threadGate = threadGate(post.uri),
                 appliedLabels = appliedLabels,
+                signedInProfileId = signedInProfileId,
+                profileViewerState = viewerState(post.author.did),
+                postUrisToThreadGates = mapOf(post.uri to threadGate(post.uri)),
+                profileIdsToViewerStates = mapOf(post.uri to viewerState(post.author.did)),
             )
 
             // Just tack the post to the current thread

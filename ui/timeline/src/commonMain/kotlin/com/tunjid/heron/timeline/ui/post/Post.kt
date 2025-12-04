@@ -17,7 +17,6 @@
 package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.animation.BoundsTransform
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -73,7 +72,6 @@ import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.allowsAll
 import com.tunjid.heron.data.core.models.allowsNone
 import com.tunjid.heron.data.core.types.ProfileHandle
-import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.PostActions
@@ -166,7 +164,6 @@ internal fun Post(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun AttributionContent(
     data: PostData,
@@ -226,7 +223,6 @@ private fun AttributionContent(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun LabelContent(
     data: PostData,
@@ -309,7 +305,6 @@ private fun LabelContent(
 }
 
 @Composable
-@OptIn(ExperimentalSharedTransitionApi::class)
 private fun TextContent(
     data: PostData,
 ) = with(data.paneMovableElementSharedTransitionScope) {
@@ -360,7 +355,6 @@ private fun TextContent(
 }
 
 @Composable
-@OptIn(ExperimentalSharedTransitionApi::class)
 private fun EmbedContent(
     data: PostData,
 ) {
@@ -409,7 +403,6 @@ private fun EmbedContent(
     )
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ActionsContent(
     data: PostData,
@@ -756,7 +749,6 @@ private class PostData(
         )
     }
 
-    @OptIn(ExperimentalSharedTransitionApi::class)
     val boundsTransform = BoundsTransform { _, _ ->
         SpringSpec.skipIf { !presentationChanged }
     }

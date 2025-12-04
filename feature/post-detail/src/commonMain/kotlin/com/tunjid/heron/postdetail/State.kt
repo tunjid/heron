@@ -46,7 +46,10 @@ data class State(
                 posts = listOf(it),
                 generation = 0,
                 hasBreak = false,
-                threadGate = null,
+                signedInProfileId = null,
+                profileViewerState = null,
+                postUrisToThreadGates = emptyMap(),
+                profileIdsToViewerStates = emptyMap(),
                 appliedLabels = it.appliedLabels(
                     adultContentEnabled = false,
                     labelers = emptyList(),

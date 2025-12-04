@@ -311,7 +311,7 @@ internal class DataStoreSavedStateDataSource(
     }
 }
 
-internal fun SavedStateDataSource.adultContentAndLabelVisibilities(): Flow<Pair<Boolean, Map<Label.Value, Label.Visibility>>> = savedState
+internal fun SavedStateDataSource.distinctUntilChangedAdultContentAndLabelVisibilityPreferences(): Flow<Pair<Boolean, Map<Label.Value, Label.Visibility>>> = savedState
     .map {
         val preferences = it.signedProfilePreferencesOrDefault()
         val labelVisibilityMap = preferences.contentLabelPreferences.associateBy(
