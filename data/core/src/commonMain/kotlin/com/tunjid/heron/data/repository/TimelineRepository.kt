@@ -1191,7 +1191,13 @@ internal class OfflineTimelineRepository(
             // Just tack the post to the current thread
             lastItem is TimelineItem.Thread -> {
                 list.removeLast()
-                list.add(lastItem.copy(posts = lastItem.posts + post))
+                list.add(
+                    lastItem.copy(
+                        posts = lastItem.posts + post,
+                        postUrisToThreadGates = lastItem.postUrisToThreadGates + (post.uri to threadGate(post.uri)),
+                        postUrisToViewerStates = lastItem.postUrisToViewerStates + (post.uri to viewerState(post.author.did)),
+                    ),
+                )
             }
             else -> Unit
         }
