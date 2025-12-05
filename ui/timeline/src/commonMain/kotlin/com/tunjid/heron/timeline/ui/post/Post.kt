@@ -65,14 +65,12 @@ import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.allowsAll
 import com.tunjid.heron.data.core.models.allowsNone
-import com.tunjid.heron.data.core.models.canReply
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -110,7 +108,6 @@ internal fun Post(
     now: Instant,
     post: Post,
     threadGate: ThreadGate?,
-    viewerState: ProfileViewerState?,
     isAnchoredInTimeline: Boolean,
     avatarShape: RoundedPolygonShape,
     sharedElementPrefix: String,
@@ -136,7 +133,6 @@ internal fun Post(
             presentationLookaheadScope = presentationLookaheadScope,
             post = post,
             threadGate = threadGate,
-            viewerState = viewerState,
             presentation = presentation,
             appliedLabels = appliedLabels,
             sharedElementPrefix = sharedElementPrefix,
@@ -654,7 +650,6 @@ private fun rememberUpdatedPostData(
     presentationLookaheadScope: LookaheadScope,
     post: Post,
     threadGate: ThreadGate?,
-    viewerState: ProfileViewerState?,
     presentation: Timeline.Presentation,
     appliedLabels: AppliedLabels,
     sharedElementPrefix: String,
@@ -670,7 +665,6 @@ private fun rememberUpdatedPostData(
             presentationLookaheadScope = presentationLookaheadScope,
             post = post,
             threadGate = threadGate,
-            viewerState = viewerState,
             presentation = presentation,
             appliedLabels = appliedLabels,
             sharedElementPrefix = sharedElementPrefix,
@@ -686,7 +680,6 @@ private fun rememberUpdatedPostData(
         it.presentationLookaheadScope = presentationLookaheadScope
         it.post = post
         it.threadGate = threadGate
-        it.viewerState = viewerState
         it.presentation = presentation
         it.appliedLabels = appliedLabels
         it.sharedElementPrefix = sharedElementPrefix
@@ -704,7 +697,6 @@ private class PostData(
     presentationLookaheadScope: LookaheadScope,
     post: Post,
     threadGate: ThreadGate?,
-    viewerState: ProfileViewerState?,
     presentation: Timeline.Presentation,
     appliedLabels: AppliedLabels,
     sharedElementPrefix: String,
@@ -720,7 +712,6 @@ private class PostData(
     var presentationLookaheadScope by mutableStateOf(presentationLookaheadScope)
     var post by mutableStateOf(post)
     var threadGate by mutableStateOf(threadGate)
-    var viewerState by mutableStateOf(viewerState)
     var presentation by mutableStateOf(presentation)
     var appliedLabels by mutableStateOf(appliedLabels)
     var sharedElementPrefix by mutableStateOf(sharedElementPrefix)

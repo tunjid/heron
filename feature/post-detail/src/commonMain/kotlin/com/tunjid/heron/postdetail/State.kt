@@ -47,9 +47,7 @@ data class State(
                 generation = 0,
                 hasBreak = false,
                 signedInProfileId = null,
-                profileViewerState = null,
                 postUrisToThreadGates = emptyMap(),
-                postUrisToViewerStates = emptyMap(),
                 appliedLabels = it.appliedLabels(
                     adultContentEnabled = false,
                     labelers = emptyList(),

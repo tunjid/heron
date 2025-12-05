@@ -349,25 +349,16 @@ internal class OfflineRecordResolver @Inject constructor(
                 val recordUris = mutableSetOf<RecordUri>()
                 val threadGatePostUris = mutableListOf<PostUri>()
                 val profileIds = mutableSetOf<ProfileId>()
-                val viewerStateProfileIds =
-                    if (signedInProfileId == null) emptySet()
-                    else mutableSetOf<ProfileId>()
 
                 items.forEach { item ->
                     postUri(item).let { itemPostUri ->
                         recordUris.add(itemPostUri)
                         threadGatePostUris.add(itemPostUri)
-                        if (viewerStateProfileIds is MutableSet) {
-                            viewerStateProfileIds.add(itemPostUri.profileId())
-                        }
                     }
                     associatedRecordUris(item).forEach { associatedRecordUri ->
                         recordUris.add(associatedRecordUri)
                         if (associatedRecordUri is PostUri) {
                             threadGatePostUris.add(associatedRecordUri)
-                            if (viewerStateProfileIds is MutableSet) {
-                                viewerStateProfileIds.add(associatedRecordUri.profileId())
-                            }
                         }
                     }
                     profileIds.addAll(associatedProfileIds(item))
