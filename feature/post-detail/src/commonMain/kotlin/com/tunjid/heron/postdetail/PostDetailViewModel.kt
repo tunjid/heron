@@ -130,10 +130,11 @@ fun postThreadsMutations(
                 else copy(
                     items = timelineItems,
                     anchorPost = timelineItems.firstNotNullOfOrNull anchor@{ item ->
-                       when (item) {
+                        when (item) {
                             is TimelineItem.Pinned,
                             is TimelineItem.Repost,
-                            is TimelineItem.Single -> item.post.takeIf {
+                            is TimelineItem.Single,
+                            -> item.post.takeIf {
                                 it.uri.recordKey == route.postRecordKey
                             }
                             is TimelineItem.Thread -> item.posts.firstOrNull {
