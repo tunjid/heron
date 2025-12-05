@@ -74,13 +74,13 @@ import com.tunjid.heron.data.core.models.allowsNone
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.label.locale
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
 import com.tunjid.heron.timeline.ui.post.threadtraversal.videoId
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.createdAt
-import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.NeutralDialogButton
 import com.tunjid.heron.ui.PrimaryDialogButton
@@ -183,10 +183,12 @@ private fun AttributionContent(
                         .size(UiTokens.avatarSize)
                         .clip(data.avatarShape)
                         .clickable {
-                            data.postActions.onProfileClicked(
-                                profile = data.post.author,
-                                post = data.post,
-                                quotingPostUri = null,
+                            data.postActions.onPostAction(
+                                PostAction.OfProfile(
+                                    profile = data.post.author,
+                                    post = data.post,
+                                    quotingPostUri = null,
+                                ),
                             )
                         },
                     sharedContentState = rememberSharedContentState(
@@ -337,14 +339,18 @@ private fun TextContent(
                 Timeline.Presentation.Media.Expanded -> 2
             },
             onClick = {
-                data.postActions.onPostClicked(
-                    post = data.post,
+                data.postActions.onPostAction(
+                    PostAction.OfPost(
+                        post = data.post,
+                    ),
                 )
             },
             onLinkTargetClicked = { post, linkTarget ->
-                data.postActions.onLinkTargetClicked(
-                    post = post,
-                    linkTarget = linkTarget,
+                data.postActions.onPostAction(
+                    PostAction.OfLinkTarget(
+                        post = post,
+                        linkTarget = linkTarget,
+                    ),
                 )
             },
         )
@@ -378,26 +384,39 @@ private fun EmbedContent(
         presentation = data.presentation,
         sharedElementPrefix = data.sharedElementPrefix,
         paneMovableElementSharedTransitionScope = data.paneMovableElementSharedTransitionScope,
-        onLinkTargetClicked = data.postActions::onLinkTargetClicked,
+        onLinkTargetClicked = { post, linkTarget ->
+            data.postActions.onPostAction(
+                PostAction.OfLinkTarget(
+                    post = post,
+                    linkTarget = linkTarget,
+                ),
+            )
+        },
         onPostMediaClicked = { media, index, quote ->
-            data.postActions.onPostMediaClicked(
-                media = media,
-                index = index,
-                post = quote ?: data.post,
-                quotingPostUri = data.post.uri.takeIf { quote != null },
+            data.postActions.onPostAction(
+                PostAction.OfMedia(
+                    media = media,
+                    index = index,
+                    post = quote ?: data.post,
+                    quotingPostUri = data.post.uri.takeIf { quote != null },
+                ),
             )
         },
         onEmbeddedRecordClicked = { record ->
-            data.postActions.onPostRecordClicked(
-                record = record,
-                owningPostUri = data.post.uri,
+            data.postActions.onPostAction(
+                PostAction.OfRecord(
+                    record = record,
+                    owningPostUri = data.post.uri,
+                ),
             )
         },
         onQuotedProfileClicked = { quotedPost, quotedProfile ->
-            data.postActions.onProfileClicked(
-                profile = quotedProfile,
-                post = quotedPost,
-                quotingPostUri = data.post.uri,
+            data.postActions.onPostAction(
+                PostAction.OfProfile(
+                    profile = quotedProfile,
+                    post = quotedPost,
+                    quotingPostUri = data.post.uri,
+                ),
             )
         },
     )
@@ -411,12 +430,7 @@ private fun ActionsContent(
         Timeline.Presentation.Text.WithEmbed,
         Timeline.Presentation.Media.Expanded,
         -> PostInteractions(
-            replyCount = format(data.post.replyCount),
-            repostCount = format(data.post.repostCount),
-            likeCount = format(data.post.likeCount),
-            viewerStats = data.post.viewerStats,
-            postId = data.post.cid,
-            postUri = data.post.uri,
+            post = data.post,
             sharedElementPrefix = data.sharedElementPrefix,
             presentation = data.presentation,
             paneMovableElementSharedTransitionScope = data.paneMovableElementSharedTransitionScope,
@@ -429,15 +443,7 @@ private fun ActionsContent(
                     lookaheadScope = data.presentationLookaheadScope,
                     boundsTransform = data.boundsTransform,
                 ),
-            onReplyToPost = {
-                data.postActions.onReplyToPost(data.post)
-            },
-            onPostInteraction = data.postActions::onPostInteraction,
-            onPostOptionsClicked = {
-                data.postActions.onPostOptionsClicked(
-                    data.post,
-                )
-            },
+            onInteraction = data.postActions::onPostAction,
         )
 
         Timeline.Presentation.Media.Condensed -> Unit
@@ -462,7 +468,9 @@ private fun MetadataContent(
         reposts = data.post.repostCount,
         quotes = data.post.quoteCount,
         likes = data.post.likeCount,
-        onMetadataClicked = data.postActions::onPostMetadataClicked,
+        onMetadataClicked = {
+            data.postActions.onPostAction(PostAction.OfMetadata(it))
+        },
     )
 }
 
@@ -505,9 +513,11 @@ private fun LabelDialog(
                 text = stringResource(Res.string.view_labeler),
                 onClick = {
                     data.selectedLabel = null
-                    data.postActions.onLinkTargetClicked(
-                        post = data.post,
-                        linkTarget = LinkTarget.UserHandleMention(labelerHandle),
+                    data.postActions.onPostAction(
+                        PostAction.OfLinkTarget(
+                            post = data.post,
+                            linkTarget = LinkTarget.UserHandleMention(labelerHandle),
+                        ),
                     )
                 },
             )

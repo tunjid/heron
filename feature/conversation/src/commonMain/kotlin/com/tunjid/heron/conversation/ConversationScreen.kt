@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.conversation
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -68,13 +67,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tunjid.heron.conversation.ui.EmojiPickerBottomSheet
 import com.tunjid.heron.conversation.ui.EmojiPickerSheetState.Companion.rememberEmojiPickerState
-import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Message
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.path
-import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -85,7 +81,8 @@ import com.tunjid.heron.scaffold.navigation.recordDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
-import com.tunjid.heron.timeline.ui.postActions
+import com.tunjid.heron.timeline.ui.PostAction
+import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.EmbeddedRecord
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
@@ -289,7 +286,6 @@ private fun Message(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun MessageAvatar(
     modifier: Modifier = Modifier,
@@ -384,7 +380,6 @@ private fun AuthorNameTimestamp(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ChatItemBubble(
     modifier: Modifier = Modifier,
@@ -474,79 +469,75 @@ private fun MessageRecord(
         sharedElementPrefix = item.id,
         movableElementSharedTransitionScope = paneScaffoldState,
         postActions = remember(item.id, actions) {
-            postActions(
-                onLinkTargetClicked = { _, linkTarget ->
-                    if (linkTarget is LinkTarget.Navigable) actions(
-                        Action.Navigate.To(
-                            pathDestination(
-                                path = linkTarget.path,
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+            PostActions { action ->
+                when (action) {
+                    is PostAction.OfLinkTarget -> {
+                        val linkTarget = action.linkTarget
+                        if (linkTarget is LinkTarget.Navigable) actions(
+                            Action.Navigate.To(
+                                pathDestination(
+                                    path = linkTarget.path,
+                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                ),
                             ),
-                        ),
-                    )
-                },
-                onPostClicked = { post ->
-                    actions(
+                        )
+                    }
+
+                    is PostAction.OfPost -> actions(
                         Action.Navigate.To(
                             recordDestination(
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                 sharedElementPrefix = item.id,
-                                record = post,
+                                record = action.post,
                             ),
                         ),
                     )
-                },
-                onProfileClicked = { profile, post, quotingPostUri ->
-                    actions(
+
+                    is PostAction.OfProfile -> actions(
                         Action.Navigate.To(
                             profileDestination(
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                profile = profile,
-                                avatarSharedElementKey = post.avatarSharedElementKey(
+                                profile = action.profile,
+                                avatarSharedElementKey = action.post.avatarSharedElementKey(
                                     prefix = item.id.withQuotingPostUriPrefix(
-                                        quotingPostUri = quotingPostUri,
+                                        quotingPostUri = action.quotingPostUri,
                                     ),
-                                    quotingPostUri = quotingPostUri,
+                                    quotingPostUri = action.quotingPostUri,
                                 ),
                             ),
                         ),
                     )
-                },
-                onPostRecordClicked = { record, owningPostUri ->
-                    actions(
+
+                    is PostAction.OfRecord -> actions(
                         Action.Navigate.To(
                             recordDestination(
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                 sharedElementPrefix = item.id.withQuotingPostUriPrefix(
-                                    quotingPostUri = owningPostUri,
+                                    quotingPostUri = action.owningPostUri,
                                 ),
-                                record = record,
+                                record = action.record,
                             ),
                         ),
                     )
-                },
-                onPostMediaClicked = { media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri? ->
-                    actions(
+
+                    is PostAction.OfMedia -> actions(
                         Action.Navigate.To(
                             galleryDestination(
-                                post = post,
-                                media = media,
-                                startIndex = index,
+                                post = action.post,
+                                media = action.media,
+                                startIndex = action.index,
                                 sharedElementPrefix = item.id.withQuotingPostUriPrefix(
-                                    quotingPostUri = quotingPostUri,
+                                    quotingPostUri = action.quotingPostUri,
                                 ),
                             ),
                         ),
                     )
-                },
-                onReplyToPost = {
-                },
-                onPostInteraction = { interaction, _ ->
-                    actions(Action.SendPostInteraction(interaction))
-                },
-                onPostOptionsClicked = {
-                },
-            )
+                    is PostAction.OfInteraction -> actions(
+                        Action.SendPostInteraction(action.interaction),
+                    )
+                    is PostAction.Options -> Unit
+                }
+            }
         },
     )
 }

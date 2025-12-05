@@ -45,6 +45,7 @@ import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.feed.FeedGenerator
 import com.tunjid.heron.timeline.ui.label.Labeler
@@ -80,22 +81,35 @@ fun EmbeddedRecord(
                 isBlurred = false,
                 sharedElementPrefix = sharedElementPrefix,
                 onClick = {
-                    postActions.onPostClicked(post = record)
+                    postActions.onPostAction(
+                        PostAction.OfPost(post = record),
+                    )
                 },
-                onLinkTargetClicked = postActions::onLinkTargetClicked,
+                onLinkTargetClicked = { post, linkTarget ->
+                    postActions.onPostAction(
+                        PostAction.OfLinkTarget(
+                            post = post,
+                            linkTarget = linkTarget,
+                        ),
+                    )
+                },
                 onProfileClicked = { post, profile ->
-                    postActions.onProfileClicked(
-                        profile = profile,
-                        post = post,
-                        quotingPostUri = null,
+                    postActions.onPostAction(
+                        PostAction.OfProfile(
+                            profile = profile,
+                            post = post,
+                            quotingPostUri = null,
+                        ),
                     )
                 },
                 onPostMediaClicked = { mediaEmbed, index, post ->
-                    postActions.onPostMediaClicked(
-                        media = mediaEmbed,
-                        index = index,
-                        post = post,
-                        quotingPostUri = null,
+                    postActions.onPostAction(
+                        PostAction.OfMedia(
+                            media = mediaEmbed,
+                            index = index,
+                            post = post,
+                            quotingPostUri = null,
+                        ),
                     )
                 },
             )

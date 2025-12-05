@@ -42,14 +42,13 @@ import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.data.core.models.canReply
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.post.PostHeadline
 import com.tunjid.heron.timeline.ui.post.PostInteractions
 import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
-import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -67,10 +66,8 @@ internal fun NotificationPostScaffold(
     onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
     onPostClicked: (Notification.PostAssociated) -> Unit,
     onPostMediaClicked: (Post, Embed.Media, Int) -> Unit,
-    onReplyToPost: (Notification.PostAssociated) -> Unit,
     onLinkTargetClicked: (Notification.PostAssociated, LinkTarget) -> Unit,
-    onPostInteraction: (Post.Interaction, viewerStats: Post.ViewerStats?) -> Unit,
-    onPostOptionsClicked: (Post) -> Unit,
+    onPostInteraction: (Notification.PostAssociated, PostAction.Options) -> Unit,
 ) {
     Column(
         modifier = modifier,
@@ -128,20 +125,13 @@ internal fun NotificationPostScaffold(
 //                )
 
                 PostInteractions(
-                    replyCount = format(notification.associatedPost.replyCount),
-                    repostCount = format(notification.associatedPost.repostCount),
-                    likeCount = format(notification.associatedPost.likeCount),
-                    postId = notification.associatedPost.cid,
-                    postUri = notification.associatedPost.uri,
-                    viewerStats = notification.associatedPost.viewerStats,
+                    post = notification.associatedPost,
                     sharedElementPrefix = notification.sharedElementPrefix(),
                     presentation = Timeline.Presentation.Text.WithEmbed,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                    onReplyToPost = {
-                        onReplyToPost(notification)
+                    onInteraction = { action ->
+                        onPostInteraction(notification, action)
                     },
-                    onPostInteraction = onPostInteraction,
-                    onPostOptionsClicked = { onPostOptionsClicked(notification.associatedPost) },
                 )
             }
         }

@@ -17,7 +17,6 @@
 package com.tunjid.heron.gallery
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -102,10 +101,11 @@ import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.post.MediaPostInteractions
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostOption
-import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsState
+import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
@@ -136,7 +136,7 @@ internal fun GalleryScreen(
         PlayerControlsUiState(videoPlayerController)
     }
     val imageDownloadState = remember(::ImageDownloadState)
-    val postInteractionState = rememberUpdatedPostInteractionState(
+    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
         isSignedIn = paneScaffoldState.isSignedIn,
         onSignInClicked = {
             actions(Action.Navigate.To(signInDestination()))
@@ -155,7 +155,7 @@ internal fun GalleryScreen(
             )
         },
     )
-    val postOptionsState = rememberUpdatedPostOptionsState(
+    val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = state.signedInProfileId,
         recentConversations = state.recentConversations,
         onOptionClicked = { option ->
@@ -313,22 +313,27 @@ internal fun GalleryScreen(
                 paneScaffoldState = paneScaffoldState,
                 modifier = Modifier
                     .padding(horizontal = 16.dp),
-                onReplyToPost = { post ->
-                    actions(
-                        Action.Navigate.To(
-                            if (paneScaffoldState.isSignedOut) signInDestination()
-                            else composePostDestination(
-                                type = Post.Create.Reply(
-                                    parent = post,
+                onPostInteraction = { interaction ->
+                    when (interaction) {
+                        is PostAction.OfInteraction -> postInteractionSheetState.onInteraction(
+                            interaction,
+                        )
+                        is PostAction.OfMetadata -> Unit
+                        is PostAction.OfMore -> postOptionsSheetState.showOptions(
+                            interaction.post,
+                        )
+                        is PostAction.OfReply -> actions(
+                            Action.Navigate.To(
+                                if (paneScaffoldState.isSignedOut) signInDestination()
+                                else composePostDestination(
+                                    type = Post.Create.Reply(
+                                        parent = interaction.post,
+                                    ),
+                                    sharedElementPrefix = state.sharedElementPrefix,
                                 ),
-                                sharedElementPrefix = state.sharedElementPrefix,
                             ),
-                        ),
-                    )
-                },
-                onPostInteraction = postInteractionState::onInteraction,
-                onPostOptionsClicked = {
-                    state.post?.let(postOptionsState::showOptions)
+                        )
+                    }
                 },
             )
             GalleryFooter(
@@ -364,7 +369,6 @@ internal fun GalleryScreen(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun GalleryImage(
     modifier: Modifier = Modifier,
@@ -401,7 +405,6 @@ private fun GalleryImage(
     )
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun GalleryVideo(
     modifier: Modifier = Modifier,
@@ -609,9 +612,7 @@ private fun MediaInteractions(
     post: Post?,
     paneScaffoldState: PaneScaffoldState,
     modifier: Modifier = Modifier,
-    onReplyToPost: (Post) -> Unit,
-    onPostInteraction: (Post.Interaction, viewerStats: Post.ViewerStats?) -> Unit,
-    onPostOptionsClicked: () -> Unit,
+    onPostInteraction: (PostAction.Options) -> Unit,
 ) {
     if (post == null) return
 
@@ -620,11 +621,7 @@ private fun MediaInteractions(
         sharedElementPrefix = UnmatchedPrefix,
         paneMovableElementSharedTransitionScope = paneScaffoldState,
         modifier = modifier,
-        onReplyToPost = {
-            onReplyToPost(post)
-        },
-        onPostInteraction = onPostInteraction,
-        onPostOptionsClicked = onPostOptionsClicked,
+        onInteraction = onPostInteraction,
     )
 }
 

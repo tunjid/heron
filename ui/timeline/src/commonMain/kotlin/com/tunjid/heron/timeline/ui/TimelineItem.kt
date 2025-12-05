@@ -86,7 +86,9 @@ fun TimelineItem(
         item = item,
         modifier = modifier,
         presentation = presentation,
-        onPostClicked = postActions::onPostClicked,
+        onPostClicked = { post ->
+            postActions.onPostAction(PostAction.OfPost(post))
+        },
         content = {
             Column(
                 modifier = Modifier
@@ -104,10 +106,12 @@ fun TimelineItem(
                         ),
                         item = item,
                         onProfileClicked = { post, profile ->
-                            postActions.onProfileClicked(
-                                profile = profile,
-                                post = post,
-                                quotingPostUri = null,
+                            postActions.onPostAction(
+                                PostAction.OfProfile(
+                                    profile = profile,
+                                    post = post,
+                                    quotingPostUri = null,
+                                ),
                             )
                         },
                     )
@@ -212,7 +216,9 @@ private fun ThreadedPost(
                                 .padding(start = 8.dp)
                                 .childThreadNode(videoId = null),
                             onClick = {
-                                postActions.onPostClicked(post = post)
+                                postActions.onPostAction(
+                                    PostAction.OfPost(post = post),
+                                )
                             },
                         )
                         else Timeline(

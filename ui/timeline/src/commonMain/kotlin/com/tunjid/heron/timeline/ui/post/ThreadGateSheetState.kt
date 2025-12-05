@@ -122,7 +122,7 @@ class ThreadGateSheetState private constructor(
 
     companion object {
         @Composable
-        fun rememberThreadGateSheetState(
+        fun rememberUpdatedThreadGateSheetState(
             onThreadGateUpdated: (Post.Interaction.Upsert.Gate) -> Unit,
         ): ThreadGateSheetState {
             val state = rememberBottomSheetState {

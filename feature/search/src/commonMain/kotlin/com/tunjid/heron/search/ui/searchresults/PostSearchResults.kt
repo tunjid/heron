@@ -53,15 +53,15 @@ import com.tunjid.heron.search.id
 import com.tunjid.heron.search.sharedElementPrefix
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostOption
-import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsState
-import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberThreadGateSheetState
+import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
+import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
-import com.tunjid.heron.timeline.ui.postActions
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
@@ -96,7 +96,7 @@ internal fun PostSearchResults(
     val now = remember { Clock.System.now() }
     val results by rememberUpdatedState(state.tiledItems)
     val sharedElementPrefix = state.sharedElementPrefix
-    val postInteractionState = rememberUpdatedPostInteractionState(
+    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
         isSignedIn = paneScaffoldState.isSignedIn,
         onSignInClicked = {
             onNavigate(signInDestination())
@@ -111,10 +111,10 @@ internal fun PostSearchResults(
             )
         },
     )
-    val threadGateSheetState = rememberThreadGateSheetState(
+    val threadGateSheetState = rememberUpdatedThreadGateSheetState(
         onThreadGateUpdated = onSendPostInteraction,
     )
-    val postOptionsState = rememberUpdatedPostOptionsState(
+    val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
         onOptionClicked = { option ->
@@ -146,40 +146,42 @@ internal fun PostSearchResults(
         onMediaClicked,
         onReplyToPost,
     ) {
-        postActions(
-            onLinkTargetClicked = { _, linkTarget ->
-                onLinkTargetClicked(linkTarget)
-            },
-            onPostClicked = { post ->
-                onPostSearchResultClicked(post, sharedElementPrefix)
-            },
-            onProfileClicked = { profile, post, quotingPostUri ->
-                onPostSearchResultProfileClicked(
-                    profile,
-                    post,
-                    sharedElementPrefix.withQuotingPostUriPrefix(quotingPostUri),
+        PostActions { action ->
+            when (action) {
+                is PostAction.OfLinkTarget -> onLinkTargetClicked(action.linkTarget)
+
+                is PostAction.OfPost -> onPostSearchResultClicked(
+                    action.post,
+                    sharedElementPrefix,
                 )
-            },
-            onPostRecordClicked = { record, owningPostUri ->
-                onPostRecordClicked(
-                    record,
-                    sharedElementPrefix.withQuotingPostUriPrefix(owningPostUri),
+
+                is PostAction.OfProfile -> onPostSearchResultProfileClicked(
+                    action.profile,
+                    action.post,
+                    sharedElementPrefix.withQuotingPostUriPrefix(action.quotingPostUri),
                 )
-            },
-            onPostMediaClicked = { media, index, post, quotingPostUri ->
-                onMediaClicked(
-                    media,
-                    index,
-                    post,
-                    sharedElementPrefix.withQuotingPostUriPrefix(quotingPostUri),
+
+                is PostAction.OfRecord -> onPostRecordClicked(
+                    action.record,
+                    sharedElementPrefix.withQuotingPostUriPrefix(action.owningPostUri),
                 )
-            },
-            onReplyToPost = { post ->
-                onReplyToPost(post, sharedElementPrefix)
-            },
-            onPostInteraction = postInteractionState::onInteraction,
-            onPostOptionsClicked = postOptionsState::showOptions,
-        )
+
+                is PostAction.OfMedia -> onMediaClicked(
+                    action.media,
+                    action.index,
+                    action.post,
+                    sharedElementPrefix.withQuotingPostUriPrefix(action.quotingPostUri),
+                )
+
+                is PostAction.OfReply -> onReplyToPost(action.post, sharedElementPrefix)
+
+                is PostAction.OfInteraction -> postInteractionSheetState.onInteraction(action)
+
+                is PostAction.OfMore -> postOptionsSheetState.showOptions(action.post)
+
+                else -> Unit
+            }
+        }
     }
     LazyVerticalStaggeredGrid(
         modifier = modifier,
@@ -256,7 +258,9 @@ private fun PostSearchResult(
     ElevatedCard(
         modifier = modifier,
         onClick = {
-            postActions.onPostClicked(result.timelineItem.post)
+            postActions.onPostAction(
+                PostAction.OfPost(result.timelineItem.post),
+            )
         },
         content = {
             TimelineItem(
