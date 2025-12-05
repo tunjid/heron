@@ -130,16 +130,16 @@ fun postThreadsMutations(
                 else copy(
                     items = timelineItems,
                     anchorPost = timelineItems.firstNotNullOfOrNull anchor@{ item ->
-                        val candidate = when (item) {
-                            is TimelineItem.Pinned -> item.post
-                            is TimelineItem.Repost -> item.post
-                            is TimelineItem.Single -> item.post
+                       when (item) {
+                            is TimelineItem.Pinned,
+                            is TimelineItem.Repost,
+                            is TimelineItem.Single -> item.post.takeIf {
+                                it.uri.recordKey == route.postRecordKey
+                            }
                             is TimelineItem.Thread -> item.posts.firstOrNull {
                                 it.uri.recordKey == route.postRecordKey
                             }
-                        } ?: return@anchor null
-                        if (candidate.uri.recordKey == route.postRecordKey) candidate
-                        else null
+                        }
                     },
                 )
             },
