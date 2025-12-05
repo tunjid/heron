@@ -216,10 +216,10 @@ data class Post(
 }
 
 val Post.ViewerStats?.canReply
-    get() = this?.replyDisabled?.not() ?: true
+    get() = this?.replyDisabled?.not() ?: false
 
 val Post.ViewerStats?.canQuote
-    get() = this?.embeddingDisabled?.not() ?: true
+    get() = this?.embeddingDisabled?.not() ?: false
 
 val Post.ViewerStats?.isBookmarked
     get() = this?.bookmarked ?: false
