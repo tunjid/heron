@@ -133,7 +133,6 @@ fun TimelineItem(
                         now = now,
                         post = item.post,
                         threadGate = item.threadGate,
-                        viewerState = item.profileViewerState,
                         isAnchoredInTimeline = false,
                         avatarShape = RoundedPolygonShape.Circle,
                         sharedElementPrefix = sharedElementPrefix,
@@ -178,7 +177,6 @@ private fun ThreadedPost(
                         now = now,
                         post = post,
                         threadGate = item.postUrisToThreadGates[post.uri],
-                        viewerState = item.postUrisToViewerStates[post.uri],
                         isAnchoredInTimeline = item.generation == 0L,
                         avatarShape = when {
                             item.isThreadedAnchor -> RoundedPolygonShape.Circle

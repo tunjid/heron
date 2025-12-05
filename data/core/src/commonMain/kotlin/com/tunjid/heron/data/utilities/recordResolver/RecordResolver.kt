@@ -28,7 +28,6 @@ import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LabelerPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
@@ -55,8 +54,6 @@ import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.PopulatedThreadGateEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
-import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
-import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.distinctUntilChangedAdultContentAndLabelVisibilityPreferences
@@ -77,7 +74,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import sh.christian.ozone.api.AtUri
@@ -113,7 +109,6 @@ internal interface RecordResolver {
         fun record(recordUri: RecordUri): Record?
         fun profile(profileId: ProfileId): Profile?
         fun threadGate(postUri: PostUri): ThreadGate?
-        fun viewerState(profileId: ProfileId): ProfileViewerState?
     }
 }
 
@@ -354,25 +349,16 @@ internal class OfflineRecordResolver @Inject constructor(
                 val recordUris = mutableSetOf<RecordUri>()
                 val threadGatePostUris = mutableListOf<PostUri>()
                 val profileIds = mutableSetOf<ProfileId>()
-                val viewerStateProfileIds =
-                    if (signedInProfileId == null) emptySet()
-                    else mutableSetOf<ProfileId>()
 
                 items.forEach { item ->
                     postUri(item).let { itemPostUri ->
                         recordUris.add(itemPostUri)
                         threadGatePostUris.add(itemPostUri)
-                        if (viewerStateProfileIds is MutableSet) {
-                            viewerStateProfileIds.add(itemPostUri.profileId())
-                        }
                     }
                     associatedRecordUris(item).forEach { associatedRecordUri ->
                         recordUris.add(associatedRecordUri)
                         if (associatedRecordUri is PostUri) {
                             threadGatePostUris.add(associatedRecordUri)
-                            if (viewerStateProfileIds is MutableSet) {
-                                viewerStateProfileIds.add(associatedRecordUri.profileId())
-                            }
                         }
                     }
                     profileIds.addAll(associatedProfileIds(item))
@@ -388,17 +374,8 @@ internal class OfflineRecordResolver @Inject constructor(
                         .toDistinctUntilChangedFlowOrEmpty(threadGateDao::threadGates),
                     flow3 = profileIds
                         .toDistinctUntilChangedFlowOrEmpty(profileDao::profiles),
-                    flow4 = when (signedInProfileId) {
-                        null -> flowOf(emptyList())
-                        else -> profileIds.toDistinctUntilChangedFlowOrEmpty {
-                            profileDao.viewerState(
-                                profileId = signedInProfileId.id,
-                                otherProfileIds = viewerStateProfileIds,
-                            )
-                        }
-                    },
-                    flow5 = subscribedLabelers,
-                    transform = { associatedRecords, threadGateEntities, profileEntities, viewerStateEntities, labelers ->
+                    flow4 = subscribedLabelers,
+                    transform = { associatedRecords, threadGateEntities, profileEntities, labelers ->
                         if (associatedRecords.isEmpty()) return@combine emptyList()
 
                         items.fold(
@@ -406,7 +383,6 @@ internal class OfflineRecordResolver @Inject constructor(
                                 signedInProfileId = signedInProfileId,
                                 associatedRecords = associatedRecords,
                                 associatedThreadGateEntities = threadGateEntities,
-                                associatedViewerStateEntities = viewerStateEntities,
                                 associatedProfileEntities = profileEntities,
                             ),
                         ) { context, item ->
@@ -454,7 +430,6 @@ internal class OfflineRecordResolver @Inject constructor(
         associatedRecords: List<Record>,
         associatedThreadGateEntities: List<PopulatedThreadGateEntity>,
         associatedProfileEntities: List<PopulatedProfileEntity>,
-        associatedViewerStateEntities: List<ProfileViewerStateEntity>,
     ) : TimelineItemCreationContext,
         MutableList<TimelineItem> by mutableListOf() {
 
@@ -492,13 +467,6 @@ internal class OfflineRecordResolver @Inject constructor(
                 valueTransform = PopulatedProfileEntity::asExternalModel,
             )
 
-        private val profileIdsToViewerStates =
-            if (associatedViewerStateEntities.isEmpty()) emptyMap()
-            else associatedViewerStateEntities.associateBy(
-                keySelector = { it.otherProfileId },
-                valueTransform = ProfileViewerStateEntity::asExternalModel,
-            )
-
         override fun record(recordUri: RecordUri): Record? =
             recordUrisToRecords[recordUri]
 
@@ -507,9 +475,6 @@ internal class OfflineRecordResolver @Inject constructor(
 
         override fun profile(profileId: ProfileId): Profile? =
             profileIdsToProfiles[profileId]
-
-        override fun viewerState(profileId: ProfileId): ProfileViewerState? =
-            profileIdsToViewerStates[profileId]
 
         fun update(
             currentPost: Post,

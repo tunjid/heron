@@ -205,7 +205,6 @@ internal class OfflineSearchRepository @Inject constructor(
                         threadGate = threadGate(item.uri),
                         appliedLabels = appliedLabels,
                         signedInProfileId = signedInProfileId,
-                        profileViewerState = viewerState(post.author.did),
                     )
                 },
             ).map {
