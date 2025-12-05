@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -71,7 +70,6 @@ import heron.ui.timeline.generated.resources.thread_gate_people_you_follow
 import heron.ui.timeline.generated.resources.thread_gate_people_you_mention
 import heron.ui.timeline.generated.resources.thread_gate_post_reply_settings
 import heron.ui.timeline.generated.resources.thread_gate_save
-import heron.ui.timeline.generated.resources.thread_gate_select_from_your_lists
 import heron.ui.timeline.generated.resources.thread_gate_who_can_reply
 import heron.ui.timeline.generated.resources.thread_gate_your_followers
 import org.jetbrains.compose.resources.stringResource
@@ -220,6 +218,7 @@ private fun ThreadGateBottomSheet(
             }
 
             // Lists Dropdown
+            /* Comment out for now, out of scope
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -241,7 +240,7 @@ private fun ThreadGateBottomSheet(
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-
+             */
             // Quote Posts Toggle
             /* Comment out for now, out of scope
              Row(
