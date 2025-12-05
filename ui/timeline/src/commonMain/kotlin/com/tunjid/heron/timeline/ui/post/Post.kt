@@ -76,6 +76,7 @@ import com.tunjid.heron.data.core.models.canReply
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.label.locale
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
@@ -187,10 +188,12 @@ private fun AttributionContent(
                         .size(UiTokens.avatarSize)
                         .clip(data.avatarShape)
                         .clickable {
-                            data.postActions.onProfileClicked(
-                                profile = data.post.author,
-                                post = data.post,
-                                quotingPostUri = null,
+                            data.postActions.onPostAction(
+                                PostAction.ProfileClicked(
+                                    profile = data.post.author,
+                                    post = data.post,
+                                    quotingPostUri = null,
+                                )
                             )
                         },
                     sharedContentState = rememberSharedContentState(
@@ -341,14 +344,18 @@ private fun TextContent(
                 Timeline.Presentation.Media.Expanded -> 2
             },
             onClick = {
-                data.postActions.onPostClicked(
-                    post = data.post,
+                data.postActions.onPostAction(
+                    PostAction.PostClicked(
+                        post = data.post,
+                    )
                 )
             },
             onLinkTargetClicked = { post, linkTarget ->
-                data.postActions.onLinkTargetClicked(
-                    post = post,
-                    linkTarget = linkTarget,
+                data.postActions.onPostAction(
+                    PostAction.LinkTargetClicked(
+                        post = post,
+                        linkTarget = linkTarget,
+                    )
                 )
             },
         )
@@ -382,26 +389,39 @@ private fun EmbedContent(
         presentation = data.presentation,
         sharedElementPrefix = data.sharedElementPrefix,
         paneMovableElementSharedTransitionScope = data.paneMovableElementSharedTransitionScope,
-        onLinkTargetClicked = data.postActions::onLinkTargetClicked,
+        onLinkTargetClicked = { post, linkTarget ->
+            data.postActions.onPostAction(
+                PostAction.LinkTargetClicked(
+                    post = post,
+                    linkTarget = linkTarget,
+                )
+            )
+        },
         onPostMediaClicked = { media, index, quote ->
-            data.postActions.onPostMediaClicked(
-                media = media,
-                index = index,
-                post = quote ?: data.post,
-                quotingPostUri = data.post.uri.takeIf { quote != null },
+            data.postActions.onPostAction(
+                PostAction.PostMediaClicked(
+                    media = media,
+                    index = index,
+                    post = quote ?: data.post,
+                    quotingPostUri = data.post.uri.takeIf { quote != null },
+                )
             )
         },
         onEmbeddedRecordClicked = { record ->
-            data.postActions.onPostRecordClicked(
-                record = record,
-                owningPostUri = data.post.uri,
+            data.postActions.onPostAction(
+                PostAction.PostRecordClicked(
+                    record = record,
+                    owningPostUri = data.post.uri,
+                )
             )
         },
         onQuotedProfileClicked = { quotedPost, quotedProfile ->
-            data.postActions.onProfileClicked(
-                profile = quotedProfile,
-                post = quotedPost,
-                quotingPostUri = data.post.uri,
+            data.postActions.onPostAction(
+                PostAction.ProfileClicked(
+                    profile = quotedProfile,
+                    post = quotedPost,
+                    quotingPostUri = data.post.uri,
+                )
             )
         },
     )
@@ -434,12 +454,21 @@ private fun ActionsContent(
                     boundsTransform = data.boundsTransform,
                 ),
             onReplyToPost = {
-                data.postActions.onReplyToPost(data.post)
+                data.postActions.onPostAction(PostAction.ReplyToPost(data.post))
             },
-            onPostInteraction = data.postActions::onPostInteraction,
+            onPostInteraction = { interaction, viewerStats ->
+                data.postActions.onPostAction(
+                    PostAction.PostInteraction(
+                        interaction = interaction,
+                        viewerStats = viewerStats,
+                    )
+                )
+            },
             onPostOptionsClicked = {
-                data.postActions.onPostOptionsClicked(
-                    data.post,
+                data.postActions.onPostAction(
+                    PostAction.PostOptionsClicked(
+                        data.post,
+                    )
                 )
             },
         )
@@ -466,7 +495,9 @@ private fun MetadataContent(
         reposts = data.post.repostCount,
         quotes = data.post.quoteCount,
         likes = data.post.likeCount,
-        onMetadataClicked = data.postActions::onPostMetadataClicked,
+        onMetadataClicked = {
+            data.postActions.onPostAction(PostAction.PostMetadataClicked(it))
+        },
     )
 }
 
@@ -509,9 +540,11 @@ private fun LabelDialog(
                 text = stringResource(Res.string.view_labeler),
                 onClick = {
                     data.selectedLabel = null
-                    data.postActions.onLinkTargetClicked(
-                        post = data.post,
-                        linkTarget = LinkTarget.UserHandleMention(labelerHandle),
+                    data.postActions.onPostAction(
+                        PostAction.LinkTargetClicked(
+                            post = data.post,
+                            linkTarget = LinkTarget.UserHandleMention(labelerHandle),
+                        )
                     )
                 },
             )

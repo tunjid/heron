@@ -53,6 +53,7 @@ import com.tunjid.heron.search.id
 import com.tunjid.heron.search.sharedElementPrefix
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
@@ -256,7 +257,9 @@ private fun PostSearchResult(
     ElevatedCard(
         modifier = modifier,
         onClick = {
-            postActions.onPostClicked(result.timelineItem.post)
+            postActions.onPostAction(
+                PostAction.PostClicked(result.timelineItem.post)
+            )
         },
         content = {
             TimelineItem(

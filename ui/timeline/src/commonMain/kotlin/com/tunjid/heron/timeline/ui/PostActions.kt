@@ -25,20 +25,58 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.timeline.ui.post.PostMetadata
 
+sealed interface PostAction {
+    data class LinkTargetClicked(
+        val post: Post,
+        val linkTarget: LinkTarget,
+    ) : PostAction
+
+    data class ProfileClicked(
+        val profile: Profile,
+        val post: Post,
+        val quotingPostUri: PostUri?,
+    ) : PostAction
+
+    data class PostClicked(
+        val post: Post,
+    ) : PostAction
+
+    data class PostRecordClicked(
+        val record: Record,
+        val owningPostUri: PostUri,
+    ) : PostAction
+
+    data class PostMediaClicked(
+        val media: Embed.Media,
+        val index: Int,
+        val post: Post,
+        val quotingPostUri: PostUri?,
+    ) : PostAction
+
+    data class ReplyToPost(
+        val post: Post,
+    ) : PostAction
+
+    data class PostInteraction(
+        val interaction: Post.Interaction,
+        val viewerStats: Post.ViewerStats?,
+    ) : PostAction
+
+    data class PostMetadataClicked(
+        val metadata: PostMetadata,
+    ) : PostAction
+
+    data class PostOptionsClicked(
+        val post: Post,
+    ) : PostAction
+}
+
 @Stable
-interface PostActions {
-    fun onLinkTargetClicked(post: Post, linkTarget: LinkTarget)
-    fun onProfileClicked(profile: Profile, post: Post, quotingPostUri: PostUri?)
-    fun onPostClicked(post: Post)
-    fun onPostRecordClicked(record: Record, owningPostUri: PostUri)
-    fun onPostMediaClicked(media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri?)
-    fun onReplyToPost(post: Post)
-    fun onPostInteraction(interaction: Post.Interaction, viewerStats: Post.ViewerStats?)
-    fun onPostMetadataClicked(metadata: PostMetadata)
-    fun onPostOptionsClicked(post: Post)
+fun interface PostActions {
+    fun onPostAction(action: PostAction)
 
     companion object {
-        val NoOp: PostActions = NoOpPostActions
+        val NoOp: PostActions = PostActions {}
     }
 }
 
@@ -52,116 +90,50 @@ fun postActions(
     onPostInteraction: (interaction: Post.Interaction, viewerStats: Post.ViewerStats?) -> Unit,
     onPostMetadataClicked: (metadata: PostMetadata) -> Unit = {},
     onPostOptionsClicked: (post: Post) -> Unit,
-) = object : PostActions {
-    override fun onProfileClicked(
-        profile: Profile,
-        post: Post,
-        quotingPostUri: PostUri?,
-    ) = onProfileClicked(
-        profile,
-        post,
-        quotingPostUri,
-    )
+): PostActions = PostActions { action ->
+    when (action) {
+        is PostAction.LinkTargetClicked -> onLinkTargetClicked(
+            action.post,
+            action.linkTarget
+        )
 
-    override fun onPostClicked(
-        post: Post,
-    ) = onPostClicked(
-        post,
-    )
+        is PostAction.ProfileClicked -> onProfileClicked(
+            action.profile,
+            action.post,
+            action.quotingPostUri
+        )
 
-    override fun onPostRecordClicked(
-        record: Record,
-        owningPostUri: PostUri,
-    ) = onPostRecordClicked(
-        record,
-        owningPostUri,
-    )
+        is PostAction.PostClicked -> onPostClicked(
+            action.post
+        )
 
-    override fun onPostMediaClicked(
-        media: Embed.Media,
-        index: Int,
-        post: Post,
-        quotingPostUri: PostUri?,
-    ) = onPostMediaClicked(
-        media,
-        index,
-        post,
-        quotingPostUri,
-    )
+        is PostAction.PostRecordClicked -> onPostRecordClicked(
+            action.record,
+            action.owningPostUri
+        )
 
-    override fun onReplyToPost(
-        post: Post,
-    ) = onReplyToPost(post)
+        is PostAction.PostMediaClicked -> onPostMediaClicked(
+            action.media,
+            action.index,
+            action.post,
+            action.quotingPostUri
+        )
 
-    override fun onPostInteraction(
-        interaction: Post.Interaction,
-        viewerStats: Post.ViewerStats?,
-    ) = onPostInteraction(
-        interaction,
-        viewerStats,
-    )
+        is PostAction.ReplyToPost -> onReplyToPost(
+            action.post
+        )
 
-    override fun onPostMetadataClicked(
-        metadata: PostMetadata,
-    ) = onPostMetadataClicked(
-        metadata,
-    )
+        is PostAction.PostInteraction -> onPostInteraction(
+            action.interaction,
+            action.viewerStats
+        )
 
-    override fun onPostOptionsClicked(
-        post: Post,
-    ) = onPostOptionsClicked(post)
+        is PostAction.PostMetadataClicked -> onPostMetadataClicked(
+            action.metadata
+        )
 
-    override fun onLinkTargetClicked(
-        post: Post,
-        linkTarget: LinkTarget,
-    ) = onLinkTargetClicked(
-        post,
-        linkTarget,
-    )
-}
-
-private val NoOpPostActions = object : PostActions {
-    override fun onProfileClicked(
-        profile: Profile,
-        post: Post,
-        quotingPostUri: PostUri?,
-    ) = Unit
-
-    override fun onPostClicked(
-        post: Post,
-    ) = Unit
-
-    override fun onPostRecordClicked(
-        record: Record,
-        owningPostUri: PostUri,
-    ) = Unit
-
-    override fun onPostMediaClicked(
-        media: Embed.Media,
-        index: Int,
-        post: Post,
-        quotingPostUri: PostUri?,
-    ) = Unit
-
-    override fun onReplyToPost(
-        post: Post,
-    ) = Unit
-
-    override fun onPostInteraction(
-        interaction: Post.Interaction,
-        viewerStats: Post.ViewerStats?,
-    ) = Unit
-
-    override fun onPostMetadataClicked(
-        metadata: PostMetadata,
-    ) = Unit
-
-    override fun onPostOptionsClicked(
-        post: Post,
-    ) = Unit
-
-    override fun onLinkTargetClicked(
-        post: Post,
-        linkTarget: LinkTarget,
-    ) = Unit
+        is PostAction.PostOptionsClicked -> onPostOptionsClicked(
+            action.post
+        )
+    }
 }
