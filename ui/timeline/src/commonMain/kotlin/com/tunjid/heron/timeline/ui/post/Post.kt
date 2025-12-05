@@ -72,6 +72,7 @@ import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.allowsAll
 import com.tunjid.heron.data.core.models.allowsNone
+import com.tunjid.heron.data.core.models.canReply
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -417,9 +418,7 @@ private fun ActionsContent(
             replyCount = format(data.post.replyCount),
             repostCount = format(data.post.repostCount),
             likeCount = format(data.post.likeCount),
-            repostUri = data.post.viewerStats?.repostUri,
-            likeUri = data.post.viewerStats?.likeUri,
-            isBookmarked = data.post.viewerStats?.bookmarked ?: false,
+            viewerStats = data.post.viewerStats,
             postId = data.post.cid,
             postUri = data.post.uri,
             sharedElementPrefix = data.sharedElementPrefix,

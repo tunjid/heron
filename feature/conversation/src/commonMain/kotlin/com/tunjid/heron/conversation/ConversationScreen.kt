@@ -541,8 +541,8 @@ private fun MessageRecord(
                 },
                 onReplyToPost = {
                 },
-                onPostInteraction = {
-                    actions(Action.SendPostInteraction(it))
+                onPostInteraction = { interaction, _ ->
+                    actions(Action.SendPostInteraction(interaction))
                 },
                 onPostOptionsClicked = {
                 },

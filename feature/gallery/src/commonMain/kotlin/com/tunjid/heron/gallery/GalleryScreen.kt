@@ -610,7 +610,7 @@ private fun MediaInteractions(
     paneScaffoldState: PaneScaffoldState,
     modifier: Modifier = Modifier,
     onReplyToPost: (Post) -> Unit,
-    onPostInteraction: (Post.Interaction) -> Unit,
+    onPostInteraction: (Post.Interaction, viewerStats: Post.ViewerStats?) -> Unit,
     onPostOptionsClicked: () -> Unit,
 ) {
     if (post == null) return

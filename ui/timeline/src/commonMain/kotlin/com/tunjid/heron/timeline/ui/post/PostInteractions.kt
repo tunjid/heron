@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.timeline.ui.post
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
@@ -70,12 +69,14 @@ import androidx.compose.ui.unit.sp
 import com.tunjid.composables.ui.animate
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.models.canReply
+import com.tunjid.heron.data.core.models.isBookmarked
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.icon
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.stringResource
 import com.tunjid.heron.timeline.utilities.format
+import com.tunjid.heron.ui.UiTokens.withDim
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
@@ -97,17 +98,15 @@ fun PostInteractions(
     replyCount: String?,
     repostCount: String?,
     likeCount: String?,
-    repostUri: GenericUri?,
-    likeUri: GenericUri?,
-    isBookmarked: Boolean,
     postId: PostId,
     postUri: PostUri,
+    viewerStats: Post.ViewerStats?,
     sharedElementPrefix: String,
     presentation: Timeline.Presentation,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     modifier: Modifier = Modifier,
     onReplyToPost: () -> Unit,
-    onPostInteraction: (Post.Interaction) -> Unit,
+    onPostInteraction: (Post.Interaction, viewerStats: Post.ViewerStats?) -> Unit,
     onPostOptionsClicked: () -> Unit,
 ) {
     Row(
@@ -120,11 +119,9 @@ fun PostInteractions(
             replyCount = replyCount,
             repostCount = repostCount,
             likeCount = likeCount,
-            repostUri = repostUri,
-            likeUri = likeUri,
-            isBookmarked = isBookmarked,
             postId = postId,
             postUri = postUri,
+            viewerStats = viewerStats,
             sharedElementPrefix = sharedElementPrefix,
             iconSize = animateDpAsState(presentation.actionIconSize).value,
             orientation = Orientation.Horizontal,
@@ -149,7 +146,7 @@ fun MediaPostInteractions(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     modifier: Modifier = Modifier,
     onReplyToPost: () -> Unit,
-    onPostInteraction: (Post.Interaction) -> Unit,
+    onPostInteraction: (Post.Interaction, viewerStats: Post.ViewerStats?) -> Unit,
     onPostOptionsClicked: () -> Unit,
 ) {
     Column(
@@ -162,11 +159,9 @@ fun MediaPostInteractions(
             replyCount = format(post.replyCount),
             repostCount = format(post.repostCount),
             likeCount = format(post.likeCount),
-            repostUri = post.viewerStats?.repostUri,
-            likeUri = post.viewerStats?.likeUri,
-            isBookmarked = post.viewerStats?.bookmarked ?: false,
             postId = post.cid,
             postUri = post.uri,
+            viewerStats = post.viewerStats,
             sharedElementPrefix = sharedElementPrefix,
             iconSize = 40.dp,
             orientation = Orientation.Vertical,
@@ -178,16 +173,13 @@ fun MediaPostInteractions(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private inline fun PostInteractionsButtons(
     interactionButtons: List<PostInteractionButton>,
+    viewerStats: Post.ViewerStats?,
     replyCount: String?,
     repostCount: String?,
     likeCount: String?,
-    repostUri: GenericUri?,
-    likeUri: GenericUri?,
-    isBookmarked: Boolean,
     postId: PostId,
     postUri: PostUri,
     sharedElementPrefix: String,
@@ -195,7 +187,7 @@ private inline fun PostInteractionsButtons(
     orientation: Orientation,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     crossinline onReplyToPost: () -> Unit,
-    crossinline onPostInteraction: (Post.Interaction) -> Unit,
+    crossinline onPostInteraction: (Post.Interaction, viewerStats: Post.ViewerStats?) -> Unit,
     crossinline onPostOptionsClicked: () -> Unit,
     crossinline prefixContent: @Composable (PostInteractionButton) -> Unit = {},
 ) = with(paneMovableElementSharedTransitionScope) {
@@ -217,9 +209,9 @@ private inline fun PostInteractionsButtons(
                     ),
                 icon = when (button) {
                     PostInteractionButton.Comment -> button.icon(isChecked = false)
-                    PostInteractionButton.Like -> button.icon(isChecked = likeUri != null)
-                    PostInteractionButton.Repost -> button.icon(isChecked = repostUri != null)
-                    PostInteractionButton.Bookmark -> button.icon(isChecked = isBookmarked)
+                    PostInteractionButton.Like -> button.icon(isChecked = viewerStats?.likeUri != null)
+                    PostInteractionButton.Repost -> button.icon(isChecked = viewerStats?.repostUri != null)
+                    PostInteractionButton.Bookmark -> button.icon(isChecked = viewerStats.isBookmarked)
                     PostInteractionButton.MoreOptions -> button.icon(isChecked = false)
                 },
                 iconSize = iconSize,
@@ -235,22 +227,29 @@ private inline fun PostInteractionsButtons(
                 tint = when (button) {
                     PostInteractionButton.Comment -> MaterialTheme.colorScheme.outline
                     PostInteractionButton.Like ->
-                        if (likeUri != null) LikeRed
+                        if (viewerStats?.likeUri != null) LikeRed
                         else MaterialTheme.colorScheme.outline
 
                     PostInteractionButton.Repost ->
-                        if (repostUri != null) RepostGreen
+                        if (viewerStats?.repostUri != null) RepostGreen
                         else MaterialTheme.colorScheme.outline
                     PostInteractionButton.Bookmark ->
-                        if (isBookmarked) BookmarkBlue
+                        if (viewerStats.isBookmarked) BookmarkBlue
                         else MaterialTheme.colorScheme.outline
                     PostInteractionButton.MoreOptions -> MaterialTheme.colorScheme.outline
+                },
+                enabled = when (button) {
+                    PostInteractionButton.Bookmark -> true
+                    PostInteractionButton.Comment -> viewerStats.canReply
+                    PostInteractionButton.Like -> true
+                    PostInteractionButton.MoreOptions -> true
+                    PostInteractionButton.Repost -> true
                 },
                 onClick = {
                     when (button) {
                         PostInteractionButton.Comment -> onReplyToPost()
                         PostInteractionButton.Like -> onPostInteraction(
-                            when (likeUri) {
+                            when (val likeUri = viewerStats?.likeUri) {
                                 null -> Post.Interaction.Create.Like(
                                     postId = postId,
                                     postUri = postUri,
@@ -261,10 +260,11 @@ private inline fun PostInteractionsButtons(
                                     likeUri = likeUri,
                                 )
                             },
+                            viewerStats,
                         )
 
                         PostInteractionButton.Repost -> onPostInteraction(
-                            when (repostUri) {
+                            when (val repostUri = viewerStats?.repostUri) {
                                 null -> Post.Interaction.Create.Repost(
                                     postId = postId,
                                     postUri = postUri,
@@ -275,9 +275,10 @@ private inline fun PostInteractionsButtons(
                                     repostUri = repostUri,
                                 )
                             },
+                            viewerStats,
                         )
                         PostInteractionButton.Bookmark -> onPostInteraction(
-                            when (isBookmarked) {
+                            when (viewerStats.isBookmarked) {
                                 false -> Post.Interaction.Create.Bookmark(
                                     postId = postId,
                                     postUri = postUri,
@@ -287,6 +288,7 @@ private inline fun PostInteractionsButtons(
                                     postUri = postUri,
                                 )
                             },
+                            viewerStats,
                         )
                         PostInteractionButton.MoreOptions -> onPostOptionsClicked()
                     }
@@ -304,14 +306,18 @@ private fun PostInteraction(
     modifier: Modifier = Modifier,
     orientation: Orientation,
     text: String?,
+    enabled: Boolean,
     onClick: () -> Unit,
-    tint: Color = MaterialTheme.colorScheme.outline,
+    tint: Color,
 ) {
     val itemModifier = modifier
-        .clickable(
-            interactionSource = remember { MutableInteractionSource() },
-            indication = ripple(bounded = false),
-            onClick = onClick,
+        .then(
+            if (enabled) Modifier.clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = ripple(bounded = false),
+                onClick = onClick,
+            )
+            else Modifier,
         )
 
     when (orientation) {
@@ -325,7 +331,7 @@ private fun PostInteraction(
                 iconSize = iconSize,
                 contentDescription = contentDescription,
                 text = text,
-                tint = tint,
+                tint = tint.withDim(!enabled),
             )
         }
         Orientation.Horizontal -> Row(
@@ -338,7 +344,7 @@ private fun PostInteraction(
                 iconSize = iconSize,
                 contentDescription = contentDescription,
                 text = text,
-                tint = tint,
+                tint = tint.withDim(!enabled),
             )
         }
     }
@@ -384,7 +390,10 @@ class PostInteractionsSheetState private constructor(
 
     internal var isSignedIn by mutableStateOf(isSignedIn)
 
-    fun onInteraction(interaction: Post.Interaction) {
+    fun onInteraction(
+        interaction: Post.Interaction,
+        viewerStats: Post.ViewerStats?,
+    ) {
         currentInteraction = interaction
     }
 

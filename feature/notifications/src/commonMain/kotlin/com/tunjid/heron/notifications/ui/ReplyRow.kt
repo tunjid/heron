@@ -36,7 +36,7 @@ fun ReplyRow(
     onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
     onPostClicked: (Notification.PostAssociated) -> Unit,
     onReplyToPost: (Notification.PostAssociated) -> Unit,
-    onPostInteraction: (Post.Interaction) -> Unit,
+    onPostInteraction: (Post.Interaction, viewerStats: Post.ViewerStats?) -> Unit,
     onPostOptionsClicked: (Post) -> Unit,
 ) {
     NotificationPostScaffold(

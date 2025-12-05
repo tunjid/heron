@@ -42,6 +42,7 @@ import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.canReply
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.PostHeadline
@@ -68,7 +69,7 @@ internal fun NotificationPostScaffold(
     onPostMediaClicked: (Post, Embed.Media, Int) -> Unit,
     onReplyToPost: (Notification.PostAssociated) -> Unit,
     onLinkTargetClicked: (Notification.PostAssociated, LinkTarget) -> Unit,
-    onPostInteraction: (Post.Interaction) -> Unit,
+    onPostInteraction: (Post.Interaction, viewerStats: Post.ViewerStats?) -> Unit,
     onPostOptionsClicked: (Post) -> Unit,
 ) {
     Column(
@@ -130,11 +131,9 @@ internal fun NotificationPostScaffold(
                     replyCount = format(notification.associatedPost.replyCount),
                     repostCount = format(notification.associatedPost.repostCount),
                     likeCount = format(notification.associatedPost.likeCount),
-                    repostUri = notification.associatedPost.viewerStats?.repostUri,
-                    likeUri = notification.associatedPost.viewerStats?.likeUri,
-                    isBookmarked = notification.associatedPost.viewerStats?.bookmarked ?: false,
                     postId = notification.associatedPost.cid,
                     postUri = notification.associatedPost.uri,
+                    viewerStats = notification.associatedPost.viewerStats,
                     sharedElementPrefix = notification.sharedElementPrefix(),
                     presentation = Timeline.Presentation.Text.WithEmbed,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,

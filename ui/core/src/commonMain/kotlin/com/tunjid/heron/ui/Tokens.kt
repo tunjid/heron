@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -67,4 +68,8 @@ object UiTokens {
             )
         }
     }
+
+    fun Color.withDim(
+        dimmed: Boolean,
+    ) = if (dimmed) copy(alpha = 0.6f) else this
 }

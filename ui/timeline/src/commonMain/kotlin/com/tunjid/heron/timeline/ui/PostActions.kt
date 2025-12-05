@@ -33,7 +33,7 @@ interface PostActions {
     fun onPostRecordClicked(record: Record, owningPostUri: PostUri)
     fun onPostMediaClicked(media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri?)
     fun onReplyToPost(post: Post)
-    fun onPostInteraction(interaction: Post.Interaction)
+    fun onPostInteraction(interaction: Post.Interaction, viewerStats: Post.ViewerStats?)
     fun onPostMetadataClicked(metadata: PostMetadata)
     fun onPostOptionsClicked(post: Post)
 
@@ -49,7 +49,7 @@ fun postActions(
     onPostRecordClicked: (record: Record, owningPostUri: PostUri) -> Unit,
     onPostMediaClicked: (media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri?) -> Unit,
     onReplyToPost: (post: Post) -> Unit,
-    onPostInteraction: (interaction: Post.Interaction) -> Unit,
+    onPostInteraction: (interaction: Post.Interaction, viewerStats: Post.ViewerStats?) -> Unit,
     onPostMetadataClicked: (metadata: PostMetadata) -> Unit = {},
     onPostOptionsClicked: (post: Post) -> Unit,
 ) = object : PostActions {
@@ -95,8 +95,10 @@ fun postActions(
 
     override fun onPostInteraction(
         interaction: Post.Interaction,
+        viewerStats: Post.ViewerStats?,
     ) = onPostInteraction(
         interaction,
+        viewerStats,
     )
 
     override fun onPostMetadataClicked(
@@ -147,6 +149,7 @@ private val NoOpPostActions = object : PostActions {
 
     override fun onPostInteraction(
         interaction: Post.Interaction,
+        viewerStats: Post.ViewerStats?,
     ) = Unit
 
     override fun onPostMetadataClicked(
