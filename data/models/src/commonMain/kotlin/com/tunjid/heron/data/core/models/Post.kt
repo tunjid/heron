@@ -215,6 +215,15 @@ data class Post(
     }
 }
 
+val Post.ViewerStats?.canReply
+    get() = this?.replyDisabled?.not() ?: true
+
+val Post.ViewerStats?.canQuote
+    get() = this?.embeddingDisabled?.not() ?: true
+
+val Post.ViewerStats?.isBookmarked
+    get() = this?.bookmarked ?: false
+
 fun Post.appliedLabels(
     adultContentEnabled: Boolean,
     labelers: List<Labeler>,
