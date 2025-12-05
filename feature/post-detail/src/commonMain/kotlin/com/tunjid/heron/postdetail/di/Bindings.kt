@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.canReply
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.di.DataBindings
@@ -199,7 +200,7 @@ class PostDetailBindings(
                     )
                 },
                 floatingActionButton = {
-                    PaneFab(
+                    if (state.anchorPost?.viewerStats.canReply) PaneFab(
                         modifier = Modifier
                             .offset {
                                 fabOffset(bottomNavigationNestedScrollConnection.offset)

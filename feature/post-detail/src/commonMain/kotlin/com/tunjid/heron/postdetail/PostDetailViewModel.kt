@@ -18,6 +18,8 @@ package com.tunjid.heron.postdetail
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.PostUri
+import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
@@ -123,9 +125,24 @@ fun postThreadsMutations(
         }
     emitAll(
         timelineRepository.postThreadedItems(postUri = postUri)
-            .mapToMutation {
-                if (it.isEmpty()) this
-                else copy(items = it)
+            .mapToMutation { timelineItems ->
+                if (timelineItems.isEmpty()) this
+                else copy(
+                    items = timelineItems,
+                    anchorPost = timelineItems.firstNotNullOfOrNull anchor@{ item ->
+                        when (item) {
+                            is TimelineItem.Pinned,
+                            is TimelineItem.Repost,
+                            is TimelineItem.Single,
+                            -> item.post.takeIf {
+                                it.uri.recordKey == route.postRecordKey
+                            }
+                            is TimelineItem.Thread -> item.posts.firstOrNull {
+                                it.uri.recordKey == route.postRecordKey
+                            }
+                        }
+                    },
+                )
             },
     )
 }
