@@ -322,7 +322,6 @@ sealed class TimelineItem {
     abstract val threadGate: ThreadGate?
     abstract val appliedLabels: AppliedLabels
     abstract val signedInProfileId: ProfileId?
-    abstract val profileViewerState: ProfileViewerState?
 
     val indexedAt
         get() = when (this) {
@@ -340,7 +339,6 @@ sealed class TimelineItem {
         override val threadGate: ThreadGate?,
         override val appliedLabels: AppliedLabels,
         override val signedInProfileId: ProfileId?,
-        override val profileViewerState: ProfileViewerState?,
     ) : TimelineItem()
 
     data class Repost(
@@ -349,7 +347,6 @@ sealed class TimelineItem {
         override val threadGate: ThreadGate?,
         override val appliedLabels: AppliedLabels,
         override val signedInProfileId: ProfileId?,
-        override val profileViewerState: ProfileViewerState?,
         val by: Profile,
         val at: Instant,
     ) : TimelineItem()
@@ -358,11 +355,9 @@ sealed class TimelineItem {
         override val id: String,
         override val appliedLabels: AppliedLabels,
         override val signedInProfileId: ProfileId?,
-        override val profileViewerState: ProfileViewerState?,
         val anchorPostIndex: Int,
         val posts: List<Post>,
         val postUrisToThreadGates: Map<PostUri, ThreadGate?>,
-        val postUrisToViewerStates: Map<PostUri, ProfileViewerState?>,
         val generation: Long?,
         val hasBreak: Boolean,
     ) : TimelineItem() {
@@ -378,7 +373,6 @@ sealed class TimelineItem {
         override val threadGate: ThreadGate?,
         override val appliedLabels: AppliedLabels,
         override val signedInProfileId: ProfileId?,
-        override val profileViewerState: ProfileViewerState?,
     ) : TimelineItem()
 }
 
