@@ -55,6 +55,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -69,6 +70,7 @@ import androidx.compose.ui.unit.sp
 import com.tunjid.composables.ui.animate
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.canQuote
 import com.tunjid.heron.data.core.models.canReply
 import com.tunjid.heron.data.core.models.isBookmarked
 import com.tunjid.heron.data.core.types.PostId
@@ -365,18 +367,18 @@ class PostInteractionsSheetState private constructor(
     isSignedIn: Boolean,
     scope: BottomSheetScope,
 ) : BottomSheetState(scope) {
-    internal var currentInteraction by mutableStateOf<PostAction.OfInteraction?>(null)
+    internal var showingAction by mutableStateOf<PostAction.OfInteraction?>(null)
 
     internal var isSignedIn by mutableStateOf(isSignedIn)
 
     fun onInteraction(
         interaction: PostAction.OfInteraction,
     ) {
-        currentInteraction = interaction
+        showingAction = interaction
     }
 
     override fun onHidden() {
-        currentInteraction = null
+        showingAction = null
     }
 
     companion object {
@@ -413,8 +415,8 @@ private fun PostInteractionsBottomSheet(
     onInteractionConfirmed: (Post.Interaction) -> Unit,
     onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
 ) {
-    LaunchedEffect(state.currentInteraction) {
-        when (val interaction = state.currentInteraction?.interaction) {
+    LaunchedEffect(state.showingAction) {
+        when (val interaction = state.showingAction?.interaction) {
             null -> Unit
             is Post.Interaction.Create.Repost -> state.show()
             is Post.Interaction.Create.Like,
@@ -426,7 +428,7 @@ private fun PostInteractionsBottomSheet(
             -> {
                 if (state.isSignedIn) {
                     onInteractionConfirmed(interaction)
-                    state.currentInteraction = null
+                    state.showingAction = null
                 } else {
                     state.show()
                 }
@@ -435,7 +437,8 @@ private fun PostInteractionsBottomSheet(
     }
 
     state.ModalBottomSheet {
-        val currentInteraction = state.currentInteraction?.interaction
+        val action = state.showingAction
+        val currentInteraction = action?.interaction
         Column(
             modifier = Modifier
                 .padding(horizontal = 16.dp),
@@ -444,23 +447,28 @@ private fun PostInteractionsBottomSheet(
             when (currentInteraction) {
                 is Post.Interaction.Create.Repost -> {
                     if (state.isSignedIn) repeat(2) { index ->
+                        val isRepost = index == 0
                         val contentDescription = stringResource(
-                            if (index == 0) Res.string.repost
+                            if (isRepost) Res.string.repost
                             else Res.string.quote,
                         ).capitalize(locale = Locale.current)
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(CircleShape)
-                                .clickable {
-                                    when (index) {
-                                        0 -> onInteractionConfirmed(currentInteraction)
-
-                                        else -> (currentInteraction as? Post.Interaction.Create.Repost)
-                                            ?.let(onQuotePostClicked)
-                                    }
-                                    state.hide()
-                                }
+                                .then(
+                                    when {
+                                        isRepost -> Modifier.clickable {
+                                            onInteractionConfirmed(currentInteraction)
+                                            state.hide()
+                                        }
+                                        action.viewerStats.canQuote -> Modifier.clickable {
+                                            onQuotePostClicked(currentInteraction)
+                                            state.hide()
+                                        }
+                                        else -> Modifier.alpha(0.6f)
+                                    },
+                                )
                                 .padding(
                                     horizontal = 8.dp,
                                     vertical = 8.dp,
@@ -474,7 +482,8 @@ private fun PostInteractionsBottomSheet(
                                 Icon(
                                     modifier = Modifier
                                         .size(24.dp),
-                                    imageVector = if (index == 0) Icons.Rounded.Repeat
+                                    imageVector =
+                                    if (isRepost) Icons.Rounded.Repeat
                                     else Icons.Rounded.FormatQuote,
                                     contentDescription = null,
                                 )
