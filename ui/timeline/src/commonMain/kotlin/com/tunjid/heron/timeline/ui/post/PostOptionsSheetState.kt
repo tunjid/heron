@@ -57,7 +57,7 @@ class PostOptionsSheetState private constructor(
 
     companion object {
         @Composable
-        fun rememberUpdatedPostOptionsState(
+        fun rememberUpdatedPostOptionsSheetState(
             signedInProfileId: ProfileId?,
             recentConversations: List<Conversation>,
             onOptionClicked: (PostOption) -> Unit,

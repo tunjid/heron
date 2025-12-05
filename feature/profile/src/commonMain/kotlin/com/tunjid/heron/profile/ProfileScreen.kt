@@ -135,10 +135,10 @@ import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
 import com.tunjid.heron.timeline.ui.feed.FeedGenerator
 import com.tunjid.heron.timeline.ui.list.FeedList
 import com.tunjid.heron.timeline.ui.list.StarterPack
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostOption
-import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsState
-import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberThreadGateSheetState
+import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
+import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
@@ -1022,7 +1022,7 @@ private fun ProfileTimeline(
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
     val presentation = timelineState.timeline.presentation
-    val postInteractionState = rememberUpdatedPostInteractionState(
+    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
         isSignedIn = paneScaffoldState.isSignedIn,
         onSignInClicked = {
             actions(Action.Navigate.To(signInDestination()))
@@ -1041,12 +1041,12 @@ private fun ProfileTimeline(
             )
         },
     )
-    val threadGateSheetState = rememberThreadGateSheetState(
+    val threadGateSheetState = rememberUpdatedThreadGateSheetState(
         onThreadGateUpdated = {
             actions(Action.SendPostInteraction(it))
         },
     )
-    val postOptionsState = rememberUpdatedPostOptionsState(
+    val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
         onOptionClicked = { option ->
@@ -1210,11 +1210,11 @@ private fun ProfileTimeline(
                                     }
 
                                     is PostAction.OfInteraction -> {
-                                        postInteractionState.onInteraction(action)
+                                        postInteractionSheetState.onInteraction(action)
                                     }
 
                                     is PostAction.OfMore -> {
-                                        postOptionsState.showOptions(action.post)
+                                        postOptionsSheetState.showOptions(action.post)
                                     }
 
                                     else -> Unit

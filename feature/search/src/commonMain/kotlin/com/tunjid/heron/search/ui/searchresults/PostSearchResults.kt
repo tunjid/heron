@@ -56,10 +56,10 @@ import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostOption
-import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsState
-import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberThreadGateSheetState
+import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
+import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
@@ -96,7 +96,7 @@ internal fun PostSearchResults(
     val now = remember { Clock.System.now() }
     val results by rememberUpdatedState(state.tiledItems)
     val sharedElementPrefix = state.sharedElementPrefix
-    val postInteractionState = rememberUpdatedPostInteractionState(
+    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
         isSignedIn = paneScaffoldState.isSignedIn,
         onSignInClicked = {
             onNavigate(signInDestination())
@@ -111,10 +111,10 @@ internal fun PostSearchResults(
             )
         },
     )
-    val threadGateSheetState = rememberThreadGateSheetState(
+    val threadGateSheetState = rememberUpdatedThreadGateSheetState(
         onThreadGateUpdated = onSendPostInteraction,
     )
-    val postOptionsState = rememberUpdatedPostOptionsState(
+    val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
         onOptionClicked = { option ->
@@ -175,9 +175,9 @@ internal fun PostSearchResults(
 
                 is PostAction.OfReply -> onReplyToPost(action.post, sharedElementPrefix)
 
-                is PostAction.OfInteraction -> postInteractionState.onInteraction(action)
+                is PostAction.OfInteraction -> postInteractionSheetState.onInteraction(action)
 
-                is PostAction.OfMore -> postOptionsState.showOptions(action.post)
+                is PostAction.OfMore -> postOptionsSheetState.showOptions(action.post)
 
                 else -> Unit
             }

@@ -68,9 +68,9 @@ import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.timeline.ui.PostAction
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostOption
-import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsState
+import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
@@ -87,7 +87,7 @@ internal fun NotificationsScreen(
     actions: (Action) -> Unit,
 ) {
     val listState = rememberLazyListState()
-    val postInteractionState = rememberUpdatedPostInteractionState(
+    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
         isSignedIn = paneScaffoldState.isSignedIn,
         onSignInClicked = {
             actions(Action.Navigate.To(signInDestination()))
@@ -106,7 +106,7 @@ internal fun NotificationsScreen(
             )
         },
     )
-    val postOptionsState = rememberUpdatedPostOptionsState(
+    val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = state.signedInProfile?.did,
         recentConversations = state.recentConversations,
         onOptionClicked = { option ->
@@ -188,9 +188,9 @@ internal fun NotificationsScreen(
     val onPostInteraction = remember {
         { notification: Notification.PostAssociated, options: PostAction.Options ->
             when (options) {
-                is PostAction.OfInteraction -> postInteractionState.onInteraction(options)
+                is PostAction.OfInteraction -> postInteractionSheetState.onInteraction(options)
                 is PostAction.OfMetadata -> Unit
-                is PostAction.OfMore -> postOptionsState.showOptions(options.post)
+                is PostAction.OfMore -> postOptionsSheetState.showOptions(options.post)
                 is PostAction.OfReply -> actions(
                     Action.Navigate.To(
                         if (paneScaffoldState.isSignedOut) signInDestination()

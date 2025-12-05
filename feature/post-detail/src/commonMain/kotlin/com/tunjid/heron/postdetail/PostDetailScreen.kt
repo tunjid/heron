@@ -62,11 +62,11 @@ import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostMetadata
 import com.tunjid.heron.timeline.ui.post.PostOption
-import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsState
-import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberThreadGateSheetState
+import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
+import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
@@ -105,7 +105,7 @@ internal fun PostDetailScreen(
             actions(Action.Navigate.To(destination))
         }
     }
-    val postInteractionState = rememberUpdatedPostInteractionState(
+    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
         isSignedIn = paneScaffoldState.isSignedIn,
         onSignInClicked = {
             actions(Action.Navigate.To(signInDestination()))
@@ -122,12 +122,12 @@ internal fun PostDetailScreen(
             )
         },
     )
-    val threadGateSheetState = rememberThreadGateSheetState(
+    val threadGateSheetState = rememberUpdatedThreadGateSheetState(
         onThreadGateUpdated = {
             actions(Action.SendPostInteraction(it))
         },
     )
-    val postOptionsState = rememberUpdatedPostOptionsState(
+    val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = state.signedInProfileId,
         recentConversations = state.recentConversations,
         onOptionClicked = { option ->
@@ -294,11 +294,11 @@ internal fun PostDetailScreen(
                                 }
 
                                 is PostAction.OfInteraction -> {
-                                    postInteractionState.onInteraction(action)
+                                    postInteractionSheetState.onInteraction(action)
                                 }
 
                                 is PostAction.OfMore -> {
-                                    postOptionsState.showOptions(action.post)
+                                    postOptionsSheetState.showOptions(action.post)
                                 }
                             }
                         }

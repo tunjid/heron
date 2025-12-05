@@ -381,7 +381,7 @@ class PostInteractionsSheetState private constructor(
 
     companion object {
         @Composable
-        fun rememberUpdatedPostInteractionState(
+        fun rememberUpdatedPostInteractionsSheetState(
             isSignedIn: Boolean,
             onSignInClicked: () -> Unit,
             onInteractionConfirmed: (Post.Interaction) -> Unit,

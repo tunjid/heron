@@ -103,9 +103,9 @@ import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.post.MediaPostInteractions
-import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
+import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostOption
-import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsState
+import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
@@ -136,7 +136,7 @@ internal fun GalleryScreen(
         PlayerControlsUiState(videoPlayerController)
     }
     val imageDownloadState = remember(::ImageDownloadState)
-    val postInteractionState = rememberUpdatedPostInteractionState(
+    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
         isSignedIn = paneScaffoldState.isSignedIn,
         onSignInClicked = {
             actions(Action.Navigate.To(signInDestination()))
@@ -155,7 +155,7 @@ internal fun GalleryScreen(
             )
         },
     )
-    val postOptionsState = rememberUpdatedPostOptionsState(
+    val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = state.signedInProfileId,
         recentConversations = state.recentConversations,
         onOptionClicked = { option ->
@@ -315,11 +315,11 @@ internal fun GalleryScreen(
                     .padding(horizontal = 16.dp),
                 onPostInteraction = { interaction ->
                     when (interaction) {
-                        is PostAction.OfInteraction -> postInteractionState.onInteraction(
+                        is PostAction.OfInteraction -> postInteractionSheetState.onInteraction(
                             interaction,
                         )
                         is PostAction.OfMetadata -> Unit
-                        is PostAction.OfMore -> postOptionsState.showOptions(
+                        is PostAction.OfMore -> postOptionsSheetState.showOptions(
                             interaction.post,
                         )
                         is PostAction.OfReply -> actions(
