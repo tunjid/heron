@@ -62,7 +62,6 @@ import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.remembe
 import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberThreadGateSheetState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
-import com.tunjid.heron.timeline.ui.postActions
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
@@ -147,40 +146,42 @@ internal fun PostSearchResults(
         onMediaClicked,
         onReplyToPost,
     ) {
-        postActions(
-            onLinkTargetClicked = { _, linkTarget ->
-                onLinkTargetClicked(linkTarget)
-            },
-            onPostClicked = { post ->
-                onPostSearchResultClicked(post, sharedElementPrefix)
-            },
-            onProfileClicked = { profile, post, quotingPostUri ->
-                onPostSearchResultProfileClicked(
-                    profile,
-                    post,
-                    sharedElementPrefix.withQuotingPostUriPrefix(quotingPostUri),
+        PostActions { action ->
+            when (action) {
+                is PostAction.OfLinkTarget -> onLinkTargetClicked(action.linkTarget)
+
+                is PostAction.OfPost -> onPostSearchResultClicked(
+                    action.post,
+                    sharedElementPrefix,
                 )
-            },
-            onPostRecordClicked = { record, owningPostUri ->
-                onPostRecordClicked(
-                    record,
-                    sharedElementPrefix.withQuotingPostUriPrefix(owningPostUri),
+
+                is PostAction.OfProfile -> onPostSearchResultProfileClicked(
+                    action.profile,
+                    action.post,
+                    sharedElementPrefix.withQuotingPostUriPrefix(action.quotingPostUri),
                 )
-            },
-            onPostMediaClicked = { media, index, post, quotingPostUri ->
-                onMediaClicked(
-                    media,
-                    index,
-                    post,
-                    sharedElementPrefix.withQuotingPostUriPrefix(quotingPostUri),
+
+                is PostAction.OfRecord -> onPostRecordClicked(
+                    action.record,
+                    sharedElementPrefix.withQuotingPostUriPrefix(action.owningPostUri),
                 )
-            },
-            onReplyToPost = { post ->
-                onReplyToPost(post, sharedElementPrefix)
-            },
-            onPostInteraction = postInteractionState::onInteraction,
-            onPostOptionsClicked = postOptionsState::showOptions,
-        )
+
+                is PostAction.OfMedia -> onMediaClicked(
+                    action.media,
+                    action.index,
+                    action.post,
+                    sharedElementPrefix.withQuotingPostUriPrefix(action.quotingPostUri),
+                )
+
+                is PostAction.OfReply -> onReplyToPost(action.post, sharedElementPrefix)
+
+                is PostAction.OfInteraction -> postInteractionState.onInteraction(action)
+
+                is PostAction.OfMore -> postOptionsState.showOptions(action.post)
+
+                else -> Unit
+            }
+        }
     }
     LazyVerticalStaggeredGrid(
         modifier = modifier,
@@ -258,7 +259,7 @@ private fun PostSearchResult(
         modifier = modifier,
         onClick = {
             postActions.onPostAction(
-                PostAction.PostClicked(result.timelineItem.post)
+                PostAction.OfPost(result.timelineItem.post),
             )
         },
         content = {

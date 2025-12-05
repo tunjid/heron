@@ -82,34 +82,34 @@ fun EmbeddedRecord(
                 sharedElementPrefix = sharedElementPrefix,
                 onClick = {
                     postActions.onPostAction(
-                        PostAction.PostClicked(post = record)
+                        PostAction.OfPost(post = record),
                     )
                 },
                 onLinkTargetClicked = { post, linkTarget ->
                     postActions.onPostAction(
-                        PostAction.LinkTargetClicked(
+                        PostAction.OfLinkTarget(
                             post = post,
                             linkTarget = linkTarget,
-                        )
+                        ),
                     )
                 },
                 onProfileClicked = { post, profile ->
                     postActions.onPostAction(
-                        PostAction.ProfileClicked(
+                        PostAction.OfProfile(
                             profile = profile,
                             post = post,
                             quotingPostUri = null,
-                        )
+                        ),
                     )
                 },
                 onPostMediaClicked = { mediaEmbed, index, post ->
                     postActions.onPostAction(
-                        PostAction.PostMediaClicked(
+                        PostAction.OfMedia(
                             media = mediaEmbed,
                             index = index,
                             post = post,
                             quotingPostUri = null,
-                        )
+                        ),
                     )
                 },
             )

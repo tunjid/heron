@@ -26,49 +26,51 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.timeline.ui.post.PostMetadata
 
 sealed interface PostAction {
-    data class LinkTargetClicked(
+    data class OfLinkTarget(
         val post: Post,
         val linkTarget: LinkTarget,
     ) : PostAction
 
-    data class ProfileClicked(
+    data class OfProfile(
         val profile: Profile,
         val post: Post,
         val quotingPostUri: PostUri?,
     ) : PostAction
 
-    data class PostClicked(
+    data class OfPost(
         val post: Post,
     ) : PostAction
 
-    data class PostRecordClicked(
+    data class OfRecord(
         val record: Record,
         val owningPostUri: PostUri,
     ) : PostAction
 
-    data class PostMediaClicked(
+    data class OfMedia(
         val media: Embed.Media,
         val index: Int,
         val post: Post,
         val quotingPostUri: PostUri?,
     ) : PostAction
 
-    data class ReplyToPost(
-        val post: Post,
-    ) : PostAction
+    sealed interface Options : PostAction
 
-    data class PostInteraction(
+    data class OfReply(
+        val post: Post,
+    ) : Options
+
+    data class OfInteraction(
         val interaction: Post.Interaction,
         val viewerStats: Post.ViewerStats?,
-    ) : PostAction
+    ) : Options
 
-    data class PostMetadataClicked(
+    data class OfMetadata(
         val metadata: PostMetadata,
-    ) : PostAction
+    ) : Options
 
-    data class PostOptionsClicked(
+    data class OfMore(
         val post: Post,
-    ) : PostAction
+    ) : Options
 }
 
 @Stable
@@ -77,63 +79,5 @@ fun interface PostActions {
 
     companion object {
         val NoOp: PostActions = PostActions {}
-    }
-}
-
-fun postActions(
-    onLinkTargetClicked: (post: Post, linkTarget: LinkTarget) -> Unit,
-    onProfileClicked: (profile: Profile, post: Post, quotingPostUri: PostUri?) -> Unit,
-    onPostClicked: (post: Post) -> Unit,
-    onPostRecordClicked: (record: Record, owningPostUri: PostUri) -> Unit,
-    onPostMediaClicked: (media: Embed.Media, index: Int, post: Post, quotingPostUri: PostUri?) -> Unit,
-    onReplyToPost: (post: Post) -> Unit,
-    onPostInteraction: (interaction: Post.Interaction, viewerStats: Post.ViewerStats?) -> Unit,
-    onPostMetadataClicked: (metadata: PostMetadata) -> Unit = {},
-    onPostOptionsClicked: (post: Post) -> Unit,
-): PostActions = PostActions { action ->
-    when (action) {
-        is PostAction.LinkTargetClicked -> onLinkTargetClicked(
-            action.post,
-            action.linkTarget
-        )
-
-        is PostAction.ProfileClicked -> onProfileClicked(
-            action.profile,
-            action.post,
-            action.quotingPostUri
-        )
-
-        is PostAction.PostClicked -> onPostClicked(
-            action.post
-        )
-
-        is PostAction.PostRecordClicked -> onPostRecordClicked(
-            action.record,
-            action.owningPostUri
-        )
-
-        is PostAction.PostMediaClicked -> onPostMediaClicked(
-            action.media,
-            action.index,
-            action.post,
-            action.quotingPostUri
-        )
-
-        is PostAction.ReplyToPost -> onReplyToPost(
-            action.post
-        )
-
-        is PostAction.PostInteraction -> onPostInteraction(
-            action.interaction,
-            action.viewerStats
-        )
-
-        is PostAction.PostMetadataClicked -> onPostMetadataClicked(
-            action.metadata
-        )
-
-        is PostAction.PostOptionsClicked -> onPostOptionsClicked(
-            action.post
-        )
     }
 }

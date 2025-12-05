@@ -20,8 +20,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Notification
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import kotlin.time.Instant
 
@@ -35,8 +35,7 @@ fun QuoteRow(
     onLinkTargetClicked: (Notification.PostAssociated, LinkTarget) -> Unit,
     onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
     onPostClicked: (Notification.PostAssociated) -> Unit,
-    onPostInteraction: (Post.Interaction, viewerStats: Post.ViewerStats?) -> Unit,
-    onPostOptionsClicked: (Post) -> Unit,
+    onPostInteraction: (Notification.PostAssociated, PostAction.Options) -> Unit,
 ) {
     NotificationPostScaffold(
         modifier = modifier,
@@ -48,8 +47,6 @@ fun QuoteRow(
         onProfileClicked = onProfileClicked,
         onPostClicked = onPostClicked,
         onPostMediaClicked = { _, _, _ -> },
-        onReplyToPost = {},
         onPostInteraction = onPostInteraction,
-        onPostOptionsClicked = onPostOptionsClicked,
     )
 }

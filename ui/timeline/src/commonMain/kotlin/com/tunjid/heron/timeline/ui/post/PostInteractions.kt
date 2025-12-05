@@ -72,7 +72,7 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.canReply
 import com.tunjid.heron.data.core.models.isBookmarked
 import com.tunjid.heron.data.core.types.PostId
-import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.icon
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.stringResource
 import com.tunjid.heron.timeline.utilities.format
@@ -95,19 +95,12 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun PostInteractions(
-    replyCount: String?,
-    repostCount: String?,
-    likeCount: String?,
-    postId: PostId,
-    postUri: PostUri,
-    viewerStats: Post.ViewerStats?,
+    post: Post,
     sharedElementPrefix: String,
     presentation: Timeline.Presentation,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     modifier: Modifier = Modifier,
-    onReplyToPost: () -> Unit,
-    onPostInteraction: (Post.Interaction, viewerStats: Post.ViewerStats?) -> Unit,
-    onPostOptionsClicked: () -> Unit,
+    onInteraction: (PostAction.Options) -> Unit,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -116,19 +109,12 @@ fun PostInteractions(
     ) {
         PostInteractionsButtons(
             interactionButtons = PostInteractionButton.PostButtons,
-            replyCount = replyCount,
-            repostCount = repostCount,
-            likeCount = likeCount,
-            postId = postId,
-            postUri = postUri,
-            viewerStats = viewerStats,
+            post = post,
             sharedElementPrefix = sharedElementPrefix,
             iconSize = animateDpAsState(presentation.actionIconSize).value,
             orientation = Orientation.Horizontal,
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-            onReplyToPost = onReplyToPost,
-            onPostInteraction = onPostInteraction,
-            onPostOptionsClicked = onPostOptionsClicked,
+            onInteraction = onInteraction,
             prefixContent = spacer@{ button ->
                 if (button != PostInteractionButton.MoreOptions) return@spacer
                 if (presentation != Timeline.Presentation.Media.Expanded) return@spacer
@@ -145,9 +131,7 @@ fun MediaPostInteractions(
     sharedElementPrefix: String,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     modifier: Modifier = Modifier,
-    onReplyToPost: () -> Unit,
-    onPostInteraction: (Post.Interaction, viewerStats: Post.ViewerStats?) -> Unit,
-    onPostOptionsClicked: () -> Unit,
+    onInteraction: (PostAction.Options) -> Unit,
 ) {
     Column(
         modifier = modifier,
@@ -156,19 +140,12 @@ fun MediaPostInteractions(
     ) {
         PostInteractionsButtons(
             interactionButtons = PostInteractionButton.MediaButtons,
-            replyCount = format(post.replyCount),
-            repostCount = format(post.repostCount),
-            likeCount = format(post.likeCount),
-            postId = post.cid,
-            postUri = post.uri,
-            viewerStats = post.viewerStats,
+            post = post,
             sharedElementPrefix = sharedElementPrefix,
             iconSize = 40.dp,
             orientation = Orientation.Vertical,
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-            onReplyToPost = onReplyToPost,
-            onPostInteraction = onPostInteraction,
-            onPostOptionsClicked = onPostOptionsClicked,
+            onInteraction = onInteraction,
         )
     }
 }
@@ -176,19 +153,12 @@ fun MediaPostInteractions(
 @Composable
 private inline fun PostInteractionsButtons(
     interactionButtons: List<PostInteractionButton>,
-    viewerStats: Post.ViewerStats?,
-    replyCount: String?,
-    repostCount: String?,
-    likeCount: String?,
-    postId: PostId,
-    postUri: PostUri,
+    post: Post,
     sharedElementPrefix: String,
     iconSize: Dp,
     orientation: Orientation,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
-    crossinline onReplyToPost: () -> Unit,
-    crossinline onPostInteraction: (Post.Interaction, viewerStats: Post.ViewerStats?) -> Unit,
-    crossinline onPostOptionsClicked: () -> Unit,
+    crossinline onInteraction: (PostAction.Options) -> Unit,
     crossinline prefixContent: @Composable (PostInteractionButton) -> Unit = {},
 ) = with(paneMovableElementSharedTransitionScope) {
     interactionButtons.forEach { button ->
@@ -202,95 +172,105 @@ private inline fun PostInteractionsButtons(
                         sharedContentState = rememberSharedContentState(
                             key = postActionSharedElementKey(
                                 prefix = sharedElementPrefix,
-                                postId = postId,
+                                postId = post.cid,
                                 button = button,
                             ),
                         ),
                     ),
                 icon = when (button) {
                     PostInteractionButton.Comment -> button.icon(isChecked = false)
-                    PostInteractionButton.Like -> button.icon(isChecked = viewerStats?.likeUri != null)
-                    PostInteractionButton.Repost -> button.icon(isChecked = viewerStats?.repostUri != null)
-                    PostInteractionButton.Bookmark -> button.icon(isChecked = viewerStats.isBookmarked)
+                    PostInteractionButton.Like -> button.icon(isChecked = post.viewerStats?.likeUri != null)
+                    PostInteractionButton.Repost -> button.icon(isChecked = post.viewerStats?.repostUri != null)
+                    PostInteractionButton.Bookmark -> button.icon(isChecked = post.viewerStats.isBookmarked)
                     PostInteractionButton.MoreOptions -> button.icon(isChecked = false)
                 },
                 iconSize = iconSize,
                 orientation = orientation,
                 contentDescription = stringResource(button.stringResource),
                 text = when (button) {
-                    PostInteractionButton.Comment -> replyCount
-                    PostInteractionButton.Like -> likeCount
-                    PostInteractionButton.Repost -> repostCount
+                    PostInteractionButton.Comment -> format(post.replyCount)
+                    PostInteractionButton.Like -> format(post.likeCount)
+                    PostInteractionButton.Repost -> format(post.repostCount)
                     PostInteractionButton.Bookmark -> ""
                     PostInteractionButton.MoreOptions -> ""
                 },
                 tint = when (button) {
                     PostInteractionButton.Comment -> MaterialTheme.colorScheme.outline
                     PostInteractionButton.Like ->
-                        if (viewerStats?.likeUri != null) LikeRed
+                        if (post.viewerStats?.likeUri != null) LikeRed
                         else MaterialTheme.colorScheme.outline
 
                     PostInteractionButton.Repost ->
-                        if (viewerStats?.repostUri != null) RepostGreen
+                        if (post.viewerStats?.repostUri != null) RepostGreen
                         else MaterialTheme.colorScheme.outline
                     PostInteractionButton.Bookmark ->
-                        if (viewerStats.isBookmarked) BookmarkBlue
+                        if (post.viewerStats.isBookmarked) BookmarkBlue
                         else MaterialTheme.colorScheme.outline
                     PostInteractionButton.MoreOptions -> MaterialTheme.colorScheme.outline
                 },
                 enabled = when (button) {
                     PostInteractionButton.Bookmark -> true
-                    PostInteractionButton.Comment -> viewerStats.canReply
+                    PostInteractionButton.Comment -> post.viewerStats.canReply
                     PostInteractionButton.Like -> true
                     PostInteractionButton.MoreOptions -> true
                     PostInteractionButton.Repost -> true
                 },
                 onClick = {
                     when (button) {
-                        PostInteractionButton.Comment -> onReplyToPost()
-                        PostInteractionButton.Like -> onPostInteraction(
-                            when (val likeUri = viewerStats?.likeUri) {
-                                null -> Post.Interaction.Create.Like(
-                                    postId = postId,
-                                    postUri = postUri,
-                                )
+                        PostInteractionButton.Comment -> onInteraction(
+                            PostAction.OfReply(post),
+                        )
+                        PostInteractionButton.Like -> onInteraction(
+                            PostAction.OfInteraction(
+                                interaction = when (val likeUri = post.viewerStats?.likeUri) {
+                                    null -> Post.Interaction.Create.Like(
+                                        postId = post.cid,
+                                        postUri = post.uri,
+                                    )
 
-                                else -> Post.Interaction.Delete.Unlike(
-                                    postUri = postUri,
-                                    likeUri = likeUri,
-                                )
-                            },
-                            viewerStats,
+                                    else -> Post.Interaction.Delete.Unlike(
+                                        postUri = post.uri,
+                                        likeUri = likeUri,
+                                    )
+                                },
+                                viewerStats = post.viewerStats,
+                            ),
                         )
 
-                        PostInteractionButton.Repost -> onPostInteraction(
-                            when (val repostUri = viewerStats?.repostUri) {
-                                null -> Post.Interaction.Create.Repost(
-                                    postId = postId,
-                                    postUri = postUri,
-                                )
+                        PostInteractionButton.Repost -> onInteraction(
+                            PostAction.OfInteraction(
+                                when (val repostUri = post.viewerStats?.repostUri) {
+                                    null -> Post.Interaction.Create.Repost(
+                                        postId = post.cid,
+                                        postUri = post.uri,
+                                    )
 
-                                else -> Post.Interaction.Delete.RemoveRepost(
-                                    postUri = postUri,
-                                    repostUri = repostUri,
-                                )
-                            },
-                            viewerStats,
+                                    else -> Post.Interaction.Delete.RemoveRepost(
+                                        postUri = post.uri,
+                                        repostUri = repostUri,
+                                    )
+                                },
+                                post.viewerStats,
+                            ),
                         )
-                        PostInteractionButton.Bookmark -> onPostInteraction(
-                            when (viewerStats.isBookmarked) {
-                                false -> Post.Interaction.Create.Bookmark(
-                                    postId = postId,
-                                    postUri = postUri,
-                                )
+                        PostInteractionButton.Bookmark -> onInteraction(
+                            PostAction.OfInteraction(
+                                when (post.viewerStats.isBookmarked) {
+                                    false -> Post.Interaction.Create.Bookmark(
+                                        postId = post.cid,
+                                        postUri = post.uri,
+                                    )
 
-                                true -> Post.Interaction.Delete.RemoveBookmark(
-                                    postUri = postUri,
-                                )
-                            },
-                            viewerStats,
+                                    true -> Post.Interaction.Delete.RemoveBookmark(
+                                        postUri = post.uri,
+                                    )
+                                },
+                                post.viewerStats,
+                            ),
                         )
-                        PostInteractionButton.MoreOptions -> onPostOptionsClicked()
+                        PostInteractionButton.MoreOptions -> onInteraction(
+                            PostAction.OfMore(post),
+                        )
                     }
                 },
             )
@@ -385,14 +365,12 @@ class PostInteractionsSheetState private constructor(
     isSignedIn: Boolean,
     scope: BottomSheetScope,
 ) : BottomSheetState(scope) {
-    var currentInteraction by mutableStateOf<Post.Interaction?>(null)
-        internal set
+    internal var currentInteraction by mutableStateOf<PostAction.OfInteraction?>(null)
 
     internal var isSignedIn by mutableStateOf(isSignedIn)
 
     fun onInteraction(
-        interaction: Post.Interaction,
-        viewerStats: Post.ViewerStats?,
+        interaction: PostAction.OfInteraction,
     ) {
         currentInteraction = interaction
     }
@@ -436,7 +414,7 @@ private fun PostInteractionsBottomSheet(
     onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
 ) {
     LaunchedEffect(state.currentInteraction) {
-        when (val interaction = state.currentInteraction) {
+        when (val interaction = state.currentInteraction?.interaction) {
             null -> Unit
             is Post.Interaction.Create.Repost -> state.show()
             is Post.Interaction.Create.Like,
@@ -457,7 +435,7 @@ private fun PostInteractionsBottomSheet(
     }
 
     state.ModalBottomSheet {
-        val currentInteraction = state.currentInteraction
+        val currentInteraction = state.currentInteraction?.interaction
         Column(
             modifier = Modifier
                 .padding(horizontal = 16.dp),
@@ -476,11 +454,9 @@ private fun PostInteractionsBottomSheet(
                                 .clip(CircleShape)
                                 .clickable {
                                     when (index) {
-                                        0 ->
-                                            state.currentInteraction
-                                                ?.let(onInteractionConfirmed)
+                                        0 -> onInteractionConfirmed(currentInteraction)
 
-                                        else -> (state.currentInteraction as? Post.Interaction.Create.Repost)
+                                        else -> (currentInteraction as? Post.Interaction.Create.Repost)
                                             ?.let(onQuotePostClicked)
                                     }
                                     state.hide()

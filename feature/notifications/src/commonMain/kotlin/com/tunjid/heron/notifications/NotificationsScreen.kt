@@ -67,6 +67,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionState
 import com.tunjid.heron.timeline.ui.post.PostOption
 import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsState
@@ -184,22 +185,26 @@ internal fun NotificationsScreen(
             )
         }
     }
-    val onReplyToPost = remember {
-        { notification: Notification.PostAssociated ->
-            actions(
-                Action.Navigate.To(
-                    if (paneScaffoldState.isSignedOut) signInDestination()
-                    else composePostDestination(
-                        type = Post.Create.Reply(
-                            parent = notification.associatedPost,
+    val onPostInteraction = remember {
+        { notification: Notification.PostAssociated, options: PostAction.Options ->
+            when (options) {
+                is PostAction.OfInteraction -> postInteractionState.onInteraction(options)
+                is PostAction.OfMetadata -> Unit
+                is PostAction.OfMore -> postOptionsState.showOptions(options.post)
+                is PostAction.OfReply -> actions(
+                    Action.Navigate.To(
+                        if (paneScaffoldState.isSignedOut) signInDestination()
+                        else composePostDestination(
+                            type = Post.Create.Reply(
+                                parent = notification.associatedPost,
+                            ),
+                            sharedElementPrefix = notification.sharedElementPrefix(),
                         ),
-                        sharedElementPrefix = notification.sharedElementPrefix(),
                     ),
-                ),
-            )
+                )
+            }
         }
     }
-    val onPostInteraction = postInteractionState::onInteraction
 
     val pullToRefreshState = rememberPullToRefreshState()
 
@@ -289,7 +294,6 @@ internal fun NotificationsScreen(
                             onProfileClicked = onProfileClicked,
                             onPostClicked = onPostClicked,
                             onPostInteraction = onPostInteraction,
-                            onPostOptionsClicked = postOptionsState::showOptions,
                         )
 
                         is Notification.Quoted -> QuoteRow(
@@ -302,7 +306,6 @@ internal fun NotificationsScreen(
                             onProfileClicked = onProfileClicked,
                             onPostClicked = onPostClicked,
                             onPostInteraction = onPostInteraction,
-                            onPostOptionsClicked = postOptionsState::showOptions,
                         )
 
                         is Notification.RepliedTo -> ReplyRow(
@@ -314,9 +317,7 @@ internal fun NotificationsScreen(
                             onLinkTargetClicked = onLinkTargetClicked,
                             onProfileClicked = onProfileClicked,
                             onPostClicked = onPostClicked,
-                            onReplyToPost = onReplyToPost,
                             onPostInteraction = onPostInteraction,
-                            onPostOptionsClicked = postOptionsState::showOptions,
                         )
 
                         is Notification.Reposted -> RepostRow(
