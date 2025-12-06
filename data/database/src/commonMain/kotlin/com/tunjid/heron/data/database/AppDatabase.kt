@@ -90,7 +90,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 31,
+    version = 32,
     entities = [
         BookmarkEntity::class,
         ExternalEmbedEntity::class,
@@ -196,6 +196,8 @@ import kotlinx.coroutines.IO
             to = 31,
             spec = Migration30To31ThreadGateAutoMigration::class,
         ),
+        // Add embedded record uris to root and parent posts for TimelineItemEntity
+        AutoMigration(from = 31, to = 32),
     ],
     exportSchema = true,
 )
