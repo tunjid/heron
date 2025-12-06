@@ -113,7 +113,7 @@ internal class SnapshotWriteQueue @Inject constructor(
                 }
                 // Dequeue on main
                 withContext(Dispatchers.Main) {
-                    queue.removeLast()
+                    queue.removeAt(queue.lastIndex)
                 }
             }
     }

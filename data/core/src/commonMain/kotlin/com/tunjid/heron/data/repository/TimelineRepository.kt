@@ -1155,7 +1155,7 @@ internal class OfflineTimelineRepository(
             )
             // For parents, edit the head
             thread.generation <= -1L -> if (lastItem is TimelineItem.Thread) {
-                list.removeLast()
+                list.removeAt(list.lastIndex)
                 list.add(
                     lastItem.copy(
                         posts = lastItem.posts + post,
@@ -1178,7 +1178,7 @@ internal class OfflineTimelineRepository(
 
             // Just tack the post to the current thread
             lastItem is TimelineItem.Thread -> {
-                list.removeLast()
+                list.removeAt(list.lastIndex)
                 list.add(
                     lastItem.copy(
                         posts = lastItem.posts + post,
