@@ -1154,15 +1154,12 @@ internal class OfflineTimelineRepository(
                 postUrisToThreadGates = mapOf(post.uri to threadGate(post.uri)),
             )
             // For parents, edit the head
-            thread.generation <= -1L -> if (lastItem is TimelineItem.Thread) {
-                list.removeAt(list.lastIndex)
-                list.add(
-                    lastItem.copy(
-                        posts = lastItem.posts + post,
-                        postUrisToThreadGates = lastItem.postUrisToThreadGates + (post.uri to threadGate(post.uri)),
-                    ),
+            thread.generation <= -1L ->
+                if (lastItem is TimelineItem.Thread) list[list.lastIndex] = lastItem.copy(
+                    posts = lastItem.posts + post,
+                    postUrisToThreadGates = lastItem.postUrisToThreadGates + (post.uri to threadGate(post.uri)),
                 )
-            } else Unit
+                else Unit
 
             // New reply to the OP, start its own thread
             lastItem is TimelineItem.Thread && lastItem.posts.first().uri != thread.rootPostUri -> list += TimelineItem.Thread(
@@ -1177,15 +1174,10 @@ internal class OfflineTimelineRepository(
             )
 
             // Just tack the post to the current thread
-            lastItem is TimelineItem.Thread -> {
-                list.removeAt(list.lastIndex)
-                list.add(
-                    lastItem.copy(
-                        posts = lastItem.posts + post,
-                        postUrisToThreadGates = lastItem.postUrisToThreadGates + (post.uri to threadGate(post.uri)),
-                    ),
-                )
-            }
+            lastItem is TimelineItem.Thread -> list[list.lastIndex] = lastItem.copy(
+                posts = lastItem.posts + post,
+                postUrisToThreadGates = lastItem.postUrisToThreadGates + (post.uri to threadGate(post.uri)),
+            )
             else -> Unit
         }
     }
