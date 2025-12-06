@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
@@ -37,7 +38,6 @@ import com.tunjid.heron.search.sharedElementPrefix
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.feed.FeedGenerator
-import com.tunjid.heron.timeline.utilities.collectionShape
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -68,7 +68,7 @@ internal fun FeedSearchResults(
             itemContent = { result ->
                 FeedGenerator(
                     modifier = Modifier
-                        .clip(result.feedGenerator.uri.collectionShape())
+                        .clip(FeedSearchResultShape)
                         .clickable {
                             onFeedGeneratorClicked(
                                 result.feedGenerator,
@@ -103,3 +103,5 @@ internal fun FeedSearchResults(
         },
     )
 }
+
+private val FeedSearchResultShape = RoundedCornerShape(8.dp)
