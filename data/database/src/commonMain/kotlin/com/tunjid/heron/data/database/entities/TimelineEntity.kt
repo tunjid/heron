@@ -86,6 +86,10 @@ data class TimelineItemEntity(
 
 data class FeedReplyEntity(
     val rootPostUri: PostUri,
+    @ColumnInfo(defaultValue = "NULL")
+    val rootPostEmbeddedRecordUri: RecordUri?,
     val parentPostUri: PostUri,
+    @ColumnInfo(defaultValue = "NULL")
+    val parentPostEmbeddedRecordUri: RecordUri?,
     val grandParentPostAuthorId: ProfileId?,
 )

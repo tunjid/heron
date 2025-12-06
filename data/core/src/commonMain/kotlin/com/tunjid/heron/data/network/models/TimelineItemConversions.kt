@@ -44,9 +44,13 @@ internal fun FeedViewPost.feedItemEntity(
     viewingProfileId = viewingProfileId,
     sourceId = sourceId,
     reply = reply?.let {
+        val rootPostEntity = it.root.postEntity()
+        val parentPostEntity = it.parent.postEntity()
         FeedReplyEntity(
-            rootPostUri = it.root.postEntity().uri,
-            parentPostUri = it.parent.postEntity().uri,
+            rootPostUri = rootPostEntity.uri,
+            rootPostEmbeddedRecordUri = rootPostEntity.record?.embeddedRecordUri,
+            parentPostUri = parentPostEntity.uri,
+            parentPostEmbeddedRecordUri = parentPostEntity.record?.embeddedRecordUri,
             grandParentPostAuthorId = it.grandparentAuthor?.did?.did?.let(::ProfileId),
         )
     },
@@ -116,6 +120,22 @@ internal fun ReplyRefRootUnion.profileEntity() = when (this) {
 internal fun ReplyRefParentUnion.profileEntity() = when (this) {
     is ReplyRefParentUnion.PostView -> value.profileEntity()
     is ReplyRefParentUnion.BlockedPost -> value.author.profileEntity()
+    is ReplyRefParentUnion.NotFoundPost,
+    is ReplyRefParentUnion.Unknown,
+    -> null
+}
+
+internal fun ReplyRefRootUnion.postView() = when (val ref = this) {
+    is ReplyRefRootUnion.PostView -> ref.value
+    is ReplyRefRootUnion.BlockedPost,
+    is ReplyRefRootUnion.NotFoundPost,
+    is ReplyRefRootUnion.Unknown,
+    -> null
+}
+
+internal fun ReplyRefParentUnion.postView() = when (val ref = this) {
+    is ReplyRefParentUnion.PostView -> ref.value
+    is ReplyRefParentUnion.BlockedPost,
     is ReplyRefParentUnion.NotFoundPost,
     is ReplyRefParentUnion.Unknown,
     -> null

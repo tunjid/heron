@@ -18,10 +18,12 @@ package com.tunjid.heron.data.utilities.multipleEntitysaver
 
 import app.bsky.feed.FeedViewPost
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.network.models.feedItemEntity
 import com.tunjid.heron.data.network.models.postEntity
+import com.tunjid.heron.data.network.models.postView
 import com.tunjid.heron.data.network.models.postViewerStatisticsEntity
 import com.tunjid.heron.data.network.models.profileEntity
 
@@ -47,20 +49,39 @@ internal fun MultipleEntitySaver.add(
         feedView.reason?.profileEntity()?.let(::add)
 
         feedView.reply?.let {
-            it.root.postEntity().let(::add)
-            it.root.profileEntity()?.let(::add)
-            it.root.postViewerStatisticsEntity(viewingProfileId)?.let(::add)
+            when (val rootPostView = it.root.postView()) {
+                null -> {
+                    it.root.postEntity().let(::add)
+                    it.root.profileEntity()?.let(::add)
+                    it.root.postViewerStatisticsEntity(viewingProfileId)?.let(::add)
+                }
+                else -> add(
+                    viewingProfileId = viewingProfileId,
+                    postView = rootPostView,
+                )
+            }
 
-            val parentPostEntity = it.parent.postEntity().also(::add)
-            it.parent.profileEntity()?.let(::add)
-            it.parent.postViewerStatisticsEntity(viewingProfileId)?.let(::add)
+            val parentPostUri = when (val parentPostView = it.parent.postView()) {
+                null -> {
+                    it.parent.profileEntity()?.let(::add)
+                    it.parent.postViewerStatisticsEntity(viewingProfileId)?.let(::add)
+                    it.parent.postEntity().also(::add).uri
+                }
+                else -> {
+                    add(
+                        viewingProfileId = viewingProfileId,
+                        postView = parentPostView,
+                    )
+                    parentPostView.uri.atUri.let(::PostUri)
+                }
+            }
 
             it.grandparentAuthor?.profileEntity()?.let(::add)
 
             add(
                 PostThreadEntity(
                     postUri = feedView.post.postEntity().uri,
-                    parentPostUri = parentPostEntity.uri,
+                    parentPostUri = parentPostUri,
                 ),
             )
         }

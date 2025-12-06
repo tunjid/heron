@@ -926,6 +926,8 @@ internal class OfflineTimelineRepository(
                                 it.reply?.parentPostUri,
                                 it.reply?.rootPostUri,
                                 it.embeddedRecordUri,
+                                it.reply?.rootPostEmbeddedRecordUri,
+                                it.reply?.parentPostEmbeddedRecordUri,
                             )
                         },
                         associatedProfileIds = {
