@@ -27,11 +27,14 @@ import app.bsky.actor.SavedFeed
 import app.bsky.actor.SavedFeedType
 import app.bsky.actor.SavedFeedsPrefV2
 import com.tunjid.heron.data.core.models.ContentLabelPreference
+import com.tunjid.heron.data.core.models.HiddenPostPreference
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.LabelerPreference
+import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelinePreference
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.utilities.TidGenerator
 import dev.zacsweers.metro.Inject
@@ -64,6 +67,8 @@ internal class ThingPreferenceUpdater @Inject constructor(
             timelinePreferences = emptyList(),
             contentLabelPreferences = emptyList(),
             labelerPreferences = emptyList(),
+            hiddenPostPreferences = emptyList(),
+            mutedWordPreferences = emptyList(),
         ),
         operation = { foldedPreferences, preferencesUnion ->
             when (preferencesUnion) {
@@ -77,7 +82,13 @@ internal class ThingPreferenceUpdater @Inject constructor(
                 )
 
                 is PreferencesUnion.FeedViewPref -> foldedPreferences
-                is PreferencesUnion.HiddenPostsPref -> foldedPreferences
+                is PreferencesUnion.HiddenPostsPref -> foldedPreferences.copy(
+                    hiddenPostPreferences = preferencesUnion.value.items.map {
+                        HiddenPostPreference(
+                            uri = it.atUri.let(::PostUri),
+                        )
+                    },
+                )
                 is PreferencesUnion.InterestsPref -> foldedPreferences
                 is PreferencesUnion.LabelersPref -> foldedPreferences.copy(
                     labelerPreferences = preferencesUnion.value.labelers.map {
@@ -86,7 +97,20 @@ internal class ThingPreferenceUpdater @Inject constructor(
                         )
                     },
                 )
-                is PreferencesUnion.MutedWordsPref -> foldedPreferences
+                is PreferencesUnion.MutedWordsPref -> foldedPreferences.copy(
+                    mutedWordPreferences = preferencesUnion.value.items.map {
+                        MutedWordPreference(
+                            value = it.value,
+                            targets = it.targets.map { target ->
+                                MutedWordPreference.Target(target.value)
+                            },
+                            actorTarget = it.actorTarget
+                                ?.value
+                                ?.let(MutedWordPreference::Target),
+                            expiresAt = it.expiresAt,
+                        )
+                    },
+                )
                 is PreferencesUnion.PersonalDetailsPref -> foldedPreferences
                 is PreferencesUnion.SavedFeedsPref -> foldedPreferences
                 is PreferencesUnion.SavedFeedsPrefV2 -> foldedPreferences.copy(

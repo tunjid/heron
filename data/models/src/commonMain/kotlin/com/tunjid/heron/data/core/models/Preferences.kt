@@ -18,9 +18,12 @@ package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ListUri
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.Uri
+import kotlin.jvm.JvmInline
+import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
 
@@ -41,6 +44,10 @@ data class Preferences(
     val labelerPreferences: List<LabelerPreference> = emptyList(),
     @ProtoNumber(6)
     val allowAdultContent: Boolean = false,
+    @ProtoNumber(7)
+    val hiddenPostPreferences: List<HiddenPostPreference> = emptyList(),
+    @ProtoNumber(8)
+    val mutedWordPreferences: List<MutedWordPreference> = emptyList(),
 ) : UrlEncodableModel {
     companion object {
         val EmptyPreferences = Preferences(
@@ -112,3 +119,22 @@ data class ContentLabelPreference(
 data class LabelerPreference(
     val labelerCreatorId: ProfileId,
 )
+
+@Serializable
+data class HiddenPostPreference(
+    val uri: PostUri,
+)
+
+@Serializable
+data class MutedWordPreference(
+    val value: String,
+    val targets: List<Target>,
+    val actorTarget: Target? = null,
+    val expiresAt: Instant? = null,
+) {
+    @JvmInline
+    @Serializable
+    value class Target(
+        val value: String,
+    )
+}
