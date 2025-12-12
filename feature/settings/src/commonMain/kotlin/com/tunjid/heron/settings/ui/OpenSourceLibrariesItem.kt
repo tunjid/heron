@@ -52,7 +52,6 @@ import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.close
 import heron.feature.settings.generated.resources.open_source_licenses
 import heron.feature.settings.generated.resources.view_website
-import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -84,9 +83,7 @@ private fun LibrariesHorizontalGrid(
     libraries: Libs?,
 ) {
     val libs = remember(libraries) {
-        libraries?.libraries
-            ?.distinctBy(Library::name)
-            ?: persistentListOf()
+        libraries?.libraries.orEmpty().distinctBy(Library::name)
     }
     val selectedLibrary = remember { mutableStateOf<Library?>(null) }
 
