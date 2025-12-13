@@ -92,14 +92,13 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.home.ui.DraggableTabsState
-import com.tunjid.heron.home.ui.DraggableTabsState.Companion.dragToCollapse
-import com.tunjid.heron.home.ui.DraggableTabsState.Companion.dragToExpand
-import com.tunjid.heron.home.ui.DraggableTabsState.Companion.rememberDragToExpandState
 import com.tunjid.heron.home.ui.EditableTimelineState
 import com.tunjid.heron.home.ui.EditableTimelineState.Companion.rememberEditableTimelineState
 import com.tunjid.heron.home.ui.EditableTimelineState.Companion.timelineEditDragAndDrop
 import com.tunjid.heron.home.ui.EditableTimelineState.Companion.timelineEditDropTarget
+import com.tunjid.heron.home.ui.ExpandableTabsState
+import com.tunjid.heron.home.ui.ExpandableTabsState.Companion.expandable
+import com.tunjid.heron.home.ui.ExpandableTabsState.Companion.rememberExpandableTabsState
 import com.tunjid.heron.home.ui.JiggleBox
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -148,7 +147,10 @@ internal fun HomeTabs(
     onSettingsIconClick: () -> Unit,
     onBookmarkIconClick: () -> Unit,
 ) = with(sharedTransitionScope) {
-    val dragToExpandState = rememberDragToExpandState(tabLayout)
+    val expandableTabsState = rememberExpandableTabsState(
+        tabLayout = tabLayout,
+        onTabLayoutChanged = onLayoutChanged,
+    )
     val collapsedTabsState = rememberTabsState(
         tabs = remember(sourceIdsToHasUpdates, timelines) {
             timelines
@@ -185,7 +187,7 @@ internal fun HomeTabs(
         modifier = modifier
             .fillMaxSize(),
     ) {
-        dragToExpandState.transition.AnimatedContent(
+        expandableTabsState.transition.AnimatedContent(
             modifier = Modifier,
             transitionSpec = {
                 if (targetState) TabsExpansionTransition
@@ -195,7 +197,7 @@ internal fun HomeTabs(
             if (isExpanding) ExpandedTabs(
                 modifier = Modifier
                     .background(MaterialTheme.colorScheme.surface)
-                    .dragToCollapse(dragToExpandState),
+                    .expandable(expandableTabsState),
                 saveRequestId = saveRequestId,
                 timelines = timelines,
                 tabsState = expandedTabsState,
@@ -206,7 +208,7 @@ internal fun HomeTabs(
             )
             else CollapsedTabs(
                 modifier = Modifier
-                    .dragToExpand(dragToExpandState),
+                    .expandable(expandableTabsState),
                 tabsState = collapsedTabsState,
                 sharedTransitionScope = this@with,
                 animatedContentScope = this@AnimatedContent,
@@ -226,7 +228,7 @@ internal fun HomeTabs(
         ) {
             val alphaModifier = remember {
                 Modifier.graphicsLayer {
-                    alpha = dragToExpandState.expansionProgress
+                    alpha = expandableTabsState.expansionProgress
                 }
             }
             Text(
@@ -257,10 +259,10 @@ internal fun HomeTabs(
                 )
             }
             ExpandButton(
-                expansionProgress = dragToExpandState::expansionProgress,
+                expansionProgress = expandableTabsState::expansionProgress,
                 onToggled = {
                     onLayoutChanged(
-                        if (dragToExpandState.targetState) TabLayout.Collapsed.All
+                        if (expandableTabsState.isExpanded) TabLayout.Collapsed.All
                         else TabLayout.Expanded,
                     )
                 },
@@ -729,12 +731,12 @@ private val TabsBoundsTransform = BoundsTransform { _, _ ->
 
 private val TabsCollapseTransition =
     fadeIn() togetherWith slideOutVertically(
-        animationSpec = DraggableTabsState.animationSpec(IntOffset.VisibilityThreshold),
+        animationSpec = ExpandableTabsState.animationSpec(IntOffset.VisibilityThreshold),
     )
 
 private val TabsExpansionTransition =
     slideInVertically(
-        animationSpec = DraggableTabsState.animationSpec(IntOffset.VisibilityThreshold),
+        animationSpec = ExpandableTabsState.animationSpec(IntOffset.VisibilityThreshold),
         initialOffsetY = { -(it * 2) },
     ) togetherWith fadeOut()
 
