@@ -230,10 +230,11 @@ internal fun HomeTabs(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    start = 8.dp,
-                    end = 8.dp,
+                    horizontal = 8.dp,
+                    vertical = 4.dp,
                 ),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             val alphaModifier = remember {
                 Modifier.graphicsLayer {
@@ -462,7 +463,7 @@ private fun CollapsedTabs(
         // Space for the Expand Button
         Spacer(
             modifier = Modifier
-                .width(48.dp),
+                .width(HomeTimelineButtonSize),
         )
     }
 }
@@ -617,8 +618,7 @@ private fun HomeTimelineButton(
     onActionClick: () -> Unit,
 ) {
     ElevatedCard(
-        modifier = modifier
-            .padding(horizontal = 4.dp),
+        modifier = modifier,
         shape = CircleShape,
     ) {
         IconButton(
@@ -626,7 +626,7 @@ private fun HomeTimelineButton(
                 onActionClick()
             },
             modifier = Modifier
-                .size(40.dp),
+                .size(HomeTimelineButtonSize),
         ) {
             Icon(
                 imageVector = icon,
@@ -761,6 +761,7 @@ private val ExpandedTabsShape = RoundedCornerShape(
 )
 
 private val ChipHeight = 32.dp
+private val HomeTimelineButtonSize = 40.dp
 
 private const val TabsSharedElementZIndex = 1f
 private const val ExpandButtonSharedElementZIndex = 2f
