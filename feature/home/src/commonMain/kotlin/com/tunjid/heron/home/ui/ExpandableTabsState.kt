@@ -63,7 +63,10 @@ class ExpandableTabsState(
         }
 
     private suspend fun animateTo(isExpanded: Boolean) {
-        draggableState.animateTo(isExpanded)
+        draggableState.animateTo(
+            targetValue = isExpanded,
+            animationSpec = ProgressAnimationSpec,
+        )
     }
 
     private fun updateAnchors(
@@ -162,6 +165,9 @@ class ExpandableTabsState(
             stiffness = Spring.StiffnessMediumLow,
             visibilityThreshold = visibilityThreshold,
         )
+
+        private val ProgressAnimationSpec =
+            animationSpec(visibilityThreshold = 0.05f)
     }
 }
 

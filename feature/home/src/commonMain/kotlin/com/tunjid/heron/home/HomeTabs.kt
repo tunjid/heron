@@ -394,7 +394,7 @@ private fun CollapsedTabs(
     currentTabUri: Uri?,
     timelines: List<Timeline>,
     onTimelinePresentationUpdated: (Int, Timeline.Presentation) -> Unit,
-) = with(sharedTransitionScope) {
+) {
     val backgroundColor = MaterialTheme.colorScheme.surface
     val backgroundProgress = animateFloatAsState(if (tabsState.isCollapsed) 0f else 1f)
     Row(
@@ -411,7 +411,6 @@ private fun CollapsedTabs(
     ) {
         Box(
             modifier = Modifier
-                .skipToLookaheadSize()
                 .weight(1f)
                 .clip(CircleShape),
         ) {
@@ -737,7 +736,6 @@ private val TabsCollapseTransition =
 private val TabsExpansionTransition =
     slideInVertically(
         animationSpec = ExpandableTabsState.animationSpec(IntOffset.VisibilityThreshold),
-        initialOffsetY = { -(it * 2) },
     ) togetherWith fadeOut()
 
 private val CollapsedTabShape = RoundedCornerShape(16.dp)
