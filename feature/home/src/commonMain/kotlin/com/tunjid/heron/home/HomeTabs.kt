@@ -14,20 +14,18 @@
  *    limitations under the License.
  */
 
-@file:OptIn(ExperimentalSharedTransitionApi::class)
-
 package com.tunjid.heron.home
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.BoundsTransform
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateBounds
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -89,10 +87,15 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.home.ui.DraggableTabsState
+import com.tunjid.heron.home.ui.DraggableTabsState.Companion.dragToCollapse
+import com.tunjid.heron.home.ui.DraggableTabsState.Companion.dragToExpand
+import com.tunjid.heron.home.ui.DraggableTabsState.Companion.rememberDragToExpandState
 import com.tunjid.heron.home.ui.EditableTimelineState
 import com.tunjid.heron.home.ui.EditableTimelineState.Companion.rememberEditableTimelineState
 import com.tunjid.heron.home.ui.EditableTimelineState.Companion.timelineEditDragAndDrop
@@ -124,7 +127,7 @@ expect fun DragAndDropEvent.draggedId(): String?
 
 expect fun Modifier.timelineEditDragAndDropSource(sourceId: String): Modifier
 
-@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun HomeTabs(
     modifier: Modifier = Modifier,
@@ -145,7 +148,7 @@ internal fun HomeTabs(
     onSettingsIconClick: () -> Unit,
     onBookmarkIconClick: () -> Unit,
 ) = with(sharedTransitionScope) {
-    val isExpanded = tabLayout is TabLayout.Expanded
+    val dragToExpandState = rememberDragToExpandState(tabLayout)
     val collapsedTabsState = rememberTabsState(
         tabs = remember(sourceIdsToHasUpdates, timelines) {
             timelines
@@ -180,23 +183,19 @@ internal fun HomeTabs(
     )
     Box(
         modifier = modifier
-            .background(
-                animateColorAsState(
-                    if (isExpanded) MaterialTheme.colorScheme.surface
-                    else Color.Transparent,
-                ).value,
-            ),
+            .fillMaxSize(),
     ) {
-        AnimatedContent(
-            modifier = Modifier
-                .animateContentSize(),
-            targetState = tabLayout is TabLayout.Expanded,
+        dragToExpandState.transition.AnimatedContent(
+            modifier = Modifier,
             transitionSpec = {
                 if (targetState) TabsExpansionTransition
                 else TabsCollapseTransition
             },
-        ) { isExpanded ->
-            if (isExpanded) ExpandedTabs(
+        ) { isExpanding ->
+            if (isExpanding) ExpandedTabs(
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.surface)
+                    .dragToCollapse(dragToExpandState),
                 saveRequestId = saveRequestId,
                 timelines = timelines,
                 tabsState = expandedTabsState,
@@ -206,7 +205,8 @@ internal fun HomeTabs(
                 onTimelinePreferencesSaved = onTimelinePreferencesSaved,
             )
             else CollapsedTabs(
-                modifier = Modifier,
+                modifier = Modifier
+                    .dragToExpand(dragToExpandState),
                 tabsState = collapsedTabsState,
                 sharedTransitionScope = this@with,
                 animatedContentScope = this@AnimatedContent,
@@ -224,47 +224,43 @@ internal fun HomeTabs(
                 ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            AnimatedVisibility(
-                visible = isExpanded,
-            ) {
-                Text(
-                    modifier = Modifier
-                        .padding(horizontal = 8.dp)
-                        .weight(1f),
-                    text = stringResource(Res.string.timeline_preferences),
-                    style = MaterialTheme.typography.titleMediumEmphasized,
-                )
+            val alphaModifier = remember {
+                Modifier.graphicsLayer {
+                    alpha = dragToExpandState.expansionProgress
+                }
             }
-
+            Text(
+                modifier = Modifier
+                    .then(alphaModifier)
+                    .padding(horizontal = 8.dp),
+                text = stringResource(Res.string.timeline_preferences),
+                style = MaterialTheme.typography.titleMediumEmphasized,
+            )
             Spacer(
                 modifier = Modifier
                     .weight(1f)
                     .animateContentSize(),
             )
-
-            AnimatedVisibility(
-                visible = isExpanded,
+            Row(
+                modifier = alphaModifier,
             ) {
-                Row {
-                    HomeTimelineAction(
-                        onActionClick = onSettingsIconClick,
-                        icon = Icons.Rounded.Settings,
-                        iconDescription = stringResource(Res.string.settings),
-                    )
+                HomeTimelineAction(
+                    onActionClick = onSettingsIconClick,
+                    icon = Icons.Rounded.Settings,
+                    iconDescription = stringResource(Res.string.settings),
+                )
 
-                    HomeTimelineAction(
-                        onActionClick = onBookmarkIconClick,
-                        icon = Icons.Rounded.Bookmark,
-                        iconDescription = stringResource(Res.string.bookmark),
-                    )
-                }
+                HomeTimelineAction(
+                    onActionClick = onBookmarkIconClick,
+                    icon = Icons.Rounded.Bookmark,
+                    iconDescription = stringResource(Res.string.bookmark),
+                )
             }
-
             ExpandButton(
-                isExpanded = isExpanded,
+                expansionProgress = dragToExpandState::expansionProgress,
                 onToggled = {
                     onLayoutChanged(
-                        if (isExpanded) TabLayout.Collapsed.All
+                        if (dragToExpandState.targetState) TabLayout.Collapsed.All
                         else TabLayout.Expanded,
                     )
                 },
@@ -273,9 +269,9 @@ internal fun HomeTabs(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ExpandedTabs(
+    modifier: Modifier = Modifier,
     saveRequestId: String?,
     timelines: List<Timeline.Home>,
     tabsState: TabsState,
@@ -288,7 +284,7 @@ private fun ExpandedTabs(
         timelines = timelines,
     )
     FlowRow(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(
                 top = 40.dp,
@@ -387,10 +383,9 @@ private fun ExpandedTabs(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun CollapsedTabs(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     tabsState: TabsState,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
@@ -442,7 +437,6 @@ private fun CollapsedTabs(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun TabsState.ExpandedTab(
     modifier: Modifier = Modifier,
@@ -521,7 +515,6 @@ private fun TabsState.ExpandedTab(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun TabsState.CollapsedTab(
     tab: Tab,
@@ -559,12 +552,9 @@ private fun TabsState.CollapsedTab(
 @Composable
 private fun ExpandButton(
     modifier: Modifier = Modifier,
-    isExpanded: Boolean,
+    expansionProgress: () -> Float,
     onToggled: () -> Unit,
 ) {
-    val rotationState = animateFloatAsState(
-        targetValue = if (isExpanded) 180f else 0f,
-    )
     ElevatedCard(
         modifier = modifier
             // TODO: This offset is needed bc of some awkward behavior in chips
@@ -575,7 +565,7 @@ private fun ExpandButton(
             modifier = Modifier
                 .size(40.dp)
                 .graphicsLayer {
-                    rotationZ = rotationState.value
+                    rotationZ = expansionProgress() * 180f
                 },
             onClick = onToggled,
             content = {
@@ -737,13 +727,16 @@ private val TabsBoundsTransform = BoundsTransform { _, _ ->
     spring(stiffness = Spring.StiffnessLow)
 }
 
-private val TabsExpansionTransition =
-    slideInVertically(spring(stiffness = Spring.StiffnessMediumLow))
-        .togetherWith(fadeOut())
-
 private val TabsCollapseTransition =
-    fadeIn()
-        .togetherWith(slideOutVertically(spring(stiffness = Spring.StiffnessMediumLow)))
+    fadeIn() togetherWith slideOutVertically(
+        animationSpec = DraggableTabsState.animationSpec(IntOffset.VisibilityThreshold),
+    )
+
+private val TabsExpansionTransition =
+    slideInVertically(
+        animationSpec = DraggableTabsState.animationSpec(IntOffset.VisibilityThreshold),
+        initialOffsetY = { -(it * 2) },
+    ) togetherWith fadeOut()
 
 private val CollapsedTabShape = RoundedCornerShape(16.dp)
 private val ChipHeight = 32.dp
