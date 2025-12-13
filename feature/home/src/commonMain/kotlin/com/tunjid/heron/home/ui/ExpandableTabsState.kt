@@ -19,6 +19,7 @@ package com.tunjid.heron.home.ui
 import androidx.compose.animation.core.SeekableTransitionState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.Transition
+import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.AnchoredDraggableState
@@ -37,6 +38,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.IntOffset
 import com.tunjid.heron.home.TabLayout
 import com.tunjid.heron.ui.UiTokens
 import kotlinx.coroutines.flow.collectLatest
@@ -56,19 +58,19 @@ class ExpandableTabsState(
     private val maxOffset
         get() = draggableState.anchors.maxPosition()
 
-    val isPartiallyOrFullyExpanded by derivedStateOf {
-        expansionProgress > FullyCollapsed
-    }
-
     val expansionProgress: Float
         get() = with(draggableState) {
             requireOffset() / maxOffset
         }
 
+    val isPartiallyOrFullyExpanded by derivedStateOf {
+        expansionProgress > FullyCollapsed
+    }
+
     private suspend fun animateTo(isExpanded: Boolean) {
         draggableState.animateTo(
             targetValue = isExpanded,
-            animationSpec = ProgressAnimationSpec,
+            animationSpec = FloatAnimationSpec,
         )
     }
 
@@ -162,14 +164,10 @@ class ExpandableTabsState(
             interactionSource = state.interactionSource,
         )
 
-        fun <T> animationSpec(
-            visibilityThreshold: T,
-        ) = spring(
-            stiffness = Spring.StiffnessMediumLow,
-            visibilityThreshold = visibilityThreshold,
-        )
+        val IntOffsetAnimationSpec =
+            animationSpec(visibilityThreshold = IntOffset.VisibilityThreshold)
 
-        private val ProgressAnimationSpec =
+        val FloatAnimationSpec =
             animationSpec(visibilityThreshold = 0.05f)
     }
 }
@@ -181,5 +179,12 @@ private fun Float.anchors() = DraggableAnchors {
     false at FullyCollapsed
     true at this@anchors
 }
+
+private fun <T> animationSpec(
+    visibilityThreshold: T,
+) = spring(
+    stiffness = Spring.StiffnessMediumLow,
+    visibilityThreshold = visibilityThreshold,
+)
 
 private const val FullyCollapsed = 0f
