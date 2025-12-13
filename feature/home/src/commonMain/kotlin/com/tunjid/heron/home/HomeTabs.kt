@@ -208,6 +208,7 @@ internal fun HomeTabs(
             )
             else CollapsedTabs(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .expandable(expandableTabsState),
                 tabsState = collapsedTabsState,
                 sharedTransitionScope = this@with,
@@ -243,7 +244,7 @@ internal fun HomeTabs(
                     .weight(1f)
                     .animateContentSize(),
             )
-            Row(
+            if (expandableTabsState.isPartiallyOrFullyExpanded) Row(
                 modifier = alphaModifier,
             ) {
                 HomeTimelineAction(
@@ -262,7 +263,7 @@ internal fun HomeTabs(
                 expansionProgress = expandableTabsState::expansionProgress,
                 onToggled = {
                     onLayoutChanged(
-                        if (expandableTabsState.isExpanded) TabLayout.Collapsed.All
+                        if (expandableTabsState.isPartiallyOrFullyExpanded) TabLayout.Collapsed.All
                         else TabLayout.Expanded,
                     )
                 },

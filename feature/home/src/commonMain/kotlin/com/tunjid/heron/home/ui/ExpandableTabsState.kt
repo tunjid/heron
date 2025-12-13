@@ -29,6 +29,8 @@ import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
@@ -54,8 +56,9 @@ class ExpandableTabsState(
     private val maxOffset
         get() = draggableState.anchors.maxPosition()
 
-    val isExpanded
-        get() = draggableState.currentValue
+    val isPartiallyOrFullyExpanded by derivedStateOf {
+        expansionProgress > FullyCollapsed
+    }
 
     val expansionProgress: Float
         get() = with(draggableState) {
@@ -175,6 +178,8 @@ private val TabLayout.isExpanded
     get() = this is TabLayout.Expanded
 
 private fun Float.anchors() = DraggableAnchors {
-    false at 0f
+    false at FullyCollapsed
     true at this@anchors
 }
+
+private const val FullyCollapsed = 0f
