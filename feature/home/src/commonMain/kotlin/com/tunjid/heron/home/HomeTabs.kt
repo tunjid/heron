@@ -70,6 +70,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -187,6 +188,7 @@ internal fun HomeTabs(
         modifier = modifier
             .fillMaxSize(),
     ) {
+        val saveableStateHolder = rememberSaveableStateHolder()
         expandableTabsState.transition.AnimatedContent(
             modifier = Modifier,
             transitionSpec = {
@@ -194,29 +196,31 @@ internal fun HomeTabs(
                 else TabsCollapseTransition
             },
         ) { isExpanding ->
-            if (isExpanding) ExpandedTabs(
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.surface)
-                    .expandable(expandableTabsState),
-                saveRequestId = saveRequestId,
-                timelines = timelines,
-                tabsState = expandedTabsState,
-                sharedTransitionScope = this@with,
-                animatedContentScope = this@AnimatedContent,
-                onDismissed = { onLayoutChanged(TabLayout.Collapsed.All) },
-                onTimelinePreferencesSaved = onTimelinePreferencesSaved,
-            )
-            else CollapsedTabs(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .expandable(expandableTabsState),
-                tabsState = collapsedTabsState,
-                sharedTransitionScope = this@with,
-                animatedContentScope = this@AnimatedContent,
-                currentTabUri = currentTabUri,
-                timelines = timelines,
-                onTimelinePresentationUpdated = onTimelinePresentationUpdated,
-            )
+            saveableStateHolder.SaveableStateProvider(isExpanding) {
+                if (isExpanding) ExpandedTabs(
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.surface)
+                        .expandable(expandableTabsState),
+                    saveRequestId = saveRequestId,
+                    timelines = timelines,
+                    tabsState = expandedTabsState,
+                    sharedTransitionScope = this@with,
+                    animatedContentScope = this@AnimatedContent,
+                    onDismissed = { onLayoutChanged(TabLayout.Collapsed.All) },
+                    onTimelinePreferencesSaved = onTimelinePreferencesSaved,
+                )
+                else CollapsedTabs(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .expandable(expandableTabsState),
+                    tabsState = collapsedTabsState,
+                    sharedTransitionScope = this@with,
+                    animatedContentScope = this@AnimatedContent,
+                    currentTabUri = currentTabUri,
+                    timelines = timelines,
+                    onTimelinePresentationUpdated = onTimelinePresentationUpdated,
+                )
+            }
         }
         if (isSignedIn) Row(
             modifier = Modifier
