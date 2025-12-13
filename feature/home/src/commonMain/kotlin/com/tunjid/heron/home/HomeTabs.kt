@@ -164,7 +164,7 @@ internal fun HomeTabs(
                     )
                 }
         },
-        isCollapsed = tabLayout is TabLayout.Collapsed.Selected,
+        isCollapsed = tabLayout is TabLayout.Collapsed.Selected && !expandableTabsState.isPartiallyOrFullyExpanded,
         selectedTabIndex = selectedTabIndex,
         onTabSelected = {
             onLayoutChanged(TabLayout.Collapsed.All)
@@ -254,14 +254,21 @@ internal fun HomeTabs(
                     .animateContentSize(),
             )
             if (expandableTabsState.isPartiallyOrFullyExpanded) {
+                val expandedOptionsModifier = remember {
+                    Modifier
+                        .renderInSharedTransitionScopeOverlay(
+                            zIndexInOverlay = HomeTimelineButtonSharedElementZIndex,
+                        )
+                        .then(alphaModifier)
+                }
                 HomeTimelineButton(
-                    modifier = alphaModifier,
+                    modifier = expandedOptionsModifier,
                     onActionClick = onSettingsIconClick,
                     icon = Icons.Rounded.Settings,
                     iconDescription = stringResource(Res.string.settings),
                 )
                 HomeTimelineButton(
-                    modifier = alphaModifier,
+                    modifier = expandedOptionsModifier,
                     onActionClick = onBookmarkIconClick,
                     icon = Icons.Rounded.Bookmark,
                     iconDescription = stringResource(Res.string.bookmark),
@@ -270,7 +277,7 @@ internal fun HomeTabs(
             HomeTimelineButton(
                 modifier = Modifier
                     .renderInSharedTransitionScopeOverlay(
-                        zIndexInOverlay = ExpandButtonSharedElementZIndex,
+                        zIndexInOverlay = HomeTimelineButtonSharedElementZIndex,
                     )
                     .graphicsLayer {
                         rotationZ = expandableTabsState.expansionProgress * 180f
@@ -337,7 +344,10 @@ private fun ExpandedTabs(
                 val index = editableTimelineState.firstUnpinnedIndex
 
                 if (index < 0) allTimelines.toList() to emptyList<Timeline.Home>()
-                else allTimelines.subList(0, index) to allTimelines.subList(index, allTimelines.size)
+                else allTimelines.subList(0, index) to allTimelines.subList(
+                    index,
+                    allTimelines.size,
+                )
             }
 
             key(Res.string.pinned) {
@@ -764,4 +774,4 @@ private val ChipHeight = 32.dp
 private val HomeTimelineButtonSize = 40.dp
 
 private const val TabsSharedElementZIndex = 1f
-private const val ExpandButtonSharedElementZIndex = 2f
+private const val HomeTimelineButtonSharedElementZIndex = 2f
