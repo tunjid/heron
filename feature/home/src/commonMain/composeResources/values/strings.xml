@@ -24,6 +24,8 @@
     <string name="save">Save</string>
     <string name="bookmark">Bookmark</string>
     <string name="settings">Settings</string>
+    <string name="expand_timeline_settings">Expand timeline settings</string>
+    <string name="collapse_timeline_settings">Collapse timeline settings</string>
     <string name="timeline_preferences">Timeline Preferences</string>
     <string name="create_post">Create Post</string>
     <string name="timeline_drop_target_hint">Drop timelines here to remove them from your pinned feeds.</string>

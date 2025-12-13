@@ -46,7 +46,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -111,6 +110,8 @@ import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import heron.feature.home.generated.resources.Res
 import heron.feature.home.generated.resources.bookmark
+import heron.feature.home.generated.resources.collapse_timeline_settings
+import heron.feature.home.generated.resources.expand_timeline_settings
 import heron.feature.home.generated.resources.pinned
 import heron.feature.home.generated.resources.saved
 import heron.feature.home.generated.resources.settings
@@ -251,28 +252,34 @@ internal fun HomeTabs(
                     .weight(1f)
                     .animateContentSize(),
             )
-            if (expandableTabsState.isPartiallyOrFullyExpanded) Row(
-                modifier = alphaModifier,
-            ) {
-                HomeTimelineAction(
+            if (expandableTabsState.isPartiallyOrFullyExpanded) {
+                HomeTimelineButton(
+                    modifier = alphaModifier,
                     onActionClick = onSettingsIconClick,
                     icon = Icons.Rounded.Settings,
                     iconDescription = stringResource(Res.string.settings),
                 )
-
-                HomeTimelineAction(
+                HomeTimelineButton(
+                    modifier = alphaModifier,
                     onActionClick = onBookmarkIconClick,
                     icon = Icons.Rounded.Bookmark,
                     iconDescription = stringResource(Res.string.bookmark),
                 )
             }
-            ExpandButton(
+            HomeTimelineButton(
                 modifier = Modifier
                     .renderInSharedTransitionScopeOverlay(
                         zIndexInOverlay = ExpandButtonSharedElementZIndex,
-                    ),
-                expansionProgress = expandableTabsState::expansionProgress,
-                onToggled = {
+                    )
+                    .graphicsLayer {
+                        rotationZ = expandableTabsState.expansionProgress * 180f
+                    },
+                icon = Icons.Rounded.ArrowDropDown,
+                iconDescription = stringResource(
+                    if (expandableTabsState.isPartiallyOrFullyExpanded) Res.string.collapse_timeline_settings
+                    else Res.string.expand_timeline_settings,
+                ),
+                onActionClick = {
                     onLayoutChanged(
                         if (expandableTabsState.isPartiallyOrFullyExpanded) TabLayout.Collapsed.All
                         else TabLayout.Expanded,
@@ -575,36 +582,6 @@ private fun TabsState.CollapsedTab(
 }
 
 @Composable
-private fun ExpandButton(
-    modifier: Modifier = Modifier,
-    expansionProgress: () -> Float,
-    onToggled: () -> Unit,
-) {
-    ElevatedCard(
-        modifier = modifier
-            // TODO: This offset is needed bc of some awkward behavior in chips
-            .offset(y = 4.dp),
-        shape = CircleShape,
-    ) {
-        IconButton(
-            modifier = Modifier
-                .size(40.dp)
-                .graphicsLayer {
-                    rotationZ = expansionProgress() * 180f
-                },
-            onClick = onToggled,
-            content = {
-                Icon(
-                    imageVector = Icons.Rounded.ArrowDropDown,
-                    contentDescription = "",
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-            },
-        )
-    }
-}
-
-@Composable
 private fun DropTargetBox(
     modifier: Modifier = Modifier,
     isHovered: Boolean,
@@ -633,7 +610,7 @@ private fun DropTargetBox(
 }
 
 @Composable
-private fun HomeTimelineAction(
+private fun HomeTimelineButton(
     modifier: Modifier = Modifier,
     icon: ImageVector,
     iconDescription: String,
@@ -641,8 +618,7 @@ private fun HomeTimelineAction(
 ) {
     ElevatedCard(
         modifier = modifier
-            .padding(horizontal = 4.dp)
-            .offset(y = 4.dp),
+            .padding(horizontal = 4.dp),
         shape = CircleShape,
     ) {
         IconButton(
