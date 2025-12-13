@@ -436,7 +436,9 @@ private fun CollapsedTabs(
     onTimelinePresentationUpdated: (Int, Timeline.Presentation) -> Unit,
 ) {
     val backgroundColor = MaterialTheme.colorScheme.surface
-    val backgroundProgress = animateFloatAsState(if (tabsState.isCollapsed) 0f else 1f)
+    val backgroundProgress = animateFloatAsState(
+        targetValue = if (tabsState.isCollapsed) 0f else 1f,
+    )
     Row(
         modifier = modifier
             .drawBehind {
@@ -748,6 +750,7 @@ private val ExpandableTabsCollapseTransition =
 private val ExpandableTabsExpansionTransition =
     slideInVertically(
         animationSpec = ExpandableTabsState.IntOffsetAnimationSpec,
+        initialOffsetY = { -it },
     ) togetherWith fadeOut(
         animationSpec = ExpandableTabsState.FloatAnimationSpec,
     )
