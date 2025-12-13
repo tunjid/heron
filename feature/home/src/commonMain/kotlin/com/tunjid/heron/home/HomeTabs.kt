@@ -267,6 +267,10 @@ internal fun HomeTabs(
                 )
             }
             ExpandButton(
+                modifier = Modifier
+                    .renderInSharedTransitionScopeOverlay(
+                        zIndexInOverlay = ExpandButtonSharedElementZIndex,
+                    ),
                 expansionProgress = expandableTabsState::expansionProgress,
                 onToggled = {
                     onLayoutChanged(
@@ -295,13 +299,13 @@ private fun ExpandedTabs(
     )
     Box(
         modifier = modifier
-            .fillMaxSize()
+            .fillMaxSize(),
     ) {
         FlowRow(
             modifier = with(animatedContentScope) {
                 Modifier
                     .animateEnterExit(
-                        enter = ExpandedTabsContentEnterAnimation
+                        enter = ExpandedTabsContentEnterAnimation,
                     )
             }
                 .fillMaxSize()
@@ -515,6 +519,7 @@ private fun TabsState.ExpandedTab(
                             ),
                             animatedVisibilityScope = animatedContentScope,
                             boundsTransform = ExpandableTabsBoundsTransform,
+                            zIndexInOverlay = TabsSharedElementZIndex,
                         ),
                     text = timeline.name,
                     maxLines = 1,
@@ -561,6 +566,7 @@ private fun TabsState.CollapsedTab(
                         ),
                         animatedVisibilityScope = animatedContentScope,
                         boundsTransform = ExpandableTabsBoundsTransform,
+                        zIndexInOverlay = TabsSharedElementZIndex,
                     ),
                 text = tab.title,
             )
@@ -760,15 +766,16 @@ private val ExpandableTabsExpansionTransition =
         animationSpec = ExpandableTabsState.FloatAnimationSpec,
     )
 
-private val ExpandedTabsContentEnterAnimation = fadeIn(
-    animationSpec = ExpandableTabsState.FloatAnimationSpec,
-)  + scaleIn(
-    initialScale = 0.92f,
-    animationSpec = tween(
-        durationMillis = 220,
-        delayMillis = 90,
+private val ExpandedTabsContentEnterAnimation =
+    fadeIn(
+        animationSpec = ExpandableTabsState.FloatAnimationSpec,
+    ) + scaleIn(
+        initialScale = 0.92f,
+        animationSpec = tween(
+            durationMillis = 220,
+            delayMillis = 90,
+        ),
     )
-)
 
 private val CollapsedTabShape = RoundedCornerShape(16.dp)
 
@@ -778,3 +785,6 @@ private val ExpandedTabsShape = RoundedCornerShape(
 )
 
 private val ChipHeight = 32.dp
+
+private const val TabsSharedElementZIndex = 1f
+private const val ExpandButtonSharedElementZIndex = 2f
