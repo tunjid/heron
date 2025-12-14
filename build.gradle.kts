@@ -33,6 +33,7 @@ plugins {
     alias(libs.plugins.spotless) apply false
     alias(libs.plugins.aboutLibraries) apply false
     alias(libs.plugins.burst) apply false
+    alias(libs.plugins.axionRelease) apply false
 }
 
 allprojects {

@@ -28,4 +28,10 @@ jobs:
           distribution: 'zulu'
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew assembleRelease
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/heads/release')
+        run: ./gradlew release -Pheron.versionCode=${{ github.run_number }}
+
+      - name: Assemble Release
+        run: ./gradlew assembleRelease -Pheron.versionCode=${{ github.run_number }}
