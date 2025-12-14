@@ -11,8 +11,7 @@ jobs:
   publish-android-app:
     runs-on: ubuntu-latest
     steps:
-      - name: Create Release
-        if: |
+      - if: |
           startsWith(github.ref, 'refs/heads/bugfix/') ||
           startsWith(github.ref, 'refs/heads/feature/') ||
           startsWith(github.ref, 'refs/heads/release/')
@@ -23,8 +22,6 @@ jobs:
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew ./gradlew spotlessCheck assembleRelease -Pheron.versionCode=${{ github.run_number }}
-
-      - name: Publish Release
       - uses: google-github-actions/auth@v3
         with:
           project_id: 'heron'
