@@ -30,7 +30,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Create Release
-        if: startsWith(github.ref, 'refs/heads/release')
+        if: |
+          startsWith(github.ref, 'refs/heads/bugfix/') ||
+          startsWith(github.ref, 'refs/heads/feature/') ||
+          startsWith(github.ref, 'refs/heads/release/')
         run: ./gradlew release -Pheron.versionCode=${{ github.run_number }}
 
       - name: Assemble Release

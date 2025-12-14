@@ -36,8 +36,20 @@ scmVersion {
         prefix.set("")
     }
 
-    releaseOnlyOnReleaseBranches = true
-    releaseBranchNames.set(listOf("release/.*"))
+    branchVersionIncrementer.set(
+        mapOf(
+            "bugfix/.*" to "incrementPatch",
+            "feature/.*" to "incrementMinor",
+            "release/.*" to "incrementMajor",
+        ),
+    )
+    releaseBranchNames.set(
+        listOf(
+            "bugfix/.*",
+            "feature/.*",
+            "release/.*",
+        ),
+    )
 }
 
 kotlin {
