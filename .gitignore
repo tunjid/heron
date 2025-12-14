@@ -16,3 +16,8 @@ captures
 !*.xcodeproj/project.xcworkspace/
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
+/composeApp/release/composeApp-release.aab
+/iosApp/iosApp.xcodeproj/project.xcworkspace/contents.xcworkspacedata
+/dependencies.txt
+/dependency-tree-diff.jar
+/gradle/wrapper/gradle-wrapper.jar.sha256

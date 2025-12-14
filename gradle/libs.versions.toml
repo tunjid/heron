@@ -15,6 +15,7 @@ androidx-media3 = "1.8.0"
 androidx-room = "2.8.4"
 androidx-sqlite = "2.6.2"
 androidx-espresso-core = "3.7.0"
+axion-release = "1.21.1"
 coreSplashscreen = "1.2.0"
 burst = "2.10.2"
 androidx-material = "1.13.0"
@@ -185,3 +186,4 @@ ozoneLexiconGenerator = { id = "com.tunjid.ozone.generator", version.ref = "ozon
 aboutLibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutLibraries" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 burst = { id = "app.cash.burst", version.ref = "burst" }
+axionRelease = { id = "pl.allegro.tech.build.axion-release", version.ref = "axion-release" }

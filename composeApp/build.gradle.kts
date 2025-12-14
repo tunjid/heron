@@ -25,8 +25,31 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.axionRelease)
     id("ksp-convention")
     id("kotlin-jvm-convention")
+}
+
+scmVersion {
+    tag {
+        // Use an empty string for prefix
+        prefix.set("")
+    }
+
+    branchVersionIncrementer.set(
+        mapOf(
+            "bugfix/.*" to "incrementPatch",
+            "feature/.*" to "incrementMinor",
+            "release/.*" to "incrementMajor",
+        ),
+    )
+    releaseBranchNames.set(
+        listOf(
+            "bugfix/.*",
+            "feature/.*",
+            "release/.*",
+        ),
+    )
 }
 
 kotlin {
@@ -111,15 +134,15 @@ kotlin {
     }
 }
 
-val appVersionProvider = providers.gradleProperty("heron.versionName")
-
 android {
     namespace = "com.tunjid.heron"
 
     defaultConfig {
         applicationId = "com.tunjid.heron"
-        versionCode = providers.gradleProperty("heron.versionCode").get().toInt()
-        versionName = appVersionProvider.get()
+        versionCode = providers.gradleProperty("heron.versionCode")
+            .get()
+            .toInt()
+        versionName = scmVersion.version
     }
     packaging {
         resources {
@@ -166,7 +189,8 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "com.tunjid.heron"
-            packageVersion = appVersionProvider.get()
+            // Remove hyphenenated suffixes if present
+            packageVersion = scmVersion.version.split("-").first()
         }
     }
 }
