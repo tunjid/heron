@@ -14,15 +14,12 @@
  *    limitations under the License.
  */
 
-@file:OptIn(ExperimentalSharedTransitionApi::class)
-
 package com.tunjid.heron.home
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.BoundsTransform
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateBounds
 import androidx.compose.animation.animateColorAsState
@@ -31,8 +28,10 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
@@ -47,7 +46,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -72,6 +70,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -97,6 +96,9 @@ import com.tunjid.heron.home.ui.EditableTimelineState
 import com.tunjid.heron.home.ui.EditableTimelineState.Companion.rememberEditableTimelineState
 import com.tunjid.heron.home.ui.EditableTimelineState.Companion.timelineEditDragAndDrop
 import com.tunjid.heron.home.ui.EditableTimelineState.Companion.timelineEditDropTarget
+import com.tunjid.heron.home.ui.ExpandableTabsState
+import com.tunjid.heron.home.ui.ExpandableTabsState.Companion.expandable
+import com.tunjid.heron.home.ui.ExpandableTabsState.Companion.rememberExpandableTabsState
 import com.tunjid.heron.home.ui.JiggleBox
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -108,6 +110,8 @@ import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import heron.feature.home.generated.resources.Res
 import heron.feature.home.generated.resources.bookmark
+import heron.feature.home.generated.resources.collapse_timeline_settings
+import heron.feature.home.generated.resources.expand_timeline_settings
 import heron.feature.home.generated.resources.pinned
 import heron.feature.home.generated.resources.saved
 import heron.feature.home.generated.resources.settings
@@ -124,7 +128,7 @@ expect fun DragAndDropEvent.draggedId(): String?
 
 expect fun Modifier.timelineEditDragAndDropSource(sourceId: String): Modifier
 
-@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun HomeTabs(
     modifier: Modifier = Modifier,
@@ -145,7 +149,10 @@ internal fun HomeTabs(
     onSettingsIconClick: () -> Unit,
     onBookmarkIconClick: () -> Unit,
 ) = with(sharedTransitionScope) {
-    val isExpanded = tabLayout is TabLayout.Expanded
+    val expandableTabsState = rememberExpandableTabsState(
+        tabLayout = tabLayout,
+        onTabLayoutChanged = onLayoutChanged,
+    )
     val collapsedTabsState = rememberTabsState(
         tabs = remember(sourceIdsToHasUpdates, timelines) {
             timelines
@@ -157,7 +164,7 @@ internal fun HomeTabs(
                     )
                 }
         },
-        isCollapsed = tabLayout is TabLayout.Collapsed.Selected,
+        isCollapsed = tabLayout is TabLayout.Collapsed.Selected && !expandableTabsState.isPartiallyOrFullyExpanded,
         selectedTabIndex = selectedTabIndex,
         onTabSelected = {
             onLayoutChanged(TabLayout.Collapsed.All)
@@ -180,91 +187,109 @@ internal fun HomeTabs(
     )
     Box(
         modifier = modifier
-            .background(
-                animateColorAsState(
-                    if (isExpanded) MaterialTheme.colorScheme.surface
-                    else Color.Transparent,
-                ).value,
-            ),
+            .fillMaxSize(),
     ) {
-        AnimatedContent(
-            modifier = Modifier
-                .animateContentSize(),
-            targetState = tabLayout is TabLayout.Expanded,
+        val saveableStateHolder = rememberSaveableStateHolder()
+        expandableTabsState.transition.AnimatedContent(
+            modifier = Modifier,
             transitionSpec = {
-                if (targetState) TabsExpansionTransition
-                else TabsCollapseTransition
+                if (targetState) ExpandableTabsExpansionTransition
+                else ExpandableTabsCollapseTransition
             },
-        ) { isExpanded ->
-            if (isExpanded) ExpandedTabs(
-                saveRequestId = saveRequestId,
-                timelines = timelines,
-                tabsState = expandedTabsState,
-                sharedTransitionScope = this@with,
-                animatedContentScope = this@AnimatedContent,
-                onDismissed = { onLayoutChanged(TabLayout.Collapsed.All) },
-                onTimelinePreferencesSaved = onTimelinePreferencesSaved,
-            )
-            else CollapsedTabs(
-                modifier = Modifier,
-                tabsState = collapsedTabsState,
-                sharedTransitionScope = this@with,
-                animatedContentScope = this@AnimatedContent,
-                currentTabUri = currentTabUri,
-                timelines = timelines,
-                onTimelinePresentationUpdated = onTimelinePresentationUpdated,
-            )
+        ) { isExpanding ->
+            saveableStateHolder.SaveableStateProvider(isExpanding) {
+                if (isExpanding) ExpandedTabs(
+                    modifier = Modifier
+                        .background(
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = ExpandedTabsShape,
+                        )
+                        .expandable(expandableTabsState),
+                    saveRequestId = saveRequestId,
+                    timelines = timelines,
+                    tabsState = expandedTabsState,
+                    sharedTransitionScope = this@with,
+                    animatedContentScope = this@AnimatedContent,
+                    onDismissed = { onLayoutChanged(TabLayout.Collapsed.All) },
+                    onTimelinePreferencesSaved = onTimelinePreferencesSaved,
+                )
+                else CollapsedTabs(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .expandable(expandableTabsState),
+                    tabsState = collapsedTabsState,
+                    sharedTransitionScope = this@with,
+                    animatedContentScope = this@AnimatedContent,
+                    currentTabUri = currentTabUri,
+                    timelines = timelines,
+                    onTimelinePresentationUpdated = onTimelinePresentationUpdated,
+                )
+            }
         }
         if (isSignedIn) Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    start = 8.dp,
-                    end = 8.dp,
+                    horizontal = 8.dp,
+                    vertical = 4.dp,
                 ),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            AnimatedVisibility(
-                visible = isExpanded,
-            ) {
-                Text(
-                    modifier = Modifier
-                        .padding(horizontal = 8.dp)
-                        .weight(1f),
-                    text = stringResource(Res.string.timeline_preferences),
-                    style = MaterialTheme.typography.titleMediumEmphasized,
-                )
+            val alphaModifier = remember {
+                Modifier.graphicsLayer {
+                    alpha = expandableTabsState.expansionProgress
+                }
             }
-
+            Text(
+                modifier = Modifier
+                    .then(alphaModifier)
+                    .padding(horizontal = 8.dp),
+                text = stringResource(Res.string.timeline_preferences),
+                style = MaterialTheme.typography.titleMediumEmphasized,
+            )
             Spacer(
                 modifier = Modifier
                     .weight(1f)
                     .animateContentSize(),
             )
-
-            AnimatedVisibility(
-                visible = isExpanded,
-            ) {
-                Row {
-                    HomeTimelineAction(
-                        onActionClick = onSettingsIconClick,
-                        icon = Icons.Rounded.Settings,
-                        iconDescription = stringResource(Res.string.settings),
-                    )
-
-                    HomeTimelineAction(
-                        onActionClick = onBookmarkIconClick,
-                        icon = Icons.Rounded.Bookmark,
-                        iconDescription = stringResource(Res.string.bookmark),
-                    )
+            if (expandableTabsState.isPartiallyOrFullyExpanded) {
+                val expandedOptionsModifier = remember {
+                    Modifier
+                        .renderInSharedTransitionScopeOverlay(
+                            zIndexInOverlay = HomeTimelineButtonSharedElementZIndex,
+                        )
+                        .then(alphaModifier)
                 }
+                HomeTimelineButton(
+                    modifier = expandedOptionsModifier,
+                    onActionClick = onSettingsIconClick,
+                    icon = Icons.Rounded.Settings,
+                    iconDescription = stringResource(Res.string.settings),
+                )
+                HomeTimelineButton(
+                    modifier = expandedOptionsModifier,
+                    onActionClick = onBookmarkIconClick,
+                    icon = Icons.Rounded.Bookmark,
+                    iconDescription = stringResource(Res.string.bookmark),
+                )
             }
-
-            ExpandButton(
-                isExpanded = isExpanded,
-                onToggled = {
+            HomeTimelineButton(
+                modifier = Modifier
+                    .renderInSharedTransitionScopeOverlay(
+                        zIndexInOverlay = HomeTimelineButtonSharedElementZIndex,
+                    )
+                    .graphicsLayer {
+                        rotationZ = expandableTabsState.expansionProgress * 180f
+                    },
+                icon = Icons.Rounded.ArrowDropDown,
+                iconDescription = stringResource(
+                    if (expandableTabsState.isPartiallyOrFullyExpanded) Res.string.collapse_timeline_settings
+                    else Res.string.expand_timeline_settings,
+                ),
+                onActionClick = {
                     onLayoutChanged(
-                        if (isExpanded) TabLayout.Collapsed.All
+                        if (expandableTabsState.isPartiallyOrFullyExpanded) TabLayout.Collapsed.All
                         else TabLayout.Expanded,
                     )
                 },
@@ -273,9 +298,9 @@ internal fun HomeTabs(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ExpandedTabs(
+    modifier: Modifier = Modifier,
     saveRequestId: String?,
     timelines: List<Timeline.Home>,
     tabsState: TabsState,
@@ -287,89 +312,102 @@ private fun ExpandedTabs(
     val editableTimelineState = rememberEditableTimelineState(
         timelines = timelines,
     )
-    FlowRow(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(
-                top = 40.dp,
-                start = 16.dp,
-                end = 16.dp,
-            )
-            .clickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() },
-                onClick = onDismissed,
-            ),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    Box(
+        modifier = modifier
+            .fillMaxSize(),
     ) {
-        val (pinned, saved) = remember(
-            editableTimelineState.firstUnpinnedIndex,
-            editableTimelineState.timelines.toList(),
-        ) {
-            val allTimelines = editableTimelineState.timelines
-            val index = editableTimelineState.firstUnpinnedIndex
-
-            if (index < 0) allTimelines.toList() to emptyList<Timeline.Home>()
-            else allTimelines.subList(0, index) to allTimelines.subList(index, allTimelines.size)
-        }
-
-        key(Res.string.pinned) {
-            SectionTitle(
-                modifier = Modifier
-                    .padding(top = 24.dp)
-                    .animateBounds(this@with),
-                title = stringResource(Res.string.pinned),
-            )
-        }
-        pinned.forEach { timeline ->
-            key(timeline.sourceId) {
-                if (!editableTimelineState.isDraggedId(timeline.sourceId)) tabsState.ExpandedTab(
-                    modifier = Modifier
-                        .animateBounds(this@with),
-                    editableTimelineState = editableTimelineState,
-                    currentTimelines = timelines,
-                    sharedTransitionScope = sharedTransitionScope,
-                    animatedContentScope = animatedContentScope,
-                    timeline = timeline,
-                )
-            }
-        }
-        key(Res.string.saved) {
-            SectionTitle(
-                modifier = Modifier
-                    .padding(top = 24.dp)
-                    .animateBounds(this@with),
-                title = stringResource(Res.string.saved),
-            )
-        }
-        saved.forEach { timeline ->
-            key(timeline.sourceId) {
-                if (!editableTimelineState.isDraggedId(timeline.sourceId)) tabsState.ExpandedTab(
-                    modifier = Modifier
-                        .animateBounds(this@with),
-                    editableTimelineState = editableTimelineState,
-                    currentTimelines = timelines,
-                    sharedTransitionScope = sharedTransitionScope,
-                    animatedContentScope = animatedContentScope,
-                    timeline = timeline,
-                )
-            }
-        }
-        AnimatedVisibility(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 24.dp),
-            visible = editableTimelineState.shouldShowHint,
-        ) {
-            DropTargetBox(
-                modifier = Modifier
-                    .timelineEditDropTarget(
-                        state = editableTimelineState,
+        FlowRow(
+            modifier = with(animatedContentScope) {
+                Modifier
+                    .animateEnterExit(
+                        enter = ExpandedTabsContentEnterAnimation,
                     )
-                    .padding(horizontal = 8.dp)
-                    .fillMaxWidth(),
-                isHovered = editableTimelineState.isHintHovered,
-            )
+            }
+                .fillMaxSize()
+                .padding(
+                    top = 40.dp,
+                    start = 16.dp,
+                    end = 16.dp,
+                )
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() },
+                    onClick = onDismissed,
+                ),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            val (pinned, saved) = remember(
+                editableTimelineState.firstUnpinnedIndex,
+                editableTimelineState.timelines.toList(),
+            ) {
+                val allTimelines = editableTimelineState.timelines
+                val index = editableTimelineState.firstUnpinnedIndex
+
+                if (index < 0) allTimelines.toList() to emptyList<Timeline.Home>()
+                else allTimelines.subList(0, index) to allTimelines.subList(
+                    index,
+                    allTimelines.size,
+                )
+            }
+
+            key(Res.string.pinned) {
+                SectionTitle(
+                    modifier = Modifier
+                        .padding(top = 24.dp)
+                        .animateBounds(this@with),
+                    title = stringResource(Res.string.pinned),
+                )
+            }
+            pinned.forEach { timeline ->
+                key(timeline.sourceId) {
+                    if (!editableTimelineState.isDraggedId(timeline.sourceId)) tabsState.ExpandedTab(
+                        modifier = Modifier
+                            .animateBounds(this@with),
+                        editableTimelineState = editableTimelineState,
+                        currentTimelines = timelines,
+                        sharedTransitionScope = sharedTransitionScope,
+                        animatedContentScope = animatedContentScope,
+                        timeline = timeline,
+                    )
+                }
+            }
+            key(Res.string.saved) {
+                SectionTitle(
+                    modifier = Modifier
+                        .padding(top = 24.dp)
+                        .animateBounds(this@with),
+                    title = stringResource(Res.string.saved),
+                )
+            }
+            saved.forEach { timeline ->
+                key(timeline.sourceId) {
+                    if (!editableTimelineState.isDraggedId(timeline.sourceId)) tabsState.ExpandedTab(
+                        modifier = Modifier
+                            .animateBounds(this@with),
+                        editableTimelineState = editableTimelineState,
+                        currentTimelines = timelines,
+                        sharedTransitionScope = sharedTransitionScope,
+                        animatedContentScope = animatedContentScope,
+                        timeline = timeline,
+                    )
+                }
+            }
+            AnimatedVisibility(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp),
+                visible = editableTimelineState.shouldShowHint,
+            ) {
+                DropTargetBox(
+                    modifier = Modifier
+                        .timelineEditDropTarget(
+                            state = editableTimelineState,
+                        )
+                        .padding(horizontal = 8.dp)
+                        .fillMaxWidth(),
+                    isHovered = editableTimelineState.isHintHovered,
+                )
+            }
         }
     }
 
@@ -387,19 +425,20 @@ private fun ExpandedTabs(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun CollapsedTabs(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     tabsState: TabsState,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
     currentTabUri: Uri?,
     timelines: List<Timeline>,
     onTimelinePresentationUpdated: (Int, Timeline.Presentation) -> Unit,
-) = with(sharedTransitionScope) {
+) {
     val backgroundColor = MaterialTheme.colorScheme.surface
-    val backgroundProgress = animateFloatAsState(if (tabsState.isCollapsed) 0f else 1f)
+    val backgroundProgress = animateFloatAsState(
+        targetValue = if (tabsState.isCollapsed) 0f else 1f,
+    )
     Row(
         modifier = modifier
             .drawBehind {
@@ -414,7 +453,6 @@ private fun CollapsedTabs(
     ) {
         Box(
             modifier = Modifier
-                .skipToLookaheadSize()
                 .weight(1f)
                 .clip(CircleShape),
         ) {
@@ -437,12 +475,11 @@ private fun CollapsedTabs(
         // Space for the Expand Button
         Spacer(
             modifier = Modifier
-                .width(48.dp),
+                .width(HomeTimelineButtonSize),
         )
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun TabsState.ExpandedTab(
     modifier: Modifier = Modifier,
@@ -501,7 +538,8 @@ private fun TabsState.ExpandedTab(
                                 timeline.name,
                             ),
                             animatedVisibilityScope = animatedContentScope,
-                            boundsTransform = TabsBoundsTransform,
+                            boundsTransform = ExpandableTabsBoundsTransform,
+                            zIndexInOverlay = TabsSharedElementZIndex,
                         ),
                     text = timeline.name,
                     maxLines = 1,
@@ -521,7 +559,6 @@ private fun TabsState.ExpandedTab(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun TabsState.CollapsedTab(
     tab: Tab,
@@ -548,45 +585,13 @@ private fun TabsState.CollapsedTab(
                             tab.title,
                         ),
                         animatedVisibilityScope = animatedContentScope,
-                        boundsTransform = TabsBoundsTransform,
+                        boundsTransform = ExpandableTabsBoundsTransform,
+                        zIndexInOverlay = TabsSharedElementZIndex,
                     ),
                 text = tab.title,
             )
         },
     )
-}
-
-@Composable
-private fun ExpandButton(
-    modifier: Modifier = Modifier,
-    isExpanded: Boolean,
-    onToggled: () -> Unit,
-) {
-    val rotationState = animateFloatAsState(
-        targetValue = if (isExpanded) 180f else 0f,
-    )
-    ElevatedCard(
-        modifier = modifier
-            // TODO: This offset is needed bc of some awkward behavior in chips
-            .offset(y = 4.dp),
-        shape = CircleShape,
-    ) {
-        IconButton(
-            modifier = Modifier
-                .size(40.dp)
-                .graphicsLayer {
-                    rotationZ = rotationState.value
-                },
-            onClick = onToggled,
-            content = {
-                Icon(
-                    imageVector = Icons.Rounded.ArrowDropDown,
-                    contentDescription = "",
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-            },
-        )
-    }
 }
 
 @Composable
@@ -618,16 +623,14 @@ private fun DropTargetBox(
 }
 
 @Composable
-private fun HomeTimelineAction(
+private fun HomeTimelineButton(
     modifier: Modifier = Modifier,
     icon: ImageVector,
     iconDescription: String,
     onActionClick: () -> Unit,
 ) {
     ElevatedCard(
-        modifier = modifier
-            .padding(horizontal = 4.dp)
-            .offset(y = 4.dp),
+        modifier = modifier,
         shape = CircleShape,
     ) {
         IconButton(
@@ -635,7 +638,7 @@ private fun HomeTimelineAction(
                 onActionClick()
             },
             modifier = Modifier
-                .size(40.dp),
+                .size(HomeTimelineButtonSize),
         ) {
             Icon(
                 imageVector = icon,
@@ -733,17 +736,45 @@ private fun Modifier.chipBackground(
     )
 }
 
-private val TabsBoundsTransform = BoundsTransform { _, _ ->
+private val ExpandableTabsBoundsTransform = BoundsTransform { _, _ ->
     spring(stiffness = Spring.StiffnessLow)
 }
 
-private val TabsExpansionTransition =
-    slideInVertically(spring(stiffness = Spring.StiffnessMediumLow))
-        .togetherWith(fadeOut())
+private val ExpandableTabsCollapseTransition =
+    fadeIn(
+        animationSpec = ExpandableTabsState.FloatAnimationSpec,
+    ) togetherWith slideOutVertically(
+        animationSpec = ExpandableTabsState.IntOffsetAnimationSpec,
+    )
 
-private val TabsCollapseTransition =
-    fadeIn()
-        .togetherWith(slideOutVertically(spring(stiffness = Spring.StiffnessMediumLow)))
+private val ExpandableTabsExpansionTransition =
+    slideInVertically(
+        animationSpec = ExpandableTabsState.IntOffsetAnimationSpec,
+        initialOffsetY = { -it },
+    ) togetherWith fadeOut(
+        animationSpec = ExpandableTabsState.FloatAnimationSpec,
+    )
+
+private val ExpandedTabsContentEnterAnimation =
+    fadeIn(
+        animationSpec = ExpandableTabsState.FloatAnimationSpec,
+    ) + scaleIn(
+        initialScale = 0.92f,
+        animationSpec = tween(
+            durationMillis = 220,
+            delayMillis = 90,
+        ),
+    )
 
 private val CollapsedTabShape = RoundedCornerShape(16.dp)
+
+private val ExpandedTabsShape = RoundedCornerShape(
+    bottomStart = 16.dp,
+    bottomEnd = 16.dp,
+)
+
 private val ChipHeight = 32.dp
+private val HomeTimelineButtonSize = 40.dp
+
+private const val TabsSharedElementZIndex = 1f
+private const val HomeTimelineButtonSharedElementZIndex = 2f

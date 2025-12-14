@@ -136,16 +136,15 @@ fun Tabs(
                 items = visibleTabs,
                 key = Tab::title,
                 itemContent = { tab ->
-                    BadgedBox(
+                    Box(
                         modifier = Modifier
                             .animateItem(),
-                        badge = {
+                        content = {
                             if (tab.hasUpdate) Badge(
                                 modifier = Modifier
+                                    .align(Alignment.TopEnd)
                                     .offset(y = 2.dp),
                             )
-                        },
-                        content = {
                             tabContent(tab)
                         },
                     )
