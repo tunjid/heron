@@ -21,6 +21,3 @@ captures
 /dependencies.txt
 /dependency-tree-diff.jar
 /gradle/wrapper/gradle-wrapper.jar.sha256
-/iosApp/iosApp.xcodeproj/xcshareddata/xcschemes/iosApp.xcscheme
-/new.txt
-/old.txt

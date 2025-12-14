@@ -134,18 +134,14 @@ kotlin {
     }
 }
 
-val appVersionCodeProvider: () -> Int = {
-    providers.gradleProperty("heron.versionCode")
-        .get()
-        .toInt()
-}
-
 android {
     namespace = "com.tunjid.heron"
 
     defaultConfig {
         applicationId = "com.tunjid.heron"
-        versionCode = appVersionCodeProvider()
+        versionCode = providers.gradleProperty("heron.versionCode")
+            .get()
+            .toInt()
         versionName = scmVersion.version
     }
     packaging {
