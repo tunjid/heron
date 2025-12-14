@@ -135,9 +135,9 @@ kotlin {
 }
 
 val appVersionCodeProvider: () -> Int = {
-    val versionCode = providers.gradleProperty("heron.versionCode").get().toInt()
-    // Always add 22 as the version was bumped manually 22 times before switching to CI.
-    versionCode + 22
+    providers.gradleProperty("heron.versionCode")
+        .get()
+        .toInt()
 }
 
 android {
