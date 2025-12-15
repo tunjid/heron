@@ -42,9 +42,5 @@ jobs:
           packageName: com.tunjid.heron
           releaseFiles: composeApp/build/outputs/bundle/release/composeApp-release.aab
           track: internal
-          status: inProgress
-          inAppUpdatePriority: 0
-          userFraction: 0.33
-          whatsNewDirectory: distribution/whatsnew
           mappingFile: app/build/outputs/mapping/release/mapping.txt
           debugSymbols: app/intermediates/merged_native_libs/release/out/lib
