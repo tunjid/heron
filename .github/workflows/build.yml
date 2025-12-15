@@ -29,9 +29,10 @@ jobs:
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew assembleRelease
+      - run: echo ${{ env.GITHUB_REF#refs/tags/ }}
 
   tag-release:
-    if: ${{ startsWith(github.ref_name, 'bugfix/') || startsWith(github.ref_name, 'feature/') || startsWith(github.ref_name, 'release/') }}
+    if: ${{ contains(env.GITHUB_REF, 'bugfix/') || contains(env.GITHUB_REF, 'feature/') || contains(env.GITHUB_REF, 'release/') }}
     needs: [ check-style, build-android-app ]
     runs-on: ubuntu-latest
     steps:
