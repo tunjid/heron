@@ -41,7 +41,7 @@ jobs:
       - name: Get play store upload credentials
         uses: google-github-actions/auth@v3
         with:
-          project_id: 'heron'
+          project_id: 'heron-d0ff3'
           workload_identity_provider: projects/313045152492/locations/global/workloadIdentityPools/github/providers/github-actions-provider
           service_account: heron-play-store-publish@heron-d0ff3.iam.gserviceaccount.com
 
