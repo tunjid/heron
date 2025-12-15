@@ -10,21 +10,30 @@ jobs:
   publish-android-app:
     runs-on: ubuntu-latest
     steps:
-      - name: Build release aabs
-      - uses: actions/checkout@v5
-      - uses: actions/setup-java@v5
+      - name: Checkout Code
+        uses: actions/checkout@v5
+
+      - name: Setup java
+        uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
           java-version: 21
-      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build artifacts
         run: ./gradlew ./gradlew spotlessCheck assembleRelease -Pheron.versionCode=${{ github.run_number }}
-      - name: Upload to play store
-      - uses: google-github-actions/auth@v3
+
+      - name: Get play store upload credentials
+        uses: google-github-actions/auth@v3
         with:
           project_id: 'heron'
           workload_identity_provider: projects/313045152492/locations/global/workloadIdentityPools/github/providers/github-actions-provider
           service_account: heron-play-store-publish@heron-d0ff3.iam.gserviceaccount.com
-      - uses: r0adkll/upload-google-play@v1
+
+      - name: Upload to play store
+        uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
           packageName: com.tunjid.heron
