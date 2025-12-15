@@ -8,12 +8,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  print-ref:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo ${{ github.ref }}
-      - run: echo ${{ github.head_ref }}
-      - run: echo ${{ github.actor }}
   check-style:
     runs-on: ubuntu-latest
     steps:
@@ -53,4 +47,4 @@ jobs:
           distribution: 'zulu'
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew release -Prelease.customUsername =${{ github.actor }} -Prelease.customPassword=${{ secrets.GITHUB_TOKEN }}
+      - run: ./gradlew release -Prelease.customUsername=${{ github.actor }} -Prelease.customPassword=${{ secrets.GITHUB_TOKEN }}
