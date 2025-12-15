@@ -23,7 +23,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build artifacts
-        run: ./gradlew ./gradlew spotlessCheck assembleRelease -Pheron.versionCode=${{ github.run_number }}
+        run: ./gradlew spotlessCheck assembleRelease -Pheron.versionCode=${{ github.run_number }}
 
       - name: Get play store upload credentials
         uses: google-github-actions/auth@v3
