@@ -40,7 +40,7 @@ scmVersion {
     }
     versionIncrementer { context ->
         val currentVersion = context.currentVersion
-        val releaseBranch = providers.gradleProperty("heron.releaseType")
+        val releaseBranch = providers.gradleProperty("heron.releaseBranch")
             .orNull ?: return@versionIncrementer currentVersion
         when {
             releaseBranch.contains("bugfix/") -> currentVersion.nextPatchVersion()
