@@ -38,17 +38,16 @@ scmVersion {
     repository {
         pushTagsOnly.set(true)
     }
-    versionIncrementer { context ->
-        val currentVersion = context.currentVersion
-        val releaseBranch = providers.gradleProperty("heron.releaseBranch")
-            .orNull ?: return@versionIncrementer currentVersion
-        when {
-            releaseBranch.contains("bugfix/") -> currentVersion.nextPatchVersion()
-            releaseBranch.contains("feature/") -> currentVersion.nextMinorVersion()
-            releaseBranch.contains("release/") -> currentVersion.nextMajorVersion()
-            else -> throw IllegalArgumentException("Unknown release type")
+    providers.gradleProperty("heron.releaseBranch")
+        .orNull
+        ?.let {
+            when {
+                it.contains("bugfix/") -> versionIncrementer("incrementPatch")
+                it.contains("feature/") -> versionIncrementer("incrementMinor")
+                it.contains("release/") -> versionIncrementer("incrementMajor")
+                else -> throw IllegalArgumentException("Unknown release type")
+            }
         }
-    }
 }
 
 kotlin {
