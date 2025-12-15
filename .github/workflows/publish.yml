@@ -48,7 +48,7 @@ jobs:
       - name: Upload to play store
         uses: r0adkll/upload-google-play@v1
         with:
-          serviceAccountJson: ${{ steps.auth.outputs.google_gha_creds_path }}
+          serviceAccountJson: $GOOGLE_APPLICATION_CREDENTIALS
           packageName: com.tunjid.heron
           releaseFiles: ${{steps.sign_app.outputs.signedReleaseFile}}
           track: internal
