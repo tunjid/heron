@@ -31,7 +31,7 @@ jobs:
       - run: ./gradlew assembleRelease
 
   tag-release:
-    if: ${{ contains(github.ref_name, 'bugfix/') || contains(github.ref_name, 'feature/') || contains(github.ref_name, 'release/') }}
+    if: ${{ startsWith(github.ref_name, 'bugfix/') || startsWith(github.ref_name, 'feature/') || startsWith(github.ref_name, 'release/') }}
     needs: [ check-style, build-android-app ]
     runs-on: ubuntu-latest
     steps:
