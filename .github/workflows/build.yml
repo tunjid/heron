@@ -32,13 +32,16 @@ jobs:
 
   tag-release:
     if: |
-      github.actor == github.repository_owner ||
-      contains(github.ref, 'bugfix/') ||
-      contains(github.ref, 'feature/') ||
-      contains(github.ref, 'release/') ||
-      contains(github.head_ref, 'bugfix/') ||
-      contains(github.head_ref, 'feature/') ||
-      contains(github.head_ref, 'release/')
+      github.actor == github.repository_owner &&
+      github.event.pull_request.merged == true &&
+      (
+        contains(github.ref, 'bugfix/') ||
+        contains(github.ref, 'feature/') ||
+        contains(github.ref, 'release/') ||
+        contains(github.head_ref, 'bugfix/') ||
+        contains(github.head_ref, 'feature/') ||
+        contains(github.head_ref, 'release/')
+      )
     needs: [ check-style, build-android-app ]
     runs-on: ubuntu-latest
     steps:
