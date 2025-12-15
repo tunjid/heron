@@ -35,21 +35,20 @@ scmVersion {
         // Use an empty string for prefix
         prefix.set("")
     }
-
-    branchVersionIncrementer.set(
-        mapOf(
-            "bugfix/.*" to "incrementPatch",
-            "feature/.*" to "incrementMinor",
-            "release/.*" to "incrementMajor",
-        ),
-    )
-    releaseBranchNames.set(
-        listOf(
-            "bugfix/.*",
-            "feature/.*",
-            "release/.*",
-        ),
-    )
+    repository {
+        pushTagsOnly.set(true)
+    }
+    versionIncrementer { context ->
+        val currentVersion = context.currentVersion
+        val releaseBranch = providers.gradleProperty("heron.releaseType")
+            .get()
+        when {
+            releaseBranch.contains("bugfix/") -> currentVersion.nextPatchVersion()
+            releaseBranch.contains("feature/") -> currentVersion.nextMinorVersion()
+            releaseBranch.contains("release/") -> currentVersion.nextMajorVersion()
+            else -> throw IllegalArgumentException("Unknown release type")
+        }
+    }
 }
 
 kotlin {
