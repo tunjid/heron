@@ -30,6 +30,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew assembleRelease
       - run: echo ${{ env.GITHUB_REF#refs/tags/ }}
+      - run: echo ${{ github.ref }}
 
   tag-release:
     if: ${{ contains(env.GITHUB_REF, 'bugfix/') || contains(env.GITHUB_REF, 'feature/') || contains(env.GITHUB_REF, 'release/') }}
