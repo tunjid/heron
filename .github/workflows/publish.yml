@@ -25,8 +25,18 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build artifacts
-        run: ./gradlew spotlessCheck assembleRelease -Pheron.versionCode=${{ github.run_number }}
+      - name: Build Unsigned AAB
+        run: ./gradlew spotlessCheck bundleRelease -Pheron.versionCode=${{ github.run_number }}
+
+      - name: Sign AAB
+        uses: r0adkll/sign-android-release@v1
+        id: sign_app
+        with:
+          releaseDirectory: composeApp/build/outputs/bundle/release
+          signingKeyBase64: ${{ secrets.SIGNING_KEY_BASE_64 }}
+          alias: ${{ secrets.ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
 
       - name: Get play store upload credentials
         uses: google-github-actions/auth@v3
@@ -40,7 +50,7 @@ jobs:
         with:
           serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
           packageName: com.tunjid.heron
-          releaseFiles: composeApp/build/outputs/bundle/release/composeApp-release.aab
+          releaseFiles: ${{steps.sign_app.outputs.signedReleaseFile}}
           track: internal
           mappingFile: app/build/outputs/mapping/release/mapping.txt
           debugSymbols: app/intermediates/merged_native_libs/release/out/lib
