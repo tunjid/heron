@@ -39,7 +39,7 @@ jobs:
           keyPassword: ${{ secrets.KEY_PASSWORD }}
 
       - name: Get play store upload credentials
-        uses: google-github-actions/auth@v3
+        uses: google-github-actions/auth@v2
         with:
           project_id: 'heron-d0ff3'
           workload_identity_provider: projects/313045152492/locations/global/workloadIdentityPools/github/providers/github-actions-provider
@@ -48,7 +48,7 @@ jobs:
       - name: Upload to play store
         uses: r0adkll/upload-google-play@v1
         with:
-          serviceAccountJson: $GOOGLE_APPLICATION_CREDENTIALS
+          serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
           packageName: com.tunjid.heron
           releaseFiles: ${{steps.sign_app.outputs.signedReleaseFile}}
           track: internal
