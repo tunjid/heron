@@ -32,7 +32,7 @@ jobs:
       - run: echo ${{ github.ref }}
 
   tag-release:
-    if: ${{ contains(env.GITHUB_REF, 'bugfix/') || contains(env.GITHUB_REF, 'feature/') || contains(env.GITHUB_REF, 'release/') }}
+    if: contains(github.ref, 'bugfix/') || contains(github.ref, 'feature/') || contains(github.ref, 'release/')
     needs: [ check-style, build-android-app ]
     runs-on: ubuntu-latest
     steps:
