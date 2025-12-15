@@ -8,6 +8,12 @@ on:
   workflow_dispatch:
 
 jobs:
+  print-ref:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo ${{ github.ref }}
+      - run: echo ${{ github.head_ref }}
+      - run: echo ${{ github.actor }}
   check-style:
     runs-on: ubuntu-latest
     steps:
@@ -29,10 +35,15 @@ jobs:
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew assembleRelease
-      - run: echo ${{ github.ref }}
 
   tag-release:
-    if: contains(github.ref, 'bugfix/') || contains(github.ref, 'feature/') || contains(github.ref, 'release/')
+    if: |
+      contains(github.ref, 'bugfix/') ||
+      contains(github.ref, 'feature/') ||
+      contains(github.ref, 'release/') ||
+      contains(github.head_ref, 'bugfix/') ||
+      contains(github.head_ref, 'feature/') ||
+      contains(github.head_ref, 'release/')
     needs: [ check-style, build-android-app ]
     runs-on: ubuntu-latest
     steps:
@@ -42,4 +53,4 @@ jobs:
           distribution: 'zulu'
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew release
+      - run: ./gradlew release -Prelease.customUsername =${{ github.actor }} -Prelease.customPassword=${{ secrets.GITHUB_TOKEN }}
