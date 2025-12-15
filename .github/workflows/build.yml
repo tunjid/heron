@@ -31,14 +31,31 @@ jobs:
       - run: ./gradlew assembleRelease
 
   tag-release:
-    if: ${{ contains(github.ref_name, 'bugfix/') || contains(github.ref_name, 'feature/') || contains(github.ref_name, 'release/') }}
+    if: |
+      github.actor == github.repository_owner ||
+      contains(github.ref, 'bugfix/') ||
+      contains(github.ref, 'feature/') ||
+      contains(github.ref, 'release/') ||
+      contains(github.head_ref, 'bugfix/') ||
+      contains(github.head_ref, 'feature/') ||
+      contains(github.head_ref, 'release/')
     needs: [ check-style, build-android-app ]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-java@v5
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        id: extract_branch
+      - name: Checkout repo
+        uses: actions/checkout@v5
+      - name: Setup java
+        uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
           java-version: 21
-      - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew release
+      - name: Setup gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Tag release
+        run: |
+          ./gradlew release \
+            -Pheron.releaseBranch=${{ steps.extract_branch.outputs.branch }}
