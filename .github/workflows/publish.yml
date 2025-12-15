@@ -9,6 +9,9 @@ on:
 jobs:
   publish-android-app:
     runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
     steps:
       - name: Checkout Code
         uses: actions/checkout@v5
@@ -22,8 +25,8 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build artifacts
-        run: ./gradlew spotlessCheck assembleRelease -Pheron.versionCode=${{ github.run_number }}
+#      - name: Build artifacts
+#        run: ./gradlew spotlessCheck assembleRelease -Pheron.versionCode=${{ github.run_number }}
 
       - name: Get play store upload credentials
         uses: google-github-actions/auth@v3
