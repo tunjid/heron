@@ -40,11 +40,11 @@ scmVersion {
     }
     providers.gradleProperty("heron.releaseBranch")
         .orNull
-        ?.let {
+        ?.let { releaseBranch ->
             when {
-                it.contains("bugfix/") -> versionIncrementer("incrementPatch")
-                it.contains("feature/") -> versionIncrementer("incrementMinor")
-                it.contains("release/") -> versionIncrementer("incrementMajor")
+                releaseBranch.contains("bugfix/") -> versionIncrementer("incrementPatch")
+                releaseBranch.contains("feature/") -> versionIncrementer("incrementMinor")
+                releaseBranch.contains("release/") -> versionIncrementer("incrementMajor")
                 else -> throw IllegalArgumentException("Unknown release type")
             }
         }
