@@ -25,8 +25,8 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build Unsigned AAB
-        run: ./gradlew spotlessCheck bundleRelease -Pheron.versionCode=${{ github.run_number }}
+#      - name: Build Unsigned AAB
+#        run: ./gradlew spotlessCheck bundleRelease -Pheron.versionCode=${{ github.run_number }}
 
       - name: Sign AAB
         uses: r0adkll/sign-android-release@v1
@@ -40,6 +40,7 @@ jobs:
 
       - name: Get play store upload credentials
         uses: google-github-actions/auth@v2
+        id: auth
         with:
           project_id: 'heron-d0ff3'
           workload_identity_provider: projects/313045152492/locations/global/workloadIdentityPools/github/providers/github-actions-provider
