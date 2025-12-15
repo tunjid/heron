@@ -58,6 +58,4 @@ jobs:
       - name: Tag release
         run: |
           ./gradlew release \
-            -Pheron.releaseBranch=${{ steps.extract_branch.outputs.branch }} \
-            -Prelease.customUsername=${{ github.actor }} \
-            -Prelease.customPassword=${{ secrets.GITHUB_TOKEN }}
+            -Pheron.releaseBranch=${{ steps.extract_branch.outputs.branch }}
