@@ -376,11 +376,11 @@ sealed class TimelineItem {
     ) : TimelineItem()
 }
 
-private val TextOnlyPresentations = listOf(
+private val TextOnlyPresentations: List<Timeline.Presentation> = listOf(
     Text.WithEmbed,
 )
 
-private val AllPresentations = listOf(
+private val AllPresentations: List<Timeline.Presentation> = listOf(
     Text.WithEmbed,
     Media.Expanded,
     Media.Condensed,

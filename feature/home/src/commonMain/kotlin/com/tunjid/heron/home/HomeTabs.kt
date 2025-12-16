@@ -160,6 +160,7 @@ internal fun HomeTabs(
                 .map { timeline ->
                     Tab(
                         title = timeline.name,
+                        id = timeline.sourceId,
                         hasUpdate = sourceIdsToHasUpdates[timeline.sourceId] == true,
                     )
                 }
@@ -177,6 +178,7 @@ internal fun HomeTabs(
             timelines.map { timeline ->
                 Tab(
                     title = timeline.name,
+                    id = timeline.sourceId,
                     hasUpdate = false,
                 )
             }
@@ -535,7 +537,7 @@ private fun TabsState.ExpandedTab(
                         .width(IntrinsicSize.Max)
                         .sharedElement(
                             sharedContentState = sharedTransitionScope.rememberSharedContentState(
-                                timeline.name,
+                                timeline.sourceId,
                             ),
                             animatedVisibilityScope = animatedContentScope,
                             boundsTransform = ExpandableTabsBoundsTransform,
@@ -582,7 +584,7 @@ private fun TabsState.CollapsedTab(
                 modifier = Modifier
                     .sharedElement(
                         sharedContentState = sharedTransitionScope.rememberSharedContentState(
-                            tab.title,
+                            tab.id,
                         ),
                         animatedVisibilityScope = animatedContentScope,
                         boundsTransform = ExpandableTabsBoundsTransform,

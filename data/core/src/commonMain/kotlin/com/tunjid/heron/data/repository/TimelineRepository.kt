@@ -1183,7 +1183,7 @@ internal class OfflineTimelineRepository(
     }
 }
 
-private fun TimelinePreferencesEntity?.preferredPresentation() =
+private fun TimelinePreferencesEntity?.preferredPresentation(): Timeline.Presentation =
     when (this?.preferredPresentation) {
         Timeline.Presentation.Media.Expanded.key -> Timeline.Presentation.Media.Expanded
         Timeline.Presentation.Media.Condensed.key -> Timeline.Presentation.Media.Condensed
