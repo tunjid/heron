@@ -190,9 +190,15 @@ private inline fun PostInteractionsButtons(
                 orientation = orientation,
                 contentDescription = stringResource(button.stringResource),
                 text = when (button) {
-                    PostInteractionButton.Comment -> format(post.replyCount)
-                    PostInteractionButton.Like -> format(post.likeCount)
-                    PostInteractionButton.Repost -> format(post.repostCount)
+                    PostInteractionButton.Comment ->
+                        if (post.replyCount > 0) format(post.replyCount)
+                        else ""
+                    PostInteractionButton.Like ->
+                        if (post.likeCount > 0) format(post.likeCount)
+                        else ""
+                    PostInteractionButton.Repost ->
+                        if (post.repostCount > 0) format(post.repostCount)
+                        else ""
                     PostInteractionButton.Bookmark -> ""
                     PostInteractionButton.MoreOptions -> ""
                 },
