@@ -147,8 +147,10 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-    val releaseSigning = if (file("debugKeystore.properties").exists()) {
-        signingConfigs.create("release") {
+    val releaseSigning = when {
+        // Do not sign the build output, it will be signed on CI
+        providers.gradleProperty("heron.isPlayStore").orNull.toBoolean() -> null
+        file("debugKeystore.properties").exists() -> signingConfigs.create("release") {
             val props = Properties()
             props.load(FileInputStream(file("debugKeystore.properties")))
             storeFile = file(props["keystore"] as String)
@@ -156,8 +158,7 @@ android {
             keyAlias = props["keyAlias"] as String
             keyPassword = props["keyPassword"] as String
         }
-    } else {
-        signingConfigs["debug"]
+        else -> signingConfigs["debug"]
     }
     buildTypes {
         all {
