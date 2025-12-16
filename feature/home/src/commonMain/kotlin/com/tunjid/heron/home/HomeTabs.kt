@@ -160,6 +160,7 @@ internal fun HomeTabs(
                 .map { timeline ->
                     Tab(
                         title = timeline.name,
+                        id = timeline.sourceId,
                         hasUpdate = sourceIdsToHasUpdates[timeline.sourceId] == true,
                     )
                 }
@@ -177,6 +178,7 @@ internal fun HomeTabs(
             timelines.map { timeline ->
                 Tab(
                     title = timeline.name,
+                    id = timeline.sourceId,
                     hasUpdate = false,
                 )
             }

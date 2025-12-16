@@ -30,7 +30,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -57,6 +56,7 @@ import kotlin.math.roundToInt
 
 data class Tab(
     val title: String,
+    val id: String = title,
     val hasUpdate: Boolean,
 )
 
@@ -134,7 +134,7 @@ fun Tabs(
         ) {
             items(
                 items = visibleTabs,
-                key = Tab::title,
+                key = Tab::id,
                 itemContent = { tab ->
                     Box(
                         modifier = Modifier
