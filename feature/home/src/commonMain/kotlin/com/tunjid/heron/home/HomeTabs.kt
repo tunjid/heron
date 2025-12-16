@@ -537,7 +537,7 @@ private fun TabsState.ExpandedTab(
                         .width(IntrinsicSize.Max)
                         .sharedElement(
                             sharedContentState = sharedTransitionScope.rememberSharedContentState(
-                                timeline.name,
+                                timeline.sourceId,
                             ),
                             animatedVisibilityScope = animatedContentScope,
                             boundsTransform = ExpandableTabsBoundsTransform,
@@ -584,7 +584,7 @@ private fun TabsState.CollapsedTab(
                 modifier = Modifier
                     .sharedElement(
                         sharedContentState = sharedTransitionScope.rememberSharedContentState(
-                            tab.title,
+                            tab.id,
                         ),
                         animatedVisibilityScope = animatedContentScope,
                         boundsTransform = ExpandableTabsBoundsTransform,
