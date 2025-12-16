@@ -1,4 +1,4 @@
-name: Build
+name: Release
 
 on:
   pull_request_target:
@@ -8,6 +8,7 @@ on:
       - 'releases'
     workflow_dispatch:
 
+jobs:
   tag-release:
     if: |
       github.event.pull_request.merged == true &&
