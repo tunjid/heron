@@ -107,7 +107,8 @@ compose-multiplatform-gradlePlugin = { group = "org.jetbrains.compose", name = "
 compose-multiplatform-runtime = { group = "org.jetbrains.compose.runtime", name = "runtime", version.ref = "compose-multiplatform" }
 compose-multiplatform-ui-test = { group = "org.jetbrains.compose.ui", name = "ui-test-junit4", version.ref = "compose-multiplatform" }
 compose-multiplatform-ui-testManifest = { group = "org.jetbrains.compose.ui", name = "ui-test-manifest", version.ref = "compose-multiplatform" }
-compose-multiplatform-ui-tooling-preview = { group = "org.jetbrains.compose.ui", name = "ui-tooling-preview-desktop", version.ref = "compose-multiplatform" }
+compose-multiplatform-ui-tooling = { group = "org.jetbrains.compose.ui", name = "ui-tooling", version.ref = "compose-multiplatform" }
+compose-multiplatform-ui-tooling-preview = { group = "org.jetbrains.compose.ui", name = "ui-tooling-preview", version.ref = "compose-multiplatform" }
 compose-multiplatform-ui-ui = { group = "org.jetbrains.compose.ui", name = "ui", version.ref = "compose-multiplatform" }
 compose-multiplatform-ui-util = { group = "org.jetbrains.compose.ui", name = "ui-util", version.ref = "compose-multiplatform" }
 codepoints-deluxe = { module = "de.cketti.unicode:kotlin-codepoints-deluxe", version = "0.11.0" }
