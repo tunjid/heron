@@ -1,0 +1,41 @@
+name: Build
+
+on:
+  pull_request_target:
+    types:
+      - closed
+    branches:
+      - 'releases'
+    workflow_dispatch:
+
+  tag-release:
+    if: |
+      github.event.pull_request.merged == true &&
+      github.actor == github.repository_owner &&
+      (
+        contains(github.ref, 'bugfix/') ||
+        contains(github.ref, 'feature/') ||
+        contains(github.ref, 'release/') ||
+        contains(github.head_ref, 'bugfix/') ||
+        contains(github.head_ref, 'feature/') ||
+        contains(github.head_ref, 'release/')
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        id: extract_branch
+      - name: Checkout repo
+        uses: actions/checkout@v5
+      - name: Setup java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: 21
+      - name: Setup gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Tag release
+        run: |
+          ./gradlew release \
+            -Pheron.releaseBranch=${{ steps.extract_branch.outputs.branch }}
