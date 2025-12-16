@@ -14,7 +14,6 @@
  *    limitations under the License.
  */
 
-import java.io.FileInputStream
 import java.util.Properties
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
@@ -70,7 +69,6 @@ kotlin {
         val desktopMain by getting
 
         androidMain.dependencies {
-            implementation(compose.preview)
             implementation(libs.connectivity.device)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.core.splashscreen)
@@ -103,15 +101,14 @@ kotlin {
 
             implementation(libs.androidx.room.runtime)
 
+            implementation(libs.compose.multiplatform.components.resources)
             implementation(libs.compose.multiplatform.runtime)
             implementation(libs.compose.multiplatform.foundation.foundation)
             implementation(libs.compose.multiplatform.material)
             implementation(libs.compose.multiplatform.ui.ui)
+            implementation(libs.compose.multiplatform.ui.tooling.preview)
 
             implementation(libs.connectivity.core)
-
-            implementation(compose.components.resources)
-            implementation(compose.components.uiToolingPreview)
 
             implementation(libs.lifecycle.multiplatform.viewmodel)
             implementation(libs.lifecycle.multiplatform.runtime.compose)
@@ -180,7 +177,7 @@ android {
 }
 
 dependencies {
-    debugImplementation(compose.uiTooling)
+    debugImplementation(libs.compose.multiplatform.ui.tooling.preview)
 }
 
 compose.desktop {
@@ -190,7 +187,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "com.tunjid.heron"
-            // Remove hyphenenated suffixes if present
+            // Remove hyphenated suffixes if present
             packageVersion = scmVersion.version.split("-").first()
         }
     }
