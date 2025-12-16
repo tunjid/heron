@@ -6,7 +6,7 @@ on:
       - closed
     branches:
       - 'releases'
-    workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
   tag-release:
