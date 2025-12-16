@@ -58,4 +58,4 @@ jobs:
           releaseFiles: ${{steps.sign_app.outputs.signedReleaseFile}}
           track: internal
           mappingFile: composeApp/build/outputs/mapping/release/mapping.txt
-          debugSymbols: composeApp/intermediates/merged_native_libs/release/out/lib
+          debugSymbols: composeApp/build/intermediates/merged_native_libs/release/out/lib
