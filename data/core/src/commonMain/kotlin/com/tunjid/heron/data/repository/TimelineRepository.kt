@@ -1162,7 +1162,8 @@ internal class OfflineTimelineRepository(
                 else Unit
 
             // New reply to the OP, start its own thread
-            lastItem is TimelineItem.Thread && lastItem.posts.first().uri != thread.rootPostUri -> list += TimelineItem.Thread(
+            lastItem is TimelineItem.Thread &&
+                lastItem.posts.first().uri != thread.rootPostUri -> list += TimelineItem.Thread(
                 id = thread.entity.uri.uri,
                 generation = thread.generation,
                 anchorPostIndex = 0,
@@ -1172,16 +1173,22 @@ internal class OfflineTimelineRepository(
                 signedInProfileId = signedInProfileId,
                 postUrisToThreadGates = mapOf(post.uri to threadGate(post.uri)),
             )
-
             // Just tack the post to the current thread
-            lastItem is TimelineItem.Thread -> list[list.lastIndex] = lastItem.copy(
-                posts = lastItem.posts + post,
-                postUrisToThreadGates = lastItem.postUrisToThreadGates + (post.uri to threadGate(post.uri)),
-            )
+            lastItem is TimelineItem.Thread ->
+                // Make sure only consecutive generations are added to the thread.
+                // Nonconsecutive generations are dropped. Users can see these replies by
+                // diving into the thread.
+                if (lastItem.nextGeneration == thread.generation) list[list.lastIndex] = lastItem.copy(
+                    posts = lastItem.posts + post,
+                    postUrisToThreadGates = lastItem.postUrisToThreadGates + (post.uri to threadGate(post.uri)),
+                )
             else -> Unit
         }
     }
 }
+
+private val TimelineItem.Thread.nextGeneration
+    get() = generation?.let { it + posts.size }
 
 private fun TimelinePreferencesEntity?.preferredPresentation(): Timeline.Presentation =
     when (this?.preferredPresentation) {
