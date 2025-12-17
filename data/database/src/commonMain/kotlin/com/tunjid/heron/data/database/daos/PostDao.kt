@@ -333,8 +333,8 @@ interface PostDao {
                   pt.parentPostUri,
                   ph.rootPostUri,
                   ph.generation - 1,
-                  ph.ancestorCreated -1,
-                  ph.postCreated -1
+                  ph.ancestorCreated - 1,
+                  ph.postCreated - 1
                 FROM
                   postThreads pt
                 INNER JOIN
