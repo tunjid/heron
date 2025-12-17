@@ -29,6 +29,7 @@ import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
+import com.tunjid.heron.data.database.daos.PreferencesDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.ThreadGateDao
@@ -57,12 +58,14 @@ import com.tunjid.heron.data.repository.OfflineProfileRepository
 import com.tunjid.heron.data.repository.OfflineRecordRepository
 import com.tunjid.heron.data.repository.OfflineSearchRepository
 import com.tunjid.heron.data.repository.OfflineTimelineRepository
+import com.tunjid.heron.data.repository.OfflineUserDataRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.ThingPreferenceUpdater
@@ -248,6 +251,12 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
+    fun providePreferencesDao(
+        database: AppDatabase,
+    ): PreferencesDao = database.preferencesDao()
+
+    @SingleIn(AppScope::class)
+    @Provides
     fun provideThreadGateDao(
         database: AppDatabase,
     ): ThreadGateDao = database.threadGateDao()
@@ -328,6 +337,12 @@ class DataBindings(
     internal fun provideOfflineMessageRepository(
         offlineMessageRepository: OfflineMessageRepository,
     ): MessageRepository = offlineMessageRepository
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideOfflineUserDataRepository(
+        offlineUserDataRepository: OfflineUserDataRepository,
+    ): UserDataRepository = offlineUserDataRepository
 
     @SingleIn(AppScope::class)
     @Provides
