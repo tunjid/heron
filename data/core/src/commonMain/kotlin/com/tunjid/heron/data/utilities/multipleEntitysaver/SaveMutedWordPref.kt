@@ -28,11 +28,13 @@ internal fun MultipleEntitySaver.add(
             expiresAt = mutedWord.expiresAt,
         )
 
-        val entity = preference.toEntity(
-            viewingProfileId = viewingProfileId,
-            id = mutedWord.id ?: "",
-        )
-        add(entity)
+        mutedWord.id?.let { id ->
+            val entity = preference.toEntity(
+                viewingProfileId = viewingProfileId,
+                id = id,
+            )
+            add(entity)
+        }
     }
 }
 

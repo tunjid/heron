@@ -52,101 +52,49 @@ internal class OfflineUserDataRepository @Inject constructor(
             }
         }
 
-    override suspend fun createMutedWord(preference: MutedWordPreference): Outcome {
-        // Create update with the preference model
-        val update = Timeline.Update.OfMutedWord.Add(preference = preference)
+    override suspend fun createMutedWord(preference: MutedWordPreference): Outcome = updateRemoteMutedWords(
+        update = Timeline.Update.OfMutedWord.Add(preference = preference),
+    )
 
-        return networkService.runCatchingWithMonitoredNetworkRetry {
-            getPreferencesForActor()
-        }.fold(
-            onSuccess = { preferencesResponse ->
-                networkService.runCatchingWithMonitoredNetworkRetry {
-                    putPreferences(
-                        PutPreferencesRequest(
-                            preferences = preferenceUpdater.update(
-                                response = preferencesResponse,
-                                update = update,
-                            ),
+    override suspend fun removeMutedWord(value: String): Outcome = updateRemoteMutedWords(
+        update = Timeline.Update.OfMutedWord.Remove(value = value),
+    )
+
+    override suspend fun clearAllMutedWords(): Outcome = updateRemoteMutedWords(
+        update = Timeline.Update.OfMutedWord.ClearAll,
+    )
+
+    private suspend fun updateRemoteMutedWords(update: Timeline.Update.OfMutedWord): Outcome = networkService.runCatchingWithMonitoredNetworkRetry {
+        getPreferencesForActor()
+    }.fold(
+        onSuccess = { preferencesResponse ->
+            networkService.runCatchingWithMonitoredNetworkRetry {
+                putPreferences(
+                    PutPreferencesRequest(
+                        preferences = preferenceUpdater.update(
+                            response = preferencesResponse,
+                            update = update,
                         ),
-                    )
-                }.fold(
-                    onSuccess = {
-                        updateLocalCache()
-                        Outcome.Success
-                    },
-                    onFailure = Outcome::Failure,
+                    ),
                 )
-            },
-            onFailure = Outcome::Failure,
-        )
-    }
+            }.fold(
+                onSuccess = { updateLocalCache() },
+                onFailure = Outcome::Failure,
+            )
+        },
+        onFailure = Outcome::Failure,
+    )
 
-    override suspend fun removeMutedWord(value: String): Outcome {
-        val update = Timeline.Update.OfMutedWord.Remove(value = value)
-
-        return networkService.runCatchingWithMonitoredNetworkRetry {
-            getPreferencesForActor()
-        }.fold(
-            onSuccess = { preferencesResponse ->
-                networkService.runCatchingWithMonitoredNetworkRetry {
-                    putPreferences(
-                        PutPreferencesRequest(
-                            preferences = preferenceUpdater.update(
-                                response = preferencesResponse,
-                                update = update,
-                            ),
-                        ),
-                    )
-                }.fold(
-                    onSuccess = {
-                        updateLocalCache()
-                        Outcome.Success
-                    },
-                    onFailure = Outcome::Failure,
-                )
-            },
-            onFailure = Outcome::Failure,
-        )
-    }
-
-    override suspend fun clearAllMutedWords(): Outcome {
-        val update = Timeline.Update.OfMutedWord.ClearAll
-        return networkService.runCatchingWithMonitoredNetworkRetry {
-            getPreferencesForActor()
-        }.fold(
-            onSuccess = { preferencesResponse ->
-                networkService.runCatchingWithMonitoredNetworkRetry {
-                    putPreferences(
-                        PutPreferencesRequest(
-                            preferences = preferenceUpdater.update(
-                                response = preferencesResponse,
-                                update = update,
-                            ),
-                        ),
-                    )
-                }.fold(
-                    onSuccess = {
-                        updateLocalCache()
-                        Outcome.Success
-                    },
-                    onFailure = Outcome::Failure,
-                )
-            },
-            onFailure = Outcome::Failure,
-        )
-    }
-
-    private suspend fun updateLocalCache() {
-        // Fetch updated preferences and save to local DB
-        networkService.runCatchingWithMonitoredNetworkRetry {
-            getPreferencesForActor()
-        }.onSuccess { response ->
+    private suspend fun updateLocalCache(): Outcome = networkService.runCatchingWithMonitoredNetworkRetry {
+        getPreferencesForActor()
+    }.fold(
+        onSuccess = {
             savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
                 signedInProfileId ?: return@inCurrentProfileSession
 
                 multipleEntitySaverProvider.saveInTransaction {
                     // Save muted words from response
-                    response.preferences.forEach { preference ->
+                    it.preferences.forEach { preference ->
                         if (preference is PreferencesUnion.MutedWordsPref) {
                             add(
                                 viewingProfileId = signedInProfileId,
@@ -156,13 +104,11 @@ internal class OfflineUserDataRepository @Inject constructor(
                     }
                 }
             }
-        }
-    }
+            Outcome.Success
+        },
+        onFailure = Outcome::Failure,
+    )
 
     // Add refresh function
-    override suspend fun refreshPreferences(): Outcome {
-        return updateLocalCache().let {
-            Outcome.Success
-        }
-    }
+    override suspend fun refreshPreferences(): Outcome = updateLocalCache()
 }
