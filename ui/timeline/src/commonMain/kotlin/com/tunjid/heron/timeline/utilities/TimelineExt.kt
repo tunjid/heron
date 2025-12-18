@@ -105,56 +105,63 @@ fun TimelineTitle(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val avatar = timeline.avatar
-        AsyncImage(
+        PaneStickySharedElement(
             modifier = Modifier
-                .paneStickySharedElement(
-                    sharedContentState = rememberSharedContentState(
-                        key = timeline.avatarSharedElementKey(sharedElementPrefix),
-                    ),
-                    zIndexInOverlay = UiTokens.appBarSharedElementOverlayZIndex,
-                )
                 .size(44.dp),
-            args = remember(avatar) {
-                ImageArgs(
-                    url = avatar.uri,
-                    contentScale = ContentScale.Crop,
-                    contentDescription = null,
-                    shape = timeline.shape,
-                )
-            },
-        )
+            sharedContentState = rememberSharedContentState(
+                key = timeline.avatarSharedElementKey(sharedElementPrefix),
+            ),
+            zIndexInOverlay = UiTokens.appBarSharedElementOverlayZIndex,
+        ) {
+            AsyncImage(
+                modifier = Modifier
+                    .fillParentAxisIfFixedOrWrap(),
+                args = remember(avatar) {
+                    ImageArgs(
+                        url = avatar.uri,
+                        contentScale = ContentScale.Crop,
+                        contentDescription = null,
+                        shape = timeline.shape,
+                    )
+                },
+            )
+        }
 
         Spacer(Modifier.width(12.dp))
 
         Box {
             Column {
-                Text(
-                    modifier = Modifier
-                        .paneStickySharedElement(
-                            sharedContentState = rememberSharedContentState(
-                                key = timeline.titleSharedElementKey(sharedElementPrefix),
-                            ),
-                            zIndexInOverlay = UiTokens.appBarSharedElementOverlayZIndex,
-                        ),
-                    text = timeline.displayName(),
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1,
-                    style = MaterialTheme.typography.titleSmallEmphasized,
-                )
-                Text(
-                    modifier = Modifier
-                        .paneStickySharedElement(
-                            sharedContentState = rememberSharedContentState(
-                                key = timeline.subtitleSharedElementKey(sharedElementPrefix),
-                            ),
-                            zIndexInOverlay = UiTokens.appBarSharedElementOverlayZIndex,
-                        ),
-                    text = timeline.creator(),
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline,
-                )
+                PaneStickySharedElement(
+                    modifier = Modifier,
+                    sharedContentState = rememberSharedContentState(
+                        key = timeline.titleSharedElementKey(sharedElementPrefix),
+                    ),
+                    zIndexInOverlay = UiTokens.appBarSharedElementOverlayZIndex,
+                ) {
+                    Text(
+                        modifier = Modifier,
+                        text = timeline.displayName(),
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                        style = MaterialTheme.typography.titleSmallEmphasized,
+                    )
+                }
+                PaneStickySharedElement(
+                    modifier = Modifier,
+                    sharedContentState = rememberSharedContentState(
+                        key = timeline.subtitleSharedElementKey(sharedElementPrefix),
+                    ),
+                    zIndexInOverlay = UiTokens.appBarSharedElementOverlayZIndex,
+                ) {
+                    Text(
+                        modifier = Modifier,
+                        text = timeline.creator(),
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline,
+                    )
+                }
             }
             if (hasUpdates) Badge(
                 modifier = Modifier.size(4.dp),

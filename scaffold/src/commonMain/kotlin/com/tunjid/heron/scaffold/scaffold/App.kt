@@ -43,8 +43,8 @@ import com.tunjid.heron.images.LocalImageLoader
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.DraggableThumb
 import com.tunjid.heron.scaffold.ui.theme.AppTheme
+import com.tunjid.treenav.compose.MovableSharedElementHostState
 import com.tunjid.treenav.compose.MultiPaneDisplay
-import com.tunjid.treenav.compose.moveablesharedelement.MovableSharedElementHostState
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.panedecorators.threePaneAdaptiveDecorator
 import com.tunjid.treenav.compose.threepane.panedecorators.threePaneMovableSharedElementDecorator

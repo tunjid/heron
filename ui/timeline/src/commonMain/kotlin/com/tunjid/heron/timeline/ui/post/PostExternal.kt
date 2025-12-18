@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.timeline.ui.post
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -45,7 +44,6 @@ import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun PostExternal(
     feature: ExternalEmbed,
@@ -58,15 +56,7 @@ internal fun PostExternal(
 ) = with(paneMovableElementSharedTransitionScope) {
     val isGif = feature.isGif()
     FeatureContainer(
-        modifier = Modifier.paneStickySharedElement(
-            sharedContentState = rememberSharedContentState(
-                key = embedSharedElementKey(
-                    prefix = sharedElementPrefix,
-                    postUri = postUri,
-                    text = feature.uri.uri,
-                ),
-            ),
-        ),
+        modifier = Modifier,
         onClick = onClick,
     ) {
         Column(verticalArrangement = spacedBy(8.dp)) {
@@ -75,52 +65,59 @@ internal fun PostExternal(
                     RoundedPolygonShape.Rectangle,
                 )
                 else Modifier
-                AsyncImage(
+                PaneStickySharedElement(
                     modifier = itemModifier
                         .fillMaxWidth()
-                        .aspectRatio(2f / 1)
-                        .paneStickySharedElement(
-                            sharedContentState = rememberSharedContentState(
-                                key = embedSharedElementKey(
-                                    prefix = sharedElementPrefix,
-                                    postUri = postUri,
-                                    text = feature.thumb?.uri,
-                                ),
-                            ),
+                        .aspectRatio(2f / 1),
+                    sharedContentState = rememberSharedContentState(
+                        key = embedSharedElementKey(
+                            prefix = sharedElementPrefix,
+                            postUri = postUri,
+                            text = feature.thumb?.uri,
                         ),
-                    args = remember(isGif, feature.uri, feature.thumb) {
-                        ImageArgs(
-                            url = if (isGif) feature.uri.uri else feature.thumb?.uri,
-                            contentDescription = feature.title,
-                            contentScale = ContentScale.Crop,
-                            shape = RoundedPolygonShape.Rectangle,
-                        )
-                    },
-                )
+                    ),
+                ) {
+                    AsyncImage(
+                        modifier = Modifier
+                            .fillParentAxisIfFixedOrWrap(),
+                        args = remember(isGif, feature.uri, feature.thumb) {
+                            ImageArgs(
+                                url = if (isGif) feature.uri.uri else feature.thumb?.uri,
+                                contentDescription = feature.title,
+                                contentScale = ContentScale.Crop,
+                                shape = RoundedPolygonShape.Rectangle,
+                            )
+                        },
+                    )
+                }
             }
             if (presentation == Timeline.Presentation.Text.WithEmbed && !isGif) {
-                PostFeatureTextContent(
+                PaneStickySharedElement(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(
                             horizontal = 16.dp,
-                        )
-                        .paneStickySharedElement(
-                            sharedContentState = rememberSharedContentState(
-                                key = embedSharedElementKey(
-                                    prefix = sharedElementPrefix,
-                                    postUri = postUri,
-                                    text = feature.title,
-                                ),
-                            ),
                         ),
-                    title = feature.title,
-                    description = null,
-                    uri = feature.uri,
-                )
+                    sharedContentState = rememberSharedContentState(
+                        key = embedSharedElementKey(
+                            prefix = sharedElementPrefix,
+                            postUri = postUri,
+                            text = feature.title,
+                        ),
+                    ),
+                ) {
+                    PostFeatureTextContent(
+                        modifier = Modifier
+                            .fillParentAxisIfFixedOrWrap(),
+                        title = feature.title,
+                        description = null,
+                        uri = feature.uri,
+                    )
+                }
             }
         }
     }
+
 }
 
 @Composable

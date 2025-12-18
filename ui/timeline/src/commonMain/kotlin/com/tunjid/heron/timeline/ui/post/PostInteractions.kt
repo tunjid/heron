@@ -168,120 +168,122 @@ private inline fun PostInteractionsButtons(
             prefixContent(button)
         }
         key(button) {
-            PostInteraction(
-                modifier = Modifier
-                    .paneStickySharedElement(
-                        sharedContentState = rememberSharedContentState(
-                            key = postActionSharedElementKey(
-                                prefix = sharedElementPrefix,
-                                postId = post.cid,
-                                button = button,
-                            ),
-                        ),
+            PaneStickySharedElement(
+                modifier = Modifier,
+                sharedContentState = rememberSharedContentState(
+                    key = postActionSharedElementKey(
+                        prefix = sharedElementPrefix,
+                        postId = post.cid,
+                        button = button,
                     ),
-                icon = when (button) {
-                    PostInteractionButton.Comment -> button.icon(isChecked = false)
-                    PostInteractionButton.Like -> button.icon(isChecked = post.viewerStats?.likeUri != null)
-                    PostInteractionButton.Repost -> button.icon(isChecked = post.viewerStats?.repostUri != null)
-                    PostInteractionButton.Bookmark -> button.icon(isChecked = post.viewerStats.isBookmarked)
-                    PostInteractionButton.MoreOptions -> button.icon(isChecked = false)
-                },
-                iconSize = iconSize,
-                orientation = orientation,
-                contentDescription = stringResource(button.stringResource),
-                text = when (button) {
-                    PostInteractionButton.Comment ->
-                        if (post.replyCount > 0) format(post.replyCount)
-                        else ""
-                    PostInteractionButton.Like ->
-                        if (post.likeCount > 0) format(post.likeCount)
-                        else ""
-                    PostInteractionButton.Repost ->
-                        if (post.repostCount > 0) format(post.repostCount)
-                        else ""
-                    PostInteractionButton.Bookmark -> ""
-                    PostInteractionButton.MoreOptions -> ""
-                },
-                tint = when (button) {
-                    PostInteractionButton.Comment -> MaterialTheme.colorScheme.outline
-                    PostInteractionButton.Like ->
-                        if (post.viewerStats?.likeUri != null) LikeRed
-                        else MaterialTheme.colorScheme.outline
+                ),
+            ) {
+                PostInteraction(
+                    modifier = Modifier,
+                    icon = when (button) {
+                        PostInteractionButton.Comment -> button.icon(isChecked = false)
+                        PostInteractionButton.Like -> button.icon(isChecked = post.viewerStats?.likeUri != null)
+                        PostInteractionButton.Repost -> button.icon(isChecked = post.viewerStats?.repostUri != null)
+                        PostInteractionButton.Bookmark -> button.icon(isChecked = post.viewerStats.isBookmarked)
+                        PostInteractionButton.MoreOptions -> button.icon(isChecked = false)
+                    },
+                    iconSize = iconSize,
+                    orientation = orientation,
+                    contentDescription = stringResource(button.stringResource),
+                    text = when (button) {
+                        PostInteractionButton.Comment ->
+                            if (post.replyCount > 0) format(post.replyCount)
+                            else ""
+                        PostInteractionButton.Like ->
+                            if (post.likeCount > 0) format(post.likeCount)
+                            else ""
+                        PostInteractionButton.Repost ->
+                            if (post.repostCount > 0) format(post.repostCount)
+                            else ""
+                        PostInteractionButton.Bookmark -> ""
+                        PostInteractionButton.MoreOptions -> ""
+                    },
+                    tint = when (button) {
+                        PostInteractionButton.Comment -> MaterialTheme.colorScheme.outline
+                        PostInteractionButton.Like ->
+                            if (post.viewerStats?.likeUri != null) LikeRed
+                            else MaterialTheme.colorScheme.outline
 
-                    PostInteractionButton.Repost ->
-                        if (post.viewerStats?.repostUri != null) RepostGreen
-                        else MaterialTheme.colorScheme.outline
-                    PostInteractionButton.Bookmark ->
-                        if (post.viewerStats.isBookmarked) BookmarkBlue
-                        else MaterialTheme.colorScheme.outline
-                    PostInteractionButton.MoreOptions -> MaterialTheme.colorScheme.outline
-                },
-                enabled = when (button) {
-                    PostInteractionButton.Bookmark -> true
-                    PostInteractionButton.Comment -> post.viewerStats.canReply
-                    PostInteractionButton.Like -> true
-                    PostInteractionButton.MoreOptions -> true
-                    PostInteractionButton.Repost -> true
-                },
-                onClick = {
-                    when (button) {
-                        PostInteractionButton.Comment -> onInteraction(
-                            PostAction.OfReply(post),
-                        )
-                        PostInteractionButton.Like -> onInteraction(
-                            PostAction.OfInteraction(
-                                interaction = when (val likeUri = post.viewerStats?.likeUri) {
-                                    null -> Post.Interaction.Create.Like(
-                                        postId = post.cid,
-                                        postUri = post.uri,
-                                    )
+                        PostInteractionButton.Repost ->
+                            if (post.viewerStats?.repostUri != null) RepostGreen
+                            else MaterialTheme.colorScheme.outline
+                        PostInteractionButton.Bookmark ->
+                            if (post.viewerStats.isBookmarked) BookmarkBlue
+                            else MaterialTheme.colorScheme.outline
+                        PostInteractionButton.MoreOptions -> MaterialTheme.colorScheme.outline
+                    },
+                    enabled = when (button) {
+                        PostInteractionButton.Bookmark -> true
+                        PostInteractionButton.Comment -> post.viewerStats.canReply
+                        PostInteractionButton.Like -> true
+                        PostInteractionButton.MoreOptions -> true
+                        PostInteractionButton.Repost -> true
+                    },
+                    onClick = {
+                        when (button) {
+                            PostInteractionButton.Comment -> onInteraction(
+                                PostAction.OfReply(post),
+                            )
+                            PostInteractionButton.Like -> onInteraction(
+                                PostAction.OfInteraction(
+                                    interaction = when (val likeUri = post.viewerStats?.likeUri) {
+                                        null -> Post.Interaction.Create.Like(
+                                            postId = post.cid,
+                                            postUri = post.uri,
+                                        )
 
-                                    else -> Post.Interaction.Delete.Unlike(
-                                        postUri = post.uri,
-                                        likeUri = likeUri,
-                                    )
-                                },
-                                viewerStats = post.viewerStats,
-                            ),
-                        )
+                                        else -> Post.Interaction.Delete.Unlike(
+                                            postUri = post.uri,
+                                            likeUri = likeUri,
+                                        )
+                                    },
+                                    viewerStats = post.viewerStats,
+                                ),
+                            )
 
-                        PostInteractionButton.Repost -> onInteraction(
-                            PostAction.OfInteraction(
-                                when (val repostUri = post.viewerStats?.repostUri) {
-                                    null -> Post.Interaction.Create.Repost(
-                                        postId = post.cid,
-                                        postUri = post.uri,
-                                    )
+                            PostInteractionButton.Repost -> onInteraction(
+                                PostAction.OfInteraction(
+                                    when (val repostUri = post.viewerStats?.repostUri) {
+                                        null -> Post.Interaction.Create.Repost(
+                                            postId = post.cid,
+                                            postUri = post.uri,
+                                        )
 
-                                    else -> Post.Interaction.Delete.RemoveRepost(
-                                        postUri = post.uri,
-                                        repostUri = repostUri,
-                                    )
-                                },
-                                post.viewerStats,
-                            ),
-                        )
-                        PostInteractionButton.Bookmark -> onInteraction(
-                            PostAction.OfInteraction(
-                                when (post.viewerStats.isBookmarked) {
-                                    false -> Post.Interaction.Create.Bookmark(
-                                        postId = post.cid,
-                                        postUri = post.uri,
-                                    )
+                                        else -> Post.Interaction.Delete.RemoveRepost(
+                                            postUri = post.uri,
+                                            repostUri = repostUri,
+                                        )
+                                    },
+                                    post.viewerStats,
+                                ),
+                            )
+                            PostInteractionButton.Bookmark -> onInteraction(
+                                PostAction.OfInteraction(
+                                    when (post.viewerStats.isBookmarked) {
+                                        false -> Post.Interaction.Create.Bookmark(
+                                            postId = post.cid,
+                                            postUri = post.uri,
+                                        )
 
-                                    true -> Post.Interaction.Delete.RemoveBookmark(
-                                        postUri = post.uri,
-                                    )
-                                },
-                                post.viewerStats,
-                            ),
-                        )
-                        PostInteractionButton.MoreOptions -> onInteraction(
-                            PostAction.OfMore(post),
-                        )
-                    }
-                },
-            )
+                                        true -> Post.Interaction.Delete.RemoveBookmark(
+                                            postUri = post.uri,
+                                        )
+                                    },
+                                    post.viewerStats,
+                                ),
+                            )
+                            PostInteractionButton.MoreOptions -> onInteraction(
+                                PostAction.OfMore(post),
+                            )
+                        }
+                    },
+                )
+            }
         }
     }
 }

@@ -87,29 +87,32 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                 visible = signedInProfile != null,
             ) {
                 signedInProfile?.let { profile ->
-                    AsyncImage(
+                    PaneStickySharedElement(
                         modifier = Modifier
-                            .size(36.dp)
-                            .paneStickySharedElement(
-                                sharedContentState = rememberSharedContentState(
-                                    key = SignedInUserAvatarSharedElementKey,
-                                ),
-                            )
-                            .clickable {
-                                onSignedInProfileClicked(
-                                    profile,
-                                    SignedInUserAvatarSharedElementKey,
+                            .size(36.dp),
+                        sharedContentState = rememberSharedContentState(
+                            key = SignedInUserAvatarSharedElementKey,
+                        ),
+                    ) {
+                        AsyncImage(
+                            modifier = Modifier
+                                .fillParentAxisIfFixedOrWrap()
+                                .clickable {
+                                    onSignedInProfileClicked(
+                                        profile,
+                                        SignedInUserAvatarSharedElementKey,
+                                    )
+                                },
+                            args = remember(profile) {
+                                ImageArgs(
+                                    url = profile.avatar?.uri,
+                                    contentDescription = signedInProfile.displayName,
+                                    contentScale = ContentScale.Crop,
+                                    shape = RoundedPolygonShape.Circle,
                                 )
                             },
-                        args = remember(profile) {
-                            ImageArgs(
-                                url = profile.avatar?.uri,
-                                contentDescription = signedInProfile.displayName,
-                                contentScale = ContentScale.Crop,
-                                shape = RoundedPolygonShape.Circle,
-                            )
-                        },
-                    )
+                        )
+                    }
                 }
             }
             Spacer(Modifier.width(8.dp))

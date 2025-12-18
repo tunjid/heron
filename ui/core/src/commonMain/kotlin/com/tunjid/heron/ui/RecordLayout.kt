@@ -55,37 +55,37 @@ fun RecordLayout(
                 .fillMaxWidth(),
             avatar = avatar,
             label = {
-                Text(
-                    modifier = Modifier
-                        .paneStickySharedElement(
-                            sharedContentState = rememberSharedContentState(
-                                key = titleSharedElementKey(
-                                    prefix = sharedElementPrefix,
-                                    type = sharedElementType,
-                                ),
-                            ),
+                PaneStickySharedElement(
+                    sharedContentState = rememberSharedContentState(
+                        key = titleSharedElementKey(
+                            prefix = sharedElementPrefix,
+                            type = sharedElementType,
                         ),
-                    text = title,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1,
-                    style = LocalTextStyle.current.copy(fontWeight = Bold),
-                )
-                Text(
-                    modifier = Modifier
-                        .paneStickySharedElement(
-                            sharedContentState = rememberSharedContentState(
-                                key = subtitleSharedElementKey(
-                                    prefix = sharedElementPrefix,
-                                    type = sharedElementType,
-                                ),
-                            ),
+                    ),
+                ) {
+                    Text(
+                        text = title,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                        style = LocalTextStyle.current.copy(fontWeight = Bold),
+                    )
+                }
+                PaneStickySharedElement(
+                    sharedContentState = rememberSharedContentState(
+                        key = subtitleSharedElementKey(
+                            prefix = sharedElementPrefix,
+                            type = sharedElementType,
                         ),
-                    text = subtitle,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline,
-                )
+                    ),
+                ) {
+                    Text(
+                        text = subtitle,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.outline,
+                    )
+                }
             },
             action = action,
         )

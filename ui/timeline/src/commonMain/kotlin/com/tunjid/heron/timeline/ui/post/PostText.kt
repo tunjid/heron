@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.timeline.ui.post
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Spacer
@@ -35,7 +34,6 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun PostText(
     post: Post,
@@ -54,28 +52,30 @@ fun PostText(
         .orEmpty()
 
     if (text.isBlank()) Spacer(Modifier.height(0.dp))
-    else Text(
-        modifier = modifier
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-            ) { onClick() }
-            .paneStickySharedElement(
-                sharedContentState = rememberSharedContentState(
-                    key = post.textSharedElementKey(
-                        prefix = sharedElementPrefix,
-                    ),
-                ),
+    else PaneStickySharedElement(
+        modifier = modifier,
+        sharedContentState = rememberSharedContentState(
+            key = post.textSharedElementKey(
+                prefix = sharedElementPrefix,
             ),
-        text = rememberFormattedTextPost(
-            text = text,
-            textLinks = post.record?.links ?: emptyList(),
-            onLinkTargetClicked = { onLinkTargetClicked(post, it) },
         ),
-        maxLines = maxLines,
-        overflow = TextOverflow.Ellipsis,
-        style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
-    )
+    ) {
+        Text(
+            modifier = Modifier
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ) { onClick() },
+            text = rememberFormattedTextPost(
+                text = text,
+                textLinks = post.record?.links ?: emptyList(),
+                onLinkTargetClicked = { onLinkTargetClicked(post, it) },
+            ),
+            maxLines = maxLines,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
+        )
+    }
 }
 
 private fun Post.textSharedElementKey(

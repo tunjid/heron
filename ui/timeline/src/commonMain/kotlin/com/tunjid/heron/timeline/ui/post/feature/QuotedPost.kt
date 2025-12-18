@@ -81,25 +81,28 @@ fun QuotedPost(
             Row(
                 horizontalArrangement = spacedBy(8.dp),
             ) {
-                AsyncImage(
+                PaneStickySharedElement(
                     modifier = Modifier
                         .size(24.dp)
-                        .align(Alignment.CenterVertically)
-                        .paneStickySharedElement(
-                            sharedContentState = rememberSharedContentState(
-                                key = quotedPost.avatarSharedElementKey(sharedElementPrefix),
-                            ),
-                        )
-                        .clickable {
-                            onProfileClicked(quotedPost, author)
-                        },
-                    args = ImageArgs(
-                        url = author.avatar?.uri,
-                        contentDescription = author.displayName ?: author.handle.id,
-                        contentScale = ContentScale.Crop,
-                        shape = RoundedPolygonShape.Circle,
+                        .align(Alignment.CenterVertically),
+                    sharedContentState = rememberSharedContentState(
+                        key = quotedPost.avatarSharedElementKey(sharedElementPrefix),
                     ),
-                )
+                ) {
+                    AsyncImage(
+                        modifier = Modifier
+                            .fillParentAxisIfFixedOrWrap()
+                            .clickable {
+                                onProfileClicked(quotedPost, author)
+                            },
+                        args = ImageArgs(
+                            url = author.avatar?.uri,
+                            contentDescription = author.displayName ?: author.handle.id,
+                            contentScale = ContentScale.Crop,
+                            shape = RoundedPolygonShape.Circle,
+                        ),
+                    )
+                }
                 PostHeadline(
                     now = now,
                     createdAt = quotedPost.record?.createdAt ?: remember { Clock.System.now() },

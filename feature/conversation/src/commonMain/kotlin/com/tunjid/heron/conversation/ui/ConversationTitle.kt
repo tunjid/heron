@@ -45,10 +45,9 @@ import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableSharedElementOf
-import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableStickySharedElementOf
+import com.tunjid.treenav.compose.UpdatedMovableSharedElementOf
+import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun ConversationTitle(
     conversationId: ConversationId,
