@@ -117,7 +117,6 @@ internal fun PostExternal(
             }
         }
     }
-
 }
 
 @Composable

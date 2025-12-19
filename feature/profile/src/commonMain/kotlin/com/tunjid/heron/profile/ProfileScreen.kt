@@ -533,7 +533,8 @@ private fun ProfileHeader(
                     modifier = Modifier
                         .profileBioTabBackground {
                             surfaceColor.copy(alpha = headerState.bioAlpha)
-                        },
+                        }
+                        .fillParentAxisIfFixedOrWrap(),
                 )
             }
         }
