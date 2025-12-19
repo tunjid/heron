@@ -64,7 +64,7 @@ import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableStickySharedElementOf
+import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.mute_video
 import heron.ui.timeline.generated.resources.play_video

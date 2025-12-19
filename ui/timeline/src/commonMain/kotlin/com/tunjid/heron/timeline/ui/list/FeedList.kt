@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.timeline.ui.list
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -42,7 +41,6 @@ import heron.ui.timeline.generated.resources.list_by
 import heron.ui.timeline.generated.resources.starter_pack_by
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun FeedList(
     modifier: Modifier = Modifier,
@@ -66,23 +64,26 @@ fun FeedList(
         sharedElementType = list.uri,
         avatar = {
             val avatar = list.avatar ?: BlueskyClouds
-            AsyncImage(
+            PaneStickySharedElement(
                 modifier = Modifier
-                    .paneStickySharedElement(
-                        sharedContentState = rememberSharedContentState(
-                            key = list.avatarSharedElementKey(sharedElementPrefix),
-                        ),
-                    )
                     .size(44.dp),
-                args = remember(avatar) {
-                    ImageArgs(
-                        url = avatar.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = null,
-                        shape = ListCollectionShape,
-                    )
-                },
-            )
+                sharedContentState = rememberSharedContentState(
+                    key = list.avatarSharedElementKey(sharedElementPrefix),
+                ),
+            ) {
+                AsyncImage(
+                    modifier = Modifier
+                        .fillParentAxisIfFixedOrWrap(),
+                    args = remember(avatar) {
+                        ImageArgs(
+                            url = avatar.uri,
+                            contentScale = ContentScale.Crop,
+                            contentDescription = null,
+                            shape = ListCollectionShape,
+                        )
+                    },
+                )
+            }
         },
         action = {
             status?.let { currentStatus ->
@@ -96,7 +97,6 @@ fun FeedList(
     )
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun StarterPack(
     modifier: Modifier = Modifier,
@@ -118,23 +118,26 @@ fun StarterPack(
         sharedElementType = starterPack.uri,
         avatar = {
             val avatar = BlueskyClouds
-            AsyncImage(
+            PaneStickySharedElement(
                 modifier = Modifier
-                    .paneStickySharedElement(
-                        sharedContentState = rememberSharedContentState(
-                            key = starterPack.avatarSharedElementKey(sharedElementPrefix),
-                        ),
-                    )
                     .size(44.dp),
-                args = remember(avatar) {
-                    ImageArgs(
-                        url = avatar.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = null,
-                        shape = StarterPackCollectionShape,
-                    )
-                },
-            )
+                sharedContentState = rememberSharedContentState(
+                    key = starterPack.avatarSharedElementKey(sharedElementPrefix),
+                ),
+            ) {
+                AsyncImage(
+                    modifier = Modifier
+                        .fillParentAxisIfFixedOrWrap(),
+                    args = remember(avatar) {
+                        ImageArgs(
+                            url = avatar.uri,
+                            contentScale = ContentScale.Crop,
+                            contentDescription = null,
+                            shape = StarterPackCollectionShape,
+                        )
+                    },
+                )
+            }
         },
     )
 }

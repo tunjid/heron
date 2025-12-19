@@ -53,7 +53,7 @@ import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableStickySharedElementOf
+import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import kotlin.time.Instant
 
 @Composable

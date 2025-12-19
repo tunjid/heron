@@ -48,20 +48,22 @@ fun PostHeadline(
         val secondaryText = author.handle.id.takeUnless { it == primaryText }
 
         Row(horizontalArrangement = spacedBy(4.dp)) {
-            ProfileName(
+            PaneStickySharedElement(
                 modifier = Modifier
-                    .weight(1f)
-                    .paneStickySharedElement(
-                        sharedContentState = rememberSharedContentState(
-                            key = author.textSharedElementKey(
-                                prefix = sharedElementPrefix,
-                                postId = postId,
-                                text = primaryText,
-                            ),
-                        ),
+                    .weight(1f),
+                sharedContentState = rememberSharedContentState(
+                    key = author.textSharedElementKey(
+                        prefix = sharedElementPrefix,
+                        postId = postId,
+                        text = primaryText,
                     ),
-                profile = author,
-            )
+                ),
+            ) {
+                ProfileName(
+                    modifier = Modifier,
+                    profile = author,
+                )
+            }
 
             TimeDelta(
                 modifier = Modifier.alignByBaseline(),
@@ -70,19 +72,21 @@ fun PostHeadline(
         }
         if (secondaryText != null) {
             Spacer(Modifier.height(2.dp))
-            ProfileHandle(
-                modifier = Modifier
-                    .paneStickySharedElement(
-                        sharedContentState = rememberSharedContentState(
-                            key = author.textSharedElementKey(
-                                prefix = sharedElementPrefix,
-                                postId = postId,
-                                text = secondaryText,
-                            ),
-                        ),
+            PaneStickySharedElement(
+                modifier = Modifier,
+                sharedContentState = rememberSharedContentState(
+                    key = author.textSharedElementKey(
+                        prefix = sharedElementPrefix,
+                        postId = postId,
+                        text = secondaryText,
                     ),
-                profile = author,
-            )
+                ),
+            ) {
+                ProfileHandle(
+                    modifier = Modifier,
+                    profile = author,
+                )
+            }
         }
     }
 }

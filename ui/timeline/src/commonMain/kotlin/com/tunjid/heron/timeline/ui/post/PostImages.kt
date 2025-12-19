@@ -39,7 +39,7 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableStickySharedElementOf
+import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable

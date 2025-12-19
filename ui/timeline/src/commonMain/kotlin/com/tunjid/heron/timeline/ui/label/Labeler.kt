@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.timeline.ui.label
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -34,7 +33,6 @@ import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.timeline.generated.resources.labeling_service_by
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun Labeler(
     modifier: Modifier = Modifier,
@@ -56,23 +54,26 @@ fun Labeler(
         sharedElementType = labeler.uri,
         avatar = {
             val avatar = labeler.creator.avatar.orDefault
-            AsyncImage(
+            PaneStickySharedElement(
                 modifier = Modifier
-                    .paneStickySharedElement(
-                        sharedContentState = rememberSharedContentState(
-                            key = labeler.avatarSharedElementKey(sharedElementPrefix),
-                        ),
-                    )
                     .size(44.dp),
-                args = remember(avatar) {
-                    ImageArgs(
-                        url = avatar.uri,
-                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                        contentDescription = null,
-                        shape = LabelerCollectionShape,
-                    )
-                },
-            )
+                sharedContentState = rememberSharedContentState(
+                    key = labeler.avatarSharedElementKey(sharedElementPrefix),
+                ),
+            ) {
+                AsyncImage(
+                    modifier = Modifier
+                        .fillParentAxisIfFixedOrWrap(),
+                    args = remember(avatar) {
+                        ImageArgs(
+                            url = avatar.uri,
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                            contentDescription = null,
+                            shape = LabelerCollectionShape,
+                        )
+                    },
+                )
+            }
         },
     )
 }

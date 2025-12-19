@@ -73,7 +73,6 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun PaneScaffoldState.PaneFab(
     modifier: Modifier = Modifier,
@@ -96,39 +95,41 @@ fun PaneScaffoldState.PaneFab(
 
             // The material3 ExtendedFloatingActionButton does not allow for placing
             // Modifier.animateContentSize() on its row.
-            FloatingActionButton(
+            PaneStickySharedElement(
                 modifier = Modifier
                     .animateFabSize()
-                    .then(modifier)
-                    .paneStickySharedElement(
-                        sharedContentState = rememberSharedContentState(
-                            key = FabSharedElementKey,
-                        ),
-                        zIndexInOverlay = FabSharedElementZIndex,
-                    )
-                    .graphicsLayer { alpha = fabAlpha.value },
-                onClick = { if (enabled) onClick() },
-                shape = MaterialTheme.shapes.small.copy(CornerSize(percent = 50)),
-                content = {
-                    Row(
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .animateFabSize(),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (icon != null) FabIcon(icon)
-                        if (icon == null || expanded) {
-                            if (icon != null) Spacer(modifier = Modifier.width(8.dp))
-                            AnimatedContent(targetState = text) { text ->
-                                Text(
-                                    text = text,
-                                    maxLines = 1,
-                                )
+                    .then(modifier),
+                sharedContentState = rememberSharedContentState(
+                    key = FabSharedElementKey,
+                ),
+                zIndexInOverlay = FabSharedElementZIndex,
+            ) {
+                FloatingActionButton(
+                    modifier = Modifier
+                        .graphicsLayer { alpha = fabAlpha.value },
+                    onClick = { if (enabled) onClick() },
+                    shape = MaterialTheme.shapes.small.copy(CornerSize(percent = 50)),
+                    content = {
+                        Row(
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .animateFabSize(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            if (icon != null) FabIcon(icon)
+                            if (icon == null || expanded) {
+                                if (icon != null) Spacer(modifier = Modifier.width(8.dp))
+                                AnimatedContent(targetState = text) { text ->
+                                    Text(
+                                        text = text,
+                                        maxLines = 1,
+                                    )
+                                }
                             }
                         }
-                    }
-                },
-            )
+                    },
+                )
+            }
         },
     )
 }
