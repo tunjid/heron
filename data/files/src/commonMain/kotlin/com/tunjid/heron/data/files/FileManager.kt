@@ -24,10 +24,6 @@ interface FileManager {
         restrictedFile: RestrictedFile,
     ): File?
 
-    suspend fun readBytes(
-        file: File,
-    ): ByteArray
-
     suspend fun source(
         file: File,
     ): Source

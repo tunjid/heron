@@ -1,4 +1,5 @@
 import sh.christian.ozone.api.generator.ApiReturnType
+import sh.christian.ozone.api.generator.BinaryDataType
 
 plugins {
     id("android-library-convention")
@@ -49,6 +50,12 @@ lexicons {
     defaults {
         generateUnknownsForSealedTypes.set(true)
         generateUnknownsForEnums.set(true)
+        binaryDataType.set(
+            BinaryDataType.Custom(
+                packageName = "io.ktor.utils.io",
+                simpleNames = listOf("ByteReadChannel"),
+            ),
+        )
     }
 
     generateApi("BlueskyApi") {
