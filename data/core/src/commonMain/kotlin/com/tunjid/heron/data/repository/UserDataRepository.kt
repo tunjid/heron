@@ -137,5 +137,4 @@ internal class OfflineUserDataRepository @Inject constructor(
             copy(preferences = updatedPreferences)
         }
     }
-
 }
