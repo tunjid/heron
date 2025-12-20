@@ -31,7 +31,6 @@ import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
-import com.tunjid.heron.data.database.daos.PreferencesDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.ThreadGateDao
@@ -71,7 +70,6 @@ import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
-import com.tunjid.heron.data.database.entities.preferences.MutedWordEntity
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.migrations.Migration12To13FeedAndListsCreatedAt
@@ -92,7 +90,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 33,
+    version = 32,
     entities = [
         BookmarkEntity::class,
         ExternalEmbedEntity::class,
@@ -128,7 +126,6 @@ import kotlinx.coroutines.IO
         MessagePostEntity::class,
         MessageReactionEntity::class,
         MessageStarterPackEntity::class,
-        MutedWordEntity::class,
         ThreadGateEntity::class,
         ThreadGateAllowedListEntity::class,
         ThreadGateHiddenPostEntity::class,
@@ -201,8 +198,6 @@ import kotlinx.coroutines.IO
         ),
         // Add embedded record uris to root and parent posts for TimelineItemEntity
         AutoMigration(from = 31, to = 32),
-        // Add MutedWordEntity
-        AutoMigration(from = 32, to = 33),
     ],
     exportSchema = true,
 )
@@ -223,7 +218,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun notificationsDao(): NotificationsDao
     abstract fun starterPackDao(): StarterPackDao
     abstract fun messagesDao(): MessageDao
-    abstract fun preferencesDao(): PreferencesDao
     abstract fun threadGateDao(): ThreadGateDao
 }
 

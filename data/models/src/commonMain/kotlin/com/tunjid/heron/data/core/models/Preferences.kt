@@ -128,7 +128,7 @@ data class HiddenPostPreference(
 @Serializable
 data class MutedWordPreference(
     val value: String,
-    val targets: TargetsList = TargetsList(targets = emptyList()),
+    val targets: List<Target>,
     val actorTarget: Target? = null,
     val expiresAt: Instant? = null,
 ) {
@@ -136,10 +136,5 @@ data class MutedWordPreference(
     @Serializable
     value class Target(
         val value: String,
-    ) : UrlEncodableModel
-
-    @Serializable
-    data class TargetsList(
-        val targets: List<Target>,
     ) : UrlEncodableModel
 }

@@ -25,7 +25,6 @@ import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
-import com.tunjid.heron.data.database.daos.PreferencesDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.ThreadGateDao
@@ -63,7 +62,6 @@ import com.tunjid.heron.data.database.entities.postembeds.PostImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
-import com.tunjid.heron.data.database.entities.preferences.MutedWordEntity
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.network.models.postExternalEmbedEntity
@@ -86,7 +84,6 @@ class MultipleEntitySaverProvider @Inject constructor(
     private val notificationsDao: NotificationsDao,
     private val starterPackDao: StarterPackDao,
     private val messageDao: MessageDao,
-    private val preferenceDao: PreferencesDao,
     private val threadGateDao: ThreadGateDao,
     private val transactionWriter: TransactionWriter,
 ) {
@@ -103,7 +100,6 @@ class MultipleEntitySaverProvider @Inject constructor(
         notificationsDao = notificationsDao,
         starterPackDao = starterPackDao,
         messageDao = messageDao,
-        preferenceDao = preferenceDao,
         threadGateDao = threadGateDao,
         transactionWriter = transactionWriter,
     ).apply {
@@ -126,7 +122,6 @@ internal class MultipleEntitySaver(
     private val notificationsDao: NotificationsDao,
     private val starterPackDao: StarterPackDao,
     private val messageDao: MessageDao,
-    private val preferenceDao: PreferencesDao,
     private val threadGateDao: ThreadGateDao,
     private val transactionWriter: TransactionWriter,
 ) {
@@ -188,8 +183,6 @@ internal class MultipleEntitySaver(
     private val messagePostEntities = LazyList<MessagePostEntity>()
 
     private val messageStarterPackEntities = LazyList<MessageStarterPackEntity>()
-
-    private val mutedWordEntities = LazyList<MutedWordEntity>()
 
     private val threadGateEntities = LazyList<ThreadGateEntity>()
     private val threadGateAllowedListEntities = LazyList<ThreadGateAllowedListEntity>()
@@ -286,8 +279,6 @@ internal class MultipleEntitySaver(
         messageDao.upsertMessageStarterPacks(messageStarterPackEntities.list)
         messageDao.upsertMessagePosts(messagePostEntities.list)
 
-        preferenceDao.upsertMutedWords(mutedWordEntities.list)
-
         threadGateDao.deleteThreadGates(
             postUris = postEntities.list.mapNotNull {
                 if (it.hasThreadGate == false) it.uri
@@ -378,8 +369,6 @@ internal class MultipleEntitySaver(
     fun add(entity: MessagePostEntity) = messagePostEntities.add(entity)
 
     fun add(entity: MessageStarterPackEntity) = messageStarterPackEntities.add(entity)
-
-    fun add(entity: MutedWordEntity) = mutedWordEntities.add(entity)
 
     fun add(entity: ThreadGateEntity) = threadGateEntities.add(entity)
 

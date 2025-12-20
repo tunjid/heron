@@ -29,7 +29,6 @@ import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
-import com.tunjid.heron.data.database.daos.PreferencesDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.ThreadGateDao
@@ -248,12 +247,6 @@ class DataBindings(
     fun provideMessageDao(
         database: AppDatabase,
     ): MessageDao = database.messagesDao()
-
-    @SingleIn(AppScope::class)
-    @Provides
-    fun providePreferencesDao(
-        database: AppDatabase,
-    ): PreferencesDao = database.preferencesDao()
 
     @SingleIn(AppScope::class)
     @Provides

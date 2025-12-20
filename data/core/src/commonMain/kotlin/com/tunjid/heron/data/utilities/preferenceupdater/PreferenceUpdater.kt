@@ -101,11 +101,9 @@ internal class ThingPreferenceUpdater @Inject constructor(
                     mutedWordPreferences = preferencesUnion.value.items.map {
                         MutedWordPreference(
                             value = it.value,
-                            targets = MutedWordPreference.TargetsList(
-                                it.targets.map { target ->
-                                    MutedWordPreference.Target(target.value)
-                                },
-                            ),
+                            targets = it.targets.map { target ->
+                                MutedWordPreference.Target(target.value)
+                            },
                             actorTarget = it.actorTarget
                                 ?.value
                                 ?.let(MutedWordPreference::Target),
@@ -319,7 +317,6 @@ internal class ThingPreferenceUpdater @Inject constructor(
             ),
         )
 
-    /** Add muted words update logic **/
     private fun Timeline.Update.OfMutedWord.updateMutedWordPreferences(
         existingPreferences: List<PreferencesUnion.MutedWordsPref>,
     ): List<PreferencesUnion.MutedWordsPref> {
@@ -342,7 +339,7 @@ internal class ThingPreferenceUpdater @Inject constructor(
                         }
 
                         is Timeline.Update.OfMutedWord.Add -> {
-                            val networkTargets = preference.targets.targets.map { target ->
+                            val networkTargets = preference.targets.map { target ->
                                 app.bsky.actor.MutedWordTarget.safeValueOf(target.value)
                             }
                             val networkActorTarget = preference.actorTarget?.let { target ->
