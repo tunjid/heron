@@ -109,21 +109,23 @@ internal class SuspendingVideoUploadService @Inject constructor(
                 ),
             )
         }.mapCatchingUnlessCancelled { tokenResponse ->
-            videoUploadClient.post(UploadVideoEndpoint) {
-                url {
-                    parameters.append(
-                        name = DidQueryParam,
-                        value = authToken.authProfileId.id,
-                    )
-                    parameters.append(
-                        name = NameQueryParam,
-                        value = Clock.System.now().toEpochMilliseconds().toString(),
-                    )
+            fileManager.source(file).use { source ->
+                videoUploadClient.post(UploadVideoEndpoint) {
+                    url {
+                        parameters.append(
+                            name = DidQueryParam,
+                            value = authToken.authProfileId.id,
+                        )
+                        parameters.append(
+                            name = NameQueryParam,
+                            value = Clock.System.now().toEpochMilliseconds().toString(),
+                        )
+                    }
+                    bearerAuth(tokenResponse.token)
+                    contentType(ContentType.Video.MP4)
+                    setBody(ByteReadChannel(source))
+                    headers[ContentLengthHeaderKey] = fileManager.size(file).toString()
                 }
-                bearerAuth(tokenResponse.token)
-                contentType(ContentType.Video.MP4)
-                setBody(ByteReadChannel(fileManager.source(file)))
-                headers[ContentLengthHeaderKey] = fileManager.size(file).toString()
             }
                 .let {
                     if (it.status.isSuccess()) it.body<VideoUploadResponse>()
