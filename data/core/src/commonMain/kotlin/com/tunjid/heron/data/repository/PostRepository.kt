@@ -443,9 +443,9 @@ internal class OfflinePostRepository @Inject constructor(
                     request.metadata.embeddedMedia.map { file ->
                         async {
                             when (file) {
-                                is File.Media.Photo -> networkService.uploadImageBlob(
-                                    data = fileManager.source(file),
-                                )
+                                is File.Media.Photo -> fileManager.source(file).use {
+                                    networkService.uploadImageBlob(data = it)
+                                }
                                 is File.Media.Video -> videoUploadService.uploadVideo(
                                     file = file,
                                 )

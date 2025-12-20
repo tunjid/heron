@@ -615,8 +615,9 @@ internal class OfflineProfileRepository @Inject constructor(
                 async {
                     if (file == null) return@async null
                     networkService.runCatchingWithMonitoredNetworkRetry {
-                        val channel = ByteReadChannel(fileManager.source(file))
-                        uploadBlob(channel)
+                        fileManager.source(file).use { source ->
+                            uploadBlob(ByteReadChannel(source))
+                        }
                     }
                         .onSuccess { fileManager.delete(file) }
                         .getOrNull()
