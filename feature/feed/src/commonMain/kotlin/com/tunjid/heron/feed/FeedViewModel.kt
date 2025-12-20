@@ -24,6 +24,7 @@ import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
+import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -35,6 +36,7 @@ import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.scaffold.duplicateWriteMessage
 import com.tunjid.heron.scaffold.scaffold.failedWriteMessage
 import com.tunjid.heron.timeline.state.timelineStateHolder
+import com.tunjid.heron.timeline.ui.sheets.MutedWordsStateHolder
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
@@ -77,6 +79,7 @@ class ActualFeedViewModel(
     messageRepository: MessageRepository,
     timelineRepository: TimelineRepository,
     profileRepository: ProfileRepository,
+    userDataRepository: UserDataRepository,
     @Assisted
     scope: CoroutineScope,
     @Assisted
@@ -100,6 +103,9 @@ class ActualFeedViewModel(
                     scope = scope,
                     timelineRepository = timelineRepository,
                     profileRepository = profileRepository,
+                ),
+                moderationStateHolderMutations(
+                    userDataRepository = userDataRepository,
                 ),
                 actions.toMutationStream(
                     keySelector = Action::key,
@@ -271,3 +277,20 @@ internal inline fun <T> Timeline.withFeedTimelineOrNull(
 ) =
     if (this is Timeline.Home.Feed) block(this)
     else null
+
+private fun moderationStateHolderMutations(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> = flow {
+    // Initialize all moderation state holders
+    val mutedWordsStateHolder = MutedWordsStateHolder(
+        userDataRepository = userDataRepository,
+    )
+
+    emit {
+        copy(
+            moderationState = moderationState.copy(
+                mutedWordsStateHolder = mutedWordsStateHolder,
+            ),
+        )
+    }
+}

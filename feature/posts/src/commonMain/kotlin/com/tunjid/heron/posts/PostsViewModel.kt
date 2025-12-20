@@ -24,6 +24,7 @@ import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.PostDataQuery
 import com.tunjid.heron.data.repository.PostRepository
+import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -38,6 +39,7 @@ import com.tunjid.heron.scaffold.scaffold.failedWriteMessage
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
+import com.tunjid.heron.timeline.ui.sheets.MutedWordsStateHolder
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
@@ -55,7 +57,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 
 internal typealias PostsStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -72,6 +76,7 @@ class ActualPostsViewModel(
     navActions: (NavigationMutation) -> Unit,
     postsRepository: PostRepository,
     messageRepository: MessageRepository,
+    userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
@@ -108,24 +113,29 @@ class ActualPostsViewModel(
         ),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         actionTransform = transform@{ actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
-                    is Action.Tile -> action.flow.postsLoadMutations(
-                        request = route.postsRequest,
-                        stateHolder = this@transform,
-                        postsRepository = postsRepository,
-                    )
-                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                        writeQueue = writeQueue,
-                    )
-                }
-            }
+            merge(
+                moderationStateHolderMutations(
+                    userDataRepository = userDataRepository,
+                ),
+                actions.toMutationStream(
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+                        is Action.Navigate -> action.flow.consumeNavigationActions(
+                            navigationMutationConsumer = navActions,
+                        )
+                        is Action.Tile -> action.flow.postsLoadMutations(
+                            request = route.postsRequest,
+                            stateHolder = this@transform,
+                            postsRepository = postsRepository,
+                        )
+                        is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                            writeQueue = writeQueue,
+                        )
+                    }
+                },
+            )
         },
     )
 
@@ -186,3 +196,20 @@ private fun PostDataQuery.updateData(newData: CursorQuery.Data): PostDataQuery =
 
 private fun PostDataQuery.refresh(): PostDataQuery =
     copy(data = data.reset())
+
+private fun moderationStateHolderMutations(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> = flow {
+    // Initialize all moderation state holders
+    val mutedWordsStateHolder = MutedWordsStateHolder(
+        userDataRepository = userDataRepository,
+    )
+
+    emit {
+        copy(
+            moderationState = moderationState.copy(
+                mutedWordsStateHolder = mutedWordsStateHolder,
+            ),
+        )
+    }
+}

@@ -135,6 +135,8 @@ import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
 import com.tunjid.heron.timeline.ui.feed.FeedGenerator
 import com.tunjid.heron.timeline.ui.list.FeedList
 import com.tunjid.heron.timeline.ui.list.StarterPack
+import com.tunjid.heron.timeline.ui.moderation.ModerationOption
+import com.tunjid.heron.timeline.ui.moderation.ModerationState
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostOption
 import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
@@ -144,6 +146,7 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
+import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberMutedWordsSheetState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
@@ -442,6 +445,7 @@ internal fun ProfileScreen(
                                 signedInProfileId = state.signedInProfileId,
                                 paneScaffoldState = paneScaffoldState,
                                 timelineStateHolder = stateHolder,
+                                moderationState = state.moderationState,
                                 actions = actions,
                                 recentConversations = state.recentConversations,
                             )
@@ -1001,6 +1005,7 @@ private fun ProfileTimeline(
     signedInProfileId: ProfileId?,
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
+    moderationState: ModerationState,
     actions: (Action) -> Unit,
     recentConversations: List<Conversation>,
 ) {
@@ -1046,6 +1051,11 @@ private fun ProfileTimeline(
             actions(Action.SendPostInteraction(it))
         },
     )
+    val mutedWordSheetState = moderationState.mutedWordsStateHolder?.let {
+        rememberMutedWordsSheetState(
+            stateHolder = it,
+        )
+    }
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
@@ -1067,6 +1077,16 @@ private fun ProfileTimeline(
                 is PostOption.ThreadGate ->
                     items.firstOrNull { it.post.uri == option.postUri }
                         ?.let(threadGateSheetState::show)
+            }
+        },
+        onModerationOptionClicked = { option ->
+            when (option) {
+                ModerationOption.BlockUser -> {
+                    // TODO ()
+                }
+                ModerationOption.MuteWords -> {
+                    mutedWordSheetState?.showMutedWordsSheet()
+                }
             }
         },
     )

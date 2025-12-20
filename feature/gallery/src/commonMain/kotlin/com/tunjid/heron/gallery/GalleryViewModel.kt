@@ -24,6 +24,7 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
+import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -35,6 +36,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.scaffold.duplicateWriteMessage
 import com.tunjid.heron.scaffold.scaffold.failedWriteMessage
+import com.tunjid.heron.timeline.ui.sheets.MutedWordsStateHolder
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -52,6 +54,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.merge
 
 internal typealias GalleryStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -68,6 +71,7 @@ class ActualGalleryViewModel(
     navActions: (NavigationMutation) -> Unit,
     authRepository: AuthRepository,
     messageRepository: MessageRepository,
+    userDataRepository: UserDataRepository,
     postRepository: PostRepository,
     profileRepository: ProfileRepository,
     writeQueue: WriteQueue,
@@ -97,23 +101,28 @@ class ActualGalleryViewModel(
             ),
         ),
         actionTransform = transform@{ actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+            merge(
+                moderationStateHolderMutations(
+                    userDataRepository = userDataRepository,
+                ),
+                actions.toMutationStream(
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                            writeQueue = writeQueue,
+                        )
+                        is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
+                            writeQueue = writeQueue,
+                        )
+                        is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
-                }
-            }
+                        is Action.Navigate -> action.flow.consumeNavigationActions(
+                            navigationMutationConsumer = navActions,
+                        )
+                    }
+                },
+            )
         },
     )
 
@@ -202,3 +211,20 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
     mapToMutation { action ->
         copy(messages = messages - action.message)
     }
+
+private fun moderationStateHolderMutations(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> = flow {
+    // Initialize all moderation state holders
+    val mutedWordsStateHolder = MutedWordsStateHolder(
+        userDataRepository = userDataRepository,
+    )
+
+    emit {
+        copy(
+            moderationState = moderationState.copy(
+                mutedWordsStateHolder = mutedWordsStateHolder,
+            ),
+        )
+    }
+}

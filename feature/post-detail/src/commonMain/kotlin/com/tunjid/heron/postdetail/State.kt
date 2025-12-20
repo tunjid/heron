@@ -24,6 +24,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
+import com.tunjid.heron.timeline.ui.moderation.ModerationState
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.treenav.strings.Route
 import kotlinx.serialization.Serializable
@@ -33,6 +34,8 @@ import kotlinx.serialization.Transient
 data class State(
     val anchorPost: Post?,
     val sharedElementPrefix: String,
+    @Transient
+    val moderationState: ModerationState = ModerationState(),
     @Transient
     val signedInProfileId: ProfileId? = null,
     @Transient

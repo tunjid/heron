@@ -29,6 +29,7 @@ import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -44,6 +45,7 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.mapCursorList
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
+import com.tunjid.heron.timeline.ui.sheets.MutedWordsStateHolder
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -65,6 +67,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
@@ -89,6 +92,7 @@ class SearchViewModel(
     searchRepository: SearchRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
+    userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
@@ -127,37 +131,42 @@ class SearchViewModel(
             ),
         ),
         actionTransform = transform@{ actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.Search -> action.flow.searchQueryMutations(
-                        coroutineScope = scope,
-                        searchRepository = searchRepository,
-                    )
+            merge(
+                moderationStateHolderMutations(
+                    userDataRepository = userDataRepository,
+                ),
+                actions.toMutationStream(
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.Search -> action.flow.searchQueryMutations(
+                            coroutineScope = scope,
+                            searchRepository = searchRepository,
+                        )
 
-                    is Action.FetchSuggestedProfiles -> action.flow.suggestedProfilesMutations(
-                        searchRepository = searchRepository,
-                    )
+                        is Action.FetchSuggestedProfiles -> action.flow.suggestedProfilesMutations(
+                            searchRepository = searchRepository,
+                        )
 
-                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+                        is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                            writeQueue = writeQueue,
+                        )
+                        is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 
-                    is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
-                        writeQueue = writeQueue,
-                    )
+                        is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
+                            writeQueue = writeQueue,
+                        )
 
-                    is Action.UpdateFeedGeneratorStatus -> action.flow.feedGeneratorStatusMutations(
-                        writeQueue = writeQueue,
-                    )
+                        is Action.UpdateFeedGeneratorStatus -> action.flow.feedGeneratorStatusMutations(
+                            writeQueue = writeQueue,
+                        )
 
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
-                }
-            }
+                        is Action.Navigate -> action.flow.consumeNavigationActions(
+                            navigationMutationConsumer = navActions,
+                        )
+                    }
+                },
+            )
         },
     )
 
@@ -549,3 +558,20 @@ private fun defaultSearchQueryData() = CursorQuery.Data(
     cursorAnchor = Clock.System.now(),
     limit = 15,
 )
+
+private fun moderationStateHolderMutations(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> = flow {
+    // Initialize all moderation state holders
+    val mutedWordsStateHolder = MutedWordsStateHolder(
+        userDataRepository = userDataRepository,
+    )
+
+    emit {
+        copy(
+            moderationState = moderationState.copy(
+                mutedWordsStateHolder = mutedWordsStateHolder,
+            ),
+        )
+    }
+}

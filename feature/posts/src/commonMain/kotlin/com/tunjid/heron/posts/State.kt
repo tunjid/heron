@@ -26,6 +26,7 @@ import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.repository.PostDataQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.timeline.ui.moderation.ModerationState
 import com.tunjid.heron.ui.text.Memo
 import kotlin.time.Clock
 import kotlinx.serialization.Serializable
@@ -36,6 +37,9 @@ data class State(
     val signedInProfileId: ProfileId? = null,
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
+
+    @Transient
+    val moderationState: ModerationState = ModerationState(),
     @Transient
     override val tilingData: TilingState.Data<PostDataQuery, TimelineItem> = TilingState.Data(
         currentQuery = PostDataQuery(

@@ -17,9 +17,11 @@ import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.timeline.ui.moderation.ModerationOption
 import com.tunjid.heron.timeline.utilities.BottomSheetItemCard
 import com.tunjid.heron.timeline.utilities.BottomSheetItemCardRow
 import com.tunjid.heron.timeline.utilities.CopyToClipboardCard
+import com.tunjid.heron.timeline.utilities.ModerationToolsCard
 import com.tunjid.heron.timeline.utilities.SendDirectMessageCard
 import com.tunjid.heron.timeline.utilities.shareUri
 import com.tunjid.heron.ui.sheets.BottomSheetScope
@@ -61,6 +63,7 @@ class PostOptionsSheetState private constructor(
             signedInProfileId: ProfileId?,
             recentConversations: List<Conversation>,
             onOptionClicked: (PostOption) -> Unit,
+            onModerationOptionClicked: (ModerationOption) -> Unit,
         ): PostOptionsSheetState {
             val state = rememberBottomSheetState {
                 PostOptionsSheetState(
@@ -76,6 +79,7 @@ class PostOptionsSheetState private constructor(
             PostOptionsBottomSheet(
                 state = state,
                 onOptionClicked = onOptionClicked,
+                onModerationOptionClicked = onModerationOptionClicked,
             )
 
             return state
@@ -87,6 +91,7 @@ class PostOptionsSheetState private constructor(
 private fun PostOptionsBottomSheet(
     state: PostOptionsSheetState,
     onOptionClicked: (PostOption) -> Unit,
+    onModerationOptionClicked: (ModerationOption) -> Unit,
 ) {
     val signedInProfileId = state.signedInProfileId
     if (signedInProfileId != null) state.ModalBottomSheet {
@@ -128,6 +133,9 @@ private fun PostOptionsBottomSheet(
                     },
                 )
                 CopyToClipboardCard(it.uri.shareUri())
+                ModerationToolsCard(
+                    onOptionClicked = onModerationOptionClicked,
+                )
             }
         }
     }

@@ -32,6 +32,7 @@ import com.tunjid.heron.data.repository.SearchQuery.OfPosts
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.search.ui.suggestions.SuggestedStarterPack
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.timeline.ui.moderation.ModerationState
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
 import kotlinx.coroutines.flow.StateFlow
@@ -122,6 +123,8 @@ data class State(
     val searchStateHolders: List<SearchResultStateHolder> = emptyList(),
     @Transient
     val autoCompletedProfiles: List<SearchResult.OfProfile> = emptyList(),
+    @Transient
+    val moderationState: ModerationState = ModerationState(),
     @Transient
     val messages: List<Memo> = emptyList(),
 )

@@ -23,6 +23,7 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.repository.signedInProfilePreferences
 import com.tunjid.heron.data.utilities.writequeue.Writable
@@ -36,6 +37,7 @@ import com.tunjid.heron.scaffold.scaffold.failedWriteMessage
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.timelineStateHolder
+import com.tunjid.heron.timeline.ui.sheets.MutedWordsStateHolder
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
@@ -57,6 +59,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.take
 
 internal typealias HomeStateHolder = ActionStateMutator<Action, StateFlow<State>>
@@ -74,6 +78,7 @@ class ActualHomeViewModel(
     authRepository: AuthRepository,
     messageRepository: MessageRepository,
     timelineRepository: TimelineRepository,
+    userDataRepository: UserDataRepository,
     savedStateDataSource: SavedStateDataSource,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
@@ -100,31 +105,36 @@ class ActualHomeViewModel(
             ),
         ),
         actionTransform = transform@{ actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.UpdatePageWithUpdates -> action.flow.pageWithUpdateMutations()
-                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+            merge(
+                moderationStateHolderMutations(
+                    userDataRepository = userDataRepository,
+                ),
+                actions.toMutationStream(
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.UpdatePageWithUpdates -> action.flow.pageWithUpdateMutations()
+                        is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                            writeQueue = writeQueue,
+                        )
+                        is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 
-                    is Action.RefreshCurrentTab -> action.flow.tabRefreshMutations(
-                        stateHolder = this@transform,
-                    )
+                        is Action.RefreshCurrentTab -> action.flow.tabRefreshMutations(
+                            stateHolder = this@transform,
+                        )
 
-                    is Action.UpdateTimeline -> action.flow.saveTimelinePreferencesMutations(
-                        writeQueue = writeQueue,
-                    )
+                        is Action.UpdateTimeline -> action.flow.saveTimelinePreferencesMutations(
+                            writeQueue = writeQueue,
+                        )
 
-                    is Action.SetCurrentTab -> action.flow.setCurrentTabMutations(savedStateDataSource)
-                    is Action.SetTabLayout -> action.flow.setTabLayoutMutations()
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
-                }
-            }
+                        is Action.SetCurrentTab -> action.flow.setCurrentTabMutations(savedStateDataSource)
+                        is Action.SetTabLayout -> action.flow.setTabLayoutMutations()
+                        is Action.Navigate -> action.flow.consumeNavigationActions(
+                            navigationMutationConsumer = navActions,
+                        )
+                    }
+                },
+            )
         },
     )
 
@@ -267,3 +277,20 @@ private fun Flow<Action.RefreshCurrentTab>.tabRefreshMutations(
                 ),
             )
     }
+
+private fun moderationStateHolderMutations(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> = flow {
+    // Initialize all moderation state holders
+    val mutedWordsStateHolder = MutedWordsStateHolder(
+        userDataRepository = userDataRepository,
+    )
+
+    emit {
+        copy(
+            moderationState = moderationState.copy(
+                mutedWordsStateHolder = mutedWordsStateHolder,
+            ),
+        )
+    }
+}

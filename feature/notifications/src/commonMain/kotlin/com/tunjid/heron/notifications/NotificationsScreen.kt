@@ -68,9 +68,11 @@ import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.timeline.ui.PostAction
+import com.tunjid.heron.timeline.ui.moderation.ModerationOption
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostOption
 import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
+import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberMutedWordsSheetState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
@@ -106,6 +108,11 @@ internal fun NotificationsScreen(
             )
         },
     )
+    val mutedWordSheetState = state.moderationState.mutedWordsStateHolder?.let {
+        rememberMutedWordsSheetState(
+            stateHolder = it,
+        )
+    }
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = state.signedInProfile?.did,
         recentConversations = state.recentConversations,
@@ -126,6 +133,16 @@ internal fun NotificationsScreen(
 
                 // Notifications UI does not present thread gate options
                 is PostOption.ThreadGate -> Unit
+            }
+        },
+        onModerationOptionClicked = { option ->
+            when (option) {
+                ModerationOption.BlockUser -> {
+                    // TODO ()
+                }
+                ModerationOption.MuteWords -> {
+                    mutedWordSheetState?.showMutedWordsSheet()
+                }
             }
         },
     )

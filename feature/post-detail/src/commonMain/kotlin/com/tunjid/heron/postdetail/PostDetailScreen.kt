@@ -62,6 +62,7 @@ import com.tunjid.heron.scaffold.scaffold.paneClip
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
+import com.tunjid.heron.timeline.ui.moderation.ModerationOption
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostMetadata
 import com.tunjid.heron.timeline.ui.post.PostOption
@@ -69,6 +70,7 @@ import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.remembe
 import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
+import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberMutedWordsSheetState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
@@ -127,6 +129,11 @@ internal fun PostDetailScreen(
             actions(Action.SendPostInteraction(it))
         },
     )
+    val mutedWordSheetState = state.moderationState.mutedWordsStateHolder?.let {
+        rememberMutedWordsSheetState(
+            stateHolder = it,
+        )
+    }
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = state.signedInProfileId,
         recentConversations = state.recentConversations,
@@ -146,6 +153,16 @@ internal fun PostDetailScreen(
                 is PostOption.ThreadGate ->
                     items.firstOrNull { it.post.uri == option.postUri }
                         ?.let(threadGateSheetState::show)
+            }
+        },
+        onModerationOptionClicked = { option ->
+            when (option) {
+                ModerationOption.BlockUser -> {
+                    // TODO ()
+                }
+                ModerationOption.MuteWords -> {
+                    mutedWordSheetState?.showMutedWordsSheet()
+                }
             }
         },
     )
