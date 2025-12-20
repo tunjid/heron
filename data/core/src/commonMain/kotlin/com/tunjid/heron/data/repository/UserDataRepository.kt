@@ -138,5 +138,4 @@ internal class OfflineUserDataRepository @Inject constructor(
         }
     }
 
-    private fun updateRemoteMutedWords(){}
 }
