@@ -45,6 +45,7 @@ data class State(
             data = CursorQuery.Data(
                 page = 0,
                 cursorAnchor = Clock.System.now(),
+                limit = 18,
             ),
         ),
     ),
