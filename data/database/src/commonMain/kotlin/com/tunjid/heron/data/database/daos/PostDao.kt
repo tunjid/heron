@@ -318,12 +318,13 @@ interface PostDao {
             WITH RECURSIVE
               -- 1. ParentHierarchy CTE: Recursively finds all parent URIs for the given post
               -- and calculates their generation (negative).
-              ParentHierarchy(uri, rootPostUri, generation, sort) AS (
+              ParentHierarchy(uri, rootPostUri, generation, ancestorCreated, postCreated) AS (
                 SELECT
                   pt.parentPostUri, -- each parent is its own root
                   pt.postUri AS rootPostUri,
                   -1 AS generation,
-                  -1 AS sort -- sort parents of the OP strictly by their generation
+                  -1 AS ancestorCreated, -- Always a negative constant for ancestors
+                  -1 AS postCreated -- Always a negative constant for ancestors
                 FROM
                   postThreads pt
                 WHERE postUri = :postUri
@@ -332,7 +333,8 @@ interface PostDao {
                   pt.parentPostUri,
                   ph.rootPostUri,
                   ph.generation - 1,
-                  ph.sort -1
+                  ph.ancestorCreated - 1,
+                  ph.postCreated - 1
                 FROM
                   postThreads pt
                 INNER JOIN
@@ -341,12 +343,13 @@ interface PostDao {
 
               -- 2. ChildHierarchy CTE: Recursively finds all child URIs for the given post
               -- and calculates their generation (positive).
-              ChildHierarchy(uri, rootPostUri, generation, sort) AS (
+              ChildHierarchy(uri, rootPostUri, generation, ancestorCreated, postCreated) AS (
                 SELECT
                   pt.postUri,
                   pt.postUri AS rootPostUri, -- add the very first reply to the OP as the root
                   1 AS generation,
-                  p.createdAt as sort -- sort all replies by the very first reply to the OP
+                  p.createdAt as ancestorCreated, -- sort all replies by the very first reply to the OP
+                  p.createdAt as postCreated -- second sort is the actual post's createdAt
                 FROM
                   postThreads pt
                 JOIN posts p ON pt.postUri = p.uri
@@ -357,21 +360,23 @@ interface PostDao {
                   pt.postUri,
                   ch.rootPostUri,
                   ch.generation + 1,
-                  ch.sort
+                  ch.ancestorCreated, -- preserve the ancestorCreatedDate in the thread
+                  p.createdAt -- pull in the actual post's createdAt date
                 FROM
                   postThreads pt
+                INNER JOIN posts p ON pt.postUri = p.uri
                 INNER JOIN
                   ChildHierarchy ch ON pt.parentPostUri = ch.uri
               ),
 
               -- 3. FullThread CTE: Combines the URIs and generations from parents, children,
               -- and the post itself (generation 0).
-              FullThread(uri, rootPostUri, generation, sort) AS (
-                SELECT uri, rootPostUri, generation, sort FROM ParentHierarchy
+              FullThread(uri, rootPostUri, generation, ancestorCreated, postCreated) AS (
+                SELECT uri, rootPostUri, generation, ancestorCreated, postCreated FROM ParentHierarchy
                 UNION
-                SELECT uri, rootPostUri, generation, sort FROM ChildHierarchy
+                SELECT uri, rootPostUri, generation, ancestorCreated, postCreated FROM ChildHierarchy
                 UNION
-                SELECT :postUri, NULL, 0, 0
+                SELECT :postUri, NULL, 0, 0, 0
               )
 
             -- 4. Final SELECT: Fetches all columns from the `posts` table for every URI
@@ -380,13 +385,14 @@ interface PostDao {
               p.*,
               ft.rootPostUri AS rootPostUri,
               ft.generation AS generation,
-              ft.sort AS sort
+              ft.ancestorCreated AS ancestorCreated,
+              ft.postCreated AS postCreated
             FROM
               posts p
             JOIN
               FullThread ft ON p.uri = ft.uri
             ORDER BY
-              ft.sort, ft.generation; -- sort by the first reply to the op, then the generation
+              ft.ancestorCreated, ft.generation, ft.postCreated; -- sort by the first reply to the op, then the generation, then the post itself
         """,
     )
     fun postThread(

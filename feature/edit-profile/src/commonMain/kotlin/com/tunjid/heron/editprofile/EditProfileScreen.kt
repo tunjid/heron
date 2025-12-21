@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.editprofile
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -77,13 +76,12 @@ import com.tunjid.heron.profile.withProfileBioTabSharedElementPrefix
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.FormField
-import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableStickySharedElementOf
+import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.feature.edit_profile.generated.resources.Res
 import heron.feature.edit_profile.generated.resources.edit_avatar_icon
 import heron.feature.edit_profile.generated.resources.edit_banner_icon
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun EditProfileScreen(
     paneScaffoldState: PaneScaffoldState,
@@ -135,19 +133,21 @@ internal fun EditProfileScreen(
             else surfaceColor,
         )
         val focusManager = LocalFocusManager.current
-        Box(
-            modifier = with(paneScaffoldState) {
-                Modifier
-                    .zIndex(0f)
-                    .paneStickySharedElement(
-                        sharedContentState = rememberSharedContentState(
-                            key = state.avatarSharedElementKey.withProfileBioTabSharedElementPrefix(),
-                        ),
-                        zIndexInOverlay = SurfaceZIndex,
-                    )
-                    .profileBioTabBackground(bioTabColorState::value)
-            },
-        )
+        with(paneScaffoldState) {
+            PaneStickySharedElement(
+                sharedContentState = rememberSharedContentState(
+                    key = state.avatarSharedElementKey.withProfileBioTabSharedElementPrefix(),
+                ),
+                zIndexInOverlay = SurfaceZIndex,
+            ) {
+                Box(
+                    Modifier
+                        .zIndex(0f)
+                        .profileBioTabBackground(bioTabColorState::value)
+                        .fillParentAxisIfFixedOrWrap(),
+                )
+            }
+        }
         Column(
             modifier = Modifier
                 .padding(
@@ -232,7 +232,6 @@ fun EditProfileHeader(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ProfileAvatarEditableImage(
     paneScaffoldState: PaneScaffoldState,
@@ -249,20 +248,23 @@ fun ProfileAvatarEditableImage(
             .size(size),
         contentAlignment = Alignment.BottomEnd,
     ) {
-        Box(
+        PaneStickySharedElement(
             modifier = Modifier
-                .paneStickySharedElement(
-                    sharedContentState = rememberSharedContentState(
-                        key = avatarSharedElementKey.withProfileAvatarHaloSharedElementPrefix(),
-                    ),
-                    zIndexInOverlay = AvatarHaloZIndex,
-                )
-                .background(
-                    color = MaterialTheme.colorScheme.surface,
-                    shape = CircleShape,
-                )
                 .matchParentSize(),
-        )
+            sharedContentState = rememberSharedContentState(
+                key = avatarSharedElementKey.withProfileAvatarHaloSharedElementPrefix(),
+            ),
+            zIndexInOverlay = AvatarHaloZIndex,
+        ) {
+            Box(
+                Modifier
+                    .background(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = CircleShape,
+                    )
+                    .fillParentAxisIfFixedOrWrap(),
+            )
+        }
         paneScaffoldState.UpdatedMovableStickySharedElementOf(
             sharedContentState = with(paneScaffoldState) {
                 rememberSharedContentState(
@@ -305,7 +307,6 @@ fun ProfileAvatarEditableImage(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ProfileBannerEditableImage(
     paneScaffoldState: PaneScaffoldState,

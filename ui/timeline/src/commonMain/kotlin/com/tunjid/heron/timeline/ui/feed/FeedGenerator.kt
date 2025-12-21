@@ -68,23 +68,26 @@ fun FeedGenerator(
         ),
         avatar = {
             val avatar = feedGenerator.avatar.orDefault
-            AsyncImage(
+            PaneStickySharedElement(
                 modifier = Modifier
-                    .paneStickySharedElement(
-                        sharedContentState = rememberSharedContentState(
-                            key = feedGenerator.avatarSharedElementKey(sharedElementPrefix),
-                        ),
-                    )
                     .size(44.dp),
-                args = remember(avatar) {
-                    ImageArgs(
-                        url = avatar.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = null,
-                        shape = FeedGeneratorCollectionShape,
-                    )
-                },
-            )
+                sharedContentState = rememberSharedContentState(
+                    key = feedGenerator.avatarSharedElementKey(sharedElementPrefix),
+                ),
+            ) {
+                AsyncImage(
+                    modifier = Modifier
+                        .fillParentAxisIfFixedOrWrap(),
+                    args = remember(avatar) {
+                        ImageArgs(
+                            url = avatar.uri,
+                            contentScale = ContentScale.Crop,
+                            contentDescription = null,
+                            shape = FeedGeneratorCollectionShape,
+                        )
+                    },
+                )
+            }
         },
         action = {
             status?.let { currentStatus ->

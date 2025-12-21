@@ -29,12 +29,10 @@ import io.github.vinceglb.filekit.extension
 import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.nameWithoutExtension
 import io.github.vinceglb.filekit.path
-import io.github.vinceglb.filekit.readBytes
 import io.github.vinceglb.filekit.size
 import io.github.vinceglb.filekit.source
 import io.github.vinceglb.filekit.write
 import kotlin.time.Clock
-import kotlinx.io.IOException
 import kotlinx.io.Source
 import kotlinx.io.buffered
 
@@ -85,14 +83,6 @@ internal class FileKitFileManager : FileManager {
                 )
             }
         }
-    }
-
-    override suspend fun readBytes(
-        file: File,
-    ): ByteArray {
-        val cachedFile = file.toPlatformFile()
-        return if (cachedFile.exists()) cachedFile.readBytes()
-        else throw IOException("File does not exist")
     }
 
     override suspend fun source(

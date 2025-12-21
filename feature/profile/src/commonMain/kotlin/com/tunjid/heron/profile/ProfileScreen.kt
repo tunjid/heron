@@ -169,7 +169,7 @@ import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.text.links
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
 import com.tunjid.tiler.compose.PivotedTilingEffect
-import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableStickySharedElementOf
+import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.feature.profile.generated.resources.Res
 import heron.feature.profile.generated.resources.followed_by_others
@@ -521,17 +521,23 @@ private fun ProfileHeader(
                 .offset {
                     headerState.bioOffset()
                 }
-                .padding(top = headerState.bioTopPadding)
-                .paneStickySharedElement(
-                    sharedContentState = rememberSharedContentState(
-                        key = avatarSharedElementKey.withProfileBioTabSharedElementPrefix(),
-                    ),
-                    zIndexInOverlay = SurfaceZIndex,
+                .padding(top = headerState.bioTopPadding),
+        ) {
+            PaneStickySharedElement(
+                sharedContentState = rememberSharedContentState(
+                    key = avatarSharedElementKey.withProfileBioTabSharedElementPrefix(),
+                ),
+                zIndexInOverlay = SurfaceZIndex,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .profileBioTabBackground {
+                            surfaceColor.copy(alpha = headerState.bioAlpha)
+                        }
+                        .fillParentAxisIfFixedOrWrap(),
                 )
-                .profileBioTabBackground {
-                    surfaceColor.copy(alpha = headerState.bioAlpha)
-                },
-        )
+            }
+        }
         Column(
             modifier = Modifier
                 .padding(top = headerState.bioTopPadding)
@@ -708,23 +714,26 @@ private fun ProfileAvatar(
         val scale = animateFloatAsState(
             if (showWave) 1.2f else 1f,
         )
-        CircularWavyProgressIndicator(
-            progress = { if (isRefreshing) 1f else pullToRefreshState.distanceFraction },
-            trackColor = MaterialTheme.colorScheme.surface,
-            amplitude = { if (showWave) 1f else 0f },
+        PaneStickySharedElement(
             modifier = Modifier
-                .paneStickySharedElement(
-                    sharedContentState = rememberSharedContentState(
-                        key = avatarSharedElementKey.withProfileAvatarHaloSharedElementPrefix(),
-                    ),
-                    zIndexInOverlay = AvatarHaloZIndex,
-                )
                 .fillMaxSize()
                 .graphicsLayer {
                     scaleX = scale.value
                     scaleY = scale.value
                 },
-        )
+            sharedContentState = rememberSharedContentState(
+                key = avatarSharedElementKey.withProfileAvatarHaloSharedElementPrefix(),
+            ),
+            zIndexInOverlay = AvatarHaloZIndex,
+        ) {
+            CircularWavyProgressIndicator(
+                progress = { if (isRefreshing) 1f else pullToRefreshState.distanceFraction },
+                trackColor = MaterialTheme.colorScheme.surface,
+                amplitude = { if (showWave) 1f else 0f },
+                modifier = Modifier
+                    .fillParentAxisIfFixedOrWrap(),
+            )
+        }
         paneScaffoldState.UpdatedMovableStickySharedElementOf(
             sharedContentState = with(paneScaffoldState) {
                 rememberSharedContentState(

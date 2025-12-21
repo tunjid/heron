@@ -92,6 +92,7 @@ import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.with
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
+import io.ktor.utils.io.ByteReadChannel
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.async
@@ -107,6 +108,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.io.Source
 import kotlinx.serialization.Serializable
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Cid
@@ -441,9 +443,9 @@ internal class OfflinePostRepository @Inject constructor(
                     request.metadata.embeddedMedia.map { file ->
                         async {
                             when (file) {
-                                is File.Media.Photo -> networkService.uploadImageBlob(
-                                    data = fileManager.readBytes(file),
-                                )
+                                is File.Media.Photo -> fileManager.source(file).use {
+                                    networkService.uploadImageBlob(data = it)
+                                }
                                 is File.Media.Video -> videoUploadService.uploadVideo(
                                     file = file,
                                 )
@@ -759,9 +761,9 @@ private fun CreateRecordResponse.successWithUri(): Pair<Boolean, String> =
     Pair(validationStatus is CreateRecordValidationStatus.Valid, uri.atUri)
 
 private suspend fun NetworkService.uploadImageBlob(
-    data: ByteArray,
+    data: Source,
 ): Result<Blob> = runCatchingWithMonitoredNetworkRetry {
-    api.uploadBlob(data)
+    api.uploadBlob(ByteReadChannel(data))
         .map(UploadBlobResponse::blob)
 }
 

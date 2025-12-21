@@ -91,7 +91,7 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.moveablesharedelement.UpdatedMovableStickySharedElementOf
+import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.ui.core.generated.resources.dismiss
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.label_source
@@ -262,23 +262,26 @@ private fun LabelContent(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
-                            AsyncImage(
-                                args = remember(labeler.creator.avatar) {
-                                    ImageArgs(
-                                        url = labeler.creator.avatar?.uri,
-                                        contentScale = ContentScale.Crop,
-                                        contentDescription = null,
-                                        shape = data.avatarShape,
-                                    )
-                                },
+                            PaneStickySharedElement(
                                 modifier = Modifier
-                                    .paneStickySharedElement(
-                                        sharedContentState = rememberSharedContentState(
-                                            data.sharedElementKey(label),
-                                        ),
-                                    )
                                     .size(12.dp),
-                            )
+                                sharedContentState = rememberSharedContentState(
+                                    data.sharedElementKey(label),
+                                ),
+                            ) {
+                                AsyncImage(
+                                    args = remember(labeler.creator.avatar) {
+                                        ImageArgs(
+                                            url = labeler.creator.avatar?.uri,
+                                            contentScale = ContentScale.Crop,
+                                            contentDescription = null,
+                                            shape = data.avatarShape,
+                                        )
+                                    },
+                                    modifier = Modifier
+                                        .fillParentAxisIfFixedOrWrap(),
+                                )
+                            }
                             Text(
                                 text = localeInfo.name,
                                 overflow = TextOverflow.Ellipsis,

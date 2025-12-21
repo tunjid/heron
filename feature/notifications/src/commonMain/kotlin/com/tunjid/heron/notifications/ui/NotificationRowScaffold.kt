@@ -17,7 +17,6 @@
 package com.tunjid.heron.notifications.ui
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeOut
@@ -63,7 +62,6 @@ import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun NotificationAggregateScaffold(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
@@ -157,7 +155,6 @@ fun NotificationAggregateScaffold(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun MovableElementSharedTransitionScope.ExpandButton(
     isExpanded: Boolean,
@@ -182,7 +179,6 @@ private fun MovableElementSharedTransitionScope.ExpandButton(
     )
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun MovableElementSharedTransitionScope.ExpandableProfiles(
     isExpanded: Boolean,
@@ -197,22 +193,25 @@ private fun MovableElementSharedTransitionScope.ExpandableProfiles(
             ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            AsyncImage(
+            PaneStickySharedElement(
                 modifier = Modifier
-                    .size(32.dp)
-                    .paneStickySharedElement(
-                        sharedContentState = rememberSharedContentState(
-                            key = notification.avatarSharedElementKey(profile),
-                        ),
-                    )
-                    .clickable { onProfileClicked(notification, profile) },
-                args = ImageArgs(
-                    url = profile.avatar?.uri,
-                    contentScale = ContentScale.Crop,
-                    contentDescription = profile.displayName ?: profile.handle.id,
-                    shape = RoundedPolygonShape.Circle,
+                    .size(32.dp),
+                sharedContentState = rememberSharedContentState(
+                    key = notification.avatarSharedElementKey(profile),
                 ),
-            )
+            ) {
+                AsyncImage(
+                    modifier = Modifier
+                        .fillParentAxisIfFixedOrWrap()
+                        .clickable { onProfileClicked(notification, profile) },
+                    args = ImageArgs(
+                        url = profile.avatar?.uri,
+                        contentScale = ContentScale.Crop,
+                        contentDescription = profile.displayName ?: profile.handle.id,
+                        shape = RoundedPolygonShape.Circle,
+                    ),
+                )
+            }
             AnimatedVisibility(
                 visible = isExpanded,
                 exit = fadeOut(),

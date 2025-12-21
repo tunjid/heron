@@ -81,6 +81,7 @@ import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.toProfileWithViewerStates
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
+import io.ktor.utils.io.ByteReadChannel
 import kotlin.time.Clock
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -614,8 +615,9 @@ internal class OfflineProfileRepository @Inject constructor(
                 async {
                     if (file == null) return@async null
                     networkService.runCatchingWithMonitoredNetworkRetry {
-                        val bytes = fileManager.readBytes(file)
-                        uploadBlob(bytes)
+                        fileManager.source(file).use { source ->
+                            uploadBlob(ByteReadChannel(source))
+                        }
                     }
                         .onSuccess { fileManager.delete(file) }
                         .getOrNull()
@@ -629,7 +631,7 @@ internal class OfflineProfileRepository @Inject constructor(
                 async {
                     if (file == null) null
                     else networkService.runCatchingWithMonitoredNetworkRetry {
-                        uploadBlob(file.data)
+                        uploadBlob(ByteReadChannel(file.data))
                     }
                         .getOrNull()
                         ?.blob

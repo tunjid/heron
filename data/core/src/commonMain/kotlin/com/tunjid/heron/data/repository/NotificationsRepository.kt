@@ -54,7 +54,13 @@ import sh.christian.ozone.api.response.AtpResponse
 @Serializable
 data class NotificationsQuery(
     override val data: CursorQuery.Data,
-) : CursorQuery
+) : CursorQuery {
+    init {
+        require(data.limit < 20) {
+            "Notification query limit must be less than 20 items"
+        }
+    }
+}
 
 interface NotificationsRepository {
     val unreadCount: Flow<Long>
