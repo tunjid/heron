@@ -14,13 +14,12 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
 interface UserDataRepository {
-    fun mutedWords(): Flow<List<MutedWordPreference>>
 
-    suspend fun createMutedWord(preference: MutedWordPreference): Outcome
+    val preferences: Flow<Preferences>
 
-    suspend fun removeMutedWord(value: String): Outcome
-
-    suspend fun clearAllMutedWords(): Outcome
+    suspend fun updateMutedWords(
+        mutedWords: List<MutedWordPreference>,
+    ): Outcome
 
     suspend fun refreshPreferences(): Outcome
 }
@@ -31,80 +30,41 @@ internal class OfflineUserDataRepository @Inject constructor(
     private val networkService: NetworkService,
 ) : UserDataRepository {
 
-    override fun mutedWords(): Flow<List<MutedWordPreference>> =
+    override val preferences: Flow<Preferences> =
         savedStateDataSource.savedState
             .map {
                 it.signedInProfileData
                     ?.preferences
-                    ?.mutedWordPreferences
-                    ?: emptyList()
+                    ?: Preferences.EmptyPreferences
             }
             .distinctUntilChanged()
 
-    override suspend fun createMutedWord(preference: MutedWordPreference): Outcome {
+    override suspend fun updateMutedWords(
+        mutedWords: List<MutedWordPreference>,
+    ): Outcome {
         val response = networkService.runCatchingWithMonitoredNetworkRetry {
             getPreferencesForActor()
-        }.getOrElse { return Outcome.Failure(it) }
+        }
+            .getOrElse { return Outcome.Failure(it) }
 
-        val update = Timeline.Update.OfMutedWord.Add(preference = preference)
+        val updatedPreferences = preferenceUpdater.update(
+            response = response,
+            update = Timeline.Update.OfMutedWord.ReplaceAll(
+                mutedWordPreferences = mutedWords,
+            ),
+        )
 
         val putResult = networkService.runCatchingWithMonitoredNetworkRetry {
             putPreferences(
                 PutPreferencesRequest(
-                    preferences = preferenceUpdater.update(
-                        response = response,
-                        update = update,
-                    ),
+                    preferences = updatedPreferences,
                 ),
             )
         }
-        if (putResult.isFailure) return Outcome.Failure(putResult.exceptionOrNull()!!)
 
-        updatePreferences(response)
-        return Outcome.Success
-    }
-
-    override suspend fun removeMutedWord(value: String): Outcome {
-        val response = networkService.runCatchingWithMonitoredNetworkRetry {
-            getPreferencesForActor()
-        }.getOrElse { return Outcome.Failure(it) }
-
-        val update = Timeline.Update.OfMutedWord.Remove(value = value)
-
-        val putResult = networkService.runCatchingWithMonitoredNetworkRetry {
-            putPreferences(
-                PutPreferencesRequest(
-                    preferences = preferenceUpdater.update(
-                        response = response,
-                        update = update,
-                    ),
-                ),
-            )
+        if (putResult.isFailure) {
+            return Outcome.Failure(putResult.exceptionOrNull()!!)
         }
-        if (putResult.isFailure) return Outcome.Failure(putResult.exceptionOrNull()!!)
-
-        updatePreferences(response)
-        return Outcome.Success
-    }
-
-    override suspend fun clearAllMutedWords(): Outcome {
-        val response = networkService.runCatchingWithMonitoredNetworkRetry {
-            getPreferencesForActor()
-        }.getOrElse { return Outcome.Failure(it) }
-
-        val update = Timeline.Update.OfMutedWord.ClearAll
-
-        val putResult = networkService.runCatchingWithMonitoredNetworkRetry {
-            putPreferences(
-                PutPreferencesRequest(
-                    preferences = preferenceUpdater.update(
-                        response = response,
-                        update = update,
-                    ),
-                ),
-            )
-        }
-        if (putResult.isFailure) return Outcome.Failure(putResult.exceptionOrNull()!!)
 
         updatePreferences(response)
         return Outcome.Success
@@ -132,7 +92,6 @@ internal class OfflineUserDataRepository @Inject constructor(
             response = response,
             preferences = currentPreferences,
         )
-
         savedStateDataSource.updateSignedInProfileData {
             copy(preferences = updatedPreferences)
         }

@@ -317,48 +317,28 @@ internal class ThingPreferenceUpdater @Inject constructor(
             ),
         )
 
-    private fun Timeline.Update.OfMutedWord.updateMutedWordPreferences(
-        existingPreferences: List<PreferencesUnion.MutedWordsPref>,
-    ): List<PreferencesUnion.MutedWordsPref> {
-        val existingItems = existingPreferences
-            .firstOrNull()
-            ?.value
-            ?.items
-            ?: emptyList()
-
-        return listOf(
-            PreferencesUnion.MutedWordsPref(
-                value = app.bsky.actor.MutedWordsPref(
-                    items = when (this) {
-                        is Timeline.Update.OfMutedWord.Remove -> {
-                            existingItems.filter { it.value != value }
-                        }
-
-                        is Timeline.Update.OfMutedWord.ClearAll -> {
-                            emptyList()
-                        }
-
-                        is Timeline.Update.OfMutedWord.Add -> {
-                            val networkTargets = preference.targets.map { target ->
-                                app.bsky.actor.MutedWordTarget.safeValueOf(target.value)
-                            }
-                            val networkActorTarget = preference.actorTarget?.let { target ->
-                                app.bsky.actor.MutedWordActorTarget.safeValueOf(target.value)
-                            }
-                            val newMutedWord = app.bsky.actor.MutedWord(
-                                id = null, // Server will generate ID
-                                value = preference.value,
-                                targets = networkTargets,
-                                actorTarget = networkActorTarget,
-                                expiresAt = preference.expiresAt,
+    private fun Timeline.Update.OfMutedWord.updateMutedWordPreferences(): List<PreferencesUnion.MutedWordsPref> =
+        when (this) {
+            is Timeline.Update.OfMutedWord.ReplaceAll -> listOf(
+                PreferencesUnion.MutedWordsPref(
+                    value = app.bsky.actor.MutedWordsPref(
+                        items = mutedWordPreferences.map { pref ->
+                            app.bsky.actor.MutedWord(
+                                id = null,
+                                value = pref.value,
+                                targets = pref.targets.map {
+                                    app.bsky.actor.MutedWordTarget.safeValueOf(it.value)
+                                },
+                                actorTarget = pref.actorTarget?.let {
+                                    app.bsky.actor.MutedWordActorTarget.safeValueOf(it.value)
+                                },
+                                expiresAt = pref.expiresAt,
                             )
-                            existingItems + newMutedWord
-                        }
-                    },
+                        },
+                    ),
                 ),
-            ),
-        )
-    }
+            )
+        }
 
     private suspend fun Timeline.Update.updatePreferences(
         existingPreferences: List<PreferencesUnion>,
@@ -374,9 +354,7 @@ internal class ThingPreferenceUpdater @Inject constructor(
             is Timeline.Update.OfLabeler -> updateLabelerPreferences(
                 existingPreferences = existingPreferences.filterIsInstance<PreferencesUnion.LabelersPref>(),
             )
-            is Timeline.Update.OfMutedWord -> updateMutedWordPreferences(
-                existingPreferences = existingPreferences.filterIsInstance<PreferencesUnion.MutedWordsPref>(),
-            )
+            is Timeline.Update.OfMutedWord -> updateMutedWordPreferences()
         }
 }
 
