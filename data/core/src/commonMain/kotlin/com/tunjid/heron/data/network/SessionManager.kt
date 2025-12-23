@@ -169,7 +169,7 @@ internal class PersistedSessionManager @Inject constructor(
             is SessionRequest.Oauth -> {
                 val existingAuth = savedStateDataSource.savedState.value.auth
                 val pendingRequest = existingAuth as? SavedState.AuthTokens.Pending.DPoP
-                    ?: throw IllegalStateException("No pending oauth session to finalize")
+                    ?: throw IllegalStateException("No pending oauth session to finalize. Current auth state: $existingAuth")
 
                 require(request.server.endpoint == pendingRequest.endpoint) {
                     "Mismatched server endpoints in OAuth flow. Expected ${pendingRequest.endpoint}, but got ${request.server.endpoint}"
