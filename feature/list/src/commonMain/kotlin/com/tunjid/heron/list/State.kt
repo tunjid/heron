@@ -34,7 +34,6 @@ import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
-import com.tunjid.heron.timeline.ui.moderation.ModerationState
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.treenav.strings.Route
@@ -55,8 +54,6 @@ data class State(
     val recentConversations: List<Conversation> = emptyList(),
     @Transient
     val timelineState: TimelineState? = null,
-    @Transient
-    val moderationState: ModerationState = ModerationState(),
     @Transient
     val stateHolders: List<ListScreenStateHolders> = emptyList(),
     @Transient

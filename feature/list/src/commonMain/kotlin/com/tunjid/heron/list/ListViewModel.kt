@@ -43,7 +43,6 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.heron.timeline.state.timelineStateHolder
-import com.tunjid.heron.timeline.ui.sheets.MutedWordsStateHolder
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
@@ -119,9 +118,6 @@ class ActualListViewModel(
                     timelineRepository = timelineRepository,
                     profileRepository = profileRepository,
                     authRepository = authRepository,
-                ),
-                moderationStateHolderMutations(
-                    userDataRepository = userDataRepository,
                 ),
                 actions.toMutationStream(
                     keySelector = Action::key,
@@ -392,20 +388,3 @@ internal inline fun <T> Timeline.withListTimelineOrNull(
 ) =
     if (this is Timeline.Home.List) block(this)
     else null
-
-private fun moderationStateHolderMutations(
-    userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> = flow {
-    // Initialize all moderation state holders
-    val mutedWordsStateHolder = MutedWordsStateHolder(
-        userDataRepository = userDataRepository,
-    )
-
-    emit {
-        copy(
-            moderationState = moderationState.copy(
-                mutedWordsStateHolder = mutedWordsStateHolder,
-            ),
-        )
-    }
-}

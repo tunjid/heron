@@ -36,7 +36,6 @@ import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.scaffold.duplicateWriteMessage
 import com.tunjid.heron.scaffold.scaffold.failedWriteMessage
 import com.tunjid.heron.timeline.state.timelineStateHolder
-import com.tunjid.heron.timeline.ui.sheets.MutedWordsStateHolder
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
@@ -103,9 +102,6 @@ class ActualFeedViewModel(
                     scope = scope,
                     timelineRepository = timelineRepository,
                     profileRepository = profileRepository,
-                ),
-                moderationStateHolderMutations(
-                    userDataRepository = userDataRepository,
                 ),
                 actions.toMutationStream(
                     keySelector = Action::key,
@@ -277,20 +273,3 @@ internal inline fun <T> Timeline.withFeedTimelineOrNull(
 ) =
     if (this is Timeline.Home.Feed) block(this)
     else null
-
-private fun moderationStateHolderMutations(
-    userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> = flow {
-    // Initialize all moderation state holders
-    val mutedWordsStateHolder = MutedWordsStateHolder(
-        userDataRepository = userDataRepository,
-    )
-
-    emit {
-        copy(
-            moderationState = moderationState.copy(
-                mutedWordsStateHolder = mutedWordsStateHolder,
-            ),
-        )
-    }
-}

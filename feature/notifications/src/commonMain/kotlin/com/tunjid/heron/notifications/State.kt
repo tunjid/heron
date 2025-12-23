@@ -26,7 +26,6 @@ import com.tunjid.heron.data.repository.NotificationsQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
-import com.tunjid.heron.timeline.ui.moderation.ModerationState
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.tiler.buildTiledList
 import kotlin.time.Clock
@@ -39,8 +38,6 @@ data class State(
     val lastRefreshed: Instant? = null,
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
-    @Transient
-    val moderationState: ModerationState = ModerationState(),
     @Transient
     val signedInProfile: Profile? = null,
     override val tilingData: TilingState.Data<NotificationsQuery, Notification> = TilingState.Data(

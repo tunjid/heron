@@ -90,15 +90,12 @@ import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.effects.TimelineRefreshEffect
-import com.tunjid.heron.timeline.ui.moderation.ModerationOption
-import com.tunjid.heron.timeline.ui.moderation.ModerationState
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostOption
 import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
 import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
-import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberMutedWordsSheetState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
@@ -179,7 +176,6 @@ internal fun HomeScreen(
                     signedInProfileId = state.signedInProfile?.did,
                     recentConversations = state.recentConversations,
                     timelineStateHolder = timelineStateHolder,
-                    moderationState = state.moderationState,
                     tabsOffset = tabsOffsetNestedScrollConnection::offset,
                     updatePendingScrollState = { pendingScrollOffset = it },
                     actions = actions,
@@ -296,18 +292,12 @@ private fun HomeTimeline(
     signedInProfileId: ProfileId?,
     recentConversations: List<Conversation>,
     timelineStateHolder: TimelineStateHolder,
-    moderationState: ModerationState,
     tabsOffset: () -> Offset,
     updatePendingScrollState: (Int) -> Unit,
     actions: (Action) -> Unit,
 ) {
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
     val items by rememberUpdatedState(timelineState.tiledItems)
-    val mutedWordSheetState = moderationState.mutedWordsStateHolder?.let {
-        rememberMutedWordsSheetState(
-            stateHolder = it,
-        )
-    }
 
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
@@ -358,16 +348,6 @@ private fun HomeTimeline(
                 is PostOption.ThreadGate ->
                     items.firstOrNull { it.post.uri == option.postUri }
                         ?.let(threadGateSheetState::show)
-            }
-        },
-        onModerationOptionClicked = { option ->
-            when (option) {
-                ModerationOption.BlockUser -> {
-                    // TODO ()
-                }
-                ModerationOption.MuteWords -> {
-                    mutedWordSheetState?.showMutedWordsSheet()
-                }
             }
         },
     )

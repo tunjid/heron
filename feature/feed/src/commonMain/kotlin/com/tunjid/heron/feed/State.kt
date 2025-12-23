@@ -30,7 +30,6 @@ import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
-import com.tunjid.heron.timeline.ui.moderation.ModerationState
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.treenav.strings.Route
 import kotlin.time.Clock
@@ -52,8 +51,6 @@ data class State(
     val timelineState: TimelineState? = null,
     @Transient
     val timelineStateHolder: TimelineStateHolder? = null,
-    @Transient
-    val moderationState: ModerationState = ModerationState(),
     @Transient
     val messages: List<Memo> = emptyList(),
 )

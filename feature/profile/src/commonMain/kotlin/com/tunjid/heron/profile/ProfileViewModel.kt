@@ -57,7 +57,6 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.heron.timeline.state.timelineStateHolder
-import com.tunjid.heron.timeline.ui.sheets.MutedWordsStateHolder
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -86,7 +85,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.take
@@ -108,7 +106,6 @@ class ActualProfileViewModel(
     messageRepository: MessageRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
-    userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
@@ -149,9 +146,6 @@ class ActualProfileViewModel(
                     recordRepository = recordRepository,
                     profileRepository = profileRepository,
                     timelineRepository = timelineRepository,
-                ),
-                moderationStateHolderMutations(
-                    userDataRepository = userDataRepository,
                 ),
                 actions.toMutationStream(
                     keySelector = Action::key,
@@ -541,20 +535,3 @@ private fun <T : Record> CoroutineScope.recordStateHolder(
         }
     },
 )
-
-private fun moderationStateHolderMutations(
-    userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> = flow {
-    // Initialize all moderation state holders
-    val mutedWordsStateHolder = MutedWordsStateHolder(
-        userDataRepository = userDataRepository,
-    )
-
-    emit {
-        copy(
-            moderationState = moderationState.copy(
-                mutedWordsStateHolder = mutedWordsStateHolder,
-            ),
-        )
-    }
-}

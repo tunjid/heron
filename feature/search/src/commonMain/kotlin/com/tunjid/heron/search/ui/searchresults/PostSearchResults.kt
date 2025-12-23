@@ -56,15 +56,12 @@ import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
-import com.tunjid.heron.timeline.ui.moderation.ModerationOption
-import com.tunjid.heron.timeline.ui.moderation.ModerationState
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostOption
 import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
 import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
-import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberMutedWordsSheetState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
@@ -86,7 +83,6 @@ internal fun PostSearchResults(
     recentConversations: List<Conversation>,
     videoStates: ThreadedVideoPositionStates<SearchResult.OfPost>,
     paneScaffoldState: PaneScaffoldState,
-    moderationState: ModerationState,
     onLinkTargetClicked: (LinkTarget) -> Unit,
     onPostSearchResultProfileClicked: (profile: Profile, post: Post, sharedElementPrefix: String) -> Unit,
     onPostSearchResultClicked: (post: Post, sharedElementPrefix: String) -> Unit,
@@ -118,11 +114,6 @@ internal fun PostSearchResults(
     val threadGateSheetState = rememberUpdatedThreadGateSheetState(
         onThreadGateUpdated = onSendPostInteraction,
     )
-    val mutedWordSheetState = moderationState.mutedWordsStateHolder?.let {
-        rememberMutedWordsSheetState(
-            stateHolder = it,
-        )
-    }
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
@@ -143,16 +134,6 @@ internal fun PostSearchResults(
                     results.firstOrNull { it.timelineItem.post.uri == option.postUri }
                         ?.timelineItem
                         ?.let(threadGateSheetState::show)
-            }
-        },
-        onModerationOptionClicked = { option ->
-            when (option) {
-                ModerationOption.BlockUser -> {
-                    // TODO ()
-                }
-                ModerationOption.MuteWords -> {
-                    mutedWordSheetState?.showMutedWordsSheet()
-                }
             }
         },
     )

@@ -21,7 +21,6 @@ import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.NotificationsRepository
-import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -35,7 +34,6 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.refreshedStatus
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
-import com.tunjid.heron.timeline.ui.sheets.MutedWordsStateHolder
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
@@ -52,9 +50,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
 
 internal typealias NotificationsStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -73,7 +69,6 @@ class ActualNotificationsViewModel(
     authRepository: AuthRepository,
     messageRepository: MessageRepository,
     notificationsRepository: NotificationsRepository,
-    userDataRepository: UserDataRepository,
     @Assisted
     scope: CoroutineScope,
     @Suppress("UNUSED_PARAMETER")
@@ -95,34 +90,29 @@ class ActualNotificationsViewModel(
             ),
         ),
         actionTransform = transform@{ actions ->
-            merge(
-                moderationStateHolderMutations(
-                    userDataRepository = userDataRepository,
-                ),
-                actions.toMutationStream(
-                    keySelector = Action::key,
-                ) {
-                    when (val action = type()) {
-                        is Action.Tile -> action.flow.notificationsMutations(
-                            stateHolder = this@transform,
-                            notificationsRepository = notificationsRepository,
-                        )
+            actions.toMutationStream(
+                keySelector = Action::key,
+            ) {
+                when (val action = type()) {
+                    is Action.Tile -> action.flow.notificationsMutations(
+                        stateHolder = this@transform,
+                        notificationsRepository = notificationsRepository,
+                    )
 
-                        is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                            writeQueue = writeQueue,
-                        )
-                        is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                        writeQueue = writeQueue,
+                    )
+                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 
-                        is Action.MarkNotificationsRead -> action.flow.markNotificationsReadMutations(
-                            notificationsRepository = notificationsRepository,
-                        )
+                    is Action.MarkNotificationsRead -> action.flow.markNotificationsReadMutations(
+                        notificationsRepository = notificationsRepository,
+                    )
 
-                        is Action.Navigate -> action.flow.consumeNavigationActions(
-                            navigationMutationConsumer = navActions,
-                        )
-                    }
-                },
-            )
+                    is Action.Navigate -> action.flow.consumeNavigationActions(
+                        navigationMutationConsumer = navActions,
+                    )
+                }
+            }
         },
     )
 
@@ -206,20 +196,3 @@ suspend fun Flow<Action.Tile>.notificationsMutations(
                 copy(tilingData = it)
             },
         )
-
-private fun moderationStateHolderMutations(
-    userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> = flow {
-    // Initialize all moderation state holders
-    val mutedWordsStateHolder = MutedWordsStateHolder(
-        userDataRepository = userDataRepository,
-    )
-
-    emit {
-        copy(
-            moderationState = moderationState.copy(
-                mutedWordsStateHolder = mutedWordsStateHolder,
-            ),
-        )
-    }
-}

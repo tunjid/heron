@@ -49,7 +49,6 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.isRefreshing
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
-import com.tunjid.heron.timeline.ui.moderation.ModerationState
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.treenav.push
@@ -78,8 +77,6 @@ data class State(
     val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
     @Transient
     val stateHolders: List<ProfileScreenStateHolders> = emptyList(),
-    @Transient
-    val moderationState: ModerationState = ModerationState(),
     @Transient
     val messages: List<Memo> = emptyList(),
 )

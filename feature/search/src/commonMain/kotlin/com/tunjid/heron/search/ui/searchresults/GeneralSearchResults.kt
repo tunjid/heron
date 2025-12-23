@@ -195,7 +195,6 @@ internal fun GeneralSearchResults(
                             recentConversations = state.recentConversations,
                             videoStates = videoStates,
                             paneScaffoldState = paneScaffoldState,
-                            moderationState = state.moderationState,
                             onLinkTargetClicked = onLinkTargetClicked,
                             onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
                             onPostSearchResultClicked = onPostSearchResultClicked,

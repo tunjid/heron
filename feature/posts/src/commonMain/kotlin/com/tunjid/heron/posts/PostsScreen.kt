@@ -65,7 +65,6 @@ import com.tunjid.heron.timeline.ui.DismissableRefreshIndicator
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
-import com.tunjid.heron.timeline.ui.moderation.ModerationOption
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostOption
 import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
@@ -137,11 +136,6 @@ internal fun PostsScreen(
             actions(Action.SendPostInteraction(it))
         },
     )
-    val mutedWordSheetState = state.moderationState.mutedWordsStateHolder?.let {
-        rememberMutedWordsSheetState(
-            stateHolder = it,
-        )
-    }
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = state.signedInProfileId,
         recentConversations = state.recentConversations,
@@ -163,16 +157,6 @@ internal fun PostsScreen(
                 is PostOption.ThreadGate ->
                     items.firstOrNull { it.post.uri == option.postUri }
                         ?.let(threadGateSheetState::show)
-            }
-        },
-        onModerationOptionClicked = { option ->
-            when (option) {
-                ModerationOption.BlockUser -> {
-                    // TODO ()
-                }
-                ModerationOption.MuteWords -> {
-                    mutedWordSheetState?.showMutedWordsSheet()
-                }
             }
         },
     )

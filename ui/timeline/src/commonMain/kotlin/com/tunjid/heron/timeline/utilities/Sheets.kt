@@ -61,7 +61,6 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.timeline.ui.moderation.ModerationOption
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.asClipEntry
 import heron.ui.timeline.generated.resources.Res
@@ -141,87 +140,6 @@ internal fun ShareInPostCard(
             icon = Icons.AutoMirrored.Rounded.Article,
             text = shareInPostDescription,
         )
-    }
-}
-
-@Composable
-fun ModerationToolsCard(
-    onOptionClicked: (ModerationOption) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    BottomSheetItemCard(
-        modifier = modifier.fillMaxWidth(),
-    ) {
-        Column(
-            modifier = Modifier.padding(vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Text(
-                text = stringResource(Res.string.moderation_options_title),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-            )
-
-            HorizontalDivider(
-                Modifier.padding(horizontal = 16.dp),
-                0.5.dp,
-                MaterialTheme.colorScheme.outlineVariant,
-            )
-
-            ModerationOptionItem(
-                option = ModerationOption.MuteWords,
-                onClick = { onOptionClicked(ModerationOption.MuteWords) },
-                contentDescription = stringResource(Res.string.mute_words),
-            )
-
-            ModerationOptionItem(
-                option = ModerationOption.BlockUser,
-                onClick = { onOptionClicked(ModerationOption.BlockUser) },
-                contentDescription = stringResource(Res.string.block_user),
-            )
-        }
-    }
-}
-
-@Composable
-private fun ModerationOptionItem(
-    option: ModerationOption,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    contentDescription: String,
-) {
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        color = Color.Transparent,
-        onClick = onClick,
-        shape = MaterialTheme.shapes.medium,
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Icon(
-                imageVector = option.icon,
-                contentDescription = contentDescription,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = option.title,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f),
-            )
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-                contentDescription = contentDescription,
-                tint = MaterialTheme.colorScheme.outline,
-                modifier = Modifier.size(16.dp),
-            )
-        }
     }
 }
 

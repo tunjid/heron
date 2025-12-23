@@ -23,7 +23,6 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.timeline.state.TimelineStateHolder
-import com.tunjid.heron.timeline.ui.moderation.ModerationState
 import com.tunjid.heron.ui.text.Memo
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -44,8 +43,6 @@ data class State(
     val timelineStateHolders: List<HomeScreenStateHolders> = emptyList(),
     @Transient
     val signedInProfile: Profile? = null,
-    @Transient
-    val moderationState: ModerationState = ModerationState(),
     @Transient
     val messages: List<Memo> = emptyList(),
 )

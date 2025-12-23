@@ -102,7 +102,6 @@ import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.PostAction
-import com.tunjid.heron.timeline.ui.moderation.ModerationOption
 import com.tunjid.heron.timeline.ui.post.MediaPostInteractions
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostOption
@@ -157,11 +156,6 @@ internal fun GalleryScreen(
             )
         },
     )
-    val mutedWordSheetState = state.moderationState.mutedWordsStateHolder?.let {
-        rememberMutedWordsSheetState(
-            stateHolder = it,
-        )
-    }
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = state.signedInProfileId,
         recentConversations = state.recentConversations,
@@ -182,16 +176,6 @@ internal fun GalleryScreen(
 
                 // TODO
                 is PostOption.ThreadGate -> Unit
-            }
-        },
-        onModerationOptionClicked = { option ->
-            when (option) {
-                ModerationOption.BlockUser -> {
-                    // TODO ()
-                }
-                ModerationOption.MuteWords -> {
-                    mutedWordSheetState?.showMutedWordsSheet()
-                }
             }
         },
     )

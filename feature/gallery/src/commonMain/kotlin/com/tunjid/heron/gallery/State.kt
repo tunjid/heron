@@ -34,7 +34,6 @@ import com.tunjid.heron.gallery.di.startIndex
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
-import com.tunjid.heron.timeline.ui.moderation.ModerationState
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.treenav.strings.Route
 import kotlinx.serialization.Serializable
@@ -53,8 +52,6 @@ data class State(
     val recentConversations: List<Conversation> = emptyList(),
     @Transient
     val items: List<GalleryItem> = emptyList(),
-    @Transient
-    val moderationState: ModerationState = ModerationState(),
     @Transient
     val messages: List<Memo> = emptyList(),
 )
