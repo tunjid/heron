@@ -22,14 +22,11 @@ import com.atproto.server.RefreshSessionResponse
 import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.models.SessionRequest
-import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.lexicons.XrpcBlueskyApi
 import com.tunjid.heron.data.lexicons.XrpcSerializersModule
 import com.tunjid.heron.data.network.oauth.DpopKeyPair
 import com.tunjid.heron.data.network.oauth.OAuthApi
-import com.tunjid.heron.data.network.oauth.OAuthAuthorizationRequest
 import com.tunjid.heron.data.network.oauth.OAuthClient
 import com.tunjid.heron.data.network.oauth.OAuthScope
 import com.tunjid.heron.data.network.oauth.OAuthToken
@@ -77,9 +74,9 @@ import sh.christian.ozone.api.runtime.buildXrpcJsonConfiguration
 
 internal interface SessionManager {
 
-    suspend fun startOauthSessionUri(
+    suspend fun initiateOauthSession(
         request: OauthUriRequest,
-    ): GenericUri
+    ): SavedState.AuthTokens.Pending
 
     suspend fun createSession(
         request: SessionRequest,
@@ -125,25 +122,24 @@ internal class PersistedSessionManager @Inject constructor(
         client = authHttpClient,
     )
 
-    private var pendingOauthSession: OauthSession? = null
-
-    override suspend fun startOauthSessionUri(
+    override suspend fun initiateOauthSession(
         request: OauthUriRequest,
-    ): GenericUri {
+    ): SavedState.AuthTokens.Pending {
         sessionRequestUrl.update { Url(request.server.endpoint) }
         return oAuthApi.buildAuthorizationRequest(
             oauthClient = HeronOauthClient,
             scopes = HeronOauthScopes,
             loginHandleHint = request.handle.id,
         )
-            .also {
-                pendingOauthSession = OauthSession(
-                    handle = request.handle,
-                    request = it,
+            .let {
+                SavedState.AuthTokens.Pending.DPoP(
+                    profileHandle = request.handle,
+                    endpoint = request.server.endpoint,
+                    authorizeRequestUrl = it.authorizeRequestUrl,
+                    codeVerifier = it.codeVerifier,
+                    nonce = it.nonce,
                 )
             }
-            .authorizeRequestUrl
-            .let(::GenericUri)
     }
 
     override suspend fun createSession(
@@ -171,36 +167,33 @@ internal class PersistedSessionManager @Inject constructor(
                 }
                 .requireResponse()
             is SessionRequest.Oauth -> {
-                val pendingRequest = pendingOauthSession
+                val pendingRequest = savedStateDataSource.savedState.value.auth
+                    as? SavedState.AuthTokens.Pending.DPoP
                     ?: throw IllegalStateException("Expired authentication session")
 
-                try {
-                    val callbackUrl = Url(request.callbackUri.uri)
+                val callbackUrl = Url(request.callbackUri.uri)
 
-                    val code = callbackUrl.parameters[OauthCallbackUriCodeParam]
-                        ?: throw IllegalStateException("No auth code")
+                val code = callbackUrl.parameters[OauthCallbackUriCodeParam]
+                    ?: throw IllegalStateException("No auth code")
 
-                    val oAuthToken = oAuthApi.requestToken(
-                        oauthClient = HeronOauthClient,
-                        nonce = pendingRequest.request.nonce,
-                        codeVerifier = pendingRequest.request.codeVerifier,
-                        code = code,
-                    )
+                val oAuthToken = oAuthApi.requestToken(
+                    oauthClient = HeronOauthClient,
+                    nonce = pendingRequest.nonce,
+                    codeVerifier = pendingRequest.codeVerifier,
+                    code = code,
+                )
 
-                    val callingDid = api.resolveHandle(
-                        ResolveHandleQueryParams(Handle(pendingRequest.handle.id)),
-                    )
-                        .requireResponse()
-                        .did
+                val callingDid = api.resolveHandle(
+                    ResolveHandleQueryParams(Handle(pendingRequest.profileHandle.id)),
+                )
+                    .requireResponse()
+                    .did
 
-                    if (oAuthToken.subject != callingDid) {
-                        throw IllegalStateException("Invalid login session")
-                    }
-
-                    oAuthToken.toAppToken(authEndpoint = request.server.endpoint)
-                } finally {
-                    pendingOauthSession = null
+                if (oAuthToken.subject != callingDid) {
+                    throw IllegalStateException("Invalid login session")
                 }
+
+                oAuthToken.toAppToken(authEndpoint = request.server.endpoint)
             }
             is SessionRequest.Guest -> SavedState.AuthTokens.Guest(
                 server = request.server,
@@ -220,6 +213,7 @@ internal class PersistedSessionManager @Inject constructor(
                 keyPair = authTokens.toKeyPair(),
             )
             is SavedState.AuthTokens.Guest,
+            is SavedState.AuthTokens.Pending,
             null,
             -> Unit
         }
@@ -502,6 +496,7 @@ private val SavedState.AuthTokens?.defaultUrl
         is SavedState.AuthTokens.Authenticated.Bearer -> authEndpoint
         is SavedState.AuthTokens.Authenticated.DPoP -> issuerEndpoint
         is SavedState.AuthTokens.Guest -> server.endpoint
+        is SavedState.AuthTokens.Pending.DPoP -> endpoint
         null -> Server.BlueSky.endpoint
     }
 
@@ -510,11 +505,6 @@ private val SavedState.AuthTokens.Authenticated.singleAccessKey
         is SavedState.AuthTokens.Authenticated.Bearer -> "$auth-$refresh"
         is SavedState.AuthTokens.Authenticated.DPoP -> "$auth-$refresh"
     }
-
-private class OauthSession(
-    val handle: ProfileHandle,
-    val request: OAuthAuthorizationRequest,
-)
 
 internal val BlueskyJson: Json = Json(
     from = buildXrpcJsonConfiguration(XrpcSerializersModule),

@@ -109,7 +109,13 @@ internal class AuthTokenRepository(
     override suspend fun oauthRequestUri(
         request: OauthUriRequest,
     ): Result<GenericUri> = runCatchingUnlessCancelled {
-        sessionManager.startOauthSessionUri(request)
+        when (val pendingToken = sessionManager.initiateOauthSession(request)) {
+            is SavedState.AuthTokens.Pending.DPoP -> {
+                savedStateDataSource.setAuth(pendingToken)
+                pendingToken.authorizeRequestUrl
+                    .let(::GenericUri)
+            }
+        }
     }
 
     override suspend fun createSession(
