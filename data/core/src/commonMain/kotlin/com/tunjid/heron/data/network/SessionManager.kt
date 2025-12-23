@@ -62,6 +62,7 @@ import io.ktor.http.encodedPath
 import io.ktor.http.isSuccess
 import io.ktor.http.set
 import io.ktor.http.takeFrom
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -139,6 +140,7 @@ internal class PersistedSessionManager @Inject constructor(
                     codeVerifier = it.codeVerifier,
                     nonce = it.nonce,
                     state = it.state,
+                    expiresAt = Clock.System.now() + it.expiresIn,
                 )
             }
     }
