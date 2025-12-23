@@ -138,6 +138,7 @@ internal class PersistedSessionManager @Inject constructor(
                     authorizeRequestUrl = it.authorizeRequestUrl,
                     codeVerifier = it.codeVerifier,
                     nonce = it.nonce,
+                    state = it.state,
                 )
             }
     }
@@ -176,6 +177,13 @@ internal class PersistedSessionManager @Inject constructor(
                 }
 
                 val callbackUrl = Url(request.callbackUri.uri)
+
+                val state = callbackUrl.parameters["state"]
+                    ?: throw IllegalStateException("No state in callback")
+
+                require(state == pendingRequest.state) {
+                    "Mismatched state in OAuth callback. Expected ${pendingRequest.state}, but got $state"
+                }
 
                 val code = callbackUrl.parameters[OauthCallbackUriCodeParam]
                     ?: throw IllegalStateException("No auth code")

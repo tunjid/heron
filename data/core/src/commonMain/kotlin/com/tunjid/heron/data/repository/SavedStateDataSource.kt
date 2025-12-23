@@ -84,6 +84,7 @@ abstract class SavedState {
                 val authorizeRequestUrl: String,
                 val codeVerifier: String,
                 val nonce: String,
+                val state: String,
             ) : Pending() {
                 override val authProfileId: ProfileId = Constants.unknownAuthorId
             }
