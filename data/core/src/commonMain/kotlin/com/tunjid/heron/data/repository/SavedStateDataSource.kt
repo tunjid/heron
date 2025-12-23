@@ -24,6 +24,7 @@ import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Server
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.utilities.Outcome
@@ -71,6 +72,23 @@ abstract class SavedState {
             val server: Server,
         ) : AuthTokens() {
             override val authProfileId: ProfileId = Constants.unknownAuthorId
+        }
+
+        @Serializable
+        sealed class Pending : AuthTokens() {
+
+            @Serializable
+            data class DPoP(
+                val profileHandle: ProfileHandle,
+                val endpoint: String,
+                val authorizeRequestUrl: String,
+                val codeVerifier: String,
+                val nonce: String,
+                val state: String,
+                val expiresAt: Instant,
+            ) : Pending() {
+                override val authProfileId: ProfileId = Constants.unknownAuthorId
+            }
         }
 
         @Serializable
@@ -194,6 +212,7 @@ internal fun SavedState.signedProfilePreferencesOrDefault(): Preferences =
             is SavedState.AuthTokens.Authenticated.Bearer -> authTokens.authEndpoint
             is SavedState.AuthTokens.Authenticated.DPoP -> authTokens.issuerEndpoint
             is SavedState.AuthTokens.Guest -> authTokens.server.endpoint
+            is SavedState.AuthTokens.Pending.DPoP -> authTokens.endpoint
             null -> Server.BlueSky.endpoint
         }.let(::preferencesForUrl)
 
@@ -201,6 +220,7 @@ private fun SavedState.AuthTokens?.ifSignedIn(): SavedState.AuthTokens.Authentic
     when (this) {
         is SavedState.AuthTokens.Authenticated -> this
         is SavedState.AuthTokens.Guest,
+        is SavedState.AuthTokens.Pending,
         null,
         -> null
     }
@@ -378,6 +398,6 @@ internal inline fun <T> SavedStateDataSource.singleSessionFlow(
         block(signedInProfileId)
     }
 
-internal fun expiredSessionOutcome() = Outcome.Failure(ExpiredSessionException)
+internal fun expiredSessionOutcome() = Outcome.Failure(ExpiredSessionException())
 
-private object ExpiredSessionException : IOException()
+private class ExpiredSessionException : IOException()
