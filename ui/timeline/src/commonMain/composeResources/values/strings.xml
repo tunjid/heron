@@ -70,7 +70,7 @@
     <string name="exclude_user_txt">Exclude users you don't follow</string>
     <string name="exclude_non_followers_txt">Excludes non-followers</string>
     <string name="mute_user_txt">Only mute from users you follow</string>
-    <string name="text_tags">Text  tags</string>
+    <string name="text_tags">Text  &amp; tags</string>
     <string name="tags_only">Tags only</string>
     <string name="mute">Mute In</string>
     <string name="mute_in">Mute In</string>
@@ -83,7 +83,7 @@
     <string name="mute_words_title">Word or phrase to mute</string>
     <string name="mute_words_placeholder">e.g., politics, spoiler, nsfw</string>
     <string name="close_icon">Close</string>
-    <string name="clear_icon">Close</string>
+    <string name="clear_icon">Clear</string>
     <string name="remove">Remove</string>
     <string name="targets">Targets</string>
     <string name="actor_target">Actor target</string>

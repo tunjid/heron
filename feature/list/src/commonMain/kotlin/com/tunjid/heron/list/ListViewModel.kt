@@ -28,7 +28,6 @@ import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
-import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -86,7 +85,6 @@ class ActualListViewModel(
     messageRepository: MessageRepository,
     timelineRepository: TimelineRepository,
     profileRepository: ProfileRepository,
-    userDataRepository: UserDataRepository,
     authRepository: AuthRepository,
     @Assisted
     scope: CoroutineScope,

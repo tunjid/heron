@@ -108,7 +108,7 @@ data class State(
     val error: String? = null,
     val newWord: String = "",
     val newWordTargets: List<String> = listOf("content", "tag"),
-    val newWordDuration: Instant? = null,
+    val newWordDuration: Duration? = null,
     val newWordExcludeNonFollowers: Boolean = false,
     @Transient
     val mutedWords: List<MutedWordPreference> = emptyList(),
@@ -135,7 +135,7 @@ sealed class Action(
     ) : Action("UpdateNewWord")
 
     data class UpdateDuration(
-        val duration: Instant?,
+        val duration: Duration?,
     ) : Action("UpdateDuration")
 
     data class UpdateTargets(
@@ -376,9 +376,9 @@ private fun MutedWordsBottomSheet(
                     val durationOptions = remember {
                         listOf(
                             DurationOption(Res.string.forever, null),
-                            DurationOption(Res.string.twenty_four_hours, Clock.System.now().plus(Duration.parse("24h"))),
-                            DurationOption(Res.string.seven_days, Clock.System.now().plus(Duration.parse("7d"))),
-                            DurationOption(Res.string.thirty_days, Clock.System.now().plus(Duration.parse("30d"))),
+                            DurationOption(Res.string.twenty_four_hours, Duration.parse("24h")),
+                            DurationOption(Res.string.seven_days, Duration.parse("7d")),
+                            DurationOption(Res.string.thirty_days, Duration.parse("30d")),
                         )
                     }
 
@@ -473,11 +473,14 @@ private fun MutedWordsBottomSheet(
 
                     Button(
                         onClick = {
-                            val duration = selectedDuration ?: Instant.DISTANT_FUTURE
+                            val expiresAt = uiState.newWordDuration
+                                ?.let { Clock.System.now() + it }
+                                ?: Instant.DISTANT_FUTURE
+
                             sheetState.accept(
                                 Action.Add(
                                     value = uiState.newWord,
-                                    duration = duration,
+                                    duration = expiresAt,
                                     targets = uiState.newWordTargets,
                                     excludeNonFollowers = uiState.newWordExcludeNonFollowers,
                                 ),
@@ -904,7 +907,7 @@ private fun formatTargets(targets: List<MutedWordPreference.Target>): String {
 
 private data class DurationOption(
     val label: StringResource,
-    val expiresAt: Instant?,
+    val expiresAt: Duration?,
 )
 
 private data class MuteTargetOption(

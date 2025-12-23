@@ -29,7 +29,6 @@ import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
-import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -91,7 +90,6 @@ class SearchViewModel(
     searchRepository: SearchRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
-    userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
