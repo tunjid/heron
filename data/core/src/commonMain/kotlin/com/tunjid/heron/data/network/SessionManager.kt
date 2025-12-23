@@ -169,7 +169,7 @@ internal class PersistedSessionManager @Inject constructor(
             is SessionRequest.Oauth -> {
                 val pendingRequest = savedStateDataSource.savedState.value.auth
                     as? SavedState.AuthTokens.Pending.DPoP
-                    ?: throw IllegalStateException("Expired authentication session")
+                    ?: throw IllegalStateException("No pending oauth session to finalize")
 
                 val callbackUrl = Url(request.callbackUri.uri)
 
