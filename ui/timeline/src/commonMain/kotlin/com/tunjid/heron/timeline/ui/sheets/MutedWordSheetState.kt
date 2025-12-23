@@ -30,6 +30,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -49,17 +50,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.core.models.MutedWordPreference
-import com.tunjid.heron.data.repository.UserDataRepository
+import com.tunjid.heron.data.core.models.Preferences
+import com.tunjid.heron.timeline.ui.moderation.ModerationFeatureWhileSubscribed
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
+import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
-import com.tunjid.mutator.mutationOf
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.actor_target
 import heron.ui.timeline.generated.resources.add_muted_word
@@ -71,6 +72,7 @@ import heron.ui.timeline.generated.resources.duration
 import heron.ui.timeline.generated.resources.error
 import heron.ui.timeline.generated.resources.exclude_non_followers_txt
 import heron.ui.timeline.generated.resources.exclude_user_txt
+import heron.ui.timeline.generated.resources.forever
 import heron.ui.timeline.generated.resources.mute_in
 import heron.ui.timeline.generated.resources.mute_user_txt
 import heron.ui.timeline.generated.resources.mute_words
@@ -79,7 +81,12 @@ import heron.ui.timeline.generated.resources.mute_words_title
 import heron.ui.timeline.generated.resources.no_muted_words_yet
 import heron.ui.timeline.generated.resources.remove
 import heron.ui.timeline.generated.resources.selected
+import heron.ui.timeline.generated.resources.seven_days
+import heron.ui.timeline.generated.resources.tags_only
 import heron.ui.timeline.generated.resources.targets
+import heron.ui.timeline.generated.resources.text_tags
+import heron.ui.timeline.generated.resources.thirty_days
+import heron.ui.timeline.generated.resources.twenty_four_hours
 import heron.ui.timeline.generated.resources.unselected
 import heron.ui.timeline.generated.resources.your_muted_word
 import kotlin.time.Clock
@@ -87,229 +94,169 @@ import kotlin.time.Duration
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
+@Serializable
 data class State(
     val isLoading: Boolean = false,
-    val mutedWords: List<MutedWordPreference> = emptyList(),
     val error: String? = null,
     val newWord: String = "",
     val newWordTargets: List<String> = listOf("content", "tag"),
     val newWordDuration: Instant? = null,
     val newWordExcludeNonFollowers: Boolean = false,
+    @Transient
+    val mutedWords: List<MutedWordPreference> = emptyList(),
 )
 
 sealed class Action(
     val key: String,
 ) {
     data class Add(
-        val word: String,
+        val value: String,
         val duration: Instant,
         val targets: List<String>,
         val excludeNonFollowers: Boolean,
     ) : Action("Add")
-    data class Remove(val value: String) : Action("Remove")
+
+    data class Remove(
+        val value: String,
+    ) : Action("Remove")
+
     object ClearAll : Action("ClearAll")
-    data class UpdateNewWord(val word: String) : Action("UpdateNewWord")
-    data class UpdateDuration(val duration: Instant?) : Action("UpdateDuration")
-    data class UpdateTargets(val targets: List<String>) : Action("UpdateTargets")
-    data class UpdateExcludeNonFollowers(val exclude: Boolean) : Action("UpdateExcludeNonFollowers")
-    object Load : Action("Load")
+
+    data class UpdateNewWord(
+        val word: String,
+    ) : Action("UpdateNewWord")
+
+    data class UpdateDuration(
+        val duration: Instant?,
+    ) : Action("UpdateDuration")
+
+    data class UpdateTargets(
+        val targets: List<String>,
+    ) : Action("UpdateTargets")
+
+    data class UpdateExcludeNonFollowers(
+        val exclude: Boolean,
+    ) : Action("UpdateExcludeNonFollowers")
 }
 
 @Stable
-class MutedWordsStateHolder(
-    private val userDataRepository: UserDataRepository,
-) {
-    private val actions = MutableSharedFlow<Action>(extraBufferCapacity = 64)
-
-    fun createMutator(scope: CoroutineScope): StateFlow<State> {
-        val mutator = scope.actionStateFlowMutator<Action, State>(
-            initialState = State(),
-            started = SharingStarted.WhileSubscribed(),
-            inputs = listOf(
-                loadMutedWords(
-                    userDataRepository = userDataRepository,
-                ),
-            ),
-            actionTransform = transform@{ actions ->
-                actions.toMutationStream(keySelector = Action::key) {
-                    when (val type = type()) {
-                        is Action.Add ->
-                            type.flow.addMutations(
-                                userDataRepository = userDataRepository,
-                            )
-
-                        is Action.Remove ->
-                            type.flow.removeMutations(
-                                userDataRepository = userDataRepository,
-                            )
-
-                        is Action.ClearAll ->
-                            type.flow.clearAllMutations(
-                                userDataRepository = userDataRepository,
-                            )
-
-                        is Action.Load ->
-                            type.flow.loadMutations(
-                                userDataRepository = userDataRepository,
-                            )
-
-                        is Action.UpdateNewWord ->
-                            type.flow.updateNewWordMutations()
-
-                        is Action.UpdateDuration ->
-                            type.flow.updateDurationMutations()
-                        is Action.UpdateExcludeNonFollowers ->
-                            type.flow.updateExcludeNonFollowersMutations()
-                        is Action.UpdateTargets ->
-                            type.flow.updateTargetsMutations()
-                    }
+class MutedWordsSheetState(
+    private val coroutineScope: CoroutineScope,
+    scope: BottomSheetScope,
+    preferences: Flow<Preferences>,
+    private val onSave: suspend (List<MutedWordPreference>) -> Unit,
+) : BottomSheetState(scope),
+    ActionStateMutator<Action, StateFlow<State>> by coroutineScope.actionStateFlowMutator(
+        initialState = State(),
+        inputs = listOf(
+            preferencesInput(preferences),
+        ),
+        started = SharingStarted.WhileSubscribed(ModerationFeatureWhileSubscribed),
+        actionTransform = { actions ->
+            actions.toMutationStream(keySelector = Action::key) {
+                when (val type = type()) {
+                    is Action.Add -> type.flow.addMutations()
+                    is Action.Remove -> type.flow.removeMutations()
+                    is Action.ClearAll -> type.flow.clearAllMutations()
+                    is Action.UpdateNewWord ->
+                        type.flow.updateNewWordMutations()
+                    is Action.UpdateDuration ->
+                        type.flow.updateDurationMutations()
+                    is Action.UpdateTargets ->
+                        type.flow.updateTargetsMutations()
+                    is Action.UpdateExcludeNonFollowers ->
+                        type.flow.updateExcludeNonFollowersMutations()
                 }
-            },
-        )
-
-        scope.launch {
-            actions.collect { action ->
-                mutator.accept(action)
             }
-        }
+        },
+    ) {
 
-        return mutator.state
+    fun save() {
+        coroutineScope.launch {
+            onSave(state.value.mutedWords)
+        }
     }
 
-    fun handleAction(action: Action, scope: CoroutineScope) {
-        scope.launch {
-            actions.emit(action)
+    override fun onHidden() {
+        // Reset all fields to empty
+        accept(Action.UpdateNewWord(""))
+        accept(Action.UpdateDuration(null))
+        accept(Action.UpdateExcludeNonFollowers(false))
+        accept(Action.UpdateTargets(emptyList()))
+    }
+
+    companion object {
+        @Composable fun rememberMutedWordsSheetState(
+            preferences: Flow<Preferences>,
+            onSave: suspend (List<MutedWordPreference>) -> Unit,
+        ): MutedWordsSheetState {
+            val coroutineScope = rememberCoroutineScope()
+            val state = rememberBottomSheetState { scope ->
+                MutedWordsSheetState(
+                    coroutineScope = coroutineScope,
+                    preferences = preferences,
+                    onSave = onSave,
+                    scope = scope,
+                )
+            }
+            MutedWordsBottomSheet(state)
+            return state
         }
     }
 }
 
-private fun Flow<Action.Add>.addMutations(
-    userDataRepository: UserDataRepository,
+private fun preferencesInput(
+    preferences: Flow<Preferences>,
 ): Flow<Mutation<State>> =
-    mapLatestToManyMutations { action ->
-        if (action.word.isBlank()) {
-            emit(mutationOf { copy(error = "Word cannot be empty") })
-            return@mapLatestToManyMutations
-        }
+    preferences.mapToMutation { prefs ->
+        copy(
+            mutedWords = prefs.mutedWordPreferences,
+        )
+    }
 
-        emit(mutationOf { copy(isLoading = true) })
-
-        val preference = MutedWordPreference(
-            value = action.word,
-            targets = listOf(MutedWordPreference.Target("content")),
-            actorTarget = null,
+private fun Flow<Action.Add>.addMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        val pref = MutedWordPreference(
+            value = action.value,
+            targets = action.targets.map { MutedWordPreference.Target(it) },
+            actorTarget =
+            if (action.excludeNonFollowers)
+                MutedWordPreference.Target("non_followers")
+            else null,
             expiresAt = action.duration,
         )
 
-        try {
-            userDataRepository.createMutedWord(preference)
-            emit(
-                mutationOf {
-                    copy(
-                        isLoading = false,
-                        newWord = "",
-                        newWordDuration = null,
-                        error = null,
-                    )
-                },
-            )
-        } catch (e: Exception) {
-            emit(
-                mutationOf {
-                    copy(
-                        isLoading = false,
-                        error = "Failed to add: ${e.message}",
-                    )
-                },
+        if (mutedWords.any { it.value == action.value }) {
+            copy(error = "Word already muted")
+        } else {
+            copy(
+                mutedWords = mutedWords + pref,
+                newWord = "",
+                newWordDuration = null,
+                error = null,
             )
         }
     }
 
-private fun Flow<Action.Remove>.removeMutations(
-    userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    mapLatestToManyMutations { action ->
-        emit(mutationOf { copy(isLoading = true) })
-
-        try {
-            userDataRepository.removeMutedWord(action.value)
-            emit(
-                mutationOf {
-                    copy(
-                        isLoading = false,
-                        error = null,
-                    )
-                },
-            )
-        } catch (e: Exception) {
-            emit(
-                mutationOf {
-                    copy(
-                        isLoading = false,
-                        error = "Failed to remove: ${e.message}",
-                    )
-                },
-            )
-        }
+private fun Flow<Action.Remove>.removeMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(
+            mutedWords = mutedWords.filterNot { it.value == action.value },
+            error = null,
+        )
     }
 
-private fun Flow<Action.ClearAll>.clearAllMutations(
-    userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    mapLatestToManyMutations {
-        emit(mutationOf { copy(isLoading = true) })
-
-        try {
-            userDataRepository.clearAllMutedWords()
-            emit(
-                mutationOf {
-                    copy(
-                        isLoading = false,
-                        error = null,
-                    )
-                },
-            )
-        } catch (e: Exception) {
-            emit(
-                mutationOf {
-                    copy(
-                        isLoading = false,
-                        error = "Failed to clear: ${e.message}",
-                    )
-                },
-            )
-        }
-    }
-
-private fun Flow<Action.Load>.loadMutations(
-    userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    mapLatestToManyMutations {
-        emit(mutationOf { copy(isLoading = true) })
-
-        try {
-            userDataRepository.refreshPreferences()
-            emit(
-                mutationOf {
-                    copy(isLoading = false, error = null)
-                },
-            )
-        } catch (e: Exception) {
-            emit(
-                mutationOf {
-                    copy(
-                        isLoading = false,
-                        error = "Failed to refresh: ${e.message}",
-                    )
-                },
-            )
-        }
+private fun Flow<Action.ClearAll>.clearAllMutations(): Flow<Mutation<State>> =
+    mapToMutation {
+        copy(mutedWords = emptyList(), error = null)
     }
 
 private fun Flow<Action.UpdateNewWord>.updateNewWordMutations(): Flow<Mutation<State>> =
@@ -332,74 +279,12 @@ private fun Flow<Action.UpdateExcludeNonFollowers>.updateExcludeNonFollowersMuta
         copy(newWordExcludeNonFollowers = action.exclude)
     }
 
-private fun loadMutedWords(
-    userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    userDataRepository.mutedWords()
-        .mapToMutation { mutedWordPreferences ->
-            copy(
-                isLoading = false,
-                mutedWords = mutedWordPreferences,
-                error = null,
-            )
-        }
-
-@Stable
-class MutedWordsSheetState private constructor(
-    private val stateHolder: MutedWordsStateHolder,
-    private val coroutineScope: CoroutineScope,
-    scope: BottomSheetScope,
-) : BottomSheetState(scope) {
-
-    private val uiStateFlow = stateHolder.createMutator(coroutineScope)
-    val uiState: StateFlow<State> = uiStateFlow
-
-    fun handleAction(action: Action) {
-        stateHolder.handleAction(action, coroutineScope)
-    }
-
-    fun showMutedWordsSheet() {
-        show()
-    }
-
-    fun hideMutedWordsSheet() {
-        hide()
-    }
-
-    fun clearAll() {
-        handleAction(Action.ClearAll)
-    }
-
-    override fun onHidden() {
-        handleAction(Action.UpdateNewWord(""))
-        handleAction(Action.UpdateDuration(null))
-    }
-
-    companion object {
-        @Composable
-        fun rememberMutedWordsSheetState(
-            stateHolder: MutedWordsStateHolder,
-        ): MutedWordsSheetState {
-            val coroutineScope = rememberCoroutineScope()
-            val state = rememberBottomSheetState {
-                MutedWordsSheetState(
-                    stateHolder = stateHolder,
-                    coroutineScope = coroutineScope,
-                    scope = it,
-                )
-            }
-            MutedWordsBottomSheet(state)
-            return state
-        }
-    }
-}
-
 @Composable
-fun MutedWordsBottomSheet(
+private fun MutedWordsBottomSheet(
     sheetState: MutedWordsSheetState,
     modifier: Modifier = Modifier,
 ) {
-    val uiState by sheetState.uiState.collectAsStateWithLifecycle()
+    val uiState by sheetState.state.collectAsStateWithLifecycle()
 
     sheetState.ModalBottomSheet {
         Column(
@@ -419,10 +304,10 @@ fun MutedWordsBottomSheet(
                 )
 
                 IconButton(
-                    onClick = { sheetState.hideMutedWordsSheet() },
+                    onClick = { sheetState.hide() },
                     modifier = Modifier.size(40.dp),
                 ) {
-                    androidx.compose.material3.Icon(
+                    Icon(
                         Icons.Default.Close,
                         contentDescription = stringResource(Res.string.close_icon),
                     )
@@ -447,7 +332,6 @@ fun MutedWordsBottomSheet(
                 Column(
                     modifier = Modifier.padding(16.dp),
                 ) {
-                    // Word input
                     Text(
                         stringResource(Res.string.mute_words_title),
                         style = MaterialTheme.typography.labelLarge,
@@ -456,7 +340,9 @@ fun MutedWordsBottomSheet(
 
                     OutlinedTextField(
                         value = uiState.newWord,
-                        onValueChange = { sheetState.handleAction(Action.UpdateNewWord(it)) },
+                        onValueChange = {
+                            sheetState.accept(Action.UpdateNewWord(it))
+                        },
                         placeholder = { Text(stringResource(Res.string.mute_words_placeholder)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
@@ -466,11 +352,11 @@ fun MutedWordsBottomSheet(
                             if (uiState.newWord.isNotBlank()) {
                                 IconButton(
                                     onClick = {
-                                        sheetState.handleAction(Action.UpdateNewWord(""))
+                                        sheetState.accept(Action.UpdateNewWord(""))
                                     },
                                     enabled = !uiState.isLoading,
                                 ) {
-                                    androidx.compose.material3.Icon(
+                                    Icon(
                                         Icons.Default.Clear,
                                         contentDescription = stringResource(Res.string.clear_icon),
                                     )
@@ -489,10 +375,10 @@ fun MutedWordsBottomSheet(
 
                     val durationOptions = remember {
                         listOf(
-                            DurationOption("Forever", null),
-                            DurationOption("24 hours", Clock.System.now().plus(Duration.parse("24h"))),
-                            DurationOption("7 days", Clock.System.now().plus(Duration.parse("7d"))),
-                            DurationOption("30 days", Clock.System.now().plus(Duration.parse("30d"))),
+                            DurationOption(Res.string.forever, null),
+                            DurationOption(Res.string.twenty_four_hours, Clock.System.now().plus(Duration.parse("24h"))),
+                            DurationOption(Res.string.seven_days, Clock.System.now().plus(Duration.parse("7d"))),
+                            DurationOption(Res.string.thirty_days, Clock.System.now().plus(Duration.parse("30d"))),
                         )
                     }
 
@@ -506,7 +392,7 @@ fun MutedWordsBottomSheet(
                                 option = option,
                                 isSelected = selectedDuration == option.expiresAt,
                                 onSelected = {
-                                    sheetState.handleAction(
+                                    sheetState.accept(
                                         Action.UpdateDuration(option.expiresAt),
                                     )
                                 },
@@ -525,8 +411,8 @@ fun MutedWordsBottomSheet(
 
                     val targets = remember {
                         listOf(
-                            MuteTargetOption("Text & tags", listOf("content", "tag")),
-                            MuteTargetOption("Tags only", listOf("tag")),
+                            MuteTargetOption(Res.string.text_tags, listOf("content", "tag")),
+                            MuteTargetOption(Res.string.tags_only, listOf("tag")),
                         )
                     }
 
@@ -542,7 +428,7 @@ fun MutedWordsBottomSheet(
                                 isSelected = selectedTargets.containsAll(target.targets) &&
                                     target.targets.containsAll(selectedTargets),
                                 onSelected = {
-                                    sheetState.handleAction(
+                                    sheetState.accept(
                                         Action.UpdateTargets(target.targets),
                                     )
                                 },
@@ -575,7 +461,7 @@ fun MutedWordsBottomSheet(
                         Switch(
                             checked = uiState.newWordExcludeNonFollowers,
                             onCheckedChange = { checked ->
-                                sheetState.handleAction(
+                                sheetState.accept(
                                     Action.UpdateExcludeNonFollowers(checked),
                                 )
                             },
@@ -588,9 +474,9 @@ fun MutedWordsBottomSheet(
                     Button(
                         onClick = {
                             val duration = selectedDuration ?: Instant.DISTANT_FUTURE
-                            sheetState.handleAction(
+                            sheetState.accept(
                                 Action.Add(
-                                    word = uiState.newWord,
+                                    value = uiState.newWord,
                                     duration = duration,
                                     targets = uiState.newWordTargets,
                                     excludeNonFollowers = uiState.newWordExcludeNonFollowers,
@@ -645,7 +531,9 @@ fun MutedWordsBottomSheet(
 
                         if (uiState.mutedWords.isNotEmpty()) {
                             TextButton(
-                                onClick = { sheetState.clearAll() },
+                                onClick = {
+                                    sheetState.accept(Action.ClearAll)
+                                },
                                 enabled = !uiState.isLoading,
                             ) {
                                 Text(
@@ -678,7 +566,7 @@ fun MutedWordsBottomSheet(
                                 MutedWordItem(
                                     mutedWord = mutedWord,
                                     onRemove = {
-                                        sheetState.handleAction(Action.Remove(mutedWord.value))
+                                        sheetState.accept(Action.Remove(mutedWord.value))
                                     },
                                     isLoading = uiState.isLoading,
                                 )
@@ -726,14 +614,14 @@ private fun DurationChip(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             if (isSelected) {
-                androidx.compose.material3.Icon(
+                Icon(
                     imageVector = Icons.Default.RadioButtonChecked,
                     contentDescription = stringResource(Res.string.selected),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(16.dp),
                 )
             } else {
-                androidx.compose.material3.Icon(
+                Icon(
                     imageVector = Icons.Default.RadioButtonUnchecked,
                     contentDescription = stringResource(Res.string.unselected),
                     tint = contentColor,
@@ -744,7 +632,7 @@ private fun DurationChip(
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = option.label,
+                text = stringResource(option.label),
                 style = MaterialTheme.typography.labelMedium,
                 color = contentColor,
             )
@@ -787,14 +675,14 @@ private fun MuteTargetChip(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             if (isSelected) {
-                androidx.compose.material3.Icon(
+                Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = stringResource(Res.string.selected),
                     tint = MaterialTheme.colorScheme.secondary,
                     modifier = Modifier.size(16.dp),
                 )
             } else {
-                androidx.compose.material3.Icon(
+                Icon(
                     imageVector = Icons.Default.Circle,
                     contentDescription = stringResource(Res.string.unselected),
                     tint = contentColor,
@@ -805,7 +693,7 @@ private fun MuteTargetChip(
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = target.label,
+                text = stringResource(target.label),
                 style = MaterialTheme.typography.labelMedium,
                 color = contentColor,
             )
@@ -845,7 +733,7 @@ private fun MutedWordItem(
                     enabled = !isLoading,
                     modifier = Modifier.size(32.dp),
                 ) {
-                    androidx.compose.material3.Icon(
+                    Icon(
                         Icons.Default.Delete,
                         contentDescription = stringResource(Res.string.remove),
                         tint = MaterialTheme.colorScheme.error,
@@ -858,7 +746,7 @@ private fun MutedWordItem(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                androidx.compose.material3.Icon(
+                Icon(
                     imageVector = Icons.Default.Schedule,
                     contentDescription = stringResource(Res.string.duration),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -879,7 +767,7 @@ private fun MutedWordItem(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                androidx.compose.material3.Icon(
+                Icon(
                     imageVector = Icons.Default.TrackChanges,
                     contentDescription = stringResource(Res.string.targets),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -901,7 +789,7 @@ private fun MutedWordItem(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    androidx.compose.material3.Icon(
+                    Icon(
                         imageVector = Icons.Default.Person,
                         contentDescription = stringResource(Res.string.actor_target),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -929,7 +817,7 @@ private fun EmptyState() {
             .padding(vertical = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        androidx.compose.material3.Icon(
+        Icon(
             imageVector = Icons.Outlined.Block,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -964,7 +852,7 @@ private fun ErrorMessage(error: String) {
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            androidx.compose.material3.Icon(
+            Icon(
                 imageVector = Icons.Default.ErrorOutline,
                 contentDescription = stringResource(Res.string.error),
                 tint = MaterialTheme.colorScheme.error,
@@ -1015,11 +903,11 @@ private fun formatTargets(targets: List<MutedWordPreference.Target>): String {
 }
 
 private data class DurationOption(
-    val label: String,
+    val label: StringResource,
     val expiresAt: Instant?,
 )
 
 private data class MuteTargetOption(
-    val label: String,
+    val label: StringResource,
     val targets: List<String>,
 )
