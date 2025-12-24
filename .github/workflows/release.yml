@@ -27,15 +27,29 @@ jobs:
         shell: bash
         run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
         id: extract_branch
+
       - name: Checkout repo
         uses: actions/checkout@v5
+
       - name: Setup java
         uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
           java-version: 21
+
       - name: Setup gradle
         uses: gradle/actions/setup-gradle@v4
+
+      - name: Create Google services file
+        shell: bash
+        run: |
+          # Create the directory structure first to prevent 'No such file or directory' errors
+          mkdir -p "${GITHUB_WORKSPACE}/composeApp/src/release/"
+
+          # Decode the secret into the file
+          echo "$GOOGLE_SERVICES_BASE_64" | openssl base64 -d -A \
+            -out "${GITHUB_WORKSPACE}/composeApp/src/release/google-services.json"
+
       - name: Tag release
         run: |
           ./gradlew release \

@@ -22,6 +22,16 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Create Google services file
+        shell: bash
+        run: |
+          # Create the directory structure first to prevent 'No such file or directory' errors
+          mkdir -p "${GITHUB_WORKSPACE}/composeApp/src/release/"
+
+          # Decode the secret into the file
+          echo "$GOOGLE_SERVICES_BASE_64" | openssl base64 -d -A \
+            -out "${GITHUB_WORKSPACE}/composeApp/src/release/google-services.json"
+
       - name: Build Unsigned AAB
         run: |
           ./gradlew spotlessCheck \
