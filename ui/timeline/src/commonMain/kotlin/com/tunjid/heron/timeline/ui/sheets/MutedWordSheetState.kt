@@ -2,7 +2,6 @@ package com.tunjid.heron.timeline.ui.sheets
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,7 +28,6 @@ import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,28 +37,22 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.core.models.MutedWordPreference
-import com.tunjid.heron.data.core.models.Preferences
-import com.tunjid.heron.timeline.ui.moderation.ModerationFeatureWhileSubscribed
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
-import com.tunjid.mutator.ActionStateMutator
-import com.tunjid.mutator.Mutation
-import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.mapToMutation
-import com.tunjid.mutator.coroutines.toMutationStream
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.actor_target
 import heron.ui.timeline.generated.resources.add_muted_word
@@ -92,201 +84,107 @@ import heron.ui.timeline.generated.resources.your_muted_word
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Instant
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
-@Serializable
-data class State(
-    val isLoading: Boolean = false,
-    val error: String? = null,
-    val newWord: String = "",
-    val newWordTargets: List<String> = listOf("content", "tag"),
-    val newWordDuration: Duration? = null,
-    val newWordExcludeNonFollowers: Boolean = false,
-    @Transient
-    val mutedWords: List<MutedWordPreference> = emptyList(),
-)
-
-sealed class Action(
-    val key: String,
-) {
-    data class Add(
-        val value: String,
-        val duration: Instant,
-        val targets: List<String>,
-        val excludeNonFollowers: Boolean,
-    ) : Action("Add")
-
-    data class Remove(
-        val value: String,
-    ) : Action("Remove")
-
-    object ClearAll : Action("ClearAll")
-
-    data class UpdateNewWord(
-        val word: String,
-    ) : Action("UpdateNewWord")
-
-    data class UpdateDuration(
-        val duration: Duration?,
-    ) : Action("UpdateDuration")
-
-    data class UpdateTargets(
-        val targets: List<String>,
-    ) : Action("UpdateTargets")
-
-    data class UpdateExcludeNonFollowers(
-        val exclude: Boolean,
-    ) : Action("UpdateExcludeNonFollowers")
-}
-
 @Stable
 class MutedWordsSheetState(
-    private val coroutineScope: CoroutineScope,
     scope: BottomSheetScope,
-    preferences: Flow<Preferences>,
-    private val onSave: suspend (List<MutedWordPreference>) -> Unit,
-) : BottomSheetState(scope),
-    ActionStateMutator<Action, StateFlow<State>> by coroutineScope.actionStateFlowMutator(
-        initialState = State(),
-        inputs = listOf(
-            preferencesInput(preferences),
-        ),
-        started = SharingStarted.WhileSubscribed(ModerationFeatureWhileSubscribed),
-        actionTransform = { actions ->
-            actions.toMutationStream(keySelector = Action::key) {
-                when (val type = type()) {
-                    is Action.Add -> type.flow.addMutations()
-                    is Action.Remove -> type.flow.removeMutations()
-                    is Action.ClearAll -> type.flow.clearAllMutations()
-                    is Action.UpdateNewWord ->
-                        type.flow.updateNewWordMutations()
-                    is Action.UpdateDuration ->
-                        type.flow.updateDurationMutations()
-                    is Action.UpdateTargets ->
-                        type.flow.updateTargetsMutations()
-                    is Action.UpdateExcludeNonFollowers ->
-                        type.flow.updateExcludeNonFollowersMutations()
-                }
-            }
-        },
-    ) {
+) : BottomSheetState(scope) {
 
-    fun save() {
-        coroutineScope.launch {
-            onSave(state.value.mutedWords)
+    var mutedWords by mutableStateOf<List<MutedWordPreference>>(emptyList())
+        internal set
+
+    var newWord by mutableStateOf("")
+    var newWordTargets by mutableStateOf(listOf("content", "tag"))
+    var newWordDuration by mutableStateOf<Duration?>(null)
+    var newWordExcludeNonFollowers by mutableStateOf(false)
+    var error by mutableStateOf<String?>(null)
+
+    fun addMutedWord() {
+        val duration = newWordDuration
+        val expiresAt = duration?.let {
+            Clock.System.now().plus(it)
         }
+
+        if (mutedWords.any { it.value == newWord }) {
+            error = "Word already muted"
+            return
+        }
+
+        mutedWords = mutedWords + MutedWordPreference(
+            value = newWord,
+            targets = newWordTargets.map { MutedWordPreference.Target(it) },
+            actorTarget =
+            if (newWordExcludeNonFollowers)
+                MutedWordPreference.Target("non_followers")
+            else null,
+            expiresAt = expiresAt,
+        )
+
+        // Reset input fields
+        newWord = ""
+        newWordDuration = null
+        error = null
+    }
+
+    fun removeMutedWord(value: String) {
+        mutedWords = mutedWords.filterNot { it.value == value }
+        error = null
+    }
+
+    fun clearAll() {
+        mutedWords = emptyList()
+        error = null
     }
 
     override fun onHidden() {
-        // Reset all fields to empty
-        accept(Action.UpdateNewWord(""))
-        accept(Action.UpdateDuration(null))
-        accept(Action.UpdateExcludeNonFollowers(false))
-        accept(Action.UpdateTargets(emptyList()))
+        newWord = ""
+        newWordDuration = null
+        newWordExcludeNonFollowers = false
+        newWordTargets = listOf("content", "tag")
+        error = null
     }
 
     companion object {
-        @Composable fun rememberMutedWordsSheetState(
-            preferences: Flow<Preferences>,
-            onSave: suspend (List<MutedWordPreference>) -> Unit,
+
+        @Composable
+        fun rememberMutedWordsSheetState(
+            mutedWords: List<MutedWordPreference>,
+            onSave: (List<MutedWordPreference>) -> Unit,
+            onShown: () -> Unit,
         ): MutedWordsSheetState {
-            val coroutineScope = rememberCoroutineScope()
             val state = rememberBottomSheetState { scope ->
                 MutedWordsSheetState(
-                    coroutineScope = coroutineScope,
-                    preferences = preferences,
-                    onSave = onSave,
                     scope = scope,
                 )
+            }.also {
+                it.mutedWords = mutedWords
             }
-            MutedWordsBottomSheet(state)
+
+            MutedWordsBottomSheet(
+                state = state,
+                onShown = onShown,
+                onSave = { onSave(state.mutedWords) },
+            )
             return state
         }
     }
 }
 
-private fun preferencesInput(
-    preferences: Flow<Preferences>,
-): Flow<Mutation<State>> =
-    preferences.mapToMutation { prefs ->
-        copy(
-            mutedWords = prefs.mutedWordPreferences,
-        )
-    }
-
-private fun Flow<Action.Add>.addMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        val pref = MutedWordPreference(
-            value = action.value,
-            targets = action.targets.map { MutedWordPreference.Target(it) },
-            actorTarget =
-            if (action.excludeNonFollowers)
-                MutedWordPreference.Target("non_followers")
-            else null,
-            expiresAt = action.duration,
-        )
-
-        if (mutedWords.any { it.value == action.value }) {
-            copy(error = "Word already muted")
-        } else {
-            copy(
-                mutedWords = mutedWords + pref,
-                newWord = "",
-                newWordDuration = null,
-                error = null,
-            )
-        }
-    }
-
-private fun Flow<Action.Remove>.removeMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(
-            mutedWords = mutedWords.filterNot { it.value == action.value },
-            error = null,
-        )
-    }
-
-private fun Flow<Action.ClearAll>.clearAllMutations(): Flow<Mutation<State>> =
-    mapToMutation {
-        copy(mutedWords = emptyList(), error = null)
-    }
-
-private fun Flow<Action.UpdateNewWord>.updateNewWordMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(newWord = action.word)
-    }
-
-private fun Flow<Action.UpdateDuration>.updateDurationMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(newWordDuration = action.duration)
-    }
-
-private fun Flow<Action.UpdateTargets>.updateTargetsMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(newWordTargets = action.targets)
-    }
-
-private fun Flow<Action.UpdateExcludeNonFollowers>.updateExcludeNonFollowersMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(newWordExcludeNonFollowers = action.exclude)
-    }
-
 @Composable
 private fun MutedWordsBottomSheet(
-    sheetState: MutedWordsSheetState,
     modifier: Modifier = Modifier,
+    state: MutedWordsSheetState,
+    onSave: (List<MutedWordPreference>) -> Unit,
+    onShown: () -> Unit,
 ) {
-    val uiState by sheetState.state.collectAsStateWithLifecycle()
+    LaunchedEffect(true) {
+        state.show()
+        onShown()
+    }
 
-    sheetState.ModalBottomSheet {
+    state.ModalBottomSheet {
         Column(
             modifier = modifier
                 .fillMaxWidth()
@@ -304,7 +202,7 @@ private fun MutedWordsBottomSheet(
                 )
 
                 IconButton(
-                    onClick = { sheetState.hide() },
+                    onClick = { state.hide() },
                     modifier = Modifier.size(40.dp),
                 ) {
                     Icon(
@@ -316,7 +214,7 @@ private fun MutedWordsBottomSheet(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            uiState.error?.let { error ->
+            state.error?.let { error ->
                 ErrorMessage(error = error)
                 Spacer(modifier = Modifier.height(12.dp))
             }
@@ -339,22 +237,20 @@ private fun MutedWordsBottomSheet(
                     )
 
                     OutlinedTextField(
-                        value = uiState.newWord,
+                        value = state.newWord,
                         onValueChange = {
-                            sheetState.accept(Action.UpdateNewWord(it))
+                            state.newWord = it
                         },
                         placeholder = { Text(stringResource(Res.string.mute_words_placeholder)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = !uiState.isLoading,
-                        isError = uiState.error != null,
+                        isError = state.error != null,
                         trailingIcon = {
-                            if (uiState.newWord.isNotBlank()) {
+                            if (state.newWord.isNotBlank()) {
                                 IconButton(
                                     onClick = {
-                                        sheetState.accept(Action.UpdateNewWord(""))
+                                        state.newWord = ""
                                     },
-                                    enabled = !uiState.isLoading,
                                 ) {
                                     Icon(
                                         Icons.Default.Clear,
@@ -382,7 +278,6 @@ private fun MutedWordsBottomSheet(
                         )
                     }
 
-                    val selectedDuration = uiState.newWordDuration
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -390,13 +285,10 @@ private fun MutedWordsBottomSheet(
                         durationOptions.forEach { option ->
                             DurationChip(
                                 option = option,
-                                isSelected = selectedDuration == option.expiresAt,
+                                isSelected = state.newWordDuration == option.expiresAt,
                                 onSelected = {
-                                    sheetState.accept(
-                                        Action.UpdateDuration(option.expiresAt),
-                                    )
+                                    state.newWordDuration = option.expiresAt
                                 },
-                                isLoading = uiState.isLoading,
                             )
                         }
                     }
@@ -416,8 +308,6 @@ private fun MutedWordsBottomSheet(
                         )
                     }
 
-                    val selectedTargets = uiState.newWordTargets
-
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -425,14 +315,12 @@ private fun MutedWordsBottomSheet(
                         targets.forEach { target ->
                             MuteTargetChip(
                                 target = target,
-                                isSelected = selectedTargets.containsAll(target.targets) &&
-                                    target.targets.containsAll(selectedTargets),
+                                isSelected =
+                                state.newWordTargets.containsAll(target.targets) &&
+                                    target.targets.containsAll(state.newWordTargets),
                                 onSelected = {
-                                    sheetState.accept(
-                                        Action.UpdateTargets(target.targets),
-                                    )
+                                    state.newWordTargets = target.targets
                                 },
-                                isLoading = uiState.isLoading,
                             )
                         }
                     }
@@ -459,13 +347,10 @@ private fun MutedWordsBottomSheet(
                         }
 
                         Switch(
-                            checked = uiState.newWordExcludeNonFollowers,
-                            onCheckedChange = { checked ->
-                                sheetState.accept(
-                                    Action.UpdateExcludeNonFollowers(checked),
-                                )
+                            checked = state.newWordExcludeNonFollowers,
+                            onCheckedChange = {
+                                state.newWordExcludeNonFollowers = it
                             },
-                            enabled = !uiState.isLoading,
                         )
                     }
 
@@ -473,37 +358,18 @@ private fun MutedWordsBottomSheet(
 
                     Button(
                         onClick = {
-                            val expiresAt = uiState.newWordDuration
-                                ?.let { Clock.System.now() + it }
-                                ?: Instant.DISTANT_FUTURE
-
-                            sheetState.accept(
-                                Action.Add(
-                                    value = uiState.newWord,
-                                    duration = expiresAt,
-                                    targets = uiState.newWordTargets,
-                                    excludeNonFollowers = uiState.newWordExcludeNonFollowers,
-                                ),
-                            )
+                            state.addMutedWord()
+                            onSave(state.mutedWords)
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = uiState.newWord.isNotBlank() &&
-                            selectedTargets.isNotEmpty() &&
-                            !uiState.isLoading,
+                        enabled = state.newWord.isNotBlank() &&
+                            state.newWordTargets.isNotEmpty(),
                         shape = MaterialTheme.shapes.large,
                     ) {
-                        if (uiState.isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onPrimary,
-                            )
-                        } else {
-                            Text(
-                                stringResource(Res.string.add_muted_word),
-                                style = MaterialTheme.typography.labelLarge,
-                            )
-                        }
+                        Text(
+                            stringResource(Res.string.add_muted_word),
+                            style = MaterialTheme.typography.labelLarge,
+                        )
                     }
                 }
             }
@@ -532,13 +398,8 @@ private fun MutedWordsBottomSheet(
                             fontWeight = FontWeight.SemiBold,
                         )
 
-                        if (uiState.mutedWords.isNotEmpty()) {
-                            TextButton(
-                                onClick = {
-                                    sheetState.accept(Action.ClearAll)
-                                },
-                                enabled = !uiState.isLoading,
-                            ) {
+                        if (state.mutedWords.isNotEmpty()) {
+                            TextButton(onClick = { state.clearAll() }) {
                                 Text(
                                     stringResource(Res.string.clear_all),
                                     color = MaterialTheme.colorScheme.error,
@@ -549,29 +410,16 @@ private fun MutedWordsBottomSheet(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    if (uiState.isLoading && uiState.mutedWords.isEmpty()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(80.dp),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            CircularProgressIndicator()
-                        }
-                    } else if (uiState.mutedWords.isEmpty()) {
+                    if (state.mutedWords.isEmpty()) {
                         EmptyState()
                     } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            items(uiState.mutedWords, key = { it.value }) { mutedWord ->
+                        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(state.mutedWords, key = { it.value }) { mutedWord ->
                                 MutedWordItem(
                                     mutedWord = mutedWord,
                                     onRemove = {
-                                        sheetState.accept(Action.Remove(mutedWord.value))
+                                        state.removeMutedWord(mutedWord.value)
                                     },
-                                    isLoading = uiState.isLoading,
                                 )
                             }
                         }
@@ -587,7 +435,6 @@ private fun DurationChip(
     option: DurationOption,
     isSelected: Boolean,
     onSelected: () -> Unit,
-    isLoading: Boolean,
 ) {
     val containerColor = if (isSelected) {
         MaterialTheme.colorScheme.primaryContainer
@@ -609,8 +456,7 @@ private fun DurationChip(
             color = if (isSelected) MaterialTheme.colorScheme.primary
             else MaterialTheme.colorScheme.outlineVariant,
         ),
-        onClick = { if (!isLoading) onSelected() },
-        enabled = !isLoading,
+        onClick = { onSelected() },
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
@@ -648,7 +494,6 @@ private fun MuteTargetChip(
     target: MuteTargetOption,
     isSelected: Boolean,
     onSelected: () -> Unit,
-    isLoading: Boolean,
 ) {
     val containerColor = if (isSelected) {
         MaterialTheme.colorScheme.secondaryContainer
@@ -670,8 +515,7 @@ private fun MuteTargetChip(
             color = if (isSelected) MaterialTheme.colorScheme.secondary
             else MaterialTheme.colorScheme.outlineVariant,
         ),
-        onClick = { if (!isLoading) onSelected() },
-        enabled = !isLoading,
+        onClick = { onSelected() },
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
@@ -708,7 +552,6 @@ private fun MuteTargetChip(
 private fun MutedWordItem(
     mutedWord: MutedWordPreference,
     onRemove: () -> Unit,
-    isLoading: Boolean,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -733,7 +576,6 @@ private fun MutedWordItem(
 
                 IconButton(
                     onClick = onRemove,
-                    enabled = !isLoading,
                     modifier = Modifier.size(32.dp),
                 ) {
                     Icon(
@@ -885,7 +727,8 @@ private fun formatDuration(expiresAt: Instant?): String {
                 val hours = totalHours % 24
 
                 when {
-                    days > 0 -> "Expires in ${days}d ${hours}h"
+                    days > 0 && hours > 0 -> "Expires in ${days}d ${hours}h"
+                    days > 0 -> "Expires in ${days}d"
                     hours > 0 -> "Expires in ${hours}h"
                     else -> "Expires soon"
                 }
@@ -897,10 +740,10 @@ private fun formatDuration(expiresAt: Instant?): String {
 }
 
 private fun formatTargets(targets: List<MutedWordPreference.Target>): String {
-    return when {
-        targets.size == 2 -> "Text & tags"
-        targets.size == 1 && targets.first().value == "content" -> "Text only"
-        targets.size == 1 && targets.first().value == "tag" -> "Tags only"
+    return when (targets.map { it.value }.toSet()) {
+        setOf("content", "tag") -> "Text & tags"
+        setOf("content") -> "Text only"
+        setOf("tag") -> "Tags only"
         else -> targets.joinToString(", ") { it.value }
     }
 }
