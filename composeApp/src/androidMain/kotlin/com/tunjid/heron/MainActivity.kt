@@ -31,6 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.splashscreen.SplashScreenViewProvider
 import androidx.core.view.WindowCompat
+import com.google.firebase.messaging.FirebaseMessaging
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.scaffold.scaffold.App
 import com.tunjid.heron.scaffold.scaffold.isShowingSplashScreen
@@ -76,6 +77,10 @@ class MainActivity : ComponentActivity() {
         }
 
         handleDeepLink(intent)
+
+        FirebaseMessaging.getInstance()
+            .getToken()
+            .addOnSuccessListener(appState::registerPushNotificationToken)
     }
 
     private fun handleDeepLink(intent: Intent) {

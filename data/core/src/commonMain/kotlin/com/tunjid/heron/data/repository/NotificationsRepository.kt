@@ -73,6 +73,10 @@ interface NotificationsRepository {
     ): Flow<CursorList<Notification>>
 
     suspend fun markRead(at: Instant)
+
+    suspend fun registerPushNotificationToken(
+        token: String,
+    )
 }
 
 internal class OfflineNotificationsRepository @Inject constructor(
@@ -197,6 +201,12 @@ internal class OfflineNotificationsRepository @Inject constructor(
                 ),
             )
         }
+    }
+
+    override suspend fun registerPushNotificationToken(
+        token: String,
+    ) {
+        // TODO in follow up PR
     }
 
     private fun observeAndRefreshNotifications(

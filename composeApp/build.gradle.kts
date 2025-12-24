@@ -25,6 +25,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.axionRelease)
+    alias(libs.plugins.googleServices)
     id("ksp-convention")
     id("kotlin-jvm-convention")
 }
@@ -72,6 +73,9 @@ kotlin {
             implementation(libs.connectivity.device)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.core.splashscreen)
+
+            implementation(project.dependencies.platform(libs.firebase.bom))
+            implementation(libs.firebase.messaging)
         }
         commonMain.dependencies {
             implementation(project(":data:models"))

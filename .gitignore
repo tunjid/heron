@@ -17,6 +17,8 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 /composeApp/release/composeApp-release.aab
+/composeApp/src/release/google-services.json
+/composeApp/src/staging/google-services.json
 /iosApp/iosApp.xcodeproj/project.xcworkspace/contents.xcworkspacedata
 /dependencies.txt
 /dependency-tree-diff.jar

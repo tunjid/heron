@@ -82,6 +82,7 @@ class AppState(
     internal val imageLoader: ImageLoader,
     internal val videoPlayerController: VideoPlayerController,
     private val writeQueue: WriteQueue,
+    private val appScope: CoroutineScope,
 ) {
     private var hasNotifications by mutableStateOf(false)
 
@@ -215,6 +216,12 @@ class AppState(
 
     fun onDeepLink(uri: GenericUri) =
         navigationStateHolder.accept(deepLinkTo(uri))
+
+    fun registerPushNotificationToken(token: String) {
+        appScope.launch {
+            notificationsRepository.registerPushNotificationToken(token)
+        }
+    }
 
     private fun currentNavItems(): List<NavItem> {
         val multiStackNav = multiStackNavState.value

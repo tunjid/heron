@@ -27,6 +27,8 @@ compose-multiplatform = "1.10.0-rc02"
 crypto = "0.5.0"
 compose-multiplatform-material3 = "1.10.0-alpha05"
 compose-material-icons = "1.7.3"
+firebase-bom-version = "34.7.0"
+google-services = "4.4.4"
 junit = "4.13.2"
 kotlin = "2.2.21"
 kotlinx-coroutines = "1.10.2"
@@ -123,6 +125,8 @@ filekit-coil = { module = "io.github.vinceglb:filekit-coil", version.ref = "vinc
 filekit-core = { module = "io.github.vinceglb:filekit-core", version.ref = "vinceglb-filekit" }
 filekit-dialogs = { module = "io.github.vinceglb:filekit-dialogs", version.ref = "vinceglb-filekit" }
 filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "vinceglb-filekit" }
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom-version" }
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
 lifecycle-multiplatform-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "lifecycle-multiplatform" }
 lifecycle-multiplatform-viewmodel-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle-multiplatform" }
 lifecycle-multiplatform-viewmodel-navigation3 = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel-navigation3", version.ref = "lifecycle-multiplatform" }
@@ -178,6 +182,7 @@ androidLibrary = { id = "com.android.library", version.ref = "agp" }
 androidxRoom = { id = "androidx.room", version.ref = "androidx-room" }
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+googleServices = { id = "com.google.gms.google-services", version.ref = "google-services" }
 jetbrainsKotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
