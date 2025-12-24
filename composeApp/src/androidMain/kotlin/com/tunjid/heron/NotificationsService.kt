@@ -17,6 +17,7 @@
 package com.tunjid.heron
 
 import com.google.firebase.messaging.FirebaseMessagingService
+import com.google.firebase.messaging.RemoteMessage
 
 class NotificationsService : FirebaseMessagingService() {
 
@@ -25,4 +26,8 @@ class NotificationsService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) =
         appState.registerPushNotificationToken(token)
+
+    override fun onMessageReceived(message: RemoteMessage) {
+        // TODO: Implement in follow up PR
+    }
 }
