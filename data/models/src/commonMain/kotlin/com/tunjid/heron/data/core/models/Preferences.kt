@@ -136,5 +136,5 @@ data class MutedWordPreference(
     @Serializable
     value class Target(
         val value: String,
-    ) : UrlEncodableModel
+    )
 }

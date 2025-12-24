@@ -65,14 +65,13 @@
     <string name="selected">Selected</string>
     <string name="unselected">Unselected</string>
     <string name="clear_all">Clear All</string>
-    <string name="add_muted_word">Add Muted word</string>
+    <string name="add_muted_word">Add Muted Word</string>
     <string name="your_muted_word">Your muted words</string>
     <string name="exclude_user_txt">Exclude users you don't follow</string>
     <string name="exclude_non_followers_txt">Excludes non-followers</string>
     <string name="mute_user_txt">Only mute from users you follow</string>
-    <string name="text_tags">Text  &amp; tags</string>
+    <string name="text_tags">Text &amp; tags</string>
     <string name="tags_only">Tags only</string>
-    <string name="mute">Mute In</string>
     <string name="mute_in">Mute In</string>
     <string name="duration">Duration</string>
     <string name="forever">Forever</string>

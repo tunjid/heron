@@ -53,7 +53,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.merge
 
 internal typealias GalleryStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
