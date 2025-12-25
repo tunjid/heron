@@ -39,10 +39,11 @@ jobs:
         shell: bash
         run: |
           # Create the directory structure first to prevent 'No such file or directory' errors
-          mkdir -p "${GITHUB_WORKSPACE}/composeApp/src/release/"
+          mkdir -p "composeApp/src/release/"
 
-          # Write the secret into the file
-          echo "$GOOGLE_SERVICES_JSON" > "composeApp/src/release/google-services.json"
+          # Decode the secret into the file
+          echo ${{ secrets.$GOOGLE_SERVICES_BASE_64 }} | openssl base64 -d -A \
+            -out "composeApp/src/release/google-services.json"
 
       - name: Build App
         run: ./gradlew assembleRelease
