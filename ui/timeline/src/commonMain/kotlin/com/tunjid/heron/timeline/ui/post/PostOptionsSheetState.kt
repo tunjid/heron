@@ -23,7 +23,6 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.timeline.utilities.BottomSheetItemCard
 import com.tunjid.heron.timeline.utilities.BottomSheetItemCardRow
 import com.tunjid.heron.timeline.utilities.CopyToClipboardCard
-import com.tunjid.heron.timeline.utilities.ModerationToolsCard
 import com.tunjid.heron.timeline.utilities.SendDirectMessageCard
 import com.tunjid.heron.timeline.utilities.shareUri
 import com.tunjid.heron.ui.sheets.BottomSheetScope
@@ -135,9 +134,6 @@ private fun PostOptionsBottomSheet(
                     },
                 )
                 CopyToClipboardCard(it.uri.shareUri())
-                ModerationToolsCard(
-                    onOptionClicked = onOptionClicked,
-                )
             }
         }
     }
