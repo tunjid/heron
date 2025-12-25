@@ -366,7 +366,9 @@ internal fun ProfileScreen(
                                         movableElementSharedTransitionScope = paneScaffoldState,
                                         sharedElementPrefix = ProfileCollectionSharedElementPrefix,
                                         feedGenerator = feedGenerator,
-                                        status = state.timelineRecordUrisToPinnedStatus.status(feedGenerator.uri),
+                                        status = state.timelineRecordUrisToPinnedStatus.status(
+                                            feedGenerator.uri,
+                                        ),
                                         onFeedGeneratorStatusUpdated = { update ->
                                             if (paneScaffoldState.isSignedOut) signInPopUpState.show()
                                             else actions(Action.UpdatePreferences(update))
@@ -1076,6 +1078,9 @@ private fun ProfileTimeline(
                 is PostOption.ThreadGate ->
                     items.firstOrNull { it.post.uri == option.postUri }
                         ?.let(threadGateSheetState::show)
+
+                is PostOption.Moderation.BlockUser -> Unit
+                is PostOption.Moderation.MuteWords -> Unit
             }
         },
     )

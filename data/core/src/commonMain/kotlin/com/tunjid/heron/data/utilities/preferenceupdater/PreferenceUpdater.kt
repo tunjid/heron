@@ -317,6 +317,29 @@ internal class ThingPreferenceUpdater @Inject constructor(
             ),
         )
 
+    private fun Timeline.Update.OfMutedWord.updateMutedWordPreferences(): List<PreferencesUnion.MutedWordsPref> =
+        when (this) {
+            is Timeline.Update.OfMutedWord.ReplaceAll -> listOf(
+                PreferencesUnion.MutedWordsPref(
+                    value = app.bsky.actor.MutedWordsPref(
+                        items = mutedWordPreferences.map { pref ->
+                            app.bsky.actor.MutedWord(
+                                id = null,
+                                value = pref.value,
+                                targets = pref.targets.map {
+                                    app.bsky.actor.MutedWordTarget.safeValueOf(it.value)
+                                },
+                                actorTarget = pref.actorTarget?.let {
+                                    app.bsky.actor.MutedWordActorTarget.safeValueOf(it.value)
+                                },
+                                expiresAt = pref.expiresAt,
+                            )
+                        },
+                    ),
+                ),
+            )
+        }
+
     private suspend fun Timeline.Update.updatePreferences(
         existingPreferences: List<PreferencesUnion>,
     ): List<PreferencesUnion> =
@@ -331,6 +354,7 @@ internal class ThingPreferenceUpdater @Inject constructor(
             is Timeline.Update.OfLabeler -> updateLabelerPreferences(
                 existingPreferences = existingPreferences.filterIsInstance<PreferencesUnion.LabelersPref>(),
             )
+            is Timeline.Update.OfMutedWord -> updateMutedWordPreferences()
         }
 }
 
@@ -340,6 +364,7 @@ private fun Timeline.Update.targetClass() =
         is Timeline.Update.OfAdultContent -> PreferencesUnion.AdultContentPref::class
         is Timeline.Update.OfContentLabel -> PreferencesUnion.ContentLabelPref::class
         is Timeline.Update.OfLabeler -> PreferencesUnion.LabelersPref::class
+        is Timeline.Update.OfMutedWord -> PreferencesUnion.MutedWordsPref::class
     }
 
 private fun PreferencesUnion.ContentLabelPref.asExternalModel() = ContentLabelPreference(
