@@ -37,6 +37,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -179,11 +180,6 @@ private fun MutedWordsBottomSheet(
     onSave: (List<MutedWordPreference>) -> Unit,
     onShown: () -> Unit,
 ) {
-    LaunchedEffect(true) {
-        state.show()
-        onShown()
-    }
-
     state.ModalBottomSheet {
         Column(
             modifier = modifier
@@ -426,6 +422,10 @@ private fun MutedWordsBottomSheet(
                     }
                 }
             }
+        }
+        DisposableEffect(Unit) {
+            onShown()
+            onDispose { }
         }
     }
 }
