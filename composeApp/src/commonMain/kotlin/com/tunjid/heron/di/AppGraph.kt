@@ -50,8 +50,10 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.DependencyGraph
 import dev.zacsweers.metro.Includes
+import dev.zacsweers.metro.Named
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
+import kotlinx.coroutines.CoroutineScope
 
 @DependencyGraph(
     scope = AppScope::class,
@@ -90,6 +92,8 @@ interface AppGraph {
     @SingleIn(AppScope::class)
     @Provides
     fun appState(
+        @Named("AppScope")
+        appScope: CoroutineScope,
         authRepository: AuthRepository,
         notificationsRepository: NotificationsRepository,
         navigationStateHolder: NavigationStateHolder,
@@ -104,6 +108,7 @@ interface AppGraph {
         imageLoader = imageLoader,
         videoPlayerController = videoPlayerController,
         writeQueue = writeQueue,
+        appScope = appScope,
     )
 
     val appState: AppState

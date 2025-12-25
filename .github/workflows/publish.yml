@@ -22,6 +22,19 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Create Google services file
+        shell: bash
+        env:
+          # Map the secret to a shell variable here
+          GOOGLE_SERVICES_ENCODED: ${{ secrets.GOOGLE_SERVICES_BASE_64 }}
+        run: |
+          # Create the directory structure
+          mkdir -p "composeApp/src/release/"
+
+          # Decode the env variable into the file
+          echo "$GOOGLE_SERVICES_ENCODED" | openssl base64 -d -A \
+            -out "composeApp/src/release/google-services.json"
+
       - name: Build Unsigned AAB
         run: |
           ./gradlew spotlessCheck \
