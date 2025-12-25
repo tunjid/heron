@@ -42,8 +42,7 @@ jobs:
           mkdir -p "${GITHUB_WORKSPACE}/composeApp/src/release/"
 
           # Write the secret into the file
-          echo "$GOOGLE_SERVICES_JSON" > \
-            "${GITHUB_WORKSPACE}/composeApp/src/release/google-services.json"
+          echo "$GOOGLE_SERVICES_JSON" > "composeApp/src/release/google-services.json"
 
       - name: Build App
         run: ./gradlew assembleRelease
