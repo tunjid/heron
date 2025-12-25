@@ -36,7 +36,6 @@ data class State(
     val signedInProfileId: ProfileId? = null,
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
-
     @Transient
     override val tilingData: TilingState.Data<PostDataQuery, TimelineItem> = TilingState.Data(
         currentQuery = PostDataQuery(
