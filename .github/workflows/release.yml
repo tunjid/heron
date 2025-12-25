@@ -46,9 +46,9 @@ jobs:
           # Create the directory structure first to prevent 'No such file or directory' errors
           mkdir -p "${GITHUB_WORKSPACE}/composeApp/src/release/"
 
-          # Decode the secret into the file
-          echo "$GOOGLE_SERVICES_BASE_64" | openssl base64 -d -A \
-            -out "${GITHUB_WORKSPACE}/composeApp/src/release/google-services.json"
+          # Write the secret into the file
+          echo "$GOOGLE_SERVICES_JSON" > \
+            "${GITHUB_WORKSPACE}/composeApp/src/release/google-services.json"
 
       - name: Tag release
         run: |
