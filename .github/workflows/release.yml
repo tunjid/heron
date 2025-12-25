@@ -42,12 +42,15 @@ jobs:
 
       - name: Create Google services file
         shell: bash
+        env:
+          # Map the secret to a shell variable here
+          GOOGLE_SERVICES_ENCODED: ${{ secrets.GOOGLE_SERVICES_BASE_64 }}
         run: |
-          # Create the directory structure first to prevent 'No such file or directory' errors
+          # Create the directory structure
           mkdir -p "composeApp/src/release/"
 
-          # Decode the secret into the file
-          echo ${{ secrets.$GOOGLE_SERVICES_BASE_64 }} | openssl base64 -d -A \
+          # Decode the env variable into the file
+          echo "$GOOGLE_SERVICES_ENCODED" | openssl base64 -d -A \
             -out "composeApp/src/release/google-services.json"
 
       - name: Tag release
