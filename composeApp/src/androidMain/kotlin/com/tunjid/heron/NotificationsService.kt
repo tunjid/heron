@@ -18,6 +18,7 @@ package com.tunjid.heron
 
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import com.tunjid.heron.scaffold.notifications.NotificationAction
 
 class NotificationsService : FirebaseMessagingService() {
 
@@ -25,9 +26,9 @@ class NotificationsService : FirebaseMessagingService() {
         get() = (application as HeronApplication).appState
 
     override fun onNewToken(token: String) =
-        appState.registerPushNotificationToken(token)
+        appState.onNotificationAction(NotificationAction.RegisterToken(token = token))
 
     override fun onMessageReceived(message: RemoteMessage) {
-        // TODO: Implement in follow up PR
+        appState.onNotificationAction(NotificationAction.HandleNotification(payload = message.data))
     }
 }

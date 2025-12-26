@@ -16,6 +16,7 @@ androidx-room = "2.8.4"
 androidx-sqlite = "2.6.2"
 androidx-espresso-core = "3.7.0"
 axion-release = "1.21.1"
+buildConfig = "6.0.7"
 coreSplashscreen = "1.2.0"
 burst = "2.10.2"
 androidx-material = "1.13.0"
@@ -180,6 +181,7 @@ tunjid-treenav-strings = { group = "com.tunjid.treenav", name = "strings", versi
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
 androidxRoom = { id = "androidx.room", version.ref = "androidx-room" }
+buildConfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildConfig" }
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 googleServices = { id = "com.google.gms.google-services", version.ref = "google-services" }

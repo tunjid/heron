@@ -41,7 +41,6 @@ import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.splitlayout.SplitLayoutState
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
@@ -51,6 +50,8 @@ import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.scaffold.navigation.deepLinkTo
 import com.tunjid.heron.scaffold.navigation.isShowingSplashScreen
 import com.tunjid.heron.scaffold.navigation.navItemSelected
+import com.tunjid.heron.scaffold.notifications.NotificationAction
+import com.tunjid.heron.scaffold.notifications.NotificationStateHolder
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.MinPaneWidth
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.MultiStackNav
@@ -77,12 +78,11 @@ import kotlinx.coroutines.launch
 class AppState(
     entryMap: Map<String, PaneEntry<ThreePane, Route>>,
     private val authRepository: AuthRepository,
-    private val notificationsRepository: NotificationsRepository,
     private val navigationStateHolder: NavigationStateHolder,
+    private val notificationStateHolder: NotificationStateHolder,
     internal val imageLoader: ImageLoader,
     internal val videoPlayerController: VideoPlayerController,
     private val writeQueue: WriteQueue,
-    private val appScope: CoroutineScope,
 ) {
     private var hasNotifications by mutableStateOf(false)
 
@@ -170,8 +170,8 @@ class AppState(
             writeQueue.drain()
         }
         LaunchedEffect(Unit) {
-            notificationsRepository.unreadCount.collect { count ->
-                hasNotifications = count != 0L
+            notificationStateHolder.state.collect { notificationState ->
+                hasNotifications = notificationState.unreadCount != 0L
             }
         }
         LaunchedEffect(Unit) {
@@ -217,11 +217,8 @@ class AppState(
     fun onDeepLink(uri: GenericUri) =
         navigationStateHolder.accept(deepLinkTo(uri))
 
-    fun registerPushNotificationToken(token: String) {
-        appScope.launch {
-            notificationsRepository.registerPushNotificationToken(token)
-        }
-    }
+    fun onNotificationAction(action: NotificationAction) =
+        notificationStateHolder.accept(action)
 
     private fun currentNavItems(): List<NavItem> {
         val multiStackNav = multiStackNavState.value

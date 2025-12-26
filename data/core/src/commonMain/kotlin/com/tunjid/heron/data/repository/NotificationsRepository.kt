@@ -17,33 +17,61 @@
 package com.tunjid.heron.data.repository
 
 import app.bsky.feed.GetPostsQueryParams
+import app.bsky.feed.GetPostsResponse
+import app.bsky.feed.PostView
 import app.bsky.notification.GetUnreadCountQueryParams
 import app.bsky.notification.ListNotificationsNotification
 import app.bsky.notification.ListNotificationsQueryParams
+import app.bsky.notification.ListNotificationsResponse
 import app.bsky.notification.UpdateSeenRequest
+import com.tunjid.heron.data.InternalEndpoints
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
+import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
+import com.tunjid.heron.data.database.entities.PopulatedNotificationEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.network.NetworkMonitor
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.multipleEntitysaver.associatedPostUri
 import com.tunjid.heron.data.utilities.nextCursorFlow
+import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
+import com.tunjid.heron.data.utilities.toOutcome
+import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Named
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.DefaultRequest
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import io.ktor.http.takeFrom
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -67,6 +95,8 @@ interface NotificationsRepository {
 
     val lastRefreshed: Flow<Instant?>
 
+    val unreadNotifications: Flow<List<Notification>>
+
     fun notifications(
         query: NotificationsQuery,
         cursor: Cursor,
@@ -76,7 +106,7 @@ interface NotificationsRepository {
 
     suspend fun registerPushNotificationToken(
         token: String,
-    )
+    ): Outcome
 }
 
 internal class OfflineNotificationsRepository @Inject constructor(
@@ -85,8 +115,27 @@ internal class OfflineNotificationsRepository @Inject constructor(
     private val notificationsDao: NotificationsDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
+    private val networkMonitor: NetworkMonitor,
     private val savedStateDataSource: SavedStateDataSource,
+    httpClient: HttpClient,
 ) : NotificationsRepository {
+
+    private val notificationsClient = httpClient.config {
+        install(DefaultRequest) {
+            url.takeFrom(InternalEndpoints.HeronEndpoint)
+        }
+        install(HttpTimeout) {
+            requestTimeoutMillis = 15.seconds.inWholeMilliseconds
+        }
+        install(Logging) {
+            level = LogLevel.BODY
+            logger = object : Logger {
+                override fun log(message: String) {
+//                    println("Logger Notifications => $message")
+                }
+            }
+        }
+    }
 
     override val unreadCount: Flow<Long> =
         savedStateDataSource.singleAuthorizedSessionFlow {
@@ -99,7 +148,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                     }
                         .getOrNull()?.count ?: 0
                     emit(unreadCount)
-                    kotlinx.coroutines.delay(30_000)
+                    delay(30.seconds)
                 }
             }
         }
@@ -113,71 +162,75 @@ internal class OfflineNotificationsRepository @Inject constructor(
         .map { it.signedInProfileNotifications()?.lastRefreshed }
         .distinctUntilChanged()
 
+    override val unreadNotifications: Flow<List<Notification>> =
+        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
+            lastRefreshed
+                .filterNotNull()
+                .flatMapLatest { refreshed ->
+                    notificationsDao.unreadNotifications(
+                        ownerId = signedInProfileId.id,
+                        lastRead = refreshed,
+                    )
+                        .distinctUntilChanged()
+                        .flatMapLatest { populatedNotificationEntities ->
+                            asExternalModel(
+                                signedInProfileId = signedInProfileId,
+                                populatedNotificationEntities = populatedNotificationEntities,
+                            )
+                        }
+                        .withRefresh {
+                            notificationsWithAssociatedPosts(
+                                queryParams = ListNotificationsQueryParams(
+                                    limit = UnreadNotificationsLimit,
+                                    cursor = null,
+                                    seenAt = refreshed,
+                                ),
+                            )
+                        }
+                }
+        }
+
     override fun notifications(
         query: NotificationsQuery,
         cursor: Cursor,
     ): Flow<CursorList<Notification>> =
-        observeAndRefreshNotifications(
-            query = query,
-            nextCursorFlow = networkService.nextCursorFlow(
-                currentCursor = cursor,
-                currentRequestWithNextCursor = {
-                    val notificationsAtpResponse = networkService.api
-                        .listNotifications(
-                            ListNotificationsQueryParams(
+        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
+            observeAndRefreshNotifications(
+                query = query,
+                nextCursorFlow = networkService.nextCursorFlow(
+                    currentCursor = cursor,
+                    currentRequestWithNextCursor = {
+                        notificationsWithAssociatedPosts(
+                            queryParams = ListNotificationsQueryParams(
                                 limit = query.data.limit,
                                 cursor = cursor.value,
                             ),
                         )
-                    when (notificationsAtpResponse) {
-                        is AtpResponse.Failure -> AtpResponse.Failure(
-                            statusCode = notificationsAtpResponse.statusCode,
-                            response = null,
-                            error = notificationsAtpResponse.error,
-                            headers = notificationsAtpResponse.headers,
-                        )
-
-                        is AtpResponse.Success -> {
-                            networkService.api
-                                .getPosts(
-                                    GetPostsQueryParams(
-                                        uris = notificationsAtpResponse.response.notifications
-                                            .mapNotNull(
-                                                ListNotificationsNotification::associatedPostUri,
-                                            )
-                                            .distinct(),
-                                    ),
-                                )
-                                .map {
-                                    notificationsAtpResponse.requireResponse() to it.posts
-                                }
+                    },
+                    nextCursor = {
+                        first.cursor
+                    },
+                    onResponse = {
+                        multipleEntitySaverProvider.saveInTransaction {
+                            if (query.data.page == 0) {
+                                notificationsDao.deleteAllNotifications()
+                            }
+                            add(
+                                viewingProfileId = signedInProfileId,
+                                listNotificationsNotification = first.notifications,
+                                associatedPosts = second,
+                            )
                         }
-                    }
-                },
-                nextCursor = {
-                    first.cursor
-                },
-                onResponse = {
-                    val authProfileId = savedStateDataSource.savedState.value.auth?.authProfileId
-                    if (authProfileId != null) multipleEntitySaverProvider.saveInTransaction {
                         if (query.data.page == 0) {
-                            notificationsDao.deleteAllNotifications()
+                            savedStateDataSource.updateSignedInUserNotifications {
+                                copy(lastRefreshed = query.data.cursorAnchor)
+                            }
                         }
-                        add(
-                            viewingProfileId = authProfileId,
-                            listNotificationsNotification = first.notifications,
-                            associatedPosts = second,
-                        )
-                    }
-                    if (query.data.page == 0) {
-                        savedStateDataSource.updateSignedInUserNotifications {
-                            copy(lastRefreshed = query.data.cursorAnchor)
-                        }
-                    }
-                },
-            ),
-        )
-            .distinctUntilChanged()
+                    },
+                ),
+            )
+                .distinctUntilChanged()
+        }
 
     override suspend fun markRead(at: Instant) {
         val lastReadAt = savedStateDataSource.savedState
@@ -205,9 +258,21 @@ internal class OfflineNotificationsRepository @Inject constructor(
 
     override suspend fun registerPushNotificationToken(
         token: String,
-    ) {
-        // TODO in follow up PR
-    }
+    ) = savedStateDataSource.inCurrentProfileSession { signedProfileId ->
+        if (signedProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+        val saveNotificationTokenRequest = SaveNotificationTokenRequest(
+            did = signedProfileId.id,
+            token = token,
+        )
+        networkMonitor.runCatchingWithNetworkRetry(
+            block = {
+                notificationsClient.post(SaveNotificationTokenPath) {
+                    contentType(ContentType.Application.Json)
+                    setBody(saveNotificationTokenRequest)
+                }
+            },
+        ).toOutcome()
+    } ?: expiredSessionOutcome()
 
     private fun observeAndRefreshNotifications(
         query: NotificationsQuery,
@@ -230,27 +295,72 @@ internal class OfflineNotificationsRepository @Inject constructor(
                 limit = query.data.limit,
             )
                 .flatMapLatest { populatedNotificationEntities ->
-                    postDao.posts(
-                        viewingProfileId = signedInProfileId.id,
-                        postUris = populatedNotificationEntities
-                            .mapNotNull { it.entity.associatedPostUri }
-                            .toSet(),
-                    ).map { posts ->
-                        val urisToPosts = posts.associateBy { it.entity.uri }
-                        populatedNotificationEntities.map {
-                            it.asExternalModel(
-                                associatedPost = it.entity.associatedPostUri
-                                    ?.let(urisToPosts::get)
-                                    ?.asExternalModel(
-                                        embeddedRecord = null,
-                                    ),
-                            )
-                        }
-                    }
+                    asExternalModel(
+                        signedInProfileId = signedInProfileId,
+                        populatedNotificationEntities = populatedNotificationEntities,
+                    )
                 }
         }
+
+    private fun asExternalModel(
+        signedInProfileId: ProfileId,
+        populatedNotificationEntities: List<PopulatedNotificationEntity>,
+    ) = postDao.posts(
+        viewingProfileId = signedInProfileId.id,
+        postUris = populatedNotificationEntities
+            .mapNotNull { it.entity.associatedPostUri }
+            .toSet(),
+    ).map { posts ->
+        val urisToPosts = posts.associateBy { it.entity.uri }
+        populatedNotificationEntities.map {
+            it.asExternalModel(
+                associatedPost = it.entity.associatedPostUri
+                    ?.let(urisToPosts::get)
+                    ?.asExternalModel(
+                        embeddedRecord = null,
+                    ),
+            )
+        }
+    }
+
+    private suspend fun notificationsWithAssociatedPosts(
+        queryParams: ListNotificationsQueryParams,
+    ): AtpResponse<Pair<ListNotificationsResponse, List<PostView>>> =
+        networkService.api
+            .listNotifications(queryParams)
+            .map { response ->
+                val chunkedPostViews = coroutineScope {
+                    response.notifications
+                        .mapNotNullTo(
+                            destination = mutableSetOf(),
+                            transform = ListNotificationsNotification::associatedPostUri,
+                        )
+                        .chunked(MaxPostsFetchedPerQuery)
+                        .map { postUris ->
+                            async {
+                                networkService.api
+                                    .getPosts(GetPostsQueryParams(uris = postUris))
+                                    .map(GetPostsResponse::posts)
+                                    .requireResponse()
+                            }
+                        }
+                }.awaitAll()
+
+                response to chunkedPostViews.flatten()
+            }
 }
 
 private fun SavedState.signedInProfileNotifications() =
     signedInProfileData
         ?.notifications
+
+@Serializable
+private data class SaveNotificationTokenRequest(
+    val did: String,
+    val token: String,
+)
+
+private const val SaveNotificationTokenPath = "/saveNotificationToken"
+
+private const val UnreadNotificationsLimit = 100L
+private const val MaxPostsFetchedPerQuery = 25
