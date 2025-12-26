@@ -22,6 +22,8 @@ import com.tunjid.heron.data.network.NetworkMonitor
 import io.ktor.client.plugins.ResponseException
 import kotlin.jvm.JvmInline
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -32,7 +34,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.io.IOException
-import sh.christian.ozone.api.response.AtpResponse
 
 internal inline fun <R> runCatchingUnlessCancelled(block: () -> R): Result<R> {
     return try {
@@ -53,12 +54,15 @@ internal inline fun <R, T> Result<T>.mapCatchingUnlessCancelled(
     onFailure = { Result.failure(it) },
 )
 
+/**
+ * Catches network related exceptions and wraps them in a failure result.
+ */
 internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry(
-    times: Int,
-    initialDelay: Duration,
-    maxDelay: Duration,
-    factor: Double,
-    crossinline block: suspend () -> AtpResponse<T>,
+    times: Int = 3,
+    initialDelay: Duration = 100.milliseconds,
+    maxDelay: Duration = 4.seconds,
+    factor: Double = 2.0,
+    crossinline block: suspend () -> T,
 ): Result<T> = coroutineScope scope@{
     var connected = true
     // Monitor connection status async
@@ -69,18 +73,7 @@ internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry
     var lastError: Throwable? = null
     repeat(times) { retry ->
         try {
-            return@scope when (val atpResponse = block()) {
-                is AtpResponse.Failure -> Result.failure(
-                    AtProtoException(
-                        statusCode = atpResponse.statusCode.code,
-                        error = atpResponse.error?.error,
-                        message = atpResponse.error?.message,
-                    ),
-                )
-                is AtpResponse.Success -> Result.success(
-                    atpResponse.response,
-                )
-            }.also { connectivityJob.cancel() }
+            return@scope Result.success(block()).also { connectivityJob.cancel() }
         } catch (e: IOException) {
             lastError = e
             // TODO: Log this exception

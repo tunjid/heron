@@ -18,6 +18,8 @@ package com.tunjid.heron.data.network
 
 import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.lexicons.XrpcBlueskyApi
+import com.tunjid.heron.data.utilities.AtProtoException
+import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
@@ -29,6 +31,11 @@ import sh.christian.ozone.api.response.AtpResponse
 internal interface NetworkService {
     val api: BlueskyApi
 
+    /**
+     * Catches network related exceptions and wraps them in a failure result.
+     * If the [BlueskyApi] indicates an [AtpResponse.Failure], it is also considered a failure
+     * and also returns a failure result.
+     */
     suspend fun <T : Any> runCatchingWithMonitoredNetworkRetry(
         times: Int = 3,
         initialDelay: Duration = 100.milliseconds,
@@ -62,5 +69,15 @@ internal class KtorNetworkService(
         maxDelay,
         factor,
         block = { block(api) },
-    )
+    ).mapCatchingUnlessCancelled { atpResponse ->
+        when (atpResponse) {
+            is AtpResponse.Failure -> throw AtProtoException(
+                statusCode = atpResponse.statusCode.code,
+                error = atpResponse.error?.error,
+                message = atpResponse.error?.message,
+            )
+
+            is AtpResponse.Success -> atpResponse.response
+        }
+    }
 }
