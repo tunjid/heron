@@ -51,9 +51,6 @@ import dev.zacsweers.metro.Named
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.logging.LogLevel
-import io.ktor.client.plugins.logging.Logger
-import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -171,13 +168,24 @@ internal class OfflineNotificationsRepository @Inject constructor(
                             )
                         }
                         .withRefresh {
-                            notificationsWithAssociatedPosts(
-                                queryParams = ListNotificationsQueryParams(
-                                    limit = UnreadNotificationsLimit,
-                                    cursor = null,
-                                    seenAt = refreshed,
-                                ),
-                            )
+                            networkService.runCatchingWithMonitoredNetworkRetry {
+                                notificationsWithAssociatedPosts(
+                                    queryParams = ListNotificationsQueryParams(
+                                        limit = UnreadNotificationsLimit,
+                                        cursor = null,
+                                        seenAt = refreshed,
+                                    ),
+                                )
+                            }
+                            .map { (listNotificationsResponse, postViews) ->
+                                multipleEntitySaverProvider.saveInTransaction {
+                                    add(
+                                        viewingProfileId = signedInProfileId,
+                                        listNotificationsNotification = listNotificationsResponse.notifications,
+                                        associatedPosts = postViews,
+                                    )
+                                }
+                            }
                         }
                 }
         }
@@ -321,8 +329,6 @@ internal class OfflineNotificationsRepository @Inject constructor(
         networkService.api
             .listNotifications(queryParams)
             .map { response ->
-                // For every notification with an associated post, the associated post
-                // must be fetched.
                 val chunkedPostViews = coroutineScope {
                     response.notifications
                         .mapNotNullTo(
@@ -331,10 +337,13 @@ internal class OfflineNotificationsRepository @Inject constructor(
                         )
                         .chunked(MaxPostsFetchedPerQuery)
                         .map { postUris ->
+                            // For every notification with an associated post, the associated post
+                            // must be fetched.
                             async {
                                 networkService.api
                                     .getPosts(GetPostsQueryParams(uris = postUris))
                                     .map(GetPostsResponse::posts)
+                                    // Successful response are required.
                                     .requireResponse()
                             }
                         }
