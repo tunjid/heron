@@ -177,15 +177,15 @@ internal class OfflineNotificationsRepository @Inject constructor(
                                     ),
                                 )
                             }
-                            .map { (listNotificationsResponse, postViews) ->
-                                multipleEntitySaverProvider.saveInTransaction {
-                                    add(
-                                        viewingProfileId = signedInProfileId,
-                                        listNotificationsNotification = listNotificationsResponse.notifications,
-                                        associatedPosts = postViews,
-                                    )
+                                .map { (listNotificationsResponse, postViews) ->
+                                    multipleEntitySaverProvider.saveInTransaction {
+                                        add(
+                                            viewingProfileId = signedInProfileId,
+                                            listNotificationsNotification = listNotificationsResponse.notifications,
+                                            associatedPosts = postViews,
+                                        )
+                                    }
                                 }
-                            }
                         }
                 }
         }
