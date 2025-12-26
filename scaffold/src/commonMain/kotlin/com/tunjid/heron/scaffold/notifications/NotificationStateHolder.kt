@@ -106,6 +106,9 @@ private fun Flow<NotificationAction.RegisterToken>.registerTokenMutations(
     notificationsRepository: NotificationsRepository,
 ): Flow<Mutation<NotificationState>> =
     mapLatestToManyMutations {
+        // TODO: This should be enqueued, but the write queue does not currently
+        //  support updating a queued write to something else. For now, just write
+        //  using the app scope and fix in a follow up PR.
         if (currentState().hasNotificationPermissions) {
             notificationsRepository.registerPushNotificationToken(it.token)
         }
@@ -118,9 +121,8 @@ private fun Flow<NotificationAction.HandleNotification>.handleNotificationMutati
     // and has lots of notifications
     conflate()
         .mapLatestToManyMutations {
-            // This is potentially expensive. Collect it for a maximum of 3 seconds
+            // This is potentially expensive, collect it for a maximum of 3 seconds.
             withTimeoutOrNull(3.seconds) {
-                // Does not terminate, 3 seconds will always be used.
                 emitAll(
                     notificationsRepository.unreadNotifications.mapToMutation {
                         copy(latestPushNotifications = it)

@@ -127,14 +127,6 @@ internal class OfflineNotificationsRepository @Inject constructor(
         install(HttpTimeout) {
             requestTimeoutMillis = 15.seconds.inWholeMilliseconds
         }
-        install(Logging) {
-            level = LogLevel.BODY
-            logger = object : Logger {
-                override fun log(message: String) {
-//                    println("Logger Notifications => $message")
-                }
-            }
-        }
     }
 
     override val unreadCount: Flow<Long> =
@@ -329,6 +321,8 @@ internal class OfflineNotificationsRepository @Inject constructor(
         networkService.api
             .listNotifications(queryParams)
             .map { response ->
+                // For every notification with an associated post, the associated post
+                // must be fetched.
                 val chunkedPostViews = coroutineScope {
                     response.notifications
                         .mapNotNullTo(
