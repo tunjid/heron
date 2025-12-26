@@ -34,8 +34,7 @@ interface NotificationsDao {
             AND ownerId = profileViewerStates.profileId
             WHERE ownerId = :ownerId
             AND indexedAt < :before
-            ORDER BY indexedAt
-            DESC
+            ORDER BY indexedAt DESC
             LIMIT :limit
             OFFSET :offset
         """,
@@ -55,7 +54,7 @@ interface NotificationsDao {
             AND ownerId = profileViewerStates.profileId
             WHERE ownerId = :ownerId
             AND indexedAt > :lastRead
-            ORDER BY indexedAt
+            ORDER BY indexedAt DESC
         """,
     )
     fun unreadNotifications(
