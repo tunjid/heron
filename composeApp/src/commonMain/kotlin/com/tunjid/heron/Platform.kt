@@ -55,6 +55,7 @@ import com.tunjid.heron.profiles.di.ProfilesBindings
 import com.tunjid.heron.profiles.di.ProfilesNavigationBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindingArgs
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.scaffold.notifications.Notifier
 import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.search.di.SearchBindings
 import com.tunjid.heron.search.di.SearchNavigationBindings
@@ -77,6 +78,7 @@ expect fun getPlatform(): Platform
 
 fun createAppState(
     imageLoader: () -> ImageLoader,
+    notifier: (appScope: CoroutineScope) -> Notifier,
     videoPlayerController: (appScope: CoroutineScope) -> VideoPlayerController,
     args: (appScope: CoroutineScope) -> DataBindingArgs,
 ): AppState {
@@ -111,6 +113,7 @@ fun createAppState(
     val scaffoldBindings = ScaffoldBindings(
         args = ScaffoldBindingArgs(
             imageLoader = imageLoader(),
+            notifier = notifier(appScope),
             videoPlayerController = videoPlayerController(appScope),
             routeMatchers = navigationComponent.allRouteMatchers,
         ),

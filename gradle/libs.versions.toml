@@ -38,6 +38,7 @@ kotlinx-serialization = "1.9.0"
 ksp = "2.3.0"
 ktlint-cli = "1.8.0"
 ktor = "3.3.3"
+lifecycle-android = "2.10.0"
 lifecycle-multiplatform = "2.10.0-alpha07"
 metro = "0.8.2"
 navigationEventCompose = "1.0.0-rc02"
@@ -128,6 +129,7 @@ filekit-dialogs = { module = "io.github.vinceglb:filekit-dialogs", version.ref =
 filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "vinceglb-filekit" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom-version" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
+lifecycle-android-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycle-android" }
 lifecycle-multiplatform-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "lifecycle-multiplatform" }
 lifecycle-multiplatform-viewmodel-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle-multiplatform" }
 lifecycle-multiplatform-viewmodel-navigation3 = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel-navigation3", version.ref = "lifecycle-multiplatform" }

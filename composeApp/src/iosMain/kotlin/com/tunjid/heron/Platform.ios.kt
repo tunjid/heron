@@ -20,6 +20,7 @@ import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.images.imageLoader
 import com.tunjid.heron.media.video.StubVideoPlayerController
+import com.tunjid.heron.scaffold.notifications.NoOpNotifier
 import com.tunjid.heron.scaffold.scaffold.AppState
 import dev.jordond.connectivity.Connectivity
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -42,6 +43,9 @@ actual fun getPlatform(): Platform = IOSPlatform()
 fun createAppState(): AppState =
     createAppState(
         imageLoader = ::imageLoader,
+        notifier = {
+            NoOpNotifier
+        },
         videoPlayerController = {
             StubVideoPlayerController
         },

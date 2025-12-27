@@ -62,6 +62,7 @@ sealed class NotificationAction(
 @Inject
 class AppNotificationStateHolder(
     @Named("AppScope") appScope: CoroutineScope,
+    notifier: Notifier,
     notificationsRepository: NotificationsRepository,
 ) : NotificationStateHolder,
     ActionStateMutator<NotificationAction, StateFlow<NotificationState>> by appScope.actionStateFlowMutator(
@@ -79,6 +80,7 @@ class AppNotificationStateHolder(
                 when (val action = type()) {
                     is NotificationAction.UpdatePermissions -> action.flow.updateNotificationPermissions()
                     is NotificationAction.HandleNotification -> action.flow.handleNotificationMutations(
+                        notifier = notifier,
                         notificationsRepository = notificationsRepository,
                     )
                     is NotificationAction.RegisterToken -> action.flow.registerTokenMutations(
@@ -115,6 +117,7 @@ private fun Flow<NotificationAction.RegisterToken>.registerTokenMutations(
     }
 
 private fun Flow<NotificationAction.HandleNotification>.handleNotificationMutations(
+    notifier: Notifier,
     notificationsRepository: NotificationsRepository,
 ): Flow<Mutation<NotificationState>> =
 // Each emission does the same thing. Simply conflate if a user went viral
@@ -124,8 +127,9 @@ private fun Flow<NotificationAction.HandleNotification>.handleNotificationMutati
             // This is potentially expensive, collect it for a maximum of 3 seconds.
             withTimeoutOrNull(3.seconds) {
                 emitAll(
-                    notificationsRepository.unreadNotifications.mapToMutation {
-                        copy(latestPushNotifications = it)
+                    notificationsRepository.unreadNotifications.mapLatestToManyMutations {
+                        emit { copy(latestPushNotifications = it) }
+                        notifier.displayNotifications(it)
                     },
                 )
             }
