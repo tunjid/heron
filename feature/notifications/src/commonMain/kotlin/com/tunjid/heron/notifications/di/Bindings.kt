@@ -49,6 +49,7 @@ import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.treenav.compose.PaneEntry
@@ -64,8 +65,7 @@ import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
-import heron.feature.notifications.generated.resources.Res
-import heron.feature.notifications.generated.resources.create_post
+import heron.ui.core.generated.resources.notifications_create_post
 import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/notifications"
@@ -160,7 +160,7 @@ class NotificationsBindings(
                             .offset {
                                 fabOffset(bottomNavigationNestedScrollConnection.offset)
                             },
-                        text = stringResource(Res.string.create_post),
+                        text = stringResource(CommonStrings.notifications_create_post),
                         icon = Icons.Rounded.Edit,
                         expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
                         onClick = {

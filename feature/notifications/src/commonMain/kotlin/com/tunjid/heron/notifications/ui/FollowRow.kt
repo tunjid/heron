@@ -31,11 +31,11 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.timeline.ui.TimeDelta
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import heron.feature.notifications.generated.resources.Res
-import heron.feature.notifications.generated.resources.followed_you
-import heron.feature.notifications.generated.resources.followed_you_description
-import heron.feature.notifications.generated.resources.multiple_followed
+import heron.ui.core.generated.resources.notifications_followed_you
+import heron.ui.core.generated.resources.notifications_followed_you_description
+import heron.ui.core.generated.resources.notifications_multiple_followed
 import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
@@ -63,7 +63,7 @@ fun FollowRow(
             Icon(
                 painter = rememberVectorPainter(Icons.Default.Person),
                 tint = MaterialTheme.colorScheme.primary,
-                contentDescription = stringResource(Res.string.followed_you_description),
+                contentDescription = stringResource(CommonStrings.notifications_followed_you_description),
             )
         },
         content = {
@@ -73,8 +73,8 @@ fun FollowRow(
                     text = notificationText(
                         notification = notification,
                         aggregatedSize = aggregatedProfiles.size,
-                        singularResource = Res.string.followed_you,
-                        pluralResource = Res.string.multiple_followed,
+                        singularResource = CommonStrings.notifications_followed_you,
+                        pluralResource = CommonStrings.notifications_multiple_followed,
                     ),
                 )
                 TimeDelta(
