@@ -35,4 +35,13 @@
     <string name="share">Share</string>
     <string name="repost_removal">repost removal</string>
     <string name="thread_gate_update">post reply update</string>
+    <string name="notification_channel_new_followers">New followers</string>
+    <string name="notification_channel_likes">Likes</string>
+    <string name="notification_channel_likes_repost">Likes of your reposts</string>
+    <string name="notification_channel_mentions">Mentions</string>
+    <string name="notification_channel_quotes">Quotes</string>
+    <string name="notification_channel_replies">Replies</string>
+    <string name="notification_channel_reposts">Reposts</string>
+    <string name="notification_channel_repost_reposts">Reposts of your reposts</string>
+    <string name="notification_channel_misc">Miscellaneous</string>
 </resources>

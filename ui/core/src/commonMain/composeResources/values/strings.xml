@@ -66,10 +66,13 @@
     <string name="notifications_joined_from_your_started_pack_description">Joined from your starter pack</string>
     <string name="notifications_joined_from_your_starter_pack">%1$s joined from your starter pack</string>
     <string name="notifications_multiple_joined_from_your_starter_pack">%1$s and %2$d others joined from your starter pack</string>
-    <string name="notifications_post_subscription_description">New content</string>
+    <string name="notifications_post_subscription_description">New update on subscribed post</string>
     <string name="notifications_post_subscription">New content from %1$s</string>
     <string name="notifications_multiple_post_subscription">New content from %1$s and %2$d others</string>
     <string name="notifications_account_verified">Your account has been verified</string>
     <string name="notifications_account_unverified">Your account has been unverified</string>
+    <string name="notifications_mentioned_you">%1$s mentioned you</string>
+    <string name="notifications_quoted_you">%1$s quoted you</string>
+    <string name="notifications_replied_to_you">%1$s replied to your post</string>
     <string name="notifications_create_post">Create Post</string>
 </resources>
