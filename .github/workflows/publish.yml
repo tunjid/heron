@@ -36,11 +36,14 @@ jobs:
             -out "composeApp/src/release/google-services.json"
 
       - name: Build Unsigned AAB
+        env:
+          HERON_ENDPOINT: ${{ secrets.HERON_ENDPOINT }}
         run: |
           ./gradlew spotlessCheck \
             bundleRelease \
             -Pheron.versionCode=${{ github.run_number }} \
             -Pheron.isPlayStore=true
+            -Pheron.endpoint="$HERON_ENDPOINT"
 
       - name: Sign AAB
         uses: r0adkll/sign-android-release@v1

@@ -43,7 +43,6 @@ jobs:
       - name: Create Google services file
         shell: bash
         env:
-          # Map the secret to a shell variable here
           GOOGLE_SERVICES_ENCODED: ${{ secrets.GOOGLE_SERVICES_BASE_64 }}
         run: |
           # Create the directory structure
