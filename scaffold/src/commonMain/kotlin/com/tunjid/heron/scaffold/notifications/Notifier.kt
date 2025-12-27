@@ -17,8 +17,13 @@
 package com.tunjid.heron.scaffold.notifications
 
 import androidx.compose.runtime.Composable
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.path
+import com.tunjid.heron.data.core.types.asRecordUriOrNull
+import com.tunjid.heron.data.utilities.path
+import com.tunjid.heron.scaffold.navigation.AppStack
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.notifications_account_unverified
 import heron.ui.core.generated.resources.notifications_account_verified
@@ -54,6 +59,19 @@ expect fun hasNotificationPermissions(): Boolean
 expect fun requestNotificationPermissions(
     onPermissionResult: (Boolean) -> Unit,
 ): () -> Unit
+
+internal fun Notification.deepLinkPath(): String {
+    return when (this) {
+        is Notification.PostAssociated -> associatedPost.uri.path
+        is Notification.Followed -> LinkTarget.UserDidMention(author.did).path
+        is Notification.JoinedStarterPack -> reasonSubject?.asRecordUriOrNull()?.path
+            ?: AppStack.Home.rootRoute.id
+        is Notification.Unknown,
+        is Notification.Unverified,
+        is Notification.Verified,
+        -> AppStack.Home.rootRoute.id
+    }
+}
 
 internal suspend fun Notification.title(): String = when (this) {
     is Notification.Liked.Post -> getString(

@@ -25,7 +25,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
+import android.net.Uri as AndroidUri
 import android.os.Build
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
@@ -34,6 +34,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.domain.navigation.R
 import heron.scaffold.generated.resources.Res
 import heron.scaffold.generated.resources.notification_channel_likes
@@ -105,18 +106,11 @@ class AndroidNotifier(
         0,
         /* intent = */
         Intent().apply {
-            val path = when (this@deepLinkPendingIntent) {
-                is Notification.PostAssociated -> associatedPost.uri.uri
-                is Notification.Followed -> author.did.id
-                is Notification.JoinedStarterPack -> reasonSubject?.uri ?: "/"
-                is Notification.Unknown,
-                is Notification.Unverified,
-                is Notification.Verified,
-                -> "/"
-            }
-
             component = ComponentName(context.packageName, DEEP_LINK_ACTIVITY)
-            data = Uri.parse("https://heron.tunji.dev/$path")
+            data = AndroidUri.Builder()
+                .scheme(Uri.Host.AtProto.prefix)
+                .path(deepLinkPath())
+                .build()
             putExtra(EXTRA_NOTIFICATION_ID, androidNotificationId)
         },
         /* flags = */
