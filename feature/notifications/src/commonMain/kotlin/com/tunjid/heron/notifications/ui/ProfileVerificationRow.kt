@@ -63,7 +63,10 @@ fun ProfileVerificationRow(
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.Person),
                 tint = MaterialTheme.colorScheme.primary,
-                contentDescription = stringResource(CommonStrings.notifications_joined_from_your_started_pack_description),
+                contentDescription = stringResource(
+                    if (isVerified) CommonStrings.notifications_account_verified
+                    else CommonStrings.notifications_account_unverified,
+                ),
             )
         },
         content = {
