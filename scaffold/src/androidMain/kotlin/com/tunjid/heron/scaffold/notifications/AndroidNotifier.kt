@@ -28,6 +28,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.domain.navigation.R
 import heron.scaffold.generated.resources.Res
 import heron.scaffold.generated.resources.notification_channel_likes
 import heron.scaffold.generated.resources.notification_channel_likes_repost
@@ -65,7 +66,7 @@ class AndroidNotifier(
                     context,
                     notification.channelId,
                 ).apply {
-                    setSmallIcon(android.R.drawable.ic_dialog_info)
+                    setSmallIcon(R.drawable.ic_heron_notification)
                     setContentTitle(notification.title())
                     notification.body()?.let(::setContentText)
                     setPriority(NotificationCompat.PRIORITY_DEFAULT)

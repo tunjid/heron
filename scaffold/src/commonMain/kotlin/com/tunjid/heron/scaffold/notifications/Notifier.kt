@@ -100,7 +100,7 @@ internal suspend fun Notification.title(): String = when (this) {
 internal fun Notification.body(): String? = when (this) {
     is Notification.Followed -> null
     is Notification.JoinedStarterPack -> null
-    is Notification.PostAssociated -> associatedPost.record?.text.orEmpty()
+    is Notification.PostAssociated -> associatedPost.record?.text
     is Notification.Unknown -> null
     is Notification.Verified -> null
     is Notification.Unverified -> null
