@@ -54,6 +54,7 @@ interface NotificationsDao {
             AND ownerId = profileViewerStates.profileId
             WHERE ownerId = :ownerId
             AND indexedAt > :lastRead
+            AND isRead = false
             ORDER BY indexedAt DESC
         """,
     )

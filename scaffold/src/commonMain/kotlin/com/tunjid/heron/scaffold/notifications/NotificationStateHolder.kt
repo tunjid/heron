@@ -27,6 +27,7 @@ import com.tunjid.mutator.coroutines.toMutationStream
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Named
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -57,6 +58,10 @@ sealed class NotificationAction(
     data class HandleNotification(
         val payload: Map<String, String>,
     ) : NotificationAction(key = "HandleNotification")
+
+    data class NotificationDismissed(
+        val dismissedAt: Instant,
+    ) : NotificationAction(key = "NotificationDismissed")
 }
 
 @Inject
@@ -85,6 +90,9 @@ class AppNotificationStateHolder(
                     )
                     is NotificationAction.RegisterToken -> action.flow.registerTokenMutations(
                         currentState = { state() },
+                        notificationsRepository = notificationsRepository,
+                    )
+                    is NotificationAction.NotificationDismissed -> action.flow.notificationDismissalMutations(
                         notificationsRepository = notificationsRepository,
                     )
                 }
@@ -123,14 +131,22 @@ private fun Flow<NotificationAction.HandleNotification>.handleNotificationMutati
 // Each emission does the same thing. Simply conflate if a user went viral
     // and has lots of notifications
     conflate()
-        .mapLatestToManyMutations {
+        .mapLatestToManyMutations { action ->
             // This is potentially expensive, collect it for a maximum of 3 seconds.
             withTimeoutOrNull(3.seconds) {
                 emitAll(
-                    notificationsRepository.unreadNotifications.mapLatestToManyMutations {
-                        emit { copy(latestPushNotifications = it) }
-                        notifier.displayNotifications(it)
-                    },
+                    notificationsRepository.getUnreadNotifications(action.payload)
+                        .mapLatestToManyMutations {
+                            emit { copy(latestPushNotifications = it) }
+                            notifier.displayNotifications(it)
+                        },
                 )
             }
         }
+
+private fun Flow<NotificationAction.NotificationDismissed>.notificationDismissalMutations(
+    notificationsRepository: NotificationsRepository,
+): Flow<Mutation<NotificationState>> =
+    mapLatestToManyMutations {
+        notificationsRepository.markRead(it.dismissedAt)
+    }
