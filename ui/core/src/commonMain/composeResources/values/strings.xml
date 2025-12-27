@@ -74,5 +74,6 @@
     <string name="notifications_mentioned_you">%1$s mentioned you</string>
     <string name="notifications_quoted_you">%1$s quoted you</string>
     <string name="notifications_replied_to_you">%1$s replied to your post</string>
+    <string name="notifications_unknown">You have a new notification</string>
     <string name="notifications_create_post">Create Post</string>
 </resources>

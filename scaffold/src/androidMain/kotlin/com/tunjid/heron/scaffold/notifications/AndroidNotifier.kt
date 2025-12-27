@@ -77,7 +77,7 @@ class AndroidNotifier(
                     /* tag = */
                     notification.uri.toString(),
                     /* id = */
-                    0,
+                    notification.hashCode(),
                     /* notification = */
                     builder.build(),
                 )

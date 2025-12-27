@@ -32,6 +32,7 @@ import heron.ui.core.generated.resources.notifications_quoted_you
 import heron.ui.core.generated.resources.notifications_replied_to_you
 import heron.ui.core.generated.resources.notifications_reposted_your_post
 import heron.ui.core.generated.resources.notifications_reposted_your_repost
+import heron.ui.core.generated.resources.notifications_unknown
 import org.jetbrains.compose.resources.getString
 
 interface Notifier {
@@ -94,7 +95,7 @@ internal suspend fun Notification.title(): String = when (this) {
     is Notification.SubscribedPost -> getString(CommonStrings.notifications_post_subscription_description)
     is Notification.Verified -> getString(CommonStrings.notifications_account_verified)
     is Notification.Unverified -> getString(CommonStrings.notifications_account_unverified)
-    is Notification.Unknown -> "You have a new notification"
+    is Notification.Unknown -> getString(CommonStrings.notifications_unknown)
 }
 
 internal fun Notification.body(): String? = when (this) {
