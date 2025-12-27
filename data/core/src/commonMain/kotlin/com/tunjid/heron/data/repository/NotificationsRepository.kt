@@ -68,6 +68,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -92,7 +93,9 @@ interface NotificationsRepository {
 
     val lastRefreshed: Flow<Instant?>
 
-    val unreadNotifications: Flow<List<Notification>>
+    fun getUnreadNotifications(
+        payload: Map<String, String>,
+    ): Flow<List<Notification>>
 
     fun notifications(
         query: NotificationsQuery,
@@ -151,7 +154,9 @@ internal class OfflineNotificationsRepository @Inject constructor(
         .map { it.signedInProfileNotifications()?.lastRefreshed }
         .distinctUntilChanged()
 
-    override val unreadNotifications: Flow<List<Notification>> =
+    override fun getUnreadNotifications(
+        payload: Map<String, String>,
+    ): Flow<List<Notification>> =
         savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
             lastRefreshed
                 .filterNotNull()
@@ -164,7 +169,8 @@ internal class OfflineNotificationsRepository @Inject constructor(
                         .flatMapLatest { populatedNotificationEntities ->
                             asExternalModel(
                                 signedInProfileId = signedInProfileId,
-                                populatedNotificationEntities = populatedNotificationEntities,
+                                populatedNotificationEntities = populatedNotificationEntities
+                                    .distinctBy(PopulatedNotificationEntity::dedupeNotificationKey),
                             )
                         }
                         .withRefresh {
@@ -173,7 +179,6 @@ internal class OfflineNotificationsRepository @Inject constructor(
                                     queryParams = ListNotificationsQueryParams(
                                         limit = UnreadNotificationsLimit,
                                         cursor = null,
-                                        seenAt = refreshed,
                                     ),
                                 )
                             }
@@ -187,6 +192,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                                     }
                                 }
                         }
+                        .filter(List<Notification>::isNotEmpty)
                 }
         }
 
@@ -353,6 +359,9 @@ internal class OfflineNotificationsRepository @Inject constructor(
             }
 }
 
+private fun PopulatedNotificationEntity.dedupeNotificationKey() =
+    "${entity.authorId}-${entity.reason.name}-${entity.associatedPostUri?.uri}"
+
 private fun SavedState.signedInProfileNotifications() =
     signedInProfileData
         ?.notifications
@@ -365,5 +374,5 @@ private data class SaveNotificationTokenRequest(
 
 private const val SaveNotificationTokenPath = "/saveNotificationToken"
 
-private const val UnreadNotificationsLimit = 100L
+private const val UnreadNotificationsLimit = 50L
 private const val MaxPostsFetchedPerQuery = 25

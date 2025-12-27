@@ -16,14 +16,18 @@
 
 package com.tunjid.heron
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import com.tunjid.heron.scaffold.notifications.AndroidNotifier.Companion.DISMISSAL_ACTION
+import com.tunjid.heron.scaffold.notifications.AndroidNotifier.Companion.DISMISSAL_INSTANT_EXTRA
 import com.tunjid.heron.scaffold.notifications.NotificationAction
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 class NotificationsService : FirebaseMessagingService() {
-
-    private val appState
-        get() = (application as HeronApplication).appState
 
     override fun onNewToken(token: String) =
         appState.onNotificationAction(NotificationAction.RegisterToken(token = token))
@@ -32,3 +36,25 @@ class NotificationsService : FirebaseMessagingService() {
         appState.onNotificationAction(NotificationAction.HandleNotification(payload = message.data))
     }
 }
+
+class NotificationDismissReceiver : BroadcastReceiver() {
+    @OptIn(ExperimentalTime::class)
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action != DISMISSAL_ACTION) return
+
+        val dismissedAtEpoch = intent.getLongExtra(
+            /* name = */
+            DISMISSAL_INSTANT_EXTRA,
+            /* defaultValue = */
+            0,
+        )
+        if (dismissedAtEpoch > 0) context.appState.onNotificationAction(
+            NotificationAction.NotificationDismissed(
+                dismissedAt = Instant.fromEpochMilliseconds(dismissedAtEpoch),
+            ),
+        )
+    }
+}
+
+private val Context.appState
+    get() = (applicationContext as HeronApplication).appState

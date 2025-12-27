@@ -17,10 +17,16 @@
 package com.tunjid.heron
 
 import android.app.Application
+import com.tunjid.heron.scaffold.scaffold.AppState
 
 class HeronApplication : Application() {
 
-    val appState by lazy {
-        createAppState(this)
+    // This needs to be lateinit instead of lazy to ensure it is
+    // instantiated on the main thread
+    lateinit var appState: AppState
+
+    override fun onCreate() {
+        super.onCreate()
+        appState = createAppState(this)
     }
 }
