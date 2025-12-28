@@ -286,7 +286,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
             delay(NotificationSearchDelay)
         }
         return@inCurrentProfileSession Outcome.Failure(
-            Exception("Unable to fetch notifications for $uri")
+            Exception("Unable to fetch notifications for $uri"),
         )
     } ?: expiredSessionOutcome()
 
