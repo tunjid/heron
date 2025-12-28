@@ -154,7 +154,6 @@ internal class OfflineNotificationsRepository @Inject constructor(
         after: Instant,
     ): Flow<List<Notification>> =
         savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
-            println("Notifications after $after")
             notificationsDao.unreadNotifications(
                 ownerId = signedInProfileId.id,
                 after = after,

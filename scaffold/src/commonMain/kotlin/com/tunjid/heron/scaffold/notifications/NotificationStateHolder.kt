@@ -212,7 +212,7 @@ private fun Flow<NotificationAction.HandleNotification>.handleNotificationMutati
         sharedActions.collect { action ->
             withTimeout(AppState.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS) {
                 val recordKey = requireNotNull(action.recordKey)
-                val after = requireNotNull(action.commitedAt) - 2.seconds
+                val after = requireNotNull(action.commitedAt) - NotificationQueryTimeWindow
 
                 notifier.displayNotifications(
                     notifications = notificationsRepository.unreadNotifications(after)
@@ -248,6 +248,7 @@ private val NotificationAction.HandleNotification.requireCommitedAt
     get() = requireNotNull(commitedAt)
 
 private val NotificationsRefreshDebounceSeconds = 3.seconds
+private val NotificationQueryTimeWindow = 2.seconds
 private const val NotificationAtProtoSenderDid = "senderDid"
 private const val NotificationAtProtoCollection = "collection"
 private const val NotificationAtProtoRecordKey = "recordKey"
