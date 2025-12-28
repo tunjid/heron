@@ -50,8 +50,9 @@ class NotificationsService : FirebaseMessagingService() {
                     appState.awaitNotificationProcessing(recordKey)
                 }
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
             // No logging utilities in the app at the moment due to its open source nature.
+            e.printStackTrace()
         } finally {
             appState.onNotificationAction(
                 NotificationAction.NotificationProcessedOrDropped(recordKey),

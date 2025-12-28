@@ -265,6 +265,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                 notificationsWithAssociatedPosts(
                     queryParams = ListNotificationsQueryParams(
                         limit = NotificationSearchLimit,
+                        // Only search on the first page. Older notifications should be dropped
                         cursor = null,
                     ),
                 )

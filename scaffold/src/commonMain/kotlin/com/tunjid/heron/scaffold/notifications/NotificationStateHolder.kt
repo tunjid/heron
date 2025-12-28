@@ -83,7 +83,7 @@ sealed class NotificationAction(
             val senderDid = payload[NotificationAtProtoSenderDid]
             val collection = payload[NotificationAtProtoCollection]
 
-            recordUri = if (senderDid == null && collection == null) null
+            recordUri = if (senderDid == null || collection == null) null
             else GenericUri("$senderDid/$collection/${recordKey?.value}")
         }
     }
