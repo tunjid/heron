@@ -24,8 +24,11 @@ import com.google.firebase.messaging.RemoteMessage
 import com.tunjid.heron.scaffold.notifications.AndroidNotifier.Companion.DISMISSAL_ACTION
 import com.tunjid.heron.scaffold.notifications.AndroidNotifier.Companion.DISMISSAL_INSTANT_EXTRA
 import com.tunjid.heron.scaffold.notifications.NotificationAction
+import com.tunjid.heron.scaffold.scaffold.AppState
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 
 class NotificationsService : FirebaseMessagingService() {
 
@@ -33,7 +36,27 @@ class NotificationsService : FirebaseMessagingService() {
         appState.onNotificationAction(NotificationAction.RegisterToken(token = token))
 
     override fun onMessageReceived(message: RemoteMessage) {
-        appState.onNotificationAction(NotificationAction.HandleNotification(payload = message.data))
+        val action = NotificationAction.HandleNotification(payload = message.data)
+        val recordKey = action.recordKey ?: return
+        if (!action.isProcessable) return
+
+        appState.onNotificationAction(action)
+
+        // await processing completion or timeout to prevent the app from being
+        // killed due to background execution limits.
+        try {
+            runBlocking {
+                withTimeout(AppState.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS) {
+                    appState.awaitNotificationProcessing(recordKey)
+                }
+            }
+        } catch (_: Exception) {
+            // No logging utilities in the app at the moment due to its open source nature.
+        } finally {
+            appState.onNotificationAction(
+                NotificationAction.NotificationProcessedOrDropped(recordKey),
+            )
+        }
     }
 }
 

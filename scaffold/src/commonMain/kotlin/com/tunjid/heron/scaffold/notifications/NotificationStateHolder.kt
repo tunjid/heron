@@ -17,7 +17,11 @@
 package com.tunjid.heron.scaffold.notifications
 
 import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.repository.NotificationsRepository
+import com.tunjid.heron.data.utilities.tidInstant
+import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -30,18 +34,24 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.conflate
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.scan
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 
-interface NotificationStateHolder : ActionStateMutator<NotificationAction, StateFlow<NotificationState>>
+interface NotificationStateHolder :
+    ActionStateMutator<NotificationAction, StateFlow<NotificationState>>
 
 data class NotificationState(
     val unreadCount: Long = 0L,
     val hasNotificationPermissions: Boolean = false,
-    val latestPushNotifications: List<Notification> = emptyList(),
+    val processedNotificationRecordKeys: Set<RecordKey> = emptySet(),
 )
 
 sealed class NotificationAction(
@@ -57,7 +67,31 @@ sealed class NotificationAction(
 
     data class HandleNotification(
         val payload: Map<String, String>,
-    ) : NotificationAction(key = "HandleNotification")
+    ) : NotificationAction(key = "HandleNotification") {
+
+        val recordKey: RecordKey? = payload[NotificationAtProtoRecordKey]
+            ?.let(::RecordKey)
+
+        internal val commitedAt = recordKey?.tidInstant
+
+        internal val recordUri: GenericUri?
+
+        val isProcessable
+            get() =
+                commitedAt != null && recordUri != null
+
+        init {
+            val senderDid = payload[NotificationAtProtoSenderDid]
+            val collection = payload[NotificationAtProtoCollection]
+
+            recordUri = if (senderDid == null && collection == null) null
+            else GenericUri("$senderDid/$collection/${recordKey?.value}")
+        }
+    }
+
+    data class NotificationProcessedOrDropped(
+        val recordKey: RecordKey,
+    ) : NotificationAction(key = "NotificationProcessedOrDropped")
 
     data class NotificationDismissed(
         val dismissedAt: Instant,
@@ -95,6 +129,7 @@ class AppNotificationStateHolder(
                     is NotificationAction.NotificationDismissed -> action.flow.notificationDismissalMutations(
                         notificationsRepository = notificationsRepository,
                     )
+                    is NotificationAction.NotificationProcessedOrDropped -> action.flow.notificationProcessedOrDroppedMutations()
                 }
             }
         },
@@ -127,22 +162,74 @@ private fun Flow<NotificationAction.RegisterToken>.registerTokenMutations(
 private fun Flow<NotificationAction.HandleNotification>.handleNotificationMutations(
     notifier: Notifier,
     notificationsRepository: NotificationsRepository,
-): Flow<Mutation<NotificationState>> =
-// Each emission does the same thing. Simply conflate if a user went viral
-    // and has lots of notifications
-    conflate()
-        .mapLatestToManyMutations { action ->
-            // This is potentially expensive, collect it for a maximum of 3 seconds.
-            withTimeoutOrNull(3.seconds) {
-                emitAll(
-                    notificationsRepository.getUnreadNotifications(action.payload)
-                        .mapLatestToManyMutations {
-                            emit { copy(latestPushNotifications = it) }
-                            notifier.displayNotifications(it)
-                        },
+): Flow<Mutation<NotificationState>> = channelFlow {
+    val sharedActions = MutableSharedFlow<NotificationAction.HandleNotification>(
+        replay = NotificationProcessingReplaySize,
+        extraBufferCapacity = NotificationProcessingBufferSize,
+    )
+
+    // Pipe emissions into the shared flow
+    launch {
+        collect { action ->
+            if (action.commitedAt == null || action.recordUri == null) return@collect
+            sharedActions.emit(action)
+        }
+    }
+
+    // This coroutine refreshes the notifications database so new
+    // notification are picked up by the display coroutine below.
+    // It debounces network calls if emissions are close to each other in case a
+    // user goes viral.
+    // It needs a separate coroutine to allow for slow collectors when displaying
+    launch {
+        sharedActions
+            .scan(
+                initial = emptyList<NotificationAction.HandleNotification>(),
+                operation = { consecutiveActions, action ->
+                    consecutiveActions.plus(action).takeLast(2)
+                },
+            )
+            .debounce { actions ->
+                // throttle API calls if a user is viral
+                if (actions.size < 2) return@debounce 0.seconds
+                val (previousAction, currentAction) = actions
+                when (currentAction.requireCommitedAt - previousAction.requireCommitedAt) {
+                    in 0.seconds..1.seconds -> NotificationsRefreshDebounceSeconds
+                    else -> 0.seconds
+                }
+            }
+            .filter(List<NotificationAction.HandleNotification>::isNotEmpty)
+            .collect { actions ->
+                // Refresh the database to pick up new notifications
+                notificationsRepository.fetchNotificationsFor(
+                    requireNotNull(actions.last().recordUri),
                 )
             }
+    }
+
+    // This coroutine strictly checks for unread notifications for a given commit.
+    // It's collector is potentially slow.
+    launch {
+        sharedActions.collect { action ->
+            withTimeout(AppState.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS) {
+                val recordKey = requireNotNull(action.recordKey)
+                val after = requireNotNull(action.commitedAt) - 2.seconds
+
+                notifier.displayNotifications(
+                    notifications = notificationsRepository.unreadNotifications(after)
+                        .first(List<Notification>::isNotEmpty),
+                )
+
+                // Perform book keeping as necessary.
+                send {
+                    copy(
+                        processedNotificationRecordKeys = processedNotificationRecordKeys + recordKey,
+                    )
+                }
+            }
         }
+    }
+}
 
 private fun Flow<NotificationAction.NotificationDismissed>.notificationDismissalMutations(
     notificationsRepository: NotificationsRepository,
@@ -150,3 +237,20 @@ private fun Flow<NotificationAction.NotificationDismissed>.notificationDismissal
     mapLatestToManyMutations {
         notificationsRepository.markRead(it.dismissedAt)
     }
+
+private fun Flow<NotificationAction.NotificationProcessedOrDropped>.notificationProcessedOrDroppedMutations(): Flow<Mutation<NotificationState>> =
+    mapToMutation { action ->
+        copy(
+            processedNotificationRecordKeys = processedNotificationRecordKeys - action.recordKey,
+        )
+    }
+
+private val NotificationAction.HandleNotification.requireCommitedAt
+    get() = requireNotNull(commitedAt)
+
+private val NotificationsRefreshDebounceSeconds = 3.seconds
+private const val NotificationAtProtoSenderDid = "senderDid"
+private const val NotificationAtProtoCollection = "collection"
+private const val NotificationAtProtoRecordKey = "recordKey"
+private const val NotificationProcessingReplaySize = 4
+private const val NotificationProcessingBufferSize = 64
