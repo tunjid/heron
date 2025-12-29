@@ -51,7 +51,9 @@ actual fun notificationPermissionsLauncher(
             contract = ActivityResultContracts.RequestPermission(),
             onResult = { hasPermissions ->
                 onPermissionResult(hasPermissions)
-                if (!activity.shouldShowRationale()) activity.maybeOpenAppSettings()
+                if (!activity.shouldShowRationale() && !hasPermissions) {
+                    activity.maybeOpenAppSettings()
+                }
             },
         )
         if (shouldShowRationaleDialog) NotificationsRationaleDialog { shouldRequestPermissions ->
