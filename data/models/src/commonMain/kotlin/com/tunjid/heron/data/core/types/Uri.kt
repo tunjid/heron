@@ -39,20 +39,20 @@ sealed interface RecordUri : Uri
 fun RecordUri.profileId(): ProfileId =
     requireNotNull(
         uri.atUriComponents { authorityRange, _, _ ->
-            ProfileId(uri.substring(authorityRange.start, authorityRange.endInclusive))
+            ProfileId(uri.substring(authorityRange.start, authorityRange.endExclusive))
         },
     )
 
 val RecordUri.recordKey: RecordKey
     get() = requireNotNull(
         uri.atUriComponents { _, _, rKeyRange ->
-            RecordKey(uri.substring(rKeyRange.start, rKeyRange.endInclusive))
+            RecordKey(uri.substring(rKeyRange.start, rKeyRange.endExclusive))
         },
     )
 
 fun GenericUri.recordKeyOrNull(): RecordKey? =
     uri.atUriComponents { _, _, rKeyRange ->
-        RecordKey(uri.substring(rKeyRange.start, rKeyRange.endInclusive))
+        RecordKey(uri.substring(rKeyRange.start, rKeyRange.endExclusive))
     }
 
 val Uri.domain get() = Url(uri).host.removePrefix("www.")
@@ -192,7 +192,7 @@ fun Uri.asRecordUriOrNull(): RecordUri? = uri.asRecordUriOrNull()
  * if parsing is successful, or `null` if the string is not a valid AT URI.
  */
 fun String.asRecordUriOrNull(): RecordUri? = atUriComponents { _, collectionRange, _ ->
-    when (substring(collectionRange.start, collectionRange.endInclusive)) {
+    when (substring(collectionRange.start, collectionRange.endExclusive)) {
         PostUri.NAMESPACE -> PostUri(this)
         FeedGeneratorUri.NAMESPACE -> FeedGeneratorUri(this)
         ListUri.NAMESPACE -> ListUri(this)
@@ -239,7 +239,6 @@ private inline fun <T> String.atUriComponents(
 
     // 4. Validate rKey (must not be empty)
     if (secondSlashIndex + 1 >= length) return null
-    IntRange
 
     // 5. Extract components
     return action(
@@ -256,15 +255,15 @@ private value class StringRange(
 
 private fun StringRange(
     start: Int,
-    endInclusive: Int,
+    endExclusive: Int,
 ) = StringRange(
-    packed = packInts(start, endInclusive),
+    packed = packInts(start, endExclusive),
 )
 
 private val StringRange.start
     get() = unpackInt1(packed)
 
-private val StringRange.endInclusive
+private val StringRange.endExclusive
     get() = unpackInt2(packed)
 
 private fun packInts(val1: Int, val2: Int): Long {
