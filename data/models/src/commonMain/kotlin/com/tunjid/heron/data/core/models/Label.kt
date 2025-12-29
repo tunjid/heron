@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.LabelerId
 import com.tunjid.heron.data.core.types.LabelerUri
@@ -129,13 +130,17 @@ data class Labeler(
     val likeCount: Long?,
     val definitions: List<Label.Definition>,
     val values: List<Label.Value>,
-) : Record {
+) : Record,
+    Record.Embeddable {
 
     override val reference: Record.Reference =
         Record.Reference(
             id = cid,
             uri = uri,
         )
+
+    override val embeddableRecordUri: EmbeddableRecordUri
+        get() = uri
 
     @Serializable
     data class LocaleInfo(

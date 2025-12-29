@@ -8,11 +8,11 @@ import androidx.room.Relation
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.stubProfile
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.LabelerId
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.RecordUri
 
 @Entity(
     tableName = "labelers",
@@ -53,7 +53,7 @@ data class PopulatedLabelerEntity(
     )
     val definitions: List<LabelDefinitionEntity>,
 ) : PopulatedRecordEntity {
-    override val recordUri: RecordUri
+    override val recordUri: EmbeddableRecordUri
         get() = entity.uri
 }
 

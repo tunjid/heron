@@ -18,6 +18,7 @@ package com.tunjid.heron.data.database
 
 import androidx.room.TypeConverter
 import com.tunjid.heron.data.core.types.ConversationId
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorId
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericId
@@ -105,7 +106,15 @@ internal class UriConverters {
         value?.asRecordUriOrNull()
 
     @TypeConverter
+    fun embeddableRecordUriFromString(value: String?): EmbeddableRecordUri? =
+        value?.asRecordUriOrNull() as? EmbeddableRecordUri
+
+    @TypeConverter
     fun toUriString(uri: Uri?): String? =
+        uri?.uri
+
+    @TypeConverter
+    fun toUriString(uri: EmbeddableRecordUri?): String? =
         uri?.uri
 }
 

@@ -16,8 +16,8 @@
 
 package com.tunjid.heron.data.database.entities
 
-import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 
 sealed interface PopulatedRecordEntity {
-    val recordUri: RecordUri
+    val recordUri: EmbeddableRecordUri
 }

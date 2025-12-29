@@ -11,7 +11,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 @Burst
-class PostInteractionSerializationTest(
+class EmbeddableInteractionSerializationTest(
     val format: SerializationTestHelper.Format = burstValues(
         SerializationTestHelper.Format.CBOR,
         SerializationTestHelper.Format.PROTOBUF,

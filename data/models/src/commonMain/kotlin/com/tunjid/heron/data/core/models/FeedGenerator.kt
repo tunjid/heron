@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorId
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ImageUri
@@ -37,11 +38,14 @@ data class FeedGenerator(
     val indexedAt: Instant,
     val labels: List<Label>,
 ) : UrlEncodableModel,
-    Record.Post {
+    Record.Embeddable {
 
     override val reference: Record.Reference =
         Record.Reference(
             id = cid,
             uri = uri,
         )
+
+    override val embeddableRecordUri: EmbeddableRecordUri
+        get() = uri
 }

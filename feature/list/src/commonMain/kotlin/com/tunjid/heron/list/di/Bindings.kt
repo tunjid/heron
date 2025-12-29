@@ -29,7 +29,7 @@ import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.data.core.types.asRecordUriOrNull
+import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.utilities.asGenericUri
@@ -54,7 +54,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.timeline.state.TimelineState
-import com.tunjid.heron.timeline.ui.RecordOptionsSheetState.Companion.rememberUpdatedRecordOptionsState
+import com.tunjid.heron.timeline.ui.EmbeddableRecordOptionsSheetState.Companion.rememberUpdatedEmbeddableRecordOptionsState
 import com.tunjid.heron.timeline.ui.ShareRecordButton
 import com.tunjid.heron.timeline.ui.list.FeedListStatus
 import com.tunjid.heron.timeline.utilities.TimelineTitle
@@ -243,7 +243,7 @@ class ListBindings(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
-            val recordOptionsSheetState = rememberUpdatedRecordOptionsState(
+            val recordOptionsSheetState = rememberUpdatedEmbeddableRecordOptionsState(
                 signedInProfileId = state.signedInProfileId,
                 recentConversations = state.recentConversations,
                 onShareInConversationClicked = { recordUri, conversation ->
@@ -320,7 +320,7 @@ class ListBindings(
                             ShareRecordButton(
                                 onShareClicked = {
                                     state.timelineState?.timeline?.uri
-                                        ?.asRecordUriOrNull()
+                                        ?.asEmbeddableRecordUriOrNull()
                                         ?.let { recordUri ->
                                             recordOptionsSheetState.showOptions(recordUri)
                                         }

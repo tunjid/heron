@@ -12,7 +12,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 @Burst
-class PostCreateSerializationTest(
+class EmbeddableCreateSerializationTest(
     val format: SerializationTestHelper.Format = burstValues(
         SerializationTestHelper.Format.CBOR,
         SerializationTestHelper.Format.PROTOBUF,
