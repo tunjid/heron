@@ -147,10 +147,9 @@ class MutedWordsSheetState(
     }
 
     companion object {
-
         @Composable
-        fun rememberMutedWordsSheetState(
-            mutedWords: List<MutedWordPreference>,
+        fun rememberUpdatedMutedWordsSheetState(
+            mutedWordPreferences: List<MutedWordPreference>,
             onSave: (List<MutedWordPreference>) -> Unit,
             onShown: () -> Unit,
         ): MutedWordsSheetState {
@@ -159,7 +158,7 @@ class MutedWordsSheetState(
                     scope = scope,
                 )
             }.also {
-                it.mutedWords = mutedWords
+                it.mutedWords = mutedWordPreferences
             }
 
             MutedWordsBottomSheet(
@@ -394,7 +393,10 @@ private fun MutedWordsBottomSheet(
                         )
 
                         if (state.mutedWords.isNotEmpty()) {
-                            TextButton(onClick = { state.clearAll() }) {
+                            TextButton(onClick = {
+                                state.clearAll()
+                                onSave(state.mutedWords)
+                            }) {
                                 Text(
                                     stringResource(Res.string.clear_all),
                                     color = MaterialTheme.colorScheme.error,
@@ -414,6 +416,7 @@ private fun MutedWordsBottomSheet(
                                     mutedWord = mutedWord,
                                     onRemove = {
                                         state.removeMutedWord(mutedWord.value)
+                                        onSave(state.mutedWords)
                                     },
                                 )
                             }
