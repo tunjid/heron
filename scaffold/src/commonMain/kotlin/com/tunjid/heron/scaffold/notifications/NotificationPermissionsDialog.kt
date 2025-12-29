@@ -38,42 +38,35 @@ import org.jetbrains.compose.resources.stringResource
 internal fun NotificationsRationaleDialog(
     shouldRequestPermissions: (Boolean) -> Unit,
 ) {
-    var dismissed by rememberSaveable { mutableStateOf(false) }
-
-    if (!dismissed) {
-        SimpleDialog(
-            onDismissRequest = {
-                shouldRequestPermissions(false)
-                dismissed = true
-            },
-            title = {
-                SimpleDialogTitle(
-                    text = stringResource(Res.string.notification_permissions_dialog_title),
-                )
-            },
-            text = {
-                SimpleDialogText(
-                    text = stringResource(Res.string.notification_permissions_dialog_text),
-                )
-            },
-            confirmButton = {
-                PrimaryDialogButton(
-                    text = stringResource(CommonStrings.yes),
-                    onClick = {
-                        shouldRequestPermissions(true)
-                        dismissed = true
-                    },
-                )
-            },
-            dismissButton = {
-                NeutralDialogButton(
-                    text = stringResource(CommonStrings.no),
-                    onClick = {
-                        shouldRequestPermissions(false)
-                        dismissed = true
-                    },
-                )
-            },
-        )
-    }
+    SimpleDialog(
+        onDismissRequest = {
+            shouldRequestPermissions(false)
+        },
+        title = {
+            SimpleDialogTitle(
+                text = stringResource(Res.string.notification_permissions_dialog_title),
+            )
+        },
+        text = {
+            SimpleDialogText(
+                text = stringResource(Res.string.notification_permissions_dialog_text),
+            )
+        },
+        confirmButton = {
+            PrimaryDialogButton(
+                text = stringResource(CommonStrings.yes),
+                onClick = {
+                    shouldRequestPermissions(true)
+                },
+            )
+        },
+        dismissButton = {
+            NeutralDialogButton(
+                text = stringResource(CommonStrings.no),
+                onClick = {
+                    shouldRequestPermissions(false)
+                },
+            )
+        },
+    )
 }
