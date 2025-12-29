@@ -22,9 +22,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
@@ -32,15 +30,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.rounded.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.rounded.Article
+import androidx.compose.material.icons.filled.FilterAlt
+import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
@@ -49,7 +48,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboard
@@ -67,7 +65,7 @@ import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.block_user
 import heron.ui.timeline.generated.resources.copy_link_to_clipboard
 import heron.ui.timeline.generated.resources.moderation_options_title
-import heron.ui.timeline.generated.resources.mute_words
+import heron.ui.timeline.generated.resources.mute_words_tags
 import heron.ui.timeline.generated.resources.send_via_direct_message
 import heron.ui.timeline.generated.resources.share_in_post
 import kotlinx.coroutines.launch
@@ -167,6 +165,104 @@ internal fun CopyToClipboardCard(
             icon = Icons.Rounded.ContentCopy,
             text = copyToClipboardDescription,
         )
+    }
+}
+
+@Composable
+fun ModerationMenuSection(
+    modifier: Modifier = Modifier,
+    onMuteWordsClicked: () -> Unit,
+    onBlockUserClicked: () -> Unit,
+) {
+    Column(modifier = modifier) {
+        Text(
+            modifier = Modifier.padding(start = 4.dp, bottom = 12.dp),
+            text = stringResource(Res.string.moderation_options_title),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+
+        ModerationMenuCard {
+            ModerationMenuItemRow(
+                title = stringResource(Res.string.mute_words_tags),
+                icon = Icons.Default.FilterAlt,
+                onClick = onMuteWordsClicked,
+            )
+            ModerationMenuItemRow(
+                title = stringResource(Res.string.block_user),
+                icon = Icons.Rounded.Block,
+                onClick = onBlockUserClicked,
+                showDivider = false, // Last item, no divider
+            )
+        }
+    }
+}
+
+@Composable
+fun ModerationMenuCard(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    BottomSheetItemCard(
+        modifier = modifier,
+        onClick = null, // Card itself is not clickable, only items inside
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp),
+        ) {
+            content()
+        }
+    }
+}
+
+@Composable
+fun ModerationMenuItemRow(
+    modifier: Modifier = Modifier,
+    title: String,
+    icon: ImageVector,
+    onClick: () -> Unit,
+    showDivider: Boolean = true,
+) {
+    Column(modifier = modifier.padding(5.dp)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp)
+                .clickable(onClick = onClick),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurface,
+            )
+
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier
+                    .padding(start = 16.dp)
+                    .weight(1f),
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        if (showDivider) {
+            HorizontalDivider(
+                thickness = 0.5.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+            )
+        }
     }
 }
 
