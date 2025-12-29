@@ -16,39 +16,100 @@
 
 package com.tunjid.heron.scaffold.notifications
 
+import android.Manifest
+import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri as AndroidUri
 import android.os.Build
+import android.provider.Settings
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import com.tunjid.heron.scaffold.scaffold.LocalAppState
 
 @Composable
-actual fun requestNotificationPermissions(
+actual fun notificationPermissionsLauncher(
     onPermissionResult: (Boolean) -> Unit,
 ): () -> Unit {
+    val activity = LocalActivity.current
+    val appState = LocalAppState.current
+
+    var shouldShowRationaleDialog by remember { mutableStateOf(false) }
+
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         val permissionRequestLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestPermission(),
-            onResult = onPermissionResult,
+            onResult = { hasPermissions ->
+                onPermissionResult(hasPermissions)
+                if (!activity.shouldShowRationale() && !hasPermissions) {
+                    activity.maybeOpenAppSettings()
+                }
+            },
         )
-        return remember(permissionRequestLauncher) {
-            { permissionRequestLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS) }
+        if (shouldShowRationaleDialog) NotificationsRationaleDialog { shouldRequestPermissions ->
+            if (shouldRequestPermissions) {
+                appState.onNotificationAction(NotificationAction.RequestedNotificationPermission)
+                permissionRequestLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            shouldShowRationaleDialog = false
+        }
+        return remember(permissionRequestLauncher, appState) {
+            {
+                if (activity.shouldShowRationale()) {
+                    shouldShowRationaleDialog = true
+                } else {
+                    appState.onNotificationAction(NotificationAction.RequestedNotificationPermission)
+                    permissionRequestLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
         }
     } else return EmptyLambda
 }
 
-private val EmptyLambda: () -> Unit = {}
-
 @Composable
 actual fun hasNotificationPermissions(): Boolean {
     val context = LocalContext.current
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        ContextCompat.checkSelfPermission(
-            context,
-            android.Manifest.permission.POST_NOTIFICATIONS,
-        ) == PackageManager.PERMISSION_GRANTED
-    } else true
+    var hasPermissions by remember { mutableStateOf(false) }
+
+    LifecycleResumeEffect(context) {
+        hasPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS,
+            ) == PackageManager.PERMISSION_GRANTED
+        } else true
+
+        onPauseOrDispose { }
+    }
+
+    return hasPermissions
 }
+
+private fun Activity?.shouldShowRationale(): Boolean {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return false
+    if (this == null) return false
+    return ActivityCompat.shouldShowRequestPermissionRationale(
+        this,
+        Manifest.permission.POST_NOTIFICATIONS,
+    )
+}
+
+private fun Activity?.maybeOpenAppSettings() {
+    this ?: return
+    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+        data = AndroidUri.fromParts("package", packageName, null)
+    }
+    startActivity(intent)
+}
+
+private val EmptyLambda: () -> Unit = {}

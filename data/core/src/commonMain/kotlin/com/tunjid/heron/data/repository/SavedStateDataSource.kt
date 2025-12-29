@@ -173,6 +173,7 @@ abstract class SavedState {
     data class Notifications(
         val lastRead: Instant? = null,
         val lastRefreshed: Instant? = null,
+        val hasPreviouslyRequestedPermissions: Boolean = false,
     )
 
     @Serializable

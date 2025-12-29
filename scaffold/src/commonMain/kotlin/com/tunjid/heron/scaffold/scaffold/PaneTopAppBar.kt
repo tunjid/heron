@@ -19,8 +19,6 @@ package com.tunjid.heron.scaffold.scaffold
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.animateBounds
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.clickable
@@ -64,7 +62,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
     modifier: Modifier = Modifier,
     signedInProfile: Profile?,
     title: @Composable () -> Unit = {},
-    actions: @Composable RowScope.() -> Unit = EmptyActions,
+    actions: (@Composable RowScope.() -> Unit)? = null,
     transparencyFactor: () -> Float = { 0f },
     onSignedInProfileClicked: (Profile, String) -> Unit,
 ) {
@@ -87,13 +85,14 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
         },
         title = title,
         actions = {
-            if (actions != EmptyActions) Row(
-                modifier = Modifier
-                    .animateBounds(this@RootDestinationTopAppBar),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                actions()
+            if (actions != null) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    actions()
+                }
+                Spacer(Modifier.width(8.dp))
             }
             AnimatedVisibility(
                 visible = signedInProfile != null,
@@ -221,8 +220,6 @@ private fun Modifier.rootAppBarBlur(
     radius = ::RootAppBarBlurRadius,
     progress = progress,
 )
-
-private val EmptyActions: @Composable RowScope.() -> Unit = {}
 
 private val BackArrowEnter: EnterTransition = slideInHorizontally { -it }
 private val BackArrowExit: ExitTransition = slideOutHorizontally { -it }

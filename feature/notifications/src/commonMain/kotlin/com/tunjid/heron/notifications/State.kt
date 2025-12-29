@@ -40,6 +40,8 @@ data class State(
     val recentConversations: List<Conversation> = emptyList(),
     @Transient
     val signedInProfile: Profile? = null,
+    @Transient
+    val canAnimateRequestPermissionsButton: Boolean = false,
     override val tilingData: TilingState.Data<NotificationsQuery, Notification> = TilingState.Data(
         currentQuery = NotificationsQuery(
             data = CursorQuery.Data(

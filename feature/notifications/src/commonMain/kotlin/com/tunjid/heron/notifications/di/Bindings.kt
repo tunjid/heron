@@ -32,10 +32,12 @@ import com.tunjid.heron.notifications.Action
 import com.tunjid.heron.notifications.ActualNotificationsViewModel
 import com.tunjid.heron.notifications.NotificationsScreen
 import com.tunjid.heron.notifications.RouteViewModelInitializer
+import com.tunjid.heron.notifications.ui.RequestNotificationsButton
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
+import com.tunjid.heron.scaffold.notifications.hasNotificationPermissions
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -151,6 +153,15 @@ class NotificationsBindings(
                                     ),
                                 ),
                             )
+                        },
+                        actions = {
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = !hasNotificationPermissions(),
+                            ) {
+                                RequestNotificationsButton(
+                                    animateIcon = state.canAnimateRequestPermissionsButton,
+                                )
+                            }
                         },
                     )
                 },

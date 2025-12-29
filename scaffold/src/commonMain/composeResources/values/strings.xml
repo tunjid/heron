@@ -44,4 +44,9 @@
     <string name="notification_channel_reposts">Reposts</string>
     <string name="notification_channel_repost_reposts">Reposts of your reposts</string>
     <string name="notification_channel_misc">Miscellaneous</string>
+    <string name="notification_permissions_dialog_title">Push notifications</string>
+    <string name="notification_permissions_dialog_text">Heron can send push notifications to your device when people interact with your posts, likes and reposts.
+      \nPush notifications are only generated for public data and are not sent for DMs because DMs are not public.
+      \nWould you like to enable push notifications?
+  </string>
 </resources>

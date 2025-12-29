@@ -80,17 +80,18 @@ class MainActivity : ComponentActivity() {
 
         updateNotificationPermissions()
         handleDeepLink(intent)
-
-        FirebaseMessaging.getInstance()
-            .getToken()
-            .addOnSuccessListener { token ->
-                appState.onNotificationAction(NotificationAction.RegisterToken(token))
-            }
     }
 
     override fun onResume() {
         super.onResume()
         updateNotificationPermissions()
+
+        FirebaseMessaging.getInstance()
+            .getToken()
+            .addOnSuccessListener { token ->
+                // appState will check if notification permissions are available
+                appState.onNotificationAction(NotificationAction.RegisterToken(token))
+            }
     }
 
     private fun updateNotificationPermissions() {

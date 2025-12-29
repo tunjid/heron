@@ -20,6 +20,7 @@ import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.asRecordUriOrNull
+import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.utilities.tidInstant
 import com.tunjid.heron.scaffold.scaffold.AppState
@@ -51,6 +52,7 @@ interface NotificationStateHolder : ActionStateMutator<NotificationAction, State
 data class NotificationState(
     val unreadCount: Long = 0L,
     val hasNotificationPermissions: Boolean = false,
+    val notificationToken: String? = null,
     val processedNotificationRecordKeys: Set<RecordKey> = emptySet(),
 )
 
@@ -97,6 +99,9 @@ sealed class NotificationAction(
     data class NotificationDismissed(
         val dismissedAt: Instant,
     ) : NotificationAction(key = "NotificationDismissed")
+
+    data object RequestedNotificationPermission :
+        NotificationAction(key = "RequestedNotificationPermission")
 }
 
 @Inject
@@ -131,6 +136,9 @@ class AppNotificationStateHolder(
                         notificationsRepository = notificationsRepository,
                     )
                     is NotificationAction.NotificationProcessedOrDropped -> action.flow.notificationProcessedOrDroppedMutations()
+                    is NotificationAction.RequestedNotificationPermission -> action.flow.markNotificationPermissionRequestedMutations(
+                        notificationsRepository = notificationsRepository,
+                    )
                 }
             }
         },
@@ -151,12 +159,16 @@ private fun Flow<NotificationAction.RegisterToken>.registerTokenMutations(
     currentState: suspend () -> NotificationState,
     notificationsRepository: NotificationsRepository,
 ): Flow<Mutation<NotificationState>> =
-    mapLatestToManyMutations {
+    mapLatestToManyMutations { action ->
         // TODO: This should be enqueued, but the write queue does not currently
         //  support updating a queued write to something else. For now, just write
         //  using the app scope and fix in a follow up PR.
-        if (currentState().hasNotificationPermissions) {
-            notificationsRepository.registerPushNotificationToken(it.token)
+        val state = currentState()
+        if (state.hasNotificationPermissions && action.token != state.notificationToken) {
+            when (notificationsRepository.registerPushNotificationToken(action.token)) {
+                is Outcome.Failure -> Unit
+                Outcome.Success -> emit { copy(notificationToken = action.token) }
+            }
         }
     }
 
@@ -244,6 +256,13 @@ private fun Flow<NotificationAction.NotificationProcessedOrDropped>.notification
         copy(
             processedNotificationRecordKeys = processedNotificationRecordKeys - action.recordKey,
         )
+    }
+
+private fun Flow<NotificationAction.RequestedNotificationPermission>.markNotificationPermissionRequestedMutations(
+    notificationsRepository: NotificationsRepository,
+): Flow<Mutation<NotificationState>> =
+    mapLatestToManyMutations {
+        notificationsRepository.markNotificationPermissionsRequested()
     }
 
 private val NotificationAction.HandleNotification.requireCommitedAt

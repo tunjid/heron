@@ -24,6 +24,8 @@
     <string name="see_more_posts">See more posts</string>
     <string name="dismiss">Dismiss</string>
     <string name="cancel">Cancel</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
     <string name="go_back">Go Back</string>
     <string name="sign_in">Sign In</string>
     <string name="hide_label">Content Blocked</string>
