@@ -20,10 +20,13 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.animateBounds
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -39,6 +42,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
@@ -55,12 +59,12 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.ui.core.generated.resources.go_back
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun PaneScaffoldState.RootDestinationTopAppBar(
     modifier: Modifier = Modifier,
     signedInProfile: Profile?,
     title: @Composable () -> Unit = {},
+    actions: @Composable RowScope.() -> Unit = EmptyActions,
     transparencyFactor: () -> Float = { 0f },
     onSignedInProfileClicked: (Profile, String) -> Unit,
 ) {
@@ -83,6 +87,14 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
         },
         title = title,
         actions = {
+            if (actions != EmptyActions) Row(
+                modifier = Modifier
+                    .animateBounds(this@RootDestinationTopAppBar),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                actions()
+            }
             AnimatedVisibility(
                 visible = signedInProfile != null,
             ) {
@@ -209,6 +221,8 @@ private fun Modifier.rootAppBarBlur(
     radius = ::RootAppBarBlurRadius,
     progress = progress,
 )
+
+private val EmptyActions: @Composable RowScope.() -> Unit = {}
 
 private val BackArrowEnter: EnterTransition = slideInHorizontally { -it }
 private val BackArrowExit: ExitTransition = slideOutHorizontally { -it }

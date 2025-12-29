@@ -41,6 +41,8 @@ object UiTokens {
 
     val bottomNavHeight: Dp = 80.dp
 
+    val appBarButtonSize = 40.dp
+
     const val appBarSharedElementOverlayZIndex = 12f
 
     val statusBarHeight: Dp

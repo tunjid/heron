@@ -57,11 +57,9 @@ import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -85,7 +83,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -103,10 +100,12 @@ import com.tunjid.heron.home.ui.JiggleBox
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
+import com.tunjid.heron.ui.AppBarButton
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import heron.feature.home.generated.resources.Res
 import heron.feature.home.generated.resources.bookmark
@@ -263,20 +262,20 @@ internal fun HomeTabs(
                         )
                         .then(alphaModifier)
                 }
-                HomeTimelineButton(
+                AppBarButton(
                     modifier = expandedOptionsModifier,
                     onActionClick = onSettingsIconClick,
                     icon = Icons.Rounded.Settings,
                     iconDescription = stringResource(Res.string.settings),
                 )
-                HomeTimelineButton(
+                AppBarButton(
                     modifier = expandedOptionsModifier,
                     onActionClick = onBookmarkIconClick,
                     icon = Icons.Rounded.Bookmark,
                     iconDescription = stringResource(Res.string.bookmark),
                 )
             }
-            HomeTimelineButton(
+            AppBarButton(
                 modifier = Modifier
                     .renderInSharedTransitionScopeOverlay(
                         zIndexInOverlay = HomeTimelineButtonSharedElementZIndex,
@@ -477,7 +476,7 @@ private fun CollapsedTabs(
         // Space for the Expand Button
         Spacer(
             modifier = Modifier
-                .width(HomeTimelineButtonSize),
+                .width(UiTokens.appBarButtonSize),
         )
     }
 }
@@ -625,33 +624,6 @@ private fun DropTargetBox(
 }
 
 @Composable
-private fun HomeTimelineButton(
-    modifier: Modifier = Modifier,
-    icon: ImageVector,
-    iconDescription: String,
-    onActionClick: () -> Unit,
-) {
-    ElevatedCard(
-        modifier = modifier,
-        shape = CircleShape,
-    ) {
-        IconButton(
-            onClick = {
-                onActionClick()
-            },
-            modifier = Modifier
-                .size(HomeTimelineButtonSize),
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = iconDescription,
-                tint = MaterialTheme.colorScheme.primary,
-            )
-        }
-    }
-}
-
-@Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun SectionTitle(
     modifier: Modifier = Modifier,
@@ -776,7 +748,6 @@ private val ExpandedTabsShape = RoundedCornerShape(
 )
 
 private val ChipHeight = 32.dp
-private val HomeTimelineButtonSize = 40.dp
 
 private const val TabsSharedElementZIndex = 1f
 private const val HomeTimelineButtonSharedElementZIndex = 2f
