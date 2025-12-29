@@ -42,6 +42,7 @@ import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.ThreadGateId
 import com.tunjid.heron.data.core.types.ThreadGateUri
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
 import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import kotlin.time.Instant
 
@@ -107,7 +108,7 @@ internal class UriConverters {
 
     @TypeConverter
     fun embeddableRecordUriFromString(value: String?): EmbeddableRecordUri? =
-        value?.asRecordUriOrNull() as? EmbeddableRecordUri
+        value?.asEmbeddableRecordUriOrNull()
 
     @TypeConverter
     fun toUriString(uri: Uri?): String? =
