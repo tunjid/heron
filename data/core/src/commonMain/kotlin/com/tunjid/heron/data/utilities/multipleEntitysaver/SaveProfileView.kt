@@ -147,7 +147,7 @@ private fun unknownFollower(
     mutedByList = null,
     blockedBy = null,
     blockingByList = null,
-    following = Constants.unknownGenericUri,
+    following = Constants.unknownFollowUri,
     followedBy = null,
     blocking = null,
     commonFollowersCount = null,

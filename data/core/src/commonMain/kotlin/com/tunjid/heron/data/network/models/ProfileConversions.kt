@@ -24,6 +24,7 @@ import app.bsky.actor.ViewerState
 import app.bsky.feed.BlockedAuthor
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
@@ -220,8 +221,8 @@ private fun profileViewerStateEntity(
     mutedByList = viewer.mutedByList?.cid?.cid?.let(::ListId),
     blockedBy = viewer.blockedBy,
     blockingByList = viewer.blockingByList?.cid?.cid?.let(::ListId),
-    following = viewer.following?.atUri?.let(::GenericUri),
-    followedBy = viewer.followedBy?.atUri?.let(::GenericUri),
+    following = viewer.following?.atUri?.let(::FollowUri),
+    followedBy = viewer.followedBy?.atUri?.let(::FollowUri),
     blocking = viewer.blocking?.atUri?.let(::GenericUri),
     commonFollowersCount = viewer.knownFollowers?.count,
 )

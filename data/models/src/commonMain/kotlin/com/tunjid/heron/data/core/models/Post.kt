@@ -17,11 +17,12 @@
 package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
-import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.LikeUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RepostUri
 import com.tunjid.heron.data.core.types.ThreadGateUri
 import com.tunjid.heron.data.core.utilities.File
 import kotlin.time.Instant
@@ -76,8 +77,8 @@ data class Post(
 
     @Serializable
     data class ViewerStats(
-        val likeUri: GenericUri?,
-        val repostUri: GenericUri?,
+        val likeUri: LikeUri?,
+        val repostUri: RepostUri?,
         val threadMuted: Boolean,
         val replyDisabled: Boolean,
         val embeddingDisabled: Boolean,
@@ -190,13 +191,13 @@ data class Post(
             @Serializable
             data class Unlike(
                 override val postUri: PostUri,
-                val likeUri: GenericUri,
+                val likeUri: LikeUri,
             ) : Delete()
 
             @Serializable
             data class RemoveRepost(
                 override val postUri: PostUri,
-                val repostUri: GenericUri,
+                val repostUri: RepostUri,
             ) : Delete()
 
             @Serializable
