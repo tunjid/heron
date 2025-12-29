@@ -34,6 +34,7 @@ import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
+import com.tunjid.heron.data.utilities.recordResolver.UnsupportedRecordException
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
@@ -97,7 +98,7 @@ internal class OfflineRecordRepository @Inject constructor(
             is FollowUri,
             is LikeUri,
             is RepostUri,
-            -> throw IllegalArgumentException("Unsupported record uri: $uri")
+            -> throw UnsupportedRecordException(uri)
         }
             .filterNotNull()
             .withRefresh {
