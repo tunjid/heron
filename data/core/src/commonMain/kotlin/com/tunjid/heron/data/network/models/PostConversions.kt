@@ -48,11 +48,13 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.LabelerId
 import com.tunjid.heron.data.core.types.LabelerUri
+import com.tunjid.heron.data.core.types.LikeUri
 import com.tunjid.heron.data.core.types.ListId
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RepostUri
 import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
@@ -256,8 +258,8 @@ internal fun ViewerState.postViewerStatisticsEntity(
     else PostViewerStatisticsEntity(
         postUri = postUri,
         viewingProfileId = viewingProfileId,
-        likeUri = like?.atUri?.let(::GenericUri),
-        repostUri = repost?.atUri?.let(::GenericUri),
+        likeUri = like?.atUri?.let(::LikeUri),
+        repostUri = repost?.atUri?.let(::RepostUri),
         threadMuted = threadMuted ?: false,
         replyDisabled = replyDisabled ?: false,
         embeddingDisabled = embeddingDisabled ?: false,

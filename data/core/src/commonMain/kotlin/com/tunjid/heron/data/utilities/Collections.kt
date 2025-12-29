@@ -21,7 +21,6 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.data.core.types.recordKeyOrNull
 import com.tunjid.heron.data.network.BlueskyJson
 import kotlin.time.Instant
 import kotlinx.serialization.KSerializer
@@ -30,24 +29,10 @@ import sh.christian.ozone.api.RKey
 import sh.christian.ozone.api.model.JsonContent
 
 internal object Collections {
-    const val Post = "app.bsky.feed.post"
     const val Profile = "app.bsky.actor.profile"
-    const val Repost = "app.bsky.feed.repost"
-    const val Like = "app.bsky.feed.like"
-    const val Follow = "app.bsky.graph.follow"
-    const val List = "app.bsky.graph.list"
-    const val StarterPack = "app.bsky.graph.starterpack"
-    const val FeedGenerator = "app.bsky.feed.generator"
     const val UploadVideo = "com.atproto.repo.uploadBlob"
 
     val SelfRecordKey = RKey("self")
-
-    // Internal method
-    fun requireRKey(uri: GenericUri) = RKey(
-        rkey = requireNotNull(uri.recordKeyOrNull()) {
-            "This uri does not have a record key"
-        }.value,
-    )
 
     val DefaultLabelerProfileId = ProfileId(id = "did:plc:ar7c4by46qjdydhdevvrndac")
 

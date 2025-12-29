@@ -21,8 +21,10 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.LikeUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RepostUri
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 
@@ -55,9 +57,9 @@ data class PostViewerStatisticsEntity(
     val postUri: PostUri,
     val viewingProfileId: ProfileId,
     @ColumnInfo(defaultValue = "NULL")
-    val likeUri: GenericUri?,
+    val likeUri: LikeUri?,
     @ColumnInfo(defaultValue = "NULL")
-    val repostUri: GenericUri?,
+    val repostUri: RepostUri?,
     val threadMuted: Boolean,
     val replyDisabled: Boolean,
     val embeddingDisabled: Boolean,
@@ -72,13 +74,13 @@ data class PostViewerStatisticsEntity(
         data class Like(
             override val postUri: PostUri,
             override val viewingProfileId: ProfileId,
-            val likeUri: GenericUri?,
+            val likeUri: LikeUri?,
         ) : Partial()
 
         data class Repost(
             override val postUri: PostUri,
             override val viewingProfileId: ProfileId,
-            val repostUri: GenericUri?,
+            val repostUri: RepostUri?,
         ) : Partial()
 
         data class Bookmark(

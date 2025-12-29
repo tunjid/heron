@@ -24,7 +24,7 @@ import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.Trend
-import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.SearchQuery
@@ -153,8 +153,8 @@ sealed class Action(val key: String) {
     data class ToggleViewerState(
         val signedInProfileId: ProfileId,
         val viewedProfileId: ProfileId,
-        val following: GenericUri?,
-        val followedBy: GenericUri?,
+        val following: FollowUri?,
+        val followedBy: FollowUri?,
     ) : Action(key = "ToggleViewerState")
 
     data class UpdateFeedGeneratorStatus(
