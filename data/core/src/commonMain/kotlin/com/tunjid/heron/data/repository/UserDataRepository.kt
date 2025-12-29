@@ -17,10 +17,6 @@ interface UserDataRepository {
 
     val preferences: Flow<Preferences>
 
-    suspend fun updateMutedWords(
-        mutedWordPreferences: List<MutedWordPreference>,
-    ): Outcome
-
     suspend fun refreshPreferences(): Outcome
 }
 
@@ -38,32 +34,6 @@ internal class OfflineUserDataRepository @Inject constructor(
                     ?: Preferences.EmptyPreferences
             }
             .distinctUntilChanged()
-
-    override suspend fun updateMutedWords(
-        mutedWordPreferences: List<MutedWordPreference>,
-    ): Outcome {
-        val response = networkService.runCatchingWithMonitoredNetworkRetry {
-            getPreferencesForActor()
-        }.getOrElse { return Outcome.Failure(it) }
-
-        val updatedPreferences = preferenceUpdater.update(
-            response = response,
-            update = Timeline.Update.OfMutedWord.ReplaceAll(
-                mutedWordPreferences = mutedWordPreferences,
-            ),
-        )
-
-        return networkService.runCatchingWithMonitoredNetworkRetry {
-            putPreferences(
-                PutPreferencesRequest(
-                    preferences = updatedPreferences,
-                ),
-            )
-        }.fold(
-            onSuccess = { refreshPreferences() },
-            onFailure = Outcome::Failure,
-        )
-    }
 
     override suspend fun refreshPreferences(): Outcome {
         return networkService.runCatchingWithMonitoredNetworkRetry {
