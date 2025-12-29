@@ -32,11 +32,14 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.LabelerUri
+import com.tunjid.heron.data.core.types.LikeUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.RepostUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
@@ -194,6 +197,10 @@ internal class OfflineRecordResolver @Inject constructor(
                 is PostUri -> postUris.add(uri)
                 is StarterPackUri -> starterPackUris.add(uri)
                 is LabelerUri -> labelerUris.add(uri)
+                is FollowUri,
+                is LikeUri,
+                is RepostUri,
+                -> throw UnsupportedRecordException(uri)
             }
         }
 
@@ -333,6 +340,10 @@ internal class OfflineRecordResolver @Inject constructor(
                         }
                     }
                 }
+            is FollowUri,
+            is LikeUri,
+            is RepostUri,
+            -> throw UnsupportedRecordException(uri)
         }
     }.let { }
 
@@ -485,3 +496,7 @@ internal class OfflineRecordResolver @Inject constructor(
         }
     }
 }
+
+internal class UnsupportedRecordException(
+    recordUri: RecordUri,
+) : IllegalStateException("Unsupported record uri: $recordUri")

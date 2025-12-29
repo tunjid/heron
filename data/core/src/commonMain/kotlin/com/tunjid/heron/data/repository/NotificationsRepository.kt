@@ -32,6 +32,7 @@ import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
@@ -45,7 +46,6 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.associatedPostUri
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.toOutcome
-import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Named
 import io.ktor.client.HttpClient
@@ -68,7 +68,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -79,20 +78,16 @@ import sh.christian.ozone.api.response.AtpResponse
 @Serializable
 data class NotificationsQuery(
     override val data: CursorQuery.Data,
-) : CursorQuery {
-    init {
-        require(data.limit < 20) {
-            "Notification query limit must be less than 20 items"
-        }
-    }
-}
+) : CursorQuery
 
 interface NotificationsRepository {
     val unreadCount: Flow<Long>
 
     val lastRefreshed: Flow<Instant?>
 
-    val unreadNotifications: Flow<List<Notification>>
+    fun unreadNotifications(
+        after: Instant,
+    ): Flow<List<Notification>>
 
     fun notifications(
         query: NotificationsQuery,
@@ -103,6 +98,10 @@ interface NotificationsRepository {
 
     suspend fun registerPushNotificationToken(
         token: String,
+    ): Outcome
+
+    suspend fun searchNewestNotificationsFor(
+        uri: RecordUri,
     ): Outcome
 }
 
@@ -151,42 +150,21 @@ internal class OfflineNotificationsRepository @Inject constructor(
         .map { it.signedInProfileNotifications()?.lastRefreshed }
         .distinctUntilChanged()
 
-    override val unreadNotifications: Flow<List<Notification>> =
+    override fun unreadNotifications(
+        after: Instant,
+    ): Flow<List<Notification>> =
         savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
-            lastRefreshed
-                .filterNotNull()
-                .flatMapLatest { refreshed ->
-                    notificationsDao.unreadNotifications(
-                        ownerId = signedInProfileId.id,
-                        lastRead = refreshed,
+            notificationsDao.unreadNotifications(
+                ownerId = signedInProfileId.id,
+                after = after,
+            )
+                .distinctUntilChanged()
+                .flatMapLatest { populatedNotificationEntities ->
+                    asExternalModel(
+                        signedInProfileId = signedInProfileId,
+                        populatedNotificationEntities = populatedNotificationEntities
+                            .distinctBy(PopulatedNotificationEntity::dedupeNotificationKey),
                     )
-                        .distinctUntilChanged()
-                        .flatMapLatest { populatedNotificationEntities ->
-                            asExternalModel(
-                                signedInProfileId = signedInProfileId,
-                                populatedNotificationEntities = populatedNotificationEntities,
-                            )
-                        }
-                        .withRefresh {
-                            networkService.runCatchingWithMonitoredNetworkRetry {
-                                notificationsWithAssociatedPosts(
-                                    queryParams = ListNotificationsQueryParams(
-                                        limit = UnreadNotificationsLimit,
-                                        cursor = null,
-                                        seenAt = refreshed,
-                                    ),
-                                )
-                            }
-                                .map { (listNotificationsResponse, postViews) ->
-                                    multipleEntitySaverProvider.saveInTransaction {
-                                        add(
-                                            viewingProfileId = signedInProfileId,
-                                            listNotificationsNotification = listNotificationsResponse.notifications,
-                                            associatedPosts = postViews,
-                                        )
-                                    }
-                                }
-                        }
                 }
         }
 
@@ -274,6 +252,44 @@ internal class OfflineNotificationsRepository @Inject constructor(
         ).toOutcome()
     } ?: expiredSessionOutcome()
 
+    override suspend fun searchNewestNotificationsFor(
+        uri: RecordUri,
+    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+
+        // TODO: When blocked users and hidden/muted posts are implemented, a quick check
+        //  here to see if the uri is from a blocked user or a hidden/muted post would
+        //  speed things up significantly.
+        repeat(MaxNotificationSearches) {
+            networkService.runCatchingWithMonitoredNetworkRetry {
+                notificationsWithAssociatedPosts(
+                    queryParams = ListNotificationsQueryParams(
+                        limit = NotificationSearchLimit,
+                        // Only search on the first page. Older notifications should be dropped
+                        cursor = null,
+                    ),
+                )
+            }
+                .getOrNull()
+                ?.let { (notificationsResponse, associatedPosts) ->
+                    multipleEntitySaverProvider.saveInTransaction {
+                        add(
+                            viewingProfileId = signedInProfileId,
+                            listNotificationsNotification = notificationsResponse.notifications,
+                            associatedPosts = associatedPosts,
+                        )
+                    }
+                    if (notificationsResponse.notifications.any { it.uri.atUri == uri.uri }) {
+                        return@inCurrentProfileSession Outcome.Success
+                    }
+                }
+            delay(NotificationSearchDelay)
+        }
+        return@inCurrentProfileSession Outcome.Failure(
+            Exception("Unable to fetch notifications for $uri"),
+        )
+    } ?: expiredSessionOutcome()
+
     private fun observeAndRefreshNotifications(
         query: NotificationsQuery,
         nextCursorFlow: Flow<Cursor>,
@@ -353,6 +369,9 @@ internal class OfflineNotificationsRepository @Inject constructor(
             }
 }
 
+private fun PopulatedNotificationEntity.dedupeNotificationKey() =
+    "${entity.authorId}-${entity.reason.name}-${entity.associatedPostUri?.uri}"
+
 private fun SavedState.signedInProfileNotifications() =
     signedInProfileData
         ?.notifications
@@ -363,7 +382,8 @@ private data class SaveNotificationTokenRequest(
     val token: String,
 )
 
+private val NotificationSearchDelay = 1.4.seconds
 private const val SaveNotificationTokenPath = "/saveNotificationToken"
-
-private const val UnreadNotificationsLimit = 100L
+private const val NotificationSearchLimit = 25L
+private const val MaxNotificationSearches = 5
 private const val MaxPostsFetchedPerQuery = 25

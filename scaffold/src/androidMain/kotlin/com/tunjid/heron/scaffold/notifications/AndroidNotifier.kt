@@ -17,17 +17,24 @@
 package com.tunjid.heron.scaffold.notifications
 
 import android.Manifest
+import android.app.Notification.EXTRA_NOTIFICATION_ID
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri as AndroidUri
 import android.os.Build
+import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.domain.navigation.R
 import heron.scaffold.generated.resources.Res
 import heron.scaffold.generated.resources.notification_channel_likes
@@ -59,7 +66,12 @@ class AndroidNotifier(
                 Manifest.permission.POST_NOTIFICATIONS,
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-            notifications.forEach { notification ->
+            val showingNotifications = notificationManager.activeNotifications
+                .mapTo(mutableSetOf(), StatusBarNotification::getId)
+
+            for (notification in notifications) {
+                if (notification.androidNotificationId in showingNotifications) continue
+
                 notification.createChannelIfNeeded()
 
                 val builder = NotificationCompat.Builder(
@@ -69,21 +81,57 @@ class AndroidNotifier(
                     setSmallIcon(R.drawable.ic_heron_notification)
                     setContentTitle(notification.title())
                     notification.body()?.let(::setContentText)
+                    setContentIntent(notification.deepLinkPendingIntent())
+                    setDeleteIntent(notification.dismissalPendingIntent())
                     setPriority(NotificationCompat.PRIORITY_DEFAULT)
                     setAutoCancel(true)
                 }
 
                 notificationManager.notify(
                     /* tag = */
-                    notification.uri.toString(),
+                    notification.androidNotificationTag,
                     /* id = */
-                    notification.uri.uri.hashCode(),
+                    notification.androidNotificationId,
                     /* notification = */
                     builder.build(),
                 )
             }
         }
     }
+
+    private fun Notification.deepLinkPendingIntent(): PendingIntent? = PendingIntent.getActivity(
+        /* context = */
+        context,
+        /* requestCode = */
+        androidPendingDeepLinkRequestCode,
+        /* intent = */
+        Intent().apply {
+            component = ComponentName(context.packageName, DEEP_LINK_ACTIVITY)
+            data = AndroidUri.Builder()
+                .scheme(Uri.Host.AtProto.prefix)
+                .path(deepLinkPath())
+                .build()
+            putExtra(EXTRA_NOTIFICATION_ID, androidNotificationId)
+        },
+        /* flags = */
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+    )
+
+    private fun Notification.dismissalPendingIntent(): PendingIntent? = PendingIntent.getBroadcast(
+        /* context = */
+        context,
+        /* requestCode = */
+        androidPendingDismissRequestCode,
+        /* intent = */
+        Intent().apply {
+            action = DISMISSAL_ACTION
+            component = ComponentName(context.packageName, NOTIFICATION_DISMISS_RECEIVER)
+            putExtra(EXTRA_NOTIFICATION_ID, androidNotificationId)
+            putExtra(DISMISSAL_INSTANT_EXTRA, indexedAt.toEpochMilliseconds())
+        },
+        /* flags = */
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+    )
 
     private suspend fun Notification.createChannelIfNeeded() {
         if (notificationManager.getNotificationChannel(channelId) == null) {
@@ -93,7 +141,28 @@ class AndroidNotifier(
             notificationManager.createNotificationChannel(channel)
         }
     }
+
+    companion object {
+        const val DISMISSAL_ACTION = "com.tunjid.heron.ACTION_NOTIFICATION_DISMISS"
+        const val DISMISSAL_INSTANT_EXTRA = "com.tunjid.heron.EXTRA_NOTIFICATION_DISMISSED_AT"
+
+        private const val DEEP_LINK_ACTIVITY = "com.tunjid.heron.MainActivity"
+        private const val NOTIFICATION_DISMISS_RECEIVER =
+            "com.tunjid.heron.NotificationDismissReceiver"
+    }
 }
+
+private val Notification.androidPendingDeepLinkRequestCode: Int
+    get() = "${uri.uri}-deep-link".hashCode()
+
+private val Notification.androidPendingDismissRequestCode: Int
+    get() = "${uri.uri}-dismiss".hashCode()
+
+private val Notification.androidNotificationId: Int
+    get() = uri.uri.hashCode()
+
+private val Notification.androidNotificationTag: String
+    get() = uri.uri
 
 private val Notification.channelId: String
     get() = when (this) {

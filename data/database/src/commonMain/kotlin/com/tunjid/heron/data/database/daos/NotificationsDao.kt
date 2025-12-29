@@ -53,13 +53,14 @@ interface NotificationsDao {
             ON notifications.authorId = profileViewerStates.otherProfileId
             AND ownerId = profileViewerStates.profileId
             WHERE ownerId = :ownerId
-            AND indexedAt > :lastRead
+            AND isRead = 0
+            AND indexedAt >= :after
             ORDER BY indexedAt DESC
         """,
     )
     fun unreadNotifications(
         ownerId: String,
-        lastRead: Instant,
+        after: Instant,
     ): Flow<List<PopulatedNotificationEntity>>
 
     @Upsert
