@@ -96,16 +96,13 @@ actual fun hasNotificationPermissions(): Boolean {
 }
 
 
-private fun Activity?.shouldShowRationale() = when {
-    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ->
-        when (this) {
-            null -> false
-            else -> ActivityCompat.shouldShowRequestPermissionRationale(
-                this,
-                Manifest.permission.POST_NOTIFICATIONS,
-            )
-        }
-    else -> true
+private fun Activity?.shouldShowRationale(): Boolean {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return false
+    if (this == null) return false
+    return ActivityCompat.shouldShowRequestPermissionRationale(
+        this,
+        Manifest.permission.POST_NOTIFICATIONS,
+    )
 }
 
 private fun Activity?.maybeOpenAppSettings() {
