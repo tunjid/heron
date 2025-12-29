@@ -21,13 +21,13 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
-import com.tunjid.heron.data.core.types.RecordUri
-import com.tunjid.heron.data.core.types.asRecordUriOrNull
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
+import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
 import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.RecordRepository
+import com.tunjid.heron.data.repository.EmbeddableRecordRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
@@ -78,7 +78,7 @@ class ActualComposeViewModel(
     navActions: (NavigationMutation) -> Unit,
     authRepository: AuthRepository,
     searchRepository: SearchRepository,
-    recordRepository: RecordRepository,
+    embeddableRecordRepository: EmbeddableRecordRepository,
     fileManager: FileManager,
     writeQueue: WriteQueue,
     @Assisted
@@ -96,9 +96,9 @@ class ActualComposeViewModel(
             embeddedRecordMutations(
                 embeddedRecordUri = when (val creationType = route.model) {
                     is Post.Create.Quote -> creationType.interaction.postUri
-                    else -> route.sharedUri?.asRecordUriOrNull()
+                    else -> route.sharedUri?.asEmbeddableRecordUriOrNull()
                 },
-                recordRepository = recordRepository,
+                embeddableRecordRepository = embeddableRecordRepository,
             ),
         ),
         actionTransform = transform@{ actions ->
@@ -137,11 +137,11 @@ private fun loadSignedInProfileMutations(
     }
 
 private fun embeddedRecordMutations(
-    embeddedRecordUri: RecordUri?,
-    recordRepository: RecordRepository,
+    embeddedRecordUri: EmbeddableRecordUri?,
+    embeddableRecordRepository: EmbeddableRecordRepository,
 ): Flow<Mutation<State>> =
     embeddedRecordUri?.let { uri ->
-        recordRepository.record(uri).mapToMutation {
+        embeddableRecordRepository.record(uri).mapToMutation {
             copy(embeddedRecord = it)
         }
     }

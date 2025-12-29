@@ -31,15 +31,12 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
-import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.LabelerUri
-import com.tunjid.heron.data.core.types.LikeUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.RecordUri
-import com.tunjid.heron.data.core.types.RepostUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
@@ -86,7 +83,7 @@ internal interface RecordResolver {
     val subscribedLabelers: Flow<List<Labeler>>
 
     fun records(
-        uris: Set<RecordUri>,
+        uris: Set<EmbeddableRecordUri>,
         viewingProfileId: ProfileId?,
     ): Flow<List<Record>>
 
@@ -94,13 +91,13 @@ internal interface RecordResolver {
         items: List<T>,
         signedInProfileId: ProfileId?,
         postUri: (T) -> PostUri,
-        associatedRecordUris: (T) -> List<RecordUri>,
+        associatedRecordUris: (T) -> List<EmbeddableRecordUri>,
         associatedProfileIds: (T) -> List<ProfileId>,
         block: TimelineItemCreationContext.(T) -> Unit,
     ): Flow<List<TimelineItem>>
 
     suspend fun refresh(
-        uri: RecordUri,
+        uri: EmbeddableRecordUri,
     )
 
     interface TimelineItemCreationContext {
@@ -109,7 +106,7 @@ internal interface RecordResolver {
         val appliedLabels: AppliedLabels
         val signedInProfileId: ProfileId?
 
-        fun record(recordUri: RecordUri): Record?
+        fun record(recordUri: EmbeddableRecordUri): Record?
         fun profile(profileId: ProfileId): Profile?
         fun threadGate(postUri: PostUri): ThreadGate?
     }
@@ -181,7 +178,7 @@ internal class OfflineRecordResolver @Inject constructor(
             )
 
     override fun records(
-        uris: Set<RecordUri>,
+        uris: Set<EmbeddableRecordUri>,
         viewingProfileId: ProfileId?,
     ): Flow<List<Record>> {
         val feedUris = LazyList<FeedGeneratorUri>()
@@ -197,10 +194,6 @@ internal class OfflineRecordResolver @Inject constructor(
                 is PostUri -> postUris.add(uri)
                 is StarterPackUri -> starterPackUris.add(uri)
                 is LabelerUri -> labelerUris.add(uri)
-                is FollowUri,
-                is LikeUri,
-                is RepostUri,
-                -> throw UnsupportedRecordException(uri)
             }
         }
 
@@ -250,7 +243,7 @@ internal class OfflineRecordResolver @Inject constructor(
     }
 
     override suspend fun refresh(
-        uri: RecordUri,
+        uri: EmbeddableRecordUri,
     ) = savedStateDataSource.inCurrentProfileSession { viewingProfileId ->
         when (uri) {
             is FeedGeneratorUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
@@ -340,10 +333,6 @@ internal class OfflineRecordResolver @Inject constructor(
                         }
                     }
                 }
-            is FollowUri,
-            is LikeUri,
-            is RepostUri,
-            -> throw UnsupportedRecordException(uri)
         }
     }.let { }
 
@@ -351,13 +340,13 @@ internal class OfflineRecordResolver @Inject constructor(
         items: List<T>,
         signedInProfileId: ProfileId?,
         postUri: (T) -> PostUri,
-        associatedRecordUris: (T) -> List<RecordUri>,
+        associatedRecordUris: (T) -> List<EmbeddableRecordUri>,
         associatedProfileIds: (T) -> List<ProfileId>,
         block: TimelineItemCreationContext.(T) -> Unit,
     ): Flow<List<TimelineItem>> =
         savedStateDataSource.distinctUntilChangedAdultContentAndLabelVisibilityPreferences()
             .flatMapLatest { (allowAdultContent, labelsVisibilityMap) ->
-                val recordUris = mutableSetOf<RecordUri>()
+                val recordUris = mutableSetOf<EmbeddableRecordUri>()
                 val threadGatePostUris = mutableListOf<PostUri>()
                 val profileIds = mutableSetOf<ProfileId>()
 
@@ -478,7 +467,7 @@ internal class OfflineRecordResolver @Inject constructor(
                 valueTransform = PopulatedProfileEntity::asExternalModel,
             )
 
-        override fun record(recordUri: RecordUri): Record? =
+        override fun record(recordUri: EmbeddableRecordUri): Record? =
             recordUrisToRecords[recordUri]
 
         override fun threadGate(postUri: PostUri): ThreadGate? =
@@ -496,7 +485,3 @@ internal class OfflineRecordResolver @Inject constructor(
         }
     }
 }
-
-internal class UnsupportedRecordException(
-    recordUri: RecordUri,
-) : IllegalStateException("Unsupported record uri: $recordUri")

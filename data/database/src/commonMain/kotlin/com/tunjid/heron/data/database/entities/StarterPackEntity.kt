@@ -23,9 +23,9 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.tunjid.heron.data.core.models.StarterPack
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.core.types.StarterPackUri
 import kotlin.time.Instant
@@ -81,7 +81,7 @@ data class PopulatedStarterPackEntity(
     )
     val labelEntities: List<LabelEntity>,
 ) : PopulatedRecordEntity {
-    override val recordUri: RecordUri
+    override val recordUri: EmbeddableRecordUri
         get() = entity.uri
 }
 

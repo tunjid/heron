@@ -35,16 +35,13 @@ import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
-import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.LabelerUri
-import com.tunjid.heron.data.core.types.LikeUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
-import com.tunjid.heron.data.core.types.RecordUri
-import com.tunjid.heron.data.core.types.RepostUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
@@ -159,7 +156,7 @@ fun Record.avatarSharedElementKey(
     return "$finalPrefix-${reference.uri.uri}-${creator.did.id}-avatar"
 }
 
-fun RecordUri.shareUri(): GenericUri =
+fun EmbeddableRecordUri.shareUri(): GenericUri =
     GenericUri(
         when (this) {
             is FeedGeneratorUri -> "https://bsky.app/profile/${profileId().id}/feed/${recordKey.value}"
@@ -167,23 +164,15 @@ fun RecordUri.shareUri(): GenericUri =
             is StarterPackUri -> "https://bsky.app/starter-pack/${profileId().id}/${recordKey.value}"
             is LabelerUri -> "https://bsky.app/profile/${profileId().id}"
             is PostUri -> "https://bsky.app/profile/${profileId().id}/post/${recordKey.value}"
-            is FollowUri,
-            is LikeUri,
-            is RepostUri,
-            -> error("Unsupported record uri: $this")
         },
     )
 
-fun RecordUri.collectionShape() = when (this) {
+fun EmbeddableRecordUri.collectionShape() = when (this) {
     is FeedGeneratorUri -> FeedGeneratorCollectionShape
     is LabelerUri -> LabelerCollectionShape
     is ListUri -> ListCollectionShape
     is PostUri -> RoundedPolygonShape.Circle
     is StarterPackUri -> StarterPackCollectionShape
-    is FollowUri,
-    is LikeUri,
-    is RepostUri,
-    -> error("Unsupported record uri: $this")
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

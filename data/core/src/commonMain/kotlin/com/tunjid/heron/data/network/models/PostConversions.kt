@@ -40,6 +40,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorId
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericId
@@ -52,10 +53,9 @@ import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.core.types.StarterPackUri
-import com.tunjid.heron.data.core.types.asRecordUriOrNull
+import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
@@ -134,7 +134,7 @@ private fun post(
     viewerStatisticsEntity: PostViewerStatisticsEntity?,
     quote: Post?,
     labels: List<Label>,
-    embeddedRecord: Record?,
+    embeddedRecord: Record.Embeddable?,
 ) = Post(
     cid = postEntity.cid,
     uri = postEntity.uri,
@@ -297,12 +297,12 @@ internal fun JsonContent.asPostEntityRecordData(): PostEntity.RecordData? =
     try {
         val bskyPost = decodeAs<BskyPost>()
 
-        val embeddedUri: RecordUri? = when (val embed = bskyPost.embed) {
+        val embeddedUri: EmbeddableRecordUri? = when (val embed = bskyPost.embed) {
             is PostEmbedUnion.Record ->
-                embed.value.record.uri.atUri.asRecordUriOrNull()
+                embed.value.record.uri.atUri.asEmbeddableRecordUriOrNull()
 
             is PostEmbedUnion.RecordWithMedia ->
-                embed.value.record.record.uri.atUri.asRecordUriOrNull()
+                embed.value.record.record.uri.atUri.asEmbeddableRecordUriOrNull()
 
             else -> null
         }
@@ -331,7 +331,7 @@ private fun BskyPost.toPostRecord() =
         },
     )
 
-private fun PostView.nonPostEmbeddedRecord(): Record? {
+private fun PostView.nonPostEmbeddedRecord(): Record.Embeddable? {
     val recordUnion = when (val embed = embed) {
         is PostViewEmbedUnion.RecordView -> embed.value.record
         is PostViewEmbedUnion.RecordWithMediaView -> embed.value.record.record

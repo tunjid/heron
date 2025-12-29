@@ -33,6 +33,9 @@ sealed interface Uri {
 @Serializable
 sealed interface RecordUri : Uri
 
+@Serializable
+sealed interface EmbeddableRecordUri : RecordUri
+
 /**
  * Extracts the [ProfileId] component from an AT URI string.
  */
@@ -62,7 +65,8 @@ val Uri.domain get() = Url(uri).host.removePrefix("www.")
 value class PostUri(
     override val uri: String,
 ) : Uri,
-    RecordUri {
+    RecordUri,
+    EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -88,7 +92,8 @@ value class ProfileUri(
 value class FeedGeneratorUri(
     override val uri: String,
 ) : Uri,
-    RecordUri {
+    RecordUri,
+    EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -101,7 +106,8 @@ value class FeedGeneratorUri(
 value class ListUri(
     override val uri: String,
 ) : Uri,
-    RecordUri {
+    RecordUri,
+    EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -114,7 +120,8 @@ value class ListUri(
 value class StarterPackUri(
     override val uri: String,
 ) : Uri,
-    RecordUri {
+    RecordUri,
+    EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -127,7 +134,8 @@ value class StarterPackUri(
 value class LabelerUri(
     override val uri: String,
 ) : Uri,
-    RecordUri {
+    RecordUri,
+    EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -224,6 +232,11 @@ value class FileUri(
 fun Uri.asRecordUriOrNull(): RecordUri? = uri.asRecordUriOrNull()
 
 /**
+ * Returns this [Uri] as a [RecordUri] if applicable.
+ */
+fun Uri.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? = uri.asEmbeddableRecordUriOrNull()
+
+/**
  * Parses a string into a specific [RecordUri] object based on its collection.
  *
  * @receiver The string to parse.
@@ -240,6 +253,17 @@ fun String.asRecordUriOrNull(): RecordUri? = atUriComponents { _, collectionRang
         LikeUri.NAMESPACE -> LikeUri(this)
         RepostUri.NAMESPACE -> RepostUri(this)
         FollowUri.NAMESPACE -> FollowUri(this)
+        else -> null
+    }
+}
+
+fun String.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? = atUriComponents { _, collectionRange, _ ->
+    when (substring(collectionRange.start, collectionRange.endExclusive)) {
+        PostUri.NAMESPACE -> PostUri(this)
+        FeedGeneratorUri.NAMESPACE -> FeedGeneratorUri(this)
+        ListUri.NAMESPACE -> ListUri(this)
+        StarterPackUri.NAMESPACE -> StarterPackUri(this)
+        LabelerUri.NAMESPACE -> LabelerUri(this)
         else -> null
     }
 }
