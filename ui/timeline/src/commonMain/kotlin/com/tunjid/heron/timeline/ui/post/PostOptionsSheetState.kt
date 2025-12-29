@@ -23,6 +23,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.timeline.utilities.BottomSheetItemCard
 import com.tunjid.heron.timeline.utilities.BottomSheetItemCardRow
 import com.tunjid.heron.timeline.utilities.CopyToClipboardCard
+import com.tunjid.heron.timeline.utilities.ModerationMenuSection
 import com.tunjid.heron.timeline.utilities.SendDirectMessageCard
 import com.tunjid.heron.timeline.utilities.shareUri
 import com.tunjid.heron.ui.sheets.BottomSheetScope
@@ -134,6 +135,13 @@ private fun PostOptionsBottomSheet(
                     },
                 )
                 CopyToClipboardCard(it.uri.shareUri())
+                ModerationMenuSection(
+                    onMuteWordsClicked = {
+                        onOptionClicked(PostOption.Moderation.MuteWords)
+                    },
+                    onBlockUserClicked = {
+                    },
+                )
             }
         }
     }
@@ -149,18 +157,8 @@ sealed class PostOption {
         val postUri: PostUri,
     ) : PostOption()
 
-    sealed class Moderation(
-        val title: StringResource,
-        val icon: ImageVector,
-    ) : PostOption() {
-        data object MuteWords : Moderation(
-            title = Res.string.mute_words_tags,
-            icon = Icons.Default.FilterAlt,
-        )
-
-        data object BlockUser : Moderation(
-            title = Res.string.block_user,
-            icon = Icons.Rounded.Block,
-        )
+    sealed class Moderation : PostOption() {
+        data object MuteWords : Moderation()
+        data object BlockUser : Moderation()
     }
 }
