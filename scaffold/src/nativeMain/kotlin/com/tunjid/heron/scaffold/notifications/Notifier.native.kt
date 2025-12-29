@@ -19,7 +19,7 @@ package com.tunjid.heron.scaffold.notifications
 import androidx.compose.runtime.Composable
 
 @Composable
-actual fun requestNotificationPermissions(
+actual fun notificationPermissionsLauncher(
     onPermissionResult: (Boolean) -> Unit,
 ): () -> Unit = {
     // No op for now, native is not the current priority

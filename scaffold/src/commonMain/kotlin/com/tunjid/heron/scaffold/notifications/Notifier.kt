@@ -56,8 +56,8 @@ object NoOpNotifier : Notifier {
 expect fun hasNotificationPermissions(): Boolean
 
 @Composable
-expect fun requestNotificationPermissions(
-    onPermissionResult: (Boolean) -> Unit,
+expect fun notificationPermissionsLauncher(
+    onPermissionResult: (Boolean) -> Unit = {},
 ): () -> Unit
 
 internal fun Notification.deepLinkPath(): String {

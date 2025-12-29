@@ -85,6 +85,8 @@ interface NotificationsRepository {
 
     val lastRefreshed: Flow<Instant?>
 
+    val hasPreviouslyRequestedNotificationPermissions: Flow<Boolean>
+
     fun unreadNotifications(
         after: Instant,
     ): Flow<List<Notification>>
@@ -103,6 +105,8 @@ interface NotificationsRepository {
     suspend fun searchNewestNotificationsFor(
         uri: RecordUri,
     ): Outcome
+
+    suspend fun markNotificationPermissionsRequested(): Outcome
 }
 
 internal class OfflineNotificationsRepository @Inject constructor(
@@ -145,6 +149,11 @@ internal class OfflineNotificationsRepository @Inject constructor(
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = 0,
             )
+
+    override val hasPreviouslyRequestedNotificationPermissions: Flow<Boolean> =
+        savedStateDataSource.savedState
+            .map { it.signedInProfileNotifications()?.hasPreviouslyRequestedPermissions ?: false }
+            .distinctUntilChanged()
 
     override val lastRefreshed: Flow<Instant?> = savedStateDataSource.savedState
         .map { it.signedInProfileNotifications()?.lastRefreshed }
@@ -289,6 +298,15 @@ internal class OfflineNotificationsRepository @Inject constructor(
             Exception("Unable to fetch notifications for $uri"),
         )
     } ?: expiredSessionOutcome()
+
+    override suspend fun markNotificationPermissionsRequested(): Outcome =
+        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+            if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+            savedStateDataSource.updateSignedInUserNotifications {
+                copy(hasPreviouslyRequestedPermissions = true)
+            }
+            Outcome.Success
+        } ?: expiredSessionOutcome()
 
     private fun observeAndRefreshNotifications(
         query: NotificationsQuery,
