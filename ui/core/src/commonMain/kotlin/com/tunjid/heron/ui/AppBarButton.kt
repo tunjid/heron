@@ -24,6 +24,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 
 @Composable
@@ -31,23 +32,22 @@ fun AppBarButton(
     modifier: Modifier = Modifier,
     icon: ImageVector,
     iconDescription: String,
-    onActionClick: () -> Unit,
+    tint: Color = MaterialTheme.colorScheme.primary,
+    onClick: () -> Unit,
 ) {
     ElevatedCard(
         modifier = modifier,
         shape = CircleShape,
     ) {
         IconButton(
-            onClick = {
-                onActionClick()
-            },
+            onClick = onClick,
             modifier = Modifier
                 .size(UiTokens.appBarButtonSize),
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = iconDescription,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = tint,
             )
         }
     }

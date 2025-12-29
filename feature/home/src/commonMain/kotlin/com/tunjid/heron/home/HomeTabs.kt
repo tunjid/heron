@@ -264,13 +264,13 @@ internal fun HomeTabs(
                 }
                 AppBarButton(
                     modifier = expandedOptionsModifier,
-                    onActionClick = onSettingsIconClick,
+                    onClick = onSettingsIconClick,
                     icon = Icons.Rounded.Settings,
                     iconDescription = stringResource(Res.string.settings),
                 )
                 AppBarButton(
                     modifier = expandedOptionsModifier,
-                    onActionClick = onBookmarkIconClick,
+                    onClick = onBookmarkIconClick,
                     icon = Icons.Rounded.Bookmark,
                     iconDescription = stringResource(Res.string.bookmark),
                 )
@@ -288,7 +288,7 @@ internal fun HomeTabs(
                     if (expandableTabsState.isPartiallyOrFullyExpanded) Res.string.collapse_timeline_settings
                     else Res.string.expand_timeline_settings,
                 ),
-                onActionClick = {
+                onClick = {
                     onLayoutChanged(
                         if (expandableTabsState.isPartiallyOrFullyExpanded) TabLayout.Collapsed.All
                         else TabLayout.Expanded,
