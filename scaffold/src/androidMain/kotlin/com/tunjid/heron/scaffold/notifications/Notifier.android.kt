@@ -95,7 +95,6 @@ actual fun hasNotificationPermissions(): Boolean {
     return hasPermissions
 }
 
-
 private fun Activity?.shouldShowRationale(): Boolean {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return false
     if (this == null) return false

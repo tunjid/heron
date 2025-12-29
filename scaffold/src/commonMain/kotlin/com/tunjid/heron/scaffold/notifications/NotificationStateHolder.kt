@@ -47,8 +47,7 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 
-interface NotificationStateHolder :
-    ActionStateMutator<NotificationAction, StateFlow<NotificationState>>
+interface NotificationStateHolder : ActionStateMutator<NotificationAction, StateFlow<NotificationState>>
 
 data class NotificationState(
     val unreadCount: Long = 0L,
