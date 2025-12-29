@@ -48,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.lazy.rememberLazyScrollableState
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.LinkTarget
+import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
@@ -81,6 +82,7 @@ import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.remembe
 import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
+import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
@@ -118,6 +120,7 @@ internal fun FeedScreen(
                 actions = actions,
                 signedInProfileId = state.signedInProfileId,
                 recentConversations = state.recentConversations,
+                mutedWordsPreferences = state.preferences.mutedWordPreferences,
             )
         }
     }
@@ -130,6 +133,7 @@ private fun FeedTimeline(
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
+    mutedWordsPreferences: List<MutedWordPreference>,
     recentConversations: List<Conversation>,
 ) {
     var pendingScrollOffset by rememberSaveable { mutableIntStateOf(0) }
@@ -175,6 +179,13 @@ private fun FeedTimeline(
             actions(Action.SendPostInteraction(it))
         },
     )
+    val mutedWordsSheetState = rememberUpdatedMutedWordsSheetState(
+        mutedWordPreferences = mutedWordsPreferences,
+        onSave = {
+            actions(Action.UpdateMutedWord(it))
+        },
+        onShown = {},
+    )
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
@@ -198,7 +209,7 @@ private fun FeedTimeline(
                         ?.let(threadGateSheetState::show)
 
                 is PostOption.Moderation.BlockUser -> Unit
-                is PostOption.Moderation.MuteWords -> Unit
+                is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
             }
         },
     )

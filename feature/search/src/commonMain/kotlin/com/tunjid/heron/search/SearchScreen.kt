@@ -263,6 +263,7 @@ internal fun SearchScreen(
                 onSendPostInteraction = sendPostInteraction,
                 onFeedGeneratorClicked = onFeedGeneratorClicked,
                 onTimelineUpdateClicked = onTimelineUpdateClicked,
+                onSave = { actions(Action.UpdateMutedWord(it)) },
             )
         }
     }

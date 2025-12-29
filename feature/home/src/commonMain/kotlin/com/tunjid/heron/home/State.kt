@@ -17,7 +17,9 @@
 package com.tunjid.heron.home
 
 import com.tunjid.heron.data.core.models.Conversation
+import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.Uri
@@ -31,6 +33,8 @@ import kotlinx.serialization.Transient
 data class State(
     val currentTabUri: Uri? = null,
     val tabLayout: TabLayout = TabLayout.Collapsed.All,
+    @Transient
+    val preferences: Preferences = Preferences.EmptyPreferences,
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
     @Transient
@@ -93,6 +97,10 @@ sealed class Action(val key: String) {
     data class SetTabLayout(
         val layout: TabLayout,
     ) : Action(key = "SetTabLayout")
+
+    data class UpdateMutedWord(
+        val mutedWordPreferences: List<MutedWordPreference>,
+    ) : Action(key = "UpdateMutedWord")
 
     data object RefreshCurrentTab : Action(key = "RefreshCurrentTab")
 

@@ -90,6 +90,7 @@ import com.tunjid.composables.lazy.rememberLazyScrollableState
 import com.tunjid.composables.ui.lerp
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.LinkTarget
+import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
@@ -144,6 +145,7 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
+import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
@@ -446,6 +448,7 @@ internal fun ProfileScreen(
                                 timelineStateHolder = stateHolder,
                                 actions = actions,
                                 recentConversations = state.recentConversations,
+                                mutedWordsPreferences = state.preferences.mutedWordPreferences,
                             )
                             is ProfileScreenStateHolders.LabelerSettings -> LabelerSettings(
                                 stateHolder = stateHolder,
@@ -1014,6 +1017,7 @@ private fun ProfileTimeline(
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
     recentConversations: List<Conversation>,
+    mutedWordsPreferences: List<MutedWordPreference>,
 ) {
     var pendingScrollOffset by rememberSaveable { mutableIntStateOf(0) }
     val gridState = rememberLazyScrollableState(
@@ -1057,6 +1061,13 @@ private fun ProfileTimeline(
             actions(Action.SendPostInteraction(it))
         },
     )
+    val mutedWordsSheetState = rememberUpdatedMutedWordsSheetState(
+        mutedWordPreferences = mutedWordsPreferences,
+        onSave = {
+            actions(Action.UpdateMutedWord(it))
+        },
+        onShown = {},
+    )
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
@@ -1080,7 +1091,7 @@ private fun ProfileTimeline(
                         ?.let(threadGateSheetState::show)
 
                 is PostOption.Moderation.BlockUser -> Unit
-                is PostOption.Moderation.MuteWords -> Unit
+                is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
             }
         },
     )

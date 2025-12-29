@@ -54,6 +54,7 @@ import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAc
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.LinkTarget
+import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
@@ -101,6 +102,7 @@ internal fun GeneralSearchResults(
     onSendPostInteraction: (Post.Interaction) -> Unit,
     onFeedGeneratorClicked: (FeedGenerator, String) -> Unit,
     onTimelineUpdateClicked: (Timeline.Update) -> Unit,
+    onSave: (mutedWordPreferences: List<MutedWordPreference>) -> Unit,
 ) {
     Box(
         modifier = modifier,
@@ -192,6 +194,7 @@ internal fun GeneralSearchResults(
                             gridState = gridState,
                             modifier = modifier,
                             signedInProfileId = state.signedInProfile?.did,
+                            mutedWordPreferences = state.preferences.mutedWordPreferences,
                             recentConversations = state.recentConversations,
                             videoStates = videoStates,
                             paneScaffoldState = paneScaffoldState,
@@ -204,6 +207,7 @@ internal fun GeneralSearchResults(
                             onNavigate = onNavigate,
                             onSendPostInteraction = onSendPostInteraction,
                             searchResultActions = searchResultStateHolder.accept,
+                            onSave = onSave,
                         )
                         tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(
                             pagerState = pagerState,

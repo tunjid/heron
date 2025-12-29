@@ -119,6 +119,9 @@ class ActualFeedViewModel(
                         is Action.Navigate -> action.flow.consumeNavigationActions(
                             navigationMutationConsumer = navActions,
                         )
+                        is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
+                            writeQueue = writeQueue,
+                        )
                     }
                 },
             )
@@ -226,6 +229,19 @@ private fun Flow<Action.UpdateFeedGeneratorStatus>.feedGeneratorStatusMutations(
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
         writeQueue.enqueue(Writable.TimelineUpdate(action.update))
+    }
+
+private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        writeQueue.enqueue(
+            Writable.TimelineUpdate(
+                Timeline.Update.OfMutedWord.ReplaceAll(
+                    mutedWordPreferences = action.mutedWordPreferences,
+                ),
+            ),
+        )
     }
 
 private fun timelineCreatorMutations(

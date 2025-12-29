@@ -76,6 +76,7 @@ class ActualHomeViewModel(
     messageRepository: MessageRepository,
     timelineRepository: TimelineRepository,
     savedStateDataSource: SavedStateDataSource,
+    userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
@@ -98,6 +99,9 @@ class ActualHomeViewModel(
             ),
             recentConversationMutations(
                 messageRepository = messageRepository,
+            ),
+            loadPreferencesMutations(
+                userDataRepository = userDataRepository,
             ),
         ),
         actionTransform = transform@{ actions ->
@@ -123,6 +127,9 @@ class ActualHomeViewModel(
                     is Action.SetTabLayout -> action.flow.setTabLayoutMutations()
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
+                    )
+                    is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
+                        writeQueue = writeQueue,
                     )
                 }
             }
@@ -183,6 +190,14 @@ fun recentConversationMutations(
     messageRepository.recentConversations()
         .mapToMutation { conversations ->
             copy(recentConversations = conversations)
+        }
+
+fun loadPreferencesMutations(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    userDataRepository.preferences
+        .mapToMutation { preferences ->
+            copy(preferences = preferences)
         }
 
 private fun Flow<Action.UpdatePageWithUpdates>.pageWithUpdateMutations(): Flow<Mutation<State>> =
@@ -252,6 +267,19 @@ private fun Flow<Action.SetCurrentTab>.setCurrentTabMutations(
 private fun Flow<Action.SetTabLayout>.setTabLayoutMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(tabLayout = action.layout)
+    }
+
+private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        writeQueue.enqueue(
+            Writable.TimelineUpdate(
+                Timeline.Update.OfMutedWord.ReplaceAll(
+                    mutedWordPreferences = action.mutedWordPreferences,
+                ),
+            ),
+        )
     }
 
 private fun Flow<Action.RefreshCurrentTab>.tabRefreshMutations(

@@ -18,6 +18,7 @@ package com.tunjid.heron.posts
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.RecordKey
@@ -127,6 +128,9 @@ class ActualPostsViewModel(
                     is Action.SendPostInteraction -> action.flow.postInteractionMutations(
                         writeQueue = writeQueue,
                     )
+                    is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
+                        writeQueue = writeQueue,
+                    )
                 }
             }
         },
@@ -177,6 +181,19 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
             }
             WriteQueue.Status.Enqueued -> Unit
         }
+    }
+
+private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        writeQueue.enqueue(
+            Writable.TimelineUpdate(
+                Timeline.Update.OfMutedWord.ReplaceAll(
+                    mutedWordPreferences = action.mutedWordPreferences,
+                ),
+            ),
+        )
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
