@@ -103,7 +103,7 @@ class AndroidNotifier(
         /* context = */
         context,
         /* requestCode = */
-        0,
+        androidPendingDeepLinkRequestCode,
         /* intent = */
         Intent().apply {
             component = ComponentName(context.packageName, DEEP_LINK_ACTIVITY)
@@ -121,7 +121,7 @@ class AndroidNotifier(
         /* context = */
         context,
         /* requestCode = */
-        0,
+        androidPendingDismissRequestCode,
         /* intent = */
         Intent().apply {
             action = DISMISSAL_ACTION
@@ -151,6 +151,12 @@ class AndroidNotifier(
             "com.tunjid.heron.NotificationDismissReceiver"
     }
 }
+
+private val Notification.androidPendingDeepLinkRequestCode: Int
+    get() = "${uri.uri}-deep-link".hashCode()
+
+private val Notification.androidPendingDismissRequestCode: Int
+    get() = "${uri.uri}-dismiss".hashCode()
 
 private val Notification.androidNotificationId: Int
     get() = uri.uri.hashCode()
