@@ -31,8 +31,8 @@ import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
-import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
@@ -100,8 +100,8 @@ interface NotificationsRepository {
         token: String,
     ): Outcome
 
-    suspend fun fetchNotificationsFor(
-        uri: GenericUri,
+    suspend fun searchNewestNotificationsFor(
+        uri: RecordUri,
     ): Outcome
 }
 
@@ -252,8 +252,8 @@ internal class OfflineNotificationsRepository @Inject constructor(
         ).toOutcome()
     } ?: expiredSessionOutcome()
 
-    override suspend fun fetchNotificationsFor(
-        uri: GenericUri,
+    override suspend fun searchNewestNotificationsFor(
+        uri: RecordUri,
     ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
         if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
 
@@ -384,6 +384,6 @@ private data class SaveNotificationTokenRequest(
 
 private val NotificationSearchDelay = 1.4.seconds
 private const val SaveNotificationTokenPath = "/saveNotificationToken"
-private const val NotificationSearchLimit = 10L
+private const val NotificationSearchLimit = 25L
 private const val MaxNotificationSearches = 5
 private const val MaxPostsFetchedPerQuery = 25

@@ -17,8 +17,9 @@
 package com.tunjid.heron.scaffold.notifications
 
 import com.tunjid.heron.data.core.models.Notification
-import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.RecordKey
+import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.utilities.tidInstant
 import com.tunjid.heron.scaffold.scaffold.AppState
@@ -73,7 +74,7 @@ sealed class NotificationAction(
 
         internal val commitedAt = recordKey?.tidInstant
 
-        internal val recordUri: GenericUri?
+        internal val recordUri: RecordUri?
 
         val isProcessable
             get() =
@@ -82,9 +83,10 @@ sealed class NotificationAction(
         init {
             val senderDid = payload[NotificationAtProtoSenderDid]
             val collection = payload[NotificationAtProtoCollection]
+            val rkey = recordKey?.value
 
-            recordUri = if (senderDid == null || collection == null) null
-            else GenericUri("$senderDid/$collection/${recordKey?.value}")
+            recordUri = if (senderDid == null || collection == null || rkey == null) null
+            else "$senderDid/$collection/$rkey".asRecordUriOrNull()
         }
     }
 
@@ -200,7 +202,7 @@ private fun Flow<NotificationAction.HandleNotification>.handleNotificationMutati
             .filter(List<NotificationAction.HandleNotification>::isNotEmpty)
             .collect { actions ->
                 // Refresh the database to pick up new notifications
-                notificationsRepository.fetchNotificationsFor(
+                notificationsRepository.searchNewestNotificationsFor(
                     requireNotNull(actions.last().recordUri),
                 )
             }

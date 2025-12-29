@@ -137,6 +137,45 @@ value class LabelerUri(
 
 @Serializable
 @JvmInline
+value class LikeUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.bsky.feed.like"
+    }
+}
+
+@Serializable
+@JvmInline
+value class RepostUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.bsky.feed.repost"
+    }
+}
+
+@Serializable
+@JvmInline
+value class FollowUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.bsky.graph.follow"
+    }
+}
+
+@Serializable
+@JvmInline
 value class ListMemberUri(
     override val uri: String,
 ) : Uri {
@@ -198,6 +237,9 @@ fun String.asRecordUriOrNull(): RecordUri? = atUriComponents { _, collectionRang
         ListUri.NAMESPACE -> ListUri(this)
         StarterPackUri.NAMESPACE -> StarterPackUri(this)
         LabelerUri.NAMESPACE -> LabelerUri(this)
+        LikeUri.NAMESPACE -> LikeUri(this)
+        RepostUri.NAMESPACE -> RepostUri(this)
+        FollowUri.NAMESPACE -> FollowUri(this)
         else -> null
     }
 }
