@@ -17,10 +17,6 @@
 package com.tunjid.heron.scaffold.notifications
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import com.tunjid.heron.ui.NeutralDialogButton
 import com.tunjid.heron.ui.PrimaryDialogButton
 import com.tunjid.heron.ui.SimpleDialog
@@ -28,19 +24,22 @@ import com.tunjid.heron.ui.SimpleDialogText
 import com.tunjid.heron.ui.SimpleDialogTitle
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.scaffold.generated.resources.Res
-import heron.scaffold.generated.resources.notification_permissions_dialog_text
+import heron.scaffold.generated.resources.notification_permissions_denied_dialog_text
 import heron.scaffold.generated.resources.notification_permissions_dialog_title
+import heron.scaffold.generated.resources.notification_permissions_request_dialog_text
+import heron.ui.core.generated.resources.go_to_settings
 import heron.ui.core.generated.resources.no
 import heron.ui.core.generated.resources.yes
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun NotificationsRationaleDialog(
-    shouldRequestPermissions: (Boolean) -> Unit,
+    callingRationale: NotificationDialogRationale,
+    shouldRequestPermissions: (NotificationDialogRationale, Boolean) -> Unit,
 ) {
     SimpleDialog(
         onDismissRequest = {
-            shouldRequestPermissions(false)
+            shouldRequestPermissions(callingRationale, false)
         },
         title = {
             SimpleDialogTitle(
@@ -49,14 +48,24 @@ internal fun NotificationsRationaleDialog(
         },
         text = {
             SimpleDialogText(
-                text = stringResource(Res.string.notification_permissions_dialog_text),
+                text = stringResource(
+                    when (callingRationale) {
+                        NotificationDialogRationale.GoToSettings -> Res.string.notification_permissions_denied_dialog_text
+                        NotificationDialogRationale.RequestPermissions -> Res.string.notification_permissions_request_dialog_text
+                    },
+                ),
             )
         },
         confirmButton = {
             PrimaryDialogButton(
-                text = stringResource(CommonStrings.yes),
+                text = stringResource(
+                    when (callingRationale) {
+                        NotificationDialogRationale.GoToSettings -> CommonStrings.go_to_settings
+                        NotificationDialogRationale.RequestPermissions -> CommonStrings.yes
+                    },
+                ),
                 onClick = {
-                    shouldRequestPermissions(true)
+                    shouldRequestPermissions(callingRationale, true)
                 },
             )
         },
@@ -64,9 +73,14 @@ internal fun NotificationsRationaleDialog(
             NeutralDialogButton(
                 text = stringResource(CommonStrings.no),
                 onClick = {
-                    shouldRequestPermissions(false)
+                    shouldRequestPermissions(callingRationale, false)
                 },
             )
         },
     )
+}
+
+internal sealed class NotificationDialogRationale {
+    data object RequestPermissions : NotificationDialogRationale()
+    data object GoToSettings : NotificationDialogRationale()
 }
