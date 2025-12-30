@@ -141,7 +141,7 @@ private fun embeddedRecordMutations(
     embeddableRecordRepository: EmbeddableRecordRepository,
 ): Flow<Mutation<State>> =
     embeddedRecordUri?.let { uri ->
-        embeddableRecordRepository.record(uri).mapToMutation {
+        embeddableRecordRepository.embeddableRecord(uri).mapToMutation {
             copy(embeddedRecord = it)
         }
     }

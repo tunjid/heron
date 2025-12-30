@@ -118,13 +118,8 @@ interface MessageRepository {
 }
 
 internal class OfflineMessageRepository @Inject constructor(
-    private val labelDao: LabelDao,
     private val messageDao: MessageDao,
-    private val postDao: PostDao,
-    private val feedDao: FeedGeneratorDao,
     private val profileDao: ProfileDao,
-    private val listDao: ListDao,
-    private val starterPackDao: StarterPackDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateDataSource: SavedStateDataSource,
@@ -190,7 +185,7 @@ internal class OfflineMessageRepository @Inject constructor(
                             destination = mutableSetOf(),
                             transform = PopulatedMessageEntity::embeddedRecordUri,
                         )
-                        recordResolver.records(
+                        recordResolver.embeddableRecords(
                             uris = embeddedRecordUris,
                             viewingProfileId = signedInProfileId,
                         ).map { embeddedRecords ->

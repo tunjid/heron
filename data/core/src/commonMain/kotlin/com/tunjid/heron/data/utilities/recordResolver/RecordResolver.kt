@@ -82,10 +82,10 @@ import sh.christian.ozone.api.Did
 internal interface RecordResolver {
     val subscribedLabelers: Flow<List<Labeler>>
 
-    fun records(
+    fun embeddableRecords(
         uris: Set<EmbeddableRecordUri>,
         viewingProfileId: ProfileId?,
-    ): Flow<List<Record>>
+    ): Flow<List<Record.Embeddable>>
 
     fun <T> timelineItems(
         items: List<T>,
@@ -177,10 +177,10 @@ internal class OfflineRecordResolver @Inject constructor(
                 initialValue = emptyList(),
             )
 
-    override fun records(
+    override fun embeddableRecords(
         uris: Set<EmbeddableRecordUri>,
         viewingProfileId: ProfileId?,
-    ): Flow<List<Record>> {
+    ): Flow<List<Record.Embeddable>> {
         val feedUris = LazyList<FeedGeneratorUri>()
         val listUris = LazyList<ListUri>()
         val postUris = LazyList<PostUri>()
@@ -365,7 +365,7 @@ internal class OfflineRecordResolver @Inject constructor(
                 }
 
                 combine(
-                    flow = records(
+                    flow = embeddableRecords(
                         uris = recordUris,
                         viewingProfileId = signedInProfileId,
                     )

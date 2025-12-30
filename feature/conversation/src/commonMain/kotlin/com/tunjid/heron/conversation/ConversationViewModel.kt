@@ -198,7 +198,7 @@ private fun sharedRecordMutations(
             )
         }
         else emitAll(
-            embeddableRecordRepository.record(recordUri)
+            embeddableRecordRepository.embeddableRecord(recordUri)
                 // Take only one emission so user changes do not override it
                 .take(1)
                 .mapToMutation {
