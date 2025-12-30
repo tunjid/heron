@@ -27,6 +27,7 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="go_back">Go Back</string>
+    <string name="go_to_settings">Go to Settings</string>
     <string name="sign_in">Sign In</string>
     <string name="hide_label">Content Blocked</string>
     <string name="hide_label_description">This content has been hidden by the moderators.</string>
