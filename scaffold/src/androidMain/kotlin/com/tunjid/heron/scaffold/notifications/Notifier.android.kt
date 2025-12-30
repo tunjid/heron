@@ -45,7 +45,7 @@ actual fun notificationPermissionsLauncher(
     val activity = LocalActivity.current
     val appState = LocalAppState.current
 
-    var rationaleReson by remember { mutableStateOf<NotificationDialogRationale?>(null) }
+    var rationale by remember { mutableStateOf<NotificationDialogRationale?>(null) }
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         val permissionRequestLauncher = rememberLauncherForActivityResult(
@@ -53,11 +53,11 @@ actual fun notificationPermissionsLauncher(
             onResult = { hasPermissions ->
                 onPermissionResult(hasPermissions)
                 if (!activity.shouldShowRationale() && !hasPermissions) {
-                    rationaleReson = NotificationDialogRationale.GoToSettings
+                    rationale = NotificationDialogRationale.GoToSettings
                 }
             },
         )
-        rationaleReson?.let {
+        rationale?.let {
             NotificationsRationaleDialog(it) { callingRationale, shouldRequestPermissions ->
                 if (shouldRequestPermissions) {
                     appState.onNotificationAction(NotificationAction.RequestedNotificationPermission)
@@ -68,13 +68,13 @@ actual fun notificationPermissionsLauncher(
                         )
                     }
                 }
-                rationaleReson = null
+                rationale = null
             }
         }
         return remember(permissionRequestLauncher, appState) {
             {
                 if (activity.shouldShowRationale()) {
-                    rationaleReson = NotificationDialogRationale.RequestPermissions
+                    rationale = NotificationDialogRationale.RequestPermissions
                 } else {
                     appState.onNotificationAction(NotificationAction.RequestedNotificationPermission)
                     permissionRequestLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
