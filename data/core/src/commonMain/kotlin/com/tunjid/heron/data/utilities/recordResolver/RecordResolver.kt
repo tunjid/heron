@@ -91,7 +91,6 @@ import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Named
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -367,8 +366,7 @@ internal class OfflineRecordResolver @Inject constructor(
                 .mapCatchingUnlessCancelled {
                     Follow(
                         uri = uri,
-                        // The Atproto API does not provide this for some reason
-                        cid = GenericId(Uuid.random().toString()),
+                        cid = GenericId(requireNotNull(it.cid).cid),
                     )
                 }
 
@@ -382,7 +380,7 @@ internal class OfflineRecordResolver @Inject constructor(
 
                     Like(
                         uri = uri,
-                        cid = GenericId(bskyLike.subject.cid.cid),
+                        cid = GenericId(requireNotNull(it.cid).cid),
                         post = resolvedRecord,
                         via = bskyLike.via?.uri?.requireRecordUri(),
                     )
@@ -398,12 +396,12 @@ internal class OfflineRecordResolver @Inject constructor(
 
                     Repost(
                         uri = uri,
-                        cid = GenericId(bskyRepost.subject.cid.cid),
+                        cid = GenericId(requireNotNull(it.cid).cid),
                         post = resolvedRecord,
                         via = bskyRepost.via?.uri?.requireRecordUri(),
                     )
                 }
-            is UnknownRecordUri -> null
+            is UnknownRecordUri -> Result.failure(UnresolvableRecordException(uri))
         }
     } ?: expiredSessionResult()
 

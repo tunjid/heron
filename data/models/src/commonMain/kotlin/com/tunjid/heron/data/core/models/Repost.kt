@@ -19,8 +19,10 @@ package com.tunjid.heron.data.core.models
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.RepostUri
+import kotlinx.serialization.Serializable
 
-class Repost(
+@Serializable
+data class Repost(
     val uri: RepostUri,
     val cid: GenericId,
     val post: Post,

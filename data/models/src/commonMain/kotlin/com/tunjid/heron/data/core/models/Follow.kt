@@ -18,8 +18,10 @@ package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.GenericId
+import kotlinx.serialization.Serializable
 
-class Follow(
+@Serializable
+data class Follow(
     val uri: FollowUri,
     val cid: GenericId,
 ) : Record {
