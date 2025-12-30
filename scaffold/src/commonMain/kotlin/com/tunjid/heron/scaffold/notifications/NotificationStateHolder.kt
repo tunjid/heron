@@ -16,35 +16,31 @@
 
 package com.tunjid.heron.scaffold.notifications
 
-import com.tunjid.heron.data.core.models.Notification
-import com.tunjid.heron.data.core.types.RecordKey
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.repository.NotificationsQuery
 import com.tunjid.heron.data.repository.NotificationsRepository
-import com.tunjid.heron.data.utilities.tidInstant
 import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapLatestToManyMutations
+import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Named
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.scan
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withTimeout
 
 interface NotificationStateHolder : ActionStateMutator<NotificationAction, StateFlow<NotificationState>>
@@ -53,7 +49,7 @@ data class NotificationState(
     val unreadCount: Long = 0L,
     val hasNotificationPermissions: Boolean = false,
     val notificationToken: String? = null,
-    val processedNotificationRecordKeys: Set<RecordKey> = emptySet(),
+    val processedNotificationRecordUris: Set<RecordUri> = emptySet(),
 )
 
 sealed class NotificationAction(
@@ -70,30 +66,15 @@ sealed class NotificationAction(
     data class HandleNotification(
         val payload: Map<String, String>,
     ) : NotificationAction(key = "HandleNotification") {
+        val senderDid = payload[NotificationAtProtoSenderDid]
+            ?.let(::ProfileId)
 
-        val recordKey: RecordKey? = payload[NotificationAtProtoRecordKey]
-            ?.let(::RecordKey)
-
-        internal val commitedAt = recordKey?.tidInstant
-
-        internal val recordUri: RecordUri?
-
-        val isProcessable
-            get() =
-                commitedAt != null && recordUri != null
-
-        init {
-            val senderDid = payload[NotificationAtProtoSenderDid]
-            val collection = payload[NotificationAtProtoCollection]
-            val rkey = recordKey?.value
-
-            recordUri = if (senderDid == null || collection == null || rkey == null) null
-            else "$senderDid/$collection/$rkey".asRecordUriOrNull()
-        }
+        val recordUri: RecordUri? = payload[NotificationAtProtoRecordUri]
+            ?.asRecordUriOrNull()
     }
 
     data class NotificationProcessedOrDropped(
-        val recordKey: RecordKey,
+        val recordUri: RecordUri,
     ) : NotificationAction(key = "NotificationProcessedOrDropped")
 
     data class NotificationDismissed(
@@ -175,74 +156,36 @@ private fun Flow<NotificationAction.RegisterToken>.registerTokenMutations(
 private fun Flow<NotificationAction.HandleNotification>.handleNotificationMutations(
     notifier: Notifier,
     notificationsRepository: NotificationsRepository,
-): Flow<Mutation<NotificationState>> = channelFlow {
-    val sharedActions = MutableSharedFlow<NotificationAction.HandleNotification>(
-        replay = NotificationProcessingReplaySize,
-        extraBufferCapacity = NotificationProcessingBufferSize,
-    )
+): Flow<Mutation<NotificationState>> = flatMapMerge(
+    concurrency = NotificationProcessingMaxConcurrencyLimit,
+) { action ->
+    val senderId = action.senderDid ?: return@flatMapMerge emptyFlow()
+    val recordUri = action.recordUri ?: return@flatMapMerge emptyFlow()
 
-    // Pipe emissions into the shared flow
-    launch {
-        collect { action ->
-            if (action.commitedAt == null || action.recordUri == null) return@collect
-            sharedActions.emit(action)
-        }
-    }
-
-    // This coroutine refreshes the notifications database so new
-    // notification are picked up by the display coroutine below.
-    // It debounces network calls if emissions are close to each other in case a
-    // user goes viral.
-    // It needs a separate coroutine to allow for slow collectors when displaying
-    launch {
-        sharedActions
-            .scan(
-                initial = emptyList<NotificationAction.HandleNotification>(),
-                operation = { consecutiveActions, action ->
-                    consecutiveActions.plus(action).takeLast(2)
-                },
+    flow {
+        val notification = withTimeout(AppState.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS) {
+            notificationsRepository.resolvePushNotification(
+                NotificationsQuery.Push(
+                    senderId = senderId,
+                    recordUri = recordUri,
+                ),
             )
-            .debounce { actions ->
-                // throttle API calls if a user is viral
-                if (actions.size < 2) return@debounce 0.seconds
-                val (previousAction, currentAction) = actions
-                when (currentAction.requireCommitedAt - previousAction.requireCommitedAt) {
-                    in 0.seconds..1.seconds -> NotificationsRefreshDebounceSeconds
-                    else -> 0.seconds
-                }
-            }
-            .filter(List<NotificationAction.HandleNotification>::isNotEmpty)
-            .collect { actions ->
-                // Refresh the database to pick up new notifications
-                notificationsRepository.searchNewestNotificationsFor(
-                    requireNotNull(actions.last().recordUri),
-                )
-            }
-    }
-
-    // This coroutine strictly checks for unread notifications for a given commit.
-    // It's collector is potentially slow.
-    launch {
-        sharedActions.collect { action ->
-            withTimeout(AppState.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS) {
-                val recordKey = requireNotNull(action.recordKey)
-                val after = requireNotNull(action.commitedAt) - NotificationQueryTimeWindow
-
-                notifier.displayNotifications(
-                    notifications = notificationsRepository.unreadNotifications(after)
-                        .first(List<Notification>::isNotEmpty),
-                )
-
-                // Perform book keeping as necessary.
-                send {
-                    copy(
-                        processedNotificationRecordKeys = processedNotificationRecordKeys + recordKey,
-                    )
-                }
-            }
+                .getOrNull()
         }
+        emit(recordUri to notification)
     }
 }
+    .buffer(NotificationProcessingBufferSize)
+    .mapToManyMutations { (recordUri, notification) ->
+        if (notification != null) notifier.displayNotifications(
+            notifications = listOf(notification),
+        )
+        emit {
+            copy(
+                processedNotificationRecordUris = processedNotificationRecordUris + recordUri,
+            )
+        }
+    }
 
 private fun Flow<NotificationAction.NotificationDismissed>.notificationDismissalMutations(
     notificationsRepository: NotificationsRepository,
@@ -254,7 +197,7 @@ private fun Flow<NotificationAction.NotificationDismissed>.notificationDismissal
 private fun Flow<NotificationAction.NotificationProcessedOrDropped>.notificationProcessedOrDroppedMutations(): Flow<Mutation<NotificationState>> =
     mapToMutation { action ->
         copy(
-            processedNotificationRecordKeys = processedNotificationRecordKeys - action.recordKey,
+            processedNotificationRecordUris = processedNotificationRecordUris - action.recordUri,
         )
     }
 
@@ -265,13 +208,7 @@ private fun Flow<NotificationAction.RequestedNotificationPermission>.markNotific
         notificationsRepository.markNotificationPermissionsRequested()
     }
 
-private val NotificationAction.HandleNotification.requireCommitedAt
-    get() = requireNotNull(commitedAt)
-
-private val NotificationsRefreshDebounceSeconds = 3.seconds
-private val NotificationQueryTimeWindow = 2.seconds
 private const val NotificationAtProtoSenderDid = "senderDid"
-private const val NotificationAtProtoCollection = "collection"
-private const val NotificationAtProtoRecordKey = "recordKey"
-private const val NotificationProcessingReplaySize = 4
+private const val NotificationAtProtoRecordUri = "recordUri"
+private const val NotificationProcessingMaxConcurrencyLimit = 4
 private const val NotificationProcessingBufferSize = 64

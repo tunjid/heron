@@ -1072,7 +1072,7 @@ internal class OfflineTimelineRepository(
                 }
         }
         .withRefresh {
-            recordResolver.refresh(
+            recordResolver.resolve(
                 uri = uri,
             )
         }
@@ -1102,7 +1102,7 @@ internal class OfflineTimelineRepository(
                 }
         }
         .withRefresh {
-            recordResolver.refresh(
+            recordResolver.resolve(
                 uri = uri,
             )
         }
@@ -1130,7 +1130,7 @@ internal class OfflineTimelineRepository(
             }
         }
         .withRefresh {
-            recordResolver.refresh(
+            recordResolver.resolve(
                 uri = uri,
             )
         }

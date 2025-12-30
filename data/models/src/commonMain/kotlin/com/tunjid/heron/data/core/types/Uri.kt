@@ -46,17 +46,25 @@ fun RecordUri.profileId(): ProfileId =
         },
     )
 
+fun RecordUri.requireCollection(): String =
+    when (this) {
+        is FeedGeneratorUri -> FeedGeneratorUri.NAMESPACE
+        is LabelerUri -> LabelerUri.NAMESPACE
+        is ListUri -> ListUri.NAMESPACE
+        is PostUri -> PostUri.NAMESPACE
+        is StarterPackUri -> StarterPackUri.NAMESPACE
+        is FollowUri -> FollowUri.NAMESPACE
+        is LikeUri -> LikeUri.NAMESPACE
+        is RepostUri -> RepostUri.NAMESPACE
+        is UnknownRecordUri -> throw UnresolvableRecordException(this)
+    }
+
 val RecordUri.recordKey: RecordKey
     get() = requireNotNull(
         uri.atUriComponents { _, _, rKeyRange ->
             RecordKey(uri.substring(rKeyRange.start, rKeyRange.endExclusive))
         },
     )
-
-fun GenericUri.recordKeyOrNull(): RecordKey? =
-    uri.atUriComponents { _, _, rKeyRange ->
-        RecordKey(uri.substring(rKeyRange.start, rKeyRange.endExclusive))
-    }
 
 val Uri.domain get() = Url(uri).host.removePrefix("www.")
 
@@ -184,6 +192,15 @@ value class FollowUri(
 
 @Serializable
 @JvmInline
+value class UnknownRecordUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+}
+
+@Serializable
+@JvmInline
 value class ListMemberUri(
     override val uri: String,
 ) : Uri {
@@ -253,20 +270,25 @@ fun String.asRecordUriOrNull(): RecordUri? = atUriComponents { _, collectionRang
         LikeUri.NAMESPACE -> LikeUri(this)
         RepostUri.NAMESPACE -> RepostUri(this)
         FollowUri.NAMESPACE -> FollowUri(this)
-        else -> null
+        else -> UnknownRecordUri(this)
     }
 }
 
-fun String.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? = atUriComponents { _, collectionRange, _ ->
-    when (substring(collectionRange.start, collectionRange.endExclusive)) {
-        PostUri.NAMESPACE -> PostUri(this)
-        FeedGeneratorUri.NAMESPACE -> FeedGeneratorUri(this)
-        ListUri.NAMESPACE -> ListUri(this)
-        StarterPackUri.NAMESPACE -> StarterPackUri(this)
-        LabelerUri.NAMESPACE -> LabelerUri(this)
-        else -> null
+fun String.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? =
+    atUriComponents { _, collectionRange, _ ->
+        when (substring(collectionRange.start, collectionRange.endExclusive)) {
+            PostUri.NAMESPACE -> PostUri(this)
+            FeedGeneratorUri.NAMESPACE -> FeedGeneratorUri(this)
+            ListUri.NAMESPACE -> ListUri(this)
+            StarterPackUri.NAMESPACE -> StarterPackUri(this)
+            LabelerUri.NAMESPACE -> LabelerUri(this)
+            else -> null
+        }
     }
-}
+
+class UnresolvableRecordException(
+    uri: RecordUri,
+) : IllegalArgumentException("The record URI $uri is not resolvable")
 
 /**
  * Parses an AT URI string into its components without using Regex or intermediate data classes.

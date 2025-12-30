@@ -27,9 +27,11 @@ import app.bsky.feed.ReplyRefParentUnion
 import app.bsky.feed.ReplyRefRootUnion
 import app.bsky.feed.ViewerState
 import app.bsky.graph.ListView
+import app.bsky.graph.StarterPackView
 import app.bsky.graph.StarterPackViewBasic
 import app.bsky.graph.Starterpack
 import app.bsky.labeler.LabelerView
+import app.bsky.labeler.LabelerViewDetailed
 import app.bsky.richtext.Facet
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
@@ -70,6 +72,7 @@ import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
+import com.tunjid.heron.data.utilities.safeDecodeAs
 import sh.christian.ozone.api.model.JsonContent
 
 internal fun PostEntity.postVideoEntity(
@@ -358,12 +361,9 @@ private fun PostView.nonPostEmbeddedRecord(): Record.Embeddable? {
     }
 }
 
-private fun StarterPackViewBasic.asExternalModel(): StarterPack {
-    val bskyStarterPack = try {
-        record.decodeAs<Starterpack>()
-    } catch (_: Exception) {
-        null
-    }
+internal fun StarterPackViewBasic.asExternalModel(): StarterPack {
+    val bskyStarterPack = record.safeDecodeAs<Starterpack>()
+
     return StarterPack(
         cid = StarterPackId(cid.cid),
         uri = StarterPackUri(uri.atUri),
@@ -378,7 +378,24 @@ private fun StarterPackViewBasic.asExternalModel(): StarterPack {
     )
 }
 
-private fun ListView.asExternalModel() = FeedList(
+internal fun StarterPackView.asExternalModel(): StarterPack {
+    val bskyStarterPack = record.safeDecodeAs<Starterpack>()
+
+    return StarterPack(
+        cid = StarterPackId(cid.cid),
+        uri = StarterPackUri(uri.atUri),
+        name = bskyStarterPack?.name ?: "",
+        description = bskyStarterPack?.description ?: "",
+        creator = creator.profileEntity().asExternalModel(),
+        list = null, // You might need to handle this if available
+        joinedWeekCount = joinedWeekCount,
+        joinedAllTimeCount = joinedAllTimeCount,
+        indexedAt = indexedAt,
+        labels = labels?.map(com.atproto.label.Label::asExternalModel) ?: emptyList(),
+    )
+}
+
+internal fun ListView.asExternalModel() = FeedList(
     cid = ListId(cid.cid),
     uri = ListUri(uri.atUri),
     creator = creator.profileEntity().asExternalModel(),
@@ -391,7 +408,7 @@ private fun ListView.asExternalModel() = FeedList(
     labels = labels?.map(com.atproto.label.Label::asExternalModel) ?: emptyList(),
 )
 
-private fun GeneratorView.asExternalModel() = FeedGenerator(
+internal fun GeneratorView.asExternalModel() = FeedGenerator(
     cid = FeedGeneratorId(cid.cid),
     uri = FeedGeneratorUri(uri.atUri),
     did = FeedGeneratorId(did.did),
@@ -406,7 +423,16 @@ private fun GeneratorView.asExternalModel() = FeedGenerator(
     labels = labels?.map(com.atproto.label.Label::asExternalModel) ?: emptyList(),
 )
 
-private fun LabelerView.asExternalModel() = Labeler(
+internal fun LabelerView.asExternalModel() = Labeler(
+    cid = LabelerId(cid.cid),
+    uri = LabelerUri(uri.atUri),
+    creator = creator.profileEntity().asExternalModel(),
+    likeCount = likeCount,
+    definitions = emptyList(),
+    values = labels?.map { it.asExternalModel().value } ?: emptyList(),
+)
+
+internal fun LabelerViewDetailed.asExternalModel() = Labeler(
     cid = LabelerId(cid.cid),
     uri = LabelerUri(uri.atUri),
     creator = creator.profileEntity().asExternalModel(),

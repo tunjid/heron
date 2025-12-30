@@ -16,11 +16,13 @@
 
 package com.tunjid.heron.data.utilities
 
+import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.network.BlueskyJson
 import kotlin.time.Instant
 import kotlinx.serialization.KSerializer
@@ -38,12 +40,16 @@ internal object Collections {
 
     fun Id.isStubbedId() = id == StubbedId
 
+    fun AtUri.requireRecordUri() = requireNotNull(atUri.asRecordUriOrNull())
+
     inline fun <reified T : Id> stubbedId(
         constructor: (String) -> T,
     ) = constructor(StubbedId)
 }
 
 fun Uri.asGenericUri(): GenericUri = GenericUri(uri)
+
+fun Id.asGenericId(): GenericId = GenericId(id)
 
 /**
  * Attempts to fetch the timestamp from the record key if it is a valid TID.

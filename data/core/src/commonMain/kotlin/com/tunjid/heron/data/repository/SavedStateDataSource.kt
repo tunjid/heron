@@ -402,4 +402,6 @@ internal inline fun <T> SavedStateDataSource.singleSessionFlow(
 
 internal fun expiredSessionOutcome() = Outcome.Failure(ExpiredSessionException())
 
+internal fun <T> expiredSessionResult() = Result.failure<T>(ExpiredSessionException())
+
 private class ExpiredSessionException : IOException()

@@ -96,8 +96,6 @@ internal class OfflineEmbeddableRecordRepository @Inject constructor(
         }
             .filterNotNull()
             .withRefresh {
-                recordResolver.refresh(
-                    uri = uri,
-                )
+                recordResolver.resolve(uri)
             }
 }

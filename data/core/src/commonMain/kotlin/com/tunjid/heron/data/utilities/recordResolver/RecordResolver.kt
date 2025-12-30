@@ -16,29 +16,45 @@
 
 package com.tunjid.heron.data.utilities.recordResolver
 
+import app.bsky.actor.GetProfileQueryParams
 import app.bsky.feed.GetFeedGeneratorQueryParams
 import app.bsky.feed.GetPostsQueryParams
+import app.bsky.feed.Like as BskyLike
+import app.bsky.feed.Repost as BskyRepost
 import app.bsky.graph.GetListQueryParams
 import app.bsky.graph.GetStarterPackQueryParams
 import app.bsky.labeler.GetServicesQueryParams
 import app.bsky.labeler.GetServicesResponseViewUnion
+import com.atproto.repo.GetRecordQueryParams
 import com.tunjid.heron.data.core.models.AppliedLabels
+import com.tunjid.heron.data.core.models.Follow
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LabelerPreference
+import com.tunjid.heron.data.core.models.Like
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.Repost
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
+import com.tunjid.heron.data.core.types.FollowUri
+import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.LabelerUri
+import com.tunjid.heron.data.core.types.LikeUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.RepostUri
 import com.tunjid.heron.data.core.types.StarterPackUri
+import com.tunjid.heron.data.core.types.UnknownRecordUri
+import com.tunjid.heron.data.core.types.UnresolvableRecordException
 import com.tunjid.heron.data.core.types.profileId
+import com.tunjid.heron.data.core.types.recordKey
+import com.tunjid.heron.data.core.types.requireCollection
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
@@ -55,12 +71,17 @@ import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.PopulatedThreadGateEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.network.models.asExternalModel
+import com.tunjid.heron.data.network.models.post
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.distinctUntilChangedAdultContentAndLabelVisibilityPreferences
+import com.tunjid.heron.data.repository.expiredSessionResult
 import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.repository.singleSessionFlow
 import com.tunjid.heron.data.utilities.Collections
+import com.tunjid.heron.data.utilities.Collections.requireRecordUri
 import com.tunjid.heron.data.utilities.LazyList
+import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver.TimelineItemCreationContext
@@ -68,6 +89,8 @@ import com.tunjid.heron.data.utilities.toDistinctUntilChangedFlowOrEmpty
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Named
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -78,6 +101,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
+import sh.christian.ozone.api.Nsid
+import sh.christian.ozone.api.RKey
 
 internal interface RecordResolver {
     val subscribedLabelers: Flow<List<Labeler>>
@@ -96,9 +121,9 @@ internal interface RecordResolver {
         block: TimelineItemCreationContext.(T) -> Unit,
     ): Flow<List<TimelineItem>>
 
-    suspend fun refresh(
-        uri: EmbeddableRecordUri,
-    )
+    suspend fun resolve(
+        uri: RecordUri,
+    ): Result<Record>
 
     interface TimelineItemCreationContext {
         val list: MutableList<TimelineItem>
@@ -242,9 +267,12 @@ internal class OfflineRecordResolver @Inject constructor(
         }
     }
 
-    override suspend fun refresh(
-        uri: EmbeddableRecordUri,
-    ) = savedStateDataSource.inCurrentProfileSession { viewingProfileId ->
+    @OptIn(ExperimentalUuidApi::class)
+    override suspend fun resolve(
+        uri: RecordUri,
+    ): Result<Record> = savedStateDataSource.inCurrentProfileSession { viewingProfileId ->
+        if (viewingProfileId == null) return@inCurrentProfileSession expiredSessionResult()
+
         when (uri) {
             is FeedGeneratorUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
                 getFeedGenerator(
@@ -253,10 +281,9 @@ internal class OfflineRecordResolver @Inject constructor(
                     ),
                 )
             }
-                .getOrNull()
-                ?.view
-                ?.let { feedGeneratorView ->
-                    multipleEntitySaverProvider.saveInTransaction { add(feedGeneratorView) }
+                .mapCatchingUnlessCancelled {
+                    multipleEntitySaverProvider.saveInTransaction { add(it.view) }
+                    it.view.asExternalModel()
                 }
 
             is ListUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
@@ -268,10 +295,9 @@ internal class OfflineRecordResolver @Inject constructor(
                     ),
                 )
             }
-                .getOrNull()
-                ?.list
-                ?.let {
-                    multipleEntitySaverProvider.saveInTransaction { add(it) }
+                .mapCatchingUnlessCancelled {
+                    multipleEntitySaverProvider.saveInTransaction { add(it.list) }
+                    it.list.asExternalModel()
                 }
 
             is PostUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
@@ -281,17 +307,15 @@ internal class OfflineRecordResolver @Inject constructor(
                     ),
                 )
             }
-                .getOrNull()
-                ?.posts
-                ?.let { postViews ->
+                .mapCatchingUnlessCancelled {
+                    val postView = it.posts.first()
                     multipleEntitySaverProvider.saveInTransaction {
-                        postViews.forEach { postView ->
-                            add(
-                                viewingProfileId = viewingProfileId,
-                                postView = postView,
-                            )
-                        }
+                        add(
+                            viewingProfileId = viewingProfileId,
+                            postView = postView,
+                        )
                     }
+                    postView.post(viewingProfileId)
                 }
 
             is StarterPackUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
@@ -301,10 +325,9 @@ internal class OfflineRecordResolver @Inject constructor(
                     ),
                 )
             }
-                .getOrNull()
-                ?.starterPack
-                ?.let { starterPackView ->
-                    multipleEntitySaverProvider.saveInTransaction { add(starterPackView) }
+                .mapCatchingUnlessCancelled {
+                    multipleEntitySaverProvider.saveInTransaction { add(it.starterPack) }
+                    it.starterPack.asExternalModel()
                 }
             is LabelerUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
                 getServices(
@@ -314,27 +337,82 @@ internal class OfflineRecordResolver @Inject constructor(
                     ),
                 )
             }
-                .getOrNull()
-                ?.views
-                ?.let { responseViewUnionList ->
+                .mapCatchingUnlessCancelled {
+                    val responseViewUnion = it.views.first()
                     multipleEntitySaverProvider.saveInTransaction {
-                        responseViewUnionList.forEach { responseViewUnion ->
-                            when (responseViewUnion) {
-                                is GetServicesResponseViewUnion.LabelerView -> add(
-                                    viewingProfileId = viewingProfileId,
-                                    labeler = responseViewUnion.value,
-                                )
-                                is GetServicesResponseViewUnion.LabelerViewDetailed -> add(
-                                    viewingProfileId = viewingProfileId,
-                                    labeler = responseViewUnion.value,
-                                )
-                                is GetServicesResponseViewUnion.Unknown -> Unit
-                            }
+                        when (responseViewUnion) {
+                            is GetServicesResponseViewUnion.LabelerView -> add(
+                                viewingProfileId = viewingProfileId,
+                                labeler = responseViewUnion.value,
+                            )
+                            is GetServicesResponseViewUnion.LabelerViewDetailed -> add(
+                                viewingProfileId = viewingProfileId,
+                                labeler = responseViewUnion.value,
+                            )
+                            is GetServicesResponseViewUnion.Unknown -> Unit
                         }
                     }
+                    when (responseViewUnion) {
+                        is GetServicesResponseViewUnion.LabelerView -> responseViewUnion.value.asExternalModel()
+                        is GetServicesResponseViewUnion.LabelerViewDetailed -> responseViewUnion.value.asExternalModel()
+                        is GetServicesResponseViewUnion.Unknown -> throw UnresolvableRecordException(
+                            uri,
+                        )
+                    }
                 }
+            is FollowUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
+                getProfile(
+                    GetProfileQueryParams(actor = uri.profileId().id.let(::Did)),
+                )
+            }
+                .mapCatchingUnlessCancelled { profileViewDetailed ->
+                    multipleEntitySaverProvider.saveInTransaction {
+                        add(
+                            viewingProfileId = viewingProfileId,
+                            profileView = profileViewDetailed,
+                        )
+                    }
+                    Follow(
+                        uri = uri,
+                        // The Atproto API does not provide this for some reason
+                        cid = GenericId(Uuid.random().toString()),
+                    )
+                }
+
+            is LikeUri -> record(uri)
+                .mapCatchingUnlessCancelled {
+                    val bskyLike = it.value.decodeAs<BskyLike>()
+                    val subjectUri = bskyLike.subject.uri.requireRecordUri()
+                    require(subjectUri is PostUri)
+                    val resolvedRecord = requireNotNull(resolve(subjectUri).getOrNull())
+                    require(resolvedRecord is Post)
+
+                    Like(
+                        uri = uri,
+                        cid = GenericId(bskyLike.subject.cid.cid),
+                        post = resolvedRecord,
+                        via = bskyLike.via?.uri?.requireRecordUri(),
+                    )
+                }
+
+            is RepostUri -> record(uri)
+                .mapCatchingUnlessCancelled {
+                    val bskyRepost = it.value.decodeAs<BskyRepost>()
+                    val subjectUri = bskyRepost.subject.uri.requireRecordUri()
+                    require(subjectUri is PostUri)
+                    val resolvedRecord = requireNotNull(resolve(subjectUri).getOrNull())
+                    require(resolvedRecord is Post)
+
+                    Repost(
+                        uri = uri,
+                        cid = GenericId(bskyRepost.subject.cid.cid),
+                        post = resolvedRecord,
+                        via = bskyRepost.via?.uri?.requireRecordUri(),
+                    )
+                }
+            is UnknownRecordUri -> null
         }
-    }.let { }
+    } ?: expiredSessionResult()
 
     override fun <T> timelineItems(
         items: List<T>,
@@ -425,9 +503,21 @@ internal class OfflineRecordResolver @Inject constructor(
                 ).distinctUntilChanged()
             }
 
+    private suspend fun record(
+        recordUri: RecordUri,
+    ) = networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
+        getRecord(
+            GetRecordQueryParams(
+                repo = recordUri.profileId().id.let(::Did),
+                collection = recordUri.requireCollection().let(::Nsid),
+                rkey = recordUri.recordKey.value.let(::RKey),
+            ),
+        )
+    }
+
     private class MutableTimelineItemCreationContext(
         override val signedInProfileId: ProfileId?,
-        associatedRecords: List<Record>,
+        associatedRecords: List<Record.Embeddable>,
         associatedThreadGateEntities: List<PopulatedThreadGateEntity>,
         associatedProfileEntities: List<PopulatedProfileEntity>,
     ) : TimelineItemCreationContext,
