@@ -177,7 +177,7 @@ private fun Post(
     modifier: Modifier = Modifier,
     signedInProfile: Profile?,
     postText: TextFieldValue,
-    embeddedRecord: Record?,
+    embeddedRecord: Record.Embeddable?,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onPostTextChanged: (TextFieldValue) -> Unit,
     onMentionDetected: (String) -> Unit,

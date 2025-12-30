@@ -41,7 +41,9 @@ interface EmbeddableRecordRepository {
 
     val subscribedLabelers: Flow<List<Labeler>>
 
-    fun record(uri: EmbeddableRecordUri): Flow<Record>
+    fun embeddableRecord(
+        uri: EmbeddableRecordUri,
+    ): Flow<Record.Embeddable>
 }
 
 internal class OfflineEmbeddableRecordRepository @Inject constructor(
@@ -57,7 +59,7 @@ internal class OfflineEmbeddableRecordRepository @Inject constructor(
     override val subscribedLabelers: Flow<List<Labeler>> =
         recordResolver.subscribedLabelers
 
-    override fun record(uri: EmbeddableRecordUri): Flow<Record> =
+    override fun embeddableRecord(uri: EmbeddableRecordUri): Flow<Record.Embeddable> =
         when (uri) {
             is FeedGeneratorUri -> feedGeneratorDao.feedGenerators(
                 listOf(uri),

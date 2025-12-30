@@ -480,7 +480,7 @@ private fun CoroutineScope.labelerSettingsStateHolders(
                         flow = timelineRepository.preferences
                             .map { it.contentLabelPreferences }
                             .distinctUntilChanged(),
-                        flow2 = embeddableRecordRepository.record(
+                        flow2 = embeddableRecordRepository.embeddableRecord(
                             uri = profileId.asSelfLabelerUri(),
                         )
                             .filterIsInstance<Labeler>()
