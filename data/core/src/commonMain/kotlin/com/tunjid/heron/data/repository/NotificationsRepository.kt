@@ -28,22 +28,42 @@ import com.tunjid.heron.data.InternalEndpoints
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.FeedList
+import com.tunjid.heron.data.core.models.Follow
+import com.tunjid.heron.data.core.models.Labeler
+import com.tunjid.heron.data.core.models.Like
+import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Repost
+import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
+import com.tunjid.heron.data.core.types.LimitedProfileException
+import com.tunjid.heron.data.core.types.MutedThreadException
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.RepostUri
+import com.tunjid.heron.data.core.types.UnknownNotificationException
+import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
+import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.PopulatedNotificationEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.network.NetworkMonitor
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.utilities.asGenericId
+import com.tunjid.heron.data.utilities.asGenericUri
+import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.multipleEntitysaver.associatedPostUri
 import com.tunjid.heron.data.utilities.nextCursorFlow
+import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.toOutcome
 import dev.zacsweers.metro.Inject
@@ -56,6 +76,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.takeFrom
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -68,6 +89,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -78,7 +100,12 @@ import sh.christian.ozone.api.response.AtpResponse
 @Serializable
 data class NotificationsQuery(
     override val data: CursorQuery.Data,
-) : CursorQuery
+) : CursorQuery {
+    data class Push(
+        val senderId: ProfileId,
+        val recordUri: RecordUri,
+    )
+}
 
 interface NotificationsRepository {
     val unreadCount: Flow<Long>
@@ -96,14 +123,14 @@ interface NotificationsRepository {
         cursor: Cursor,
     ): Flow<CursorList<Notification>>
 
+    suspend fun resolvePushNotification(
+        query: NotificationsQuery.Push,
+    ): Result<Notification>
+
     suspend fun markRead(at: Instant)
 
     suspend fun registerPushNotificationToken(
         token: String,
-    ): Outcome
-
-    suspend fun searchNewestNotificationsFor(
-        uri: RecordUri,
     ): Outcome
 
     suspend fun markNotificationPermissionsRequested(): Outcome
@@ -112,8 +139,10 @@ interface NotificationsRepository {
 internal class OfflineNotificationsRepository @Inject constructor(
     @Named("AppScope") appScope: CoroutineScope,
     private val postDao: PostDao,
+    private val profileDao: ProfileDao,
     private val notificationsDao: NotificationsDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
+    private val recordResolver: RecordResolver,
     private val networkService: NetworkService,
     private val networkMonitor: NetworkMonitor,
     private val savedStateDataSource: SavedStateDataSource,
@@ -261,43 +290,139 @@ internal class OfflineNotificationsRepository @Inject constructor(
         ).toOutcome()
     } ?: expiredSessionOutcome()
 
-    override suspend fun searchNewestNotificationsFor(
-        uri: RecordUri,
-    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+    override suspend fun resolvePushNotification(
+        query: NotificationsQuery.Push,
+    ): Result<Notification> = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionResult()
 
-        // TODO: When blocked users and hidden/muted posts are implemented, a quick check
-        //  here to see if the uri is from a blocked user or a hidden/muted post would
-        //  speed things up significantly.
-        repeat(MaxNotificationSearches) {
-            networkService.runCatchingWithMonitoredNetworkRetry {
-                notificationsWithAssociatedPosts(
-                    queryParams = ListNotificationsQueryParams(
-                        limit = NotificationSearchLimit,
-                        // Only search on the first page. Older notifications should be dropped
-                        cursor = null,
-                    ),
+        recordResolver.resolve(query.recordUri).mapCatchingUnlessCancelled { resolvedRecord ->
+            val authorEntity = profileDao.profiles(listOf(query.senderId))
+                .first { it.isNotEmpty() }
+                .first()
+
+            val now = Clock.System.now()
+
+            // Check if the author of the notification is restricted
+            val viewerState = authorEntity.relationship?.asExternalModel()
+            viewerState?.let {
+                val limited = it.muted != null || it.blocking != null || it.blockingByList != null
+                if (limited) throw LimitedProfileException(
+                    profileId = authorEntity.entity.did,
+                    profileViewerState = viewerState,
                 )
             }
-                .getOrNull()
-                ?.let { (notificationsResponse, associatedPosts) ->
-                    multipleEntitySaverProvider.saveInTransaction {
-                        add(
-                            viewingProfileId = signedInProfileId,
-                            listNotificationsNotification = notificationsResponse.notifications,
-                            associatedPosts = associatedPosts,
+
+            when (resolvedRecord) {
+                // These don't have notification generation logic yet
+                is FeedGenerator,
+                is FeedList,
+                is Labeler,
+                is StarterPack,
+                -> throw UnknownNotificationException(query.recordUri)
+                // Reply, mention or Quote
+                is Post -> when {
+                    resolvedRecord.viewerStats?.threadMuted == true -> throw MutedThreadException(
+                        resolvedRecord.uri,
+                    )
+                    resolvedRecord.isReply(signedInProfileId) -> Notification.RepliedTo(
+                        uri = resolvedRecord.uri.asGenericUri(),
+                        cid = resolvedRecord.cid.asGenericId(),
+                        author = authorEntity.asExternalModel(),
+                        reasonSubject = null,
+                        isRead = false,
+                        indexedAt = now,
+                        associatedPost = resolvedRecord,
+                        viewerState = viewerState,
+                    )
+                    resolvedRecord.isQuote(signedInProfileId) -> Notification.Quoted(
+                        uri = resolvedRecord.uri.asGenericUri(),
+                        cid = resolvedRecord.cid.asGenericId(),
+                        author = authorEntity.asExternalModel(),
+                        reasonSubject = null,
+                        isRead = false,
+                        indexedAt = now,
+                        associatedPost = resolvedRecord,
+                        viewerState = viewerState,
+                    )
+                    resolvedRecord.isMention(signedInProfileId) -> Notification.Mentioned(
+                        uri = resolvedRecord.uri.asGenericUri(),
+                        cid = resolvedRecord.cid.asGenericId(),
+                        author = authorEntity.asExternalModel(),
+                        reasonSubject = null,
+                        isRead = false,
+                        indexedAt = now,
+                        associatedPost = resolvedRecord,
+                        viewerState = viewerState,
+                    )
+                    else -> throw UnknownNotificationException(query.recordUri)
+                }
+                // Follow
+                is Follow -> Notification.Followed(
+                    uri = resolvedRecord.uri.asGenericUri(),
+                    cid = resolvedRecord.cid.asGenericId(),
+                    author = authorEntity.asExternalModel(),
+                    reasonSubject = null,
+                    isRead = false,
+                    indexedAt = now,
+                    viewerState = viewerState,
+                )
+                // Like or Like via repost
+                is Like -> when (resolvedRecord.post.viewerStats?.threadMuted) {
+                    true -> throw MutedThreadException(resolvedRecord.post.uri)
+                    else -> when (resolvedRecord.via) {
+                        is RepostUri -> Notification.Liked.Repost(
+                            uri = resolvedRecord.uri.asGenericUri(),
+                            cid = resolvedRecord.cid.asGenericId(),
+                            author = authorEntity.asExternalModel(),
+                            reasonSubject = null,
+                            isRead = false,
+                            indexedAt = now,
+                            associatedPost = resolvedRecord.post,
+                            viewerState = viewerState,
                         )
-                    }
-                    if (notificationsResponse.notifications.any { it.uri.atUri == uri.uri }) {
-                        return@inCurrentProfileSession Outcome.Success
+                        null -> Notification.Liked.Post(
+                            uri = resolvedRecord.uri.asGenericUri(),
+                            cid = resolvedRecord.cid.asGenericId(),
+                            author = authorEntity.asExternalModel(),
+                            reasonSubject = null,
+                            isRead = false,
+                            indexedAt = now,
+                            associatedPost = resolvedRecord.post,
+                            viewerState = viewerState,
+                        )
+                        else -> throw UnknownNotificationException(query.recordUri)
                     }
                 }
-            delay(NotificationSearchDelay)
+                // Repost or repost via repost
+                is Repost -> when (resolvedRecord.post.viewerStats?.threadMuted) {
+                    true -> throw MutedThreadException(resolvedRecord.post.uri)
+                    else -> when (resolvedRecord.via) {
+                        is RepostUri -> Notification.Reposted.Repost(
+                            uri = resolvedRecord.uri.asGenericUri(),
+                            cid = resolvedRecord.cid.asGenericId(),
+                            author = authorEntity.asExternalModel(),
+                            reasonSubject = null,
+                            isRead = false,
+                            indexedAt = now,
+                            associatedPost = resolvedRecord.post,
+                            viewerState = viewerState,
+                        )
+                        null -> Notification.Reposted.Post(
+                            uri = resolvedRecord.uri.asGenericUri(),
+                            cid = resolvedRecord.cid.asGenericId(),
+                            author = authorEntity.asExternalModel(),
+                            reasonSubject = null,
+                            isRead = false,
+                            indexedAt = now,
+                            associatedPost = resolvedRecord.post,
+                            viewerState = viewerState,
+                        )
+                        else -> throw UnknownNotificationException(query.recordUri)
+                    }
+                }
+            }
         }
-        return@inCurrentProfileSession Outcome.Failure(
-            Exception("Unable to fetch notifications for $uri"),
-        )
-    } ?: expiredSessionOutcome()
+    } ?: expiredSessionResult()
 
     override suspend fun markNotificationPermissionsRequested(): Outcome =
         savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
@@ -387,6 +512,30 @@ internal class OfflineNotificationsRepository @Inject constructor(
             }
 }
 
+private fun Post.isReply(
+    signedInProfileId: ProfileId?,
+) = record
+    ?.replyRef
+    ?.parentUri
+    ?.profileId() == signedInProfileId
+
+private fun Post.isQuote(
+    signedInProfileId: ProfileId?,
+): Boolean {
+    val embeddedRecord = embeddedRecord
+    return embeddedRecord is Post && embeddedRecord.author.did == signedInProfileId
+}
+
+private fun Post.isMention(
+    signedInProfileId: ProfileId?,
+): Boolean {
+    val links = record?.links ?: return false
+    return links.any { link ->
+        val target = link.target
+        target is LinkTarget.UserDidMention && target.did == signedInProfileId
+    }
+}
+
 private fun PopulatedNotificationEntity.dedupeNotificationKey() =
     "${entity.authorId}-${entity.reason.name}-${entity.associatedPostUri?.uri}"
 
@@ -400,8 +549,5 @@ private data class SaveNotificationTokenRequest(
     val token: String,
 )
 
-private val NotificationSearchDelay = 1.4.seconds
 private const val SaveNotificationTokenPath = "/saveNotificationToken"
-private const val NotificationSearchLimit = 25L
-private const val MaxNotificationSearches = 5
 private const val MaxPostsFetchedPerQuery = 25

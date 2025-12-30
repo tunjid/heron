@@ -83,7 +83,7 @@ internal fun PostEmbed(
     modifier: Modifier = Modifier,
     now: Instant,
     embed: Embed?,
-    embeddedRecord: Record?,
+    embeddedRecord: Record.Embeddable?,
     postUri: PostUri,
     sharedElementPrefix: String,
     appliedLabels: AppliedLabels,

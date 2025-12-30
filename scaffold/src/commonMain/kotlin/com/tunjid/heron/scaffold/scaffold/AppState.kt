@@ -40,7 +40,7 @@ import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.splitlayout.SplitLayoutState
 import com.tunjid.heron.data.core.types.GenericUri
-import com.tunjid.heron.data.core.types.RecordKey
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.images.ImageLoader
@@ -223,9 +223,9 @@ class AppState(
     fun onNotificationAction(action: NotificationAction) =
         notificationStateHolder.accept(action)
 
-    suspend fun awaitNotificationProcessing(recordKey: RecordKey) {
+    suspend fun awaitNotificationProcessing(recordUri: RecordUri) {
         notificationStateHolder.state.first { state ->
-            recordKey in state.processedNotificationRecordKeys
+            recordUri in state.processedNotificationRecordUris
         }
     }
 

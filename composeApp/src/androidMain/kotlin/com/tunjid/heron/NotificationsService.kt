@@ -37,8 +37,8 @@ class NotificationsService : FirebaseMessagingService() {
 
     override fun onMessageReceived(message: RemoteMessage) {
         val action = NotificationAction.HandleNotification(payload = message.data)
-        val recordKey = action.recordKey ?: return
-        if (!action.isProcessable) return
+        action.senderDid ?: return
+        val recordUri = action.recordUri ?: return
 
         appState.onNotificationAction(action)
 
@@ -47,7 +47,7 @@ class NotificationsService : FirebaseMessagingService() {
         try {
             runBlocking {
                 withTimeout(AppState.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS) {
-                    appState.awaitNotificationProcessing(recordKey)
+                    appState.awaitNotificationProcessing(recordUri)
                 }
             }
         } catch (e: Exception) {
@@ -55,7 +55,7 @@ class NotificationsService : FirebaseMessagingService() {
             e.printStackTrace()
         } finally {
             appState.onNotificationAction(
-                NotificationAction.NotificationProcessedOrDropped(recordKey),
+                NotificationAction.NotificationProcessedOrDropped(recordUri),
             )
         }
     }

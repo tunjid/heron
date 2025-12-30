@@ -451,7 +451,7 @@ private fun ChatItemBubble(
 
 @Composable
 private fun MessageRecord(
-    record: Record,
+    record: Record.Embeddable,
     item: MessageItem,
     paneScaffoldState: PaneScaffoldState,
     actions: (Action) -> Unit,

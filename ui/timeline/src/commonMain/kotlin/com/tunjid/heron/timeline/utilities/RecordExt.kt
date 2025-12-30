@@ -59,7 +59,7 @@ import kotlin.time.Clock
 @Composable
 fun EmbeddedRecord(
     modifier: Modifier = Modifier,
-    record: Record,
+    record: Record.Embeddable,
     sharedElementPrefix: String,
     movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     postActions: PostActions,
@@ -139,7 +139,7 @@ fun EmbeddedRecord(
     }
 }
 
-fun Record.avatarSharedElementKey(
+fun Record.Embeddable.avatarSharedElementKey(
     prefix: String?,
     quotingPostUri: PostUri? = null,
 ): String {
