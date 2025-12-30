@@ -26,6 +26,7 @@ import app.bsky.graph.GetStarterPackQueryParams
 import app.bsky.labeler.GetServicesQueryParams
 import app.bsky.labeler.GetServicesResponseViewUnion
 import com.atproto.repo.GetRecordQueryParams
+import com.atproto.repo.GetRecordResponse
 import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Follow
 import com.tunjid.heron.data.core.models.Label
@@ -92,6 +93,7 @@ import dev.zacsweers.metro.Named
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -99,6 +101,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
@@ -360,18 +363,8 @@ internal class OfflineRecordResolver @Inject constructor(
                         )
                     }
                 }
-            is FollowUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
-                getProfile(
-                    GetProfileQueryParams(actor = uri.profileId().id.let(::Did)),
-                )
-            }
-                .mapCatchingUnlessCancelled { profileViewDetailed ->
-                    multipleEntitySaverProvider.saveInTransaction {
-                        add(
-                            viewingProfileId = viewingProfileId,
-                            profileView = profileViewDetailed,
-                        )
-                    }
+            is FollowUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
+                .mapCatchingUnlessCancelled {
                     Follow(
                         uri = uri,
                         // The Atproto API does not provide this for some reason
@@ -379,7 +372,7 @@ internal class OfflineRecordResolver @Inject constructor(
                     )
                 }
 
-            is LikeUri -> record(uri)
+            is LikeUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
                 .mapCatchingUnlessCancelled {
                     val bskyLike = it.value.decodeAs<BskyLike>()
                     val subjectUri = bskyLike.subject.uri.requireRecordUri()
@@ -395,7 +388,7 @@ internal class OfflineRecordResolver @Inject constructor(
                     )
                 }
 
-            is RepostUri -> record(uri)
+            is RepostUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
                 .mapCatchingUnlessCancelled {
                     val bskyRepost = it.value.decodeAs<BskyRepost>()
                     val subjectUri = bskyRepost.subject.uri.requireRecordUri()
@@ -503,16 +496,35 @@ internal class OfflineRecordResolver @Inject constructor(
                 ).distinctUntilChanged()
             }
 
-    private suspend fun record(
+    private suspend fun fetchRecordAndSaveCreator(
         recordUri: RecordUri,
-    ) = networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
-        getRecord(
-            GetRecordQueryParams(
-                repo = recordUri.profileId().id.let(::Did),
-                collection = recordUri.requireCollection().let(::Nsid),
-                rkey = recordUri.recordKey.value.let(::RKey),
-            ),
-        )
+        viewingProfileId: ProfileId?,
+    ): Result<GetRecordResponse> = coroutineScope {
+        // Get the profile independently
+        launch {
+            networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
+                getProfile(
+                    GetProfileQueryParams(actor = recordUri.profileId().id.let(::Did)),
+                )
+            }
+                .mapCatchingUnlessCancelled { profileViewDetailed ->
+                    multipleEntitySaverProvider.saveInTransaction {
+                        add(
+                            viewingProfileId = viewingProfileId,
+                            profileView = profileViewDetailed,
+                        )
+                    }
+                }
+        }
+        networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
+            getRecord(
+                GetRecordQueryParams(
+                    repo = recordUri.profileId().id.let(::Did),
+                    collection = recordUri.requireCollection().let(::Nsid),
+                    rkey = recordUri.recordKey.value.let(::RKey),
+                ),
+            )
+        }
     }
 
     private class MutableTimelineItemCreationContext(

@@ -286,10 +286,6 @@ fun String.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? =
         }
     }
 
-class UnresolvableRecordException(
-    uri: RecordUri,
-) : IllegalArgumentException("The record URI $uri is not resolvable")
-
 /**
  * Parses an AT URI string into its components without using Regex or intermediate data classes.
  *

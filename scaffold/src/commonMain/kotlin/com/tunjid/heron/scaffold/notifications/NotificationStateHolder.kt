@@ -18,6 +18,7 @@ package com.tunjid.heron.scaffold.notifications
 
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.repository.NotificationsQuery
@@ -70,6 +71,7 @@ sealed class NotificationAction(
             ?.let(::ProfileId)
 
         val recordUri: RecordUri? = payload[NotificationAtProtoRecordUri]
+            ?.let { "${Uri.Host.AtProto.prefix}$it" }
             ?.asRecordUriOrNull()
     }
 
