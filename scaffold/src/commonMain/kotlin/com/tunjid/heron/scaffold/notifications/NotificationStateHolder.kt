@@ -23,6 +23,7 @@ import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
+import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.data.repository.NotificationsQuery
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.scaffold.scaffold.AppState
@@ -177,32 +178,38 @@ private fun Flow<NotificationAction.HandleNotification>.handleNotificationMutati
 ): Flow<Mutation<NotificationState>> =
     buffer(NotificationProcessingBufferSize)
         // Process up NotificationProcessingMaxConcurrencyLimit in parallel
-        .flatMapMerge(
-            concurrency = NotificationProcessingMaxConcurrencyLimit,
-        ) { action ->
+        .flatMapMerge(concurrency = NotificationProcessingMaxConcurrencyLimit) { action ->
             val senderId = action.senderDid ?: return@flatMapMerge emptyFlow()
             val recordUri = action.recordUri ?: return@flatMapMerge emptyFlow()
 
             flow {
-                val notification = withTimeoutOrNull(AppState.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS) {
+                val result = withTimeoutOrNull(AppState.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS) {
                     notificationsRepository.resolvePushNotification(
                         NotificationsQuery.Push(
                             senderId = senderId,
                             recordUri = recordUri,
                         ),
                     )
-                        .getOrNull()
                 }
-                if (notification != null) notifier.displayNotifications(
-                    notifications = listOf(notification),
-                )
-                else logcat(LogPriority.WARN) {
-                    "Failed to resolve notification for $recordUri"
-                }
-                emit {
-                    copy(
-                        processedNotificationRecordUris = processedNotificationRecordUris + recordUri,
-                    )
+                when {
+                    result == null -> logcat(LogPriority.WARN) {
+                        "Notification processing timed out for $recordUri"
+                    }
+                    result.isFailure -> logcat(LogPriority.WARN) {
+                        "Failed to resolve notification for $recordUri. Cause: ${
+                            result.exceptionOrNull()?.loggableText()
+                        }"
+                    }
+                    result.isSuccess -> {
+                        notifier.displayNotifications(
+                            notifications = listOf(result.getOrThrow()),
+                        )
+                        emit {
+                            copy(
+                                processedNotificationRecordUris = processedNotificationRecordUris + recordUri,
+                            )
+                        }
+                    }
                 }
             }
         }
