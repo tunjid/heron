@@ -46,6 +46,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 
 interface NotificationStateHolder : ActionStateMutator<NotificationAction, StateFlow<NotificationState>>
 
@@ -184,7 +185,7 @@ private fun Flow<NotificationAction.HandleNotification>.handleNotificationMutati
             val recordUri = action.recordUri ?: return@flatMapMerge emptyFlow()
 
             flow {
-                val notification = withTimeout(AppState.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS) {
+                val notification = withTimeoutOrNull(AppState.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS) {
                     notificationsRepository.resolvePushNotification(
                         NotificationsQuery.Push(
                             senderId = senderId,
