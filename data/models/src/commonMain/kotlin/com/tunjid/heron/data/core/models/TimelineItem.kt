@@ -270,6 +270,15 @@ sealed interface Timeline {
         data class OfAdultContent(
             val enabled: Boolean,
         ) : Update
+
+        @Serializable
+        sealed class OfMutedWord : Update {
+
+            @Serializable
+            data class ReplaceAll(
+                val mutedWordPreferences: List<MutedWordPreference>,
+            ) : OfMutedWord()
+        }
     }
 
     @Serializable

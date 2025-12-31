@@ -32,6 +32,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigationevent.NavigationEvent
@@ -40,8 +41,8 @@ import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.splitlayout.SplitLayoutState
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
@@ -51,6 +52,8 @@ import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.scaffold.navigation.deepLinkTo
 import com.tunjid.heron.scaffold.navigation.isShowingSplashScreen
 import com.tunjid.heron.scaffold.navigation.navItemSelected
+import com.tunjid.heron.scaffold.notifications.NotificationAction
+import com.tunjid.heron.scaffold.notifications.NotificationStateHolder
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.MinPaneWidth
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.MultiStackNav
@@ -67,18 +70,20 @@ import com.tunjid.treenav.requireCurrent
 import com.tunjid.treenav.strings.PathPattern
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.toRouteTrie
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 @Stable
 class AppState(
     entryMap: Map<String, PaneEntry<ThreePane, Route>>,
     private val authRepository: AuthRepository,
-    private val notificationsRepository: NotificationsRepository,
     private val navigationStateHolder: NavigationStateHolder,
+    private val notificationStateHolder: NotificationStateHolder,
     internal val imageLoader: ImageLoader,
     internal val videoPlayerController: VideoPlayerController,
     private val writeQueue: WriteQueue,
@@ -169,13 +174,23 @@ class AppState(
             writeQueue.drain()
         }
         LaunchedEffect(Unit) {
-            notificationsRepository.unreadCount.collect { count ->
-                hasNotifications = count != 0L
+            notificationStateHolder.state.collect { notificationState ->
+                hasNotifications = notificationState.unreadCount != 0L
             }
         }
         LaunchedEffect(Unit) {
             authRepository.isSignedIn.collect { signedIn ->
                 isSignedIn = signedIn
+            }
+        }
+        LifecycleResumeEffect(Unit) {
+            notificationStateHolder.accept(
+                NotificationAction.ToggleUnreadNotificationsMonitor(monitor = true),
+            )
+            onPauseOrDispose {
+                notificationStateHolder.accept(
+                    NotificationAction.ToggleUnreadNotificationsMonitor(monitor = false),
+                )
             }
         }
 
@@ -216,6 +231,15 @@ class AppState(
     fun onDeepLink(uri: GenericUri) =
         navigationStateHolder.accept(deepLinkTo(uri))
 
+    fun onNotificationAction(action: NotificationAction) =
+        notificationStateHolder.accept(action)
+
+    suspend fun awaitNotificationProcessing(recordUri: RecordUri) {
+        notificationStateHolder.state.first { state ->
+            recordUri in state.processedNotificationRecordUris
+        }
+    }
+
     private fun currentNavItems(): List<NavItem> {
         val multiStackNav = multiStackNavState.value
         return multiStackNav.stacks
@@ -248,6 +272,10 @@ class AppState(
             data object SlideToPop : Gesture()
             data object ScaleToPop : Gesture()
         }
+    }
+
+    companion object {
+        val NOTIFICATION_PROCESSING_TIMEOUT_SECONDS = 10.seconds
     }
 }
 

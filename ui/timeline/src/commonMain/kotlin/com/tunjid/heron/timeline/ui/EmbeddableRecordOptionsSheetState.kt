@@ -27,8 +27,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Conversation
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.timeline.utilities.CopyToClipboardCard
 import com.tunjid.heron.timeline.utilities.SendDirectMessageCard
 import com.tunjid.heron.timeline.utilities.ShareInPostCard
@@ -39,7 +39,7 @@ import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetState
 
 @Stable
-class RecordOptionsSheetState private constructor(
+class EmbeddableRecordOptionsSheetState private constructor(
     signedInProfileId: ProfileId?,
     recentConversations: List<Conversation>,
     scope: BottomSheetScope,
@@ -48,7 +48,7 @@ class RecordOptionsSheetState private constructor(
 
     internal var recentConversations by mutableStateOf(recentConversations)
 
-    internal var currentRecordUri: RecordUri? by mutableStateOf(null)
+    internal var currentRecordUri: EmbeddableRecordUri? by mutableStateOf(null)
 
     internal val isSignedIn get() = signedInProfileId != null
 
@@ -56,21 +56,21 @@ class RecordOptionsSheetState private constructor(
         currentRecordUri = null
     }
 
-    fun showOptions(recordUri: RecordUri) {
+    fun showOptions(recordUri: EmbeddableRecordUri) {
         currentRecordUri = recordUri
         show()
     }
 
-    companion object {
+    companion object Companion {
         @Composable
-        fun rememberUpdatedRecordOptionsState(
+        fun rememberUpdatedEmbeddableRecordOptionsState(
             signedInProfileId: ProfileId?,
             recentConversations: List<Conversation>,
-            onShareInConversationClicked: (RecordUri, Conversation) -> Unit,
-            onShareInPostClicked: (RecordUri) -> Unit,
-        ): RecordOptionsSheetState {
+            onShareInConversationClicked: (EmbeddableRecordUri, Conversation) -> Unit,
+            onShareInPostClicked: (EmbeddableRecordUri) -> Unit,
+        ): EmbeddableRecordOptionsSheetState {
             val state = rememberBottomSheetState {
-                RecordOptionsSheetState(
+                EmbeddableRecordOptionsSheetState(
                     signedInProfileId = signedInProfileId,
                     recentConversations = recentConversations,
                     scope = it,
@@ -80,7 +80,7 @@ class RecordOptionsSheetState private constructor(
                 it.recentConversations = recentConversations
             }
 
-            RecordOptionsBottomSheet(
+            EmbeddableRecordOptionsBottomSheet(
                 state = state,
                 onShareInConversationClicked = onShareInConversationClicked,
                 onShareInPostClicked = onShareInPostClicked,
@@ -92,10 +92,10 @@ class RecordOptionsSheetState private constructor(
 }
 
 @Composable
-private fun RecordOptionsBottomSheet(
-    state: RecordOptionsSheetState,
-    onShareInConversationClicked: (RecordUri, Conversation) -> Unit,
-    onShareInPostClicked: (RecordUri) -> Unit,
+private fun EmbeddableRecordOptionsBottomSheet(
+    state: EmbeddableRecordOptionsSheetState,
+    onShareInConversationClicked: (EmbeddableRecordUri, Conversation) -> Unit,
+    onShareInPostClicked: (EmbeddableRecordUri) -> Unit,
 ) {
     val signedInProfileId = state.signedInProfileId
 

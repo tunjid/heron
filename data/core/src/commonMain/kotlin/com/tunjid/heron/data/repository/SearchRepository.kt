@@ -193,7 +193,7 @@ internal class OfflineSearchRepository @Inject constructor(
                 signedInProfileId = signedInProfileId,
                 postUri = Post::uri,
                 associatedRecordUris = {
-                    listOfNotNull(it.embeddedRecord?.reference?.uri)
+                    listOfNotNull(it.embeddedRecord?.embeddableRecordUri)
                 },
                 associatedProfileIds = {
                     emptyList()

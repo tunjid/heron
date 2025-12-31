@@ -27,10 +27,10 @@ import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostExternalEmbedEntity
@@ -76,7 +76,7 @@ data class PostEntity(
 ) {
     data class UriWithEmbeddedRecordUri(
         val uri: PostUri,
-        val embeddedRecordUri: RecordUri?,
+        val embeddedRecordUri: EmbeddableRecordUri?,
     )
 
     data class Partial(
@@ -95,7 +95,7 @@ data class PostEntity(
     data class RecordData(
         val text: String,
         val base64EncodedRecord: String?,
-        val embeddedRecordUri: RecordUri?,
+        val embeddedRecordUri: EmbeddableRecordUri?,
         val createdAt: Instant,
     )
 }
@@ -185,7 +185,7 @@ data class PopulatedPostEntity(
     )
     val authorLabelEntities: List<LabelEntity>,
 ) : PopulatedRecordEntity {
-    override val recordUri: RecordUri
+    override val recordUri: EmbeddableRecordUri
         get() = entity.uri
 }
 
@@ -204,7 +204,7 @@ data class ThreadedPostEntity(
 )
 
 fun PopulatedPostEntity.asExternalModel(
-    embeddedRecord: Record?,
+    embeddedRecord: Record.Embeddable?,
 ) = Post(
     cid = entity.cid,
     uri = entity.uri,

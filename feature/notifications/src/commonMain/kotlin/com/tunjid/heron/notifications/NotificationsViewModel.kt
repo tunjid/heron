@@ -88,6 +88,9 @@ class ActualNotificationsViewModel(
             recentConversationMutations(
                 messageRepository = messageRepository,
             ),
+            canShowRequestPermissionsButtonMutations(
+                notificationsRepository,
+            ),
         ),
         actionTransform = transform@{ actions ->
             actions.toMutationStream(
@@ -149,6 +152,14 @@ fun lastRefreshedMutations(
             ),
         )
     }
+
+fun canShowRequestPermissionsButtonMutations(
+    notificationsRepository: NotificationsRepository,
+): Flow<Mutation<State>> =
+    notificationsRepository.hasPreviouslyRequestedNotificationPermissions
+        .mapToMutation { hasPreviouslyRequestedNotificationPermissions ->
+            copy(canAnimateRequestPermissionsButton = !hasPreviouslyRequestedNotificationPermissions)
+        }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,

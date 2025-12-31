@@ -18,11 +18,11 @@ package com.tunjid.heron.data.repository
 
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
-import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
@@ -37,14 +37,16 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 
-interface RecordRepository {
+interface EmbeddableRecordRepository {
 
     val subscribedLabelers: Flow<List<Labeler>>
 
-    fun record(uri: RecordUri): Flow<Record>
+    fun embeddableRecord(
+        uri: EmbeddableRecordUri,
+    ): Flow<Record.Embeddable>
 }
 
-internal class OfflineRecordRepository @Inject constructor(
+internal class OfflineEmbeddableRecordRepository @Inject constructor(
     private val postDao: PostDao,
     private val listDao: ListDao,
     private val labelDao: LabelDao,
@@ -52,12 +54,12 @@ internal class OfflineRecordRepository @Inject constructor(
     private val feedGeneratorDao: FeedGeneratorDao,
     private val savedStateDataSource: SavedStateDataSource,
     private val recordResolver: RecordResolver,
-) : RecordRepository {
+) : EmbeddableRecordRepository {
 
     override val subscribedLabelers: Flow<List<Labeler>> =
         recordResolver.subscribedLabelers
 
-    override fun record(uri: RecordUri): Flow<Record> =
+    override fun embeddableRecord(uri: EmbeddableRecordUri): Flow<Record.Embeddable> =
         when (uri) {
             is FeedGeneratorUri -> feedGeneratorDao.feedGenerators(
                 listOf(uri),
@@ -94,8 +96,6 @@ internal class OfflineRecordRepository @Inject constructor(
         }
             .filterNotNull()
             .withRefresh {
-                recordResolver.refresh(
-                    uri = uri,
-                )
+                recordResolver.resolve(uri)
             }
 }

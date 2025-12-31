@@ -34,8 +34,7 @@ interface NotificationsDao {
             AND ownerId = profileViewerStates.profileId
             WHERE ownerId = :ownerId
             AND indexedAt < :before
-            ORDER BY indexedAt
-            DESC
+            ORDER BY indexedAt DESC
             LIMIT :limit
             OFFSET :offset
         """,
@@ -45,6 +44,23 @@ interface NotificationsDao {
         before: Instant,
         limit: Long,
         offset: Long,
+    ): Flow<List<PopulatedNotificationEntity>>
+
+    @Query(
+        """
+            SELECT * FROM notifications
+            LEFT JOIN profileViewerStates
+            ON notifications.authorId = profileViewerStates.otherProfileId
+            AND ownerId = profileViewerStates.profileId
+            WHERE ownerId = :ownerId
+            AND isRead = 0
+            AND indexedAt >= :after
+            ORDER BY indexedAt DESC
+        """,
+    )
+    fun unreadNotifications(
+        ownerId: String,
+        after: Instant,
     ): Flow<List<PopulatedNotificationEntity>>
 
     @Upsert

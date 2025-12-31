@@ -427,6 +427,8 @@ private fun ListTimeline(
                 is PostOption.ThreadGate ->
                     items.firstOrNull { it.post.uri == option.postUri }
                         ?.let(threadGateSheetState::show)
+                is PostOption.Moderation.BlockUser -> Unit
+                is PostOption.Moderation.MuteWords -> Unit
             }
         },
     )

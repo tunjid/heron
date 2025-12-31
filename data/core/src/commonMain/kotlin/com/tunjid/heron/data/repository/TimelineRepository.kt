@@ -67,7 +67,6 @@ import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.preferredPresentationPartial
 import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.lookupProfileDid
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
@@ -673,7 +672,7 @@ internal class OfflineTimelineRepository(
                                 networkService = networkService,
                             ) ?: return@flow
                             val uri = FeedGeneratorUri(
-                                uri = "at://${profileDid.did}/${Collections.FeedGenerator}/${request.feedUriSuffix}",
+                                uri = "at://${profileDid.did}/${FeedGeneratorUri.NAMESPACE}/${request.feedUriSuffix}",
                             )
                             emitAll(
                                 feedGeneratorTimeline(
@@ -694,7 +693,7 @@ internal class OfflineTimelineRepository(
                                 networkService = networkService,
                             ) ?: return@flow
                             val uri = ListUri(
-                                uri = "at://${profileDid.did}/${Collections.List}/${request.listUriSuffix}",
+                                uri = "at://${profileDid.did}/${ListUri.NAMESPACE}/${request.listUriSuffix}",
                             )
                             emitAll(
                                 listTimeline(
@@ -723,7 +722,7 @@ internal class OfflineTimelineRepository(
                                 networkService = networkService,
                             ) ?: return@flow
                             val uri = StarterPackUri(
-                                uri = "at://${profileDid.did}/${Collections.StarterPack}/${request.starterPackUriSuffix}",
+                                uri = "at://${profileDid.did}/${StarterPackUri.NAMESPACE}/${request.starterPackUriSuffix}",
                             )
                             emitAll(
                                 starterPackTimeline(
@@ -1073,7 +1072,7 @@ internal class OfflineTimelineRepository(
                 }
         }
         .withRefresh {
-            recordResolver.refresh(
+            recordResolver.resolve(
                 uri = uri,
             )
         }
@@ -1103,7 +1102,7 @@ internal class OfflineTimelineRepository(
                 }
         }
         .withRefresh {
-            recordResolver.refresh(
+            recordResolver.resolve(
                 uri = uri,
             )
         }
@@ -1131,7 +1130,7 @@ internal class OfflineTimelineRepository(
             }
         }
         .withRefresh {
-            recordResolver.refresh(
+            recordResolver.resolve(
                 uri = uri,
             )
         }

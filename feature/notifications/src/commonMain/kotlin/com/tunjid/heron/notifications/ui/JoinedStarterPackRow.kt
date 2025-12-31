@@ -31,11 +31,11 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.timeline.ui.TimeDelta
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import heron.feature.notifications.generated.resources.Res
-import heron.feature.notifications.generated.resources.joined_from_your_started_pack_description
-import heron.feature.notifications.generated.resources.joined_from_your_starter_pack
-import heron.feature.notifications.generated.resources.multiple_joined_from_your_starter_pack
+import heron.ui.core.generated.resources.notifications_joined_from_your_started_pack_description
+import heron.ui.core.generated.resources.notifications_joined_from_your_starter_pack
+import heron.ui.core.generated.resources.notifications_multiple_joined_from_your_starter_pack
 import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
@@ -63,7 +63,7 @@ fun JoinedStarterPackRow(
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.Person),
                 tint = MaterialTheme.colorScheme.primary,
-                contentDescription = stringResource(Res.string.joined_from_your_started_pack_description),
+                contentDescription = stringResource(CommonStrings.notifications_joined_from_your_started_pack_description),
             )
         },
         content = {
@@ -73,8 +73,8 @@ fun JoinedStarterPackRow(
                     text = notificationText(
                         notification = notification,
                         aggregatedSize = aggregatedProfiles.size,
-                        singularResource = Res.string.joined_from_your_starter_pack,
-                        pluralResource = Res.string.multiple_joined_from_your_starter_pack,
+                        singularResource = CommonStrings.notifications_joined_from_your_starter_pack,
+                        pluralResource = CommonStrings.notifications_multiple_joined_from_your_starter_pack,
                     ),
                 )
                 TimeDelta(

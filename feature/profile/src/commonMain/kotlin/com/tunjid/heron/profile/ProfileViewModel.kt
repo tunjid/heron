@@ -36,10 +36,10 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri.Companion.asSelfLabelerUri
 import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.EmbeddableRecordRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.ProfilesQuery
-import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.repository.recentConversations
@@ -101,7 +101,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 @AssistedInject
 class ActualProfileViewModel(
     authRepository: AuthRepository,
-    recordRepository: RecordRepository,
+    embeddableRecordRepository: EmbeddableRecordRepository,
     messageRepository: MessageRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
@@ -131,7 +131,7 @@ class ActualProfileViewModel(
                 messageRepository = messageRepository,
             ),
             subscribedLabelerMutations(
-                recordRepository = recordRepository,
+                embeddableRecordRepository = embeddableRecordRepository,
             ),
         ),
         actionTransform = transform@{ actions ->
@@ -142,7 +142,7 @@ class ActualProfileViewModel(
                     scope = scope,
                     writeQueue = writeQueue,
                     authRepository = authRepository,
-                    recordRepository = recordRepository,
+                    embeddableRecordRepository = embeddableRecordRepository,
                     profileRepository = profileRepository,
                     timelineRepository = timelineRepository,
                 ),
@@ -192,9 +192,9 @@ fun recentConversationMutations(
         }
 
 fun subscribedLabelerMutations(
-    recordRepository: RecordRepository,
+    embeddableRecordRepository: EmbeddableRecordRepository,
 ): Flow<Mutation<State>> =
-    recordRepository.subscribedLabelers
+    embeddableRecordRepository.subscribedLabelers
         .mapToMutation { labelers ->
             copy(
                 subscribedLabelerProfileIds = labelers.mapTo(
@@ -223,7 +223,7 @@ private fun loadProfileMutations(
     authRepository: AuthRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
-    recordRepository: RecordRepository,
+    embeddableRecordRepository: EmbeddableRecordRepository,
 ): Flow<Mutation<State>> =
     combine(
         profileRepository.profile(profileId),
@@ -290,7 +290,7 @@ private fun loadProfileMutations(
                                             profileId = profile.did,
                                             writeQueue = writeQueue,
                                             timelineRepository = timelineRepository,
-                                            recordRepository = recordRepository,
+                                            embeddableRecordRepository = embeddableRecordRepository,
                                         ),
                                     )
                                     addAll(
@@ -453,7 +453,7 @@ private fun CoroutineScope.labelerSettingsStateHolders(
     profileId: ProfileId,
     writeQueue: WriteQueue,
     timelineRepository: TimelineRepository,
-    recordRepository: RecordRepository,
+    embeddableRecordRepository: EmbeddableRecordRepository,
 ): List<ProfileScreenStateHolders.LabelerSettings> =
     listOfNotNull(
         ProfileScreenStateHolders.LabelerSettings(
@@ -473,14 +473,14 @@ private fun CoroutineScope.labelerSettingsStateHolders(
                     }
                 },
                 inputs = listOf(
-                    recordRepository.subscribedLabelers.mapToMutation { labelers ->
+                    embeddableRecordRepository.subscribedLabelers.mapToMutation { labelers ->
                         copy(subscribed = labelers.any { it.creator.did == profileId })
                     },
                     combine(
                         flow = timelineRepository.preferences
                             .map { it.contentLabelPreferences }
                             .distinctUntilChanged(),
-                        flow2 = recordRepository.record(
+                        flow2 = embeddableRecordRepository.embeddableRecord(
                             uri = profileId.asSelfLabelerUri(),
                         )
                             .filterIsInstance<Labeler>()

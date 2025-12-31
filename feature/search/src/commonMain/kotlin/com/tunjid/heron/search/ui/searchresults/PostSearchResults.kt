@@ -134,6 +134,8 @@ internal fun PostSearchResults(
                     results.firstOrNull { it.timelineItem.post.uri == option.postUri }
                         ?.timelineItem
                         ?.let(threadGateSheetState::show)
+                is PostOption.Moderation.BlockUser -> Unit
+                is PostOption.Moderation.MuteWords -> Unit
             }
         },
     )

@@ -23,10 +23,29 @@ jobs:
   build-android-app:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-java@v5
+      - name: Checkout repo
+        uses: actions/checkout@v5
+
+      - name: Setup java
+        uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
           java-version: 21
-      - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew assembleRelease
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Create Google services file
+        shell: bash
+        env:
+          GOOGLE_SERVICES_ENCODED: ${{ secrets.GOOGLE_SERVICES_BASE_64 }}
+        run: |
+          # Create the directory structure
+          mkdir -p "composeApp/src/release/"
+
+          # Decode the env variable into the file
+          echo "$GOOGLE_SERVICES_ENCODED" | openssl base64 -d -A \
+            -out "composeApp/src/release/google-services.json"
+
+      - name: Build App
+        run: ./gradlew assembleRelease

@@ -175,6 +175,8 @@ internal fun GalleryScreen(
 
                 // TODO
                 is PostOption.ThreadGate -> Unit
+                is PostOption.Moderation.BlockUser -> Unit
+                is PostOption.Moderation.MuteWords -> Unit
             }
         },
     )

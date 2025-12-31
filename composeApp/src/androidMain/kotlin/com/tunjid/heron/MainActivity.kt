@@ -28,10 +28,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.splashscreen.SplashScreenViewProvider
 import androidx.core.view.WindowCompat
+import com.google.firebase.messaging.FirebaseMessaging
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.scaffold.notifications.NotificationAction
 import com.tunjid.heron.scaffold.scaffold.App
 import com.tunjid.heron.scaffold.scaffold.isShowingSplashScreen
 import kotlinx.coroutines.delay
@@ -75,7 +78,32 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        updateNotificationPermissions()
         handleDeepLink(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateNotificationPermissions()
+
+        FirebaseMessaging.getInstance()
+            .getToken()
+            .addOnSuccessListener { token ->
+                // appState will check if notification permissions are available
+                appState.onNotificationAction(NotificationAction.RegisterToken(token))
+            }
+    }
+
+    private fun updateNotificationPermissions() {
+        NotificationManagerCompat.from(this)
+            .areNotificationsEnabled()
+            .let {
+                appState.onNotificationAction(
+                    NotificationAction.UpdatePermissions(
+                        hasNotificationPermissions = it,
+                    ),
+                )
+            }
     }
 
     private fun handleDeepLink(intent: Intent) {

@@ -18,6 +18,7 @@ package com.tunjid.heron.profiles
 
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
+import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
@@ -74,8 +75,8 @@ sealed class Action(val key: String) {
     data class ToggleViewerState(
         val signedInProfileId: ProfileId,
         val viewedProfileId: ProfileId,
-        val following: GenericUri?,
-        val followedBy: GenericUri?,
+        val following: FollowUri?,
+        val followedBy: FollowUri?,
     ) : Action(key = "ToggleViewerState")
 
     data class SnackbarDismissed(

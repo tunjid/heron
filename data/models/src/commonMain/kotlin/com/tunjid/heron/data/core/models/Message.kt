@@ -30,7 +30,7 @@ data class Message(
     val sender: Profile,
     val isDeleted: Boolean,
     val sentAt: Instant,
-    val embeddedRecord: Record?,
+    val embeddedRecord: Record.Embeddable?,
     val reactions: List<Reaction>,
     val metadata: Metadata?,
 ) {

@@ -25,12 +25,12 @@ import androidx.room.Relation
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ListId
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.RecordUri
 import kotlin.time.Instant
 
 @Entity(
@@ -89,7 +89,7 @@ data class PopulatedListEntity(
     )
     val labelEntities: List<LabelEntity>,
 ) : PopulatedRecordEntity {
-    override val recordUri: RecordUri
+    override val recordUri: EmbeddableRecordUri
         get() = entity.uri
 }
 

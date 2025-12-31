@@ -29,6 +29,7 @@ import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
+import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
@@ -206,8 +207,8 @@ sealed class Action(val key: String) {
     data class ToggleViewerState(
         val signedInProfileId: ProfileId,
         val viewedProfileId: ProfileId,
-        val following: GenericUri?,
-        val followedBy: GenericUri?,
+        val following: FollowUri?,
+        val followedBy: FollowUri?,
     ) : Action(key = "ToggleViewerState")
 
     data class UpdatePreferences(

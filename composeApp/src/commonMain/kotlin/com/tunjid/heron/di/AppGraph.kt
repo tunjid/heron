@@ -20,7 +20,6 @@ import com.tunjid.heron.compose.di.ComposeBindings
 import com.tunjid.heron.conversation.di.ConversationBindings
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.editprofile.di.EditProfileBindings
 import com.tunjid.heron.feed.di.FeedBindings
@@ -39,6 +38,7 @@ import com.tunjid.heron.profile.di.ProfileBindings
 import com.tunjid.heron.profiles.di.ProfilesBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
+import com.tunjid.heron.scaffold.notifications.NotificationStateHolder
 import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.search.di.SearchBindings
 import com.tunjid.heron.settings.di.SettingsBindings
@@ -50,8 +50,10 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.DependencyGraph
 import dev.zacsweers.metro.Includes
+import dev.zacsweers.metro.Named
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
+import kotlinx.coroutines.CoroutineScope
 
 @DependencyGraph(
     scope = AppScope::class,
@@ -90,17 +92,19 @@ interface AppGraph {
     @SingleIn(AppScope::class)
     @Provides
     fun appState(
+        @Named("AppScope")
+        appScope: CoroutineScope,
         authRepository: AuthRepository,
-        notificationsRepository: NotificationsRepository,
         navigationStateHolder: NavigationStateHolder,
+        notificationStateHolder: NotificationStateHolder,
         imageLoader: ImageLoader,
         videoPlayerController: VideoPlayerController,
         writeQueue: WriteQueue,
     ): AppState = AppState(
         entryMap = entryMap,
         authRepository = authRepository,
-        notificationsRepository = notificationsRepository,
         navigationStateHolder = navigationStateHolder,
+        notificationStateHolder = notificationStateHolder,
         imageLoader = imageLoader,
         videoPlayerController = videoPlayerController,
         writeQueue = writeQueue,

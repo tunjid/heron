@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FilterAlt
+import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.EditAttributes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -12,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Post
@@ -27,7 +30,10 @@ import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
 import heron.ui.timeline.generated.resources.Res
+import heron.ui.timeline.generated.resources.block_user
+import heron.ui.timeline.generated.resources.mute_words_tags
 import heron.ui.timeline.generated.resources.thread_gate_post_reply_settings
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Stable
@@ -142,4 +148,19 @@ sealed class PostOption {
     data class ThreadGate(
         val postUri: PostUri,
     ) : PostOption()
+
+    sealed class Moderation(
+        val title: StringResource,
+        val icon: ImageVector,
+    ) : PostOption() {
+        data object MuteWords : Moderation(
+            title = Res.string.mute_words_tags,
+            icon = Icons.Default.FilterAlt,
+        )
+
+        data object BlockUser : Moderation(
+            title = Res.string.block_user,
+            icon = Icons.Rounded.Block,
+        )
+    }
 }

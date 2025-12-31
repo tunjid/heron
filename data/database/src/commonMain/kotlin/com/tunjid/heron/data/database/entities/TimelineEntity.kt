@@ -22,9 +22,9 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.RecordUri
 import kotlin.time.Instant
 
 @Entity(
@@ -69,7 +69,7 @@ data class TimelineItemEntity(
     val postUri: PostUri,
     val viewingProfileId: ProfileId?,
     val sourceId: String,
-    val embeddedRecordUri: RecordUri?,
+    val embeddedRecordUri: EmbeddableRecordUri?,
     @Embedded
     val reply: FeedReplyEntity?,
     val reposter: ProfileId?,
@@ -87,9 +87,9 @@ data class TimelineItemEntity(
 data class FeedReplyEntity(
     val rootPostUri: PostUri,
     @ColumnInfo(defaultValue = "NULL")
-    val rootPostEmbeddedRecordUri: RecordUri?,
+    val rootPostEmbeddedRecordUri: EmbeddableRecordUri?,
     val parentPostUri: PostUri,
     @ColumnInfo(defaultValue = "NULL")
-    val parentPostEmbeddedRecordUri: RecordUri?,
+    val parentPostEmbeddedRecordUri: EmbeddableRecordUri?,
     val grandParentPostAuthorId: ProfileId?,
 )

@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.notifications
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
@@ -78,7 +77,7 @@ import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.filterNotNull
 
-@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun NotificationsScreen(
     paneScaffoldState: PaneScaffoldState,
@@ -126,6 +125,8 @@ internal fun NotificationsScreen(
 
                 // Notifications UI does not present thread gate options
                 is PostOption.ThreadGate -> Unit
+                is PostOption.Moderation.BlockUser -> Unit
+                is PostOption.Moderation.MuteWords -> Unit
             }
         },
     )

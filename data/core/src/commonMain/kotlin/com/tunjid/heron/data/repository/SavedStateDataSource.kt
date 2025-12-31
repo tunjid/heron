@@ -173,6 +173,7 @@ abstract class SavedState {
     data class Notifications(
         val lastRead: Instant? = null,
         val lastRefreshed: Instant? = null,
+        val hasPreviouslyRequestedPermissions: Boolean = false,
     )
 
     @Serializable
@@ -354,7 +355,8 @@ internal suspend fun SavedStateDataSource.updateSignedInUserNotifications(
 internal suspend inline fun <T> SavedStateDataSource.inCurrentProfileSession(
     crossinline block: suspend (ProfileId?) -> T,
 ): T? {
-    val currentProfileId = savedState.value.signedInProfileId
+    val currentSavedState = savedState.first { it != InitialSavedState }
+    val currentProfileId = currentSavedState.signedInProfileId
     return coroutineScope {
         select {
             async {
@@ -399,5 +401,7 @@ internal inline fun <T> SavedStateDataSource.singleSessionFlow(
     }
 
 internal fun expiredSessionOutcome() = Outcome.Failure(ExpiredSessionException())
+
+internal fun <T> expiredSessionResult() = Result.failure<T>(ExpiredSessionException())
 
 private class ExpiredSessionException : IOException()

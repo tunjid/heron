@@ -16,8 +16,8 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.GenericId
-import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
@@ -50,21 +50,21 @@ data class Profile(
     sealed class Connection {
         abstract val signedInProfileId: ProfileId
         abstract val profileId: ProfileId
-        abstract val followedBy: GenericUri?
+        abstract val followedBy: FollowUri?
 
         @Serializable
         data class Follow(
             override val signedInProfileId: ProfileId,
             override val profileId: ProfileId,
-            override val followedBy: GenericUri?,
+            override val followedBy: FollowUri?,
         ) : Connection()
 
         @Serializable
         data class Unfollow(
             override val signedInProfileId: ProfileId,
             override val profileId: ProfileId,
-            override val followedBy: GenericUri?,
-            val followUri: GenericUri,
+            override val followedBy: FollowUri?,
+            val followUri: FollowUri,
         ) : Connection()
     }
 

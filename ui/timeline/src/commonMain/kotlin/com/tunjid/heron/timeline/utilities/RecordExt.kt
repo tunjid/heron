@@ -35,13 +35,13 @@ import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
-import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
@@ -59,7 +59,7 @@ import kotlin.time.Clock
 @Composable
 fun EmbeddedRecord(
     modifier: Modifier = Modifier,
-    record: Record,
+    record: Record.Embeddable,
     sharedElementPrefix: String,
     movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     postActions: PostActions,
@@ -139,7 +139,7 @@ fun EmbeddedRecord(
     }
 }
 
-fun Record.avatarSharedElementKey(
+fun Record.Embeddable.avatarSharedElementKey(
     prefix: String?,
     quotingPostUri: PostUri? = null,
 ): String {
@@ -156,7 +156,7 @@ fun Record.avatarSharedElementKey(
     return "$finalPrefix-${reference.uri.uri}-${creator.did.id}-avatar"
 }
 
-fun RecordUri.shareUri(): GenericUri =
+fun EmbeddableRecordUri.shareUri(): GenericUri =
     GenericUri(
         when (this) {
             is FeedGeneratorUri -> "https://bsky.app/profile/${profileId().id}/feed/${recordKey.value}"
@@ -167,7 +167,7 @@ fun RecordUri.shareUri(): GenericUri =
         },
     )
 
-fun RecordUri.collectionShape() = when (this) {
+fun EmbeddableRecordUri.collectionShape() = when (this) {
     is FeedGeneratorUri -> FeedGeneratorCollectionShape
     is LabelerUri -> LabelerCollectionShape
     is ListUri -> ListCollectionShape

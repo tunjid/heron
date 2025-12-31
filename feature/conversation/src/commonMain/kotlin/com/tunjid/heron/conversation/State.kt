@@ -79,7 +79,7 @@ sealed class SharedRecord {
 
     @Serializable
     data class Pending(
-        val record: Record,
+        val record: Record.Embeddable,
     ) : SharedRecord()
 
     @Serializable

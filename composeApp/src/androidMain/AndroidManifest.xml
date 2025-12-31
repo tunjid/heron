@@ -15,6 +15,7 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
         android:name=".HeronApplication"
@@ -25,6 +26,18 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Heron">
+        <service
+          android:name=".NotificationsService"
+          android:exported="false">
+          <intent-filter>
+            <action android:name="com.google.firebase.MESSAGING_EVENT" />
+          </intent-filter>
+        </service>
+        <receiver android:name=".NotificationDismissReceiver" android:exported="false">
+          <intent-filter>
+            <action android:name="com.tunjid.heron.ACTION_NOTIFICATION_DISMISS" />
+          </intent-filter>
+        </receiver>
         <activity
             android:name=".MainActivity"
             android:configChanges="uiMode"

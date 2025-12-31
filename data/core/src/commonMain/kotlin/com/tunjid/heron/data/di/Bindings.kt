@@ -38,31 +38,35 @@ import com.tunjid.heron.data.files.createFileManager
 import com.tunjid.heron.data.network.BlueskyJson
 import com.tunjid.heron.data.network.ConnectivityNetworkMonitor
 import com.tunjid.heron.data.network.KtorNetworkService
+import com.tunjid.heron.data.network.NetworkConnectionException
 import com.tunjid.heron.data.network.NetworkMonitor
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.PersistedSessionManager
 import com.tunjid.heron.data.network.SessionManager
 import com.tunjid.heron.data.network.SuspendingVideoUploadService
 import com.tunjid.heron.data.network.VideoUploadService
+import com.tunjid.heron.data.network.isNetworkConnectionError
 import com.tunjid.heron.data.network.oauth.crypto.platformCryptographyProvider
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.DataStoreSavedStateDataSource
+import com.tunjid.heron.data.repository.EmbeddableRecordRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.NotificationsRepository
+import com.tunjid.heron.data.repository.OfflineEmbeddableRecordRepository
 import com.tunjid.heron.data.repository.OfflineMessageRepository
 import com.tunjid.heron.data.repository.OfflineNotificationsRepository
 import com.tunjid.heron.data.repository.OfflinePostRepository
 import com.tunjid.heron.data.repository.OfflineProfileRepository
-import com.tunjid.heron.data.repository.OfflineRecordRepository
 import com.tunjid.heron.data.repository.OfflineSearchRepository
 import com.tunjid.heron.data.repository.OfflineTimelineRepository
+import com.tunjid.heron.data.repository.OfflineUserDataRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
-import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.ThingPreferenceUpdater
@@ -80,6 +84,7 @@ import dev.zacsweers.metro.Named
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpCallValidator
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
@@ -164,6 +169,16 @@ class DataBindings(
         }
         install(HttpTimeout) {
             requestTimeoutMillis = 4.seconds.inWholeMilliseconds
+        }
+        install(HttpCallValidator) {
+            handleResponseExceptionWithRequest { throwable, request ->
+                if (throwable.isNetworkConnectionError()) {
+                    throw NetworkConnectionException(
+                        url = request.url,
+                        cause = throwable,
+                    )
+                }
+            }
         }
     }
 
@@ -331,7 +346,13 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
+    internal fun provideOfflineUserDataRepository(
+        offlineUserDataRepository: OfflineUserDataRepository,
+    ): UserDataRepository = offlineUserDataRepository
+
+    @SingleIn(AppScope::class)
+    @Provides
     internal fun provideRecordRepository(
-        offlineRecordRepository: OfflineRecordRepository,
-    ): RecordRepository = offlineRecordRepository
+        offlineRecordRepository: OfflineEmbeddableRecordRepository,
+    ): EmbeddableRecordRepository = offlineRecordRepository
 }
