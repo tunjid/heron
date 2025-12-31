@@ -18,9 +18,11 @@ package com.tunjid.heron.profile.avatar.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Profile
@@ -36,16 +38,17 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOptio
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.scaffold.DragToPopState.Companion.dragToPop
 import com.tunjid.heron.scaffold.scaffold.DragToPopState.Companion.rememberDragToPopState
+import com.tunjid.heron.scaffold.scaffold.PaneExpandableFloatingToolbar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
+import com.tunjid.heron.scaffold.scaffold.floatingToolbarNestedScroll
 import com.tunjid.heron.scaffold.scaffold.fullAppbarTransparency
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
-import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -135,20 +138,29 @@ class ProfileAvatarBindings(
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
 
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection()
+            var floatingToolbarExpanded by rememberSaveable { mutableStateOf(true) }
 
             rememberPaneScaffoldState().PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
-                    .nestedScroll(bottomNavigationNestedScrollConnection),
+                    .floatingToolbarNestedScroll(
+                        expanded = floatingToolbarExpanded,
+                        onExpand = { floatingToolbarExpanded = true },
+                        onCollapse = { floatingToolbarExpanded = false },
+                    ),
                 containerColor = Color.Transparent,
                 showNavigation = true,
                 topBar = {
                     PoppableDestinationTopAppBar(
                         transparencyFactor = ::fullAppbarTransparency,
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                    )
+                },
+                useFloatingToolbar = true,
+                floatingToolbar = {
+                    PaneExpandableFloatingToolbar(
+                        expanded = floatingToolbarExpanded,
                     )
                 },
                 navigationRail = {

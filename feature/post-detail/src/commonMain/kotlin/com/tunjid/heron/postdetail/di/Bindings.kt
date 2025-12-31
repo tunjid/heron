@@ -17,14 +17,15 @@
 package com.tunjid.heron.postdetail.di
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Login
 import androidx.compose.material.icons.automirrored.rounded.Reply
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
@@ -41,20 +42,18 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOptio
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
-import com.tunjid.heron.scaffold.scaffold.PaneFab
-import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
+import com.tunjid.heron.scaffold.scaffold.PaneExpandableFloatingToolbar
+import com.tunjid.heron.scaffold.scaffold.PaneFloatingToolbarFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PaneSnackbarHost
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
-import com.tunjid.heron.scaffold.scaffold.fabOffset
-import com.tunjid.heron.scaffold.scaffold.isFabExpanded
+import com.tunjid.heron.scaffold.scaffold.floatingToolbarNestedScroll
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
-import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
@@ -171,15 +170,18 @@ class PostDetailBindings(
             val topAppBarNestedScrollConnection =
                 topAppBarNestedScrollConnection()
 
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection()
+            var floatingToolbarExpanded by rememberSaveable { mutableStateOf(true) }
 
             rememberPaneScaffoldState().PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
                     .nestedScroll(topAppBarNestedScrollConnection)
-                    .nestedScroll(bottomNavigationNestedScrollConnection),
+                    .floatingToolbarNestedScroll(
+                        expanded = floatingToolbarExpanded,
+                        onExpand = { floatingToolbarExpanded = true },
+                        onCollapse = { floatingToolbarExpanded = false },
+                    ),
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
@@ -192,53 +194,39 @@ class PostDetailBindings(
                     )
                 },
                 snackBarHost = {
-                    PaneSnackbarHost(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
-                    )
+                    PaneSnackbarHost()
                 },
-                floatingActionButton = {
-                    if (state.anchorPost?.viewerStats.canReply) PaneFab(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
-                        text = stringResource(
-                            when {
-                                isSignedOut -> CommonStrings.sign_in
-                                else -> Res.string.reply
-                            },
-                        ),
-                        icon = when {
-                            isSignedOut -> Icons.AutoMirrored.Rounded.Login
-                            else -> Icons.AutoMirrored.Rounded.Reply
-                        },
-                        expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
-                        onClick = onClick@{
-                            val anchorPost = state.anchorPost ?: return@onClick
-                            viewModel.accept(
-                                Action.Navigate.To(
-                                    when {
-                                        isSignedOut -> signInDestination()
-                                        else -> composePostDestination(
-                                            type = Post.Create.Reply(
-                                                parent = anchorPost,
+                useFloatingToolbar = true,
+                floatingToolbar = {
+                    PaneExpandableFloatingToolbar(
+                        expanded = floatingToolbarExpanded,
+                        fab = if (state.anchorPost?.viewerStats.canReply) {
+                            {
+                                val fabIcon = when {
+                                    isSignedOut -> Icons.AutoMirrored.Rounded.Login
+                                    else -> Icons.AutoMirrored.Rounded.Reply
+                                }
+                                PaneFloatingToolbarFab(
+                                    icon = fabIcon,
+                                    onClick = onClick@{
+                                        val anchorPost = state.anchorPost ?: return@onClick
+                                        viewModel.accept(
+                                            Action.Navigate.To(
+                                                when {
+                                                    isSignedOut -> signInDestination()
+                                                    else -> composePostDestination(
+                                                        type = Post.Create.Reply(
+                                                            parent = anchorPost,
+                                                        ),
+                                                        sharedElementPrefix = state.sharedElementPrefix,
+                                                    )
+                                                },
                                             ),
-                                            sharedElementPrefix = state.sharedElementPrefix,
                                         )
                                     },
-                                ),
-                            )
-                        },
-                    )
-                },
-                navigationBar = {
-                    PaneNavigationBar(
-                        modifier = Modifier.offset {
-                            bottomNavigationNestedScrollConnection.offset.round()
-                        },
+                                )
+                            }
+                        } else null,
                     )
                 },
                 navigationRail = {

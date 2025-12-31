@@ -21,6 +21,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
@@ -38,19 +41,17 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.notifications.hasNotificationPermissions
-import com.tunjid.heron.scaffold.scaffold.PaneFab
-import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
+import com.tunjid.heron.scaffold.scaffold.PaneExpandableFloatingToolbar
+import com.tunjid.heron.scaffold.scaffold.PaneFloatingToolbarFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
-import com.tunjid.heron.scaffold.scaffold.fabOffset
-import com.tunjid.heron.scaffold.scaffold.isFabExpanded
+import com.tunjid.heron.scaffold.scaffold.floatingToolbarNestedScroll
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.tiling.TilingState
-import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
@@ -122,15 +123,18 @@ class NotificationsBindings(
             val topAppBarNestedScrollConnection =
                 topAppBarNestedScrollConnection()
 
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection()
+            var floatingToolbarExpanded by rememberSaveable { mutableStateOf(true) }
 
             rememberPaneScaffoldState().PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
                     .nestedScroll(topAppBarNestedScrollConnection)
-                    .nestedScroll(bottomNavigationNestedScrollConnection),
+                    .floatingToolbarNestedScroll(
+                        expanded = floatingToolbarExpanded,
+                        onExpand = { floatingToolbarExpanded = true },
+                        onCollapse = { floatingToolbarExpanded = false },
+                    ),
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
@@ -165,36 +169,28 @@ class NotificationsBindings(
                         },
                     )
                 },
-                floatingActionButton = {
-                    PaneFab(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
-                        text = stringResource(CommonStrings.notifications_create_post),
-                        icon = Icons.Rounded.Edit,
-                        expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
-                        onClick = {
-                            viewModel.accept(
-                                Action.Navigate.To(
-                                    composePostDestination(
-                                        type = Post.Create.Timeline,
-                                        sharedElementPrefix = null,
-                                    ),
-                                ),
-                            )
-                        },
-                    )
-                },
-                navigationBar = {
-                    PaneNavigationBar(
-                        modifier = Modifier
-                            .offset {
-                                bottomNavigationNestedScrollConnection.offset.round()
-                            },
+                useFloatingToolbar = true,
+                floatingToolbar = {
+                    PaneExpandableFloatingToolbar(
+                        expanded = floatingToolbarExpanded,
                         onNavItemReselected = {
                             viewModel.accept(Action.Tile(TilingState.Action.Refresh))
                             true
+                        },
+                        fab = {
+                            PaneFloatingToolbarFab(
+                                icon = Icons.Rounded.Edit,
+                                onClick = {
+                                    viewModel.accept(
+                                        Action.Navigate.To(
+                                            composePostDestination(
+                                                type = Post.Create.Timeline,
+                                                sharedElementPrefix = null,
+                                            ),
+                                        ),
+                                    )
+                                },
+                            )
                         },
                     )
                 },

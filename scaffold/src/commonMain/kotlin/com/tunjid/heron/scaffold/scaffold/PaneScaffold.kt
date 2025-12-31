@@ -140,6 +140,8 @@ fun PaneScaffoldState.PaneScaffold(
     floatingActionButton: @Composable PaneScaffoldState.() -> Unit = {},
     navigationBar: @Composable PaneScaffoldState.() -> Unit = {},
     navigationRail: @Composable PaneScaffoldState.() -> Unit = {},
+    useFloatingToolbar: Boolean = false,
+    floatingToolbar: @Composable PaneScaffoldState.() -> Unit = {},
     content: @Composable PaneScaffoldState.(PaddingValues) -> Unit,
 ) {
     PaneNavigationRailScaffold(
@@ -171,10 +173,16 @@ fun PaneScaffoldState.PaneScaffold(
                     topBar()
                 },
                 floatingActionButton = {
-                    floatingActionButton()
+                    if (!useFloatingToolbar) {
+                        floatingActionButton()
+                    }
                 },
                 bottomBar = {
-                    navigationBar()
+                    if (useFloatingToolbar) {
+                        floatingToolbar()
+                    } else {
+                        navigationBar()
+                    }
                 },
                 snackbarHost = {
                     snackBarHost()
