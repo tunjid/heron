@@ -75,18 +75,19 @@ internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry
     repeat(times) { retry ->
         try {
             return@scope Result.success(block()).also { connectivityJob.cancel() }
-        } catch (e: NetworkConnectionException) {
-            lastError = e
-            // TODO: Log this exception when a suitable KMP logging library is found
-            e.printStackTrace()
-        } catch (e: IOException) {
-            lastError = e
-            // TODO: Log this exception when a suitable KMP logging library is found
-            e.printStackTrace()
-        } catch (e: ResponseException) {
-            lastError = e
-            // TODO: Log this exception when a suitable KMP logging library is found
-            e.printStackTrace()
+        } catch (e: Exception) {
+            when (e) {
+                is NetworkConnectionException,
+                is IOException,
+                is ResponseException,
+                -> {
+                    lastError = e
+                    // TODO: Log this exception when a suitable KMP logging library is found
+                    e.printStackTrace()
+                }
+
+                else -> throw e
+            }
         }
         if (retry != times) {
             if (connected) delay(currentDelay)

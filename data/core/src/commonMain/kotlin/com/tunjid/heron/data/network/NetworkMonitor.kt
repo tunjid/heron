@@ -65,8 +65,8 @@ internal class NetworkConnectionException(
     val url: Url,
     cause: Throwable,
 ) : Exception(
-    message = "Network error attempting to reach $url",
-    cause = cause,
+    "Network error attempting to reach $url",
+    cause,
 )
 
 internal expect fun Throwable.isNetworkConnectionError(): Boolean
