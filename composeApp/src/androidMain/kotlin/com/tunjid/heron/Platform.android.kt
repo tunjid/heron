@@ -20,6 +20,7 @@ import android.content.Context
 import android.os.Build
 import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataBindingArgs
+import com.tunjid.heron.data.logging.AndroidLogger
 import com.tunjid.heron.images.imageLoader
 import com.tunjid.heron.media.video.ExoplayerController
 import com.tunjid.heron.scaffold.notifications.AndroidNotifier
@@ -43,6 +44,9 @@ fun createAppState(context: Context): AppState =
         },
         notifier = {
             AndroidNotifier(context)
+        },
+        logger = {
+            AndroidLogger(context)
         },
         videoPlayerController = { appScope ->
             ExoplayerController(

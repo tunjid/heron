@@ -20,6 +20,12 @@ import logcat.LogPriority as SquareLogPriority
 import logcat.asLog as squareAsLog
 import logcat.logcat as squareLogcat
 
+class JvmLogger : Logger {
+    override fun install() {
+        // no-op on JVM
+    }
+}
+
 actual fun Any.logcat(
     priority: LogPriority,
     tag: String?,

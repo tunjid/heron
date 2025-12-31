@@ -22,6 +22,7 @@ import com.tunjid.heron.conversation.di.ConversationBindings
 import com.tunjid.heron.conversation.di.ConversationNavigationBindings
 import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.data.di.DataBindings
+import com.tunjid.heron.data.logging.Logger
 import com.tunjid.heron.di.AppGraph
 import com.tunjid.heron.di.AppNavigationGraph
 import com.tunjid.heron.di.allRouteMatchers
@@ -79,9 +80,12 @@ expect fun getPlatform(): Platform
 fun createAppState(
     imageLoader: () -> ImageLoader,
     notifier: (appScope: CoroutineScope) -> Notifier,
+    logger: () -> Logger,
     videoPlayerController: (appScope: CoroutineScope) -> VideoPlayerController,
     args: (appScope: CoroutineScope) -> DataBindingArgs,
 ): AppState {
+    logger().install()
+
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     val navigationComponent = createGraphFactory<AppNavigationGraph.Factory>().create(

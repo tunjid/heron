@@ -16,6 +16,12 @@
 
 package com.tunjid.heron.data.logging
 
+class IOSLogger : Logger {
+    override fun install() {
+        // no-op on iOS
+    }
+}
+
 actual fun Any.logcat(
     priority: LogPriority,
     tag: String?,

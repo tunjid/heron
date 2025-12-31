@@ -16,14 +16,35 @@
 
 package com.tunjid.heron.data.logging
 
+import android.content.Context
+import logcat.AndroidLogcatLogger
 import logcat.LogPriority as SquareLogPriority
+import logcat.LogcatLogger
 import logcat.asLog as squareAsLog
 import logcat.logcat as squareLogcat
+
+class AndroidLogger(
+    private val context: Context,
+) : Logger {
+
+    override fun install() {
+        val shouldLog = when (context.packageName.split(".").lastOrNull()?.lowercase()) {
+            DEBUG,
+            STAGING,
+                -> true
+            else -> false
+        }
+        if (!LogcatLogger.isInstalled && shouldLog) {
+            LogcatLogger.install()
+            LogcatLogger.loggers += AndroidLogcatLogger(SquareLogPriority.VERBOSE)
+        }
+    }
+}
 
 actual fun Any.logcat(
     priority: LogPriority,
     tag: String?,
-    message: () -> String
+    message: () -> String,
 ) {
     this.squareLogcat(
         priority = when (priority) {
@@ -35,8 +56,11 @@ actual fun Any.logcat(
             LogPriority.ASSERT -> SquareLogPriority.ASSERT
         },
         tag = tag,
-        message = message
+        message = message,
     )
 }
 
 actual fun Throwable.loggableText(): String = squareAsLog()
+
+private const val DEBUG = "debug"
+private const val STAGING = "staging"

@@ -18,6 +18,7 @@ package com.tunjid.heron
 
 import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataBindingArgs
+import com.tunjid.heron.data.logging.IOSLogger
 import com.tunjid.heron.images.imageLoader
 import com.tunjid.heron.media.video.StubVideoPlayerController
 import com.tunjid.heron.scaffold.notifications.NoOpNotifier
@@ -45,6 +46,9 @@ fun createAppState(): AppState =
         imageLoader = ::imageLoader,
         notifier = {
             NoOpNotifier
+        },
+        logger = {
+            IOSLogger()
         },
         videoPlayerController = {
             StubVideoPlayerController

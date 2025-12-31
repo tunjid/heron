@@ -16,6 +16,10 @@
 
 package com.tunjid.heron.data.logging
 
+interface Logger {
+    fun install()
+}
+
 enum class LogPriority {
     VERBOSE,
     DEBUG,
