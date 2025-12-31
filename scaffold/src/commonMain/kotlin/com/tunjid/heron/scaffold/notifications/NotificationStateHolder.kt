@@ -39,6 +39,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapMerge
@@ -133,12 +134,13 @@ class AppNotificationStateHolder(
 private fun Flow<NotificationAction.ToggleUnreadNotificationsMonitor>.monitorUnreadCountMutations(
     notificationsRepository: NotificationsRepository,
 ): Flow<Mutation<NotificationState>> =
-    mapLatestToManyMutations { action ->
-        if (action.monitor) emitAll(
-            notificationsRepository.unreadCount
-                .mapToMutation { copy(unreadCount = it) },
-        )
-    }
+    distinctUntilChanged()
+        .mapLatestToManyMutations { action ->
+            if (action.monitor) emitAll(
+                notificationsRepository.unreadCount
+                    .mapToMutation { copy(unreadCount = it) },
+            )
+        }
 
 private fun Flow<NotificationAction.UpdatePermissions>.updateNotificationPermissions(): Flow<Mutation<NotificationState>> =
     mapToMutation {
