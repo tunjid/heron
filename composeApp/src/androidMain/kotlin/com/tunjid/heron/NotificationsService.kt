@@ -43,6 +43,9 @@ class NotificationsService : FirebaseMessagingService() {
         action.senderDid ?: return
         val recordUri = action.recordUri ?: return
 
+        logcat(LogPriority.DEBUG) {
+            "Received notification for $recordUri. Payload: ${message.data}"
+        }
         appState.onNotificationAction(action)
 
         // await processing completion or timeout to prevent the app from being
