@@ -29,7 +29,7 @@ enum class LogPriority {
     ASSERT,
 }
 
-expect fun Any.logcat(
+expect inline fun Any.logcat(
     priority: LogPriority = LogPriority.DEBUG,
     tag: String? = null,
     message: () -> String,

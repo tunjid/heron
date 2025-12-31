@@ -41,7 +41,7 @@ class AndroidLogger(
     }
 }
 
-actual fun Any.logcat(
+actual inline fun Any.logcat(
     priority: LogPriority,
     tag: String?,
     message: () -> String,
