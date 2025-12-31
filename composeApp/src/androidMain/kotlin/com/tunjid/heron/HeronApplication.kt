@@ -18,6 +18,9 @@ package com.tunjid.heron
 
 import android.app.Application
 import com.tunjid.heron.scaffold.scaffold.AppState
+import logcat.AndroidLogcatLogger
+import logcat.LogPriority as SquareLogPriority
+import logcat.LogcatLogger
 
 class HeronApplication : Application() {
 
@@ -27,6 +30,20 @@ class HeronApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        val shouldLog = when (packageName.split(".").lastOrNull()?.lowercase()) {
+            DEBUG,
+            STAGING,
+                -> true
+            else -> false
+        }
+        if (!LogcatLogger.isInstalled && shouldLog) {
+            LogcatLogger.install()
+            LogcatLogger.loggers += AndroidLogcatLogger(SquareLogPriority.VERBOSE)
+        }
+
         appState = createAppState(this)
     }
 }
+
+private const val DEBUG = "debug"
+private const val STAGING = "staging"

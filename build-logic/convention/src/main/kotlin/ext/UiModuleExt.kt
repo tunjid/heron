@@ -25,6 +25,7 @@ fun org.gradle.api.Project.configureUiModule(
             dependencies {
                 implementation(project(":data:models"))
                 implementation(project(":data:core"))
+                implementation(project(":data:logging"))
                 implementation(project(":scaffold"))
                 implementation(project(":feature:template"))
                 implementation(project(":ui:core"))

@@ -34,6 +34,7 @@ kotlin {
                 implementation(project(":data:models"))
                 implementation(project(":data:database"))
                 implementation(project(":data:lexicons"))
+                implementation(project(":data:logging"))
 
                 implementation(libs.crypto.core)
                 implementation(libs.crypto.random)

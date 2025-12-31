@@ -120,6 +120,7 @@ kotlin {
             implementation(libs.kotlinx.serialization.protobuf)
             implementation(libs.kotlinx.serialization.json)
 
+            implementation(libs.logcat)
             implementation(libs.okio)
         }
         desktopMain.dependencies {
