@@ -18,6 +18,9 @@ package com.tunjid.heron.data.utilities
 
 import androidx.collection.MutableObjectIntMap
 import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.logging.LogPriority
+import com.tunjid.heron.data.logging.logcat
+import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.data.network.NetworkConnectionException
 import com.tunjid.heron.data.network.NetworkMonitor
 import io.ktor.client.plugins.ResponseException
@@ -80,10 +83,11 @@ internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry
                 is NetworkConnectionException,
                 is IOException,
                 is ResponseException,
-                -> {
+                    -> {
                     lastError = e
-                    // TODO: Log this exception when a suitable KMP logging library is found
-                    e.printStackTrace()
+                    logcat(LogPriority.VERBOSE) {
+                        "Network error on ${retry + 1} of $times retries. Cause:\n${e.loggableText()}"
+                    }
                 }
 
                 else -> throw e
@@ -98,7 +102,9 @@ internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry
     }
     // Cancel the connectivity job before returning
     connectivityJob.cancel()
-    // TODO: Be more descriptive with this error
+    logcat(LogPriority.INFO) {
+        "Exponential backoff failed after $times retries. Cause: ${lastError?.loggableText()} "
+    }
     return@scope Result.failure(lastError ?: Exception("There was an error")) // last attempt
 }
 
