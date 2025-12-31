@@ -102,7 +102,7 @@ internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry
     }
     // Cancel the connectivity job before returning
     connectivityJob.cancel()
-    logcat(LogPriority.INFO) {
+    logcat(LogPriority.WARN) {
         "Exponential backoff failed after $times retries. Cause: ${lastError?.loggableText()} "
     }
     return@scope Result.failure(lastError ?: Exception("There was an error")) // last attempt

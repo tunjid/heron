@@ -54,7 +54,7 @@ class NotificationsService : FirebaseMessagingService() {
                 }
             }
         } catch (e: Exception) {
-            logcat(LogPriority.INFO) {
+            logcat(LogPriority.WARN) {
                 "Notification processing timed out or failed for $recordUri. Cause: ${e.loggableText()}"
             }
         } finally {
