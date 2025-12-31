@@ -42,7 +42,7 @@ jobs:
           ./gradlew spotlessCheck \
             bundleRelease \
             -Pheron.versionCode=${{ github.run_number }} \
-            -Pheron.isPlayStore=true
+            -Pheron.isPlayStore=true \
             -Pheron.endpoint="$HERON_ENDPOINT"
 
       - name: Sign AAB

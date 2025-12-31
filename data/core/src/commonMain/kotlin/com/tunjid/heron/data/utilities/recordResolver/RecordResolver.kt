@@ -71,6 +71,9 @@ import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.PopulatedThreadGateEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.logging.LogPriority
+import com.tunjid.heron.data.logging.logcat
+import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.asExternalModel
 import com.tunjid.heron.data.network.models.post
@@ -90,7 +93,6 @@ import com.tunjid.heron.data.utilities.toDistinctUntilChangedFlowOrEmpty
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Named
-import kotlin.uuid.ExperimentalUuidApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -269,7 +271,6 @@ internal class OfflineRecordResolver @Inject constructor(
         }
     }
 
-    @OptIn(ExperimentalUuidApi::class)
     override suspend fun resolve(
         uri: RecordUri,
     ): Result<Record> = savedStateDataSource.inCurrentProfileSession { viewingProfileId ->
@@ -402,6 +403,10 @@ internal class OfflineRecordResolver @Inject constructor(
                     )
                 }
             is UnknownRecordUri -> Result.failure(UnresolvableRecordException(uri))
+        }
+    }?.onFailure {
+        logcat(LogPriority.WARN) {
+            "Failed to resolve $uri. Cause: ${it.loggableText()}"
         }
     } ?: expiredSessionResult()
 

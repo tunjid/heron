@@ -21,6 +21,9 @@ import android.content.Context
 import android.content.Intent
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import com.tunjid.heron.data.logging.LogPriority
+import com.tunjid.heron.data.logging.logcat
+import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.scaffold.notifications.AndroidNotifier.Companion.DISMISSAL_ACTION
 import com.tunjid.heron.scaffold.notifications.AndroidNotifier.Companion.DISMISSAL_INSTANT_EXTRA
 import com.tunjid.heron.scaffold.notifications.NotificationAction
@@ -40,6 +43,9 @@ class NotificationsService : FirebaseMessagingService() {
         action.senderDid ?: return
         val recordUri = action.recordUri ?: return
 
+        logcat(LogPriority.DEBUG) {
+            "Received notification for $recordUri. Payload: ${message.data}"
+        }
         appState.onNotificationAction(action)
 
         // await processing completion or timeout to prevent the app from being
@@ -51,8 +57,9 @@ class NotificationsService : FirebaseMessagingService() {
                 }
             }
         } catch (e: Exception) {
-            // No logging utilities in the app at the moment due to its open source nature.
-            e.printStackTrace()
+            logcat(LogPriority.WARN) {
+                "Notification processing timed out or failed for $recordUri. Cause: ${e.loggableText()}"
+            }
         } finally {
             appState.onNotificationAction(
                 NotificationAction.NotificationProcessedOrDropped(recordUri),
