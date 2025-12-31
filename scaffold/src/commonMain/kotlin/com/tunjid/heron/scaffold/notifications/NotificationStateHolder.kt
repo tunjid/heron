@@ -200,16 +200,14 @@ private fun Flow<NotificationAction.HandleNotification>.handleNotificationMutati
                             result.exceptionOrNull()?.loggableText()
                         }"
                     }
-                    result.isSuccess -> {
-                        notifier.displayNotifications(
-                            notifications = listOf(result.getOrThrow()),
-                        )
-                        emit {
-                            copy(
-                                processedNotificationRecordUris = processedNotificationRecordUris + recordUri,
-                            )
-                        }
-                    }
+                    result.isSuccess -> notifier.displayNotifications(
+                        notifications = listOf(result.getOrThrow()),
+                    )
+                }
+                emit {
+                    copy(
+                        processedNotificationRecordUris = processedNotificationRecordUris + recordUri,
+                    )
                 }
             }
         }
