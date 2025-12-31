@@ -38,12 +38,14 @@ import com.tunjid.heron.data.files.createFileManager
 import com.tunjid.heron.data.network.BlueskyJson
 import com.tunjid.heron.data.network.ConnectivityNetworkMonitor
 import com.tunjid.heron.data.network.KtorNetworkService
+import com.tunjid.heron.data.network.NetworkConnectionException
 import com.tunjid.heron.data.network.NetworkMonitor
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.PersistedSessionManager
 import com.tunjid.heron.data.network.SessionManager
 import com.tunjid.heron.data.network.SuspendingVideoUploadService
 import com.tunjid.heron.data.network.VideoUploadService
+import com.tunjid.heron.data.network.isNetworkConnectionError
 import com.tunjid.heron.data.network.oauth.crypto.platformCryptographyProvider
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.AuthTokenRepository
@@ -82,6 +84,7 @@ import dev.zacsweers.metro.Named
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpCallValidator
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
@@ -166,6 +169,16 @@ class DataBindings(
         }
         install(HttpTimeout) {
             requestTimeoutMillis = 4.seconds.inWholeMilliseconds
+        }
+        install(HttpCallValidator) {
+            handleResponseExceptionWithRequest { throwable, request ->
+                if (throwable.isNetworkConnectionError()) {
+                    throw NetworkConnectionException(
+                        url = request.url,
+                        cause = throwable,
+                    )
+                }
+            }
         }
     }
 

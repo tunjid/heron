@@ -18,6 +18,7 @@ package com.tunjid.heron.data.utilities
 
 import androidx.collection.MutableObjectIntMap
 import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.network.NetworkConnectionException
 import com.tunjid.heron.data.network.NetworkMonitor
 import io.ktor.client.plugins.ResponseException
 import kotlin.jvm.JvmInline
@@ -74,13 +75,17 @@ internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry
     repeat(times) { retry ->
         try {
             return@scope Result.success(block()).also { connectivityJob.cancel() }
+        } catch (e: NetworkConnectionException) {
+            lastError = e
+            // TODO: Log this exception when a suitable KMP logging library is found
+            e.printStackTrace()
         } catch (e: IOException) {
             lastError = e
-            // TODO: Log this exception
+            // TODO: Log this exception when a suitable KMP logging library is found
             e.printStackTrace()
         } catch (e: ResponseException) {
             lastError = e
-            // TODO: Log this exception
+            // TODO: Log this exception when a suitable KMP logging library is found
             e.printStackTrace()
         }
         if (retry != times) {
