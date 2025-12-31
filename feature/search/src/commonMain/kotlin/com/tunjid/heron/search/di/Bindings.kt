@@ -18,13 +18,17 @@ package com.tunjid.heron.search.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -34,6 +38,7 @@ import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneExpandableFloatingToolbar
+import com.tunjid.heron.scaffold.scaffold.PaneFloatingToolbarFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PaneSnackbarHost
@@ -140,6 +145,7 @@ class SearchBindings(
                 topAppBarNestedScrollConnection()
 
             var floatingToolbarExpanded by rememberSaveable { mutableStateOf(true) }
+            val searchBarFocusRequester = remember { FocusRequester() }
 
             rememberPaneScaffoldState().PaneScaffold(
                 modifier = Modifier
@@ -175,6 +181,7 @@ class SearchBindings(
                                         Action.Search.OnSearchQueryConfirmed(isLocalOnly = false),
                                     )
                                 },
+                                focusRequester = searchBarFocusRequester,
                             )
                         },
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
@@ -210,6 +217,16 @@ class SearchBindings(
                 floatingToolbar = {
                     PaneExpandableFloatingToolbar(
                         expanded = floatingToolbarExpanded,
+                        fab = if (state.isQueryEditable) {
+                            {
+                                PaneFloatingToolbarFab(
+                                    icon = Icons.Rounded.Search,
+                                    onClick = {
+                                        searchBarFocusRequester.requestFocus()
+                                    },
+                                )
+                            }
+                        } else null,
                     )
                 },
                 navigationRail = {

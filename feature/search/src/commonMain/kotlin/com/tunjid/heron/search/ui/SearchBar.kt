@@ -37,6 +37,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import heron.feature.search.generated.resources.Res
@@ -49,6 +51,7 @@ internal fun SearchBar(
     searchQuery: String,
     onQueryChanged: (String) -> Unit,
     onQueryConfirmed: () -> Unit,
+    focusRequester: FocusRequester? = null,
 ) {
     Box(
         modifier = Modifier
@@ -59,7 +62,11 @@ internal fun SearchBar(
     ) {
         OutlinedTextField(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .then(
+                    if (focusRequester != null) Modifier.focusRequester(focusRequester)
+                    else Modifier
+                ),
             value = searchQuery,
             onValueChange = {
                 onQueryChanged(it)
