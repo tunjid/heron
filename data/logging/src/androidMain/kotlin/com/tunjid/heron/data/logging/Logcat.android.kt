@@ -31,7 +31,7 @@ class AndroidLogger(
         val shouldLog = when (context.packageName.split(".").lastOrNull()?.lowercase()) {
             DEBUG,
             STAGING,
-                -> true
+            -> true
             else -> false
         }
         if (!LogcatLogger.isInstalled && shouldLog) {

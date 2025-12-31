@@ -26,13 +26,13 @@ enum class LogPriority {
     INFO,
     WARN,
     ERROR,
-    ASSERT
+    ASSERT,
 }
 
 expect fun Any.logcat(
     priority: LogPriority = LogPriority.DEBUG,
     tag: String? = null,
-    message: () -> String
+    message: () -> String,
 )
 
 expect fun Throwable.loggableText(): String

@@ -25,7 +25,7 @@ class IOSLogger : Logger {
 actual fun Any.logcat(
     priority: LogPriority,
     tag: String?,
-    message: () -> String
+    message: () -> String,
 ) {
     // no-op on iOS till a suitable implementation is found
 }

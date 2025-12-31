@@ -29,7 +29,7 @@ class JvmLogger : Logger {
 actual fun Any.logcat(
     priority: LogPriority,
     tag: String?,
-    message: () -> String
+    message: () -> String,
 ) {
     this.squareLogcat(
         priority = when (priority) {
@@ -41,7 +41,7 @@ actual fun Any.logcat(
             LogPriority.ASSERT -> SquareLogPriority.ASSERT
         },
         tag = tag,
-        message = message
+        message = message,
     )
 }
 
