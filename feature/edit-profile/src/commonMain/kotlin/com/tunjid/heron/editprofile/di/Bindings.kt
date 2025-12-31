@@ -169,6 +169,7 @@ class EditProfileBindings(
                         fab = {
                             PaneFloatingToolbarFab(
                                 icon = Icons.Rounded.Save,
+                                enabled = !state.submitting,
                                 onClick = {
                                     if (!state.submitting) {
                                         viewModel.accept(state.saveProfileAction())
