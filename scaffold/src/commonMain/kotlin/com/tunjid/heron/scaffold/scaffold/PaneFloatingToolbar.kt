@@ -200,7 +200,7 @@ private fun NavItemButton(
                         tint = if (selected) {
                             MaterialTheme.colorScheme.onPrimary
                         } else {
-                            MaterialTheme.colorScheme.onSurface
+                            MaterialTheme.colorScheme.onSurfaceVariant
                         },
                     )
                 },
