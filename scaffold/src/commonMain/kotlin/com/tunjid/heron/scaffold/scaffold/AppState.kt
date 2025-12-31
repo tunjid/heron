@@ -32,6 +32,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigationevent.NavigationEvent
@@ -180,6 +181,16 @@ class AppState(
         LaunchedEffect(Unit) {
             authRepository.isSignedIn.collect { signedIn ->
                 isSignedIn = signedIn
+            }
+        }
+        LifecycleResumeEffect(Unit) {
+            notificationStateHolder.accept(
+                NotificationAction.ToggleUnreadNotificationsMonitor(monitor = true),
+            )
+            onPauseOrDispose {
+                notificationStateHolder.accept(
+                    NotificationAction.ToggleUnreadNotificationsMonitor(monitor = false),
+                )
             }
         }
 
