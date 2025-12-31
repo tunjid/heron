@@ -21,6 +21,9 @@ import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.logging.LogPriority
+import com.tunjid.heron.data.logging.logcat
+import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.data.repository.NotificationsQuery
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.scaffold.scaffold.AppState
@@ -28,7 +31,6 @@ import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapLatestToManyMutations
-import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import dev.zacsweers.metro.Inject
@@ -44,7 +46,7 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 
 interface NotificationStateHolder : ActionStateMutator<NotificationAction, StateFlow<NotificationState>>
 
@@ -157,9 +159,15 @@ private fun Flow<NotificationAction.RegisterToken>.registerTokenMutations(
         //  using the app scope and fix in a follow up PR.
         val state = currentState()
         if (state.hasNotificationPermissions && action.token != state.notificationToken) {
-            when (notificationsRepository.registerPushNotificationToken(action.token)) {
+            val tokenRegistrationOutcome = notificationsRepository.registerPushNotificationToken(
+                action.token,
+            )
+            when (tokenRegistrationOutcome) {
                 is Outcome.Failure -> Unit
                 Outcome.Success -> emit { copy(notificationToken = action.token) }
+            }
+            logcat(LogPriority.INFO) {
+                "Push notification token registration outcome: $tokenRegistrationOutcome"
             }
         }
     }
@@ -167,36 +175,42 @@ private fun Flow<NotificationAction.RegisterToken>.registerTokenMutations(
 private fun Flow<NotificationAction.HandleNotification>.handleNotificationMutations(
     notifier: Notifier,
     notificationsRepository: NotificationsRepository,
-): Flow<Mutation<NotificationState>> = flatMapMerge(
-    concurrency = NotificationProcessingMaxConcurrencyLimit,
-) { action ->
-    val senderId = action.senderDid ?: return@flatMapMerge emptyFlow()
-    val recordUri = action.recordUri ?: return@flatMapMerge emptyFlow()
+): Flow<Mutation<NotificationState>> =
+    buffer(NotificationProcessingBufferSize)
+        // Process up NotificationProcessingMaxConcurrencyLimit in parallel
+        .flatMapMerge(concurrency = NotificationProcessingMaxConcurrencyLimit) { action ->
+            val senderId = action.senderDid ?: return@flatMapMerge emptyFlow()
+            val recordUri = action.recordUri ?: return@flatMapMerge emptyFlow()
 
-    flow {
-        val notification = withTimeout(AppState.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS) {
-            notificationsRepository.resolvePushNotification(
-                NotificationsQuery.Push(
-                    senderId = senderId,
-                    recordUri = recordUri,
-                ),
-            )
-                .getOrNull()
+            flow {
+                val result = withTimeoutOrNull(AppState.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS) {
+                    notificationsRepository.resolvePushNotification(
+                        NotificationsQuery.Push(
+                            senderId = senderId,
+                            recordUri = recordUri,
+                        ),
+                    )
+                }
+                when {
+                    result == null -> logcat(LogPriority.WARN) {
+                        "Notification processing timed out for $recordUri"
+                    }
+                    result.isFailure -> logcat(LogPriority.WARN) {
+                        "Failed to resolve notification for $recordUri. Cause: ${
+                            result.exceptionOrNull()?.loggableText()
+                        }"
+                    }
+                    result.isSuccess -> notifier.displayNotifications(
+                        notifications = listOf(result.getOrThrow()),
+                    )
+                }
+                emit {
+                    copy(
+                        processedNotificationRecordUris = processedNotificationRecordUris + recordUri,
+                    )
+                }
+            }
         }
-        emit(recordUri to notification)
-    }
-}
-    .buffer(NotificationProcessingBufferSize)
-    .mapToManyMutations { (recordUri, notification) ->
-        if (notification != null) notifier.displayNotifications(
-            notifications = listOf(notification),
-        )
-        emit {
-            copy(
-                processedNotificationRecordUris = processedNotificationRecordUris + recordUri,
-            )
-        }
-    }
 
 private fun Flow<NotificationAction.NotificationDismissed>.notificationDismissalMutations(
     notificationsRepository: NotificationsRepository,
