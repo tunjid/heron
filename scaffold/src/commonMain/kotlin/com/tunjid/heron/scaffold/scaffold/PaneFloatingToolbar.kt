@@ -18,6 +18,7 @@
 
 package com.tunjid.heron.scaffold.scaffold
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -39,6 +40,7 @@ import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -88,7 +90,9 @@ fun PaneScaffoldState.PaneFloatingToolbar(
             .padding(bottom = 16.dp),
         contentAlignment = Alignment.Center,
     ) {
-        val floatingActionButton: @Composable () -> Unit = if (fab != null && canShowFab) fab else { {} }
+        val floatingActionButton: @Composable () -> Unit = if (fab != null && canShowFab) fab else {
+            {}
+        }
         HorizontalFloatingToolbar(
             expanded = true,
             floatingActionButton = floatingActionButton,
@@ -133,7 +137,9 @@ fun PaneScaffoldState.PaneExpandableFloatingToolbar(
             .padding(bottom = 16.dp),
         contentAlignment = Alignment.Center,
     ) {
-        val floatingActionButton: @Composable () -> Unit = if (fab != null && canShowFab) fab else { {} }
+        val floatingActionButton: @Composable () -> Unit = if (fab != null && canShowFab) fab else {
+            {}
+        }
         HorizontalFloatingToolbar(
             expanded = expanded,
             floatingActionButton = floatingActionButton,
@@ -193,7 +199,7 @@ private fun NavItemButton(
                         tint = if (selected) {
                             MaterialTheme.colorScheme.onPrimary
                         } else {
-                            MaterialTheme.colorScheme.onSurface
+                            MaterialTheme.colorScheme.onSurfaceVariant
                         },
                     )
                 },
@@ -211,11 +217,16 @@ fun PaneScaffoldState.PaneFloatingToolbarFab(
     modifier: Modifier = Modifier,
     icon: ImageVector,
     contentDescription: String? = null,
+    enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
+    val fabAlpha by animateFloatAsState(
+        targetValue = if (enabled) 1f else 0.6f,
+        label = "fabAlpha"
+    )
     FloatingToolbarDefaults.VibrantFloatingActionButton(
-        modifier = modifier,
-        onClick = onClick,
+        modifier = modifier.graphicsLayer { alpha = fabAlpha },
+        onClick = { if (enabled) onClick() },
     ) {
         Icon(
             imageVector = icon,
