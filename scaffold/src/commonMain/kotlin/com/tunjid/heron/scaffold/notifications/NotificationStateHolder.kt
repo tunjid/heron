@@ -86,7 +86,7 @@ sealed class NotificationAction(
 
     data class ToggleUnreadNotificationsMonitor(
         val monitor: Boolean,
-    ) : NotificationAction(key = "NotificationDismissed")
+    ) : NotificationAction(key = "ToggleUnreadNotificationsMonitor")
 
     data object RequestedNotificationPermission :
         NotificationAction(key = "RequestedNotificationPermission")
