@@ -180,7 +180,7 @@ private fun NavItemButton(
             modifier = if (selected) {
                 Modifier
                     .background(
-                        color = MaterialTheme.colorScheme.primary,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                         shape = CircleShape,
                     )
                     .padding(8.dp)
@@ -200,7 +200,7 @@ private fun NavItemButton(
                         tint = if (selected) {
                             MaterialTheme.colorScheme.onPrimary
                         } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
+                            MaterialTheme.colorScheme.onSurface
                         },
                     )
                 },
