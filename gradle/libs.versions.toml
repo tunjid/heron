@@ -40,6 +40,7 @@ ktlint-cli = "1.8.0"
 ktor = "3.3.3"
 lifecycle-android = "2.10.0"
 lifecycle-multiplatform = "2.10.0-alpha07"
+logcat = "0.4"
 metro = "0.8.2"
 navigationEventCompose = "1.0.0-rc02"
 navigationEvent = "1.0.1"
@@ -135,6 +136,7 @@ lifecycle-multiplatform-viewmodel-compose = { group = "org.jetbrains.androidx.li
 lifecycle-multiplatform-viewmodel-navigation3 = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel-navigation3", version.ref = "lifecycle-multiplatform" }
 lifecycle-multiplatform-runtime = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime", version.ref = "lifecycle-multiplatform" }
 lifecycle-multiplatform-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle-multiplatform" }
+logcat = { module = "com.squareup.logcat:logcat", version.ref = "logcat" }
 savedstate-multiplatform-savedstate = { group = "org.jetbrains.androidx.savedstate", name = "savedstate", version.ref = "savedstate-multiplatform" }
 savedstate-multiplatform-compose = { group = "org.jetbrains.androidx.savedstate", name = "savedstate-compose", version.ref = "savedstate-multiplatform" }
 google-devtools-kspPlugin = { group = "com.google.devtools.ksp", name = "symbol-processing-gradle-plugin", version.ref = "ksp" }

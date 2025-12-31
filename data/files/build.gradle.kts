@@ -16,6 +16,7 @@ kotlin {
         commonMain {
             dependencies {
                 api(project(":data:models"))
+                implementation(project(":data:logging"))
 
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.cbor)
