@@ -83,7 +83,7 @@ internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry
                 is NetworkConnectionException,
                 is IOException,
                 is ResponseException,
-                    -> {
+                -> {
                     lastError = e
                     logcat(LogPriority.VERBOSE) {
                         "Network error on ${retry + 1} of $times retries. Cause:\n${e.loggableText()}"
