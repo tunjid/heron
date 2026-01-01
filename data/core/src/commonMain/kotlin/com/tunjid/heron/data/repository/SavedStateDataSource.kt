@@ -30,6 +30,7 @@ import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedState
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
+import com.tunjid.heron.data.utilities.updateOrPutValue
 import com.tunjid.heron.data.utilities.writequeue.FailedWrite
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import dev.zacsweers.metro.Inject
@@ -71,7 +72,7 @@ abstract class SavedState {
         data class Guest(
             val server: Server,
         ) : AuthTokens() {
-            override val authProfileId: ProfileId = Constants.unknownAuthorId
+            override val authProfileId: ProfileId = Constants.guestProfileId
         }
 
         @Serializable
@@ -87,7 +88,7 @@ abstract class SavedState {
                 val state: String,
                 val expiresAt: Instant,
             ) : Pending() {
-                override val authProfileId: ProfileId = Constants.unknownAuthorId
+                override val authProfileId: ProfileId = Constants.pendingProfileId
             }
         }
 
@@ -188,7 +189,31 @@ abstract class SavedState {
         val notifications: Notifications,
         // Need default for migration
         val writes: Writes = Writes(),
-    )
+        val auth: AuthTokens? = null,
+    ) {
+        companion object {
+            val defaultGuestData = ProfileData(
+                preferences = Preferences.BlueSkyGuestPreferences,
+                notifications = Notifications(),
+                auth = AuthTokens.Guest(Server.BlueSky),
+            )
+
+            fun fromTokens(auth: AuthTokens) = ProfileData(
+                // With the exception of guest and pending tokens, other
+                // preferences will eventually become consistent with their PDS.
+                preferences = preferencesForUrl(
+                    when (auth) {
+                        is AuthTokens.Authenticated.Bearer -> auth.authEndpoint
+                        is AuthTokens.Authenticated.DPoP -> auth.pdsUrl
+                        is AuthTokens.Guest -> auth.server.endpoint
+                        is AuthTokens.Pending.DPoP -> auth.endpoint
+                    },
+                ),
+                notifications = Notifications(),
+                auth = auth,
+            )
+        }
+    }
 }
 
 val InitialSavedState: SavedState = VersionedSavedState.Initial
@@ -297,7 +322,33 @@ internal class DataStoreSavedStateDataSource(
     override suspend fun setAuth(
         auth: SavedState.AuthTokens?,
     ) = updateState {
-        copy(auth = auth)
+        copy(
+            activeProfileId = auth?.authProfileId,
+            profileData = when (auth) {
+                null -> when (activeProfileId) {
+                    null -> profileData
+                    else -> profileData.updateOrPutValue(
+                        key = activeProfileId,
+                        update = { copy(auth = null) },
+                    )
+                }
+                is SavedState.AuthTokens.Guest -> profileData.updateOrPutValue(
+                    key = auth.authProfileId,
+                    update = {
+                        copy(
+                            auth = auth,
+                            preferences = preferencesForUrl(auth.server.endpoint),
+                        )
+                    },
+                    put = { SavedState.ProfileData.fromTokens(auth) },
+                )
+                else -> profileData.updateOrPutValue(
+                    key = auth.authProfileId,
+                    update = { copy(auth = auth) },
+                    put = { SavedState.ProfileData.fromTokens(auth) },
+                )
+            },
+        )
     }
 
     override suspend fun updateSignedInProfileData(
@@ -332,16 +383,17 @@ internal class DataStoreSavedStateDataSource(
     }
 }
 
-internal fun SavedStateDataSource.distinctUntilChangedAdultContentAndLabelVisibilityPreferences(): Flow<Pair<Boolean, Map<Label.Value, Label.Visibility>>> = savedState
-    .map {
-        val preferences = it.signedProfilePreferencesOrDefault()
-        val labelVisibilityMap = preferences.contentLabelPreferences.associateBy(
-            keySelector = ContentLabelPreference::label,
-            valueTransform = ContentLabelPreference::visibility,
-        )
-        preferences.allowAdultContent to labelVisibilityMap
-    }
-    .distinctUntilChanged()
+internal fun SavedStateDataSource.distinctUntilChangedAdultContentAndLabelVisibilityPreferences(): Flow<Pair<Boolean, Map<Label.Value, Label.Visibility>>> =
+    savedState
+        .map {
+            val preferences = it.signedProfilePreferencesOrDefault()
+            val labelVisibilityMap = preferences.contentLabelPreferences.associateBy(
+                keySelector = ContentLabelPreference::label,
+                valueTransform = ContentLabelPreference::visibility,
+            )
+            preferences.allowAdultContent to labelVisibilityMap
+        }
+        .distinctUntilChanged()
 
 internal suspend fun SavedStateDataSource.updateSignedInUserNotifications(
     block: SavedState.Notifications.() -> SavedState.Notifications,
