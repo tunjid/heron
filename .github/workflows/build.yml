@@ -47,7 +47,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run tests
-        run: ./gradlew :data:allTests
+        run: ./gradlew testDataLayer
 
   build-android-app:
     runs-on: ubuntu-latest
@@ -77,4 +77,4 @@ jobs:
             -out "composeApp/src/release/google-services.json"
 
       - name: Build App
-        run: ./gradlew testDataLayer
+        run: ./gradlew assembleRelease
