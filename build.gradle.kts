@@ -38,6 +38,12 @@ plugins {
     alias(libs.plugins.burst) apply false
 }
 
+// 1. Register the lifecycle task (Lazy)
+val testDataLayer by tasks.registering {
+    group = "verification"
+    description = "Runs tests for all data modules"
+}
+
 allprojects {
     plugins.apply(rootProject.libs.plugins.spotless.get().pluginId)
     extensions.configure<SpotlessExtension> {
@@ -49,6 +55,17 @@ allprojects {
             )
             targetExclude("**/build/**")
             ktlint(rootProject.libs.ktlint.get().version)
+        }
+    }
+}
+
+subprojects {
+    // Only apply if the project path matches your criteria
+    if (path.startsWith(":data:")) {
+        // We use .configure {} to safely add dependencies to the root task
+        testDataLayer.configure {
+            // "dependsOn" works with strings (lazy) or TaskProviders
+            dependsOn(this@subprojects.tasks.named("test"))
         }
     }
 }

@@ -77,4 +77,4 @@ jobs:
             -out "composeApp/src/release/google-services.json"
 
       - name: Build App
-        run: ./gradlew assembleRelease
+        run: ./gradlew testDataLayer
