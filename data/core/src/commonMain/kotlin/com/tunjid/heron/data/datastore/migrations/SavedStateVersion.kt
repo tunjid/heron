@@ -64,10 +64,11 @@ internal data class VersionedSavedState(
 
     override val signedInProfileData: ProfileData?
         get() = when (val profileId = activeProfileId) {
-            null -> null
-            Constants.unknownAuthorId -> null
-            Constants.pendingProfileId -> null
-            Constants.guestProfileId -> null
+            null,
+            Constants.unknownAuthorId,
+            Constants.pendingProfileId,
+            Constants.guestProfileId,
+            -> null
             else -> profileData[profileId]
         }
 
