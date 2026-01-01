@@ -20,6 +20,45 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew spotlessCheck
 
+  data-tests:
+    runs-on: macos-14
+
+    steps:
+      - name: Skip on PRs
+        if: github.ref != 'refs/heads/main'
+        run: echo "Skipping multiplatform tests on PRs to reduce CI time"
+
+      - name: Checkout repo
+        if: github.ref == 'refs/heads/main'
+        uses: actions/checkout@v5
+
+      - name: Validate Gradle Wrapper
+        if: github.ref == 'refs/heads/main'
+        uses: gradle/wrapper-validation-action@v3
+
+      - name: Setup cache
+        if: github.ref == 'refs/heads/main'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.konan
+          key: ${{ runner.os }}-${{ hashFiles('**/.lock') }}
+
+      - name: Set up java
+        if: github.ref == 'refs/heads/main'
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: 21
+
+      - name: Setup Gradle
+        if: github.ref == 'refs/heads/main'
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run tests
+        if: github.ref == 'refs/heads/main'
+        run: ./gradlew testDataLayer
+
   build-android-app:
     runs-on: ubuntu-latest
     steps:

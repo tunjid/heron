@@ -21,7 +21,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 android {
-    namespace = "com.tunjid.heron.ui.feed"
+    namespace = "com.tunjid.heron.ui.timeline"
 }
 
 kotlin {
@@ -43,6 +43,7 @@ kotlin {
                 implementation(libs.compose.multiplatform.ui.ui)
 
                 implementation(libs.androidx.graphics.shapes)
+                implementation(libs.androidx.collection)
 
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)
