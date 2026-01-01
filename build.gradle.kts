@@ -65,7 +65,7 @@ subprojects {
         // We use .configure {} to safely add dependencies to the root task
         testDataLayer.configure {
             // "dependsOn" works with strings (lazy) or TaskProviders
-            dependsOn(this@subprojects.tasks.named("test"))
+            dependsOn(this@subprojects.tasks.named("allTests"))
         }
     }
 }
