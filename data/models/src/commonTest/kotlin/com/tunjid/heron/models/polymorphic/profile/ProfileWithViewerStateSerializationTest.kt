@@ -5,7 +5,7 @@ import app.cash.burst.burstValues
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.stubProfile
-import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.fakes.sampleProfile
@@ -36,8 +36,8 @@ class ProfileWithViewerStateSerializationTest(
                 blockedBy = false,
                 blocking = null,
                 blockingByList = null,
-                following = GenericUri("at://profile/following/1"),
-                followedBy = GenericUri("at://profile/followedby/2"),
+                following = FollowUri("at://did:example:stub2/${FollowUri.NAMESPACE}/2222222222222"),
+                followedBy = FollowUri("at://did:example:target3/${FollowUri.NAMESPACE}/2222222222223"),
                 commonFollowersCount = 60L,
             ),
         ),

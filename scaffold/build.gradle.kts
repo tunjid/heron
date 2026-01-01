@@ -59,6 +59,7 @@ kotlin {
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.kotlinx.serialization.protobuf)
 
+                implementation(libs.lifecycle.multiplatform.runtime.compose)
                 implementation(libs.lifecycle.multiplatform.viewmodel.navigation3)
 
                 implementation(libs.navigation.event)
