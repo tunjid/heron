@@ -57,14 +57,9 @@ internal class SavedStateVersion2(
                     update = { copy(auth = currentAuth.asAuthTokens()) },
                     put = { SavedState.ProfileData.fromTokens(auth = currentAuth.asAuthTokens()) },
                 )
-                AuthTokensV2.Guest -> profileData + Pair(
-                    Constants.guestProfileId,
-                    SavedState.ProfileData(
-                        preferences = Preferences.BlueSkyGuestPreferences,
-                        notifications = SavedState.Notifications(),
-                    ),
-                )
-                null -> profileData
+                AuthTokensV2.Guest,
+                null,
+                -> profileData
             } + Pair(
                 Constants.guestProfileId,
                 SavedState.ProfileData.defaultGuestData,

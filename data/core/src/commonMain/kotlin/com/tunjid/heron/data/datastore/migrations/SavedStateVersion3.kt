@@ -53,12 +53,10 @@ internal class SavedStateVersion3(
                     update = { copy(auth = currentAuth) },
                     put = { SavedState.ProfileData.fromTokens(auth = currentAuth) },
                 )
-                is SavedState.AuthTokens.Guest -> profileData + Pair(
-                    Constants.guestProfileId,
-                    SavedState.ProfileData.defaultGuestData,
-                )
                 is SavedState.AuthTokens.Pending.DPoP -> profileData
-                null -> profileData
+                is SavedState.AuthTokens.Guest,
+                null,
+                -> profileData
             } + Pair(
                 Constants.guestProfileId,
                 SavedState.ProfileData.defaultGuestData,

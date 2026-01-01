@@ -195,6 +195,7 @@ abstract class SavedState {
             val defaultGuestData = ProfileData(
                 preferences = Preferences.BlueSkyGuestPreferences,
                 notifications = Notifications(),
+                auth = AuthTokens.Guest(Server.BlueSky),
             )
 
             fun fromTokens(auth: AuthTokens) = ProfileData(
