@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.datastore.migrations
 
 import androidx.datastore.core.okio.OkioSerializer
+import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.SavedState
 import kotlinx.serialization.Serializable
@@ -27,7 +28,7 @@ import kotlinx.serialization.protobuf.ProtoNumber
 import okio.BufferedSink
 import okio.BufferedSource
 
-private const val CurrentVersion = 3
+private const val CurrentVersion = 4
 
 /**
  * Defines a method of versioning the proto based saved state.
@@ -53,30 +54,38 @@ internal sealed interface SavedStateVersion {
 internal data class VersionedSavedState(
     @ProtoNumber(1)
     val version: Int,
-    @ProtoNumber(2)
-    override val auth: AuthTokens?,
     @ProtoNumber(3)
     override val navigation: Navigation,
     @ProtoNumber(4)
     val profileData: Map<ProfileId, ProfileData>,
+    @ProtoNumber(5)
+    val activeProfileId: ProfileId?,
 ) : SavedState() {
 
     override val signedInProfileData: ProfileData?
-        get() = auth
-            ?.authProfileId
+        get() = when (val profileId = activeProfileId) {
+            Constants.unknownAuthorId -> null
+            Constants.pendingProfileId -> null
+            Constants.guestProfileId -> null
+            else -> profileData[profileId]
+        }
+
+    override val auth: AuthTokens?
+        get() = activeProfileId
             ?.let(profileData::get)
+            ?.auth
 
     companion object {
         internal val Initial: VersionedSavedState = VersionedSavedState(
             version = CurrentVersion,
-            auth = null,
+            activeProfileId = null,
             navigation = Navigation(activeNav = -1),
             profileData = emptyMap(),
         )
 
         internal val Empty: VersionedSavedState = VersionedSavedState(
             version = CurrentVersion,
-            auth = null,
+            activeProfileId = null,
             navigation = Navigation(activeNav = 0),
             profileData = emptyMap(),
         )
@@ -100,6 +109,7 @@ internal class VersionedSavedStateOkioSerializer(
                 SavedStateVersion1.SnapshotVersion -> decodeFromByteArray<SavedStateVersion1>(data)
                 SavedStateVersion2.SnapshotVersion -> decodeFromByteArray<SavedStateVersion2>(data)
                 SavedStateVersion3.SnapshotVersion -> decodeFromByteArray<SavedStateVersion3>(data)
+                SavedStateVersion4.SnapshotVersion -> decodeFromByteArray<SavedStateVersion4>(data)
                 else -> throw IllegalArgumentException("Unknown saved state version")
             }.toVersionedSavedState(CurrentVersion)
         } catch (e: Exception) {
