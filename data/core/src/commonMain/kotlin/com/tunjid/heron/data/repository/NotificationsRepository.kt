@@ -54,6 +54,7 @@ import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.PopulatedNotificationEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
+import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.network.NetworkMonitor
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.asGenericId
@@ -481,36 +482,34 @@ internal class OfflineNotificationsRepository @Inject constructor(
             )
         }
     }
-
-    private suspend fun notificationsWithAssociatedPosts(
-        queryParams: ListNotificationsQueryParams,
-    ): AtpResponse<Pair<ListNotificationsResponse, List<PostView>>> =
-        networkService.api
-            .listNotifications(queryParams)
-            .map { response ->
-                val chunkedPostViews = coroutineScope {
-                    response.notifications
-                        .mapNotNullTo(
-                            destination = mutableSetOf(),
-                            transform = ListNotificationsNotification::associatedPostUri,
-                        )
-                        .chunked(MaxPostsFetchedPerQuery)
-                        .map { postUris ->
-                            // For every notification with an associated post, the associated post
-                            // must be fetched.
-                            async {
-                                networkService.api
-                                    .getPosts(GetPostsQueryParams(uris = postUris))
-                                    .map(GetPostsResponse::posts)
-                                    // Successful response are required.
-                                    .requireResponse()
-                            }
-                        }
-                }.awaitAll()
-
-                response to chunkedPostViews.flatten()
-            }
 }
+
+private suspend fun BlueskyApi.notificationsWithAssociatedPosts(
+    queryParams: ListNotificationsQueryParams,
+): AtpResponse<Pair<ListNotificationsResponse, List<PostView>>> =
+    listNotifications(queryParams)
+        .map { response ->
+            val chunkedPostViews = coroutineScope {
+                response.notifications
+                    .mapNotNullTo(
+                        destination = mutableSetOf(),
+                        transform = ListNotificationsNotification::associatedPostUri,
+                    )
+                    .chunked(MaxPostsFetchedPerQuery)
+                    .map { postUris ->
+                        // For every notification with an associated post, the associated post
+                        // must be fetched.
+                        async {
+                            getPosts(GetPostsQueryParams(uris = postUris))
+                                .map(GetPostsResponse::posts)
+                                // Successful response are required.
+                                .requireResponse()
+                        }
+                    }
+            }.awaitAll()
+
+            response to chunkedPostViews.flatten()
+        }
 
 private fun Post.isReply(
     signedInProfileId: ProfileId?,
