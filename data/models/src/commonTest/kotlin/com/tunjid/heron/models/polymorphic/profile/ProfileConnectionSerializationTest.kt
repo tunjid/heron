@@ -19,12 +19,12 @@ class ProfileConnectionSerializationTest(
         Profile.Connection.Follow(
             signedInProfileId = ProfileId("did:example:me"),
             profileId = ProfileId("did:example:target1"),
-            followedBy = FollowUri("at://did:example:target3/${FollowUri.NAMESPACE}/2222222222222"),
+            followedBy = FollowUri("at://did:example:target1/${FollowUri.NAMESPACE}/2222222222222"),
         ),
         Profile.Connection.Unfollow(
             signedInProfileId = ProfileId("did:example:me"),
             profileId = ProfileId("did:example:target2"),
-            followedBy = FollowUri("at://did:example:target3/${FollowUri.NAMESPACE}/2222222222223"),
+            followedBy = FollowUri("at://did:example:target2/${FollowUri.NAMESPACE}/2222222222223"),
             followUri = FollowUri("at://did:example:me/${FollowUri.NAMESPACE}/2222222222224"),
         ),
     ),
