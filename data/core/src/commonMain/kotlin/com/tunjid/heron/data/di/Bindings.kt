@@ -80,8 +80,8 @@ import dev.whyoleg.cryptography.CryptographyProviderApi
 import dev.whyoleg.cryptography.CryptographySystem
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
-import dev.zacsweers.metro.Named
 import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.Qualifier
 import dev.zacsweers.metro.SingleIn
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpCallValidator
@@ -93,6 +93,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.protobuf.ProtoBuf
 import okio.FileSystem
 import okio.Path
+
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+annotation class AppCoroutineScope
 
 class DataBindingArgs(
     val appScope: CoroutineScope,
@@ -107,7 +111,7 @@ class DataBindings(
     private val args: DataBindingArgs,
 ) {
 
-    @Named("AppScope")
+    @AppCoroutineScope
     @SingleIn(AppScope::class)
     @Provides
     fun provideAppScope(): CoroutineScope = args.appScope

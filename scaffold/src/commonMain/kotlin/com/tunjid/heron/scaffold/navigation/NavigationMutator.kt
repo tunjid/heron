@@ -36,6 +36,7 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.recordKey
+import com.tunjid.heron.data.di.AppCoroutineScope
 import com.tunjid.heron.data.repository.EmptySavedState
 import com.tunjid.heron.data.repository.InitialSavedState
 import com.tunjid.heron.data.repository.SavedState
@@ -63,7 +64,6 @@ import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.routeQuery
 import com.tunjid.treenav.strings.routeString
 import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.Named
 import heron.scaffold.generated.resources.Res
 import heron.scaffold.generated.resources.auth
 import heron.scaffold.generated.resources.home
@@ -411,7 +411,8 @@ interface NavigationAction {
 
 @Inject
 class PersistedNavigationStateHolder(
-    @Named("AppScope") appScope: CoroutineScope,
+    @AppCoroutineScope
+    appScope: CoroutineScope,
     savedStateDataSource: SavedStateDataSource,
     routeParser: RouteParser,
 ) : NavigationStateHolder,

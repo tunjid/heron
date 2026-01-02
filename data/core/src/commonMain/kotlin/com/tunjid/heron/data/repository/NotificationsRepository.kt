@@ -54,6 +54,7 @@ import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.PopulatedNotificationEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
+import com.tunjid.heron.data.di.AppCoroutineScope
 import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.network.NetworkMonitor
 import com.tunjid.heron.data.network.NetworkService
@@ -68,7 +69,6 @@ import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.toOutcome
 import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.Named
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.HttpTimeout
@@ -138,7 +138,8 @@ interface NotificationsRepository {
 }
 
 internal class OfflineNotificationsRepository @Inject constructor(
-    @Named("AppScope") appScope: CoroutineScope,
+    @AppCoroutineScope
+    appScope: CoroutineScope,
     private val postDao: PostDao,
     private val profileDao: ProfileDao,
     private val notificationsDao: NotificationsDao,

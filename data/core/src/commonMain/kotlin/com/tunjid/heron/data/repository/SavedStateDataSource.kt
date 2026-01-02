@@ -30,11 +30,11 @@ import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedState
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
+import com.tunjid.heron.data.di.AppCoroutineScope
 import com.tunjid.heron.data.utilities.updateOrPutValue
 import com.tunjid.heron.data.utilities.writequeue.FailedWrite
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.Named
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -294,8 +294,9 @@ sealed class SavedStateDataSource {
 internal class DataStoreSavedStateDataSource(
     path: Path,
     fileSystem: FileSystem,
-    @Named("AppScope") appScope: CoroutineScope,
     protoBuf: ProtoBuf,
+    @AppCoroutineScope
+    appScope: CoroutineScope,
 ) : SavedStateDataSource() {
 
     private val dataStore: DataStore<VersionedSavedState> = DataStoreFactory.create(
