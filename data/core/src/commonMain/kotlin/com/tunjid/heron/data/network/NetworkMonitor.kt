@@ -61,7 +61,7 @@ internal class ConnectivityNetworkMonitor @Inject constructor(
         )
 }
 
-internal class NetworkConnectionException(
+class NetworkConnectionException(
     val url: Url,
     cause: Throwable,
 ) : Exception(
