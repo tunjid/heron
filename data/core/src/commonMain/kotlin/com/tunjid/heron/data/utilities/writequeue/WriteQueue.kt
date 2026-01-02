@@ -31,6 +31,7 @@ import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.repository.onEachSignedInProfile
 import com.tunjid.heron.data.repository.singleAuthorizedSessionFlow
 import dev.zacsweers.metro.Inject
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Dispatchers
@@ -182,7 +183,14 @@ internal class PersistedWriteQueue @Inject constructor(
                     val shouldEmit = concurrentWriteMutex.withLock {
                         processingWriteIds.add(writable.queueId)
                     }
-                    if (shouldEmit) emit(writable)
+                    if (shouldEmit) try {
+                        emit(writable)
+                    } catch (e: CancellationException) {
+                        concurrentWriteMutex.withLock {
+                            processingWriteIds.remove(writable.queueId)
+                        }
+                        throw e
+                    }
                 }
             }
             .buffer()
