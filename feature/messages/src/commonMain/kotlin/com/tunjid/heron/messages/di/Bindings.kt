@@ -16,11 +16,30 @@
 
 package com.tunjid.heron.messages.di
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandIn
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ForwardToInbox
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -32,14 +51,18 @@ import com.tunjid.heron.messages.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.profileDestination
+import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
+import com.tunjid.heron.scaffold.scaffold.fabOffset
+import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
+import com.tunjid.heron.ui.SearchBar
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
@@ -56,6 +79,9 @@ import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
+import heron.feature.messages.generated.resources.Res
+import heron.feature.messages.generated.resources.write_new_dm
+import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/messages"
 
@@ -112,6 +138,8 @@ class MessagesBindings(
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection()
 
+            val searchFocusRequester = remember { FocusRequester() }
+
             rememberPaneScaffoldState().PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
@@ -128,6 +156,29 @@ class MessagesBindings(
                         modifier = Modifier.offset {
                             topAppBarNestedScrollConnection.offset.round()
                         },
+                        title = {
+                            val keyboardController = LocalSoftwareKeyboardController.current
+                            AnimatedVisibility(
+                                visible = state.isSearching,
+                                enter = SearchbarEnterAnimation,
+                                exit = SearchbarExitAnimation,
+                            ) {
+                                SearchBar(
+                                    searchQuery = state.searchQuery,
+                                    focusRequester = searchFocusRequester,
+                                    onQueryChanged = { query ->
+                                        viewModel.accept(Action.SearchQueryChanged(query))
+                                    },
+                                    onQueryConfirmed = {
+                                        viewModel.accept(Action.SearchQueryChanged(query = ""))
+                                        keyboardController?.hide()
+                                    },
+                                )
+                                LaunchedEffect(Unit) {
+                                    searchFocusRequester.requestFocus()
+                                }
+                            }
+                        },
                         signedInProfile = state.signedInProfile,
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         onSignedInProfileClicked = { profile, sharedElementKey ->
@@ -140,6 +191,20 @@ class MessagesBindings(
                                     ),
                                 ),
                             )
+                        },
+                    )
+                },
+                floatingActionButton = {
+                    PaneFab(
+                        modifier = Modifier
+                            .offset {
+                                fabOffset(bottomNavigationNestedScrollConnection.offset)
+                            },
+                        text = stringResource(Res.string.write_new_dm),
+                        icon = Icons.AutoMirrored.Rounded.ForwardToInbox,
+                        expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
+                        onClick = {
+                            viewModel.accept(Action.SetIsSearching(isSearching = true))
                         },
                     )
                 },
@@ -159,9 +224,27 @@ class MessagesBindings(
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
+                        modifier = Modifier
+                            .imePadding(),
                     )
                 },
             )
+
+            val imePadding = WindowInsets.ime.asPaddingValues()
+            val navBarPadding = WindowInsets.navigationBars.asPaddingValues()
+            val imeShowing by remember {
+                derivedStateOf {
+                    imePadding.calculateBottomPadding() > navBarPadding.calculateBottomPadding()
+                }
+            }
+            LaunchedEffect(imeShowing) {
+                if (imeShowing) return@LaunchedEffect
+                searchFocusRequester.freeFocus()
+                viewModel.accept(Action.SetIsSearching(isSearching = false))
+            }
         },
     )
 }
+
+private val SearchbarEnterAnimation = fadeIn() + slideInVertically()
+private val SearchbarExitAnimation = fadeOut() + slideOutVertically()

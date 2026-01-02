@@ -16,9 +16,10 @@
 
 package com.tunjid.heron.messages
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -51,6 +52,7 @@ import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.messages.ui.ConversationSearchResults
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
@@ -77,39 +79,57 @@ internal fun MessagesScreen(
     val listState = rememberLazyListState()
     val items by rememberUpdatedState(state.tiledItems)
 
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize(),
-        contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
-        ),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+    Box(
+        modifier = modifier,
     ) {
-        items(
-            items = items,
-            key = { it.id.id },
-            itemContent = { conversation ->
-                Conversation(
-                    modifier = Modifier
-                        .animateItem(),
-                    paneScaffoldState = paneScaffoldState,
-                    signedInProfileId = state.signedInProfile?.did,
-                    conversation = conversation,
-                    onConversationClicked = {
-                        actions(
-                            Action.Navigate.To(
-                                conversationDestination(
-                                    id = conversation.id,
-                                    members = conversation.members,
-                                    sharedElementPrefix = conversation.id.id,
-                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+        LazyColumn(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth(),
+            contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
+                top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+            ),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+        ) {
+            items(
+                items = items,
+                key = { it.id.id },
+                itemContent = { conversation ->
+                    Conversation(
+                        modifier = Modifier
+                            .animateItem(),
+                        paneScaffoldState = paneScaffoldState,
+                        signedInProfileId = state.signedInProfile?.did,
+                        conversation = conversation,
+                        onConversationClicked = {
+                            actions(
+                                Action.Navigate.To(
+                                    conversationDestination(
+                                        id = conversation.id,
+                                        members = conversation.members,
+                                        sharedElementPrefix = conversation.id.id,
+                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                    ),
                                 ),
-                            ),
-                        )
-                    },
-                )
-            },
-        )
+                            )
+                        },
+                    )
+                },
+            )
+        }
+        AnimatedVisibility(
+            visible = state.isSearching,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(
+                    horizontal = 16.dp,
+                ),
+        ) {
+            ConversationSearchResults(
+                paneScaffoldState = paneScaffoldState,
+                autoCompletedProfiles = state.autoCompletedProfiles,
+            )
+        }
     }
 
     listState.PivotedTilingEffect(
@@ -168,7 +188,6 @@ fun Conversation(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ConversationMembers(
     paneScaffoldState: PaneScaffoldState,

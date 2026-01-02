@@ -18,8 +18,12 @@ package com.tunjid.heron.messages
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Conversation
+import com.tunjid.heron.data.core.models.Cursor
+import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
+import com.tunjid.heron.data.repository.SearchQuery
+import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -36,11 +40,22 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.launch
 
 internal typealias MessagesStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -56,6 +71,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualMessagesViewModel(
     authRepository: AuthRepository,
     messagesRepository: MessageRepository,
+    searchRepository: SearchRepository,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
@@ -79,6 +95,10 @@ class ActualMessagesViewModel(
                     is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
+                    )
+                    is Action.SetIsSearching -> action.flow.setIsSearchingMutations()
+                    is Action.SearchQueryChanged -> action.flow.searchQueryChangeMutations(
+                        searchRepository = searchRepository,
                     )
 
                     is Action.Tile ->
@@ -110,3 +130,47 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
     mapToMutation { action ->
         copy(messages = messages - action.message)
     }
+
+private fun Flow<Action.SetIsSearching>.setIsSearchingMutations(): Flow<Mutation<State>> =
+    mapToMutation { copy(isSearching = it.isSearching) }
+
+private fun Flow<Action.SearchQueryChanged>.searchQueryChangeMutations(
+    searchRepository: SearchRepository,
+): Flow<Mutation<State>> = channelFlow {
+    val sharedActions = shareIn(
+        scope = this,
+        started = SharingStarted.WhileSubscribed(),
+        replay = 1,
+    )
+    launch {
+        sharedActions.collectLatest {
+            send { copy(searchQuery = it.query) }
+        }
+    }
+    launch {
+        sharedActions
+            .debounce {
+                if (it.query.isBlank()) 0.milliseconds
+                else 300.milliseconds
+            }
+            .flatMapLatest { action ->
+                if (action.query.isBlank()) flowOf(emptyList())
+                else searchRepository.autoCompleteProfileSearch(
+                    query = SearchQuery.OfProfiles(
+                        query = action.query,
+                        isLocalOnly = false,
+                        data = DMSearchData,
+                    ),
+                    cursor = Cursor.Initial,
+                )
+            }.collect {
+                send { copy(autoCompletedProfiles = it) }
+            }
+    }
+}
+
+private val DMSearchData = CursorQuery.Data(
+    page = 0,
+    cursorAnchor = Clock.System.now(),
+    limit = 30,
+)

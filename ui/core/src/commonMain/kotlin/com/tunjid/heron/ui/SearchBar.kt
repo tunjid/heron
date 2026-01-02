@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.search.ui
+package com.tunjid.heron.ui
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -37,16 +37,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import heron.feature.search.generated.resources.Res
-import heron.feature.search.generated.resources.clear_search
-import heron.feature.search.generated.resources.search
+import heron.ui.core.generated.resources.Res
+import heron.ui.core.generated.resources.clear_search
+import heron.ui.core.generated.resources.search
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-internal fun SearchBar(
+fun SearchBar(
     searchQuery: String,
+    focusRequester: FocusRequester? = null,
     onQueryChanged: (String) -> Unit,
     onQueryConfirmed: () -> Unit,
 ) {
@@ -58,7 +61,10 @@ internal fun SearchBar(
             .fillMaxWidth(),
     ) {
         OutlinedTextField(
-            modifier = Modifier
+            modifier = when (focusRequester) {
+                null -> Modifier
+                else -> Modifier.focusRequester(focusRequester)
+            }
                 .fillMaxWidth(),
             value = searchQuery,
             onValueChange = {
