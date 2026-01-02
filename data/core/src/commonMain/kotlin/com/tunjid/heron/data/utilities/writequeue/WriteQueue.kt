@@ -31,13 +31,12 @@ import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.repository.onEachSignedInProfile
 import com.tunjid.heron.data.repository.singleAuthorizedSessionFlow
 import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.Named
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
@@ -50,7 +49,6 @@ import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.transform
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -136,8 +134,6 @@ internal class SnapshotWriteQueue @Inject constructor(
 }
 
 internal class PersistedWriteQueue @Inject constructor(
-    @Named("AppScope")
-    private val appScope: CoroutineScope,
     override val postRepository: PostRepository,
     override val profileRepository: ProfileRepository,
     override val messageRepository: MessageRepository,
@@ -279,17 +275,10 @@ internal class PersistedWriteQueue @Inject constructor(
 
     private suspend fun removeFromConcurrentProcessingQueue(
         writable: Writable,
-    ) = try {
+    ) = withContext(NonCancellable) {
         concurrentWriteMutex.withLock {
             processingWriteIds.remove(writable.queueId)
         }
-    } catch (e: CancellationException) {
-        appScope.launch {
-            concurrentWriteMutex.withLock {
-                processingWriteIds.remove(writable.queueId)
-            }
-        }
-        throw e
     }
 }
 
