@@ -18,7 +18,6 @@ package com.tunjid.heron.notifications
 
 import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -250,7 +249,6 @@ internal fun NotificationsScreen(
                 items = items,
                 key = AggregatedNotification::id,
                 itemContent = { item ->
-                    item.notification is Notification.PostAssociated
                     Box(
                         modifier = Modifier
                             .background(
