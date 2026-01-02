@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.timeline.utilities
 
+import androidx.collection.FloatFloatPair
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialShapes
@@ -28,7 +29,6 @@ import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.CornerRounding
 import androidx.graphics.shapes.RoundedPolygon
-import androidx.graphics.shapes.TransformResult
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Labeler
@@ -217,5 +217,5 @@ internal val BlueskyClouds =
 
 private fun RoundedPolygon.transformed(matrix: Matrix): RoundedPolygon = transformed { x, y ->
     val transformedPoint = matrix.map(Offset(x, y))
-    TransformResult(transformedPoint.x, transformedPoint.y)
+    FloatFloatPair(transformedPoint.x, transformedPoint.y)
 }

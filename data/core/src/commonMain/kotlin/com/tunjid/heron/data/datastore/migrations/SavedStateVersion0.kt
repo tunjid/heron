@@ -16,15 +16,18 @@
 
 package com.tunjid.heron.data.datastore.migrations
 
+import com.tunjid.heron.data.core.models.Constants
+import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.SavedState
+import com.tunjid.heron.data.repository.SavedState.AuthTokens.DidDoc
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
 
 @Serializable
 internal class SavedStateVersion0(
     @ProtoNumber(1)
-    private val auth: SavedState.AuthTokens?,
+    private val auth: AuthTokensV0?,
     @ProtoNumber(2)
     private val navigation: SavedState.Navigation,
     @ProtoNumber(3)
@@ -36,12 +39,38 @@ internal class SavedStateVersion0(
     ): VersionedSavedState =
         VersionedSavedState(
             version = currentVersion,
-            auth = auth,
             navigation = navigation,
-            profileData = profileData.mapKeys { (id) -> ProfileId(id) },
+            profileData = profileData.entries.associate { (profileId, profileData) ->
+                ProfileId(profileId) to when (auth?.authProfileId?.id) {
+                    profileId -> profileData.copy(auth = auth.asBearerToken())
+                    else -> profileData
+                }
+            },
+            activeProfileId = when (val authProfileId = auth?.authProfileId) {
+                null -> null
+                Constants.unknownAuthorId -> Constants.guestProfileId
+                else -> authProfileId
+            },
         )
+
+    @Serializable
+    data class AuthTokensV0(
+        val authProfileId: ProfileId,
+        val auth: String,
+        val refresh: String,
+        val didDoc: DidDoc = DidDoc(),
+    )
 
     companion object {
         const val SnapshotVersion = Int.MIN_VALUE
+
+        private fun AuthTokensV0.asBearerToken() =
+            SavedState.AuthTokens.Authenticated.Bearer(
+                authProfileId = authProfileId,
+                auth = auth,
+                refresh = refresh,
+                didDoc = didDoc,
+                authEndpoint = Server.BlueSky.endpoint,
+            )
     }
 }

@@ -16,8 +16,10 @@
 
 package com.tunjid.heron.data.datastore.migrations
 
+import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.SavedState
+import com.tunjid.heron.data.utilities.updateOrPutValue
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
 
@@ -39,9 +41,33 @@ internal class SavedStateVersion3(
     ): VersionedSavedState =
         VersionedSavedState(
             version = currentVersion,
-            auth = auth,
             navigation = navigation,
-            profileData = profileData,
+            profileData = when (val currentAuth = auth) {
+                is SavedState.AuthTokens.Authenticated.Bearer -> profileData.updateOrPutValue(
+                    key = currentAuth.authProfileId,
+                    update = { copy(auth = currentAuth) },
+                    put = { SavedState.ProfileData.fromTokens(auth = currentAuth) },
+                )
+                is SavedState.AuthTokens.Authenticated.DPoP -> profileData.updateOrPutValue(
+                    key = currentAuth.authProfileId,
+                    update = { copy(auth = currentAuth) },
+                    put = { SavedState.ProfileData.fromTokens(auth = currentAuth) },
+                )
+                is SavedState.AuthTokens.Pending.DPoP -> profileData
+                is SavedState.AuthTokens.Guest,
+                null,
+                -> profileData
+            } + Pair(
+                Constants.guestProfileId,
+                SavedState.ProfileData.defaultGuestData,
+            ),
+            activeProfileId = when (val currentAuth = auth) {
+                is SavedState.AuthTokens.Authenticated.Bearer -> currentAuth.authProfileId
+                is SavedState.AuthTokens.Authenticated.DPoP -> currentAuth.authProfileId
+                is SavedState.AuthTokens.Guest -> Constants.guestProfileId
+                is SavedState.AuthTokens.Pending.DPoP -> null
+                null -> null
+            },
         )
 
     companion object {
