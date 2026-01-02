@@ -31,9 +31,11 @@ import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.repository.onEachSignedInProfile
 import com.tunjid.heron.data.repository.singleAuthorizedSessionFlow
 import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.Named
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.TimeoutCancellationException
@@ -48,6 +50,7 @@ import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.transform
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -133,6 +136,8 @@ internal class SnapshotWriteQueue @Inject constructor(
 }
 
 internal class PersistedWriteQueue @Inject constructor(
+    @Named("AppScope")
+    private val appScope: CoroutineScope,
     override val postRepository: PostRepository,
     override val profileRepository: ProfileRepository,
     override val messageRepository: MessageRepository,
@@ -195,15 +200,12 @@ internal class PersistedWriteQueue @Inject constructor(
         writes: List<Writable>,
     ) {
         for (writable in writes.asReversed()) {
+            var inserted = false
             try {
-                val shouldEmit = concurrentWriteMutex.withLock {
-                    processingWriteIds.add(writable.queueId)
-                }
-                if (shouldEmit) emit(writable)
+                inserted = maybeInsertIntoConcurrentProcessingQueue(writable)
+                if (inserted) emit(writable)
             } catch (e: CancellationException) {
-                concurrentWriteMutex.withLock {
-                    processingWriteIds.remove(writable.queueId)
-                }
+                if (inserted) removeFromConcurrentProcessingQueue(writable)
                 throw e
             }
         }
@@ -226,49 +228,68 @@ internal class PersistedWriteQueue @Inject constructor(
     private suspend fun onWriteOutcome(
         outcome: Outcome,
         writable: Writable,
-    ) = concurrentWriteMutex.withLock {
-        try {
-            savedStateDataSource.updateWrites {
-                val failure = when (outcome) {
-                    is Outcome.Failure -> outcome.exception
-                    else -> null
-                }
-                val shouldTryAgain = when (failure) {
-                    is NetworkConnectionException,
-                    is TimeoutCancellationException,
-                    -> true
-                    else -> false
-                }
-                copy(
-                    failedWrites = when {
-                        failure != null && !shouldTryAgain ->
-                            failedWrites
-                                .plus(
-                                    FailedWrite(
-                                        writable = writable,
-                                        failedAt = Clock.System.now(),
-                                        reason = when (failure) {
-                                            is IOException -> FailedWrite.Reason.IO
-                                            else -> null
-                                        },
-                                    ),
-                                )
-                                .distinctBy { it.writable.queueId }
-                                .takeLast(MaximumFailedWrites)
-                        else -> failedWrites
-                    },
-                    pendingWrites = when {
-                        shouldTryAgain -> pendingWrites
-                        else ->
-                            pendingWrites
-                                .filter { it.queueId != writable.queueId }
-                                .take(MaximumPendingWrites)
-                    },
-                )
+    ) = try {
+        savedStateDataSource.updateWrites {
+            val failure = when (outcome) {
+                is Outcome.Failure -> outcome.exception
+                else -> null
             }
-        } finally {
+            val shouldTryAgain = when (failure) {
+                is NetworkConnectionException,
+                is TimeoutCancellationException,
+                -> true
+                else -> false
+            }
+            copy(
+                failedWrites = when {
+                    failure != null && !shouldTryAgain ->
+                        failedWrites
+                            .plus(
+                                FailedWrite(
+                                    writable = writable,
+                                    failedAt = Clock.System.now(),
+                                    reason = when (failure) {
+                                        is IOException -> FailedWrite.Reason.IO
+                                        else -> null
+                                    },
+                                ),
+                            )
+                            .distinctBy { it.writable.queueId }
+                            .takeLast(MaximumFailedWrites)
+                    else -> failedWrites
+                },
+                pendingWrites = when {
+                    shouldTryAgain -> pendingWrites
+                    else ->
+                        pendingWrites
+                            .filter { it.queueId != writable.queueId }
+                            .take(MaximumPendingWrites)
+                },
+            )
+        }
+    } finally {
+        removeFromConcurrentProcessingQueue(writable)
+    }
+
+    private suspend fun maybeInsertIntoConcurrentProcessingQueue(
+        writable: Writable,
+    ) = concurrentWriteMutex.withLock {
+        processingWriteIds.add(writable.queueId)
+    }
+
+    private suspend fun removeFromConcurrentProcessingQueue(
+        writable: Writable,
+    ) = try {
+        concurrentWriteMutex.withLock {
             processingWriteIds.remove(writable.queueId)
         }
+    } catch (e: CancellationException) {
+        appScope.launch {
+            concurrentWriteMutex.withLock {
+                processingWriteIds.remove(writable.queueId)
+            }
+        }
+        throw e
     }
 }
 
