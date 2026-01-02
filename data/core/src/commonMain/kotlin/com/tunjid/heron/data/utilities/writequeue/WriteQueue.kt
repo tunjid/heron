@@ -228,49 +228,52 @@ internal class PersistedWriteQueue @Inject constructor(
     private suspend fun onWriteOutcome(
         outcome: Outcome,
         writable: Writable,
-    ) = try {
-        savedStateDataSource.updateWrites {
-            val failure = when (outcome) {
-                is Outcome.Failure -> outcome.exception
-                else -> null
-            }
-            val shouldTryAgain = when (failure) {
-                is NetworkConnectionException,
-                is TimeoutCancellationException,
-                -> true
-                else -> false
-            }
-            copy(
-                failedWrites = when {
-                    failure != null && !shouldTryAgain ->
-                        failedWrites
-                            .plus(
-                                FailedWrite(
-                                    writable = writable,
-                                    failedAt = Clock.System.now(),
-                                    reason = when (failure) {
-                                        is IOException -> FailedWrite.Reason.IO
-                                        else -> null
-                                    },
-                                ),
-                            )
-                            .distinctBy { it.writable.queueId }
-                            .takeLast(MaximumFailedWrites)
-                    else -> failedWrites
-                },
-                pendingWrites = when {
-                    shouldTryAgain ->
-                        pendingWrites
-                            .filter { it.queueId != writable.queueId }
-                            .plus(writable)
-                    else ->
-                        pendingWrites
-                            .filter { it.queueId != writable.queueId }
-                },
-            )
+    ) {
+        val failure = when (outcome) {
+            is Outcome.Failure -> outcome.exception
+            else -> null
         }
-    } finally {
-        removeFromConcurrentProcessingQueue(writable)
+        val shouldTryAgain = when (failure) {
+            is NetworkConnectionException,
+            is TimeoutCancellationException,
+            -> true
+            else -> false
+        }
+
+        if (shouldTryAgain) {
+            removeFromConcurrentProcessingQueue(writable)
+        }
+
+        try {
+            savedStateDataSource.updateWrites {
+                copy(
+                    failedWrites = when {
+                        failure != null && !shouldTryAgain ->
+                            failedWrites
+                                .plus(
+                                    FailedWrite(
+                                        writable = writable,
+                                        failedAt = Clock.System.now(),
+                                        reason = when (failure) {
+                                            is IOException -> FailedWrite.Reason.IO
+                                            else -> null
+                                        },
+                                    ),
+                                )
+                                .distinctBy { it.writable.queueId }
+                                .takeLast(MaximumFailedWrites)
+                        else -> failedWrites
+                    },
+                    pendingWrites = pendingWrites
+                        .filter { it.queueId != writable.queueId }
+                        .let { writes -> if (shouldTryAgain) writes + writable else writes },
+                )
+            }
+        } finally {
+            if (!shouldTryAgain) {
+                removeFromConcurrentProcessingQueue(writable)
+            }
+        }
     }
 
     private suspend fun maybeInsertIntoConcurrentProcessingQueue(
