@@ -38,6 +38,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChangedBy
@@ -179,67 +180,33 @@ internal class PersistedWriteQueue @Inject constructor(
     override suspend fun drain() = savedStateDataSource.onEachSignedInProfile {
         savedStateDataSource.signedInProfileWrites()
             .transform { writes ->
-                for (writable in writes.asReversed()) {
-                    try {
-                        val shouldEmit = concurrentWriteMutex.withLock {
-                            processingWriteIds.add(writable.queueId)
-                        }
-                        if (shouldEmit) emit(writable)
-                    } catch (e: CancellationException) {
-                        concurrentWriteMutex.withLock {
-                            processingWriteIds.remove(writable.queueId)
-                        }
-                        throw e
-                    }
-                }
+                filterAndRecordNewWrites(writes)
             }
             .buffer()
             .flatMapMerge(concurrency = MaxConcurrentWrites) { writable ->
                 concurrentWrite(writable)
             }
             .collect { (writable, outcome) ->
+                onWriteOutcome(outcome, writable)
+            }
+    }
+
+    private suspend fun FlowCollector<Writable>.filterAndRecordNewWrites(
+        writes: List<Writable>,
+    ) {
+        for (writable in writes.asReversed()) {
+            try {
+                val shouldEmit = concurrentWriteMutex.withLock {
+                    processingWriteIds.add(writable.queueId)
+                }
+                if (shouldEmit) emit(writable)
+            } catch (e: CancellationException) {
                 concurrentWriteMutex.withLock {
-                    savedStateDataSource.updateWrites {
-                        val failure = when (outcome) {
-                            is Outcome.Failure -> outcome.exception
-                            else -> null
-                        }
-                        val shouldTryAgain = when (failure) {
-                            is NetworkConnectionException,
-                            is TimeoutCancellationException,
-                            -> true
-                            else -> false
-                        }
-                        copy(
-                            failedWrites = when {
-                                failure != null && !shouldTryAgain ->
-                                    failedWrites
-                                        .plus(
-                                            FailedWrite(
-                                                writable = writable,
-                                                failedAt = Clock.System.now(),
-                                                reason = when (failure) {
-                                                    is IOException -> FailedWrite.Reason.IO
-                                                    else -> null
-                                                },
-                                            ),
-                                        )
-                                        .distinctBy { it.writable.queueId }
-                                        .takeLast(MaximumFailedWrites)
-                                else -> failedWrites
-                            },
-                            pendingWrites = when {
-                                shouldTryAgain -> pendingWrites
-                                else ->
-                                    pendingWrites
-                                        .filter { it.queueId != writable.queueId }
-                                        .take(MaximumPendingWrites)
-                            },
-                        )
-                    }
                     processingWriteIds.remove(writable.queueId)
                 }
+                throw e
             }
+        }
     }
 
     private fun PersistedWriteQueue.concurrentWrite(
@@ -255,6 +222,54 @@ internal class PersistedWriteQueue @Inject constructor(
         .catch {
             emit(writable to Outcome.Failure(it))
         }
+
+    private suspend fun onWriteOutcome(
+        outcome: Outcome,
+        writable: Writable,
+    ) = concurrentWriteMutex.withLock {
+        try {
+            savedStateDataSource.updateWrites {
+                val failure = when (outcome) {
+                    is Outcome.Failure -> outcome.exception
+                    else -> null
+                }
+                val shouldTryAgain = when (failure) {
+                    is NetworkConnectionException,
+                    is TimeoutCancellationException,
+                    -> true
+                    else -> false
+                }
+                copy(
+                    failedWrites = when {
+                        failure != null && !shouldTryAgain ->
+                            failedWrites
+                                .plus(
+                                    FailedWrite(
+                                        writable = writable,
+                                        failedAt = Clock.System.now(),
+                                        reason = when (failure) {
+                                            is IOException -> FailedWrite.Reason.IO
+                                            else -> null
+                                        },
+                                    ),
+                                )
+                                .distinctBy { it.writable.queueId }
+                                .takeLast(MaximumFailedWrites)
+                        else -> failedWrites
+                    },
+                    pendingWrites = when {
+                        shouldTryAgain -> pendingWrites
+                        else ->
+                            pendingWrites
+                                .filter { it.queueId != writable.queueId }
+                                .take(MaximumPendingWrites)
+                    },
+                )
+            }
+        } finally {
+            processingWriteIds.remove(writable.queueId)
+        }
+    }
 }
 
 private fun SavedStateDataSource.signedInProfileWrites() =
