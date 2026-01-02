@@ -17,17 +17,22 @@
 package com.tunjid.heron.notifications
 
 import androidx.compose.animation.animateBounds
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -233,135 +238,146 @@ internal fun NotificationsScreen(
     ) {
         LazyColumn(
             modifier = Modifier
-                .padding(horizontal = 8.dp)
                 .fillMaxSize()
                 .paneClip(),
             state = listState,
             contentPadding = bottomNavAndInsetPaddingValues(
                 top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
             ),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
             userScrollEnabled = !paneScaffoldState.isTransitionActive,
         ) {
             items(
                 items = items,
                 key = AggregatedNotification::id,
                 itemContent = { item ->
-                    val itemModifier = Modifier
-                        .animateBounds(
-                            lookaheadScope = paneScaffoldState,
-                        )
-                        .animateItem()
+                    item.notification is Notification.PostAssociated
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                MaterialTheme.colorScheme.surfaceColorAtElevation(
+                                    if (item.isRead) 0.dp else 2.dp,
+                                ),
+                            )
+                            .padding(vertical = 8.dp)
+                            .fillMaxWidth(),
+                    ) {
+                        val itemModifier = Modifier
+                            .padding(horizontal = 8.dp)
+                            .animateBounds(
+                                lookaheadScope = paneScaffoldState,
+                            )
+                            .animateItem()
 
-                    when (val notification = item.notification) {
-                        is Notification.Followed -> FollowRow(
-                            modifier = itemModifier,
-                            paneMovableElementSharedTransitionScope = paneScaffoldState,
-                            now = now,
-                            isRead = item.isRead,
-                            notification = notification,
-                            aggregatedProfiles = item.aggregatedProfiles,
-                            onProfileClicked = onAggregatedProfileClicked,
-                        )
+                        when (val notification = item.notification) {
+                            is Notification.Followed -> FollowRow(
+                                modifier = itemModifier,
+                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                now = now,
+                                isRead = item.isRead,
+                                notification = notification,
+                                aggregatedProfiles = item.aggregatedProfiles,
+                                onProfileClicked = onAggregatedProfileClicked,
+                            )
 
-                        is Notification.JoinedStarterPack -> JoinedStarterPackRow(
-                            modifier = itemModifier,
-                            paneMovableElementSharedTransitionScope = paneScaffoldState,
-                            now = now,
-                            isRead = item.isRead,
-                            notification = notification,
-                            aggregatedProfiles = item.aggregatedProfiles,
-                            onProfileClicked = onAggregatedProfileClicked,
-                        )
+                            is Notification.JoinedStarterPack -> JoinedStarterPackRow(
+                                modifier = itemModifier,
+                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                now = now,
+                                isRead = item.isRead,
+                                notification = notification,
+                                aggregatedProfiles = item.aggregatedProfiles,
+                                onProfileClicked = onAggregatedProfileClicked,
+                            )
 
-                        is Notification.Liked -> LikeRow(
-                            modifier = itemModifier,
-                            paneMovableElementSharedTransitionScope = paneScaffoldState,
-                            now = now,
-                            isRead = item.isRead,
-                            notification = notification,
-                            aggregatedProfiles = item.aggregatedProfiles,
-                            onProfileClicked = onAggregatedProfileClicked,
-                            onPostClicked = onPostClicked,
-                        )
+                            is Notification.Liked -> LikeRow(
+                                modifier = itemModifier,
+                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                now = now,
+                                isRead = item.isRead,
+                                notification = notification,
+                                aggregatedProfiles = item.aggregatedProfiles,
+                                onProfileClicked = onAggregatedProfileClicked,
+                                onPostClicked = onPostClicked,
+                            )
 
-                        is Notification.Mentioned -> MentionRow(
-                            modifier = itemModifier,
-                            paneMovableElementSharedTransitionScope = paneScaffoldState,
-                            now = now,
-                            isRead = item.isRead,
-                            notification = notification,
-                            onLinkTargetClicked = onLinkTargetClicked,
-                            onProfileClicked = onProfileClicked,
-                            onPostClicked = onPostClicked,
-                            onPostInteraction = onPostInteraction,
-                        )
+                            is Notification.Mentioned -> MentionRow(
+                                modifier = itemModifier,
+                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                now = now,
+                                isRead = item.isRead,
+                                notification = notification,
+                                onLinkTargetClicked = onLinkTargetClicked,
+                                onProfileClicked = onProfileClicked,
+                                onPostClicked = onPostClicked,
+                                onPostInteraction = onPostInteraction,
+                            )
 
-                        is Notification.Quoted -> QuoteRow(
-                            modifier = itemModifier,
-                            paneMovableElementSharedTransitionScope = paneScaffoldState,
-                            now = now,
-                            isRead = item.isRead,
-                            notification = notification,
-                            onLinkTargetClicked = onLinkTargetClicked,
-                            onProfileClicked = onProfileClicked,
-                            onPostClicked = onPostClicked,
-                            onPostInteraction = onPostInteraction,
-                        )
+                            is Notification.Quoted -> QuoteRow(
+                                modifier = itemModifier,
+                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                now = now,
+                                isRead = item.isRead,
+                                notification = notification,
+                                onLinkTargetClicked = onLinkTargetClicked,
+                                onProfileClicked = onProfileClicked,
+                                onPostClicked = onPostClicked,
+                                onPostInteraction = onPostInteraction,
+                            )
 
-                        is Notification.RepliedTo -> ReplyRow(
-                            modifier = itemModifier,
-                            paneMovableElementSharedTransitionScope = paneScaffoldState,
-                            now = now,
-                            isRead = item.isRead,
-                            notification = notification,
-                            onLinkTargetClicked = onLinkTargetClicked,
-                            onProfileClicked = onProfileClicked,
-                            onPostClicked = onPostClicked,
-                            onPostInteraction = onPostInteraction,
-                        )
+                            is Notification.RepliedTo -> ReplyRow(
+                                modifier = itemModifier,
+                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                now = now,
+                                isRead = item.isRead,
+                                notification = notification,
+                                onLinkTargetClicked = onLinkTargetClicked,
+                                onProfileClicked = onProfileClicked,
+                                onPostClicked = onPostClicked,
+                                onPostInteraction = onPostInteraction,
+                            )
 
-                        is Notification.Reposted -> RepostRow(
-                            modifier = itemModifier,
-                            paneMovableElementSharedTransitionScope = paneScaffoldState,
-                            now = now,
-                            isRead = item.isRead,
-                            notification = notification,
-                            aggregatedProfiles = item.aggregatedProfiles,
-                            onProfileClicked = onAggregatedProfileClicked,
-                            onPostClicked = onPostClicked,
-                        )
+                            is Notification.Reposted -> RepostRow(
+                                modifier = itemModifier,
+                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                now = now,
+                                isRead = item.isRead,
+                                notification = notification,
+                                aggregatedProfiles = item.aggregatedProfiles,
+                                onProfileClicked = onAggregatedProfileClicked,
+                                onPostClicked = onPostClicked,
+                            )
 
-                        is Notification.Unknown -> Unit
-                        is Notification.Unverified -> ProfileVerificationRow(
-                            modifier = itemModifier,
-                            paneMovableElementSharedTransitionScope = paneScaffoldState,
-                            now = now,
-                            isRead = item.isRead,
-                            isVerified = false,
-                            notification = notification,
-                            onProfileClicked = onAggregatedProfileClicked,
-                        )
+                            is Notification.Unknown -> Unit
+                            is Notification.Unverified -> ProfileVerificationRow(
+                                modifier = itemModifier,
+                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                now = now,
+                                isRead = item.isRead,
+                                isVerified = false,
+                                notification = notification,
+                                onProfileClicked = onAggregatedProfileClicked,
+                            )
 
-                        is Notification.Verified -> ProfileVerificationRow(
-                            modifier = itemModifier,
-                            paneMovableElementSharedTransitionScope = paneScaffoldState,
-                            now = now,
-                            isRead = item.isRead,
-                            isVerified = true,
-                            notification = notification,
-                            onProfileClicked = onAggregatedProfileClicked,
-                        )
-                        is Notification.SubscribedPost -> SubscribedRow(
-                            modifier = itemModifier,
-                            paneMovableElementSharedTransitionScope = paneScaffoldState,
-                            now = now,
-                            isRead = item.isRead,
-                            notification = notification,
-                            aggregatedProfiles = item.aggregatedProfiles,
-                            onProfileClicked = onAggregatedProfileClicked,
-                            onPostClicked = onPostClicked,
-                        )
+                            is Notification.Verified -> ProfileVerificationRow(
+                                modifier = itemModifier,
+                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                now = now,
+                                isRead = item.isRead,
+                                isVerified = true,
+                                notification = notification,
+                                onProfileClicked = onAggregatedProfileClicked,
+                            )
+                            is Notification.SubscribedPost -> SubscribedRow(
+                                modifier = itemModifier,
+                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                now = now,
+                                isRead = item.isRead,
+                                notification = notification,
+                                aggregatedProfiles = item.aggregatedProfiles,
+                                onProfileClicked = onAggregatedProfileClicked,
+                                onPostClicked = onPostClicked,
+                            )
+                        }
                     }
                 },
             )

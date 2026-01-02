@@ -31,6 +31,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material3.Badge
@@ -46,6 +48,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.LinkAnnotation
@@ -125,23 +128,30 @@ fun NotificationAggregateScaffold(
                 }
             }
             with(paneMovableElementSharedTransitionScope) {
-                if (isExpanded) Column(
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { isExpanded = !isExpanded },
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                        .animateBounds(this)
+                        .clip(ExpandableAvatarRowShape),
                 ) {
-                    if (renderedProfiles.size > 1) expandButton(isExpanded)
-                    items(isExpanded, notification, renderedProfiles)
-                }
-                else Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { isExpanded = !isExpanded },
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(isExpanded, notification, renderedProfiles)
-                    if (renderedProfiles.size > 1) expandButton(isExpanded)
+                    if (isExpanded) Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { isExpanded = !isExpanded },
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        if (renderedProfiles.size > 1) expandButton(isExpanded)
+                        items(isExpanded, notification, renderedProfiles)
+                    }
+                    else Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { isExpanded = !isExpanded },
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        items(isExpanded, notification, renderedProfiles)
+                        Spacer(Modifier.weight(1f))
+                        if (renderedProfiles.size > 1) expandButton(isExpanded)
+                    }
                 }
             }
             Box(
@@ -195,7 +205,7 @@ private fun MovableElementSharedTransitionScope.ExpandableProfiles(
         ) {
             PaneStickySharedElement(
                 modifier = Modifier
-                    .size(32.dp),
+                    .size(ExpandableAvatarSize),
                 sharedContentState = rememberSharedContentState(
                     key = notification.avatarSharedElementKey(profile),
                 ),
@@ -203,6 +213,7 @@ private fun MovableElementSharedTransitionScope.ExpandableProfiles(
                 AsyncImage(
                     modifier = Modifier
                         .fillParentAxisIfFixedOrWrap()
+                        .clip(CircleShape)
                         .clickable { onProfileClicked(notification, profile) },
                     args = ImageArgs(
                         url = profile.avatar?.uri,
@@ -260,3 +271,6 @@ internal fun notificationText(
 internal fun Notification.avatarSharedElementKey(
     profile: Profile,
 ): String = "notification-${cid.id}-${profile.did.id}"
+
+private val ExpandableAvatarSize = 32.dp
+private val ExpandableAvatarRowShape = RoundedCornerShape(8.dp)
