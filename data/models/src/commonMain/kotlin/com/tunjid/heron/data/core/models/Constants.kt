@@ -44,6 +44,8 @@ object Constants {
     // Invalid post uri format, but its already in the db. Follow up in a migration to replace
     val unknownPostUri = PostUri(UNKNOWN)
     val unknownAuthorId = ProfileId(id = "did:web:heron.app.unknown.user")
+    val guestProfileId = ProfileId(id = "did:web:heron.app.guest.user")
+    val pendingProfileId = ProfileId(id = "did:web:heron.app.pending.user")
     val unknownFollowUri = FollowUri("${unknownAuthorId.id}/${FollowUri.NAMESPACE}/$unknownRecordKey")
     val unknownAuthorHandle = ProfileHandle(UNKNOWN)
 }

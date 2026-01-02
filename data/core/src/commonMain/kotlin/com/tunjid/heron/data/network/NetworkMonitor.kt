@@ -16,9 +16,9 @@
 
 package com.tunjid.heron.data.network
 
+import com.tunjid.heron.data.di.AppCoroutineScope
 import dev.jordond.connectivity.Connectivity
 import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.Named
 import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -36,7 +36,7 @@ interface NetworkMonitor {
 }
 
 internal class ConnectivityNetworkMonitor @Inject constructor(
-    @Named("AppScope")
+    @AppCoroutineScope
     appScope: CoroutineScope,
     private val connectivity: Connectivity,
 ) : NetworkMonitor {
@@ -61,7 +61,7 @@ internal class ConnectivityNetworkMonitor @Inject constructor(
         )
 }
 
-internal class NetworkConnectionException(
+class NetworkConnectionException(
     val url: Url,
     cause: Throwable,
 ) : Exception(

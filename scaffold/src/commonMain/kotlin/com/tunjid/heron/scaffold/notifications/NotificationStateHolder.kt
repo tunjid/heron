@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.di.AppCoroutineScope
 import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.logging.loggableText
@@ -34,7 +35,6 @@ import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.Named
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -97,7 +97,8 @@ sealed class NotificationAction(
 
 @Inject
 class AppNotificationStateHolder(
-    @Named("AppScope") appScope: CoroutineScope,
+    @AppCoroutineScope
+    appScope: CoroutineScope,
     notifier: Notifier,
     notificationsRepository: NotificationsRepository,
 ) : NotificationStateHolder,

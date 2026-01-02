@@ -71,6 +71,7 @@ import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.PopulatedThreadGateEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.di.AppCoroutineScope
 import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.logging.loggableText
@@ -92,7 +93,6 @@ import com.tunjid.heron.data.utilities.recordResolver.RecordResolver.TimelineIte
 import com.tunjid.heron.data.utilities.toDistinctUntilChangedFlowOrEmpty
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.Named
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -142,7 +142,8 @@ internal interface RecordResolver {
 }
 
 internal class OfflineRecordResolver @Inject constructor(
-    @Named("AppScope") appScope: CoroutineScope,
+    @AppCoroutineScope
+    appScope: CoroutineScope,
     private val feedGeneratorDao: FeedGeneratorDao,
     private val labelDao: LabelDao,
     private val listDao: ListDao,

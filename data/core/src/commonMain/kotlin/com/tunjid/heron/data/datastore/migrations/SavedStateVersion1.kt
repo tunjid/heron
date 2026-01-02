@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedState.AuthTokens.DidDoc
+import com.tunjid.heron.data.utilities.updateOrPutValue
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
 
@@ -30,7 +31,7 @@ internal class SavedStateVersion1(
     @ProtoNumber(1)
     private val version: Int,
     @ProtoNumber(2)
-    private val auth: AuthTokens?,
+    private val auth: AuthTokensV1?,
     @ProtoNumber(3)
     private val navigation: SavedState.Navigation,
     @ProtoNumber(4)
@@ -42,26 +43,44 @@ internal class SavedStateVersion1(
     ): VersionedSavedState =
         VersionedSavedState(
             version = currentVersion,
-            auth = auth?.let {
-                when (it.authProfileId) {
-                    Constants.unknownAuthorId -> SavedState.AuthTokens.Guest(
-                        server = Server.BlueSky,
-                    )
-                    else -> SavedState.AuthTokens.Authenticated.Bearer(
-                        authProfileId = it.authProfileId,
-                        auth = it.auth,
-                        refresh = it.refresh,
-                        didDoc = it.didDoc,
-                        authEndpoint = Server.BlueSky.endpoint,
-                    )
-                }
-            },
+            profileData = when (val currentAuth = auth) {
+                null -> profileData
+                else -> profileData.updateOrPutValue(
+                    key = currentAuth.authProfileId,
+                    update = {
+                        copy(
+                            auth = when (currentAuth.authProfileId) {
+                                Constants.unknownAuthorId -> SavedState.AuthTokens.Guest(
+                                    server = Server.BlueSky,
+                                )
+                                else -> currentAuth.asBearerToken()
+                            },
+                        )
+                    },
+                    put = {
+                        when (currentAuth.authProfileId) {
+                            // No op on unknown users
+                            Constants.unknownAuthorId -> null
+                            else -> SavedState.ProfileData.fromTokens(
+                                auth = currentAuth.asBearerToken(),
+                            )
+                        }
+                    },
+                )
+            } + Pair(
+                Constants.guestProfileId,
+                SavedState.ProfileData.defaultGuestData,
+            ),
             navigation = navigation,
-            profileData = profileData,
+            activeProfileId = when (val authProfileId = auth?.authProfileId) {
+                null -> null
+                Constants.unknownAuthorId -> Constants.guestProfileId
+                else -> authProfileId
+            },
         )
 
     @Serializable
-    data class AuthTokens(
+    data class AuthTokensV1(
         val authProfileId: ProfileId,
         val auth: String,
         val refresh: String,
@@ -70,5 +89,14 @@ internal class SavedStateVersion1(
 
     companion object {
         const val SnapshotVersion = 1
+
+        private fun AuthTokensV1.asBearerToken() =
+            SavedState.AuthTokens.Authenticated.Bearer(
+                authProfileId = authProfileId,
+                auth = auth,
+                refresh = refresh,
+                didDoc = didDoc,
+                authEndpoint = Server.BlueSky.endpoint,
+            )
     }
 }

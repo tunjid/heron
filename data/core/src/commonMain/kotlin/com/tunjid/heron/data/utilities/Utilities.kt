@@ -128,6 +128,19 @@ internal value class LazyList<T>(
         lazyList.value.add(element)
 }
 
+internal inline fun <K, V> Map<K, V>.updateOrPutValue(
+    key: K,
+    update: V.() -> V,
+    put: () -> V? = { null },
+): Map<K, V> =
+    when (val existingValue = this[key]) {
+        null -> when (val newValue = put()) {
+            null -> this
+            else -> this + Pair(key, newValue)
+        }
+        else -> this + Pair(key, existingValue.update())
+    }
+
 internal inline fun <T> Iterable<T>.triage(
     crossinline firstPredicate: (T) -> Boolean,
     crossinline secondPredicate: (T) -> Boolean,
