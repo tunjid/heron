@@ -163,7 +163,7 @@ internal class PersistedWriteQueue @Inject constructor(
                     }
                     else -> {
                         status = Status.Enqueued
-                        copy(pendingWrites = listOf(writable) + pendingWrites)
+                        copy(pendingWrites = pendingWrites + writable)
                     }
                 }
             }
@@ -195,7 +195,7 @@ internal class PersistedWriteQueue @Inject constructor(
     private suspend fun FlowCollector<Writable>.filterAndRecordNewWrites(
         writes: List<Writable>,
     ) {
-        for (writable in writes.asReversed()) {
+        for (writable in writes) {
             var inserted = false
             try {
                 inserted = maybeInsertIntoConcurrentProcessingQueue(writable)
@@ -207,7 +207,7 @@ internal class PersistedWriteQueue @Inject constructor(
         }
     }
 
-    private fun PersistedWriteQueue.concurrentWrite(
+    private fun concurrentWrite(
         writable: Writable,
     ) = flow {
         emit(
@@ -255,7 +255,10 @@ internal class PersistedWriteQueue @Inject constructor(
                     else -> failedWrites
                 },
                 pendingWrites = when {
-                    shouldTryAgain -> pendingWrites
+                    shouldTryAgain ->
+                        pendingWrites
+                            .filter { it.queueId != writable.queueId }
+                            .plus(writable)
                     else ->
                         pendingWrites
                             .filter { it.queueId != writable.queueId }
