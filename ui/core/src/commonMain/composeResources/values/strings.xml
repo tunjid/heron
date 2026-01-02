@@ -15,6 +15,8 @@
   -->
 
 <resources>
+    <string name="search">Search</string>
+    <string name="clear_search">Clear Search</string>
     <string name="reply">Reply</string>
     <string name="reply_to">Reply to %1$s</string>
     <string name="repost">Reply</string>

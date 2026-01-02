@@ -17,4 +17,5 @@
 <resources>
     <string name="heron">Heron</string>
     <string name="sender_reacted">%1$s reacted %2$s to "%3$s"</string>
+    <string name="write_new_dm">Write a new DM</string>
 </resources>
