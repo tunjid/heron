@@ -29,7 +29,6 @@ import kotlin.time.Duration.Companion.seconds
 import sh.christian.ozone.api.response.AtpResponse
 
 internal interface NetworkService {
-    val api: BlueskyApi
 
     /**
      * Catches network related exceptions and wraps them in a failure result.
@@ -51,7 +50,7 @@ internal class KtorNetworkService(
     sessionManager: SessionManager,
     private val networkMonitor: NetworkMonitor,
 ) : NetworkService {
-    override val api = XrpcBlueskyApi(
+    private val api = XrpcBlueskyApi(
         httpClient = httpClient.config {
             sessionManager.manage(config = this)
         },

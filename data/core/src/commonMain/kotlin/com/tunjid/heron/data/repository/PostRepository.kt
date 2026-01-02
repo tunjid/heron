@@ -765,7 +765,7 @@ private fun CreateRecordResponse.successWithUri(): Pair<Boolean, String> =
 private suspend fun NetworkService.uploadImageBlob(
     data: Source,
 ): Result<Blob> = runCatchingWithMonitoredNetworkRetry {
-    api.uploadBlob(ByteReadChannel(data))
+    uploadBlob(ByteReadChannel(data))
         .map(UploadBlobResponse::blob)
 }
 
