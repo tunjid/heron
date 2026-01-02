@@ -180,11 +180,11 @@ internal class PersistedWriteQueue @Inject constructor(
         savedStateDataSource.signedInProfileWrites()
             .transform { writes ->
                 for (writable in writes.asReversed()) {
-                    val shouldEmit = concurrentWriteMutex.withLock {
-                        processingWriteIds.add(writable.queueId)
-                    }
-                    if (shouldEmit) try {
-                        emit(writable)
+                    try {
+                        val shouldEmit = concurrentWriteMutex.withLock {
+                            processingWriteIds.add(writable.queueId)
+                        }
+                        if (shouldEmit) emit(writable)
                     } catch (e: CancellationException) {
                         concurrentWriteMutex.withLock {
                             processingWriteIds.remove(writable.queueId)
