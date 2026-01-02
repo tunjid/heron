@@ -157,6 +157,10 @@ internal class PersistedWriteQueue @Inject constructor(
         savedStateDataSource.inCurrentProfileSession {
             savedStateDataSource.updateWrites {
                 when {
+                    pendingWrites.size >= MaximumPendingWrites -> {
+                        status = Status.Dropped
+                        this
+                    }
                     pendingWrites.any { writable.queueId == it.queueId } -> {
                         status = Status.Duplicate
                         this
@@ -262,7 +266,6 @@ internal class PersistedWriteQueue @Inject constructor(
                     else ->
                         pendingWrites
                             .filter { it.queueId != writable.queueId }
-                            .take(MaximumPendingWrites)
                 },
             )
         }
