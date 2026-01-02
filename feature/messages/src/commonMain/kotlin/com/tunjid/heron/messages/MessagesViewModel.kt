@@ -49,8 +49,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -159,7 +157,7 @@ private fun Flow<Action.SearchQueryChanged>.searchQueryChangeMutations(
                     query = SearchQuery.OfProfiles(
                         query = action.query,
                         isLocalOnly = false,
-                        data = DMSearchData,
+                        data = dMSearchData(),
                     ),
                     cursor = Cursor.Initial,
                 )
@@ -169,7 +167,7 @@ private fun Flow<Action.SearchQueryChanged>.searchQueryChangeMutations(
     }
 }
 
-private val DMSearchData = CursorQuery.Data(
+private fun dMSearchData() = CursorQuery.Data(
     page = 0,
     cursorAnchor = Clock.System.now(),
     limit = 30,
