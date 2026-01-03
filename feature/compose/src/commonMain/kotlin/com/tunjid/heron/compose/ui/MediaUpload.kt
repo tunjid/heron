@@ -233,8 +233,8 @@ private fun MediaUpload(
         val addAltTextContentDescription = stringResource(Res.string.alt_text_add)
         Row(
             modifier = Modifier
-                .align(Alignment.TopStart)
-                .offset(x = 8.dp, y = 8.dp)
+                .align(Alignment.BottomEnd)
+                .offset(x = (-8).dp, y = (-8).dp)
                 .background(
                     color = Color.Black.copy(alpha = 0.6f),
                     shape = CircleShape,
