@@ -41,19 +41,71 @@ sealed class RestrictedFile {
                 is Video -> width != 0 && height != 0
             }
 
+        // This is deliberately not a data class to only allow copies
+        // with the the specific methods provided.
         class Photo(
             override val file: PlatformFile,
             override val width: Int = 0,
             override val height: Int = 0,
             val altText: String? = null,
-        ) : Media()
+        ) : Media() {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (other == null || this::class != other::class) return false
+                if (!super.equals(other)) return false
 
+                other as Photo
+
+                if (width != other.width) return false
+                if (height != other.height) return false
+                if (file != other.file) return false
+                if (altText != other.altText) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = super.hashCode()
+                result = 31 * result + width
+                result = 31 * result + height
+                result = 31 * result + file.hashCode()
+                result = 31 * result + (altText?.hashCode() ?: 0)
+                return result
+            }
+        }
+
+        // This is deliberately not a data class to only allow copies
+        // with the the specific methods provided.
         class Video(
             override val file: PlatformFile,
             override val width: Int = 0,
             override val height: Int = 0,
             val altText: String? = null,
-        ) : Media()
+        ) : Media() {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (other == null || this::class != other::class) return false
+                if (!super.equals(other)) return false
+
+                other as Video
+
+                if (width != other.width) return false
+                if (height != other.height) return false
+                if (file != other.file) return false
+                if (altText != other.altText) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = super.hashCode()
+                result = 31 * result + width
+                result = 31 * result + height
+                result = 31 * result + file.hashCode()
+                result = 31 * result + (altText?.hashCode() ?: 0)
+                return result
+            }
+        }
 
         fun withSize(
             width: Int,
@@ -90,26 +142,6 @@ sealed class RestrictedFile {
                 height = height,
                 altText = altText,
             )
-        }
-
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (other == null || this::class != other::class) return false
-
-            other as Media
-
-            if (width != other.width) return false
-            if (height != other.height) return false
-            if (path != other.path) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = width
-            result = 31 * result + height
-            result = 31 * result + (path?.hashCode() ?: 0)
-            return result
         }
     }
 }

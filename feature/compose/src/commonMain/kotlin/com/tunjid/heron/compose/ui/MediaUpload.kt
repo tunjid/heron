@@ -16,26 +16,30 @@
 
 package com.tunjid.heron.compose.ui
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement.spacedBy
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.DoNotDisturbOn
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,7 +47,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.compose.ui.MediaAltTextSheetState.Companion.rememberMediaAltTextSheetState
 import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -52,9 +60,12 @@ import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.media.video.VideoPlayer
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import heron.feature.compose.generated.resources.Res
+import heron.feature.compose.generated.resources.alt_text_add
+import heron.feature.compose.generated.resources.remove_media
 import kotlinx.coroutines.flow.first
+import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun MediaUploadItems(
     modifier: Modifier = Modifier,
@@ -63,6 +74,11 @@ internal fun MediaUploadItems(
     removeMediaItem: (RestrictedFile.Media) -> Unit,
     onMediaItemUpdated: (RestrictedFile.Media) -> Unit,
 ) = LookaheadScope {
+    val altTextSheetState = rememberMediaAltTextSheetState(
+        onMediaItemUpdated = onMediaItemUpdated,
+    )
+    remember(photos) {
+    }
     Box(modifier = modifier) {
         val itemSum = photos.size + if (video == null) 0 else 1
         if (video != null) VideoUpload(
@@ -71,13 +87,14 @@ internal fun MediaUploadItems(
                 .aspectRatio(1f),
             video = video,
             removeMediaItem = removeMediaItem,
+            onAltClicked = { altTextSheetState.editAltText(video) },
             onMediaItemUpdated = onMediaItemUpdated,
         )
         else Row(
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .fillMaxWidth(if (itemSum < 2) 0.6f else 1f),
-            horizontalArrangement = spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             photos.forEach {
                 key(it.path) {
@@ -91,6 +108,7 @@ internal fun MediaUploadItems(
                             ),
                         photo = it,
                         removeMediaItem = removeMediaItem,
+                        onAltClicked = { altTextSheetState.editAltText(it) },
                         onMediaItemUpdated = onMediaItemUpdated,
                     )
                 }
@@ -104,12 +122,14 @@ private fun ImageUpload(
     modifier: Modifier = Modifier,
     photo: RestrictedFile.Media.Photo,
     removeMediaItem: (RestrictedFile.Media) -> Unit,
+    onAltClicked: () -> Unit,
     onMediaItemUpdated: (RestrictedFile.Media) -> Unit,
 ) {
     MediaUpload(
         modifier = modifier,
         media = photo,
         removeMediaItem = removeMediaItem,
+        onAltClicked = onAltClicked,
         content = {
             val state = rememberUpdatedImageState(
                 args = ImageArgs(
@@ -144,12 +164,14 @@ private fun VideoUpload(
     modifier: Modifier = Modifier,
     video: RestrictedFile.Media.Video,
     removeMediaItem: (RestrictedFile.Media) -> Unit,
+    onAltClicked: () -> Unit,
     onMediaItemUpdated: (RestrictedFile.Media) -> Unit,
 ) {
     MediaUpload(
         modifier = modifier,
         media = video,
         removeMediaItem = removeMediaItem,
+        onAltClicked = onAltClicked,
         content = {
             video.path?.let { videoPath ->
                 val videoPlayerController = LocalVideoPlayerController.current
@@ -190,6 +212,7 @@ private fun MediaUpload(
     modifier: Modifier = Modifier,
     media: RestrictedFile.Media,
     removeMediaItem: (RestrictedFile.Media) -> Unit,
+    onAltClicked: () -> Unit,
     content: @Composable BoxScope.() -> Unit,
 ) {
     Box(
@@ -199,7 +222,7 @@ private fun MediaUpload(
         Icon(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(8.dp)
+                .offset(x = (-8).dp, y = 8.dp)
                 .background(
                     color = Color.Black.copy(alpha = 0.6f),
                     shape = CircleShape,
@@ -208,9 +231,41 @@ private fun MediaUpload(
                 .clip(CircleShape)
                 .clickable { removeMediaItem(media) },
             imageVector = Icons.Rounded.DoNotDisturbOn,
-            contentDescription = null,
+            contentDescription = stringResource(Res.string.remove_media),
         )
+        val addAltTextContentDescription = stringResource(Res.string.alt_text_add)
+        Row(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .offset(x = 8.dp, y = 8.dp)
+                .background(
+                    color = Color.Black.copy(alpha = 0.6f),
+                    shape = CircleShape,
+                )
+                .padding(horizontal = 8.dp)
+                .height(32.dp)
+                .clip(CircleShape)
+                .semantics { contentDescription = addAltTextContentDescription }
+                .clickable { onAltClicked() },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(1.dp),
+        ) {
+            Icon(
+                modifier = Modifier
+                    .size(16.dp),
+                imageVector = Icons.Rounded.Add,
+                contentDescription = null,
+            )
+            Text(
+                modifier = Modifier,
+                text = AltTextSymbol,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+            )
+        }
     }
 }
 
-private val MediaUploadItemShape = RoundedPolygonShape.RoundedRectangle(0.1f)
+internal val MediaUploadItemShape = RoundedPolygonShape.RoundedRectangle(0.1f)
+private const val AltTextSymbol = "ALT"

@@ -125,8 +125,10 @@ data class Profile(
         sealed class Allowed {
             @Serializable
             data object Everyone : Allowed()
+
             @Serializable
             data object Following : Allowed()
+
             @Serializable
             data object NoOne : Allowed()
         }
