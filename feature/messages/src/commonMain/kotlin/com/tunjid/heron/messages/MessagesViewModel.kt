@@ -20,6 +20,8 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.contentDescription
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
@@ -207,17 +209,30 @@ private fun Flow<Action.SearchQueryChanged>.searchQueryChangeMutations(
                     query = SearchQuery.OfProfiles(
                         query = action.query,
                         isLocalOnly = false,
-                        data = dMSearchData(),
+                        data = chatSearchData(),
                     ),
                     cursor = Cursor.Initial,
                 )
             }.collect {
-                send { copy(autoCompletedProfiles = it) }
+                send {
+                    copy(
+                        autoCompletedProfiles = it.sortedByDescending(
+                            ProfileWithViewerState::canBeMessaged
+                        ),
+                    )
+                }
             }
     }
 }
 
-private fun dMSearchData() = CursorQuery.Data(
+fun ProfileWithViewerState.canBeMessaged() =
+    when (profile.metadata.chat.allowed) {
+        Profile.ChatInfo.Allowed.Everyone -> true
+        Profile.ChatInfo.Allowed.Following -> viewerState?.followedBy != null
+        Profile.ChatInfo.Allowed.NoOne -> false
+    }
+
+private fun chatSearchData() = CursorQuery.Data(
     page = 0,
     cursorAnchor = Clock.System.now(),
     limit = 30,
