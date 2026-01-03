@@ -60,6 +60,7 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
+import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -107,7 +108,9 @@ internal fun MessagesScreen(
                                     conversationDestination(
                                         id = conversation.id,
                                         members = conversation.members,
-                                        sharedElementPrefix = conversation.id.id,
+                                        sharedElementPrefix = conversationListSharedElementPrefix(
+                                            conversationId = conversation.id,
+                                        ),
                                         referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                     ),
                                 ),
@@ -128,6 +131,9 @@ internal fun MessagesScreen(
             ConversationSearchResults(
                 paneScaffoldState = paneScaffoldState,
                 autoCompletedProfiles = state.autoCompletedProfiles,
+                onProfileClicked = {
+                    actions(Action.ResolveConversation(it))
+                },
             )
         }
     }
@@ -204,7 +210,9 @@ fun ConversationMembers(
         members.forEachIndexed { index, profile ->
             UpdatedMovableStickySharedElementOf(
                 sharedContentState = paneScaffoldState.rememberSharedContentState(
-                    key = "$conversationId-${profile.did}",
+                    key = profile.avatarSharedElementKey(
+                        prefix = conversationListSharedElementPrefix(conversationId),
+                    ),
                 ),
                 state = remember(profile.did) {
                     ImageArgs(
@@ -298,3 +306,9 @@ private fun Conversation.summary(): String {
         }
     }
 }
+
+private fun conversationListSharedElementPrefix(
+    conversationId: ConversationId,
+) = "$ConversationListSharedElementPrefix-${conversationId.id}"
+
+private const val ConversationListSharedElementPrefix = "conversation-list"

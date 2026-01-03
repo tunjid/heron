@@ -69,6 +69,10 @@ sealed class Action(val key: String) {
         val query: String,
     ) : Action(key = "SearchQueryChanged")
 
+    data class ResolveConversation(
+        val with: Profile,
+    ) : Action(key = "ResolveConversation")
+
     sealed class Navigate :
         Action(key = "Navigate"),
         NavigationAction {
@@ -78,3 +82,5 @@ sealed class Action(val key: String) {
             NavigationAction by delegate
     }
 }
+
+const val ConversationSearchResult = "ConversationSearchResult"

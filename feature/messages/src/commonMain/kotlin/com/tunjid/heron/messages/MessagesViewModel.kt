@@ -20,19 +20,24 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.contentDescription
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
+import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
+import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
+import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.tiler.distinctBy
@@ -40,9 +45,13 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
+import heron.feature.messages.generated.resources.Res
+import heron.feature.messages.generated.resources.error_conversation_not_found
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -54,6 +63,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 
 internal typealias MessagesStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -98,6 +108,10 @@ class ActualMessagesViewModel(
                     is Action.SearchQueryChanged -> action.flow.searchQueryChangeMutations(
                         searchRepository = searchRepository,
                     )
+                    is Action.ResolveConversation -> action.flow.resolveConversationMutations(
+                        navActions = navActions,
+                        messagesRepository = messagesRepository,
+                    )
 
                     is Action.Tile ->
                         action.flow
@@ -127,6 +141,42 @@ private fun loadProfileMutations(
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(messages = messages - action.message)
+    }
+
+private fun Flow<Action.ResolveConversation>.resolveConversationMutations(
+    navActions: (NavigationMutation) -> Unit,
+    messagesRepository: MessageRepository,
+): Flow<Mutation<State>> =
+    mapLatestToManyMutations { action ->
+        try {
+            withTimeout(2.seconds) {
+                messagesRepository.resolveConversation(
+                    with = action.with.did,
+                )
+            }
+        } catch (e: TimeoutCancellationException) {
+            Result.failure(e)
+        }
+            .onSuccess { conversationId ->
+                navActions(
+                    conversationDestination(
+                        id = conversationId,
+                        members = listOf(action.with),
+                        sharedElementPrefix = ConversationSearchResult,
+                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                    ).navigationMutation,
+                )
+            }
+            .onFailure {
+                emit {
+                    copy(
+                        messages = messages + Memo.Resource(
+                            Res.string.error_conversation_not_found,
+                            listOf(action.with.contentDescription),
+                        ),
+                    )
+                }
+            }
     }
 
 private fun Flow<Action.SetIsSearching>.setIsSearchingMutations(): Flow<Mutation<State>> =
