@@ -217,7 +217,7 @@ private fun Flow<Action.SearchQueryChanged>.searchQueryChangeMutations(
                 send {
                     copy(
                         autoCompletedProfiles = it.sortedByDescending(
-                            ProfileWithViewerState::canBeMessaged
+                            ProfileWithViewerState::canBeMessaged,
                         ),
                     )
                 }

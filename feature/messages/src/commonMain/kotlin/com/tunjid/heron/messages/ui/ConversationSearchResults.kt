@@ -137,7 +137,6 @@ internal fun ConversationSearchResults(
                                 }
                             }
                         }
-
                     },
                 )
             }
