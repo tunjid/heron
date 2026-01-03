@@ -73,6 +73,7 @@ data class Profile(
         val createdListCount: Long,
         val createdFeedGeneratorCount: Long,
         val createdStarterPackCount: Long,
+        val chat: ChatInfo,
     )
 
     @Serializable
@@ -115,6 +116,18 @@ data class Profile(
             }
         }
     }
+
+    @Serializable
+    data class ChatInfo(
+        val allowed: Allowed,
+    ) {
+        @Serializable
+        sealed class Allowed {
+            data object Everyone : Allowed()
+            data object Following : Allowed()
+            data object NoOne : Allowed()
+        }
+    }
 }
 
 @Serializable
@@ -147,6 +160,9 @@ fun stubProfile(
         createdListCount = 0,
         createdFeedGeneratorCount = 0,
         createdStarterPackCount = 0,
+        chat = Profile.ChatInfo(
+            allowed = Profile.ChatInfo.Allowed.NoOne,
+        ),
     ),
     labels = emptyList(),
     isLabeler = false,

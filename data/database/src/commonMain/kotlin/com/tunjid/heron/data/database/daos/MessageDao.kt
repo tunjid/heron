@@ -60,7 +60,7 @@ interface MessageDao {
                 lastReaction.createdAt AS lastReaction_createdAt,
                 MAX(COALESCE(lastReaction.createdAt, lastMessage.sentAt), lastMessage.sentAt) AS sort
                 FROM conversations
-            LEFT JOIN messages AS lastMessage
+            INNER JOIN messages AS lastMessage
             ON lastMessageId = lastMessage.id
             LEFT JOIN messages AS lastMessageReactedTo
             ON lastReactedToMessageId = lastMessageReactedTo.id

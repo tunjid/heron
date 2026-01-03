@@ -23,6 +23,7 @@ import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ProfileHandle
@@ -99,6 +100,9 @@ fun ProfileEntity?.asExternalModel(
             createdListCount = associated.createdListCount ?: 0,
             createdFeedGeneratorCount = associated.createdFeedGeneratorCount ?: 0,
             createdStarterPackCount = associated.createdStarterPackCount ?: 0,
+            chat = Profile.ChatInfo(
+                allowed = associated.allowedChat(),
+            ),
         ),
         labels = labels,
         isLabeler = associated.labeler ?: false,
@@ -134,30 +138,26 @@ fun PopulatedProfileEntity.asExternalModel() = with(entity) {
             createdListCount = associated.createdListCount ?: 0,
             createdFeedGeneratorCount = associated.createdFeedGeneratorCount ?: 0,
             createdStarterPackCount = associated.createdStarterPackCount ?: 0,
+            chat = Profile.ChatInfo(
+                allowed = associated.allowedChat(),
+            ),
         ),
         labels = labelEntities.map(LabelEntity::asExternalModel),
         isLabeler = associated.labeler ?: false,
     )
 }
 
-private fun emptyProfile() = Profile(
+private fun ProfileEntity.Associated?.allowedChat(): Profile.ChatInfo.Allowed =
+    when (this?.allowDms) {
+        ALLOW_DMS_ALL -> Profile.ChatInfo.Allowed.Everyone
+        ALLOW_DMS_FOLLOWING -> Profile.ChatInfo.Allowed.Following
+        else -> Profile.ChatInfo.Allowed.NoOne
+    }
+
+private fun emptyProfile() = stubProfile(
     did = ProfileId(""),
     handle = ProfileHandle(""),
-    displayName = null,
-    description = null,
-    avatar = null,
-    banner = null,
-    followersCount = null,
-    followsCount = null,
-    postsCount = null,
-    joinedViaStarterPack = null,
-    indexedAt = null,
-    createdAt = null,
-    metadata = Profile.Metadata(
-        createdListCount = 0,
-        createdFeedGeneratorCount = 0,
-        createdStarterPackCount = 0,
-    ),
-    labels = emptyList(),
-    isLabeler = false,
 )
+
+private const val ALLOW_DMS_ALL = "all"
+private const val ALLOW_DMS_FOLLOWING = "following"

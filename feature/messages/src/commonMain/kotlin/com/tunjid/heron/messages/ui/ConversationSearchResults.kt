@@ -17,6 +17,8 @@
 package com.tunjid.heron.messages.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -28,7 +30,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
@@ -41,11 +45,17 @@ import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.messages.ConversationSearchResult
+import com.tunjid.heron.messages.canBeMessaged
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.timeline.ui.profile.ProfileHandle
+import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import heron.feature.messages.generated.resources.Res
+import heron.feature.messages.generated.resources.error_cannot_be_messaged
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun ConversationSearchResults(
@@ -73,10 +83,12 @@ internal fun ConversationSearchResults(
         LazyColumn {
             items(autoCompletedProfiles) { profileWithViewerState ->
                 val profile = profileWithViewerState.profile
+                val canMessage = profileWithViewerState.canBeMessaged()
                 AttributionLayout(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable {
+                        .alpha(if (canMessage) 1f else 0.6f)
+                        .clickable(enabled = canMessage) {
                             onProfileClicked(profile)
                         }
                         .padding(16.dp),
@@ -103,14 +115,33 @@ internal fun ConversationSearchResults(
                         }
                     },
                     label = {
-                        Text(
-                            text = profile.displayName
-                                ?: profile.handle.toString(),
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
+                        Column {
+                            ProfileName(profile = profile)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                ProfileHandle(profile = profile)
+                                if (!canMessage) {
+                                    Text(
+                                        modifier = Modifier
+                                            .padding(horizontal = 2.dp),
+                                        text = Bullet,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.outline,
+                                    )
+                                    Text(
+                                        text = stringResource(Res.string.error_cannot_be_messaged),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.outline,
+                                    )
+                                }
+                            }
+                        }
                     },
                 )
             }
         }
     }
 }
+
+private const val Bullet = "•"
