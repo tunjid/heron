@@ -550,7 +550,6 @@ private val ChatProxyPaths = listOf(
     "chat.bsky.convo.sendMessage",
     "chat.bsky.convo.addReaction",
     "chat.bsky.convo.removeReaction",
-    "chat.bsky.convo.removeReaction",
 )
 
 private val SignedOutPaths = listOf(

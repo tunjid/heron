@@ -20,7 +20,6 @@ import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
-import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.repository.ConversationQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.tiling.TilingState
@@ -44,8 +43,6 @@ data class State(
     ),
     @Transient
     val isSearching: Boolean = false,
-    @Transient
-    val pendingConversationId: ConversationId? = null,
     @Transient
     val searchQuery: String = "",
     @Transient
