@@ -201,8 +201,7 @@ private fun MediaAltTextBottomSheet(
 
             Button(
                 modifier = Modifier
-                    .fillMaxWidth(1f)
-                    .padding(start = 16.dp),
+                    .fillMaxWidth(),
                 onClick = {
                     onMediaItemUpdated(media.withAltText(altText))
                     state.hide()

@@ -52,7 +52,6 @@ sealed class RestrictedFile {
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
                 if (other == null || this::class != other::class) return false
-                if (!super.equals(other)) return false
 
                 other as Photo
 
@@ -85,7 +84,6 @@ sealed class RestrictedFile {
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
                 if (other == null || this::class != other::class) return false
-                if (!super.equals(other)) return false
 
                 other as Video
 

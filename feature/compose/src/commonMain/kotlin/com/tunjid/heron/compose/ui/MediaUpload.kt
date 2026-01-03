@@ -39,7 +39,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -77,8 +76,6 @@ internal fun MediaUploadItems(
     val altTextSheetState = rememberMediaAltTextSheetState(
         onMediaItemUpdated = onMediaItemUpdated,
     )
-    remember(photos) {
-    }
     Box(modifier = modifier) {
         val itemSum = photos.size + if (video == null) 0 else 1
         if (video != null) VideoUpload(
