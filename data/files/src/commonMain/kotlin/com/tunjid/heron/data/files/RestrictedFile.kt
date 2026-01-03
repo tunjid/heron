@@ -64,8 +64,7 @@ sealed class RestrictedFile {
             }
 
             override fun hashCode(): Int {
-                var result = super.hashCode()
-                result = 31 * result + width
+                var result = width
                 result = 31 * result + height
                 result = 31 * result + file.hashCode()
                 result = 31 * result + (altText?.hashCode() ?: 0)
@@ -96,8 +95,7 @@ sealed class RestrictedFile {
             }
 
             override fun hashCode(): Int {
-                var result = super.hashCode()
-                result = 31 * result + width
+                var result = width
                 result = 31 * result + height
                 result = 31 * result + file.hashCode()
                 result = 31 * result + (altText?.hashCode() ?: 0)
