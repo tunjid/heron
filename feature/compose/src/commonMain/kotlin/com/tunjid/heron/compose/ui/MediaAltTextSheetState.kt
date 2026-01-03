@@ -22,16 +22,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -64,7 +61,6 @@ import heron.feature.compose.generated.resources.Res
 import heron.feature.compose.generated.resources.alt_text
 import heron.feature.compose.generated.resources.alt_text_add
 import heron.feature.compose.generated.resources.alt_text_descriptive
-import heron.ui.core.generated.resources.close
 import heron.ui.core.generated.resources.save
 import kotlinx.coroutines.flow.first
 import org.jetbrains.compose.resources.stringResource
@@ -129,22 +125,10 @@ private fun MediaAltTextBottomSheet(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(Res.string.alt_text_add),
-                    style = MaterialTheme.typography.titleLarge,
-                )
-                IconButton(onClick = { state.hide() }) {
-                    Icon(
-                        imageVector = Icons.Rounded.Close,
-                        contentDescription = stringResource(CommonStrings.close),
-                    )
-                }
-            }
+            Text(
+                text = stringResource(Res.string.alt_text_add),
+                style = MaterialTheme.typography.titleLarge,
+            )
 
             when (media) {
                 is RestrictedFile.Media.Photo -> {
@@ -227,7 +211,7 @@ private fun MediaAltTextBottomSheet(
                 Text(stringResource(CommonStrings.save))
             }
 
-            Spacer(Modifier.heightIn(16.dp))
+            Spacer(Modifier.height(100.dp))
         }
     }
 }
