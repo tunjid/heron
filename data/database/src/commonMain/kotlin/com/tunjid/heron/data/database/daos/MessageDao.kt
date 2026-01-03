@@ -72,6 +72,7 @@ interface MessageDao {
             ) AS lastReaction
             ON lastReactedToMessageId = lastReaction.messageId
             WHERE ownerId = :ownerId
+            AND lastMessage_id IS NOT NULL
             ORDER BY sort
             DESC
             LIMIT :limit
