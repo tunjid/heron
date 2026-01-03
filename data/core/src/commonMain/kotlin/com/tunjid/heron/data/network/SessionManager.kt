@@ -544,10 +544,12 @@ private val HeronOauthScopes = listOf(
 
 private val ChatProxyPaths = listOf(
     "chat.bsky.convo.listConvos",
+    "chat.bsky.convo.getConvoForMembers",
     "chat.bsky.convo.getMessages",
     "chat.bsky.convo.getLog",
     "chat.bsky.convo.sendMessage",
     "chat.bsky.convo.addReaction",
+    "chat.bsky.convo.removeReaction",
     "chat.bsky.convo.removeReaction",
 )
 

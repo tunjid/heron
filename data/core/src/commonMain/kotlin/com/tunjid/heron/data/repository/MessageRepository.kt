@@ -20,6 +20,7 @@ import app.bsky.embed.Record as BskyRecord
 import chat.bsky.convo.AddReactionRequest
 import chat.bsky.convo.AddReactionResponse
 import chat.bsky.convo.DeletedMessageView
+import chat.bsky.convo.GetConvoForMembersQueryParams
 import chat.bsky.convo.GetLogQueryParams
 import chat.bsky.convo.GetLogResponseLogUnion as Log
 import chat.bsky.convo.GetMessagesQueryParams
@@ -47,14 +48,10 @@ import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.ConversationId
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.utilities.Outcome
-import com.tunjid.heron.data.database.daos.FeedGeneratorDao
-import com.tunjid.heron.data.database.daos.LabelDao
-import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.MessageDao
-import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
-import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.PopulatedConversationEntity
 import com.tunjid.heron.data.database.entities.PopulatedMessageEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
@@ -82,6 +79,7 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.serialization.Serializable
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Cid
+import sh.christian.ozone.api.Did
 
 @Serializable
 data class ConversationQuery(
@@ -107,6 +105,10 @@ interface MessageRepository {
     ): Flow<CursorList<Message>>
 
     suspend fun monitorConversationLogs()
+
+    suspend fun resolveConversation(
+        with: ProfileId,
+    ): Result<ConversationId>
 
     suspend fun sendMessage(
         message: Message.Create,
@@ -318,6 +320,32 @@ internal class OfflineMessageRepository @Inject constructor(
                 .collect()
         }
     }
+
+    override suspend fun resolveConversation(
+        with: ProfileId,
+    ): Result<ConversationId> = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionResult()
+        networkService.runCatchingWithMonitoredNetworkRetry {
+            getConvoForMembers(
+                params = GetConvoForMembersQueryParams(
+                    members = listOf(
+                        with.id.let(::Did),
+                    ),
+                ),
+            )
+        }
+            .onSuccess {
+                multipleEntitySaverProvider.saveInTransaction {
+                    add(
+                        viewingProfileId = signedInProfileId,
+                        convoView = it.convo,
+                    )
+                }
+            }
+            .map {
+                ConversationId(it.convo.id)
+            }
+    } ?: expiredSessionResult()
 
     override suspend fun sendMessage(
         message: Message.Create,

@@ -36,10 +36,13 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.messages.ConversationSearchResult
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -49,6 +52,7 @@ internal fun ConversationSearchResults(
     modifier: Modifier = Modifier,
     paneScaffoldState: PaneScaffoldState,
     autoCompletedProfiles: List<ProfileWithViewerState>,
+    onProfileClicked: (Profile) -> Unit,
 ) = with(paneScaffoldState) {
     val topClearance = UiTokens.statusBarHeight + UiTokens.toolbarHeight + 8.dp
     val tabsOffsetNestedScrollConnection = rememberAccumulatedOffsetNestedScrollConnection(
@@ -73,6 +77,7 @@ internal fun ConversationSearchResults(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
+                            onProfileClicked(profile)
                         }
                         .padding(16.dp),
                     avatar = {
@@ -80,14 +85,12 @@ internal fun ConversationSearchResults(
                             modifier = Modifier
                                 .size(36.dp),
                             sharedContentState = rememberSharedContentState(
-                                key = "$ConversationSearchResult-${profile.did}",
+                                key = profile.avatarSharedElementKey(ConversationSearchResult),
                             ),
                         ) {
                             AsyncImage(
                                 modifier = Modifier
-                                    .fillParentAxisIfFixedOrWrap()
-                                    .clickable {
-                                    },
+                                    .fillParentAxisIfFixedOrWrap(),
                                 args = remember(profile.avatar) {
                                     ImageArgs(
                                         url = profile.avatar?.uri,
@@ -111,5 +114,3 @@ internal fun ConversationSearchResults(
         }
     }
 }
-
-private const val ConversationSearchResult = "ConversationSearchResult"

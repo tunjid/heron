@@ -39,6 +39,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.round
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.di.DataBindings
@@ -53,6 +55,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.scaffold.scaffold.PaneSnackbarHost
 import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.fabOffset
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
@@ -206,6 +209,12 @@ class MessagesBindings(
                         },
                     )
                 },
+                snackBarHost = {
+                    PaneSnackbarHost(
+                        modifier = Modifier
+                            .imePadding(),
+                    )
+                },
                 navigationBar = {
                     PaneNavigationBar(
                         modifier = Modifier
@@ -235,8 +244,14 @@ class MessagesBindings(
                     imePadding.calculateBottomPadding() > navBarPadding.calculateBottomPadding()
                 }
             }
-            LaunchedEffect(imeShowing) {
+
+            val lifeCycleOwner = LocalLifecycleOwner.current
+            LaunchedEffect(imeShowing, lifeCycleOwner) {
                 if (imeShowing) return@LaunchedEffect
+                if (!lifeCycleOwner.lifecycle.currentState
+                        .isAtLeast(Lifecycle.State.RESUMED)
+                ) return@LaunchedEffect
+
                 searchFocusRequester.freeFocus()
                 viewModel.accept(Action.SetIsSearching(isSearching = false))
             }
