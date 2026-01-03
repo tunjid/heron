@@ -88,7 +88,7 @@ internal fun ConversationSearchResults(
                     modifier = Modifier
                         .fillMaxWidth()
                         .alpha(if (canMessage) 1f else 0.6f)
-                        .clickable {
+                        .clickable(enabled = canMessage) {
                             onProfileClicked(profile)
                         }
                         .padding(16.dp),

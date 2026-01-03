@@ -149,8 +149,8 @@ fun PopulatedProfileEntity.asExternalModel() = with(entity) {
 
 private fun ProfileEntity.Associated?.allowedChat(): Profile.ChatInfo.Allowed =
     when (this?.allowDms) {
-        "all" -> Profile.ChatInfo.Allowed.Everyone
-        "following" -> Profile.ChatInfo.Allowed.Following
+        ALLOW_DMS_ALL -> Profile.ChatInfo.Allowed.Everyone
+        ALLOW_DMS_FOLLOWING -> Profile.ChatInfo.Allowed.Following
         else -> Profile.ChatInfo.Allowed.NoOne
     }
 
@@ -158,3 +158,6 @@ private fun emptyProfile() = stubProfile(
     did = ProfileId(""),
     handle = ProfileHandle(""),
 )
+
+private const val ALLOW_DMS_ALL = "all"
+private const val ALLOW_DMS_FOLLOWING = "following"
