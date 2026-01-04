@@ -139,7 +139,7 @@ class MessagesBindings(
 
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.usesCompactBottomNavigation
+                    isCompact = paneScaffoldState.prefersCompactBottomNav
                 )
 
             val searchFocusRequester = remember { FocusRequester() }

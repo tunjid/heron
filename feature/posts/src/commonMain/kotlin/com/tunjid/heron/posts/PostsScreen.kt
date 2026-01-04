@@ -209,7 +209,7 @@ internal fun PostsScreen(
                 verticalItemSpacing = presentation.lazyGridVerticalItemSpacing,
                 contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
                     top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
-                    isCompact = paneScaffoldState.usesCompactBottomNavigation,
+                    isCompact = paneScaffoldState.prefersCompactBottomNav,
                     ),
                 horizontalArrangement = Arrangement.spacedBy(
                     presentation.lazyGridHorizontalItemSpacing,

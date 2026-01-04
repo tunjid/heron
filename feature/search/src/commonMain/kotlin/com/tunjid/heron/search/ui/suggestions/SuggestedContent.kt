@@ -105,7 +105,7 @@ internal fun SuggestedContent(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = bottomNavAndInsetPaddingValues(
             top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
-            isCompact = paneScaffoldState.usesCompactBottomNavigation,
+            isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),
     ) {
         item {
@@ -243,7 +243,7 @@ internal fun SuggestedContent(
                     .padding(WindowInsets.navigationBars.asPaddingValues())
                     .height(
                         UiTokens.bottomNavHeight(
-                            isCompact = paneScaffoldState.usesCompactBottomNavigation,
+                            isCompact = paneScaffoldState.prefersCompactBottomNav,
                         ),
                     ),
             )

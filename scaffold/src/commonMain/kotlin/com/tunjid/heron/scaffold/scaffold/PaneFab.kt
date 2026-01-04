@@ -168,7 +168,7 @@ fun PaneScaffoldState.fabOffset(offset: Offset): IntOffset {
             offset.y.roundToInt(),
             with(splitPaneState.density) {
                 UiTokens.bottomNavHeight(
-                    isCompact = usesCompactBottomNavigation,
+                    isCompact = prefersCompactBottomNav,
                 ).roundToPx()
             },
         ),

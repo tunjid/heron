@@ -67,7 +67,7 @@ internal fun AutoCompleteProfileSearchResults(
         contentPadding = bottomNavAndInsetPaddingValues(
             top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
             horizontal = 16.dp,
-            isCompact = paneMovableElementSharedTransitionScope.usesCompactBottomNavigation,
+            isCompact = paneMovableElementSharedTransitionScope.prefersCompactBottomNav,
         ),
     ) {
         items(
@@ -103,7 +103,7 @@ internal fun ProfileSearchResults(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = bottomNavAndInsetPaddingValues(
             top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
-            isCompact = paneScaffoldState.usesCompactBottomNavigation,
+            isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),
     ) {
         items(

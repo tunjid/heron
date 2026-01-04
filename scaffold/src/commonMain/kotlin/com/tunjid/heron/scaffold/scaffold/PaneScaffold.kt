@@ -72,8 +72,8 @@ class PaneScaffoldState internal constructor(
     val isSignedIn
         get() = appState.isSignedIn
 
-    val usesCompactBottomNavigation
-        get() = appState.preferences?.useCompactNavigation ?: false
+    val prefersCompactBottomNav
+        get() = appState.prefersCompactBottomNav
 
     internal val canShowNavigationBar: Boolean
         get() = !isMediumScreenWidthOrWider

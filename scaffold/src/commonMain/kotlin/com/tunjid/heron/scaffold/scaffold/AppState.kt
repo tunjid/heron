@@ -340,6 +340,9 @@ internal class SplitPaneState(
     }
 }
 
+internal val AppState.prefersCompactBottomNav: Boolean
+    get() = preferences?.useCompactNavigation ?: false
+
 private val PaneRenderOrder = listOf(
     ThreePane.Tertiary,
     ThreePane.Secondary,
@@ -347,9 +350,9 @@ private val PaneRenderOrder = listOf(
 )
 
 internal val LocalSplitPaneState = staticCompositionLocalOf<SplitPaneState> {
-    TODO()
+    throw IllegalStateException("No SplitPaneState provided")
 }
 
 internal val LocalAppState = staticCompositionLocalOf<AppState> {
-    TODO()
+    throw IllegalStateException("No AppState provided")
 }

@@ -69,7 +69,7 @@ internal fun ModerationScreen(
             .fillMaxWidth(),
         contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
             horizontal = 16.dp,
-            isCompact = paneScaffoldState.usesCompactBottomNavigation,
+            isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),
     ) {
         adultLabelsSection(

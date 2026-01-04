@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -89,7 +88,7 @@ internal fun MessagesScreen(
                 .fillMaxWidth(),
             contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
                 top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
-                isCompact = paneScaffoldState.usesCompactBottomNavigation,
+                isCompact = paneScaffoldState.prefersCompactBottomNav,
             ),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {

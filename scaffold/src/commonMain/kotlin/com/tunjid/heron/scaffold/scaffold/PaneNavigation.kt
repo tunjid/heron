@@ -39,6 +39,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.compose.Adaptation
 import com.tunjid.treenav.compose.threepane.ThreePane
 import org.jetbrains.compose.resources.stringResource
@@ -112,12 +113,10 @@ internal fun AppState.PaneNavigationBar(
     modifier: Modifier = Modifier,
     onNavItemReselected: () -> Boolean,
 ) {
-    val useCompactNavigation = preferences?.useCompactNavigation ?: false
 
     NavigationBar(
-        modifier = modifier.then(
-            if (useCompactNavigation) Modifier.height(72.dp) else Modifier,
-        ),
+        modifier = modifier
+            .height(UiTokens.bottomNavHeight(isCompact = prefersCompactBottomNav)),
     ) {
         navItems.forEach { item ->
             NavigationBarItem(
@@ -134,10 +133,10 @@ internal fun AppState.PaneNavigationBar(
                         },
                     )
                 },
-                label = if (!useCompactNavigation) {
+                label = if (!prefersCompactBottomNav) {
                     { Text(stringResource(item.stack.titleRes)) }
                 } else null,
-                alwaysShowLabel = !useCompactNavigation,
+                alwaysShowLabel = !prefersCompactBottomNav,
                 selected = item.selected,
                 onClick = {
                     if (item.selected && onNavItemReselected()) return@NavigationBarItem
