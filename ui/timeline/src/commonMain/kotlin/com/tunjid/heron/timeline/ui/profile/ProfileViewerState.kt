@@ -33,8 +33,8 @@ import com.tunjid.heron.data.core.models.isFollowing
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.edit
 import heron.ui.timeline.generated.resources.follow
-import heron.ui.timeline.generated.resources.following
 import heron.ui.timeline.generated.resources.follow_back
+import heron.ui.timeline.generated.resources.following
 import heron.ui.timeline.generated.resources.mutuals
 import org.jetbrains.compose.resources.stringResource
 
@@ -62,9 +62,9 @@ fun ProfileViewerState(
         leadingIcon = {
             Icon(
                 imageVector =
-                    if (isSignedInProfile) Icons.Rounded.Edit
-                    else if (follows) Icons.Rounded.Check
-                    else Icons.Rounded.Add,
+                if (isSignedInProfile) Icons.Rounded.Edit
+                else if (follows) Icons.Rounded.Check
+                else Icons.Rounded.Add,
                 contentDescription = followStatusText,
             )
         },
