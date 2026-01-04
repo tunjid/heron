@@ -142,14 +142,14 @@ fun MediaPostInteractions(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         PostInteractionsButtons(
             interactionButtons = PostInteractionButton.MediaButtons,
             post = post,
             sharedElementPrefix = sharedElementPrefix,
-            iconSize = 64.dp,
+            iconSize = 40.dp,
             orientation = Orientation.Vertical,
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
             onInteraction = onInteraction,
@@ -553,7 +553,7 @@ private val Timeline.Presentation.postInteractionArrangement: Arrangement.Horizo
 
 private val Timeline.Presentation.actionIconSize
     get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 16.dp
+        Timeline.Presentation.Text.WithEmbed -> 18.dp
         Timeline.Presentation.Media.Condensed -> 0.dp
         Timeline.Presentation.Media.Expanded -> 24.dp
         Timeline.Presentation.Media.Grid -> 0.dp
