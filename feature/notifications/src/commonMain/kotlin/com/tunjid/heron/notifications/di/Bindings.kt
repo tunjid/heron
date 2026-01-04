@@ -38,8 +38,8 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.notifications.hasNotificationPermissions
-import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.LocalAppState
+import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
@@ -126,10 +126,7 @@ class NotificationsBindings(
 
             val appState = LocalAppState.current
 
-
             val autoHideNavigationBar = appState.preferences?.autoHideNavigationBar ?: true
-
-
 
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection(

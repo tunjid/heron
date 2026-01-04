@@ -185,10 +185,7 @@ class PostsBindings(
 
             val appState = LocalAppState.current
 
-
             val autoHideNavigationBar = appState.preferences?.autoHideNavigationBar ?: true
-
-
 
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection(
