@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
@@ -52,6 +53,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntSize
@@ -180,7 +182,12 @@ fun SettingsToggleItem(
         modifier = SettingsItemClipModifier
             .then(
                 modifier
-                    .clickable { onCheckedChange(!checked) }
+                    .toggleable(
+                        value = checked,
+                        onValueChange = onCheckedChange,
+                        enabled = enabled,
+                        role = Role.Switch,
+                    )
                     .padding(
                         horizontal = 8.dp,
                         vertical = 4.dp,
@@ -201,7 +208,7 @@ fun SettingsToggleItem(
         Switch(
             enabled = enabled,
             checked = checked,
-            onCheckedChange = onCheckedChange,
+            onCheckedChange = null,
         )
     }
 }
