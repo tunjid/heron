@@ -14,7 +14,6 @@
  *    limitations under the License.
  */
 
-@file:OptIn(ExperimentalSharedTransitionApi::class)
 
 package com.tunjid.heron.scaffold.scaffold
 
@@ -22,7 +21,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
@@ -39,15 +37,12 @@ import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.treenav.compose.Adaptation
 import com.tunjid.treenav.compose.threepane.ThreePane
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun PaneScaffoldState.PaneNavigationBar(
     modifier: Modifier = Modifier,
@@ -117,7 +112,6 @@ internal fun AppState.PaneNavigationBar(
     modifier: Modifier = Modifier,
     onNavItemReselected: () -> Boolean,
 ) {
-    val preferences by preferences.collectAsState()
     val useCompactNavigation = preferences?.useCompactNavigation ?: false
 
     NavigationBar(
@@ -201,7 +195,7 @@ fun Modifier.bottomNavigationSharedBounds(
         ThreePane.Tertiary,
         ThreePane.Overlay,
         null,
-        -> this@bottomNavigationSharedBounds
+            -> this@bottomNavigationSharedBounds
     }
 }
 

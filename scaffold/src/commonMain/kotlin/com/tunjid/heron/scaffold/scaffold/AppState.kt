@@ -44,8 +44,7 @@ import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.SavedStateDataSource
-import com.tunjid.heron.data.repository.signedInProfilePreferences
+import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
@@ -76,22 +75,18 @@ import com.tunjid.treenav.strings.toRouteTrie
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @Stable
 class AppState(
     entryMap: Map<String, PaneEntry<ThreePane, Route>>,
     private val authRepository: AuthRepository,
+    private val userDataRepository: UserDataRepository,
     private val navigationStateHolder: NavigationStateHolder,
     private val notificationStateHolder: NotificationStateHolder,
-    private val savedStateDataSource: SavedStateDataSource,
     internal val imageLoader: ImageLoader,
     internal val videoPlayerController: VideoPlayerController,
     private val writeQueue: WriteQueue,
@@ -100,16 +95,9 @@ class AppState(
 
     internal var isSignedIn by mutableStateOf(false)
 
-    private val multiStackNavState = mutableStateOf(navigationStateHolder.state.value)
+    internal var preferences by mutableStateOf<Preferences?>(null)
 
-    internal val preferences: kotlinx.coroutines.flow.StateFlow<Preferences?> =
-        savedStateDataSource.savedState
-            .map { it.signedInProfilePreferences() }
-            .stateIn(
-                scope = CoroutineScope(Dispatchers.Main.immediate),
-                started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
-                initialValue = null,
-            )
+    private val multiStackNavState = mutableStateOf(navigationStateHolder.state.value)
 
     internal var showNavigation by mutableStateOf(false)
     internal val navItems by derivedStateOf {
@@ -188,16 +176,23 @@ class AppState(
 
         // TODO: Figure out a way to do this in the background with KMP
         LaunchedEffect(Unit) {
-            writeQueue.drain()
-        }
-        LaunchedEffect(Unit) {
-            notificationStateHolder.state.collect { notificationState ->
-                hasNotifications = notificationState.unreadCount != 0L
+            launch {
+                writeQueue.drain()
             }
-        }
-        LaunchedEffect(Unit) {
-            authRepository.isSignedIn.collect { signedIn ->
-                isSignedIn = signedIn
+            launch {
+                notificationStateHolder.state.collect { notificationState ->
+                    hasNotifications = notificationState.unreadCount != 0L
+                }
+            }
+            launch {
+                authRepository.isSignedIn.collect { signedIn ->
+                    isSignedIn = signedIn
+                }
+            }
+            launch {
+                userDataRepository.preferences.collect { currentPreferences ->
+                    preferences = currentPreferences
+                }
             }
         }
         LifecycleResumeEffect(Unit) {
@@ -304,6 +299,7 @@ internal class SplitPaneState(
     paneNavigationState: () -> PaneNavigationState<ThreePane, Route>,
     density: Density,
     private val windowWidth: State<Dp>,
+    private val hasCompatBottomNav: () -> Boolean,
 ) {
     internal var density by mutableStateOf(density)
 
@@ -314,7 +310,9 @@ internal class SplitPaneState(
     }
 
     internal val minPaneWidth: Dp
-        get() = (windowWidth.value * 0.5f) - UiTokens.bottomNavHeight
+        get() = (windowWidth.value * 0.5f) - UiTokens.bottomNavHeight(
+            isCompact = hasCompatBottomNav(),
+        )
 
     internal val splitLayoutState = SplitLayoutState(
         orientation = Orientation.Horizontal,
