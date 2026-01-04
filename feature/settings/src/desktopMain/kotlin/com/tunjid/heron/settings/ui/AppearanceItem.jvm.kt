@@ -16,10 +16,10 @@
 
 package com.tunjid.heron.settings.ui
 
-actual fun isDynamicThemingSupported(): Boolean {
-    return false
-}
+import androidx.compose.runtime.Stable
 
-actual fun isNavigationBarSettingsSupported(): Boolean {
-    return false
-}
+@Stable
+actual fun isDynamicThemingSupported(): Boolean = false
+
+@Stable
+actual fun isNavigationBarSettingsSupported(): Boolean = false

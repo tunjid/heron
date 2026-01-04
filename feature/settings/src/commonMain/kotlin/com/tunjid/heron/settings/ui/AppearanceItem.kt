@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.models.Preferences
 import heron.feature.settings.generated.resources.Res
@@ -29,8 +30,10 @@ import heron.feature.settings.generated.resources.use_compact_navigation
 import heron.feature.settings.generated.resources.use_dynamic_theming
 import org.jetbrains.compose.resources.stringResource
 
+@Stable
 expect fun isDynamicThemingSupported(): Boolean
 
+@Stable
 expect fun isNavigationBarSettingsSupported(): Boolean
 
 @Composable
@@ -51,12 +54,16 @@ fun AppearanceItem(
         icon = Icons.Rounded.Palette,
     ) {
         SettingsToggleItem(
+            modifier = Modifier
+                .fillMaxWidth(),
             text = stringResource(Res.string.use_dynamic_theming),
             enabled = isDynamicThemingSupported,
             checked = signedInProfilePreferences.useDynamicTheming,
             onCheckedChange = setDynamicThemingPreference,
         )
         SettingsToggleItem(
+            modifier = Modifier
+                .fillMaxWidth(),
             text = stringResource(Res.string.use_compact_navigation),
             enabled = isNavigationBarSettingsSupported,
             checked = signedInProfilePreferences.useCompactNavigation,
