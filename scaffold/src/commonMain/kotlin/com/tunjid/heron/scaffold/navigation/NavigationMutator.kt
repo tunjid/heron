@@ -496,12 +496,13 @@ private fun forceSignOutMutations(
 ): Flow<Mutation<MultiStackNav>> =
     combine(
         authRepository.isSignedIn,
+        authRepository.isGuest,
         userDataRepository.navigation,
-        ::Pair,
+        ::Triple,
     )
-        .filter { (isSignedIn, navigation) ->
+        .filter { (isSignedIn, isGuest, navigation) ->
             // No auth token and is displaying main navigation
-            !isSignedIn && navigation != EmptyNavigation
+            !isSignedIn && !isGuest && navigation != EmptyNavigation
         }
         .mapLatestToMutation {
             when (stacks[currentIndex].name) {

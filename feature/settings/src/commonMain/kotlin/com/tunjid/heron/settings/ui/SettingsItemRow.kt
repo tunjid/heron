@@ -37,6 +37,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -151,6 +152,30 @@ fun ExpandableSettingsItemRow(
                     content()
                 }
             },
+        )
+    }
+}
+
+@Composable
+fun SettingsToggleItem(
+    text: String,
+    enabled: Boolean,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = text,
+        )
+        Spacer(Modifier.weight(1f))
+        Spacer(Modifier.width(16.dp))
+        Switch(
+            enabled = enabled,
+            checked = checked,
+            onCheckedChange = onCheckedChange,
         )
     }
 }

@@ -16,15 +16,10 @@
 
 package com.tunjid.heron.settings.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Palette
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.models.Preferences
 import heron.feature.settings.generated.resources.Res
@@ -53,33 +48,17 @@ fun AppearanceItem(
         title = stringResource(Res.string.appearance),
         icon = Icons.Rounded.Palette,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(Res.string.use_dynamic_theming),
-            )
-            Switch(
-                checked = signedInProfilePreferences.useDynamicTheming,
-                onCheckedChange = setDynamicThemingPreference,
-                enabled = isDynamicThemingSupported,
-            )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(Res.string.use_compact_navigation),
-            )
-            Switch(
-                checked = signedInProfilePreferences.useCompactNavigation,
-                onCheckedChange = setCompactNavigation,
-                enabled = isCompactNavigationSupported,
-            )
-        }
+        SettingsToggleItem(
+            text = stringResource(Res.string.use_dynamic_theming),
+            enabled = isDynamicThemingSupported,
+            checked = signedInProfilePreferences.useDynamicTheming,
+            onCheckedChange = setDynamicThemingPreference,
+        )
+        SettingsToggleItem(
+            text = stringResource(Res.string.use_compact_navigation),
+            enabled = isCompactNavigationSupported,
+            checked = signedInProfilePreferences.useCompactNavigation,
+            onCheckedChange = setCompactNavigation,
+        )
     }
 }
