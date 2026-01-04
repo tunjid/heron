@@ -142,14 +142,14 @@ fun MediaPostInteractions(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         PostInteractionsButtons(
             interactionButtons = PostInteractionButton.MediaButtons,
             post = post,
             sharedElementPrefix = sharedElementPrefix,
-            iconSize = 40.dp,
+            iconSize = 64.dp,
             orientation = Orientation.Vertical,
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
             onInteraction = onInteraction,
