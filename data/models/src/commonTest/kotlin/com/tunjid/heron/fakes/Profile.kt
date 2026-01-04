@@ -23,6 +23,9 @@ fun sampleProfile(): Profile {
             createdListCount = 0,
             createdFeedGeneratorCount = 0,
             createdStarterPackCount = 0,
+            chat = Profile.ChatInfo(
+                allowed = Profile.ChatInfo.Allowed.NoOne,
+            ),
         ),
         labels = emptyList(),
         isLabeler = false,
