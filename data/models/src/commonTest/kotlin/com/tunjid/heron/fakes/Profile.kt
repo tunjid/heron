@@ -1,7 +1,6 @@
 package com.tunjid.heron.fakes
 
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.Profile.ChatInfo
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import kotlin.time.Instant
@@ -24,8 +23,8 @@ fun sampleProfile(): Profile {
             createdListCount = 0,
             createdFeedGeneratorCount = 0,
             createdStarterPackCount = 0,
-            chat = ChatInfo(
-                allowed = ChatInfo.Allowed.NoOne,
+            chat = Profile.ChatInfo(
+                allowed = Profile.ChatInfo.Allowed.NoOne,
             ),
         ),
         labels = emptyList(),
