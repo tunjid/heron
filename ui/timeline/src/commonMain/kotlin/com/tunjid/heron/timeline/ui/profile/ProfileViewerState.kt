@@ -34,6 +34,8 @@ import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.edit
 import heron.ui.timeline.generated.resources.follow
 import heron.ui.timeline.generated.resources.following
+import heron.ui.timeline.generated.resources.follow_back
+import heron.ui.timeline.generated.resources.mutuals
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -43,7 +45,7 @@ fun ProfileViewerState(
     onClick: () -> Unit,
 ) {
     val follows = viewerState.isFollowing
-    val followsYou = viewerState?.following?.followedBy == true
+    val followsYou = viewerState?.followedBy != null
     val followStatusText = stringResource(
         if (isSignedInProfile) Res.string.edit
         else if (follows && followsYou) Res.string.mutuals
@@ -60,9 +62,9 @@ fun ProfileViewerState(
         leadingIcon = {
             Icon(
                 imageVector =
-                if (isSignedInProfile) Icons.Rounded.Edit
-                else if (follows) Icons.Rounded.Check
-                else Icons.Rounded.Add,
+                    if (isSignedInProfile) Icons.Rounded.Edit
+                    else if (follows) Icons.Rounded.Check
+                    else Icons.Rounded.Add,
                 contentDescription = followStatusText,
             )
         },
