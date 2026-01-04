@@ -17,7 +17,6 @@
 package com.tunjid.heron.profile.di
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Login
@@ -25,9 +24,7 @@ import androidx.compose.material.icons.rounded.AlternateEmail
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
@@ -43,7 +40,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOptio
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
-import com.tunjid.heron.scaffold.scaffold.LocalAppState
+
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -51,15 +48,11 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PaneSnackbarHost
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
-import com.tunjid.heron.scaffold.scaffold.fabOffset
 import com.tunjid.heron.scaffold.scaffold.fullAppbarTransparency
-import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
-import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.navigationBarOffset
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -169,21 +162,10 @@ class ProfileBindings(
             val state by viewModel.state.collectAsStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
-            val appState = LocalAppState.current
-
-            val autoHideNavigationBar = appState.preferences?.autoHideNavigationBar ?: true
-
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                    enabled = autoHideNavigationBar,
-                )
-
             paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
-                    .predictiveBackPlacement(paneScope = this)
-                    .nestedScroll(bottomNavigationNestedScrollConnection),
+                    .predictiveBackPlacement(paneScope = this),
                 showNavigation = true,
                 topBar = {
                     PoppableDestinationTopAppBar(
@@ -194,19 +176,10 @@ class ProfileBindings(
                     )
                 },
                 snackBarHost = {
-                    PaneSnackbarHost(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
-                    )
+                    PaneSnackbarHost()
                 },
                 floatingActionButton = {
                     PaneFab(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
                         text = stringResource(
                             when {
                                 isSignedOut -> CommonStrings.sign_in
@@ -219,7 +192,7 @@ class ProfileBindings(
                             state.isSignedInProfile -> Icons.Rounded.Edit
                             else -> Icons.Rounded.AlternateEmail
                         },
-                        expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
+                        expanded = true,
                         onClick = {
                             viewModel.accept(
                                 Action.Navigate.To(
@@ -227,8 +200,8 @@ class ProfileBindings(
                                         isSignedOut -> signInDestination()
                                         else -> composePostDestination(
                                             type =
-                                            if (state.isSignedInProfile) Post.Create.Timeline
-                                            else Post.Create.Mention(state.profile),
+                                                if (state.isSignedInProfile) Post.Create.Timeline
+                                                else Post.Create.Mention(state.profile),
                                             sharedElementPrefix = null,
                                         )
                                     },
@@ -238,11 +211,7 @@ class ProfileBindings(
                     )
                 },
                 navigationBar = {
-                    PaneNavigationBar(
-                        modifier = Modifier.offset {
-                            bottomNavigationNestedScrollConnection.navigationBarOffset(autoHideNavigationBar).round()
-                        },
-                    )
+                    PaneNavigationBar()
                 },
                 navigationRail = {
                     PaneNavigationRail()

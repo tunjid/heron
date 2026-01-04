@@ -75,6 +75,9 @@ class PaneScaffoldState internal constructor(
     val prefersCompactBottomNav
         get() = appState.prefersCompactBottomNav
 
+    val prefersAutoHideNavigationBar: Boolean
+        get() = appState.preferences?.autoHideNavigationBar ?: true
+
     internal val canShowNavigationBar: Boolean
         get() = !isMediumScreenWidthOrWider
 
@@ -83,7 +86,7 @@ class PaneScaffoldState internal constructor(
 
     internal val canShowNavigationRail: Boolean
         get() = splitPaneState.filteredPaneOrder.firstOrNull() == paneState.pane &&
-            isMediumScreenWidthOrWider
+                isMediumScreenWidthOrWider
 
     internal val canUseMovableNavigationRail: Boolean
         get() = isActive && canShowNavigationRail
@@ -159,10 +162,11 @@ fun PaneScaffoldState.PaneScaffold(
                 else when (dismissBehavior) {
                     AppState.DismissBehavior.None,
                     AppState.DismissBehavior.Gesture.DragToPop,
-                    -> Modifier.animateBounds(lookaheadScope = this)
+                        -> Modifier.animateBounds(lookaheadScope = this)
+
                     AppState.DismissBehavior.Gesture.SlideToPop,
                     AppState.DismissBehavior.Gesture.ScaleToPop,
-                    -> Modifier
+                        -> Modifier
                 }
                     .padding(
                         horizontal = if (hasSiblings) 8.dp else 0.dp,

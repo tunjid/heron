@@ -17,7 +17,6 @@
 package com.tunjid.heron.home.di
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Login
 import androidx.compose.material.icons.rounded.Edit
@@ -25,7 +24,6 @@ import androidx.compose.material.icons.rounded.Save
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
@@ -41,22 +39,16 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
-import com.tunjid.heron.scaffold.scaffold.LocalAppState
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PaneSnackbarHost
 import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
-import com.tunjid.heron.scaffold.scaffold.fabOffset
-import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
-import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.fabPositionOffset
-import com.tunjid.heron.ui.navigationBarOffset
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
@@ -129,24 +121,14 @@ class HomeBindings(
             val state by viewModel.state.collectAsStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
-            val appState = LocalAppState.current
-            val autoHideNavigationBar = appState.preferences?.autoHideNavigationBar ?: true
-
             val topAppBarNestedScrollConnection =
                 topAppBarNestedScrollConnection()
-
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                    enabled = autoHideNavigationBar,
-                )
 
             paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
-                    .nestedScroll(topAppBarNestedScrollConnection)
-                    .nestedScroll(bottomNavigationNestedScrollConnection),
+                    .nestedScroll(topAppBarNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
@@ -173,19 +155,10 @@ class HomeBindings(
                     )
                 },
                 snackBarHost = {
-                    PaneSnackbarHost(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.fabPositionOffset(autoHideNavigationBar))
-                            },
-                    )
+                    PaneSnackbarHost()
                 },
                 floatingActionButton = {
                     PaneFab(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.fabPositionOffset(autoHideNavigationBar))
-                            },
                         text = stringResource(
                             when {
                                 isSignedOut -> CommonStrings.sign_in
@@ -198,7 +171,7 @@ class HomeBindings(
                             state.tabLayout is TabLayout.Expanded -> Icons.Rounded.Save
                             else -> Icons.Rounded.Edit
                         },
-                        expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
+                        expanded = true,
                         onClick = {
                             viewModel.accept(
                                 when {
@@ -220,10 +193,6 @@ class HomeBindings(
                 },
                 navigationBar = {
                     PaneNavigationBar(
-                        modifier = Modifier
-                            .offset {
-                                bottomNavigationNestedScrollConnection.navigationBarOffset(autoHideNavigationBar).round()
-                            },
                         onNavItemReselected = {
                             viewModel.accept(Action.RefreshCurrentTab)
                             true

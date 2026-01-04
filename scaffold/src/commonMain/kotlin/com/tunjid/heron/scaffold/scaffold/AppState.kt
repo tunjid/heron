@@ -353,6 +353,6 @@ internal val LocalSplitPaneState = staticCompositionLocalOf<SplitPaneState> {
     throw IllegalStateException("No SplitPaneState provided")
 }
 
-val LocalAppState = staticCompositionLocalOf<AppState> {
+internal val LocalAppState = staticCompositionLocalOf<AppState> {
     throw IllegalStateException("No AppState provided")
 }
