@@ -31,6 +31,6 @@
     <string name="refresh_timelines_on_launch">Refresh timelines on launch</string>
     <string name="moderation">Moderation</string>
     <string name="appearance">Appearance</string>
-    <string name="use_dynamic_theming">Material You colors</string>
-    <string name="use_compact_navigation">Compact navigation</string>
+    <string name="use_dynamic_theming">Use wallpaper influenced dynamic app theme</string>
+    <string name="use_compact_navigation">Use compact bottom navigation bar</string>
 </resources>
