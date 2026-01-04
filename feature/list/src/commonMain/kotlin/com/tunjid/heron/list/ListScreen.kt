@@ -300,6 +300,7 @@ private fun ListMembers(
         state = listState,
         contentPadding = bottomNavAndInsetPaddingValues(
             horizontal = 8.dp,
+            isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -458,7 +459,9 @@ private fun ListTimeline(
             state = gridState,
             columns = StaggeredGridCells.Adaptive(presentation.cardSize),
             verticalItemSpacing = 8.dp,
-            contentPadding = bottomNavAndInsetPaddingValues(),
+            contentPadding = bottomNavAndInsetPaddingValues(
+                isCompact = paneScaffoldState.prefersCompactBottomNav,
+            ),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             userScrollEnabled = !paneScaffoldState.isTransitionActive,
         ) {

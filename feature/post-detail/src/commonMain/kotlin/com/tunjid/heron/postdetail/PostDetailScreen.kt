@@ -162,6 +162,7 @@ internal fun PostDetailScreen(
         verticalItemSpacing = 4.dp,
         contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
             top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+            isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         userScrollEnabled = !paneScaffoldState.isTransitionActive,

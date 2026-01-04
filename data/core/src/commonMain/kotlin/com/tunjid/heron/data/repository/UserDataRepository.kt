@@ -5,9 +5,12 @@ import app.bsky.actor.PutPreferencesRequest
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
+import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.toOutcome
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -16,6 +19,28 @@ import kotlinx.coroutines.flow.map
 interface UserDataRepository {
 
     val preferences: Flow<Preferences>
+
+    val navigation: Flow<SavedState.Navigation>
+
+    suspend fun persistNavigationState(
+        navigation: SavedState.Navigation,
+    ): Outcome
+
+    suspend fun setLastViewedHomeTimelineUri(
+        uri: Uri,
+    ): Outcome
+
+    suspend fun setRefreshedHomeTimelineOnLaunch(
+        refreshOnLaunch: Boolean,
+    ): Outcome
+
+    suspend fun setDynamicTheming(
+        dynamicTheming: Boolean,
+    ): Outcome
+
+    suspend fun setCompactNavigation(
+        compactNavigation: Boolean,
+    ): Outcome
 
     suspend fun updateMutedWords(
         mutedWordPreferences: List<MutedWordPreference>,
@@ -38,6 +63,42 @@ internal class OfflineUserDataRepository @Inject constructor(
                     ?: Preferences.EmptyPreferences
             }
             .distinctUntilChanged()
+
+    override val navigation: Flow<SavedState.Navigation>
+        get() = savedStateDataSource.savedState
+            .map { it.navigation }
+
+    override suspend fun persistNavigationState(
+        navigation: SavedState.Navigation,
+    ): Outcome = runCatchingUnlessCancelled {
+        if (navigation != InitialNavigation) savedStateDataSource.setNavigationState(
+            navigation = navigation,
+        )
+    }.toOutcome()
+
+    override suspend fun setLastViewedHomeTimelineUri(
+        uri: Uri,
+    ): Outcome = updatePreferences {
+        copy(lastViewedHomeTimelineUri = uri)
+    }
+
+    override suspend fun setRefreshedHomeTimelineOnLaunch(
+        refreshOnLaunch: Boolean,
+    ): Outcome = updatePreferences {
+        copy(refreshHomeTimelineOnLaunch = refreshOnLaunch)
+    }
+
+    override suspend fun setDynamicTheming(
+        dynamicTheming: Boolean,
+    ): Outcome = updatePreferences {
+        copy(useDynamicTheming = dynamicTheming)
+    }
+
+    override suspend fun setCompactNavigation(
+        compactNavigation: Boolean,
+    ): Outcome = updatePreferences {
+        copy(useCompactNavigation = compactNavigation)
+    }
 
     override suspend fun updateMutedWords(
         mutedWordPreferences: List<MutedWordPreference>,
@@ -91,4 +152,13 @@ internal class OfflineUserDataRepository @Inject constructor(
             copy(preferences = updatedPreferences)
         }
     }
+
+    private suspend fun updatePreferences(
+        updater: Preferences.() -> Preferences,
+    ): Outcome =
+        runCatchingUnlessCancelled {
+            savedStateDataSource.updateSignedInProfileData {
+                copy(preferences = preferences.updater())
+            }
+        }.toOutcome()
 }

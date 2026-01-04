@@ -111,7 +111,9 @@ internal fun ConversationScreen(
     LazyColumn(
         state = listState,
         reverseLayout = true,
-        contentPadding = UiTokens.bottomNavAndInsetPaddingValues(),
+        contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
+            isCompact = paneScaffoldState.prefersCompactBottomNav,
+        ),
         modifier = modifier
             .fillMaxSize(),
     ) {

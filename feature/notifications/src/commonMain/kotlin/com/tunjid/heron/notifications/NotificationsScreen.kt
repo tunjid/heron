@@ -242,6 +242,7 @@ internal fun NotificationsScreen(
             state = listState,
             contentPadding = bottomNavAndInsetPaddingValues(
                 top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+                isCompact = paneScaffoldState.prefersCompactBottomNav,
             ),
             userScrollEnabled = !paneScaffoldState.isTransitionActive,
         ) {

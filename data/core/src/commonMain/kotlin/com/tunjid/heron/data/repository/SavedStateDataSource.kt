@@ -26,7 +26,6 @@ import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedState
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
@@ -101,6 +100,7 @@ abstract class SavedState {
                         didDoc.service
                             .firstOrNull()
                             ?.serviceEndpoint
+
                     is DPoP -> pdsUrl
                 }
 
@@ -216,9 +216,13 @@ abstract class SavedState {
     }
 }
 
-val InitialSavedState: SavedState = VersionedSavedState.Initial
+private val InitialSavedState: SavedState = VersionedSavedState.Initial
 
-val EmptySavedState: SavedState = VersionedSavedState.Empty
+private val EmptySavedState: SavedState = VersionedSavedState.Empty
+
+val InitialNavigation: SavedState.Navigation = InitialSavedState.navigation
+
+val EmptyNavigation: SavedState.Navigation = EmptySavedState.navigation
 
 fun SavedState.isSignedIn(): Boolean =
     auth.ifSignedIn() != null
@@ -266,7 +270,7 @@ private fun preferencesForUrl(url: String) =
         else -> Preferences.BlueSkyGuestPreferences
     }
 
-sealed class SavedStateDataSource {
+internal sealed class SavedStateDataSource {
     abstract val savedState: StateFlow<SavedState>
 
     abstract suspend fun setNavigationState(
@@ -279,14 +283,6 @@ sealed class SavedStateDataSource {
 
     internal abstract suspend fun updateSignedInProfileData(
         block: SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData,
-    )
-
-    abstract suspend fun setLastViewedHomeTimelineUri(
-        uri: Uri,
-    )
-
-    abstract suspend fun setRefreshedHomeTimelineOnLaunch(
-        refreshOnLaunch: Boolean,
     )
 }
 
@@ -333,6 +329,7 @@ internal class DataStoreSavedStateDataSource(
                         update = { copy(auth = null) },
                     )
                 }
+
                 is SavedState.AuthTokens.Guest -> profileData.updateOrPutValue(
                     key = auth.authProfileId,
                     update = {
@@ -343,6 +340,7 @@ internal class DataStoreSavedStateDataSource(
                     },
                     put = { SavedState.ProfileData.fromTokens(auth) },
                 )
+
                 else -> profileData.updateOrPutValue(
                     key = auth.authProfileId,
                     update = { copy(auth = auth) },
@@ -365,18 +363,6 @@ internal class DataStoreSavedStateDataSource(
         copy(
             profileData = profileData + update,
         )
-    }
-
-    override suspend fun setLastViewedHomeTimelineUri(
-        uri: Uri,
-    ) = updateSignedInProfileData {
-        copy(preferences = preferences.copy(lastViewedHomeTimelineUri = uri))
-    }
-
-    override suspend fun setRefreshedHomeTimelineOnLaunch(
-        refreshOnLaunch: Boolean,
-    ) = updateSignedInProfileData {
-        copy(preferences = preferences.copy(refreshHomeTimelineOnLaunch = refreshOnLaunch))
     }
 
     private suspend fun updateState(update: VersionedSavedState.() -> VersionedSavedState) {

@@ -39,8 +39,6 @@ object UiTokens {
 
     val tabsHeight = 48.dp
 
-    val bottomNavHeight: Dp = 80.dp
-
     val appBarButtonSize = 40.dp
 
     const val appBarSharedElementOverlayZIndex = 12f
@@ -55,12 +53,17 @@ object UiTokens {
             calculateTopPadding() + calculateBottomPadding()
         }
 
+    fun bottomNavHeight(
+        isCompact: Boolean,
+    ): Dp = if (isCompact) 64.dp else 80.dp
+
     @Composable
     fun bottomNavAndInsetPaddingValues(
         top: Dp = 0.dp,
         horizontal: Dp = 0.dp,
+        isCompact: Boolean,
     ): PaddingValues {
-        val padding = navigationBarHeight + bottomNavHeight
+        val padding = navigationBarHeight + bottomNavHeight(isCompact)
         return remember(top, horizontal, padding) {
             PaddingValues(
                 top = top,

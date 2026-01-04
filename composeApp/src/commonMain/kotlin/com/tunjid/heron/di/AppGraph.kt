@@ -21,6 +21,7 @@ import com.tunjid.heron.conversation.di.ConversationBindings
 import com.tunjid.heron.data.di.AppCoroutineScope
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.editprofile.di.EditProfileBindings
 import com.tunjid.heron.feed.di.FeedBindings
@@ -95,6 +96,7 @@ interface AppGraph {
         @AppCoroutineScope
         appScope: CoroutineScope,
         authRepository: AuthRepository,
+        userDataRepository: UserDataRepository,
         navigationStateHolder: NavigationStateHolder,
         notificationStateHolder: NotificationStateHolder,
         imageLoader: ImageLoader,
@@ -103,6 +105,7 @@ interface AppGraph {
     ): AppState = AppState(
         entryMap = entryMap,
         authRepository = authRepository,
+        userDataRepository = userDataRepository,
         navigationStateHolder = navigationStateHolder,
         notificationStateHolder = notificationStateHolder,
         imageLoader = imageLoader,
