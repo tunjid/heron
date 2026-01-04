@@ -28,6 +28,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -36,7 +37,10 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.treenav.compose.Adaptation
@@ -113,8 +117,13 @@ internal fun AppState.PaneNavigationBar(
     modifier: Modifier = Modifier,
     onNavItemReselected: () -> Boolean,
 ) {
+    val preferences by preferences.collectAsState()
+    val useCompactNavigation = preferences?.useCompactNavigation ?: false
+
     NavigationBar(
-        modifier = modifier,
+        modifier = modifier.then(
+            if (useCompactNavigation) Modifier.height(74.dp) else Modifier
+        ),
     ) {
         navItems.forEach { item ->
             NavigationBarItem(
@@ -131,6 +140,10 @@ internal fun AppState.PaneNavigationBar(
                         },
                     )
                 },
+                label = if (!useCompactNavigation) {
+                    { Text(stringResource(item.stack.titleRes)) }
+                } else null,
+                alwaysShowLabel = !useCompactNavigation,
                 selected = item.selected,
                 onClick = {
                     if (item.selected && onNavItemReselected()) return@NavigationBarItem

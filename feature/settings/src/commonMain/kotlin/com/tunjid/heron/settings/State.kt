@@ -41,6 +41,10 @@ sealed class Action(val key: String) {
         val dynamicTheming: Boolean,
     ) : Action(key = "SetDynamicThemingPreference")
 
+    data class SetCompactNavigation(
+        val compactNavigation: Boolean,
+    ) : Action(key = "SetCompactNavigation")
+
     data class SnackbarDismissed(
         val message: Memo,
     ) : Action(key = "SnackbarDismissed")

@@ -50,6 +50,8 @@ data class Preferences(
     val mutedWordPreferences: List<MutedWordPreference> = emptyList(),
     @ProtoNumber(9)
     val useDynamicTheming: Boolean = false,
+    @ProtoNumber(10)
+    val useCompactNavigation: Boolean = false,
 ) : UrlEncodableModel {
     companion object {
         val EmptyPreferences = Preferences(
