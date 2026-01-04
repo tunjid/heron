@@ -20,6 +20,6 @@ actual fun isDynamicThemingSupported(): Boolean {
     return true
 }
 
-actual fun isCompactNavigationSupported(): Boolean {
+actual fun isNavigationBarSettingsSupported(): Boolean {
     return true
 }

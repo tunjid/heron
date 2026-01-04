@@ -45,6 +45,7 @@ import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -55,6 +56,8 @@ import sh.christian.ozone.api.Did
 
 interface AuthRepository {
     val isSignedIn: Flow<Boolean>
+
+    val isGuest: Flow<Boolean>
 
     val signedInUser: Flow<Profile?>
 
@@ -87,6 +90,13 @@ internal class AuthTokenRepository(
         savedStateDataSource.signedInAuth.map {
             it != null
         }
+            .distinctUntilChanged()
+
+    override val isGuest: Flow<Boolean> =
+        savedStateDataSource.savedState.map { savedState ->
+            savedState.auth is SavedState.AuthTokens.Guest
+        }
+            .distinctUntilChanged()
 
     override val signedInUser: Flow<Profile?> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->

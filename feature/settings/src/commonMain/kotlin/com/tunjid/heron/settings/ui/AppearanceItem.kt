@@ -16,15 +16,10 @@
 
 package com.tunjid.heron.settings.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Palette
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.models.Preferences
 import heron.feature.settings.generated.resources.Res
@@ -36,7 +31,7 @@ import org.jetbrains.compose.resources.stringResource
 
 expect fun isDynamicThemingSupported(): Boolean
 
-expect fun isCompactNavigationSupported(): Boolean
+expect fun isNavigationBarSettingsSupported(): Boolean
 
 @Composable
 fun AppearanceItem(
@@ -47,7 +42,7 @@ fun AppearanceItem(
     setAutoHideNavigationBar: (Boolean) -> Unit,
 ) {
     val isDynamicThemingSupported = isDynamicThemingSupported()
-    val isCompactNavigationSupported = isCompactNavigationSupported()
+    val isNavigationBarSettingsSupported = isNavigationBarSettingsSupported()
 
     ExpandableSettingsItemRow(
         modifier = modifier
@@ -55,47 +50,23 @@ fun AppearanceItem(
         title = stringResource(Res.string.appearance),
         icon = Icons.Rounded.Palette,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(Res.string.use_dynamic_theming),
-            )
-            Switch(
-                checked = signedInProfilePreferences.useDynamicTheming,
-                onCheckedChange = setDynamicThemingPreference,
-                enabled = isDynamicThemingSupported,
-            )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(Res.string.use_compact_navigation),
-            )
-            Switch(
-                checked = signedInProfilePreferences.useCompactNavigation,
-                onCheckedChange = setCompactNavigation,
-                enabled = isCompactNavigationSupported,
-            )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(Res.string.auto_hide_navigation_bar),
-            )
-            Switch(
-                checked = signedInProfilePreferences.autoHideNavigationBar,
-                onCheckedChange = setAutoHideNavigationBar,
-                enabled = isCompactNavigationSupported,
-            )
-        }
+        SettingsToggleItem(
+            text = stringResource(Res.string.use_dynamic_theming),
+            enabled = isDynamicThemingSupported,
+            checked = signedInProfilePreferences.useDynamicTheming,
+            onCheckedChange = setDynamicThemingPreference,
+        )
+        SettingsToggleItem(
+            text = stringResource(Res.string.use_compact_navigation),
+            enabled = isNavigationBarSettingsSupported,
+            checked = signedInProfilePreferences.useCompactNavigation,
+            onCheckedChange = setCompactNavigation,
+        )
+        SettingsToggleItem(
+            text = stringResource(Res.string.auto_hide_navigation_bar),
+            enabled = isNavigationBarSettingsSupported,
+            checked = signedInProfilePreferences.autoHideNavigationBar,
+            onCheckedChange = setAutoHideNavigationBar,
+        )
     }
 }

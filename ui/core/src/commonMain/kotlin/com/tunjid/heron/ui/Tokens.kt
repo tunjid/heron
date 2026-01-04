@@ -41,6 +41,12 @@ object UiTokens {
 
     val appBarButtonSize = 40.dp
 
+    val LikeRed: Color = Color(0xFFE0245E)
+
+    val RepostGreen: Color = Color(0xFF17BF63)
+
+    val BookmarkBlue: Color = Color(0xFF1D9BF0)
+
     const val appBarSharedElementOverlayZIndex = 12f
 
     val statusBarHeight: Dp

@@ -71,6 +71,7 @@ internal class OfflineUserDataRepository @Inject constructor(
     override val navigation: Flow<SavedState.Navigation>
         get() = savedStateDataSource.savedState
             .map { it.navigation }
+            .distinctUntilChanged()
 
     override suspend fun persistNavigationState(
         navigation: SavedState.Navigation,
