@@ -107,7 +107,7 @@ fun PaneScaffoldState.PaneFab(
                     modifier = Modifier
                         .graphicsLayer { alpha = fabAlpha.value },
                     onClick = { if (enabled) onClick() },
-                    shape = MaterialTheme.shapes.small.copy(CornerSize(percent = 50)),
+                    shape = MaterialTheme.shapes.large,
                     content = {
                         Row(
                             modifier = Modifier

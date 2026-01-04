@@ -18,10 +18,10 @@ package com.tunjid.heron.compose.ui
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -54,7 +54,7 @@ fun PaneScaffoldState.TopAppBarFab(
                 )
                 else this
             },
-        shape = CircleShape,
+        shape = MaterialTheme.shapes.large,
         onClick = onClick@{
             state.createPostAction()?.let(onCreatePost)
         },
