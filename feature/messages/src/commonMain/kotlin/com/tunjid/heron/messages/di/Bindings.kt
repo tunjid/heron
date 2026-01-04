@@ -66,6 +66,8 @@ import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.ui.SearchBar
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.navigationBarOffset
+import com.tunjid.heron.ui.fabPositionOffset
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.treenav.compose.PaneEntry
@@ -207,7 +209,7 @@ class MessagesBindings(
                     PaneFab(
                         modifier = Modifier
                             .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
+                                fabOffset(bottomNavigationNestedScrollConnection.fabPositionOffset(autoHideNavigationBar))
                             },
                         text = stringResource(Res.string.write_new_dm),
                         icon = Icons.AutoMirrored.Rounded.ForwardToInbox,
@@ -227,7 +229,7 @@ class MessagesBindings(
                     PaneNavigationBar(
                         modifier = Modifier
                             .offset {
-                                bottomNavigationNestedScrollConnection.offset.round()
+                                bottomNavigationNestedScrollConnection.navigationBarOffset(autoHideNavigationBar).round()
                             },
                     )
                 },

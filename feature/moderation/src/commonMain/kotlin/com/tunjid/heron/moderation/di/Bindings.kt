@@ -45,6 +45,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.navigationBarOffset
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -154,7 +155,7 @@ class ModerationBindings(
                 navigationBar = {
                     PaneNavigationBar(
                         modifier = Modifier.offset {
-                            bottomNavigationNestedScrollConnection.offset.round()
+                            bottomNavigationNestedScrollConnection.navigationBarOffset(autoHideNavigationBar).round()
                         },
                     )
                 },

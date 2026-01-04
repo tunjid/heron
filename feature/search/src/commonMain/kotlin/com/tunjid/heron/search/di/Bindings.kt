@@ -49,6 +49,7 @@ import com.tunjid.heron.search.SearchScreen
 import com.tunjid.heron.search.SearchViewModel
 import com.tunjid.heron.ui.SearchBar
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.navigationBarOffset
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.treenav.compose.PaneEntry
@@ -221,7 +222,7 @@ class SearchBindings(
                     PaneNavigationBar(
                         modifier = Modifier
                             .offset {
-                                bottomNavigationNestedScrollConnection.offset.round()
+                                bottomNavigationNestedScrollConnection.navigationBarOffset(autoHideNavigationBar).round()
                             },
                     )
                 },

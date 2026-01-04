@@ -51,6 +51,8 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.navigationBarOffset
+import com.tunjid.heron.ui.fabPositionOffset
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -171,7 +173,7 @@ class EditProfileBindings(
                 navigationBar = {
                     PaneNavigationBar(
                         modifier = Modifier.offset {
-                            bottomNavigationNestedScrollConnection.offset.round()
+                            bottomNavigationNestedScrollConnection.navigationBarOffset(autoHideNavigationBar).round()
                         },
                     )
                 },
@@ -179,7 +181,7 @@ class EditProfileBindings(
                     PaneFab(
                         modifier = Modifier
                             .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
+                                fabOffset(bottomNavigationNestedScrollConnection.fabPositionOffset(autoHideNavigationBar))
                             },
                         text = stringResource(
                             if (state.submitting) Res.string.profile_updating

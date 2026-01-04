@@ -52,19 +52,23 @@ fun bottomNavigationNestedScrollConnection(
     val navigationBarHeight by rememberUpdatedState(UiTokens.navigationBarHeight)
     return rememberAccumulatedOffsetNestedScrollConnection(
         invert = true,
-        maxOffset = maxOffset@{
-            if (enabled) {
-                Offset(
-                    x = 0f,
-                    y = (navigationBarHeight + UiTokens.bottomNavHeight(isCompact = isCompact)).toPx(),
-                )
-            } else {
-                Offset.Zero
-            }
+        maxOffset = {
+            Offset(
+                x = 0f,
+                y = (navigationBarHeight + UiTokens.bottomNavHeight(isCompact = isCompact)).toPx(),
+            )
         },
         minOffset = { Offset.Zero },
     )
 }
+
+fun AccumulatedOffsetNestedScrollConnection.navigationBarOffset(
+    enabled: Boolean,
+): Offset = if (enabled) offset else Offset.Zero
+
+fun AccumulatedOffsetNestedScrollConnection.fabPositionOffset(
+    enabled: Boolean,
+): Offset = if (enabled) offset else Offset.Zero
 
 @Composable
 fun AccumulatedOffsetNestedScrollConnection.PagerTopGapCloseEffect(

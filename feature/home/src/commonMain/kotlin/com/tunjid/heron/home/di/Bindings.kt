@@ -55,6 +55,8 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.navigationBarOffset
+import com.tunjid.heron.ui.fabPositionOffset
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
@@ -174,7 +176,7 @@ class HomeBindings(
                     PaneSnackbarHost(
                         modifier = Modifier
                             .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
+                                fabOffset(bottomNavigationNestedScrollConnection.fabPositionOffset(autoHideNavigationBar))
                             },
                     )
                 },
@@ -182,7 +184,7 @@ class HomeBindings(
                     PaneFab(
                         modifier = Modifier
                             .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
+                                fabOffset(bottomNavigationNestedScrollConnection.fabPositionOffset(autoHideNavigationBar))
                             },
                         text = stringResource(
                             when {
@@ -220,7 +222,7 @@ class HomeBindings(
                     PaneNavigationBar(
                         modifier = Modifier
                             .offset {
-                                bottomNavigationNestedScrollConnection.offset.round()
+                                bottomNavigationNestedScrollConnection.navigationBarOffset(autoHideNavigationBar).round()
                             },
                         onNavItemReselected = {
                             viewModel.accept(Action.RefreshCurrentTab)
