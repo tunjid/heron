@@ -80,9 +80,9 @@ import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.icon
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.stringResource
 import com.tunjid.heron.timeline.utilities.format
+import com.tunjid.heron.ui.UiTokens.BookmarkBlue
 import com.tunjid.heron.ui.UiTokens.LikeRed
 import com.tunjid.heron.ui.UiTokens.RepostGreen
-import com.tunjid.heron.ui.UiTokens.BookmarkBlue
 import com.tunjid.heron.ui.UiTokens.withDim
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
@@ -214,7 +214,7 @@ private inline fun PostInteractionsButtons(
                             PostInteractionButton.Like ->
                                 if (post.viewerStats?.likeUri != null) LikeRed
                                 else MaterialTheme.colorScheme.outline
-    
+
                             PostInteractionButton.Repost ->
                                 if (post.viewerStats?.repostUri != null) RepostGreen
                                 else MaterialTheme.colorScheme.outline
