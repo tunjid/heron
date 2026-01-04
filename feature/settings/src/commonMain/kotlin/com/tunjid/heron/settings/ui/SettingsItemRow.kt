@@ -24,7 +24,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -120,7 +119,11 @@ fun ExpandableSettingsItemRow(
             .then(
                 modifier
                     .fillMaxWidth()
-                    .clickable { isExpanded = !isExpanded },
+                    .toggleable(
+                        value = isExpanded,
+                        onValueChange = { isExpanded = it },
+                        role = Role.Button,
+                    ),
             ),
     ) {
         SettingsItemRow(
