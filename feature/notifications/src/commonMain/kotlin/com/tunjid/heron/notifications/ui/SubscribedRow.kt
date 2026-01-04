@@ -36,6 +36,7 @@ import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.timeline.ui.TimeDelta
 import com.tunjid.heron.ui.text.CommonStrings
+import com.tunjid.heron.ui.UiTokens.BookmarkBlue
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.core.generated.resources.notifications_multiple_post_subscription
 import heron.ui.core.generated.resources.notifications_post_subscription
@@ -66,7 +67,7 @@ fun SubscribedRow(
         icon = {
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.FiberNew),
-                tint = Color.Red,
+                tint = BookmarkBlue,
                 contentDescription = stringResource(CommonStrings.notifications_post_subscription_description),
             )
         },

@@ -16,7 +16,9 @@
 
 package com.tunjid.heron.timeline.ui.post
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -78,6 +80,9 @@ import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.icon
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.stringResource
 import com.tunjid.heron.timeline.utilities.format
+import com.tunjid.heron.ui.UiTokens.LikeRed
+import com.tunjid.heron.ui.UiTokens.RepostGreen
+import com.tunjid.heron.ui.UiTokens.BookmarkBlue
 import com.tunjid.heron.ui.UiTokens.withDim
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
@@ -203,20 +208,23 @@ private inline fun PostInteractionsButtons(
                         PostInteractionButton.Bookmark -> ""
                         PostInteractionButton.MoreOptions -> ""
                     },
-                    tint = when (button) {
-                        PostInteractionButton.Comment -> MaterialTheme.colorScheme.outline
-                        PostInteractionButton.Like ->
-                            if (post.viewerStats?.likeUri != null) LikeRed
-                            else MaterialTheme.colorScheme.outline
-
-                        PostInteractionButton.Repost ->
-                            if (post.viewerStats?.repostUri != null) RepostGreen
-                            else MaterialTheme.colorScheme.outline
-                        PostInteractionButton.Bookmark ->
-                            if (post.viewerStats.isBookmarked) BookmarkBlue
-                            else MaterialTheme.colorScheme.outline
-                        PostInteractionButton.MoreOptions -> MaterialTheme.colorScheme.outline
-                    },
+                    tint = animateColorAsState(
+                        targetValue = when (button) {
+                            PostInteractionButton.Comment -> MaterialTheme.colorScheme.outline
+                            PostInteractionButton.Like ->
+                                if (post.viewerStats?.likeUri != null) LikeRed
+                                else MaterialTheme.colorScheme.outline
+    
+                            PostInteractionButton.Repost ->
+                                if (post.viewerStats?.repostUri != null) RepostGreen
+                                else MaterialTheme.colorScheme.outline
+                            PostInteractionButton.Bookmark ->
+                                if (post.viewerStats.isBookmarked) BookmarkBlue
+                                else MaterialTheme.colorScheme.outline
+                            PostInteractionButton.MoreOptions -> MaterialTheme.colorScheme.outline
+                        },
+                        animationSpec = ColorTween,
+                    ).value,
                     enabled = when (button) {
                         PostInteractionButton.Bookmark -> true
                         PostInteractionButton.Comment -> post.viewerStats.canReply
@@ -533,9 +541,7 @@ private fun PostInteractionsBottomSheet(
     }
 }
 
-private val LikeRed = Color(0xFFE0245E)
-private val RepostGreen = Color(0xFF17BF63)
-private val BookmarkBlue = Color(0xFF1D9BF0)
+private val ColorTween = tween<Color>(durationMillis = 100)
 
 private val Timeline.Presentation.postInteractionArrangement: Arrangement.Horizontal
     get() = when (this) {

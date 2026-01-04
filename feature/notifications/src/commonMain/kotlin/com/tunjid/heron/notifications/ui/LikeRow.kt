@@ -36,6 +36,7 @@ import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.timeline.ui.TimeDelta
 import com.tunjid.heron.ui.text.CommonStrings
+import com.tunjid.heron.ui.UiTokens.LikeRed
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.core.generated.resources.notifications_liked_your_post
 import heron.ui.core.generated.resources.notifications_liked_your_post_description
@@ -69,7 +70,7 @@ fun LikeRow(
         icon = {
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.Favorite),
-                tint = Color.Red,
+                tint = LikeRed,
                 contentDescription = stringResource(
                     when (notification) {
                         is Notification.Liked.Post -> CommonStrings.notifications_liked_your_post_description

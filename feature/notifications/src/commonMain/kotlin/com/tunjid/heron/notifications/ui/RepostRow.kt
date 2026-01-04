@@ -36,6 +36,7 @@ import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.timeline.ui.TimeDelta
 import com.tunjid.heron.ui.text.CommonStrings
+import com.tunjid.heron.ui.UiTokens.RepostGreen
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.core.generated.resources.notifications_multiple_reposted_your_post
 import heron.ui.core.generated.resources.notifications_multiple_reposted_your_repost
@@ -69,7 +70,7 @@ fun RepostRow(
         icon = {
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.Repeat),
-                tint = Color.Green,
+                tint = RepostGreen,
                 contentDescription = stringResource(
                     when (notification) {
                         is Notification.Reposted.Post -> CommonStrings.notifications_reposted_your_post_description
