@@ -48,6 +48,8 @@ data class Preferences(
     val hiddenPostPreferences: List<HiddenPostPreference> = emptyList(),
     @ProtoNumber(8)
     val mutedWordPreferences: List<MutedWordPreference> = emptyList(),
+    @ProtoNumber(9)
+    val useDynamicTheming: Boolean = false,
 ) : UrlEncodableModel {
     companion object {
         val EmptyPreferences = Preferences(

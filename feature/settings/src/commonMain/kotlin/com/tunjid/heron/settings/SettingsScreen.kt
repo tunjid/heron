@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.scaffold.navigation.moderationDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.settings.ui.AppearanceItem
 import com.tunjid.heron.settings.ui.ContentAndMediaItem
 import com.tunjid.heron.settings.ui.FeedbackItem
 import com.tunjid.heron.settings.ui.ModerationItem
@@ -63,6 +64,14 @@ internal fun SettingsScreen(
             ) {
                 actions(Action.Navigate.To(moderationDestination()))
             }
+            AppearanceItem(
+                modifier = Modifier
+                    .animateBounds(paneScaffoldState),
+                signedInProfilePreferences = signedInProfilePreferences,
+                setDynamicThemingPreference = {
+                    actions(Action.SetDynamicThemingPreference(it))
+                },
+            )
         }
         FeedbackItem(
             modifier = Modifier

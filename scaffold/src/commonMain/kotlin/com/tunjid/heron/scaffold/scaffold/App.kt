@@ -24,6 +24,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,7 +60,10 @@ fun App(
     modifier: Modifier,
     appState: AppState,
 ) {
-    AppTheme {
+    val preferences by appState.preferences.collectAsState()
+    AppTheme(
+        dynamicColor = preferences?.useDynamicTheming ?: false,
+    ) {
         CompositionLocalProvider(
             LocalAppState provides appState,
             LocalImageLoader provides appState.imageLoader,
