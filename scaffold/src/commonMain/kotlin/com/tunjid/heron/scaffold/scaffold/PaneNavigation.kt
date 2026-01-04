@@ -21,6 +21,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
@@ -113,10 +114,13 @@ internal fun AppState.PaneNavigationBar(
     modifier: Modifier = Modifier,
     onNavItemReselected: () -> Boolean,
 ) {
-
     NavigationBar(
         modifier = modifier
-            .height(UiTokens.bottomNavHeight(isCompact = prefersCompactBottomNav)),
+            .animateContentSize()
+            .then(
+                if (prefersCompactBottomNav) Modifier.height(UiTokens.bottomNavHeight(isCompact = true))
+                else Modifier,
+            ),
     ) {
         navItems.forEach { item ->
             NavigationBarItem(
@@ -133,9 +137,13 @@ internal fun AppState.PaneNavigationBar(
                         },
                     )
                 },
-                label = if (!prefersCompactBottomNav) {
-                    { Text(stringResource(item.stack.titleRes)) }
-                } else null,
+                label = {
+                    AnimatedVisibility(
+                        visible = !prefersCompactBottomNav
+                    ) {
+                        Text(stringResource(item.stack.titleRes))
+                    }
+                },
                 alwaysShowLabel = !prefersCompactBottomNav,
                 selected = item.selected,
                 onClick = {
