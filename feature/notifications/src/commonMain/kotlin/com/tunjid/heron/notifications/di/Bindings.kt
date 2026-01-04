@@ -52,8 +52,8 @@ import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.navigationBarOffset
 import com.tunjid.heron.ui.fabPositionOffset
+import com.tunjid.heron.ui.navigationBarOffset
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
