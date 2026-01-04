@@ -32,6 +32,7 @@ import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
+import com.tunjid.heron.scaffold.scaffold.LocalAppState
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PaneSnackbarHost
@@ -140,9 +141,17 @@ class SearchBindings(
             val topAppBarNestedScrollConnection =
                 topAppBarNestedScrollConnection()
 
+            val appState = LocalAppState.current
+
+
+            val autoHideNavigationBar = appState.preferences?.autoHideNavigationBar ?: true
+
+
+
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection(
                     isCompact = paneScaffoldState.prefersCompactBottomNav,
+                    enabled = autoHideNavigationBar,
                 )
 
             paneScaffoldState.PaneScaffold(

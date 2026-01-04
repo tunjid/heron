@@ -33,4 +33,5 @@
     <string name="appearance">Appearance</string>
     <string name="use_dynamic_theming">Use wallpaper influenced dynamic app theme</string>
     <string name="use_compact_navigation">Use compact bottom navigation bar</string>
+    <string name="auto_hide_navigation_bar">Auto-hide navigation bar when scrolling</string>
 </resources>

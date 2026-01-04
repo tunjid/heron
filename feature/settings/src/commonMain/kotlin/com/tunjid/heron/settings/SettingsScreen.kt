@@ -74,6 +74,9 @@ internal fun SettingsScreen(
                 setCompactNavigation = {
                     actions(Action.SetCompactNavigation(it))
                 },
+                setAutoHideNavigationBar = {
+                    actions(Action.SetAutoHideNavigationBar(it))
+                },
             )
         }
         FeedbackItem(

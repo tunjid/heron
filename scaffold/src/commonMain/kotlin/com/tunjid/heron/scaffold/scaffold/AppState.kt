@@ -95,7 +95,7 @@ class AppState(
 
     internal var isSignedIn by mutableStateOf(false)
 
-    internal var preferences by mutableStateOf<Preferences?>(null)
+    var preferences by mutableStateOf<Preferences?>(null)
 
     private val multiStackNavState = mutableStateOf(navigationStateHolder.state.value)
 
@@ -353,6 +353,6 @@ internal val LocalSplitPaneState = staticCompositionLocalOf<SplitPaneState> {
     throw IllegalStateException("No SplitPaneState provided")
 }
 
-internal val LocalAppState = staticCompositionLocalOf<AppState> {
+val LocalAppState = staticCompositionLocalOf<AppState> {
     throw IllegalStateException("No AppState provided")
 }

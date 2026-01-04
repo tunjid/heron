@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.models.Preferences
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.appearance
+import heron.feature.settings.generated.resources.auto_hide_navigation_bar
 import heron.feature.settings.generated.resources.use_compact_navigation
 import heron.feature.settings.generated.resources.use_dynamic_theming
 import org.jetbrains.compose.resources.stringResource
@@ -43,6 +44,7 @@ fun AppearanceItem(
     signedInProfilePreferences: Preferences,
     setDynamicThemingPreference: (Boolean) -> Unit,
     setCompactNavigation: (Boolean) -> Unit,
+    setAutoHideNavigationBar: (Boolean) -> Unit,
 ) {
     val isDynamicThemingSupported = isDynamicThemingSupported()
     val isCompactNavigationSupported = isCompactNavigationSupported()
@@ -78,6 +80,20 @@ fun AppearanceItem(
             Switch(
                 checked = signedInProfilePreferences.useCompactNavigation,
                 onCheckedChange = setCompactNavigation,
+                enabled = isCompactNavigationSupported,
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(Res.string.auto_hide_navigation_bar),
+            )
+            Switch(
+                checked = signedInProfilePreferences.autoHideNavigationBar,
+                onCheckedChange = setAutoHideNavigationBar,
                 enabled = isCompactNavigationSupported,
             )
         }
