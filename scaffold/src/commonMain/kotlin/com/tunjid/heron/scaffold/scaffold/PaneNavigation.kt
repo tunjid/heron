@@ -122,7 +122,7 @@ internal fun AppState.PaneNavigationBar(
 
     NavigationBar(
         modifier = modifier.then(
-            if (useCompactNavigation) Modifier.height(74.dp) else Modifier
+            if (useCompactNavigation) Modifier.height(72.dp) else Modifier
         ),
     ) {
         navItems.forEach { item ->
