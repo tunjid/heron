@@ -78,35 +78,27 @@ internal class OfflineUserDataRepository @Inject constructor(
 
     override suspend fun setLastViewedHomeTimelineUri(
         uri: Uri,
-    ): Outcome = runCatchingUnlessCancelled {
-        savedStateDataSource.updateSignedInProfileData {
-            copy(preferences = preferences.copy(lastViewedHomeTimelineUri = uri))
-        }
-    }.toOutcome()
+    ): Outcome = updatePreferences {
+        copy(lastViewedHomeTimelineUri = uri)
+    }
 
     override suspend fun setRefreshedHomeTimelineOnLaunch(
         refreshOnLaunch: Boolean,
-    ): Outcome = runCatchingUnlessCancelled {
-        savedStateDataSource.updateSignedInProfileData {
-            copy(preferences = preferences.copy(refreshHomeTimelineOnLaunch = refreshOnLaunch))
-        }
-    }.toOutcome()
+    ): Outcome = updatePreferences {
+        copy(refreshHomeTimelineOnLaunch = refreshOnLaunch)
+    }
 
     override suspend fun setDynamicTheming(
         dynamicTheming: Boolean,
-    ): Outcome = runCatchingUnlessCancelled {
-        savedStateDataSource.updateSignedInProfileData {
-            copy(preferences = preferences.copy(useDynamicTheming = dynamicTheming))
-        }
-    }.toOutcome()
+    ): Outcome = updatePreferences {
+        copy(useDynamicTheming = dynamicTheming)
+    }
 
     override suspend fun setCompactNavigation(
         compactNavigation: Boolean,
-    ): Outcome = runCatchingUnlessCancelled {
-        savedStateDataSource.updateSignedInProfileData {
-            copy(preferences = preferences.copy(useCompactNavigation = compactNavigation))
-        }
-    }.toOutcome()
+    ): Outcome = updatePreferences {
+        copy(useCompactNavigation = compactNavigation)
+    }
 
     override suspend fun updateMutedWords(
         mutedWordPreferences: List<MutedWordPreference>,
@@ -160,4 +152,13 @@ internal class OfflineUserDataRepository @Inject constructor(
             copy(preferences = updatedPreferences)
         }
     }
+
+    private suspend fun updatePreferences(
+        updater: Preferences.() -> Preferences,
+    ): Outcome =
+        runCatchingUnlessCancelled {
+            savedStateDataSource.updateSignedInProfileData {
+                copy(preferences = preferences.updater())
+            }
+        }.toOutcome()
 }
