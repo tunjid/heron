@@ -94,13 +94,7 @@ internal class AuthTokenRepository(
 
     override val isGuest: Flow<Boolean> =
         savedStateDataSource.savedState.map { savedState ->
-            when (savedState.auth) {
-                is SavedState.AuthTokens.Guest -> true
-                is SavedState.AuthTokens.Authenticated,
-                is SavedState.AuthTokens.Pending.DPoP,
-                null,
-                -> false
-            }
+            savedState.auth is SavedState.AuthTokens.Guest
         }
             .distinctUntilChanged()
 
