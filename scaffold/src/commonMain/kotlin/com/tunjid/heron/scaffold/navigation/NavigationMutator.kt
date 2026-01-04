@@ -37,17 +37,18 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.di.AppCoroutineScope
-import com.tunjid.heron.data.repository.EmptySavedState
-import com.tunjid.heron.data.repository.InitialSavedState
+import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.EmptyNavigation
+import com.tunjid.heron.data.repository.InitialNavigation
 import com.tunjid.heron.data.repository.SavedState
-import com.tunjid.heron.data.repository.SavedStateDataSource
-import com.tunjid.heron.data.repository.isSignedIn
+import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapLatestToMutation
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.StackNav
@@ -77,6 +78,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
@@ -413,26 +415,35 @@ interface NavigationAction {
 class PersistedNavigationStateHolder(
     @AppCoroutineScope
     appScope: CoroutineScope,
-    savedStateDataSource: SavedStateDataSource,
+    userDataRepository: UserDataRepository,
+    authRepository: AuthRepository,
     routeParser: RouteParser,
 ) : NavigationStateHolder,
     ActionStateMutator<NavigationMutation, StateFlow<MultiStackNav>> by appScope.actionStateFlowMutator(
         initialState = InitialNavigationState,
         started = SharingStarted.Eagerly,
         inputs = listOf(
-            savedStateDataSource.forceSignOutMutations(),
+            forceSignOutMutations(
+                authRepository = authRepository,
+                userDataRepository = userDataRepository,
+            ),
         ),
         actionTransform = { navActions ->
             flow {
                 // Restore saved nav from disk first
-                val savedState = savedStateDataSource.savedState
+                val savedNavigation = userDataRepository.navigation
                     // Wait for a non empty saved state to be read
-                    .first { it != InitialSavedState }
+                    .first { it != InitialNavigation }
+
+                val isSignedIn = authRepository.isSignedIn.first()
 
                 val multiStackNav = when {
-                    savedState == EmptySavedState -> SignedOutNavigationState
-                    !savedState.isSignedIn() -> SignedOutNavigationState
-                    else -> routeParser.parseMultiStackNav(savedState).let {
+                    savedNavigation == EmptyNavigation -> SignedOutNavigationState
+                    !isSignedIn -> SignedOutNavigationState
+                    else -> routeParser.parseMultiStackNav(
+                        navigation = savedNavigation,
+                        isSignedIn = isSignedIn,
+                    ).let {
                         val wasInOauthFlow = it.current?.id?.contains(OAuthUrlPathSegment) == true
                         if (wasInOauthFlow) SignedOutNavigationState else it
                     }
@@ -455,9 +466,11 @@ class PersistedNavigationStateHolder(
         stateTransform = { navigationStateFlow ->
             // Save each new navigation state in parallel
             navigationStateFlow.onEach { navigationState ->
+                // Fire and forget, do not slow down the collector,
+                // navigation needs to be immediate.
                 appScope.persistNavigationState(
                     navigationState = navigationState,
-                    savedStateDataSource = savedStateDataSource,
+                    userDataRepository = userDataRepository,
                 )
             }
         },
@@ -477,11 +490,20 @@ fun <Action : NavigationAction, State> Flow<Action>.consumeNavigationActions(
     emptyFlow<Mutation<State>>()
 }
 
-private fun SavedStateDataSource.forceSignOutMutations(): Flow<Mutation<MultiStackNav>> =
-    savedState
-        // No auth token and is displaying main navigation
-        .filter { it.auth == null && it != EmptySavedState }
-        .mapToMutation { _ ->
+private fun forceSignOutMutations(
+    authRepository: AuthRepository,
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<MultiStackNav>> =
+    combine(
+        authRepository.isSignedIn,
+        userDataRepository.navigation,
+        ::Pair,
+    )
+        .filter { (isSignedIn, navigation) ->
+            // No auth token and is displaying main navigation
+            !isSignedIn && navigation != EmptyNavigation
+        }
+        .mapLatestToMutation {
             when (stacks[currentIndex].name) {
                 // If on the auth stack already, keep the navigation state as is
                 AppStack.Auth.stackName -> this
@@ -491,44 +513,46 @@ private fun SavedStateDataSource.forceSignOutMutations(): Flow<Mutation<MultiSta
 
 private fun CoroutineScope.persistNavigationState(
     navigationState: MultiStackNav,
-    savedStateDataSource: SavedStateDataSource,
+    userDataRepository: UserDataRepository,
 ) = launch {
-    if (navigationState != InitialNavigationState) savedStateDataSource.setNavigationState(
+    if (navigationState != InitialNavigationState) userDataRepository.persistNavigationState(
         navigation = navigationState.toSavedState(),
     )
 }
 
-private fun RouteParser.parseMultiStackNav(savedState: SavedState) =
-    savedState.navigation.backStacks
-        .foldIndexed(
-            initial = MultiStackNav(
-                name = if (savedState.isSignedIn()) SignedInNavigationState.name
-                else SignedOutNavigationState.name,
-            ),
-            operation = { index, multiStackNav, routesForStack ->
-                multiStackNav.copy(
-                    stacks = multiStackNav.stacks +
-                        routesForStack.fold(
-                            initial = StackNav(
-                                name = when {
-                                    savedState.isSignedIn() -> SignedInNavigationState
-                                    else -> SignedOutNavigationState
-                                }.stacks.getOrNull(index)?.name ?: "Unknown",
-                            ),
-                            operation = innerFold@{ stackNav, route ->
-                                val resolvedRoute =
-                                    parse(pathAndQueries = route) ?: unknownRoute()
-                                stackNav.copy(
-                                    children = stackNav.children + resolvedRoute,
-                                )
-                            },
+private fun RouteParser.parseMultiStackNav(
+    navigation: SavedState.Navigation,
+    isSignedIn: Boolean,
+) = navigation.backStacks
+    .foldIndexed(
+        initial = MultiStackNav(
+            name = if (isSignedIn) SignedInNavigationState.name
+            else SignedOutNavigationState.name,
+        ),
+        operation = { index, multiStackNav, routesForStack ->
+            multiStackNav.copy(
+                stacks = multiStackNav.stacks +
+                    routesForStack.fold(
+                        initial = StackNav(
+                            name = when {
+                                isSignedIn -> SignedInNavigationState
+                                else -> SignedOutNavigationState
+                            }.stacks.getOrNull(index)?.name ?: "Unknown",
                         ),
-                )
-            },
-        )
-        .copy(
-            currentIndex = savedState.navigation.activeNav,
-        )
+                        operation = innerFold@{ stackNav, route ->
+                            val resolvedRoute =
+                                parse(pathAndQueries = route) ?: unknownRoute()
+                            stackNav.copy(
+                                children = stackNav.children + resolvedRoute,
+                            )
+                        },
+                    ),
+            )
+        },
+    )
+    .copy(
+        currentIndex = navigation.activeNav,
+    )
 
 private fun MultiStackNav.toSavedState() = SavedState.Navigation(
     activeNav = currentIndex,

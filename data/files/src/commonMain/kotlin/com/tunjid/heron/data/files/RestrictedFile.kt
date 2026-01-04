@@ -41,32 +41,40 @@ sealed class RestrictedFile {
                 is Video -> width != 0 && height != 0
             }
 
-        class Photo(
-            override val file: PlatformFile,
-            override val width: Int = 0,
-            override val height: Int = 0,
-            val altText: String? = null,
-        ) : Media()
+        sealed class Photo : Media() {
+            abstract val altText: String?
 
-        class Video(
-            override val file: PlatformFile,
-            override val width: Int = 0,
-            override val height: Int = 0,
-            val altText: String? = null,
-        ) : Media()
+            internal data class File(
+                override val file: PlatformFile,
+                override val width: Int = 0,
+                override val height: Int = 0,
+                override val altText: String? = null,
+            ) : Photo()
+        }
+
+        sealed class Video : Media() {
+            abstract val altText: String?
+
+            internal data class File(
+                override val file: PlatformFile,
+                override val width: Int = 0,
+                override val height: Int = 0,
+                override val altText: String? = null,
+            ) : Video()
+        }
 
         fun withSize(
             width: Int,
             height: Int,
         ) = when (this) {
-            is Photo -> Photo(
+            is Photo.File -> Photo.File(
                 file = file,
                 width = width,
                 height = height,
                 altText = altText,
             )
 
-            is Video -> Video(
+            is Video.File -> Video.File(
                 file = file,
                 width = width,
                 height = height,
@@ -77,40 +85,30 @@ sealed class RestrictedFile {
         fun withAltText(
             altText: String?,
         ) = when (this) {
-            is Photo -> Photo(
+            is Photo.File -> Photo.File(
                 file = file,
                 width = width,
                 height = height,
                 altText = altText,
             )
 
-            is Video -> Video(
+            is Video.File -> Video.File(
                 file = file,
                 width = width,
                 height = height,
                 altText = altText,
             )
         }
+    }
 
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (other == null || this::class != other::class) return false
+    companion object {
+        fun photo(
+            file: PlatformFile,
+        ): Media.Photo = Media.Photo.File(file)
 
-            other as Media
-
-            if (width != other.width) return false
-            if (height != other.height) return false
-            if (path != other.path) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = width
-            result = 31 * result + height
-            result = 31 * result + (path?.hashCode() ?: 0)
-            return result
-        }
+        fun video(
+            file: PlatformFile,
+        ): Media.Video = Media.Video.File(file)
     }
 }
 

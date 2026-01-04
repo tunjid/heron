@@ -67,12 +67,13 @@ class PaneScaffoldState internal constructor(
         get() = appState.dismissBehavior
 
     val isSignedOut
-        get() =
-            !appState.isSignedIn
+        get() = !appState.isSignedIn
 
     val isSignedIn
-        get() =
-            appState.isSignedIn
+        get() = appState.isSignedIn
+
+    val prefersCompactBottomNav
+        get() = appState.prefersCompactBottomNav
 
     internal val canShowNavigationBar: Boolean
         get() = !isMediumScreenWidthOrWider

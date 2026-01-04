@@ -18,9 +18,7 @@ package com.tunjid.heron.conversation
 
 import androidx.compose.ui.text.input.TextFieldValue
 import com.tunjid.heron.conversation.di.conversationId
-import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.CursorQuery
-import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -30,6 +28,7 @@ import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.MessageQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.models
+import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.TextFieldValueSerializer
@@ -43,6 +42,7 @@ import kotlinx.serialization.Transient
 data class State(
     @Transient
     val signedInProfile: Profile? = null,
+    val sharedElementPrefix: String,
     val id: ConversationId,
     val members: List<Profile> = emptyList(),
     val pendingItems: List<MessageItem.Pending> = emptyList(),
@@ -59,6 +59,7 @@ fun State(
     route: Route,
 ) = State(
     id = route.conversationId,
+    sharedElementPrefix = route.sharedElementPrefix,
     members = route.models.filterIsInstance<Profile>(),
     tilingData = TilingState.Data(
         currentQuery = MessageQuery(

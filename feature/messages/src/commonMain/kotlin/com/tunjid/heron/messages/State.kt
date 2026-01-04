@@ -19,6 +19,7 @@ package com.tunjid.heron.messages
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.repository.ConversationQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.tiling.TilingState
@@ -41,7 +42,13 @@ data class State(
         ),
     ),
     @Transient
+    val isSearching: Boolean = false,
+    @Transient
+    val searchQuery: String = "",
+    @Transient
     val messages: List<Memo> = emptyList(),
+    @Transient
+    val autoCompletedProfiles: List<ProfileWithViewerState> = emptyList(),
 ) : TilingState<ConversationQuery, Conversation>
 
 sealed class Action(val key: String) {
@@ -54,6 +61,18 @@ sealed class Action(val key: String) {
         val message: Memo,
     ) : Action(key = "SnackbarDismissed")
 
+    data class SetIsSearching(
+        val isSearching: Boolean,
+    ) : Action(key = "SetIsSearching")
+
+    data class SearchQueryChanged(
+        val query: String,
+    ) : Action(key = "SearchQueryChanged")
+
+    data class ResolveConversation(
+        val with: Profile,
+    ) : Action(key = "ResolveConversation")
+
     sealed class Navigate :
         Action(key = "Navigate"),
         NavigationAction {
@@ -63,3 +82,5 @@ sealed class Action(val key: String) {
             NavigationAction by delegate
     }
 }
+
+const val ConversationSearchResult = "ConversationSearchResult"

@@ -20,7 +20,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationEndReason
 import androidx.compose.animation.core.AnimationSpec
@@ -167,7 +166,11 @@ fun PaneScaffoldState.fabOffset(offset: Offset): IntOffset {
         x = offset.x.roundToInt(),
         y = min(
             offset.y.roundToInt(),
-            with(splitPaneState.density) { UiTokens.bottomNavHeight.roundToPx() },
+            with(splitPaneState.density) {
+                UiTokens.bottomNavHeight(
+                    isCompact = prefersCompactBottomNav,
+                ).roundToPx()
+            },
         ),
     )
 }

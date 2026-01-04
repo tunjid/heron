@@ -14,36 +14,41 @@
  *    limitations under the License.
  */
 
-@file:OptIn(ExperimentalSharedTransitionApi::class)
-
 package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.animateBounds
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.Surface
+import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.compose.Adaptation
 import com.tunjid.treenav.compose.threepane.ThreePane
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun PaneScaffoldState.PaneNavigationBar(
     modifier: Modifier = Modifier,
@@ -113,30 +118,42 @@ internal fun AppState.PaneNavigationBar(
     modifier: Modifier = Modifier,
     onNavItemReselected: () -> Boolean,
 ) {
-    NavigationBar(
-        modifier = modifier,
-    ) {
-        navItems.forEach { item ->
-            NavigationBarItem(
-                icon = {
-                    BadgedBox(
-                        badge = {
-                            if (item.hasBadge) Badge(Modifier.size(4.dp))
-                        },
-                        content = {
-                            Icon(
-                                imageVector = item.stack.icon,
-                                contentDescription = stringResource(item.stack.titleRes),
+    LookaheadScope {
+        Surface(
+            modifier = modifier
+                .animateBounds(lookaheadScope = this@LookaheadScope),
+            color = BottomAppBarDefaults.containerColor,
+            contentColor = contentColorFor(BottomAppBarDefaults.containerColor),
+        ) {
+            Row(
+                modifier = Modifier
+                    .navigationBarsPadding()
+                    .height(UiTokens.bottomNavHeight(isCompact = prefersCompactBottomNav)),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                navItems.forEach { item ->
+                    NavigationBarItem(
+                        icon = {
+                            BadgedBox(
+                                badge = {
+                                    if (item.hasBadge) Badge(Modifier.size(4.dp))
+                                },
+                                content = {
+                                    Icon(
+                                        imageVector = item.stack.icon,
+                                        contentDescription = stringResource(item.stack.titleRes),
+                                    )
+                                },
                             )
                         },
+                        selected = item.selected,
+                        onClick = {
+                            if (item.selected && onNavItemReselected()) return@NavigationBarItem
+                            onNavItemSelected(item)
+                        },
                     )
-                },
-                selected = item.selected,
-                onClick = {
-                    if (item.selected && onNavItemReselected()) return@NavigationBarItem
-                    onNavItemSelected(item)
-                },
-            )
+                }
+            }
         }
     }
 }

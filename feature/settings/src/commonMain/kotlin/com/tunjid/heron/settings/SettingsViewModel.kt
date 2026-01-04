@@ -19,8 +19,7 @@ package com.tunjid.heron.settings
 import androidx.lifecycle.ViewModel
 import com.mikepenz.aboutlibraries.Libs
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.SavedStateDataSource
-import com.tunjid.heron.data.repository.signedInProfilePreferences
+import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -42,9 +41,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 internal typealias SettingsStateHolder = ActionStateMutator<Action, StateFlow<State>>
@@ -60,7 +57,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 @AssistedInject
 class ActualSettingsViewModel(
     authRepository: AuthRepository,
-    savedStateDataSource: SavedStateDataSource,
+    userDataRepository: UserDataRepository,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
@@ -72,7 +69,7 @@ class ActualSettingsViewModel(
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         inputs = listOf(
             signedInProfileSavedStateMutations(
-                savedStateDataSource = savedStateDataSource,
+                userDataRepository = userDataRepository,
             ),
             loadOpenSourceLibraryMutations(),
         ),
@@ -81,10 +78,19 @@ class ActualSettingsViewModel(
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.SetRefreshHomeTimelinesOnLaunch -> action.flow.homeTimelineRefreshOnLaunchMutations(
-                        savedStateDataSource = savedStateDataSource,
-                    )
                     is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+
+                    is Action.SetRefreshHomeTimelinesOnLaunch -> action.flow.homeTimelineRefreshOnLaunchMutations(
+                        userDataRepository = userDataRepository,
+                    )
+
+                    is Action.SetDynamicThemingPreference -> action.flow.toggleDynamicTheming(
+                        userDataRepository = userDataRepository,
+                    )
+
+                    is Action.SetCompactNavigation -> action.flow.toggleCompactNavigation(
+                        userDataRepository = userDataRepository,
+                    )
 
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
@@ -99,11 +105,9 @@ class ActualSettingsViewModel(
     )
 
 fun signedInProfileSavedStateMutations(
-    savedStateDataSource: SavedStateDataSource,
+    userDataRepository: UserDataRepository,
 ): Flow<Mutation<State>> =
-    savedStateDataSource.savedState
-        .map { it.signedInProfilePreferences() }
-        .distinctUntilChanged()
+    userDataRepository.preferences
         .mapToMutation {
             copy(signedInProfilePreferences = it)
         }
@@ -118,10 +122,24 @@ fun loadOpenSourceLibraryMutations(): Flow<Mutation<State>> = flow {
 }
 
 private fun Flow<Action.SetRefreshHomeTimelinesOnLaunch>.homeTimelineRefreshOnLaunchMutations(
-    savedStateDataSource: SavedStateDataSource,
+    userDataRepository: UserDataRepository,
 ): Flow<Mutation<State>> =
     mapToManyMutations { (refreshOnLaunch) ->
-        savedStateDataSource.setRefreshedHomeTimelineOnLaunch(refreshOnLaunch)
+        userDataRepository.setRefreshedHomeTimelineOnLaunch(refreshOnLaunch)
+    }
+
+private fun Flow<Action.SetDynamicThemingPreference>.toggleDynamicTheming(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    mapToManyMutations { (dynamicTheming) ->
+        userDataRepository.setDynamicTheming(dynamicTheming)
+    }
+
+private fun Flow<Action.SetCompactNavigation>.toggleCompactNavigation(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    mapToManyMutations { (compactNavigation) ->
+        userDataRepository.setCompactNavigation(compactNavigation)
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =

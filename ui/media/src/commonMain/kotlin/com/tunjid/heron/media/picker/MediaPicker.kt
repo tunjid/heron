@@ -46,8 +46,8 @@ fun rememberMediaPicker(
         ) { file ->
             onItemsPicked(
                 when (mediaType) {
-                    MediaType.Photo -> file?.let(RestrictedFile.Media::Photo)
-                    MediaType.Video -> file?.let(RestrictedFile.Media::Video)
+                    MediaType.Photo -> file?.let(RestrictedFile::photo)
+                    MediaType.Video -> file?.let(RestrictedFile::video)
                 }
                     ?.let(::listOf)
                     ?: emptyList(),
@@ -61,8 +61,8 @@ fun rememberMediaPicker(
         ) { files ->
             onItemsPicked(
                 when (mediaType) {
-                    MediaType.Photo -> files?.map(RestrictedFile.Media::Photo)
-                    MediaType.Video -> files?.map(RestrictedFile.Media::Video)
+                    MediaType.Photo -> files?.map(RestrictedFile::photo)
+                    MediaType.Video -> files?.map(RestrictedFile::video)
                 }
                     ?: emptyList(),
             )
