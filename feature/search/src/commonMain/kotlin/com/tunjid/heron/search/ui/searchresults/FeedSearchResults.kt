@@ -60,6 +60,7 @@ internal fun FeedSearchResults(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = bottomNavAndInsetPaddingValues(
             top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
+            isCompact = paneScaffoldState.usesCompactBottomNavigation,
         ),
     ) {
         items(

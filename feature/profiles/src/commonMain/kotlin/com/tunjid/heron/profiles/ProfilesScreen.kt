@@ -57,6 +57,7 @@ internal fun ProfilesScreen(
         state = listState,
         contentPadding = bottomNavAndInsetPaddingValues(
             horizontal = 8.dp,
+            isCompact = paneScaffoldState.usesCompactBottomNavigation,
         ),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         userScrollEnabled = !paneScaffoldState.isTransitionActive,

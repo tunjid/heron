@@ -177,14 +177,17 @@ class PostsBindings(
                 )
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
+            val paneScaffoldState = rememberPaneScaffoldState()
 
             val topAppBarNestedScrollConnection =
                 topAppBarNestedScrollConnection()
 
             val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection()
+                bottomNavigationNestedScrollConnection(
+                    isCompact = paneScaffoldState.usesCompactBottomNavigation,
+                )
 
-            rememberPaneScaffoldState().PaneScaffold(
+            paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)

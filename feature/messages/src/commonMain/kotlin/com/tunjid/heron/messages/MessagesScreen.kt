@@ -89,6 +89,7 @@ internal fun MessagesScreen(
                 .fillMaxWidth(),
             contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
                 top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+                isCompact = paneScaffoldState.usesCompactBottomNavigation,
             ),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {

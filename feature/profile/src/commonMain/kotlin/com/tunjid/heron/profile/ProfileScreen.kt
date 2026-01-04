@@ -343,6 +343,7 @@ internal fun ProfileScreen(
                         when (val stateHolder = updatedStateHolders[page]) {
                             is ProfileScreenStateHolders.Records.Feeds -> RecordList(
                                 collectionStateHolder = stateHolder,
+                                prefersCompactBottomNav = paneScaffoldState.usesCompactBottomNavigation,
                                 itemKey = { it.cid.id },
                                 itemContent = { feedGenerator ->
                                     FeedGenerator(
@@ -379,6 +380,7 @@ internal fun ProfileScreen(
 
                             is ProfileScreenStateHolders.Records.StarterPacks -> RecordList(
                                 collectionStateHolder = stateHolder,
+                                prefersCompactBottomNav = paneScaffoldState.usesCompactBottomNavigation,
                                 itemKey = { it.cid.id },
                                 itemContent = { starterPack ->
                                     StarterPack(
@@ -408,6 +410,7 @@ internal fun ProfileScreen(
 
                             is ProfileScreenStateHolders.Records.Lists -> RecordList(
                                 collectionStateHolder = stateHolder,
+                                prefersCompactBottomNav = paneScaffoldState.usesCompactBottomNavigation,
                                 itemKey = { it.cid.id },
                                 itemContent = { list ->
                                     FeedList(
@@ -448,6 +451,7 @@ internal fun ProfileScreen(
                                 recentConversations = state.recentConversations,
                             )
                             is ProfileScreenStateHolders.LabelerSettings -> LabelerSettings(
+                                prefersCompactBottomNav = paneScaffoldState.usesCompactBottomNavigation,
                                 stateHolder = stateHolder,
                             )
                         }
@@ -1108,7 +1112,9 @@ private fun ProfileTimeline(
                 },
             state = gridState,
             columns = StaggeredGridCells.Adaptive(presentation.cardSize),
-            contentPadding = UiTokens.bottomNavAndInsetPaddingValues(),
+            contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
+                isCompact = paneScaffoldState.usesCompactBottomNavigation,
+                ),
             verticalItemSpacing = presentation.lazyGridVerticalItemSpacing,
             horizontalArrangement = Arrangement.spacedBy(
                 presentation.lazyGridHorizontalItemSpacing,

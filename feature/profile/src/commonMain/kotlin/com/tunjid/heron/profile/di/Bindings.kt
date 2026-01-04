@@ -165,11 +165,14 @@ class ProfileBindings(
                 )
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
+            val paneScaffoldState = rememberPaneScaffoldState()
 
             val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection()
+                bottomNavigationNestedScrollConnection(
+                    isCompact = paneScaffoldState.usesCompactBottomNavigation,
+                )
 
-            rememberPaneScaffoldState().PaneScaffold(
+            paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
@@ -217,8 +220,8 @@ class ProfileBindings(
                                         isSignedOut -> signInDestination()
                                         else -> composePostDestination(
                                             type =
-                                            if (state.isSignedInProfile) Post.Create.Timeline
-                                            else Post.Create.Mention(state.profile),
+                                                if (state.isSignedInProfile) Post.Create.Timeline
+                                                else Post.Create.Mention(state.profile),
                                             sharedElementPrefix = null,
                                         )
                                     },

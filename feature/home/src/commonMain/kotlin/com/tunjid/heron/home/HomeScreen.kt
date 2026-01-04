@@ -408,7 +408,8 @@ private fun HomeTimeline(
                 verticalItemSpacing = presentation.lazyGridVerticalItemSpacing,
                 contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
                     top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
-                ),
+                    isCompact = paneScaffoldState.usesCompactBottomNavigation,
+                    ),
                 horizontalArrangement = Arrangement.spacedBy(
                     presentation.lazyGridHorizontalItemSpacing,
                 ),
