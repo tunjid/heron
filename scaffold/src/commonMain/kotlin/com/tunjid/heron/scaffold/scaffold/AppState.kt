@@ -108,7 +108,7 @@ class AppState(
             .stateIn(
                 scope = CoroutineScope(Dispatchers.Main.immediate),
                 started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
-                initialValue = null
+                initialValue = null,
             )
 
     internal var showNavigation by mutableStateOf(false)

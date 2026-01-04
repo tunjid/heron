@@ -26,7 +26,6 @@ import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedState
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
@@ -217,9 +216,13 @@ abstract class SavedState {
     }
 }
 
-val InitialSavedState: SavedState = VersionedSavedState.Initial
+private val InitialSavedState: SavedState = VersionedSavedState.Initial
 
-val EmptySavedState: SavedState = VersionedSavedState.Empty
+private val EmptySavedState: SavedState = VersionedSavedState.Empty
+
+val InitialNavigation: SavedState.Navigation = InitialSavedState.navigation
+
+val EmptyNavigation: SavedState.Navigation = EmptySavedState.navigation
 
 fun SavedState.isSignedIn(): Boolean =
     auth.ifSignedIn() != null
@@ -249,7 +252,7 @@ private fun SavedState.AuthTokens?.ifSignedIn(): SavedState.AuthTokens.Authentic
         is SavedState.AuthTokens.Guest,
         is SavedState.AuthTokens.Pending,
         null,
-            -> null
+        -> null
     }
 
 private val SavedState.signedInProfileId: ProfileId?
@@ -267,7 +270,7 @@ private fun preferencesForUrl(url: String) =
         else -> Preferences.BlueSkyGuestPreferences
     }
 
-sealed class SavedStateDataSource {
+internal sealed class SavedStateDataSource {
     abstract val savedState: StateFlow<SavedState>
 
     abstract suspend fun setNavigationState(
@@ -280,22 +283,6 @@ sealed class SavedStateDataSource {
 
     internal abstract suspend fun updateSignedInProfileData(
         block: SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData,
-    )
-
-    abstract suspend fun setLastViewedHomeTimelineUri(
-        uri: Uri,
-    )
-
-    abstract suspend fun setRefreshedHomeTimelineOnLaunch(
-        refreshOnLaunch: Boolean,
-    )
-
-    abstract suspend fun setDynamicTheming(
-        dynamicTheming: Boolean,
-    )
-
-    abstract suspend fun setCompactNavigation(
-        compactNavigation: Boolean,
     )
 }
 
@@ -376,30 +363,6 @@ internal class DataStoreSavedStateDataSource(
         copy(
             profileData = profileData + update,
         )
-    }
-
-    override suspend fun setLastViewedHomeTimelineUri(
-        uri: Uri,
-    ) = updateSignedInProfileData {
-        copy(preferences = preferences.copy(lastViewedHomeTimelineUri = uri))
-    }
-
-    override suspend fun setRefreshedHomeTimelineOnLaunch(
-        refreshOnLaunch: Boolean,
-    ) = updateSignedInProfileData {
-        copy(preferences = preferences.copy(refreshHomeTimelineOnLaunch = refreshOnLaunch))
-    }
-
-    override suspend fun setDynamicTheming(
-        dynamicTheming: Boolean,
-    ) = updateSignedInProfileData {
-        copy(preferences = preferences.copy(useDynamicTheming = dynamicTheming))
-    }
-
-    override suspend fun setCompactNavigation(
-        compactNavigation: Boolean,
-    ) = updateSignedInProfileData {
-        copy(preferences = preferences.copy(useCompactNavigation = compactNavigation))
     }
 
     private suspend fun updateState(update: VersionedSavedState.() -> VersionedSavedState) {

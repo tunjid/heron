@@ -21,11 +21,9 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
-import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.recentConversations
-import com.tunjid.heron.data.repository.signedInProfilePreferences
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -75,7 +73,7 @@ class ActualHomeViewModel(
     authRepository: AuthRepository,
     messageRepository: MessageRepository,
     timelineRepository: TimelineRepository,
-    savedStateDataSource: SavedStateDataSource,
+    userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
@@ -91,7 +89,7 @@ class ActualHomeViewModel(
             timelineMutations(
                 scope = scope,
                 timelineRepository = timelineRepository,
-                savedStateDataSource = savedStateDataSource,
+                userDataRepository = userDataRepository,
             ),
             loadProfileMutations(
                 authRepository,
@@ -119,7 +117,9 @@ class ActualHomeViewModel(
                         writeQueue = writeQueue,
                     )
 
-                    is Action.SetCurrentTab -> action.flow.setCurrentTabMutations(savedStateDataSource)
+                    is Action.SetCurrentTab -> action.flow.setCurrentTabMutations(
+                        userDataRepository = userDataRepository,
+                    )
                     is Action.SetTabLayout -> action.flow.setTabLayoutMutations()
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
@@ -139,17 +139,17 @@ private fun loadProfileMutations(
 private fun timelineMutations(
     scope: CoroutineScope,
     timelineRepository: TimelineRepository,
-    savedStateDataSource: SavedStateDataSource,
+    userDataRepository: UserDataRepository,
 ): Flow<Mutation<State>> =
     combine(
-        savedStateDataSource.savedState.take(1),
+        userDataRepository.preferences.take(1),
         timelineRepository.homeTimelines,
         ::Pair,
-    ).mapToMutation { (savedState, homeTimelines) ->
+    ).mapToMutation { (preferences, homeTimelines) ->
         val tabUri = currentTabUri
-            ?: savedState.signedInProfilePreferences()
-                ?.lastViewedHomeTimelineUri
-                ?.takeIf { uri ->
+            ?: preferences
+                .lastViewedHomeTimelineUri
+                .takeIf { uri ->
                     homeTimelines.any { it.isPinned && it.uri == uri }
                 }
             ?: homeTimelines.firstOrNull()?.uri
@@ -162,8 +162,7 @@ private fun timelineMutations(
                     .firstOrNull { it.state.value.timeline.sourceId == timeline.sourceId }
                     ?.mutator
                     ?: scope.timelineStateHolder(
-                        refreshOnStart = savedState.signedInProfilePreferences()
-                            ?.refreshHomeTimelineOnLaunch == true,
+                        refreshOnStart = preferences.refreshHomeTimelineOnLaunch,
                         timeline = timeline,
                         startNumColumns = 1,
                         timelineRepository = timelineRepository,
@@ -238,7 +237,7 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
     }
 
 private fun Flow<Action.SetCurrentTab>.setCurrentTabMutations(
-    savedStateDataSource: SavedStateDataSource,
+    userDataRepository: UserDataRepository,
 ): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
     // Write to memory in state immediately
     emit { copy(currentTabUri = action.currentTabUri) }
@@ -246,7 +245,7 @@ private fun Flow<Action.SetCurrentTab>.setCurrentTabMutations(
     // Wait until we're sure the user has settled on this tab
     delay(1400.milliseconds)
     // Write to disk
-    savedStateDataSource.setLastViewedHomeTimelineUri(action.currentTabUri)
+    userDataRepository.setLastViewedHomeTimelineUri(action.currentTabUri)
 }
 
 private fun Flow<Action.SetTabLayout>.setTabLayoutMutations(): Flow<Mutation<State>> =
