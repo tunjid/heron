@@ -43,9 +43,12 @@ fun ProfileViewerState(
     onClick: () -> Unit,
 ) {
     val follows = viewerState.isFollowing
+    val followsYou = viewerState?.following?.followedBy == true
     val followStatusText = stringResource(
         if (isSignedInProfile) Res.string.edit
+        else if (follows && followsYou) Res.string.mutuals
         else if (follows) Res.string.following
+        else if (followsYou) Res.string.follow_back
         else Res.string.follow,
     )
     FilterChip(
