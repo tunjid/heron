@@ -101,6 +101,7 @@ abstract class SavedState {
                         didDoc.service
                             .firstOrNull()
                             ?.serviceEndpoint
+
                     is DPoP -> pdsUrl
                 }
 
@@ -248,7 +249,7 @@ private fun SavedState.AuthTokens?.ifSignedIn(): SavedState.AuthTokens.Authentic
         is SavedState.AuthTokens.Guest,
         is SavedState.AuthTokens.Pending,
         null,
-        -> null
+            -> null
     }
 
 private val SavedState.signedInProfileId: ProfileId?
@@ -287,6 +288,10 @@ sealed class SavedStateDataSource {
 
     abstract suspend fun setRefreshedHomeTimelineOnLaunch(
         refreshOnLaunch: Boolean,
+    )
+
+    abstract suspend fun setDynamicTheming(
+        dynamicTheming: Boolean,
     )
 }
 
@@ -333,6 +338,7 @@ internal class DataStoreSavedStateDataSource(
                         update = { copy(auth = null) },
                     )
                 }
+
                 is SavedState.AuthTokens.Guest -> profileData.updateOrPutValue(
                     key = auth.authProfileId,
                     update = {
@@ -343,6 +349,7 @@ internal class DataStoreSavedStateDataSource(
                     },
                     put = { SavedState.ProfileData.fromTokens(auth) },
                 )
+
                 else -> profileData.updateOrPutValue(
                     key = auth.authProfileId,
                     update = { copy(auth = auth) },
@@ -377,6 +384,12 @@ internal class DataStoreSavedStateDataSource(
         refreshOnLaunch: Boolean,
     ) = updateSignedInProfileData {
         copy(preferences = preferences.copy(refreshHomeTimelineOnLaunch = refreshOnLaunch))
+    }
+
+    override suspend fun setDynamicTheming(
+        dynamicTheming: Boolean,
+    ) = updateSignedInProfileData {
+        copy(preferences = preferences.copy(useDynamicTheming = dynamicTheming))
     }
 
     private suspend fun updateState(update: VersionedSavedState.() -> VersionedSavedState) {

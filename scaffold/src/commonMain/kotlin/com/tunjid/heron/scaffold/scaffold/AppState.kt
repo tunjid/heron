@@ -40,9 +40,12 @@ import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.splitlayout.SplitLayoutState
+import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.SavedStateDataSource
+import com.tunjid.heron.data.repository.signedInProfilePreferences
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
@@ -73,9 +76,13 @@ import com.tunjid.treenav.strings.toRouteTrie
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @Stable
@@ -84,6 +91,7 @@ class AppState(
     private val authRepository: AuthRepository,
     private val navigationStateHolder: NavigationStateHolder,
     private val notificationStateHolder: NotificationStateHolder,
+    private val savedStateDataSource: SavedStateDataSource,
     internal val imageLoader: ImageLoader,
     internal val videoPlayerController: VideoPlayerController,
     private val writeQueue: WriteQueue,
@@ -93,6 +101,15 @@ class AppState(
     internal var isSignedIn by mutableStateOf(false)
 
     private val multiStackNavState = mutableStateOf(navigationStateHolder.state.value)
+
+    internal val preferences: kotlinx.coroutines.flow.StateFlow<Preferences?> =
+        savedStateDataSource.savedState
+            .map { it.signedInProfilePreferences() }
+            .stateIn(
+                scope = CoroutineScope(Dispatchers.Main.immediate),
+                started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
+                initialValue = null
+            )
 
     internal var showNavigation by mutableStateOf(false)
     internal val navItems by derivedStateOf {

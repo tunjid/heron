@@ -81,10 +81,15 @@ class ActualSettingsViewModel(
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
+                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+                    
                     is Action.SetRefreshHomeTimelinesOnLaunch -> action.flow.homeTimelineRefreshOnLaunchMutations(
                         savedStateDataSource = savedStateDataSource,
                     )
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+                    
+                    is Action.SetDynamicThemingPreference -> action.flow.toggleDynamicTheming(
+                        savedStateDataSource = savedStateDataSource,
+                    )
 
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
@@ -122,6 +127,13 @@ private fun Flow<Action.SetRefreshHomeTimelinesOnLaunch>.homeTimelineRefreshOnLa
 ): Flow<Mutation<State>> =
     mapToManyMutations { (refreshOnLaunch) ->
         savedStateDataSource.setRefreshedHomeTimelineOnLaunch(refreshOnLaunch)
+    }
+    
+private fun Flow<Action.SetDynamicThemingPreference>.toggleDynamicTheming(
+    savedStateDataSource: SavedStateDataSource,
+): Flow<Mutation<State>> =
+    mapToManyMutations { (dynamicTheming) ->
+        savedStateDataSource.setDynamicTheming(dynamicTheming)
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
