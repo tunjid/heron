@@ -256,7 +256,7 @@ private fun FeedTimeline(
                 contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
                     top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
                     isCompact = paneScaffoldState.prefersCompactBottomNav,
-                    ),
+                ),
                 horizontalArrangement = Arrangement.spacedBy(
                     presentation.lazyGridHorizontalItemSpacing,
                 ),

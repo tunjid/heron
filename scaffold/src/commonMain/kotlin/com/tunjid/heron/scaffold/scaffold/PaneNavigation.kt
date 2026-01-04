@@ -14,7 +14,6 @@
  *    limitations under the License.
  */
 
-
 package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.AnimatedVisibility
@@ -139,7 +138,7 @@ internal fun AppState.PaneNavigationBar(
                 },
                 label = {
                     AnimatedVisibility(
-                        visible = !prefersCompactBottomNav
+                        visible = !prefersCompactBottomNav,
                     ) {
                         Text(stringResource(item.stack.titleRes))
                     }
@@ -202,7 +201,7 @@ fun Modifier.bottomNavigationSharedBounds(
         ThreePane.Tertiary,
         ThreePane.Overlay,
         null,
-            -> this@bottomNavigationSharedBounds
+        -> this@bottomNavigationSharedBounds
     }
 }
 

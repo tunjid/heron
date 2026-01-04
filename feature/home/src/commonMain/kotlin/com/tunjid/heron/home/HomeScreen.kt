@@ -409,7 +409,7 @@ private fun HomeTimeline(
                 contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
                     top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
                     isCompact = paneScaffoldState.prefersCompactBottomNav,
-                    ),
+                ),
                 horizontalArrangement = Arrangement.spacedBy(
                     presentation.lazyGridHorizontalItemSpacing,
                 ),

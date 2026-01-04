@@ -220,8 +220,8 @@ class ProfileBindings(
                                         isSignedOut -> signInDestination()
                                         else -> composePostDestination(
                                             type =
-                                                if (state.isSignedInProfile) Post.Create.Timeline
-                                                else Post.Create.Mention(state.profile),
+                                            if (state.isSignedInProfile) Post.Create.Timeline
+                                            else Post.Create.Mention(state.profile),
                                             sharedElementPrefix = null,
                                         )
                                     },

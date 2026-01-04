@@ -1114,7 +1114,7 @@ private fun ProfileTimeline(
             columns = StaggeredGridCells.Adaptive(presentation.cardSize),
             contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
                 isCompact = paneScaffoldState.prefersCompactBottomNav,
-                ),
+            ),
             verticalItemSpacing = presentation.lazyGridVerticalItemSpacing,
             horizontalArrangement = Arrangement.spacedBy(
                 presentation.lazyGridHorizontalItemSpacing,
