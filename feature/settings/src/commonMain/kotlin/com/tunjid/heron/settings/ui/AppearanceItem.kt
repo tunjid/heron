@@ -33,10 +33,8 @@ import heron.feature.settings.generated.resources.use_compact_navigation
 import heron.feature.settings.generated.resources.use_dynamic_theming
 import org.jetbrains.compose.resources.stringResource
 
-@Composable
 expect fun isDynamicThemingSupported(): Boolean
 
-@Composable
 expect fun isCompactNavigationSupported(): Boolean
 
 @Composable
