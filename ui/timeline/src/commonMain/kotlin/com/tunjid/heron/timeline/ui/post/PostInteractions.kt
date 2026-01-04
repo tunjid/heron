@@ -16,13 +16,18 @@
 
 package com.tunjid.heron.timeline.ui.post
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -59,9 +64,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.capitalize
@@ -183,15 +191,19 @@ private inline fun PostInteractionsButtons(
                     ),
                 ),
             ) {
+                val isChecked = when (button) {
+                    PostInteractionButton.Comment -> false
+                    PostInteractionButton.Like -> post.viewerStats?.likeUri != null
+                    PostInteractionButton.Repost -> post.viewerStats?.repostUri != null
+                    PostInteractionButton.Bookmark -> post.viewerStats.isBookmarked
+                    PostInteractionButton.MoreOptions -> false
+                }
+
                 PostInteraction(
                     modifier = Modifier,
-                    icon = when (button) {
-                        PostInteractionButton.Comment -> button.icon(isChecked = false)
-                        PostInteractionButton.Like -> button.icon(isChecked = post.viewerStats?.likeUri != null)
-                        PostInteractionButton.Repost -> button.icon(isChecked = post.viewerStats?.repostUri != null)
-                        PostInteractionButton.Bookmark -> button.icon(isChecked = post.viewerStats.isBookmarked)
-                        PostInteractionButton.MoreOptions -> button.icon(isChecked = false)
-                    },
+                    icon = button.icon(isChecked = isChecked),
+                    isChecked = isChecked,
+                    button = button,
                     iconSize = iconSize,
                     orientation = orientation,
                     contentDescription = stringResource(button.stringResource),
@@ -199,32 +211,34 @@ private inline fun PostInteractionsButtons(
                         PostInteractionButton.Comment ->
                             if (post.replyCount > 0) format(post.replyCount)
                             else ""
+
                         PostInteractionButton.Like ->
                             if (post.likeCount > 0) format(post.likeCount)
                             else ""
+
                         PostInteractionButton.Repost ->
                             if (post.repostCount > 0) format(post.repostCount)
                             else ""
+
                         PostInteractionButton.Bookmark -> ""
                         PostInteractionButton.MoreOptions -> ""
                     },
-                    tint = animateColorAsState(
-                        targetValue = when (button) {
-                            PostInteractionButton.Comment -> MaterialTheme.colorScheme.outline
-                            PostInteractionButton.Like ->
-                                if (post.viewerStats?.likeUri != null) LikeRed
-                                else MaterialTheme.colorScheme.outline
+                    tint = when (button) {
+                        PostInteractionButton.Comment -> MaterialTheme.colorScheme.outline
+                        PostInteractionButton.Like ->
+                            if (post.viewerStats?.likeUri != null) LikeRed
+                            else MaterialTheme.colorScheme.outline
 
-                            PostInteractionButton.Repost ->
-                                if (post.viewerStats?.repostUri != null) RepostGreen
-                                else MaterialTheme.colorScheme.outline
-                            PostInteractionButton.Bookmark ->
-                                if (post.viewerStats.isBookmarked) BookmarkBlue
-                                else MaterialTheme.colorScheme.outline
-                            PostInteractionButton.MoreOptions -> MaterialTheme.colorScheme.outline
-                        },
-                        animationSpec = ColorTween,
-                    ).value,
+                        PostInteractionButton.Repost ->
+                            if (post.viewerStats?.repostUri != null) RepostGreen
+                            else MaterialTheme.colorScheme.outline
+
+                        PostInteractionButton.Bookmark ->
+                            if (post.viewerStats.isBookmarked) BookmarkBlue
+                            else MaterialTheme.colorScheme.outline
+
+                        PostInteractionButton.MoreOptions -> MaterialTheme.colorScheme.outline
+                    },
                     enabled = when (button) {
                         PostInteractionButton.Bookmark -> true
                         PostInteractionButton.Comment -> post.viewerStats.canReply
@@ -237,6 +251,7 @@ private inline fun PostInteractionsButtons(
                             PostInteractionButton.Comment -> onInteraction(
                                 PostAction.OfReply(post),
                             )
+
                             PostInteractionButton.Like -> onInteraction(
                                 PostAction.OfInteraction(
                                     interaction = when (val likeUri = post.viewerStats?.likeUri) {
@@ -270,6 +285,7 @@ private inline fun PostInteractionsButtons(
                                     post.viewerStats,
                                 ),
                             )
+
                             PostInteractionButton.Bookmark -> onInteraction(
                                 PostAction.OfInteraction(
                                     when (post.viewerStats.isBookmarked) {
@@ -285,6 +301,7 @@ private inline fun PostInteractionsButtons(
                                     post.viewerStats,
                                 ),
                             )
+
                             PostInteractionButton.MoreOptions -> onInteraction(
                                 PostAction.OfMore(post),
                             )
@@ -307,13 +324,28 @@ private fun PostInteraction(
     enabled: Boolean,
     onClick: () -> Unit,
     tint: Color,
+    isChecked: Boolean,
+    button: PostInteractionButton,
 ) {
+    val haptic = LocalHapticFeedback.current
+
     val itemModifier = modifier
         .then(
             if (enabled) Modifier.clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = ripple(bounded = false),
-                onClick = onClick,
+                onClick = {
+                    when (button) {
+                        PostInteractionButton.Like,
+                        PostInteractionButton.Bookmark,
+                        -> {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        }
+
+                        else -> {}
+                    }
+                    onClick()
+                },
             )
             else Modifier,
         )
@@ -330,8 +362,11 @@ private fun PostInteraction(
                 contentDescription = contentDescription,
                 text = text,
                 tint = tint.withDim(!enabled),
+                isChecked = isChecked,
+                button = button,
             )
         }
+
         Orientation.Horizontal -> Row(
             modifier = itemModifier,
             verticalAlignment = Alignment.CenterVertically,
@@ -343,6 +378,8 @@ private fun PostInteraction(
                 contentDescription = contentDescription,
                 text = text,
                 tint = tint.withDim(!enabled),
+                isChecked = isChecked,
+                button = button,
             )
         }
     }
@@ -355,13 +392,74 @@ private fun PostInteractionElements(
     contentDescription: String,
     text: String?,
     tint: Color,
+    isChecked: Boolean,
+    button: PostInteractionButton,
 ) {
-    Icon(
-        modifier = Modifier.size(iconSize),
-        painter = rememberVectorPainter(icon),
-        contentDescription = contentDescription,
-        tint = tint,
+    val animatedTint by animateColorAsState(
+        targetValue = tint,
+        animationSpec = ColorTween,
     )
+
+    var shouldPop by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isChecked) {
+        if (isChecked) {
+            shouldPop = true
+            kotlinx.coroutines.delay(100)
+            shouldPop = false
+        }
+    }
+
+    val scale by animateFloatAsState(
+        targetValue = if (shouldPop) 1.1f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium,
+        ),
+        label = "icon_scale",
+    )
+
+    Box(modifier = Modifier.scale(scale)) {
+        // Use crossfade for smooth icon transition between outlined and filled
+        when (button) {
+            PostInteractionButton.Like,
+            PostInteractionButton.Bookmark,
+            -> {
+                Crossfade(
+                    targetState = isChecked,
+                    label = "icon_crossfade",
+                ) { checked ->
+                    Icon(
+                        modifier = Modifier.size(iconSize),
+                        imageVector = if (checked) {
+                            when (button) {
+                                PostInteractionButton.Like -> Icons.Rounded.Favorite
+                                PostInteractionButton.Bookmark -> Icons.Rounded.Bookmark
+                                else -> icon
+                            }
+                        } else {
+                            when (button) {
+                                PostInteractionButton.Like -> Icons.Rounded.FavoriteBorder
+                                PostInteractionButton.Bookmark -> Icons.Rounded.BookmarkBorder
+                                else -> icon
+                            }
+                        },
+                        contentDescription = contentDescription,
+                        tint = animatedTint,
+                    )
+                }
+            }
+
+            else -> {
+                Icon(
+                    modifier = Modifier.size(iconSize),
+                    painter = rememberVectorPainter(icon),
+                    contentDescription = contentDescription,
+                    tint = animatedTint,
+                )
+            }
+        }
+    }
 
     if (text != null) {
         BasicText(
@@ -369,7 +467,7 @@ private fun PostInteractionElements(
                 .padding(vertical = 1.dp),
             text = text,
             maxLines = 1,
-            color = { tint },
+            color = { animatedTint },
             autoSize = TextAutoSize.StepBased(
                 minFontSize = 4.sp,
                 maxFontSize = 16.sp,
@@ -478,10 +576,12 @@ private fun PostInteractionsBottomSheet(
                                             onInteractionConfirmed(currentInteraction)
                                             state.hide()
                                         }
+
                                         action.viewerStats.canQuote -> Modifier.clickable {
                                             onQuotePostClicked(currentInteraction)
                                             state.hide()
                                         }
+
                                         else -> Modifier.alpha(0.6f)
                                     },
                                 )
@@ -512,6 +612,7 @@ private fun PostInteractionsBottomSheet(
                         )
                     }
                 }
+
                 else -> Unit
             }
 
