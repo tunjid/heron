@@ -46,7 +46,7 @@ import com.tunjid.heron.search.Action
 import com.tunjid.heron.search.RouteViewModelInitializer
 import com.tunjid.heron.search.SearchScreen
 import com.tunjid.heron.search.SearchViewModel
-import com.tunjid.heron.search.ui.SearchBar
+import com.tunjid.heron.ui.SearchBar
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress

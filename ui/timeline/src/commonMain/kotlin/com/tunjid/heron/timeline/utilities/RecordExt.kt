@@ -33,6 +33,7 @@ import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
@@ -153,8 +154,12 @@ fun Record.Embeddable.avatarSharedElementKey(
         is FeedList -> creator
         is StarterPack -> creator
     }
-    return "$finalPrefix-${reference.uri.uri}-${creator.did.id}-avatar"
+    return creator.avatarSharedElementKey("$finalPrefix-${reference.uri.uri}")
 }
+
+fun Profile.avatarSharedElementKey(
+    prefix: String?,
+): String = "$prefix-${did.id}-avatar"
 
 fun EmbeddableRecordUri.shareUri(): GenericUri =
     GenericUri(

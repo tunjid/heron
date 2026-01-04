@@ -17,6 +17,8 @@
 package com.tunjid.heron.data.network.models
 
 import app.bsky.actor.KnownFollowers
+import app.bsky.actor.ProfileAssociated
+import app.bsky.actor.ProfileAssociatedChatAllowIncoming
 import app.bsky.actor.ProfileView
 import app.bsky.actor.ProfileViewBasic
 import app.bsky.actor.ProfileViewDetailed
@@ -183,6 +185,9 @@ internal fun ProfileViewBasic.profile() = Profile(
         createdListCount = associated?.lists ?: 0,
         createdFeedGeneratorCount = associated?.feedgens ?: 0,
         createdStarterPackCount = associated?.starterPacks ?: 0,
+        chat = Profile.ChatInfo(
+            allowed = associated.allowedChat(),
+        ),
     ),
     labels = labels?.map(com.atproto.label.Label::asExternalModel) ?: emptyList(),
     isLabeler = associated?.labeler ?: false,
@@ -205,10 +210,23 @@ internal fun ProfileView.profile() = Profile(
         createdListCount = associated?.lists ?: 0,
         createdFeedGeneratorCount = associated?.feedgens ?: 0,
         createdStarterPackCount = associated?.starterPacks ?: 0,
+        chat = Profile.ChatInfo(
+            allowed = associated.allowedChat(),
+        ),
     ),
     labels = labels?.map(com.atproto.label.Label::asExternalModel) ?: emptyList(),
     isLabeler = associated?.labeler ?: false,
 )
+
+private fun ProfileAssociated?.allowedChat(): Profile.ChatInfo.Allowed =
+    when (this?.chat?.allowIncoming) {
+        ProfileAssociatedChatAllowIncoming.All -> Profile.ChatInfo.Allowed.Everyone
+        ProfileAssociatedChatAllowIncoming.Following -> Profile.ChatInfo.Allowed.Following
+        ProfileAssociatedChatAllowIncoming.None,
+        is ProfileAssociatedChatAllowIncoming.Unknown,
+        null,
+        -> Profile.ChatInfo.Allowed.NoOne
+    }
 
 private fun profileViewerStateEntity(
     viewingProfileId: ProfileId,

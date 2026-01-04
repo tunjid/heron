@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.conversation.ui
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,13 +34,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.contentDescription
-import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
+import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -50,7 +49,7 @@ import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 
 @Composable
 internal fun ConversationTitle(
-    conversationId: ConversationId,
+    sharedElementPrefix: String,
     signedInProfileId: ProfileId?,
     participants: List<Profile>,
     paneScaffoldState: PaneScaffoldState,
@@ -64,26 +63,25 @@ internal fun ConversationTitle(
     }
     if (hasMultipleParticipants) {
         MultipleParticipantTitle(
-            conversationId = conversationId,
+            sharedElementPrefix = sharedElementPrefix,
             participants = participants,
             paneScaffoldState = paneScaffoldState,
             onProfileClicked = onProfileClicked,
         )
     } else {
         SingleMemberTitle(
-            participants = participants,
             signedInProfileId = signedInProfileId,
-            conversationId = conversationId,
+            sharedElementPrefix = sharedElementPrefix,
+            participants = participants,
             paneScaffoldState = paneScaffoldState,
             onProfileClicked = onProfileClicked,
         )
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun MultipleParticipantTitle(
-    conversationId: ConversationId,
+    sharedElementPrefix: String,
     participants: List<Profile>,
     paneScaffoldState: PaneScaffoldState,
     onProfileClicked: (Profile) -> Unit,
@@ -94,7 +92,9 @@ private fun MultipleParticipantTitle(
         participants.forEachIndexed { index, participant ->
             UpdatedMovableSharedElementOf(
                 sharedContentState = rememberSharedContentState(
-                    key = participant.conversationSharedElementKey(conversationId),
+                    key = participant.avatarSharedElementKey(
+                        prefix = sharedElementPrefix,
+                    ),
                 ),
                 state = remember(participant.avatar?.uri) {
                     ImageArgs(
@@ -125,11 +125,10 @@ private fun MultipleParticipantTitle(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun SingleMemberTitle(
     signedInProfileId: ProfileId?,
-    conversationId: ConversationId,
+    sharedElementPrefix: String,
     participants: List<Profile>,
     paneScaffoldState: PaneScaffoldState,
     onProfileClicked: (Profile) -> Unit,
@@ -144,7 +143,9 @@ private fun SingleMemberTitle(
                     .size(UiTokens.avatarSize)
                     .clickable { onProfileClicked(profile) },
                 sharedContentState = rememberSharedContentState(
-                    key = profile.conversationSharedElementKey(conversationId),
+                    key = profile.avatarSharedElementKey(
+                        prefix = sharedElementPrefix,
+                    ),
                 ),
                 zIndexInOverlay = UiTokens.appBarSharedElementOverlayZIndex,
                 state = remember(profile.avatar) {
@@ -174,7 +175,3 @@ private fun SingleMemberTitle(
         },
     )
 }
-
-internal fun Profile.conversationSharedElementKey(
-    conversationId: ConversationId,
-): String = "${conversationId.id}-$did"
