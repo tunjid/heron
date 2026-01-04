@@ -118,7 +118,7 @@ fun PostInteractions(
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
             onInteraction = onInteraction,
             prefixContent = spacer@{ button ->
-                if (button != PostInteractionButton.MoreOptions) return@spacer
+                if (button != PostInteractionButton.Share) return@spacer
                 if (presentation != Timeline.Presentation.Media.Expanded) return@spacer
 
                 Spacer(Modifier.weight(1f))
@@ -185,7 +185,7 @@ private inline fun PostInteractionsButtons(
                         PostInteractionButton.Like -> button.icon(isChecked = post.viewerStats?.likeUri != null)
                         PostInteractionButton.Repost -> button.icon(isChecked = post.viewerStats?.repostUri != null)
                         PostInteractionButton.Bookmark -> button.icon(isChecked = post.viewerStats.isBookmarked)
-                        PostInteractionButton.MoreOptions -> button.icon(isChecked = false)
+                        PostInteractionButton.Share -> button.icon(isChecked = false)
                     },
                     iconSize = iconSize,
                     orientation = orientation,
@@ -201,7 +201,7 @@ private inline fun PostInteractionsButtons(
                             if (post.repostCount > 0) format(post.repostCount)
                             else ""
                         PostInteractionButton.Bookmark -> ""
-                        PostInteractionButton.MoreOptions -> ""
+                        PostInteractionButton.Share -> ""
                     },
                     tint = when (button) {
                         PostInteractionButton.Comment -> MaterialTheme.colorScheme.outline
@@ -215,13 +215,13 @@ private inline fun PostInteractionsButtons(
                         PostInteractionButton.Bookmark ->
                             if (post.viewerStats.isBookmarked) BookmarkBlue
                             else MaterialTheme.colorScheme.outline
-                        PostInteractionButton.MoreOptions -> MaterialTheme.colorScheme.outline
+                        PostInteractionButton.Share -> MaterialTheme.colorScheme.outline
                     },
                     enabled = when (button) {
                         PostInteractionButton.Bookmark -> true
                         PostInteractionButton.Comment -> post.viewerStats.canReply
                         PostInteractionButton.Like -> true
-                        PostInteractionButton.MoreOptions -> true
+                        PostInteractionButton.Share -> true
                         PostInteractionButton.Repost -> true
                     },
                     onClick = {
@@ -277,7 +277,7 @@ private inline fun PostInteractionsButtons(
                                     post.viewerStats,
                                 ),
                             )
-                            PostInteractionButton.MoreOptions -> onInteraction(
+                            PostInteractionButton.Share -> onInteraction(
                                 PostAction.OfMore(post),
                             )
                         }
@@ -565,7 +565,7 @@ private sealed class PostInteractionButton {
     data object Repost : PostInteractionButton()
     data object Like : PostInteractionButton()
     data object Bookmark : PostInteractionButton()
-    data object MoreOptions : PostInteractionButton()
+    data object Share : PostInteractionButton()
 
     companion object {
         fun PostInteractionButton.icon(
@@ -575,7 +575,7 @@ private sealed class PostInteractionButton {
             Like -> if (isChecked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder
             Repost -> Icons.Rounded.Repeat
             Bookmark -> if (isChecked) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder
-            MoreOptions -> Icons.Rounded.Share
+            Share -> Icons.Rounded.Share
         }
 
         val PostInteractionButton.stringResource
@@ -584,7 +584,7 @@ private sealed class PostInteractionButton {
                 Like -> Res.string.liked
                 Repost -> Res.string.repost
                 Bookmark -> Res.string.bookmarked
-                MoreOptions -> Res.string.expand_options
+                Share -> Res.string.expand_options
             }
 
         val PostButtons = listOf(
@@ -592,7 +592,7 @@ private sealed class PostInteractionButton {
             Repost,
             Like,
             Bookmark,
-            MoreOptions,
+            Share,
         )
 
         val MediaButtons = listOf(
@@ -600,7 +600,7 @@ private sealed class PostInteractionButton {
             Comment,
             Repost,
             Bookmark,
-            MoreOptions,
+            Share,
         )
     }
 }

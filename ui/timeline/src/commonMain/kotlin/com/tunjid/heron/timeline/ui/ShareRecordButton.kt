@@ -12,7 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import heron.ui.timeline.generated.resources.Res
-import heron.ui.timeline.generated.resources.more_options
+import heron.ui.timeline.generated.resources.share_record
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -30,7 +30,7 @@ fun ShareRecordButton(
         ) {
             Icon(
                 imageVector = Icons.Rounded.Share,
-                contentDescription = stringResource(Res.string.more_options),
+                contentDescription = stringResource(Res.string.share_record),
                 tint = MaterialTheme.colorScheme.primary,
             )
         }
