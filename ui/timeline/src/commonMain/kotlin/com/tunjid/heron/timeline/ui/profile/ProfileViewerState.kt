@@ -53,7 +53,7 @@ fun ProfileViewerState(
             follows -> Res.string.following
             followsYou -> Res.string.follow_back
             else -> Res.string.follow
-        }
+        },
     )
     FilterChip(
         modifier = Modifier
