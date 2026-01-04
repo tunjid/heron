@@ -34,13 +34,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowCircleUp
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.ChatBubbleOutline
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.FormatQuote
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -581,7 +581,7 @@ private sealed class PostInteractionButton {
             Like -> if (isChecked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder
             Repost -> Icons.Rounded.Repeat
             Bookmark -> if (isChecked) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder
-            MoreOptions -> Icons.Rounded.ArrowCircleUp
+            MoreOptions -> Icons.Rounded.MoreVert
         }
 
         val PostInteractionButton.stringResource
