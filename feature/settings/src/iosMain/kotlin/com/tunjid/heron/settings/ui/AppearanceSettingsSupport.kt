@@ -16,10 +16,14 @@
 
 package com.tunjid.heron.settings.ui
 
-import android.os.Build
 import androidx.compose.runtime.Composable
 
 @Composable
 actual fun isDynamicThemingSupported(): Boolean {
-    return Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    return false
+}
+
+@Composable
+actual fun isCompactNavigationSupported(): Boolean {
+    return true
 }

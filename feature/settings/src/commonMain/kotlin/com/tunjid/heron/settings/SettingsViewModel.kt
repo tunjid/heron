@@ -91,6 +91,10 @@ class ActualSettingsViewModel(
                         savedStateDataSource = savedStateDataSource,
                     )
 
+                    is Action.SetCompactNavigation -> action.flow.toggleCompactNavigation(
+                        savedStateDataSource = savedStateDataSource,
+                    )
+
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
@@ -128,12 +132,19 @@ private fun Flow<Action.SetRefreshHomeTimelinesOnLaunch>.homeTimelineRefreshOnLa
     mapToManyMutations { (refreshOnLaunch) ->
         savedStateDataSource.setRefreshedHomeTimelineOnLaunch(refreshOnLaunch)
     }
-    
+
 private fun Flow<Action.SetDynamicThemingPreference>.toggleDynamicTheming(
     savedStateDataSource: SavedStateDataSource,
 ): Flow<Mutation<State>> =
     mapToManyMutations { (dynamicTheming) ->
         savedStateDataSource.setDynamicTheming(dynamicTheming)
+    }
+
+private fun Flow<Action.SetCompactNavigation>.toggleCompactNavigation(
+    savedStateDataSource: SavedStateDataSource,
+): Flow<Mutation<State>> =
+    mapToManyMutations { (compactNavigation) ->
+        savedStateDataSource.setCompactNavigation(compactNavigation)
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =

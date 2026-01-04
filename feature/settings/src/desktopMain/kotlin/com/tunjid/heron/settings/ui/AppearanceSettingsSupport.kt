@@ -22,3 +22,8 @@ import androidx.compose.runtime.Composable
 actual fun isDynamicThemingSupported(): Boolean {
     return false
 }
+
+@Composable
+actual fun isCompactNavigationSupported(): Boolean {
+    return false
+}

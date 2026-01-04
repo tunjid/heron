@@ -293,6 +293,10 @@ sealed class SavedStateDataSource {
     abstract suspend fun setDynamicTheming(
         dynamicTheming: Boolean,
     )
+
+    abstract suspend fun setCompactNavigation(
+        compactNavigation: Boolean,
+    )
 }
 
 @Inject
@@ -390,6 +394,12 @@ internal class DataStoreSavedStateDataSource(
         dynamicTheming: Boolean,
     ) = updateSignedInProfileData {
         copy(preferences = preferences.copy(useDynamicTheming = dynamicTheming))
+    }
+
+    override suspend fun setCompactNavigation(
+        compactNavigation: Boolean,
+    ) = updateSignedInProfileData {
+        copy(preferences = preferences.copy(useCompactNavigation = compactNavigation))
     }
 
     private suspend fun updateState(update: VersionedSavedState.() -> VersionedSavedState) {

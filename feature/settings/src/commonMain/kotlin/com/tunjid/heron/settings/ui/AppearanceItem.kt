@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.models.Preferences
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.appearance
+import heron.feature.settings.generated.resources.use_compact_navigation
 import heron.feature.settings.generated.resources.use_dynamic_theming
 import org.jetbrains.compose.resources.stringResource
 
@@ -36,12 +37,17 @@ import org.jetbrains.compose.resources.stringResource
 expect fun isDynamicThemingSupported(): Boolean
 
 @Composable
+expect fun isCompactNavigationSupported(): Boolean
+
+@Composable
 fun AppearanceItem(
     modifier: Modifier = Modifier,
     signedInProfilePreferences: Preferences,
     setDynamicThemingPreference: (Boolean) -> Unit,
+    setCompactNavigation: (Boolean) -> Unit,
 ) {
     val isDynamicThemingSupported = isDynamicThemingSupported()
+    val isCompactNavigationSupported = isCompactNavigationSupported()
 
     ExpandableSettingsItemRow(
         modifier = modifier
@@ -61,6 +67,20 @@ fun AppearanceItem(
                 checked = signedInProfilePreferences.useDynamicTheming,
                 onCheckedChange = setDynamicThemingPreference,
                 enabled = isDynamicThemingSupported,
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(Res.string.use_compact_navigation),
+            )
+            Switch(
+                checked = signedInProfilePreferences.useCompactNavigation,
+                onCheckedChange = setCompactNavigation,
+                enabled = isCompactNavigationSupported,
             )
         }
     }

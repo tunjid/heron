@@ -71,6 +71,9 @@ internal fun SettingsScreen(
                 setDynamicThemingPreference = {
                     actions(Action.SetDynamicThemingPreference(it))
                 },
+                setCompactNavigation = {
+                    actions(Action.SetCompactNavigation(it))
+                },
             )
         }
         FeedbackItem(
