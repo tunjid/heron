@@ -90,7 +90,7 @@ private fun LibrariesHorizontalGrid(
     LazyHorizontalGrid(
         modifier = modifier,
         rows = GridCells.Adaptive(56.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         items(
             items = libs,

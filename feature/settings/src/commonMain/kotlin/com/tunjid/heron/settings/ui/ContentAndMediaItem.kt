@@ -16,15 +16,10 @@
 
 package com.tunjid.heron.settings.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Newspaper
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.models.Preferences
 import heron.feature.settings.generated.resources.Res
@@ -44,18 +39,13 @@ fun ContentAndMediaItem(
         title = stringResource(Res.string.content_and_media),
         icon = Icons.Rounded.Newspaper,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(Res.string.refresh_timelines_on_launch),
-            )
-            Switch(
-                checked = signedInProfilePreferences.refreshHomeTimelineOnLaunch,
-                onCheckedChange = setRefreshHomeTimelineOnLaunch,
-            )
-        }
+        SettingsToggleItem(
+            modifier = Modifier
+                .fillMaxWidth(),
+            text = stringResource(Res.string.refresh_timelines_on_launch),
+            enabled = true,
+            checked = signedInProfilePreferences.refreshHomeTimelineOnLaunch,
+            onCheckedChange = setRefreshHomeTimelineOnLaunch,
+        )
     }
 }
