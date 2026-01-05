@@ -36,7 +36,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOptio
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.scaffold.DragToPopState.Companion.dragToPop
 import com.tunjid.heron.scaffold.scaffold.DragToPopState.Companion.rememberDragToPopState
-import com.tunjid.heron.scaffold.scaffold.LocalAppState
+
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar

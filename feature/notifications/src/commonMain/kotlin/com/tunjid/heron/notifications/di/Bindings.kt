@@ -38,7 +38,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.notifications.hasNotificationPermissions
-import com.tunjid.heron.scaffold.scaffold.LocalAppState
+
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -201,7 +201,8 @@ class NotificationsBindings(
                     PaneNavigationBar(
                         modifier = Modifier
                             .offset {
-                                bottomNavigationNestedScrollConnection.navigationBarOffset(autoHideNavigationBar).round()
+                                bottomNavigationNestedScrollConnection.navigationBarOffset(autoHideNavigationBar)
+                                    .round()
                             },
                         onNavItemReselected = {
                             viewModel.accept(Action.Tile(TilingState.Action.Refresh))

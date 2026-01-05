@@ -17,6 +17,7 @@
 package com.tunjid.heron.home.di
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Login
 import androidx.compose.material.icons.rounded.Edit
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.rounded.Save
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
@@ -45,10 +47,13 @@ import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PaneSnackbarHost
 import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
+import com.tunjid.heron.scaffold.scaffold.fabOffset
+import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
+import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
@@ -124,11 +129,17 @@ class HomeBindings(
             val topAppBarNestedScrollConnection =
                 topAppBarNestedScrollConnection()
 
+            val bottomNavigationNestedScrollConnection =
+                bottomNavigationNestedScrollConnection(
+                    isCompact = paneScaffoldState.prefersCompactBottomNav,
+                )
+
             paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
-                    .nestedScroll(topAppBarNestedScrollConnection),
+                    .nestedScroll(topAppBarNestedScrollConnection)
+                    .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
@@ -155,10 +166,19 @@ class HomeBindings(
                     )
                 },
                 snackBarHost = {
-                    PaneSnackbarHost()
+                    PaneSnackbarHost(
+                        modifier = Modifier
+                            .offset {
+                                fabOffset(bottomNavigationNestedScrollConnection.offset)
+                            },
+                    )
                 },
                 floatingActionButton = {
                     PaneFab(
+                        modifier = Modifier
+                            .offset {
+                                fabOffset(bottomNavigationNestedScrollConnection.offset)
+                            },
                         text = stringResource(
                             when {
                                 isSignedOut -> CommonStrings.sign_in
@@ -171,7 +191,7 @@ class HomeBindings(
                             state.tabLayout is TabLayout.Expanded -> Icons.Rounded.Save
                             else -> Icons.Rounded.Edit
                         },
-                        expanded = true,
+                        expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
                         onClick = {
                             viewModel.accept(
                                 when {
@@ -193,6 +213,10 @@ class HomeBindings(
                 },
                 navigationBar = {
                     PaneNavigationBar(
+                        modifier = Modifier
+                            .offset {
+                                bottomNavigationNestedScrollConnection.offset.round()
+                            },
                         onNavItemReselected = {
                             viewModel.accept(Action.RefreshCurrentTab)
                             true

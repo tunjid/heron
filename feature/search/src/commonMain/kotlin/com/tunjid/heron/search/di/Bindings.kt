@@ -31,7 +31,7 @@ import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.profileDestination
-import com.tunjid.heron.scaffold.scaffold.LocalAppState
+
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
@@ -222,7 +222,8 @@ class SearchBindings(
                     PaneNavigationBar(
                         modifier = Modifier
                             .offset {
-                                bottomNavigationNestedScrollConnection.navigationBarOffset(autoHideNavigationBar).round()
+                                bottomNavigationNestedScrollConnection.navigationBarOffset(autoHideNavigationBar)
+                                    .round()
                             },
                     )
                 },
