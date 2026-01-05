@@ -163,7 +163,6 @@ fun PaneScaffoldState.PaneScaffold(
                     AppState.DismissBehavior.None,
                     AppState.DismissBehavior.Gesture.DragToPop,
                     -> Modifier.animateBounds(lookaheadScope = this)
-
                     AppState.DismissBehavior.Gesture.SlideToPop,
                     AppState.DismissBehavior.Gesture.ScaleToPop,
                     -> Modifier
