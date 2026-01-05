@@ -40,7 +40,6 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOptio
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
-
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -200,8 +199,8 @@ class ProfileBindings(
                                         isSignedOut -> signInDestination()
                                         else -> composePostDestination(
                                             type =
-                                                if (state.isSignedInProfile) Post.Create.Timeline
-                                                else Post.Create.Mention(state.profile),
+                                            if (state.isSignedInProfile) Post.Create.Timeline
+                                            else Post.Create.Mention(state.profile),
                                             sharedElementPrefix = null,
                                         )
                                     },
