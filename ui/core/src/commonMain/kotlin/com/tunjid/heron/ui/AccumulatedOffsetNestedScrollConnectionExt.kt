@@ -64,6 +64,23 @@ fun bottomNavigationNestedScrollConnection(
 }
 
 @Composable
+fun fabScrollConnection(
+    isCompact: Boolean,
+): AccumulatedOffsetNestedScrollConnection {
+    val navigationBarHeight by rememberUpdatedState(UiTokens.navigationBarHeight)
+    return rememberAccumulatedOffsetNestedScrollConnection(
+        invert = true,
+        maxOffset = {
+            Offset(
+                x = 0f,
+                y = (navigationBarHeight + UiTokens.bottomNavHeight(isCompact = isCompact)).toPx(),
+            )
+        },
+        minOffset = { Offset.Zero },
+    )
+}
+
+@Composable
 fun AccumulatedOffsetNestedScrollConnection.PagerTopGapCloseEffect(
     pagerState: PagerState,
     firstVisibleItemIndex: () -> Int,

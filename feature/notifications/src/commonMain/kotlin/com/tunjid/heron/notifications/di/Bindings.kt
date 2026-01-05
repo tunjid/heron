@@ -51,6 +51,7 @@ import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.fabScrollConnection
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
@@ -129,12 +130,18 @@ class NotificationsBindings(
                     enabled = paneScaffoldState.prefersAutoHideNavigationBar,
                 )
 
+            val fabScrollConnection =
+                fabScrollConnection(
+                    isCompact = paneScaffoldState.prefersCompactBottomNav,
+                )
+
             paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
                     .nestedScroll(topAppBarNestedScrollConnection)
-                    .nestedScroll(bottomNavigationNestedScrollConnection),
+                    .nestedScroll(bottomNavigationNestedScrollConnection)
+                    .nestedScroll(fabScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
@@ -177,7 +184,7 @@ class NotificationsBindings(
                             },
                         text = stringResource(CommonStrings.notifications_create_post),
                         icon = Icons.Rounded.Edit,
-                        expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
+                        expanded = isFabExpanded(fabScrollConnection.offset),
                         onClick = {
                             viewModel.accept(
                                 Action.Navigate.To(

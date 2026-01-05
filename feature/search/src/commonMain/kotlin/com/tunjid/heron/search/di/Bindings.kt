@@ -48,6 +48,7 @@ import com.tunjid.heron.search.SearchScreen
 import com.tunjid.heron.search.SearchViewModel
 import com.tunjid.heron.ui.SearchBar
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.fabScrollConnection
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.treenav.compose.PaneEntry
@@ -146,12 +147,18 @@ class SearchBindings(
                     enabled = paneScaffoldState.prefersAutoHideNavigationBar,
                 )
 
+            val fabScrollConnection =
+                fabScrollConnection(
+                    isCompact = paneScaffoldState.prefersCompactBottomNav,
+                )
+
             paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
                     .nestedScroll(topAppBarNestedScrollConnection)
-                    .nestedScroll(bottomNavigationNestedScrollConnection),
+                    .nestedScroll(bottomNavigationNestedScrollConnection)
+                    .nestedScroll(fabScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {

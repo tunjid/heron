@@ -65,6 +65,7 @@ import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.ui.SearchBar
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.fabScrollConnection
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.treenav.compose.PaneEntry
@@ -143,6 +144,11 @@ class MessagesBindings(
                     enabled = paneScaffoldState.prefersAutoHideNavigationBar,
                 )
 
+            val fabScrollConnection =
+                fabScrollConnection(
+                    isCompact = paneScaffoldState.prefersCompactBottomNav,
+                )
+
             val searchFocusRequester = remember { FocusRequester() }
 
             paneScaffoldState.PaneScaffold(
@@ -150,7 +156,8 @@ class MessagesBindings(
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
                     .nestedScroll(topAppBarNestedScrollConnection)
-                    .nestedScroll(bottomNavigationNestedScrollConnection),
+                    .nestedScroll(bottomNavigationNestedScrollConnection)
+                    .nestedScroll(fabScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
@@ -207,7 +214,7 @@ class MessagesBindings(
                             },
                         text = stringResource(Res.string.write_new_dm),
                         icon = Icons.AutoMirrored.Rounded.ForwardToInbox,
-                        expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
+                        expanded = isFabExpanded(fabScrollConnection.offset),
                         onClick = {
                             viewModel.accept(Action.SetIsSearching(isSearching = true))
                         },
