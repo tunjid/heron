@@ -41,7 +41,7 @@ interface UserDataRepository {
     suspend fun setCompactNavigation(
         compactNavigation: Boolean,
     ): Outcome
-    
+
     suspend fun setShowNotificationCount(
         showNotificationCountPreference: Boolean,
     ): Outcome
@@ -104,7 +104,7 @@ internal class OfflineUserDataRepository @Inject constructor(
     ): Outcome = updatePreferences {
         copy(useCompactNavigation = compactNavigation)
     }
-    
+
     override suspend fun setShowNotificationCount(
         showNotificationCountPreference: Boolean,
     ): Outcome = updatePreferences {

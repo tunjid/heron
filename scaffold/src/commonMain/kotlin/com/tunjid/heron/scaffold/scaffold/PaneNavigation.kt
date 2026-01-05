@@ -38,6 +38,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -137,7 +138,7 @@ internal fun AppState.PaneNavigationBar(
                             BadgedBox(
                                 badge = {
                                     if (item.hasBadge) {
-                                        if (item.badgeCount) Badge({ Text("${item.badgeCount}") })
+                                        if ((item.badgeCount ?: 0) > 0) Badge(content = { Text("${item.badgeCount}") })
                                         else Badge(Modifier.size(4.dp))
                                     }
                                 },

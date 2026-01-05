@@ -76,7 +76,7 @@ internal fun SettingsScreen(
                 },
                 setShowNotificationCount = {
                     actions(Action.SetShowNotificationCount(it))
-                }
+                },
             )
         }
         FeedbackItem(

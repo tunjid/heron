@@ -42,6 +42,7 @@ fun AppearanceItem(
     signedInProfilePreferences: Preferences,
     setDynamicThemingPreference: (Boolean) -> Unit,
     setCompactNavigation: (Boolean) -> Unit,
+    setShowNotificationCount: (Boolean) -> Unit,
 ) {
     val isDynamicThemingSupported = isDynamicThemingSupported()
     val isCompactNavigationSupported = isCompactNavigationSupported()
@@ -72,6 +73,7 @@ fun AppearanceItem(
             modifier = Modifier
                 .fillMaxWidth(),
             text = stringResource(Res.string.show_notification_count),
+            enabled = true,
             checked = signedInProfilePreferences.showNotificationCount,
             onCheckedChange = setShowNotificationCount,
         )
