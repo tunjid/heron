@@ -66,6 +66,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -419,7 +420,12 @@ private fun PostInteractionElements(
         label = "icon_scale",
     )
 
-    Box(modifier = Modifier.scale(scale)) {
+    Box(
+        modifier = Modifier.graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+        },
+    ) {
         // Use crossfade for smooth icon transition between outlined and filled
         when (button) {
             PostInteractionButton.Like,
