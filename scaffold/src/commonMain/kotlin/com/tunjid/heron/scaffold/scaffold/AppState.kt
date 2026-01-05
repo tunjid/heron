@@ -95,7 +95,7 @@ class AppState(
 
     internal var isSignedIn by mutableStateOf(false)
 
-    var preferences by mutableStateOf<Preferences?>(null)
+    internal var preferences by mutableStateOf<Preferences?>(null)
 
     private val multiStackNavState = mutableStateOf(navigationStateHolder.state.value)
 
