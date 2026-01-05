@@ -35,7 +35,6 @@ import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.scaffold.AppBarTitle
-
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
@@ -46,7 +45,6 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.navigationBarOffset
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.treenav.compose.PaneEntry
@@ -184,14 +182,9 @@ class PostsBindings(
             val topAppBarNestedScrollConnection =
                 topAppBarNestedScrollConnection()
 
-            val appState = LocalAppState.current
-
-            val autoHideNavigationBar = appState.preferences?.autoHideNavigationBar ?: true
-
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection(
                     isCompact = paneScaffoldState.prefersCompactBottomNav,
-                    enabled = autoHideNavigationBar,
                 )
 
             paneScaffoldState.PaneScaffold(
@@ -224,7 +217,7 @@ class PostsBindings(
                 navigationBar = {
                     PaneNavigationBar(
                         modifier = Modifier.offset {
-                            bottomNavigationNestedScrollConnection.navigationBarOffset(autoHideNavigationBar).round()
+                            bottomNavigationNestedScrollConnection.offset.round()
                         },
                     )
                 },

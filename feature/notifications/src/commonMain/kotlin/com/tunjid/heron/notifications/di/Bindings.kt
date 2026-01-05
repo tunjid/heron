@@ -38,7 +38,6 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.notifications.hasNotificationPermissions
-
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -52,8 +51,6 @@ import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.fabPositionOffset
-import com.tunjid.heron.ui.navigationBarOffset
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
@@ -126,14 +123,9 @@ class NotificationsBindings(
             val topAppBarNestedScrollConnection =
                 topAppBarNestedScrollConnection()
 
-            val appState = LocalAppState.current
-
-            val autoHideNavigationBar = appState.preferences?.autoHideNavigationBar ?: true
-
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection(
                     isCompact = paneScaffoldState.prefersCompactBottomNav,
-                    enabled = autoHideNavigationBar,
                 )
 
             paneScaffoldState.PaneScaffold(
@@ -180,7 +172,7 @@ class NotificationsBindings(
                     PaneFab(
                         modifier = Modifier
                             .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.fabPositionOffset(autoHideNavigationBar))
+                                fabOffset(bottomNavigationNestedScrollConnection.offset)
                             },
                         text = stringResource(CommonStrings.notifications_create_post),
                         icon = Icons.Rounded.Edit,
@@ -201,8 +193,7 @@ class NotificationsBindings(
                     PaneNavigationBar(
                         modifier = Modifier
                             .offset {
-                                bottomNavigationNestedScrollConnection.navigationBarOffset(autoHideNavigationBar)
-                                    .round()
+                                bottomNavigationNestedScrollConnection.offset.round()
                             },
                         onNavItemReselected = {
                             viewModel.accept(Action.Tile(TilingState.Action.Refresh))

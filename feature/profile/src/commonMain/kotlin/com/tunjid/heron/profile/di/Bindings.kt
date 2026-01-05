@@ -17,6 +17,7 @@
 package com.tunjid.heron.profile.di
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Login
@@ -24,7 +25,9 @@ import androidx.compose.material.icons.rounded.AlternateEmail
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.models.Post
@@ -47,11 +50,14 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PaneSnackbarHost
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
+import com.tunjid.heron.scaffold.scaffold.fabOffset
 import com.tunjid.heron.scaffold.scaffold.fullAppbarTransparency
+import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
+import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -161,10 +167,16 @@ class ProfileBindings(
             val state by viewModel.state.collectAsStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
+            val bottomNavigationNestedScrollConnection =
+                bottomNavigationNestedScrollConnection(
+                    isCompact = paneScaffoldState.prefersCompactBottomNav,
+                )
+
             paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
-                    .predictiveBackPlacement(paneScope = this),
+                    .predictiveBackPlacement(paneScope = this)
+                    .nestedScroll(bottomNavigationNestedScrollConnection),
                 showNavigation = true,
                 topBar = {
                     PoppableDestinationTopAppBar(
@@ -175,10 +187,19 @@ class ProfileBindings(
                     )
                 },
                 snackBarHost = {
-                    PaneSnackbarHost()
+                    PaneSnackbarHost(
+                        modifier = Modifier
+                            .offset {
+                                fabOffset(bottomNavigationNestedScrollConnection.offset)
+                            },
+                    )
                 },
                 floatingActionButton = {
                     PaneFab(
+                        modifier = Modifier
+                            .offset {
+                                fabOffset(bottomNavigationNestedScrollConnection.offset)
+                            },
                         text = stringResource(
                             when {
                                 isSignedOut -> CommonStrings.sign_in
@@ -191,7 +212,7 @@ class ProfileBindings(
                             state.isSignedInProfile -> Icons.Rounded.Edit
                             else -> Icons.Rounded.AlternateEmail
                         },
-                        expanded = true,
+                        expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
                         onClick = {
                             viewModel.accept(
                                 Action.Navigate.To(
@@ -210,7 +231,11 @@ class ProfileBindings(
                     )
                 },
                 navigationBar = {
-                    PaneNavigationBar()
+                    PaneNavigationBar(
+                        modifier = Modifier.offset {
+                            bottomNavigationNestedScrollConnection.offset.round()
+                        },
+                    )
                 },
                 navigationRail = {
                     PaneNavigationRail()

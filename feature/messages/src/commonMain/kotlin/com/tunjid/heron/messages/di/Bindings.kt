@@ -51,7 +51,6 @@ import com.tunjid.heron.messages.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.profileDestination
-
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -66,8 +65,6 @@ import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.ui.SearchBar
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
-import com.tunjid.heron.ui.fabPositionOffset
-import com.tunjid.heron.ui.navigationBarOffset
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.treenav.compose.PaneEntry
@@ -137,16 +134,12 @@ class MessagesBindings(
             val state by viewModel.state.collectAsStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
-            val appState = LocalAppState.current
-            val autoHideNavigationBar = appState.preferences?.autoHideNavigationBar ?: true
-
             val topAppBarNestedScrollConnection =
                 topAppBarNestedScrollConnection()
 
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection(
                     isCompact = paneScaffoldState.prefersCompactBottomNav,
-                    enabled = autoHideNavigationBar,
                 )
 
             val searchFocusRequester = remember { FocusRequester() }
@@ -209,7 +202,7 @@ class MessagesBindings(
                     PaneFab(
                         modifier = Modifier
                             .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.fabPositionOffset(autoHideNavigationBar))
+                                fabOffset(bottomNavigationNestedScrollConnection.offset)
                             },
                         text = stringResource(Res.string.write_new_dm),
                         icon = Icons.AutoMirrored.Rounded.ForwardToInbox,
@@ -229,8 +222,7 @@ class MessagesBindings(
                     PaneNavigationBar(
                         modifier = Modifier
                             .offset {
-                                bottomNavigationNestedScrollConnection.navigationBarOffset(autoHideNavigationBar)
-                                    .round()
+                                bottomNavigationNestedScrollConnection.offset.round()
                             },
                     )
                 },
