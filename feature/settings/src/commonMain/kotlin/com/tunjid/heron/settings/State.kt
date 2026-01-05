@@ -44,7 +44,7 @@ sealed class Action(val key: String) {
     data class SetCompactNavigation(
         val compactNavigation: Boolean,
     ) : Action(key = "SetCompactNavigation")
-    
+
     data class SetShowNotificationCount(
         val showNotificationCount: Boolean,
     ) : Action(key = "SetShowNotificationCount")
