@@ -47,11 +47,13 @@ fun topAppBarNestedScrollConnection(): AccumulatedOffsetNestedScrollConnection =
 @Composable
 fun bottomNavigationNestedScrollConnection(
     isCompact: Boolean,
+    enabled: Boolean,
 ): AccumulatedOffsetNestedScrollConnection {
     val navigationBarHeight by rememberUpdatedState(UiTokens.navigationBarHeight)
     return rememberAccumulatedOffsetNestedScrollConnection(
         invert = true,
         maxOffset = maxOffset@{
+            if (!enabled) return@maxOffset Offset.Zero
             Offset(
                 x = 0f,
                 y = (navigationBarHeight + UiTokens.bottomNavHeight(isCompact = isCompact)).toPx(),

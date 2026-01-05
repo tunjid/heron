@@ -175,6 +175,7 @@ class PostDetailBindings(
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection(
                     isCompact = paneScaffoldState.prefersCompactBottomNav,
+                    enabled = paneScaffoldState.prefersAutoHideNavigationBar,
                 )
 
             paneScaffoldState.PaneScaffold(

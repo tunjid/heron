@@ -76,7 +76,7 @@ class PaneScaffoldState internal constructor(
         get() = appState.prefersCompactBottomNav
 
     val prefersAutoHideNavigationBar: Boolean
-        get() = appState.preferences?.autoHideNavigationBar ?: true
+        get() = appState.prefersAutoHideNavigationBar
 
     internal val canShowNavigationBar: Boolean
         get() = !isMediumScreenWidthOrWider

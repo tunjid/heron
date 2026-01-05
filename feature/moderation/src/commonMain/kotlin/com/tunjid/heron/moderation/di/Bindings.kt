@@ -127,6 +127,7 @@ class ModerationBindings(
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection(
                     isCompact = paneScaffoldState.prefersCompactBottomNav,
+                    enabled = paneScaffoldState.prefersAutoHideNavigationBar,
                 )
 
             paneScaffoldState.PaneScaffold(

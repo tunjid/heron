@@ -140,6 +140,7 @@ class MessagesBindings(
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection(
                     isCompact = paneScaffoldState.prefersCompactBottomNav,
+                    enabled = paneScaffoldState.prefersAutoHideNavigationBar,
                 )
 
             val searchFocusRequester = remember { FocusRequester() }
