@@ -69,8 +69,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.capitalize
@@ -328,25 +326,12 @@ private fun PostInteraction(
     isChecked: Boolean,
     button: PostInteractionButton,
 ) {
-    val haptic = LocalHapticFeedback.current
-
     val itemModifier = modifier
         .then(
             if (enabled) Modifier.clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = ripple(bounded = false),
-                onClick = {
-                    when (button) {
-                        PostInteractionButton.Like,
-                        PostInteractionButton.Bookmark,
-                        -> {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        }
-
-                        else -> {}
-                    }
-                    onClick()
-                },
+                onClick = onClick,
             )
             else Modifier,
         )
