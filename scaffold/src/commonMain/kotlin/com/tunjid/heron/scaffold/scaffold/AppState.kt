@@ -342,7 +342,7 @@ internal class SplitPaneState(
 
 internal val AppState.prefersCompactBottomNav: Boolean
     get() = preferences?.useCompactNavigation ?: false
-    
+
 internal val AppState.prefersAutoHideNavigationBar: Boolean
     get() = preferences?.autoHideNavigationBar ?: false
 
