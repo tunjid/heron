@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.models.Preferences
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.appearance
+import heron.feature.settings.generated.resources.show_notification_count
 import heron.feature.settings.generated.resources.use_compact_navigation
 import heron.feature.settings.generated.resources.use_dynamic_theming
 import org.jetbrains.compose.resources.stringResource
@@ -66,6 +67,13 @@ fun AppearanceItem(
             enabled = isCompactNavigationSupported,
             checked = signedInProfilePreferences.useCompactNavigation,
             onCheckedChange = setCompactNavigation,
+        )
+        SettingsToggleItem(
+            modifier = Modifier
+                .fillMaxWidth(),
+            text = stringResource(Res.string.show_notification_count),
+            checked = signedInProfilePreferences.showNotificationCount,
+            onCheckedChange = setShowNotificationCount,
         )
     }
 }

@@ -136,7 +136,10 @@ internal fun AppState.PaneNavigationBar(
                         icon = {
                             BadgedBox(
                                 badge = {
-                                    if (item.hasBadge) Badge(Modifier.size(4.dp))
+                                    if (item.hasBadge) {
+                                        if (item.badgeCount) Badge({ Text("${item.badgeCount}") })
+                                        else Badge(Modifier.size(4.dp))
+                                    }
                                 },
                                 content = {
                                     Icon(

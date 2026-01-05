@@ -41,6 +41,10 @@ interface UserDataRepository {
     suspend fun setCompactNavigation(
         compactNavigation: Boolean,
     ): Outcome
+    
+    suspend fun setShowNotificationCount(
+        showNotificationCountPreference: Boolean,
+    ): Outcome
 
     suspend fun updateMutedWords(
         mutedWordPreferences: List<MutedWordPreference>,
@@ -99,6 +103,12 @@ internal class OfflineUserDataRepository @Inject constructor(
         compactNavigation: Boolean,
     ): Outcome = updatePreferences {
         copy(useCompactNavigation = compactNavigation)
+    }
+    
+    override suspend fun setShowNotificationCount(
+        showNotificationCountPreference: Boolean,
+    ): Outcome = updatePreferences {
+        copy(showNotificationCount = showNotificationCountPreference)
     }
 
     override suspend fun updateMutedWords(
