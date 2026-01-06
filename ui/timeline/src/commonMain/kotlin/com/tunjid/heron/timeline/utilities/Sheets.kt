@@ -145,57 +145,43 @@ internal fun ShareInPostCard(
 }
 
 @Composable
-internal fun CopyLinkToClipboardCard(
-    uri: GenericUri,
+private fun CopyToClipboardCard(
+    description: String,
+    clipEntryProvider: () -> ClipEntry,
 ) {
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
-    val copyToClipboardDescription = stringResource(Res.string.copy_link_to_clipboard)
 
     BottomSheetItemCard(
         modifier = Modifier.fillMaxWidth(),
         onClick = {
             scope.launch {
-                clipboard.setClipEntry(uri.asClipEntry(copyToClipboardDescription))
+                clipboard.setClipEntry(clipEntryProvider())
             }
         },
     ) {
         BottomSheetItemCardRow(
-            modifier = Modifier
-                .semantics {
-                    contentDescription = copyToClipboardDescription
-                },
+            modifier = Modifier.semantics { contentDescription = description },
             icon = Icons.Rounded.ContentCopy,
-            text = copyToClipboardDescription,
+            text = description,
         )
     }
 }
 
 @Composable
-internal fun CopyContentsToClipboardCard(
-    text: String,
-) {
-    val clipboard = LocalClipboard.current
-    val scope = rememberCoroutineScope()
-    val copyToClipboardDescription = stringResource(Res.string.copy_contents_to_clipboard)
+internal fun CopyLinkToClipboardCard(uri: GenericUri) {
+    CopyToClipboardCard(
+        description = stringResource(Res.string.copy_link_to_clipboard),
+        clipEntryProvider = { uri.asClipEntry(description) },
+    )
+}
 
-    BottomSheetItemCard(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = {
-            scope.launch {
-                clipboard.setClipEntry(text.asClipEntry(copyToClipboardDescription))
-            }
-        },
-    ) {
-        BottomSheetItemCardRow(
-            modifier = Modifier
-                .semantics {
-                    contentDescription = copyToClipboardDescription
-                },
-            icon = Icons.Rounded.ContentCopy,
-            text = copyToClipboardDescription,
-        )
-    }
+@Composable
+internal fun CopyContentsToClipboardCard(text: String) {
+    CopyToClipboardCard(
+        description = stringResource(Res.string.copy_contents_to_clipboard),
+        clipEntryProvider = { text.asClipEntry(description) },
+    )
 }
 
 @Composable
