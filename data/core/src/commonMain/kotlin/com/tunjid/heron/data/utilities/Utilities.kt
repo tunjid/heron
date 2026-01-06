@@ -55,7 +55,14 @@ internal inline fun <R, T> Result<T>.mapCatchingUnlessCancelled(
     onSuccess = {
         runCatchingUnlessCancelled { transform(it) }
     },
-    onFailure = { Result.failure(it) },
+    onFailure = Result.Companion::failure,
+)
+
+internal inline fun <R, T> Result<T>.mapToResult(
+    transform: (value: T) -> Result<R>,
+): Result<R> = fold(
+    onSuccess = transform,
+    onFailure = Result.Companion::failure,
 )
 
 /**

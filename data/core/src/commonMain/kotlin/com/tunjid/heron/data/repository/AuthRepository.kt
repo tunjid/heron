@@ -22,7 +22,6 @@ import app.bsky.actor.SavedFeedType
 import app.bsky.feed.GetFeedGeneratorQueryParams
 import app.bsky.graph.GetListQueryParams
 import com.tunjid.heron.data.core.models.OauthUriRequest
-import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SessionRequest
 import com.tunjid.heron.data.core.models.TimelinePreference
@@ -193,9 +192,9 @@ internal class AuthTokenRepository(
         preferencesResponse: GetPreferencesResponse,
     ) = supervisorScope {
         val preferences = preferenceUpdater.update(
-            response = preferencesResponse,
+            networkPreferences = preferencesResponse.preferences,
             preferences = savedStateDataSource.savedState
-                .map { it.signedInProfileData?.preferences ?: Preferences.EmptyPreferences }
+                .map(SavedState::signedProfilePreferencesOrDefault)
                 .first(),
         )
 

@@ -781,7 +781,7 @@ internal class OfflineTimelineRepository(
                     putPreferences(
                         PutPreferencesRequest(
                             preferences = preferenceUpdater.update(
-                                response = preferencesResponse,
+                                networkPreferences = preferencesResponse.preferences,
                                 update = update,
                             ),
                         ),
