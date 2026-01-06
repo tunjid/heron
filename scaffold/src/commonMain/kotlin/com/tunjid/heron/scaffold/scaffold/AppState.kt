@@ -91,7 +91,7 @@ class AppState(
     internal val videoPlayerController: VideoPlayerController,
     private val writeQueue: WriteQueue,
 ) {
-    private var hasNotifications by mutableStateOf(false)
+    private var notificationCount by mutableStateOf(0L)
 
     internal var isSignedIn by mutableStateOf(false)
 
@@ -181,7 +181,7 @@ class AppState(
             }
             launch {
                 notificationStateHolder.state.collect { notificationState ->
-                    hasNotifications = notificationState.unreadCount != 0L
+                    notificationCount = notificationState.unreadCount
                 }
             }
             launch {
@@ -272,7 +272,10 @@ class AppState(
                     stack = stack,
                     index = index,
                     selected = multiStackNav.currentIndex == index,
-                    hasBadge = stack == AppStack.Notifications && hasNotifications,
+                    hasBadge = stack == AppStack.Notifications && notificationCount > 0L,
+                    badgeCount = stack.takeIf {
+                        it == AppStack.Notifications && notificationCount > 0L
+                    }?.let { notificationCount.toInt() },
                 )
             }
     }
