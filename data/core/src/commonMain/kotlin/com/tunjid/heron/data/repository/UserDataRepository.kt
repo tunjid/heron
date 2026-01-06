@@ -117,9 +117,8 @@ internal class OfflineUserDataRepository @Inject constructor(
                             preferences = networkPreferences,
                         ),
                     )
-                        .map {
-                            networkPreferences
-                        }
+                }.mapCatchingUnlessCancelled {
+                    networkPreferences
                 }
             }
             .mapCatchingUnlessCancelled { networkPreferences ->
