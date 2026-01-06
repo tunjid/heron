@@ -55,7 +55,14 @@ internal inline fun <R, T> Result<T>.mapCatchingUnlessCancelled(
     onSuccess = {
         runCatchingUnlessCancelled { transform(it) }
     },
-    onFailure = { Result.failure(it) },
+    onFailure = Result.Companion::failure,
+)
+
+internal inline fun <R, T> Result<T>.mapToResult(
+    transform: (value: T) -> Result<R>,
+): Result<R> = fold(
+    onSuccess = transform,
+    onFailure = Result.Companion::failure,
 )
 
 /**
@@ -187,19 +194,15 @@ internal inline fun <T, R, K> List<T>.sortedWithNetworkList(
 
 internal inline fun <T> Result<T>.toOutcome(
     onSuccess: (T) -> Unit = {},
-): Outcome = fold(
-    onSuccess = {
-        try {
-            onSuccess(it)
-            Outcome.Success
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Outcome.Failure(e)
-        }
-    },
-    onFailure = Outcome::Failure,
-)
+): Outcome = mapCatchingUnlessCancelled { value ->
+    if (value is Outcome.Failure) return@mapCatchingUnlessCancelled value
+    onSuccess(value)
+    Outcome.Success
+}
+    .fold(
+        onSuccess = { it },
+        onFailure = Outcome::Failure,
+    )
 
 internal class InvalidTokenException : Exception("Invalid tokens")
 

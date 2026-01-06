@@ -227,7 +227,7 @@ val EmptyNavigation: SavedState.Navigation = EmptySavedState.navigation
 fun SavedState.isSignedIn(): Boolean =
     auth.ifSignedIn() != null
 
-fun SavedState.signedInProfilePreferences() =
+internal fun SavedState.signedInProfilePreferences() =
     signedInProfileData?.preferences
 
 internal val SavedStateDataSource.signedInAuth
@@ -236,8 +236,7 @@ internal val SavedStateDataSource.signedInAuth
         .distinctUntilChanged()
 
 internal fun SavedState.signedProfilePreferencesOrDefault(): Preferences =
-    signedInProfileData
-        ?.preferences
+    signedInProfilePreferences()
         ?: when (val authTokens = auth) {
             is SavedState.AuthTokens.Authenticated.Bearer -> authTokens.authEndpoint
             is SavedState.AuthTokens.Authenticated.DPoP -> authTokens.issuerEndpoint
@@ -282,7 +281,7 @@ internal sealed class SavedStateDataSource {
     )
 
     internal abstract suspend fun updateSignedInProfileData(
-        block: SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData,
+        block: suspend SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData,
     )
 }
 
@@ -351,7 +350,7 @@ internal class DataStoreSavedStateDataSource(
     }
 
     override suspend fun updateSignedInProfileData(
-        block: SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData,
+        block: suspend SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData,
     ) = updateState {
         val signedInProfileId = auth.ifSignedIn()?.authProfileId ?: return@updateState this
         val signedInProfileData = profileData[signedInProfileId] ?: SavedState.ProfileData(
@@ -365,7 +364,9 @@ internal class DataStoreSavedStateDataSource(
         )
     }
 
-    private suspend fun updateState(update: VersionedSavedState.() -> VersionedSavedState) {
+    private suspend fun updateState(
+        update: suspend VersionedSavedState.() -> VersionedSavedState,
+    ) {
         dataStore.updateData(update)
     }
 }

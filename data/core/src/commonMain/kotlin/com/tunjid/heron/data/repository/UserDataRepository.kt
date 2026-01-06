@@ -1,6 +1,5 @@
 package com.tunjid.heron.data.repository
 
-import app.bsky.actor.GetPreferencesResponse
 import app.bsky.actor.PutPreferencesRequest
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Preferences
@@ -8,6 +7,8 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.mapToResult
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.toOutcome
@@ -45,8 +46,6 @@ interface UserDataRepository {
     suspend fun updateMutedWords(
         mutedWordPreferences: List<MutedWordPreference>,
     ): Outcome
-
-    suspend fun refreshPreferences(): Outcome
 }
 
 internal class OfflineUserDataRepository @Inject constructor(
@@ -57,11 +56,7 @@ internal class OfflineUserDataRepository @Inject constructor(
 
     override val preferences: Flow<Preferences> =
         savedStateDataSource.savedState
-            .map {
-                it.signedInProfileData
-                    ?.preferences
-                    ?: Preferences.EmptyPreferences
-            }
+            .map(SavedState::signedProfilePreferencesOrDefault)
             .distinctUntilChanged()
 
     override val navigation: Flow<SavedState.Navigation>
@@ -103,59 +98,41 @@ internal class OfflineUserDataRepository @Inject constructor(
 
     override suspend fun updateMutedWords(
         mutedWordPreferences: List<MutedWordPreference>,
-    ): Outcome {
-        val response = networkService.runCatchingWithMonitoredNetworkRetry {
+    ): Outcome =
+        networkService.runCatchingWithMonitoredNetworkRetry {
             getPreferencesForActor()
-        }.getOrElse { return Outcome.Failure(it) }
-
-        val updatedPreferences = preferenceUpdater.update(
-            response = response,
-            update = Timeline.Update.OfMutedWord.ReplaceAll(
-                mutedWordPreferences = mutedWordPreferences,
-            ),
-        )
-
-        return networkService.runCatchingWithMonitoredNetworkRetry {
-            putPreferences(
-                PutPreferencesRequest(
-                    preferences = updatedPreferences,
-                ),
-            )
-        }.fold(
-            onSuccess = { refreshPreferences() },
-            onFailure = Outcome::Failure,
-        )
-    }
-
-    override suspend fun refreshPreferences(): Outcome {
-        return networkService.runCatchingWithMonitoredNetworkRetry {
-            getPreferencesForActor()
-        }.fold(
-            onSuccess = { response ->
-                updatePreferences(response)
-                Outcome.Success
-            },
-            onFailure = Outcome::Failure,
-        )
-    }
-
-    private suspend fun updatePreferences(response: GetPreferencesResponse) {
-        val currentPreferences = savedStateDataSource.savedState.value
-            .signedInProfileData
-            ?.preferences
-            ?: Preferences.EmptyPreferences
-
-        val updatedPreferences = preferenceUpdater.update(
-            response = response,
-            preferences = currentPreferences,
-        )
-        savedStateDataSource.updateSignedInProfileData {
-            copy(preferences = updatedPreferences)
         }
-    }
+            .mapCatchingUnlessCancelled { response ->
+                preferenceUpdater.update(
+                    networkPreferences = response.preferences,
+                    update = Timeline.Update.OfMutedWord.ReplaceAll(
+                        mutedWordPreferences = mutedWordPreferences,
+                    ),
+                )
+            }
+            .mapToResult { networkPreferences ->
+                networkService.runCatchingWithMonitoredNetworkRetry {
+                    putPreferences(
+                        PutPreferencesRequest(
+                            preferences = networkPreferences,
+                        ),
+                    )
+                }.mapCatchingUnlessCancelled {
+                    networkPreferences
+                }
+            }
+            .mapCatchingUnlessCancelled { networkPreferences ->
+                updatePreferences {
+                    preferenceUpdater.update(
+                        networkPreferences = networkPreferences,
+                        preferences = this,
+                    )
+                }
+            }
+            .toOutcome()
 
-    private suspend fun updatePreferences(
-        updater: Preferences.() -> Preferences,
+    private suspend inline fun updatePreferences(
+        crossinline updater: suspend Preferences.() -> Preferences,
     ): Outcome =
         runCatchingUnlessCancelled {
             savedStateDataSource.updateSignedInProfileData {
