@@ -74,9 +74,6 @@ internal fun SettingsScreen(
                 setCompactNavigation = {
                     actions(Action.SetCompactNavigation(it))
                 },
-                setShowNotificationCount = {
-                    actions(Action.SetShowNotificationCount(it))
-                },
             )
         }
         FeedbackItem(

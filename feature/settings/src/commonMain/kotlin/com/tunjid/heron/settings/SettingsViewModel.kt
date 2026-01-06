@@ -92,10 +92,6 @@ class ActualSettingsViewModel(
                         userDataRepository = userDataRepository,
                     )
 
-                    is Action.SetShowNotificationCount -> action.flow.toggleShowNotificationCount(
-                        userDataRepository = userDataRepository,
-                    )
-
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
@@ -144,13 +140,6 @@ private fun Flow<Action.SetCompactNavigation>.toggleCompactNavigation(
 ): Flow<Mutation<State>> =
     mapToManyMutations { (compactNavigation) ->
         userDataRepository.setCompactNavigation(compactNavigation)
-    }
-
-private fun Flow<Action.SetShowNotificationCount>.toggleShowNotificationCount(
-    userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    mapToManyMutations { (showNotificationCount) ->
-        userDataRepository.setShowNotificationCount(showNotificationCount)
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =

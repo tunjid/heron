@@ -52,8 +52,6 @@ data class Preferences(
     val useDynamicTheming: Boolean = false,
     @ProtoNumber(10)
     val useCompactNavigation: Boolean = false,
-    @ProtoNumber(12)
-    val showNotificationCount: Boolean = true,
 ) : UrlEncodableModel {
     companion object {
         val EmptyPreferences = Preferences(

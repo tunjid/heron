@@ -274,7 +274,7 @@ class AppState(
                     selected = multiStackNav.currentIndex == index,
                     hasBadge = stack == AppStack.Notifications && notificationCount > 0L,
                     badgeCount = stack.takeIf {
-                        it == AppStack.Notifications && notificationCount > 0L && showNotificationCountInNav
+                        it == AppStack.Notifications && notificationCount > 0L
                     }?.let { notificationCount.toInt() },
                 )
             }
@@ -345,9 +345,6 @@ internal class SplitPaneState(
 
 internal val AppState.prefersCompactBottomNav: Boolean
     get() = preferences?.useCompactNavigation ?: false
-
-internal val AppState.showNotificationCountInNav: Boolean
-    get() = preferences?.showNotificationCount ?: true
 
 private val PaneRenderOrder = listOf(
     ThreePane.Tertiary,

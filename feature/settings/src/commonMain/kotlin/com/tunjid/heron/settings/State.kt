@@ -45,10 +45,6 @@ sealed class Action(val key: String) {
         val compactNavigation: Boolean,
     ) : Action(key = "SetCompactNavigation")
 
-    data class SetShowNotificationCount(
-        val showNotificationCount: Boolean,
-    ) : Action(key = "SetShowNotificationCount")
-
     data class SnackbarDismissed(
         val message: Memo,
     ) : Action(key = "SnackbarDismissed")
