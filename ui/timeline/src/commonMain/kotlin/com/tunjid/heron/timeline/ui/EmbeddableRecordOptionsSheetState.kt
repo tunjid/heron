@@ -29,7 +29,8 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.timeline.utilities.CopyToClipboardCard
+import com.tunjid.heron.timeline.utilities.CopyContentsToClipboardCard
+import com.tunjid.heron.timeline.utilities.CopyLinkToClipboardCard
 import com.tunjid.heron.timeline.utilities.SendDirectMessageCard
 import com.tunjid.heron.timeline.utilities.ShareInPostCard
 import com.tunjid.heron.timeline.utilities.shareUri
@@ -50,14 +51,18 @@ class EmbeddableRecordOptionsSheetState private constructor(
 
     internal var currentRecordUri: EmbeddableRecordUri? by mutableStateOf(null)
 
+    internal var currentRecordText: String? by mutableStateOf(null)
+
     internal val isSignedIn get() = signedInProfileId != null
 
     override fun onHidden() {
         currentRecordUri = null
+        currentRecordText = null
     }
 
-    fun showOptions(recordUri: EmbeddableRecordUri) {
+    fun showOptions(recordUri: EmbeddableRecordUri, recordText: String? = null) {
         currentRecordUri = recordUri
+        currentRecordText = recordText
         show()
     }
 
@@ -123,7 +128,11 @@ private fun EmbeddableRecordOptionsBottomSheet(
             }
 
             state.currentRecordUri?.let { uri ->
-                CopyToClipboardCard(uri.shareUri())
+                CopyLinkToClipboardCard(uri.shareUri())
+            }
+
+            state.currentRecordText?.let { text ->
+                CopyContentsToClipboardCard(text)
             }
         }
     }

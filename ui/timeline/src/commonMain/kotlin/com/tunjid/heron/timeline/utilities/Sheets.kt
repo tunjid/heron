@@ -65,6 +65,7 @@ import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.asClipEntry
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.block_user
+import heron.ui.timeline.generated.resources.copy_contents_to_clipboard
 import heron.ui.timeline.generated.resources.copy_link_to_clipboard
 import heron.ui.timeline.generated.resources.moderation_options_title
 import heron.ui.timeline.generated.resources.mute_words
@@ -144,7 +145,7 @@ internal fun ShareInPostCard(
 }
 
 @Composable
-internal fun CopyToClipboardCard(
+internal fun CopyLinkToClipboardCard(
     uri: GenericUri,
 ) {
     val clipboard = LocalClipboard.current
@@ -156,6 +157,33 @@ internal fun CopyToClipboardCard(
         onClick = {
             scope.launch {
                 clipboard.setClipEntry(uri.asClipEntry(copyToClipboardDescription))
+            }
+        },
+    ) {
+        BottomSheetItemCardRow(
+            modifier = Modifier
+                .semantics {
+                    contentDescription = copyToClipboardDescription
+                },
+            icon = Icons.Rounded.ContentCopy,
+            text = copyToClipboardDescription,
+        )
+    }
+}
+
+@Composable
+internal fun CopyContentsToClipboardCard(
+    text: String,
+) {
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+    val copyToClipboardDescription = stringResource(Res.string.copy_contents_to_clipboard)
+
+    BottomSheetItemCard(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = {
+            scope.launch {
+                clipboard.setClipEntry(text.asClipEntry(copyToClipboardDescription))
             }
         },
     ) {

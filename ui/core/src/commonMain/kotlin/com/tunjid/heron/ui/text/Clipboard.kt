@@ -20,3 +20,5 @@ import androidx.compose.ui.platform.ClipEntry
 import com.tunjid.heron.data.core.types.Uri
 
 expect fun Uri.asClipEntry(label: String): ClipEntry
+
+expect fun String.asClipEntry(label: String): ClipEntry

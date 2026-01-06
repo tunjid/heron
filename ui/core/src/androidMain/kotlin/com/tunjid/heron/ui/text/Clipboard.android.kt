@@ -28,3 +28,12 @@ actual fun Uri.asClipEntry(
         uri,
     ),
 )
+
+actual fun String.asClipEntry(
+    label: String,
+): ClipEntry = ClipEntry(
+    ClipData.newPlainText(
+        label,
+        this,
+    ),
+)

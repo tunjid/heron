@@ -22,7 +22,8 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.timeline.utilities.BottomSheetItemCard
 import com.tunjid.heron.timeline.utilities.BottomSheetItemCardRow
-import com.tunjid.heron.timeline.utilities.CopyToClipboardCard
+import com.tunjid.heron.timeline.utilities.CopyContentsToClipboardCard
+import com.tunjid.heron.timeline.utilities.CopyLinkToClipboardCard
 import com.tunjid.heron.timeline.utilities.SendDirectMessageCard
 import com.tunjid.heron.timeline.utilities.shareUri
 import com.tunjid.heron.ui.sheets.BottomSheetScope
@@ -133,7 +134,11 @@ private fun PostOptionsBottomSheet(
                         )
                     },
                 )
-                CopyToClipboardCard(it.uri.shareUri())
+                CopyLinkToClipboardCard(it.uri.shareUri())
+
+                it.record?.text?.let { text ->
+                    CopyContentsToClipboardCard(text)
+                }
             }
         }
     }

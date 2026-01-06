@@ -22,3 +22,7 @@ import com.tunjid.heron.data.core.types.Uri
 actual fun Uri.asClipEntry(
     label: String,
 ): ClipEntry = ClipEntry.withPlainText(uri)
+
+actual fun String.asClipEntry(
+    label: String,
+): ClipEntry = ClipEntry.withPlainText(this)

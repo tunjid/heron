@@ -24,3 +24,9 @@ actual fun Uri.asClipEntry(
 ): ClipEntry = ClipEntry(
     java.awt.datatransfer.StringSelection(uri),
 )
+
+actual fun String.asClipEntry(
+    label: String,
+): ClipEntry = ClipEntry(
+    java.awt.datatransfer.StringSelection(this),
+)
