@@ -138,8 +138,9 @@ internal fun AppState.PaneNavigationBar(
                             BadgedBox(
                                 badge = {
                                     if (item.hasBadge) {
-                                        if ((item.badgeCount ?: 0) > 0) Badge(content = { Text("${item.badgeCount}") })
-                                        else Badge(Modifier.size(4.dp))
+                                        item.badgeCount?.let { count ->
+                                            Badge { Text("$count") }
+                                        } ?: Badge(Modifier.size(4.dp))
                                     }
                                 },
                                 content = {
