@@ -76,7 +76,7 @@ fun PostText(
                 maxLines = maxLines,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
-            ),
+            )
         }
     }
 }
