@@ -61,7 +61,7 @@ fun PostText(
             ),
         ),
     ) {
-        SelectionContainer(
+        SelectionContainer {
             Text(
                 modifier = Modifier
                     .clickable(
@@ -77,7 +77,7 @@ fun PostText(
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
             ),
-        )
+        }
     }
 }
 
