@@ -25,6 +25,7 @@ import app.bsky.notification.ListNotificationsQueryParams
 import app.bsky.notification.ListNotificationsResponse
 import app.bsky.notification.UpdateSeenRequest
 import com.tunjid.heron.data.InternalEndpoints
+import com.tunjid.heron.data.core.models.Block
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -40,11 +41,11 @@ import com.tunjid.heron.data.core.models.Repost
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
-import com.tunjid.heron.data.core.types.LimitedProfileException
 import com.tunjid.heron.data.core.types.MutedThreadException
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.RepostUri
+import com.tunjid.heron.data.core.types.RestrictedProfileException
 import com.tunjid.heron.data.core.types.UnknownNotificationException
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.utilities.Outcome
@@ -307,8 +308,8 @@ internal class OfflineNotificationsRepository @Inject constructor(
             // Check if the author of the notification is restricted
             val viewerState = authorEntity.relationship?.asExternalModel()
             viewerState?.let {
-                val limited = it.muted != null || it.blocking != null || it.blockingByList != null
-                if (limited) throw LimitedProfileException(
+                val restrict = it.muted == true || it.blocking != null || it.blockingByList != null
+                if (restrict) throw RestrictedProfileException(
                     profileId = authorEntity.entity.did,
                     profileViewerState = viewerState,
                 )
@@ -320,6 +321,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                 is FeedList,
                 is Labeler,
                 is StarterPack,
+                is Block,
                 -> throw UnknownNotificationException(query.recordUri)
                 // Reply, mention or Quote
                 is Post -> when {
