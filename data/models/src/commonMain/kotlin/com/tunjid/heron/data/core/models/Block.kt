@@ -17,20 +17,19 @@
 package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.BlockUri
-import com.tunjid.heron.data.core.types.FollowUri
-import com.tunjid.heron.data.core.types.ListId
+import com.tunjid.heron.data.core.types.GenericId
+import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ProfileViewerState(
-    val muted: Boolean?,
-    val mutedByList: ListId?,
-    val blockedBy: Boolean?,
-    val blocking: BlockUri?,
-    val blockingByList: ListId?,
-    val following: FollowUri?,
-    val followedBy: FollowUri?,
-    val commonFollowersCount: Long?,
-)
-
-val ProfileViewerState?.isFollowing: Boolean get() = this?.following != null
+data class Block(
+    val uri: BlockUri,
+    val cid: GenericId,
+    val subject: ProfileId,
+) : Record {
+    override val reference: Record.Reference =
+        Record.Reference(
+            id = cid,
+            uri = uri,
+        )
+}

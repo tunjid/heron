@@ -22,10 +22,10 @@ class UnresolvableRecordException(
     uri: RecordUri,
 ) : IllegalArgumentException("The record URI $uri is not resolvable")
 
-class LimitedProfileException(
+class RestrictedProfileException(
     profileId: ProfileId,
     profileViewerState: ProfileViewerState,
-) : IllegalArgumentException("The profile with did $profileId is limited $profileViewerState")
+) : IllegalArgumentException("The profile with did $profileId is restricted $profileViewerState")
 
 class UnknownNotificationException(
     uri: RecordUri,
@@ -34,3 +34,8 @@ class UnknownNotificationException(
 class MutedThreadException(
     postUri: PostUri,
 ) : IllegalArgumentException("The post with URI $postUri has been muted")
+
+class RecordCreationException(
+    profileId: ProfileId,
+    collection: String,
+) : IllegalArgumentException("Record creation for $profileId in collection $collection failed")

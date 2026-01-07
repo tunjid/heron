@@ -132,4 +132,14 @@ interface ProfileDao {
     suspend fun updatePartialProfileViewers(
         entities: List<ProfileViewerStateEntity.Partial>,
     )
+
+    @Update(entity = ProfileViewerStateEntity::class)
+    suspend fun updatePartialProfileViewer(
+        partial: ProfileViewerStateEntity.BlockPartial,
+    )
+
+    @Update(entity = ProfileViewerStateEntity::class)
+    suspend fun updatePartialProfileViewer(
+        partial: ProfileViewerStateEntity.MutedPartial,
+    )
 }

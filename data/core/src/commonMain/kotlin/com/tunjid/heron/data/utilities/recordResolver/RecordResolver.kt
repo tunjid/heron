@@ -21,6 +21,7 @@ import app.bsky.feed.GetFeedGeneratorQueryParams
 import app.bsky.feed.GetPostsQueryParams
 import app.bsky.feed.Like as BskyLike
 import app.bsky.feed.Repost as BskyRepost
+import app.bsky.graph.Block as BskyBlock
 import app.bsky.graph.GetListQueryParams
 import app.bsky.graph.GetStarterPackQueryParams
 import app.bsky.labeler.GetServicesQueryParams
@@ -28,6 +29,7 @@ import app.bsky.labeler.GetServicesResponseViewUnion
 import com.atproto.repo.GetRecordQueryParams
 import com.atproto.repo.GetRecordResponse
 import com.tunjid.heron.data.core.models.AppliedLabels
+import com.tunjid.heron.data.core.models.Block
 import com.tunjid.heron.data.core.models.Follow
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
@@ -39,6 +41,7 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Repost
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.FollowUri
@@ -401,6 +404,15 @@ internal class OfflineRecordResolver @Inject constructor(
                         cid = GenericId(requireNotNull(it.cid).cid),
                         post = resolvedRecord,
                         via = bskyRepost.via?.uri?.requireRecordUri(),
+                    )
+                }
+            is BlockUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
+                .mapCatchingUnlessCancelled {
+                    val bskyBlock = it.value.decodeAs<BskyBlock>()
+                    Block(
+                        uri = uri,
+                        cid = GenericId(requireNotNull(it.cid).cid),
+                        subject = bskyBlock.subject.did.let(::ProfileId),
                     )
                 }
             is UnknownRecordUri -> Result.failure(UnresolvableRecordException(uri))

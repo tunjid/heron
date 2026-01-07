@@ -56,6 +56,7 @@ fun RecordUri.requireCollection(): String =
         is FollowUri -> FollowUri.NAMESPACE
         is LikeUri -> LikeUri.NAMESPACE
         is RepostUri -> RepostUri.NAMESPACE
+        is BlockUri -> BlockUri.NAMESPACE
         is UnknownRecordUri -> throw UnresolvableRecordException(this)
     }
 
@@ -192,6 +193,19 @@ value class FollowUri(
 
 @Serializable
 @JvmInline
+value class BlockUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.bsky.graph.block"
+    }
+}
+
+@Serializable
+@JvmInline
 value class UnknownRecordUri(
     override val uri: String,
 ) : Uri,
@@ -270,6 +284,7 @@ fun String.asRecordUriOrNull(): RecordUri? = atUriComponents { _, collectionRang
         LikeUri.NAMESPACE -> LikeUri(this)
         RepostUri.NAMESPACE -> RepostUri(this)
         FollowUri.NAMESPACE -> FollowUri(this)
+        BlockUri.NAMESPACE -> BlockUri(this)
         else -> UnknownRecordUri(this)
     }
 }
