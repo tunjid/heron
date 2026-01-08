@@ -92,6 +92,10 @@ class ActualSettingsViewModel(
                         userDataRepository = userDataRepository,
                     )
 
+                    is Action.SetAutoHideNavigationBar -> action.flow.toggleAutoHideNavigationBar(
+                        userDataRepository = userDataRepository,
+                    )
+
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
@@ -140,6 +144,13 @@ private fun Flow<Action.SetCompactNavigation>.toggleCompactNavigation(
 ): Flow<Mutation<State>> =
     mapToManyMutations { (compactNavigation) ->
         userDataRepository.setCompactNavigation(compactNavigation)
+    }
+
+private fun Flow<Action.SetAutoHideNavigationBar>.toggleAutoHideNavigationBar(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    mapToManyMutations { (autoHideNavigationBar) ->
+        userDataRepository.setAutoHideNavigationBar(autoHideNavigationBar)
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =

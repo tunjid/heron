@@ -22,4 +22,4 @@ import androidx.compose.runtime.Stable
 actual fun isDynamicThemingSupported(): Boolean = true
 
 @Stable
-actual fun isCompactNavigationSupported(): Boolean = true
+actual fun isNavigationBarSettingsSupported(): Boolean = true

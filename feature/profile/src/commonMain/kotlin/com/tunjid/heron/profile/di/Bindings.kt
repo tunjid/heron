@@ -58,6 +58,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.fabScrollConnection
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -170,13 +171,20 @@ class ProfileBindings(
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection(
                     isCompact = paneScaffoldState.prefersCompactBottomNav,
+                    enabled = paneScaffoldState.prefersAutoHideNavigationBar,
+                )
+
+            val fabScrollConnection =
+                fabScrollConnection(
+                    isCompact = paneScaffoldState.prefersCompactBottomNav,
                 )
 
             paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
-                    .nestedScroll(bottomNavigationNestedScrollConnection),
+                    .nestedScroll(bottomNavigationNestedScrollConnection)
+                    .nestedScroll(fabScrollConnection),
                 showNavigation = true,
                 topBar = {
                     PoppableDestinationTopAppBar(
@@ -212,7 +220,7 @@ class ProfileBindings(
                             state.isSignedInProfile -> Icons.Rounded.Edit
                             else -> Icons.Rounded.AlternateEmail
                         },
-                        expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
+                        expanded = isFabExpanded(fabScrollConnection.offset),
                         onClick = {
                             viewModel.accept(
                                 Action.Navigate.To(

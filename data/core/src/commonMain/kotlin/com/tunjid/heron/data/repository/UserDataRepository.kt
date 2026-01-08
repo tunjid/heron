@@ -43,6 +43,10 @@ interface UserDataRepository {
         compactNavigation: Boolean,
     ): Outcome
 
+    suspend fun setAutoHideNavigationBar(
+        autoHideNavigationBar: Boolean,
+    ): Outcome
+
     suspend fun updateMutedWords(
         mutedWordPreferences: List<MutedWordPreference>,
     ): Outcome
@@ -94,6 +98,12 @@ internal class OfflineUserDataRepository @Inject constructor(
         compactNavigation: Boolean,
     ): Outcome = updatePreferences {
         copy(useCompactNavigation = compactNavigation)
+    }
+
+    override suspend fun setAutoHideNavigationBar(
+        autoHideNavigationBar: Boolean,
+    ): Outcome = updatePreferences {
+        copy(autoHideNavigationBar = autoHideNavigationBar)
     }
 
     override suspend fun updateMutedWords(

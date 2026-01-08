@@ -54,6 +54,7 @@ import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.fabScrollConnection
 import com.tunjid.heron.ui.text.links
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -136,13 +137,20 @@ class ConversationBindings(
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection(
                     isCompact = paneScaffoldState.prefersCompactBottomNav,
+                    enabled = paneScaffoldState.prefersAutoHideNavigationBar,
+                )
+
+            val fabScrollConnection =
+                fabScrollConnection(
+                    isCompact = paneScaffoldState.prefersCompactBottomNav,
                 )
 
             paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
-                    .nestedScroll(bottomNavigationNestedScrollConnection),
+                    .nestedScroll(bottomNavigationNestedScrollConnection)
+                    .nestedScroll(fabScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {

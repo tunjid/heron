@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.models.Preferences
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.appearance
+import heron.feature.settings.generated.resources.auto_hide_navigation_bar
 import heron.feature.settings.generated.resources.use_compact_navigation
 import heron.feature.settings.generated.resources.use_dynamic_theming
 import org.jetbrains.compose.resources.stringResource
@@ -33,7 +34,7 @@ import org.jetbrains.compose.resources.stringResource
 expect fun isDynamicThemingSupported(): Boolean
 
 @Stable
-expect fun isCompactNavigationSupported(): Boolean
+expect fun isNavigationBarSettingsSupported(): Boolean
 
 @Composable
 fun AppearanceItem(
@@ -41,9 +42,10 @@ fun AppearanceItem(
     signedInProfilePreferences: Preferences,
     setDynamicThemingPreference: (Boolean) -> Unit,
     setCompactNavigation: (Boolean) -> Unit,
+    setAutoHideNavigationBar: (Boolean) -> Unit,
 ) {
     val isDynamicThemingSupported = isDynamicThemingSupported()
-    val isCompactNavigationSupported = isCompactNavigationSupported()
+    val isNavigationBarSettingsSupported = isNavigationBarSettingsSupported()
 
     ExpandableSettingsItemRow(
         modifier = modifier
@@ -63,9 +65,15 @@ fun AppearanceItem(
             modifier = Modifier
                 .fillMaxWidth(),
             text = stringResource(Res.string.use_compact_navigation),
-            enabled = isCompactNavigationSupported,
+            enabled = isNavigationBarSettingsSupported,
             checked = signedInProfilePreferences.useCompactNavigation,
             onCheckedChange = setCompactNavigation,
+        )
+        SettingsToggleItem(
+            text = stringResource(Res.string.auto_hide_navigation_bar),
+            enabled = isNavigationBarSettingsSupported,
+            checked = signedInProfilePreferences.autoHideNavigationBar,
+            onCheckedChange = setAutoHideNavigationBar,
         )
     }
 }

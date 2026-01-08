@@ -50,6 +50,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.fabScrollConnection
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -143,6 +144,12 @@ class EditProfileBindings(
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection(
                     isCompact = paneScaffoldState.prefersCompactBottomNav,
+                    enabled = paneScaffoldState.prefersAutoHideNavigationBar,
+                )
+
+            val fabScrollConnection =
+                fabScrollConnection(
+                    isCompact = paneScaffoldState.prefersCompactBottomNav,
                 )
 
             paneScaffoldState.PaneScaffold(
@@ -150,7 +157,8 @@ class EditProfileBindings(
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
                     .nestedScroll(topAppBarNestedScrollConnection)
-                    .nestedScroll(bottomNavigationNestedScrollConnection),
+                    .nestedScroll(bottomNavigationNestedScrollConnection)
+                    .nestedScroll(fabScrollConnection),
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
@@ -181,7 +189,7 @@ class EditProfileBindings(
                         ),
                         icon = Icons.Rounded.Save,
                         enabled = !state.submitting,
-                        expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
+                        expanded = isFabExpanded(fabScrollConnection.offset),
                         onClick = {
                             viewModel.accept(state.saveProfileAction())
                         },
