@@ -19,6 +19,7 @@ package com.tunjid.heron.data.repository
 import app.bsky.actor.ProfileView
 import app.bsky.actor.ProfileViewBasic
 import app.bsky.actor.SearchActorsQueryParams
+import app.bsky.actor.SearchActorsResponse
 import app.bsky.actor.SearchActorsTypeaheadQueryParams
 import app.bsky.feed.GetSuggestedFeedsQueryParams
 import app.bsky.feed.GetSuggestedFeedsResponse
@@ -28,6 +29,7 @@ import app.bsky.unspecced.GetPopularFeedGeneratorsQueryParams
 import app.bsky.unspecced.GetPopularFeedGeneratorsResponse
 import app.bsky.unspecced.GetSuggestedStarterPacksQueryParams
 import app.bsky.unspecced.GetSuggestedUsersQueryParams
+import app.bsky.unspecced.GetSuggestedUsersResponse
 import app.bsky.unspecced.GetTrendsQueryParams
 import app.bsky.unspecced.TrendView
 import app.bsky.unspecced.TrendViewStatus
@@ -42,10 +44,8 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
-import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
-import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
@@ -53,13 +53,11 @@ import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.post
 import com.tunjid.heron.data.network.models.profile
-import com.tunjid.heron.data.network.models.profileViewerStateEntities
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
-import com.tunjid.heron.data.utilities.observeProfileWithViewerStates
+import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.sortedWithNetworkList
-import com.tunjid.heron.data.utilities.toProfileWithViewerStates
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -141,10 +139,10 @@ internal class OfflineSearchRepository @Inject constructor(
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateDataSource: SavedStateDataSource,
-    private val profileDao: ProfileDao,
     private val starterPackDao: StarterPackDao,
     private val feedGeneratorDao: FeedGeneratorDao,
     private val recordResolver: RecordResolver,
+    private val profileLookup: ProfileLookup,
 ) : SearchRepository {
 
     override fun postSearch(
@@ -219,10 +217,11 @@ internal class OfflineSearchRepository @Inject constructor(
         query: SearchQuery.OfProfiles,
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>> =
-        savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            if (query.query.isBlank()) emptyFlow()
-            else flow {
-                val response = networkService.runCatchingWithMonitoredNetworkRetry {
+        if (query.query.isBlank()) emptyFlow()
+        else savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            profileLookup.profilesWithViewerState(
+                signedInProfileId = signedInProfileId,
+                responseFetcher = {
                     searchActors(
                         params = SearchActorsQueryParams(
                             q = query.query,
@@ -234,49 +233,10 @@ internal class OfflineSearchRepository @Inject constructor(
                             },
                         ),
                     )
-                }
-                    .getOrNull()
-                    ?: return@flow
-
-                multipleEntitySaverProvider.saveInTransaction {
-                    response.actors
-                        .forEach { profileView ->
-                            add(
-                                viewingProfileId = signedInProfileId,
-                                profileView = profileView,
-                            )
-                        }
-                }
-
-                val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
-
-                // Emit network results immediately for minimal latency during search
-                emit(
-                    CursorList(
-                        items = response.actors.toProfileWithViewerStates(
-                            signedInProfileId = signedInProfileId,
-                            profileMapper = ProfileView::profile,
-                            profileViewerStateEntities = ProfileView::profileViewerStateEntities,
-                        ),
-                        nextCursor = nextCursor,
-                    ),
-                )
-
-                emitAll(
-                    response.actors.observeProfileWithViewerStates(
-                        profileDao = profileDao,
-                        signedInProfileId = signedInProfileId,
-                        profileMapper = ProfileView::profile,
-                        idMapper = { did.did.let(::ProfileId) },
-                    )
-                        .map { profileWithViewerStates ->
-                            CursorList(
-                                items = profileWithViewerStates,
-                                nextCursor = nextCursor,
-                            )
-                        },
-                )
-            }
+                },
+                responseProfileViews = SearchActorsResponse::actors,
+                responseCursor = SearchActorsResponse::cursor,
+            )
         }
 
     override fun feedGeneratorSearch(
@@ -335,45 +295,38 @@ internal class OfflineSearchRepository @Inject constructor(
         cursor: Cursor,
     ): Flow<List<ProfileWithViewerState>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            flow {
-                val profileViews = networkService.runCatchingWithMonitoredNetworkRetry {
+            profileLookup.profilesWithViewerState(
+                signedInProfileId = signedInProfileId,
+                responseFetcher = {
                     searchActorsTypeahead(
                         params = SearchActorsTypeaheadQueryParams(
                             q = query.query,
                             limit = query.data.limit,
                         ),
                     )
-                }
-                    .getOrNull()
-                    ?.actors ?: return@flow
-
-                multipleEntitySaverProvider.saveInTransaction {
-                    profileViews.forEach { profileView ->
-                        add(
-                            viewingProfileId = signedInProfileId,
-                            profileView = profileView,
+                },
+                responseProfileViews = {
+                    actors.map { basicProfileView ->
+                        ProfileView(
+                            did = basicProfileView.did,
+                            handle = basicProfileView.handle,
+                            displayName = basicProfileView.displayName,
+                            pronouns = basicProfileView.pronouns,
+                            description = null,
+                            avatar = basicProfileView.avatar,
+                            associated = basicProfileView.associated,
+                            indexedAt = null,
+                            createdAt = basicProfileView.createdAt,
+                            viewer = basicProfileView.viewer,
+                            labels = basicProfileView.labels,
+                            verification = basicProfileView.verification,
+                            status = basicProfileView.status,
+                            debug = basicProfileView.debug,
                         )
                     }
-                }
-
-                // Emit network results immediately for minimal latency during search
-                emit(
-                    profileViews.toProfileWithViewerStates(
-                        signedInProfileId = signedInProfileId,
-                        profileMapper = ProfileViewBasic::profile,
-                        profileViewerStateEntities = ProfileViewBasic::profileViewerStateEntities,
-                    ),
-                )
-
-                emitAll(
-                    profileViews.observeProfileWithViewerStates(
-                        profileDao = profileDao,
-                        signedInProfileId = signedInProfileId,
-                        profileMapper = ProfileViewBasic::profile,
-                        idMapper = { did.did.let(::ProfileId) },
-                    ),
-                )
-            }
+                },
+                responseCursor = { null },
+            )
         }
 
     override fun trends(): Flow<List<Trend>> = flow {
@@ -394,31 +347,17 @@ internal class OfflineSearchRepository @Inject constructor(
         category: String?,
     ): Flow<List<ProfileWithViewerState>> =
         savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
-            val profileViews = networkService.runCatchingWithMonitoredNetworkRetry {
-                getSuggestedUsersUnspecced(
-                    GetSuggestedUsersQueryParams(
-                        category = category,
-                    ),
-                )
-            }
-                .getOrNull()
-                ?.actors
-                ?: return@singleAuthorizedSessionFlow emptyFlow()
-
-            multipleEntitySaverProvider.saveInTransaction {
-                profileViews.forEach { profileView ->
-                    add(
-                        viewingProfileId = signedInProfileId,
-                        profileView = profileView,
-                    )
-                }
-            }
-
-            profileViews.observeProfileWithViewerStates(
-                profileDao = profileDao,
+            profileLookup.profilesWithViewerState(
                 signedInProfileId = signedInProfileId,
-                profileMapper = ProfileView::profile,
-                idMapper = { did.did.let(::ProfileId) },
+                responseFetcher = {
+                    getSuggestedUsersUnspecced(
+                        GetSuggestedUsersQueryParams(
+                            category = category,
+                        ),
+                    )
+                },
+                responseProfileViews = GetSuggestedUsersResponse::actors,
+                responseCursor = { null },
             )
         }
 
