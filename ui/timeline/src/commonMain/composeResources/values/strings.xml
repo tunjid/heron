@@ -59,6 +59,7 @@
     <string name="remove_feed">Remove</string>
     <string name="mute_video">Mute video</string>
     <string name="block_user">Block User</string>
+    <string name="muted_meta_format">Muted in %1$s · %2$s</string>
     <string name="mute_words_tags">Mute words &amp; tags</string>
     <string name="moderation_options_title">Moderation tools</string>
     <string name="error">Error</string>
@@ -74,13 +75,13 @@
     <string name="tags_only">Tags only</string>
     <string name="mute_in">Mute In</string>
     <string name="duration">Duration</string>
-    <string name="forever">Forever</string>
+    <string name="forever">Permanent</string>
     <string name="twenty_four_hours">24 hours</string>
     <string name="seven_days">7 days</string>
     <string name="thirty_days">30 days</string>
     <string name="mute_words">Mute Words</string>
-    <string name="mute_words_title">Word or phrase to mute</string>
-    <string name="mute_words_placeholder">e.g., politics, spoiler, nsfw</string>
+    <string name="mute_words_title">Add Word or phrase to mute</string>
+    <string name="mute_words_placeholder">e.g., spoiler</string>
     <string name="close_icon">Close</string>
     <string name="forward_icon">Forward</string>
     <string name="clear_icon">Clear</string>
