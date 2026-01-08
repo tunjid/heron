@@ -70,6 +70,8 @@ import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.ThingPreferenceUpdater
+import com.tunjid.heron.data.utilities.profileLookup.OfflineProfileLookup
+import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.OfflineRecordResolver
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.writequeue.PersistedWriteQueue
@@ -157,6 +159,12 @@ class DataBindings(
     ): PreferenceUpdater = ThingPreferenceUpdater(
         tidGenerator = tidGenerator,
     )
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideProfileLookup(
+        offlineProfileLookup: OfflineProfileLookup,
+    ): ProfileLookup = offlineProfileLookup
 
     @SingleIn(AppScope::class)
     @Provides

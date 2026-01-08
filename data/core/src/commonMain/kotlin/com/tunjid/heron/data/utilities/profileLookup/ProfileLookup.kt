@@ -14,10 +14,13 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.data.utilities
+package com.tunjid.heron.data.utilities.profileLookup
 
 import app.bsky.actor.GetProfileQueryParams
+import app.bsky.actor.ProfileView
 import com.atproto.identity.ResolveHandleQueryParams
+import com.tunjid.heron.data.core.models.Cursor
+import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Profile
@@ -29,21 +32,98 @@ import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
+import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.network.models.profile
+import com.tunjid.heron.data.network.models.profileViewerStateEntities
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Handle
+import sh.christian.ozone.api.response.AtpResponse
+
+internal interface ProfileLookup {
+    fun <NetworkResponse : Any> profilesWithViewerState(
+        signedInProfileId: ProfileId?,
+        responseFetcher: suspend BlueskyApi.() -> AtpResponse<NetworkResponse>,
+        responseProfileViews: NetworkResponse.() -> List<ProfileView>,
+        responseCursor: NetworkResponse.() -> String?,
+    ): Flow<CursorList<ProfileWithViewerState>>
+}
+
+internal class OfflineProfileLookup @Inject constructor(
+    private val profileDao: ProfileDao,
+    private val networkService: NetworkService,
+    private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
+) : ProfileLookup {
+    override fun <NetworkResponse : Any> profilesWithViewerState(
+        signedInProfileId: ProfileId?,
+        responseFetcher: suspend BlueskyApi.() -> AtpResponse<NetworkResponse>,
+        responseProfileViews: NetworkResponse.() -> List<ProfileView>,
+        responseCursor: NetworkResponse.() -> String?,
+    ): Flow<CursorList<ProfileWithViewerState>> = flow {
+        val response = networkService.runCatchingWithMonitoredNetworkRetry(
+            block = responseFetcher,
+        ).getOrNull()
+            ?: return@flow
+
+        val profileViews = response.responseProfileViews()
+
+        val nextCursor = response.responseCursor()
+            ?.let(Cursor::Next)
+            ?: Cursor.Pending
+
+        // Emit network results immediately for minimal latency
+        emit(
+            CursorList(
+                items = profileViews.toProfileWithViewerStates(
+                    signedInProfileId = signedInProfileId,
+                    profileMapper = ProfileView::profile,
+                    profileViewerStateEntities = ProfileView::profileViewerStateEntities,
+                ),
+                nextCursor = nextCursor,
+            ),
+        )
+
+        multipleEntitySaverProvider.saveInTransaction {
+            profileViews
+                .forEach { profileView ->
+                    add(
+                        viewingProfileId = signedInProfileId,
+                        profileView = profileView,
+                    )
+                }
+        }
+
+        emitAll(
+            profileViews.observeProfileWithViewerStates(
+                profileDao = profileDao,
+                signedInProfileId = signedInProfileId,
+                profileMapper = ProfileView::profile,
+                idMapper = { did.did.let(::ProfileId) },
+            )
+                .map { profileWithViewerStates ->
+                    CursorList(
+                        items = profileWithViewerStates,
+                        nextCursor = nextCursor,
+                    )
+                },
+        )
+    }
+}
 
 internal suspend fun lookupProfileDid(
     profileId: Id.Profile,
@@ -132,30 +212,28 @@ internal suspend fun refreshProfile(
         }
 }
 
-internal fun <ProfileViewType> List<ProfileViewType>.toProfileWithViewerStates(
+private inline fun <ProfileViewType> List<ProfileViewType>.toProfileWithViewerStates(
     signedInProfileId: ProfileId?,
-    profileMapper: ProfileViewType.() -> Profile,
-    profileViewerStateEntities: ProfileViewType.(ProfileId) -> List<ProfileViewerStateEntity>,
-): List<ProfileWithViewerState> {
-    return map { profileView ->
-        ProfileWithViewerState(
-            profile = profileView.profileMapper(),
-            viewerState =
-            if (signedInProfileId == null) null
-            else profileView.profileViewerStateEntities(
-                signedInProfileId,
-            )
-                .first()
-                .asExternalModel(),
+    crossinline profileMapper: ProfileViewType.() -> Profile,
+    crossinline profileViewerStateEntities: ProfileViewType.(ProfileId) -> List<ProfileViewerStateEntity>,
+): List<ProfileWithViewerState> = map { profileView ->
+    ProfileWithViewerState(
+        profile = profileView.profileMapper(),
+        viewerState =
+        if (signedInProfileId == null) null
+        else profileView.profileViewerStateEntities(
+            signedInProfileId,
         )
-    }
+            .first()
+            .asExternalModel(),
+    )
 }
 
-internal fun <ProfileViewType> List<ProfileViewType>.observeProfileWithViewerStates(
+private inline fun <ProfileViewType> List<ProfileViewType>.observeProfileWithViewerStates(
     profileDao: ProfileDao,
     signedInProfileId: ProfileId?,
-    profileMapper: ProfileViewType.() -> Profile,
-    idMapper: ProfileViewType.() -> ProfileId,
+    crossinline profileMapper: ProfileViewType.() -> Profile,
+    crossinline idMapper: ProfileViewType.() -> ProfileId,
 ): Flow<List<ProfileWithViewerState>> {
     val profileViews = this
     return when (signedInProfileId) {

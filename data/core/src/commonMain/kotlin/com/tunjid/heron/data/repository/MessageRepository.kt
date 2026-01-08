@@ -61,8 +61,8 @@ import com.tunjid.heron.data.utilities.facet
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
+import com.tunjid.heron.data.utilities.profileLookup.resolveLinks
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
-import com.tunjid.heron.data.utilities.resolveLinks
 import com.tunjid.heron.data.utilities.toOutcome
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock

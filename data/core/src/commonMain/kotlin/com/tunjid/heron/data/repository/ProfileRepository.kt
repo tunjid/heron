@@ -17,7 +17,6 @@
 package com.tunjid.heron.data.repository
 
 import app.bsky.actor.Profile as BskyProfile
-import app.bsky.actor.ProfileView
 import app.bsky.feed.GetActorFeedsQueryParams
 import app.bsky.feed.GetActorFeedsResponse
 import app.bsky.graph.Block as BskyBlock
@@ -25,7 +24,9 @@ import app.bsky.graph.Follow as BskyFollow
 import app.bsky.graph.GetActorStarterPacksQueryParams
 import app.bsky.graph.GetActorStarterPacksResponse
 import app.bsky.graph.GetFollowersQueryParams
+import app.bsky.graph.GetFollowersResponse
 import app.bsky.graph.GetFollowsQueryParams
+import app.bsky.graph.GetFollowsResponse
 import app.bsky.graph.GetListQueryParams
 import app.bsky.graph.GetListResponse
 import app.bsky.graph.GetListsQueryParams
@@ -53,7 +54,6 @@ import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ListUri
-import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordCreationException
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.recordKey
@@ -72,19 +72,16 @@ import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.network.models.profile
-import com.tunjid.heron.data.network.models.profileViewerStateEntities
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.asJsonContent
-import com.tunjid.heron.data.utilities.lookupProfileDid
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
-import com.tunjid.heron.data.utilities.observeProfileWithViewerStates
-import com.tunjid.heron.data.utilities.refreshProfile
+import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
+import com.tunjid.heron.data.utilities.profileLookup.lookupProfileDid
+import com.tunjid.heron.data.utilities.profileLookup.refreshProfile
 import com.tunjid.heron.data.utilities.toOutcome
-import com.tunjid.heron.data.utilities.toProfileWithViewerStates
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import io.ktor.utils.io.ByteReadChannel
@@ -182,6 +179,7 @@ internal class OfflineProfileRepository @Inject constructor(
     private val starterPackDao: StarterPackDao,
     private val feedGeneratorDao: FeedGeneratorDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
+    private val profileLookup: ProfileLookup,
     private val networkService: NetworkService,
     private val fileManager: FileManager,
     private val savedStateDataSource: SavedStateDataSource,
@@ -295,14 +293,15 @@ internal class OfflineProfileRepository @Inject constructor(
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            flow {
-                val profileDid = lookupProfileDid(
-                    profileId = query.profileId,
-                    profileDao = profileDao,
-                    networkService = networkService,
-                ) ?: return@flow
+            val profileDid = lookupProfileDid(
+                profileId = query.profileId,
+                profileDao = profileDao,
+                networkService = networkService,
+            ) ?: return@singleSessionFlow emptyFlow()
 
-                val response = networkService.runCatchingWithMonitoredNetworkRetry {
+            profileLookup.profilesWithViewerState(
+                signedInProfileId = signedInProfileId,
+                responseFetcher = {
                     getFollowers(
                         GetFollowersQueryParams(
                             actor = profileDid,
@@ -314,49 +313,10 @@ internal class OfflineProfileRepository @Inject constructor(
                             },
                         ),
                     )
-                }
-                    .getOrNull()
-                    ?: return@flow
-
-                multipleEntitySaverProvider.saveInTransaction {
-                    response.followers
-                        .forEach { profileView ->
-                            add(
-                                viewingProfileId = signedInProfileId,
-                                profileView = profileView,
-                            )
-                        }
-                }
-
-                val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
-
-                // Emit network results immediately for minimal latency during search
-                emit(
-                    CursorList(
-                        items = response.followers.toProfileWithViewerStates(
-                            signedInProfileId = signedInProfileId,
-                            profileMapper = ProfileView::profile,
-                            profileViewerStateEntities = ProfileView::profileViewerStateEntities,
-                        ),
-                        nextCursor = nextCursor,
-                    ),
-                )
-
-                emitAll(
-                    response.followers.observeProfileWithViewerStates(
-                        profileDao = profileDao,
-                        signedInProfileId = signedInProfileId,
-                        profileMapper = ProfileView::profile,
-                        idMapper = { did.did.let(::ProfileId) },
-                    )
-                        .map { profileWithViewerStates ->
-                            CursorList(
-                                items = profileWithViewerStates,
-                                nextCursor = nextCursor,
-                            )
-                        },
-                )
-            }
+                },
+                responseProfileViews = GetFollowersResponse::followers,
+                responseCursor = GetFollowersResponse::cursor,
+            )
         }
 
     override fun following(
@@ -364,14 +324,15 @@ internal class OfflineProfileRepository @Inject constructor(
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            flow {
-                val profileDid = lookupProfileDid(
-                    profileId = query.profileId,
-                    profileDao = profileDao,
-                    networkService = networkService,
-                ) ?: return@flow
+            val profileDid = lookupProfileDid(
+                profileId = query.profileId,
+                profileDao = profileDao,
+                networkService = networkService,
+            ) ?: return@singleSessionFlow emptyFlow()
 
-                val response = networkService.runCatchingWithMonitoredNetworkRetry {
+            profileLookup.profilesWithViewerState(
+                signedInProfileId = signedInProfileId,
+                responseFetcher = {
                     getFollows(
                         GetFollowsQueryParams(
                             actor = profileDid,
@@ -383,49 +344,10 @@ internal class OfflineProfileRepository @Inject constructor(
                             },
                         ),
                     )
-                }
-                    .getOrNull()
-                    ?: return@flow
-
-                multipleEntitySaverProvider.saveInTransaction {
-                    response.follows
-                        .forEach { profileView ->
-                            add(
-                                viewingProfileId = signedInProfileId,
-                                profileView = profileView,
-                            )
-                        }
-                }
-
-                val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
-
-                // Emit network results immediately for minimal latency during search
-                emit(
-                    CursorList(
-                        items = response.follows.toProfileWithViewerStates(
-                            signedInProfileId = signedInProfileId,
-                            profileMapper = ProfileView::profile,
-                            profileViewerStateEntities = ProfileView::profileViewerStateEntities,
-                        ),
-                        nextCursor = nextCursor,
-                    ),
-                )
-
-                emitAll(
-                    response.follows.observeProfileWithViewerStates(
-                        profileDao = profileDao,
-                        signedInProfileId = signedInProfileId,
-                        profileMapper = ProfileView::profile,
-                        idMapper = { did.did.let(::ProfileId) },
-                    )
-                        .map { profileWithViewerStates ->
-                            CursorList(
-                                items = profileWithViewerStates,
-                                nextCursor = nextCursor,
-                            )
-                        },
-                )
-            }
+                },
+                responseProfileViews = GetFollowsResponse::follows,
+                responseCursor = GetFollowsResponse::cursor,
+            )
         }
 
     override fun starterPacks(
