@@ -169,37 +169,22 @@ internal fun CopyToClipboardCard(
 }
 
 @Composable
-fun ModerationMenuSection(
+internal fun ModerationMenuSection(
     modifier: Modifier = Modifier,
     onMuteWordsClicked: () -> Unit,
-    onBlockUserClicked: () -> Unit,
 ) {
-    Column(modifier = modifier) {
-        Text(
-            modifier = Modifier.padding(start = 4.dp, bottom = 12.dp),
-            text = stringResource(Res.string.moderation_options_title),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
+    ModerationMenuCard {
+        ModerationMenuItemRow(
+            title = stringResource(Res.string.mute_words_tags),
+            icon = Icons.Default.FilterAlt,
+            onClick = onMuteWordsClicked,
+            showDivider = false, // First item, no divider
         )
-
-        ModerationMenuCard {
-            ModerationMenuItemRow(
-                title = stringResource(Res.string.mute_words_tags),
-                icon = Icons.Default.FilterAlt,
-                onClick = onMuteWordsClicked,
-            )
-            ModerationMenuItemRow(
-                title = stringResource(Res.string.block_user),
-                icon = Icons.Rounded.Block,
-                onClick = onBlockUserClicked,
-                showDivider = false, // Last item, no divider
-            )
-        }
     }
 }
 
 @Composable
-fun ModerationMenuCard(
+internal fun ModerationMenuCard(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -209,8 +194,7 @@ fun ModerationMenuCard(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp),
+                .fillMaxWidth(),
         ) {
             content()
         }
@@ -225,9 +209,15 @@ fun ModerationMenuItemRow(
     onClick: () -> Unit,
     showDivider: Boolean = true,
 ) {
-    Column(modifier = modifier.padding(5.dp)) {
+    Column(
+        modifier = modifier
+            .padding(
+                horizontal = 16.dp,
+                vertical = 8.dp,
+            ),
+    ) {
         Row(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .padding(vertical = 4.dp)
                 .clickable(onClick = onClick),
@@ -236,14 +226,14 @@ fun ModerationMenuItemRow(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                modifier = Modifier.size(20.dp),
+                modifier = modifier.size(20.dp),
                 tint = MaterialTheme.colorScheme.onSurface,
             )
 
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier
+                modifier = modifier
                     .padding(start = 16.dp)
                     .weight(1f),
                 color = MaterialTheme.colorScheme.onSurface,
@@ -252,7 +242,7 @@ fun ModerationMenuItemRow(
             Icon(
                 imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
                 contentDescription = null,
-                modifier = Modifier.size(16.dp),
+                modifier = modifier.size(16.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }

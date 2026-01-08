@@ -139,8 +139,6 @@ private fun PostOptionsBottomSheet(
                     onMuteWordsClicked = {
                         onOptionClicked(PostOption.Moderation.MuteWords)
                     },
-                    onBlockUserClicked = {
-                    },
                 )
             }
         }
