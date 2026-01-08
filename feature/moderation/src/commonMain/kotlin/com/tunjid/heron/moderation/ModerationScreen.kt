@@ -25,6 +25,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FilterAlt
+import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
@@ -44,16 +47,21 @@ import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.label.LabelSetting
 import com.tunjid.heron.timeline.ui.label.Labeler
+import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
+import com.tunjid.heron.timeline.utilities.ModerationMenuItemRow
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.moderation.generated.resources.Res
+import heron.feature.moderation.generated.resources.block_user
 import heron.feature.moderation.generated.resources.content_filters
 import heron.feature.moderation.generated.resources.enable_adult_content
 import heron.feature.moderation.generated.resources.label_hide
 import heron.feature.moderation.generated.resources.label_show
 import heron.feature.moderation.generated.resources.label_warn
 import heron.feature.moderation.generated.resources.labeler_subscriptions
+import heron.feature.moderation.generated.resources.moderation_options_title
+import heron.feature.moderation.generated.resources.mute_words_tags
 import heron.ui.core.generated.resources.unknown_label
 import org.jetbrains.compose.resources.stringResource
 
@@ -64,6 +72,11 @@ internal fun ModerationScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val mutedWordSheetState = rememberUpdatedMutedWordsSheetState(
+        mutedWordPreferences = state.preferences.mutedWordPreferences,
+        onSave = { actions(Action.UpdateMutedWord(it)) },
+        onShown = { /* TODO : Handle onShown */ },
+    )
     LazyColumn(
         modifier = modifier
             .fillMaxWidth(),
@@ -105,6 +118,9 @@ internal fun ModerationScreen(
                     ),
                 )
             },
+        )
+        moderationToolsMenuSection(
+            onMutedWordsClicked = mutedWordSheetState::show,
         )
     }
 }
@@ -233,6 +249,31 @@ private fun LazyListScope.subscribedLabelersSection(
             }
         },
     )
+}
+
+private fun LazyListScope.moderationToolsMenuSection(
+    onMutedWordsClicked: () -> Unit,
+) {
+    item(
+        key = Res.string.moderation_options_title.key,
+    ) {
+        SectionTitle(
+            modifier = Modifier.animateItem(),
+            title = stringResource(Res.string.moderation_options_title),
+        )
+        ElevatedItem(
+            shape = RoundCardShape,
+            showDivider = false,
+            onItemClicked = null,
+        ) {
+            ModerationMenuItemRow(
+                title = stringResource(Res.string.mute_words_tags),
+                icon = Icons.Default.FilterAlt,
+                onClick = onMutedWordsClicked,
+                showDivider = false,
+            )
+        }
+    }
 }
 
 @Composable
