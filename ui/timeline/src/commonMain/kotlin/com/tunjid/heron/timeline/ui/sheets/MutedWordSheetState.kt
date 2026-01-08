@@ -504,12 +504,6 @@ private fun MuteTargetChip(
                     tint = contentColor,
                 )
             }
-//            Icon(
-//                imageVector = if (isSelected) Icons.Default.CheckCircle else Icons.Default.Circle,
-//                contentDescription = null,
-//                modifier = Modifier.size(14.dp),
-//                tint = contentColor,
-//            )
 
             Text(
                 text = stringResource(target.label),

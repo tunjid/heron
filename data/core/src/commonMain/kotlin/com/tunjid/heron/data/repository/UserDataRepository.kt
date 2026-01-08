@@ -92,5 +92,3 @@ internal class OfflineUserDataRepository @Inject constructor(
             }
         }.toOutcome()
 }
-
-fun UserDataRepository.readPreferences(): Flow<Preferences> = preferences

@@ -75,7 +75,7 @@ internal fun ModerationScreen(
     val mutedWordSheetState = rememberUpdatedMutedWordsSheetState(
         mutedWordPreferences = state.preferences.mutedWordPreferences,
         onSave = { actions(Action.UpdateMutedWord(it)) },
-        onShown = { /* TODO : Handle onShown */ },
+        onShown = { },
     )
     LazyColumn(
         modifier = modifier
@@ -261,6 +261,10 @@ private fun LazyListScope.moderationToolsMenuSection(
             modifier = Modifier.animateItem(),
             title = stringResource(Res.string.moderation_options_title),
         )
+    }
+    item(
+        key = Res.string.mute_words_tags.key,
+    ) {
         ElevatedItem(
             shape = RoundCardShape,
             showDivider = false,
