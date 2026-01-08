@@ -39,7 +39,13 @@ object UiTokens {
 
     val tabsHeight = 48.dp
 
-    val bottomNavHeight: Dp = 80.dp
+    val appBarButtonSize = 40.dp
+
+    val LikeRed: Color = Color(0xFFE0245E)
+
+    val RepostGreen: Color = Color(0xFF17BF63)
+
+    val BookmarkBlue: Color = Color(0xFF1D9BF0)
 
     const val appBarSharedElementOverlayZIndex = 12f
 
@@ -53,12 +59,17 @@ object UiTokens {
             calculateTopPadding() + calculateBottomPadding()
         }
 
+    fun bottomNavHeight(
+        isCompact: Boolean,
+    ): Dp = if (isCompact) 48.dp else 80.dp
+
     @Composable
     fun bottomNavAndInsetPaddingValues(
         top: Dp = 0.dp,
         horizontal: Dp = 0.dp,
+        isCompact: Boolean,
     ): PaddingValues {
-        val padding = navigationBarHeight + bottomNavHeight
+        val padding = navigationBarHeight + bottomNavHeight(isCompact)
         return remember(top, horizontal, padding) {
             PaddingValues(
                 top = top,

@@ -20,6 +20,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshotFlow
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.network.NetworkConnectionException
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
@@ -30,15 +31,28 @@ import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.repository.onEachSignedInProfile
 import com.tunjid.heron.data.repository.singleAuthorizedSessionFlow
 import dev.zacsweers.metro.Inject
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.transform
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import okio.IOException
 
 sealed class WriteQueue {
@@ -127,23 +141,33 @@ internal class PersistedWriteQueue @Inject constructor(
     private val savedStateDataSource: SavedStateDataSource,
 ) : WriteQueue() {
 
+    private val processingWriteIds = mutableSetOf<String>()
+    private val concurrentWriteMutex = Mutex()
+
     override val queueChanges: Flow<List<Writable>>
         get() = savedStateDataSource.signedInProfileWrites()
 
     override suspend fun enqueue(
         writable: Writable,
     ): Status {
+        concurrentWriteMutex.withLock {
+            if (writable.queueId in processingWriteIds) return Status.Duplicate
+        }
         var status: Status = Status.Dropped
         savedStateDataSource.inCurrentProfileSession {
             savedStateDataSource.updateWrites {
                 when {
+                    pendingWrites.size >= MaximumPendingWrites -> {
+                        status = Status.Dropped
+                        this
+                    }
                     pendingWrites.any { writable.queueId == it.queueId } -> {
                         status = Status.Duplicate
                         this
                     }
                     else -> {
                         status = Status.Enqueued
-                        copy(pendingWrites = listOf(writable) + pendingWrites)
+                        copy(pendingWrites = pendingWrites + writable)
                     }
                 }
             }
@@ -160,38 +184,110 @@ internal class PersistedWriteQueue @Inject constructor(
 
     override suspend fun drain() = savedStateDataSource.onEachSignedInProfile {
         savedStateDataSource.signedInProfileWrites()
-            .mapNotNull(List<Writable>::lastOrNull)
-            .distinctUntilChangedBy(Writable::queueId)
-            .collect { writable ->
-                val outcome = with(writable) {
-                    write()
-                }
-                savedStateDataSource.updateWrites {
-                    copy(
-                        failedWrites = when (outcome) {
-                            is Outcome.Failure ->
-                                failedWrites
-                                    .plus(
-                                        FailedWrite(
-                                            writable = writable,
-                                            failedAt = Clock.System.now(),
-                                            reason = when (outcome.exception) {
-                                                is IOException -> FailedWrite.Reason.IO
-                                                else -> null
-                                            },
-                                        ),
-                                    )
-                                    .distinctBy { it.writable.queueId }
-                                    .takeLast(MaximumFailedWrites)
-                            Outcome.Success -> failedWrites
-                        },
-                        // Always dequeue write
-                        pendingWrites = pendingWrites
-                            .filter { it.queueId != writable.queueId }
-                            .take(MaximumPendingWrites),
-                    )
-                }
+            .transform { writes ->
+                filterAndRecordNewWrites(writes)
             }
+            .buffer()
+            .flatMapMerge(concurrency = MaxConcurrentWrites) { writable ->
+                concurrentWrite(writable)
+            }
+            .collect { (writable, outcome) ->
+                onWriteOutcome(outcome, writable)
+            }
+    }
+
+    private suspend fun FlowCollector<Writable>.filterAndRecordNewWrites(
+        writes: List<Writable>,
+    ) {
+        for (writable in writes) {
+            var inserted = false
+            try {
+                inserted = maybeInsertIntoConcurrentProcessingQueue(writable)
+                if (inserted) emit(writable)
+            } catch (e: CancellationException) {
+                if (inserted) removeFromConcurrentProcessingQueue(writable)
+                throw e
+            }
+        }
+    }
+
+    private fun concurrentWrite(
+        writable: Writable,
+    ) = flow {
+        emit(
+            Pair(
+                writable,
+                with(writable) { withTimeout(WriteTimeout) { write() } },
+            ),
+        )
+    }
+        .catch {
+            emit(writable to Outcome.Failure(it))
+        }
+
+    private suspend fun onWriteOutcome(
+        outcome: Outcome,
+        writable: Writable,
+    ) {
+        val failure = when (outcome) {
+            is Outcome.Failure -> outcome.exception
+            else -> null
+        }
+        val shouldTryAgain = when (failure) {
+            is NetworkConnectionException,
+            is TimeoutCancellationException,
+            -> true
+            else -> false
+        }
+
+        if (shouldTryAgain) {
+            removeFromConcurrentProcessingQueue(writable)
+        }
+
+        try {
+            savedStateDataSource.updateWrites {
+                copy(
+                    failedWrites = when {
+                        failure != null && !shouldTryAgain ->
+                            failedWrites
+                                .plus(
+                                    FailedWrite(
+                                        writable = writable,
+                                        failedAt = Clock.System.now(),
+                                        reason = when (failure) {
+                                            is IOException -> FailedWrite.Reason.IO
+                                            else -> null
+                                        },
+                                    ),
+                                )
+                                .distinctBy { it.writable.queueId }
+                                .takeLast(MaximumFailedWrites)
+                        else -> failedWrites
+                    },
+                    pendingWrites = pendingWrites
+                        .filter { it.queueId != writable.queueId }
+                        .let { writes -> if (shouldTryAgain) writes + writable else writes },
+                )
+            }
+        } finally {
+            if (!shouldTryAgain) {
+                removeFromConcurrentProcessingQueue(writable)
+            }
+        }
+    }
+
+    private suspend fun maybeInsertIntoConcurrentProcessingQueue(
+        writable: Writable,
+    ) = concurrentWriteMutex.withLock {
+        processingWriteIds.add(writable.queueId)
+    }
+
+    private suspend fun removeFromConcurrentProcessingQueue(
+        writable: Writable,
+    ) = withContext(NonCancellable) {
+        concurrentWriteMutex.withLock {
+            processingWriteIds.remove(writable.queueId)
+        }
     }
 }
 
@@ -219,5 +315,7 @@ private suspend inline fun SavedStateDataSource.updateWrites(
     }
 }
 
+private val WriteTimeout = 10.seconds
+private const val MaxConcurrentWrites = 6
 private const val MaximumPendingWrites = 15
 private const val MaximumFailedWrites = 10

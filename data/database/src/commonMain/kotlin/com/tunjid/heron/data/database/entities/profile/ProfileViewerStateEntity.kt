@@ -19,7 +19,8 @@ package com.tunjid.heron.data.database.entities.profile
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import com.tunjid.heron.data.core.models.ProfileViewerState
-import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.BlockUri
+import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.ListId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.ProfileEntity
@@ -51,17 +52,29 @@ data class ProfileViewerStateEntity(
     val muted: Boolean?,
     val mutedByList: ListId?,
     val blockedBy: Boolean?,
-    val blocking: GenericUri?,
+    val blocking: BlockUri?,
     val blockingByList: ListId?,
-    val following: GenericUri?,
-    val followedBy: GenericUri?,
+    val following: FollowUri?,
+    val followedBy: FollowUri?,
     val commonFollowersCount: Long?,
 ) {
     data class Partial(
         val profileId: ProfileId,
         val otherProfileId: ProfileId,
-        val following: GenericUri?,
-        val followedBy: GenericUri?,
+        val following: FollowUri?,
+        val followedBy: FollowUri?,
+    )
+
+    data class MutedPartial(
+        val profileId: ProfileId,
+        val otherProfileId: ProfileId,
+        val muted: Boolean,
+    )
+
+    data class BlockPartial(
+        val profileId: ProfileId,
+        val otherProfileId: ProfileId,
+        val blocking: BlockUri?,
     )
 }
 

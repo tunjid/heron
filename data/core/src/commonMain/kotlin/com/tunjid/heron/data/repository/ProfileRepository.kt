@@ -20,6 +20,7 @@ import app.bsky.actor.Profile as BskyProfile
 import app.bsky.actor.ProfileView
 import app.bsky.feed.GetActorFeedsQueryParams
 import app.bsky.feed.GetActorFeedsResponse
+import app.bsky.graph.Block as BskyBlock
 import app.bsky.graph.Follow as BskyFollow
 import app.bsky.graph.GetActorStarterPacksQueryParams
 import app.bsky.graph.GetActorStarterPacksResponse
@@ -29,6 +30,8 @@ import app.bsky.graph.GetListQueryParams
 import app.bsky.graph.GetListResponse
 import app.bsky.graph.GetListsQueryParams
 import app.bsky.graph.GetListsResponse
+import app.bsky.graph.MuteActorRequest
+import app.bsky.graph.UnmuteActorRequest
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.CreateRecordValidationStatus
 import com.atproto.repo.DeleteRecordRequest
@@ -46,11 +49,14 @@ import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
-import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.BlockUri
+import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordCreationException
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ListDao
@@ -98,6 +104,7 @@ import kotlinx.serialization.Serializable
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
+import sh.christian.ozone.api.RKey
 
 @Serializable
 data class ProfilesQuery(
@@ -158,6 +165,10 @@ interface ProfileRepository {
 
     suspend fun sendConnection(
         connection: Profile.Connection,
+    ): Outcome
+
+    suspend fun updateRestriction(
+        restriction: Profile.Restriction,
     ): Outcome
 
     suspend fun updateProfile(
@@ -556,7 +567,7 @@ internal class OfflineProfileRepository @Inject constructor(
             createRecord(
                 CreateRecordRequest(
                     repo = connection.signedInProfileId.id.let(::Did),
-                    collection = Nsid(Collections.Follow),
+                    collection = Nsid(FollowUri.NAMESPACE),
                     record = BskyFollow(
                         subject = connection.profileId.id.let(::Did),
                         createdAt = Clock.System.now(),
@@ -566,14 +577,17 @@ internal class OfflineProfileRepository @Inject constructor(
         }
             .toOutcome {
                 if (it.validationStatus !is CreateRecordValidationStatus.Valid) {
-                    throw Exception("Record creation failed validation")
+                    throw RecordCreationException(
+                        profileId = connection.signedInProfileId,
+                        collection = FollowUri.NAMESPACE,
+                    )
                 }
                 profileDao.updatePartialProfileViewers(
                     listOf(
                         ProfileViewerStateEntity.Partial(
                             profileId = connection.signedInProfileId,
                             otherProfileId = connection.profileId,
-                            following = it.uri.atUri.let(::GenericUri),
+                            following = it.uri.atUri.let(::FollowUri),
                             followedBy = connection.followedBy,
                         ),
                     ),
@@ -584,8 +598,8 @@ internal class OfflineProfileRepository @Inject constructor(
             deleteRecord(
                 DeleteRecordRequest(
                     repo = connection.signedInProfileId.id.let(::Did),
-                    collection = Nsid(Collections.Follow),
-                    rkey = Collections.requireRKey(connection.followUri),
+                    collection = Nsid(FollowUri.NAMESPACE),
+                    rkey = connection.followUri.recordKey.value.let(::RKey),
                 ),
             )
         }
@@ -601,6 +615,72 @@ internal class OfflineProfileRepository @Inject constructor(
                     ),
                 )
             }
+    }
+
+    override suspend fun updateRestriction(
+        restriction: Profile.Restriction,
+    ): Outcome = when (restriction) {
+        is Profile.Restriction.Block.Add -> networkService.runCatchingWithMonitoredNetworkRetry {
+            createRecord(
+                CreateRecordRequest(
+                    repo = restriction.signedInProfileId.id.let(::Did),
+                    collection = Nsid(BlockUri.NAMESPACE),
+                    record = BskyBlock(
+                        subject = restriction.profileId.id.let(::Did),
+                        createdAt = Clock.System.now(),
+                    ).asJsonContent(BskyBlock.serializer()),
+                ),
+            )
+        }.toOutcome {
+            if (it.validationStatus !is CreateRecordValidationStatus.Valid) {
+                throw RecordCreationException(
+                    profileId = restriction.signedInProfileId,
+                    collection = BlockUri.NAMESPACE,
+                )
+            }
+            profileDao.updatePartialProfileViewer(
+                ProfileViewerStateEntity.BlockPartial(
+                    profileId = restriction.signedInProfileId,
+                    otherProfileId = restriction.profileId,
+                    blocking = it.uri.atUri.let(::BlockUri),
+                ),
+            )
+        }
+        is Profile.Restriction.Block.Remove -> networkService.runCatchingWithMonitoredNetworkRetry {
+            deleteRecord(
+                DeleteRecordRequest(
+                    repo = restriction.signedInProfileId.id.let(::Did),
+                    collection = Nsid(BlockUri.NAMESPACE),
+                    rkey = restriction.blockUri.recordKey.value.let(::RKey),
+                ),
+            )
+        }.toOutcome {
+            profileDao.updatePartialProfileViewer(
+                ProfileViewerStateEntity.BlockPartial(
+                    profileId = restriction.signedInProfileId,
+                    otherProfileId = restriction.profileId,
+                    blocking = null,
+                ),
+            )
+        }
+        is Profile.Restriction.Mute -> networkService.runCatchingWithMonitoredNetworkRetry {
+            when (restriction) {
+                is Profile.Restriction.Mute.Add -> muteActor(
+                    MuteActorRequest(restriction.profileId.id.let(::Did)),
+                )
+                is Profile.Restriction.Mute.Remove -> unmuteActor(
+                    UnmuteActorRequest(restriction.profileId.id.let(::Did)),
+                )
+            }
+        }.toOutcome {
+            profileDao.updatePartialProfileViewer(
+                ProfileViewerStateEntity.MutedPartial(
+                    profileId = restriction.signedInProfileId,
+                    otherProfileId = restriction.profileId,
+                    muted = restriction is Profile.Restriction.Mute.Add,
+                ),
+            )
+        }
     }
 
     override suspend fun updateProfile(

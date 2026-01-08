@@ -40,7 +40,7 @@ data class State(
     val postType: Post.Create? = null,
     val signedInProfile: Profile? = null,
     val fabExpanded: Boolean = true,
-    val embeddedRecord: Record? = null,
+    val embeddedRecord: Record.Embeddable? = null,
     @Serializable(with = TextFieldValueSerializer::class)
     val postText: TextFieldValue = TextFieldValue(),
     @Transient

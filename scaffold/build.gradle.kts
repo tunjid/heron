@@ -32,12 +32,13 @@ kotlin {
         androidMain {
             dependencies {
                 implementation(libs.androidx.activity.compose)
-                implementation("org.jetbrains.androidx.core:core-bundle:1.1.0-alpha03")
+                implementation(libs.lifecycle.android.process)
             }
         }
         commonMain {
             dependencies {
                 implementation(project(":data:models"))
+                implementation(project(":data:logging"))
                 implementation(project(":data:core"))
                 implementation(project(":ui:core"))
                 implementation(project(":ui:media"))
@@ -58,6 +59,7 @@ kotlin {
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.kotlinx.serialization.protobuf)
 
+                implementation(libs.lifecycle.multiplatform.runtime.compose)
                 implementation(libs.lifecycle.multiplatform.viewmodel.navigation3)
 
                 implementation(libs.navigation.event)

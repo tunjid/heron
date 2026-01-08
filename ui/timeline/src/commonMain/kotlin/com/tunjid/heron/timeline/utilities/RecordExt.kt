@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.timeline.utilities
 
+import androidx.collection.FloatFloatPair
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialShapes
@@ -28,20 +29,20 @@ import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.CornerRounding
 import androidx.graphics.shapes.RoundedPolygon
-import androidx.graphics.shapes.TransformResult
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
-import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
@@ -59,7 +60,7 @@ import kotlin.time.Clock
 @Composable
 fun EmbeddedRecord(
     modifier: Modifier = Modifier,
-    record: Record,
+    record: Record.Embeddable,
     sharedElementPrefix: String,
     movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     postActions: PostActions,
@@ -139,7 +140,7 @@ fun EmbeddedRecord(
     }
 }
 
-fun Record.avatarSharedElementKey(
+fun Record.Embeddable.avatarSharedElementKey(
     prefix: String?,
     quotingPostUri: PostUri? = null,
 ): String {
@@ -153,10 +154,14 @@ fun Record.avatarSharedElementKey(
         is FeedList -> creator
         is StarterPack -> creator
     }
-    return "$finalPrefix-${reference.uri.uri}-${creator.did.id}-avatar"
+    return creator.avatarSharedElementKey("$finalPrefix-${reference.uri.uri}")
 }
 
-fun RecordUri.shareUri(): GenericUri =
+fun Profile.avatarSharedElementKey(
+    prefix: String?,
+): String = "$prefix-${did.id}-avatar"
+
+fun EmbeddableRecordUri.shareUri(): GenericUri =
     GenericUri(
         when (this) {
             is FeedGeneratorUri -> "https://bsky.app/profile/${profileId().id}/feed/${recordKey.value}"
@@ -167,7 +172,7 @@ fun RecordUri.shareUri(): GenericUri =
         },
     )
 
-fun RecordUri.collectionShape() = when (this) {
+fun EmbeddableRecordUri.collectionShape() = when (this) {
     is FeedGeneratorUri -> FeedGeneratorCollectionShape
     is LabelerUri -> LabelerCollectionShape
     is ListUri -> ListCollectionShape
@@ -217,5 +222,5 @@ internal val BlueskyClouds =
 
 private fun RoundedPolygon.transformed(matrix: Matrix): RoundedPolygon = transformed { x, y ->
     val transformedPoint = matrix.map(Offset(x, y))
-    TransformResult(transformedPoint.x, transformedPoint.y)
+    FloatFloatPair(transformedPoint.x, transformedPoint.y)
 }

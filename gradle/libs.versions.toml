@@ -16,6 +16,7 @@ androidx-room = "2.8.4"
 androidx-sqlite = "2.6.2"
 androidx-espresso-core = "3.7.0"
 axion-release = "1.21.1"
+buildConfig = "6.0.7"
 coreSplashscreen = "1.2.0"
 burst = "2.10.2"
 androidx-material = "1.13.0"
@@ -37,7 +38,9 @@ kotlinx-serialization = "1.9.0"
 ksp = "2.3.0"
 ktlint-cli = "1.8.0"
 ktor = "3.3.3"
+lifecycle-android = "2.10.0"
 lifecycle-multiplatform = "2.10.0-alpha07"
+logcat = "0.4"
 metro = "0.8.2"
 navigationEventCompose = "1.0.0-rc02"
 navigationEvent = "1.0.1"
@@ -127,11 +130,13 @@ filekit-dialogs = { module = "io.github.vinceglb:filekit-dialogs", version.ref =
 filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "vinceglb-filekit" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom-version" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
+lifecycle-android-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycle-android" }
 lifecycle-multiplatform-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "lifecycle-multiplatform" }
 lifecycle-multiplatform-viewmodel-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle-multiplatform" }
 lifecycle-multiplatform-viewmodel-navigation3 = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel-navigation3", version.ref = "lifecycle-multiplatform" }
 lifecycle-multiplatform-runtime = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime", version.ref = "lifecycle-multiplatform" }
 lifecycle-multiplatform-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle-multiplatform" }
+logcat = { module = "com.squareup.logcat:logcat", version.ref = "logcat" }
 savedstate-multiplatform-savedstate = { group = "org.jetbrains.androidx.savedstate", name = "savedstate", version.ref = "savedstate-multiplatform" }
 savedstate-multiplatform-compose = { group = "org.jetbrains.androidx.savedstate", name = "savedstate-compose", version.ref = "savedstate-multiplatform" }
 google-devtools-kspPlugin = { group = "com.google.devtools.ksp", name = "symbol-processing-gradle-plugin", version.ref = "ksp" }
@@ -180,6 +185,7 @@ tunjid-treenav-strings = { group = "com.tunjid.treenav", name = "strings", versi
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
 androidxRoom = { id = "androidx.room", version.ref = "androidx-room" }
+buildConfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildConfig" }
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 googleServices = { id = "com.google.gms.google-services", version.ref = "google-services" }

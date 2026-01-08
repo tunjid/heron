@@ -203,6 +203,7 @@ internal fun PostSearchResults(
         verticalItemSpacing = 16.dp,
         contentPadding = bottomNavAndInsetPaddingValues(
             top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
+            isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),
         horizontalArrangement = Arrangement.spacedBy(
             Timeline.Presentation.Text.WithEmbed.lazyGridHorizontalItemSpacing,

@@ -19,7 +19,6 @@ package com.tunjid.heron.data.utilities.preferenceupdater
 import app.bsky.actor.AdultContentPref
 import app.bsky.actor.ContentLabelPref
 import app.bsky.actor.ContentLabelPrefVisibility
-import app.bsky.actor.GetPreferencesResponse
 import app.bsky.actor.LabelerPrefItem
 import app.bsky.actor.LabelersPref
 import app.bsky.actor.PreferencesUnion
@@ -43,12 +42,12 @@ import sh.christian.ozone.api.Did
 
 internal interface PreferenceUpdater {
     suspend fun update(
-        response: GetPreferencesResponse,
+        networkPreferences: List<PreferencesUnion>,
         preferences: Preferences,
     ): Preferences
 
     suspend fun update(
-        response: GetPreferencesResponse,
+        networkPreferences: List<PreferencesUnion>,
         update: Timeline.Update,
     ): List<PreferencesUnion>
 }
@@ -58,9 +57,9 @@ internal class ThingPreferenceUpdater @Inject constructor(
 ) : PreferenceUpdater {
 
     override suspend fun update(
-        response: GetPreferencesResponse,
+        networkPreferences: List<PreferencesUnion>,
         preferences: Preferences,
-    ): Preferences = response.preferences.fold(
+    ): Preferences = networkPreferences.fold(
         // Reset values to be filled from network response
         initial = preferences.copy(
             allowAdultContent = false,
@@ -133,10 +132,10 @@ internal class ThingPreferenceUpdater @Inject constructor(
     )
 
     override suspend fun update(
-        response: GetPreferencesResponse,
+        networkPreferences: List<PreferencesUnion>,
         update: Timeline.Update,
     ): List<PreferencesUnion> {
-        val groupedPreferences = response.preferences.groupBy(
+        val groupedPreferences = networkPreferences.groupBy(
             keySelector = { it::class },
         )
         val targetClass = update.targetClass()

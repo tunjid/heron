@@ -22,7 +22,6 @@ import app.bsky.actor.SavedFeedType
 import app.bsky.feed.GetFeedGeneratorQueryParams
 import app.bsky.graph.GetListQueryParams
 import com.tunjid.heron.data.core.models.OauthUriRequest
-import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SessionRequest
 import com.tunjid.heron.data.core.models.TimelinePreference
@@ -45,6 +44,7 @@ import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -55,6 +55,8 @@ import sh.christian.ozone.api.Did
 
 interface AuthRepository {
     val isSignedIn: Flow<Boolean>
+
+    val isGuest: Flow<Boolean>
 
     val signedInUser: Flow<Profile?>
 
@@ -87,6 +89,13 @@ internal class AuthTokenRepository(
         savedStateDataSource.signedInAuth.map {
             it != null
         }
+            .distinctUntilChanged()
+
+    override val isGuest: Flow<Boolean> =
+        savedStateDataSource.savedState.map { savedState ->
+            savedState.auth is SavedState.AuthTokens.Guest
+        }
+            .distinctUntilChanged()
 
     override val signedInUser: Flow<Profile?> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
@@ -183,9 +192,9 @@ internal class AuthTokenRepository(
         preferencesResponse: GetPreferencesResponse,
     ) = supervisorScope {
         val preferences = preferenceUpdater.update(
-            response = preferencesResponse,
+            networkPreferences = preferencesResponse.preferences,
             preferences = savedStateDataSource.savedState
-                .map { it.signedInProfileData?.preferences ?: Preferences.EmptyPreferences }
+                .map(SavedState::signedProfilePreferencesOrDefault)
                 .first(),
         )
 

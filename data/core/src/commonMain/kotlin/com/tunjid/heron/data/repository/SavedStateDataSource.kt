@@ -26,14 +26,14 @@ import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedState
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
+import com.tunjid.heron.data.di.AppCoroutineScope
+import com.tunjid.heron.data.utilities.updateOrPutValue
 import com.tunjid.heron.data.utilities.writequeue.FailedWrite
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.Named
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -71,7 +71,7 @@ abstract class SavedState {
         data class Guest(
             val server: Server,
         ) : AuthTokens() {
-            override val authProfileId: ProfileId = Constants.unknownAuthorId
+            override val authProfileId: ProfileId = Constants.guestProfileId
         }
 
         @Serializable
@@ -87,7 +87,7 @@ abstract class SavedState {
                 val state: String,
                 val expiresAt: Instant,
             ) : Pending() {
-                override val authProfileId: ProfileId = Constants.unknownAuthorId
+                override val authProfileId: ProfileId = Constants.pendingProfileId
             }
         }
 
@@ -100,6 +100,7 @@ abstract class SavedState {
                         didDoc.service
                             .firstOrNull()
                             ?.serviceEndpoint
+
                     is DPoP -> pdsUrl
                 }
 
@@ -173,6 +174,7 @@ abstract class SavedState {
     data class Notifications(
         val lastRead: Instant? = null,
         val lastRefreshed: Instant? = null,
+        val hasPreviouslyRequestedPermissions: Boolean = false,
     )
 
     @Serializable
@@ -187,17 +189,45 @@ abstract class SavedState {
         val notifications: Notifications,
         // Need default for migration
         val writes: Writes = Writes(),
-    )
+        val auth: AuthTokens? = null,
+    ) {
+        companion object {
+            val defaultGuestData = ProfileData(
+                preferences = Preferences.BlueSkyGuestPreferences,
+                notifications = Notifications(),
+                auth = AuthTokens.Guest(Server.BlueSky),
+            )
+
+            fun fromTokens(auth: AuthTokens) = ProfileData(
+                // With the exception of guest and pending tokens, other
+                // preferences will eventually become consistent with their PDS.
+                preferences = preferencesForUrl(
+                    when (auth) {
+                        is AuthTokens.Authenticated.Bearer -> auth.authEndpoint
+                        is AuthTokens.Authenticated.DPoP -> auth.pdsUrl
+                        is AuthTokens.Guest -> auth.server.endpoint
+                        is AuthTokens.Pending.DPoP -> auth.endpoint
+                    },
+                ),
+                notifications = Notifications(),
+                auth = auth,
+            )
+        }
+    }
 }
 
-val InitialSavedState: SavedState = VersionedSavedState.Initial
+private val InitialSavedState: SavedState = VersionedSavedState.Initial
 
-val EmptySavedState: SavedState = VersionedSavedState.Empty
+private val EmptySavedState: SavedState = VersionedSavedState.Empty
+
+val InitialNavigation: SavedState.Navigation = InitialSavedState.navigation
+
+val EmptyNavigation: SavedState.Navigation = EmptySavedState.navigation
 
 fun SavedState.isSignedIn(): Boolean =
     auth.ifSignedIn() != null
 
-fun SavedState.signedInProfilePreferences() =
+internal fun SavedState.signedInProfilePreferences() =
     signedInProfileData?.preferences
 
 internal val SavedStateDataSource.signedInAuth
@@ -206,8 +236,7 @@ internal val SavedStateDataSource.signedInAuth
         .distinctUntilChanged()
 
 internal fun SavedState.signedProfilePreferencesOrDefault(): Preferences =
-    signedInProfileData
-        ?.preferences
+    signedInProfilePreferences()
         ?: when (val authTokens = auth) {
             is SavedState.AuthTokens.Authenticated.Bearer -> authTokens.authEndpoint
             is SavedState.AuthTokens.Authenticated.DPoP -> authTokens.issuerEndpoint
@@ -240,7 +269,7 @@ private fun preferencesForUrl(url: String) =
         else -> Preferences.BlueSkyGuestPreferences
     }
 
-sealed class SavedStateDataSource {
+internal sealed class SavedStateDataSource {
     abstract val savedState: StateFlow<SavedState>
 
     abstract suspend fun setNavigationState(
@@ -252,15 +281,7 @@ sealed class SavedStateDataSource {
     )
 
     internal abstract suspend fun updateSignedInProfileData(
-        block: SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData,
-    )
-
-    abstract suspend fun setLastViewedHomeTimelineUri(
-        uri: Uri,
-    )
-
-    abstract suspend fun setRefreshedHomeTimelineOnLaunch(
-        refreshOnLaunch: Boolean,
+        block: suspend SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData,
     )
 }
 
@@ -268,8 +289,9 @@ sealed class SavedStateDataSource {
 internal class DataStoreSavedStateDataSource(
     path: Path,
     fileSystem: FileSystem,
-    @Named("AppScope") appScope: CoroutineScope,
     protoBuf: ProtoBuf,
+    @AppCoroutineScope
+    appScope: CoroutineScope,
 ) : SavedStateDataSource() {
 
     private val dataStore: DataStore<VersionedSavedState> = DataStoreFactory.create(
@@ -296,11 +318,39 @@ internal class DataStoreSavedStateDataSource(
     override suspend fun setAuth(
         auth: SavedState.AuthTokens?,
     ) = updateState {
-        copy(auth = auth)
+        copy(
+            activeProfileId = auth?.authProfileId,
+            profileData = when (auth) {
+                null -> when (activeProfileId) {
+                    null -> profileData
+                    else -> profileData.updateOrPutValue(
+                        key = activeProfileId,
+                        update = { copy(auth = null) },
+                    )
+                }
+
+                is SavedState.AuthTokens.Guest -> profileData.updateOrPutValue(
+                    key = auth.authProfileId,
+                    update = {
+                        copy(
+                            auth = auth,
+                            preferences = preferencesForUrl(auth.server.endpoint),
+                        )
+                    },
+                    put = { SavedState.ProfileData.fromTokens(auth) },
+                )
+
+                else -> profileData.updateOrPutValue(
+                    key = auth.authProfileId,
+                    update = { copy(auth = auth) },
+                    put = { SavedState.ProfileData.fromTokens(auth) },
+                )
+            },
+        )
     }
 
     override suspend fun updateSignedInProfileData(
-        block: SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData,
+        block: suspend SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData,
     ) = updateState {
         val signedInProfileId = auth.ifSignedIn()?.authProfileId ?: return@updateState this
         val signedInProfileData = profileData[signedInProfileId] ?: SavedState.ProfileData(
@@ -314,33 +364,24 @@ internal class DataStoreSavedStateDataSource(
         )
     }
 
-    override suspend fun setLastViewedHomeTimelineUri(
-        uri: Uri,
-    ) = updateSignedInProfileData {
-        copy(preferences = preferences.copy(lastViewedHomeTimelineUri = uri))
-    }
-
-    override suspend fun setRefreshedHomeTimelineOnLaunch(
-        refreshOnLaunch: Boolean,
-    ) = updateSignedInProfileData {
-        copy(preferences = preferences.copy(refreshHomeTimelineOnLaunch = refreshOnLaunch))
-    }
-
-    private suspend fun updateState(update: VersionedSavedState.() -> VersionedSavedState) {
+    private suspend fun updateState(
+        update: suspend VersionedSavedState.() -> VersionedSavedState,
+    ) {
         dataStore.updateData(update)
     }
 }
 
-internal fun SavedStateDataSource.distinctUntilChangedAdultContentAndLabelVisibilityPreferences(): Flow<Pair<Boolean, Map<Label.Value, Label.Visibility>>> = savedState
-    .map {
-        val preferences = it.signedProfilePreferencesOrDefault()
-        val labelVisibilityMap = preferences.contentLabelPreferences.associateBy(
-            keySelector = ContentLabelPreference::label,
-            valueTransform = ContentLabelPreference::visibility,
-        )
-        preferences.allowAdultContent to labelVisibilityMap
-    }
-    .distinctUntilChanged()
+internal fun SavedStateDataSource.distinctUntilChangedAdultContentAndLabelVisibilityPreferences(): Flow<Pair<Boolean, Map<Label.Value, Label.Visibility>>> =
+    savedState
+        .map {
+            val preferences = it.signedProfilePreferencesOrDefault()
+            val labelVisibilityMap = preferences.contentLabelPreferences.associateBy(
+                keySelector = ContentLabelPreference::label,
+                valueTransform = ContentLabelPreference::visibility,
+            )
+            preferences.allowAdultContent to labelVisibilityMap
+        }
+        .distinctUntilChanged()
 
 internal suspend fun SavedStateDataSource.updateSignedInUserNotifications(
     block: SavedState.Notifications.() -> SavedState.Notifications,
@@ -354,7 +395,8 @@ internal suspend fun SavedStateDataSource.updateSignedInUserNotifications(
 internal suspend inline fun <T> SavedStateDataSource.inCurrentProfileSession(
     crossinline block: suspend (ProfileId?) -> T,
 ): T? {
-    val currentProfileId = savedState.value.signedInProfileId
+    val currentSavedState = savedState.first { it != InitialSavedState }
+    val currentProfileId = currentSavedState.signedInProfileId
     return coroutineScope {
         select {
             async {
@@ -399,5 +441,7 @@ internal inline fun <T> SavedStateDataSource.singleSessionFlow(
     }
 
 internal fun expiredSessionOutcome() = Outcome.Failure(ExpiredSessionException())
+
+internal fun <T> expiredSessionResult() = Result.failure<T>(ExpiredSessionException())
 
 private class ExpiredSessionException : IOException()

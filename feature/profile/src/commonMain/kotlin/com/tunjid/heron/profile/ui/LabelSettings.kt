@@ -44,12 +44,15 @@ import heron.ui.core.generated.resources.unknown_label
 fun LabelerSettings(
     modifier: Modifier = Modifier,
     stateHolder: LabelerSettingsStateHolder,
+    prefersCompactBottomNav: Boolean,
 ) {
     val state by stateHolder.state.collectAsStateWithLifecycle()
     LazyColumn(
         modifier = modifier
             .fillMaxWidth(),
-        contentPadding = UiTokens.bottomNavAndInsetPaddingValues(),
+        contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
+            isCompact = prefersCompactBottomNav,
+        ),
     ) {
         val languageTag = Locale.current.toLanguageTag()
         items(

@@ -15,6 +15,8 @@
   -->
 
 <resources>
+    <string name="search">Search</string>
+    <string name="clear_search">Clear Search</string>
     <string name="reply">Reply</string>
     <string name="reply_to">Reply to %1$s</string>
     <string name="repost">Reply</string>
@@ -24,7 +26,12 @@
     <string name="see_more_posts">See more posts</string>
     <string name="dismiss">Dismiss</string>
     <string name="cancel">Cancel</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
     <string name="go_back">Go Back</string>
+    <string name="save">Save</string>
+    <string name="close">Close</string>
+    <string name="go_to_settings">Go to Settings</string>
     <string name="sign_in">Sign In</string>
     <string name="hide_label">Content Blocked</string>
     <string name="hide_label_description">This content has been hidden by the moderators.</string>
@@ -48,4 +55,32 @@
     <string name="record_list">List</string>
     <string name="record_post">Post</string>
     <string name="record_starter_pack">Starter Pack</string>
+    <string name="notifications_followed_you_description">Followed you</string>
+    <string name="notifications_followed_you">%1$s followed you</string>
+    <string name="notifications_multiple_followed">%1$s and %2$d others followed you</string>
+    <string name="notifications_liked_your_post_description">Liked your post</string>
+    <string name="notifications_liked_your_repost_description">Liked your repost</string>
+    <string name="notifications_liked_your_post">%1$s liked your post</string>
+    <string name="notifications_liked_your_repost">%1$s liked your repost</string>
+    <string name="notifications_multiple_liked_your_post">%1$s and %2$d others liked your post</string>
+    <string name="notifications_multiple_liked_your_repost">%1$s and %2$d others liked your repost</string>
+    <string name="notifications_reposted_your_post_description">Reposted your post</string>
+    <string name="notifications_reposted_your_repost_description">Reposted your repost</string>
+    <string name="notifications_reposted_your_post">%1$s reposted your post</string>
+    <string name="notifications_reposted_your_repost">%1$s reposted your repost</string>
+    <string name="notifications_multiple_reposted_your_post">%1$s and %2$d others reposted your post</string>
+    <string name="notifications_multiple_reposted_your_repost">%1$s and %2$d others reposted your repost</string>
+    <string name="notifications_joined_from_your_started_pack_description">Joined from your starter pack</string>
+    <string name="notifications_joined_from_your_starter_pack">%1$s joined from your starter pack</string>
+    <string name="notifications_multiple_joined_from_your_starter_pack">%1$s and %2$d others joined from your starter pack</string>
+    <string name="notifications_post_subscription_description">New update on subscribed post</string>
+    <string name="notifications_post_subscription">New content from %1$s</string>
+    <string name="notifications_multiple_post_subscription">New content from %1$s and %2$d others</string>
+    <string name="notifications_account_verified">Your account has been verified</string>
+    <string name="notifications_account_unverified">Your account has been unverified</string>
+    <string name="notifications_mentioned_you">%1$s mentioned you</string>
+    <string name="notifications_quoted_you">%1$s quoted you</string>
+    <string name="notifications_replied_to_you">%1$s replied to your post</string>
+    <string name="notifications_unknown">You have a new notification</string>
+    <string name="notifications_create_post">Create Post</string>
 </resources>

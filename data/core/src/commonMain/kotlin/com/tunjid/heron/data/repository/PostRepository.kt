@@ -52,12 +52,14 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
-import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.LikeUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
+import com.tunjid.heron.data.core.types.RepostUri
 import com.tunjid.heron.data.core.types.ThreadGateUri
+import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.TransactionWriter
@@ -73,9 +75,7 @@ import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.VideoUploadService
 import com.tunjid.heron.data.network.models.toNetworkRecord
-import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.MediaBlob
-import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.facet
 import com.tunjid.heron.data.utilities.lookupProfileDid
@@ -114,6 +114,7 @@ import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
+import sh.christian.ozone.api.RKey
 import sh.christian.ozone.api.model.Blob
 
 @Serializable
@@ -473,7 +474,7 @@ internal class OfflinePostRepository @Inject constructor(
 
         val createRecordRequest = CreateRecordRequest(
             repo = request.authorId.id.let(::Did),
-            collection = Nsid(Collections.Post),
+            collection = Nsid(PostUri.NAMESPACE),
             record = BskyPost(
                 text = request.text,
                 reply = reply,
@@ -514,7 +515,7 @@ internal class OfflinePostRepository @Inject constructor(
                     is Post.Interaction.Create.Like -> createRecord(
                         CreateRecordRequest(
                             repo = signedInProfileId.id.let(::Did),
-                            collection = Nsid(Collections.Like),
+                            collection = Nsid(LikeUri.NAMESPACE),
                             record = BskyLike(
                                 subject = StrongRef(
                                     cid = interaction.postId.id.let(::Cid),
@@ -528,7 +529,7 @@ internal class OfflinePostRepository @Inject constructor(
                     is Post.Interaction.Create.Repost -> createRecord(
                         CreateRecordRequest(
                             repo = signedInProfileId.id.let(::Did),
-                            collection = Nsid(Collections.Repost),
+                            collection = Nsid(RepostUri.NAMESPACE),
                             record = BskyRepost(
                                 subject = StrongRef(
                                     cid = interaction.postId.id.let(::Cid),
@@ -546,7 +547,7 @@ internal class OfflinePostRepository @Inject constructor(
                         is Post.Interaction.Create.Like -> {
                             upsertInteraction(
                                 partial = PostViewerStatisticsEntity.Partial.Like(
-                                    likeUri = uriOrCidString.let(::GenericUri),
+                                    likeUri = uriOrCidString.let(::LikeUri),
                                     postUri = interaction.postUri,
                                     viewingProfileId = signedInProfileId,
                                 ),
@@ -559,7 +560,7 @@ internal class OfflinePostRepository @Inject constructor(
                         is Post.Interaction.Create.Repost -> {
                             upsertInteraction(
                                 partial = PostViewerStatisticsEntity.Partial.Repost(
-                                    repostUri = uriOrCidString.let(::GenericUri),
+                                    repostUri = uriOrCidString.let(::RepostUri),
                                     postUri = interaction.postUri,
                                     viewingProfileId = signedInProfileId,
                                 ),
@@ -590,15 +591,15 @@ internal class OfflinePostRepository @Inject constructor(
                     is Post.Interaction.Delete.RemoveRepost -> deleteRecord(
                         DeleteRecordRequest(
                             repo = signedInProfileId.id.let(::Did),
-                            collection = Nsid(Collections.Repost),
-                            rkey = Collections.requireRKey(interaction.repostUri),
+                            collection = Nsid(RepostUri.NAMESPACE),
+                            rkey = interaction.repostUri.recordKey.value.let(::RKey),
                         ),
                     )
                     is Post.Interaction.Delete.Unlike -> deleteRecord(
                         DeleteRecordRequest(
                             repo = signedInProfileId.id.let(::Did),
-                            collection = Nsid(Collections.Like),
-                            rkey = Collections.requireRKey(interaction.likeUri),
+                            collection = Nsid(LikeUri.NAMESPACE),
+                            rkey = interaction.likeUri.recordKey.value.let(::RKey),
                         ),
                     )
                 }
@@ -642,8 +643,9 @@ internal class OfflinePostRepository @Inject constructor(
                 val collection = Nsid(ThreadGateUri.NAMESPACE)
                 val record = interaction.toNetworkRecord()
                 val recordKey = interaction.postUri
-                    .asGenericUri()
-                    .let(Collections::requireRKey)
+                    .recordKey
+                    .value
+                    .let(::RKey)
 
                 networkService.runCatchingWithMonitoredNetworkRetry {
                     putRecord(
@@ -763,7 +765,7 @@ private fun CreateRecordResponse.successWithUri(): Pair<Boolean, String> =
 private suspend fun NetworkService.uploadImageBlob(
     data: Source,
 ): Result<Blob> = runCatchingWithMonitoredNetworkRetry {
-    api.uploadBlob(ByteReadChannel(data))
+    uploadBlob(ByteReadChannel(data))
         .map(UploadBlobResponse::blob)
 }
 

@@ -35,14 +35,15 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.timeline.ui.TimeDelta
+import com.tunjid.heron.ui.UiTokens.RepostGreen
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import heron.feature.notifications.generated.resources.Res
-import heron.feature.notifications.generated.resources.multiple_reposted_your_post
-import heron.feature.notifications.generated.resources.multiple_reposted_your_repost
-import heron.feature.notifications.generated.resources.reposted_your_post
-import heron.feature.notifications.generated.resources.reposted_your_post_description
-import heron.feature.notifications.generated.resources.reposted_your_repost
-import heron.feature.notifications.generated.resources.reposted_your_repost_description
+import heron.ui.core.generated.resources.notifications_multiple_reposted_your_post
+import heron.ui.core.generated.resources.notifications_multiple_reposted_your_repost
+import heron.ui.core.generated.resources.notifications_reposted_your_post
+import heron.ui.core.generated.resources.notifications_reposted_your_post_description
+import heron.ui.core.generated.resources.notifications_reposted_your_repost
+import heron.ui.core.generated.resources.notifications_reposted_your_repost_description
 import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
@@ -69,11 +70,11 @@ fun RepostRow(
         icon = {
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.Repeat),
-                tint = Color.Green,
+                tint = RepostGreen,
                 contentDescription = stringResource(
                     when (notification) {
-                        is Notification.Reposted.Post -> Res.string.reposted_your_post_description
-                        is Notification.Reposted.Repost -> Res.string.reposted_your_repost_description
+                        is Notification.Reposted.Post -> CommonStrings.notifications_reposted_your_post_description
+                        is Notification.Reposted.Repost -> CommonStrings.notifications_reposted_your_repost_description
                     },
                 ),
             )
@@ -87,12 +88,12 @@ fun RepostRow(
                             notification = notification,
                             aggregatedSize = aggregatedProfiles.size,
                             singularResource = when (notification) {
-                                is Notification.Reposted.Post -> Res.string.reposted_your_post
-                                is Notification.Reposted.Repost -> Res.string.reposted_your_repost
+                                is Notification.Reposted.Post -> CommonStrings.notifications_reposted_your_post
+                                is Notification.Reposted.Repost -> CommonStrings.notifications_reposted_your_repost
                             },
                             pluralResource = when (notification) {
-                                is Notification.Reposted.Post -> Res.string.multiple_reposted_your_post
-                                is Notification.Reposted.Repost -> Res.string.multiple_reposted_your_repost
+                                is Notification.Reposted.Post -> CommonStrings.notifications_multiple_reposted_your_post
+                                is Notification.Reposted.Repost -> CommonStrings.notifications_multiple_reposted_your_repost
                             },
                         ),
                     )

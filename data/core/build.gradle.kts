@@ -20,6 +20,7 @@ plugins {
     id("ksp-convention")
     id("app.cash.burst")
     kotlin("plugin.serialization")
+    alias(libs.plugins.buildConfig)
 }
 android {
     namespace = "com.tunjid.heron.data"
@@ -33,6 +34,7 @@ kotlin {
                 implementation(project(":data:models"))
                 implementation(project(":data:database"))
                 implementation(project(":data:lexicons"))
+                implementation(project(":data:logging"))
 
                 implementation(libs.crypto.core)
                 implementation(libs.crypto.random)
@@ -88,5 +90,20 @@ kotlin {
                 implementation(libs.burst)
             }
         }
+    }
+}
+
+buildConfig {
+    packageName("com.tunjid.heron.data")
+
+    useKotlinOutput {
+        internalVisibility = true
+    }
+
+    forClass("InternalEndpoints") {
+        val heronEndpoint = providers.gradleProperty("heron.endpoint")
+            .orNull
+            .orEmpty()
+        buildConfigField("String", "HeronEndpoint", "\"${heronEndpoint}\"")
     }
 }

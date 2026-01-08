@@ -24,6 +24,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,13 +54,14 @@ import com.tunjid.treenav.strings.Route
 /**
  * Root scaffold for the app
  */
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun App(
     modifier: Modifier,
     appState: AppState,
 ) {
-    AppTheme {
+    AppTheme(
+        dynamicColor = appState.preferences?.useDynamicTheming ?: false,
+    ) {
         CompositionLocalProvider(
             LocalAppState provides appState,
             LocalImageLoader provides appState.imageLoader,
@@ -110,6 +112,9 @@ fun App(
                                 paneNavigationState = { this.paneNavigationState },
                                 density = density,
                                 windowWidth = windowWidth,
+                                hasCompatBottomNav = {
+                                    appState.preferences?.useCompactNavigation ?: false
+                                },
                             )
                         }.also {
                             it.update(
@@ -136,8 +141,9 @@ fun App(
                             )
                         }
 
-                        val navigationEventDispatcher = LocalNavigationEventDispatcherOwner.current!!
-                            .navigationEventDispatcher
+                        val navigationEventDispatcher =
+                            LocalNavigationEventDispatcherOwner.current!!
+                                .navigationEventDispatcher
 
                         LaunchedEffect(navigationEventDispatcher) {
                             navigationEventDispatcher.transitionState

@@ -111,7 +111,9 @@ internal fun ConversationScreen(
     LazyColumn(
         state = listState,
         reverseLayout = true,
-        contentPadding = UiTokens.bottomNavAndInsetPaddingValues(),
+        contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
+            isCompact = paneScaffoldState.prefersCompactBottomNav,
+        ),
         modifier = modifier
             .fillMaxSize(),
     ) {
@@ -451,7 +453,7 @@ private fun ChatItemBubble(
 
 @Composable
 private fun MessageRecord(
-    record: Record,
+    record: Record.Embeddable,
     item: MessageItem,
     paneScaffoldState: PaneScaffoldState,
     actions: (Action) -> Unit,

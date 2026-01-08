@@ -1,13 +1,10 @@
 package com.tunjid.heron.data.repository
 
-import app.bsky.actor.GetPreferencesResponse
-import app.bsky.actor.PutPreferencesRequest
-import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Preferences
-import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.utilities.Outcome
-import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
+import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.toOutcome
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -17,48 +14,81 @@ interface UserDataRepository {
 
     val preferences: Flow<Preferences>
 
-    suspend fun refreshPreferences(): Outcome
+    val navigation: Flow<SavedState.Navigation>
+
+    suspend fun persistNavigationState(
+        navigation: SavedState.Navigation,
+    ): Outcome
+
+    suspend fun setLastViewedHomeTimelineUri(
+        uri: Uri,
+    ): Outcome
+
+    suspend fun setRefreshedHomeTimelineOnLaunch(
+        refreshOnLaunch: Boolean,
+    ): Outcome
+
+    suspend fun setDynamicTheming(
+        dynamicTheming: Boolean,
+    ): Outcome
+
+    suspend fun setCompactNavigation(
+        compactNavigation: Boolean,
+    ): Outcome
 }
 
 internal class OfflineUserDataRepository @Inject constructor(
     private val savedStateDataSource: SavedStateDataSource,
-    private val preferenceUpdater: PreferenceUpdater,
-    private val networkService: NetworkService,
 ) : UserDataRepository {
 
     override val preferences: Flow<Preferences> =
         savedStateDataSource.savedState
-            .map {
-                it.signedInProfileData
-                    ?.preferences
-                    ?: Preferences.EmptyPreferences
-            }
+            .map(SavedState::signedProfilePreferencesOrDefault)
             .distinctUntilChanged()
 
-    override suspend fun refreshPreferences(): Outcome {
-        return networkService.runCatchingWithMonitoredNetworkRetry {
-            getPreferencesForActor()
-        }.fold(
-            onSuccess = { response ->
-                updatePreferences(response)
-                Outcome.Success
-            },
-            onFailure = Outcome::Failure,
+    override val navigation: Flow<SavedState.Navigation>
+        get() = savedStateDataSource.savedState
+            .map { it.navigation }
+            .distinctUntilChanged()
+
+    override suspend fun persistNavigationState(
+        navigation: SavedState.Navigation,
+    ): Outcome = runCatchingUnlessCancelled {
+        if (navigation != InitialNavigation) savedStateDataSource.setNavigationState(
+            navigation = navigation,
         )
+    }.toOutcome()
+
+    override suspend fun setLastViewedHomeTimelineUri(
+        uri: Uri,
+    ): Outcome = updatePreferences {
+        copy(lastViewedHomeTimelineUri = uri)
     }
 
-    private suspend fun updatePreferences(response: GetPreferencesResponse) {
-        val currentPreferences = savedStateDataSource.savedState.value
-            .signedInProfileData
-            ?.preferences
-            ?: Preferences.EmptyPreferences
-
-        val updatedPreferences = preferenceUpdater.update(
-            response = response,
-            preferences = currentPreferences,
-        )
-        savedStateDataSource.updateSignedInProfileData {
-            copy(preferences = updatedPreferences)
-        }
+    override suspend fun setRefreshedHomeTimelineOnLaunch(
+        refreshOnLaunch: Boolean,
+    ): Outcome = updatePreferences {
+        copy(refreshHomeTimelineOnLaunch = refreshOnLaunch)
     }
+
+    override suspend fun setDynamicTheming(
+        dynamicTheming: Boolean,
+    ): Outcome = updatePreferences {
+        copy(useDynamicTheming = dynamicTheming)
+    }
+
+    override suspend fun setCompactNavigation(
+        compactNavigation: Boolean,
+    ): Outcome = updatePreferences {
+        copy(useCompactNavigation = compactNavigation)
+    }
+
+    private suspend inline fun updatePreferences(
+        crossinline updater: suspend Preferences.() -> Preferences,
+    ): Outcome =
+        runCatchingUnlessCancelled {
+            savedStateDataSource.updateSignedInProfileData {
+                copy(preferences = preferences.updater())
+            }
+        }.toOutcome()
 }

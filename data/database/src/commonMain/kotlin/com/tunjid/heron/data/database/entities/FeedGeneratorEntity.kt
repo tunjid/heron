@@ -23,11 +23,11 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorId
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.types.RecordUri
 import kotlin.time.Instant
 
 @Entity(
@@ -78,7 +78,7 @@ data class PopulatedFeedGeneratorEntity(
     )
     val labelEntities: List<LabelEntity>,
 ) : PopulatedRecordEntity {
-    override val recordUri: RecordUri
+    override val recordUri: EmbeddableRecordUri
         get() = entity.uri
 }
 

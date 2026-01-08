@@ -14,28 +14,30 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.data.network
+plugins {
+    id("android-library-convention")
+    id("kotlin-library-convention")
+}
 
-import kotlinx.coroutines.delay
+android {
+    namespace = "com.tunjid.heron.data.logging"
+}
 
-suspend fun <T> exponentialBackoff(
-    times: Int = Int.MAX_VALUE,
-    initialDelay: Long = 1_000,
-    maxDelay: Long = 1_000 * 60 * 60,
-    factor: Double = 2.0,
-    default: T,
-    block: suspend () -> T,
-): T {
-    var currentDelay = initialDelay
-    repeat(times) {
-        try {
-            return block()
-        } catch (e: Exception) {
-//            println("Exponential backoff error")
-//            e.printStackTrace()
+kotlin {
+    sourceSets {
+        commonMain {
+            dependencies {
+            }
         }
-        delay(currentDelay)
-        currentDelay = (currentDelay * factor).toLong().coerceAtMost(maxDelay)
+        androidMain {
+            dependencies {
+                implementation(libs.logcat)
+            }
+        }
+        desktopMain {
+            dependencies {
+                implementation(libs.logcat)
+            }
+        }
     }
-    return default
 }

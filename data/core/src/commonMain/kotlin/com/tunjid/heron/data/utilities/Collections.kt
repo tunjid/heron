@@ -16,11 +16,13 @@
 
 package com.tunjid.heron.data.utilities
 
+import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.Uri
-import com.tunjid.heron.data.core.types.recordKeyOrNull
+import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.network.BlueskyJson
 import kotlin.time.Instant
 import kotlinx.serialization.KSerializer
@@ -29,28 +31,16 @@ import sh.christian.ozone.api.RKey
 import sh.christian.ozone.api.model.JsonContent
 
 internal object Collections {
-    const val Post = "app.bsky.feed.post"
     const val Profile = "app.bsky.actor.profile"
-    const val Repost = "app.bsky.feed.repost"
-    const val Like = "app.bsky.feed.like"
-    const val Follow = "app.bsky.graph.follow"
-    const val List = "app.bsky.graph.list"
-    const val StarterPack = "app.bsky.graph.starterpack"
-    const val FeedGenerator = "app.bsky.feed.generator"
     const val UploadVideo = "com.atproto.repo.uploadBlob"
 
     val SelfRecordKey = RKey("self")
 
-    // Internal method
-    fun requireRKey(uri: GenericUri) = RKey(
-        rkey = requireNotNull(uri.recordKeyOrNull()) {
-            "This uri does not have a record key"
-        }.value,
-    )
-
     val DefaultLabelerProfileId = ProfileId(id = "did:plc:ar7c4by46qjdydhdevvrndac")
 
     fun Id.isStubbedId() = id == StubbedId
+
+    fun AtUri.requireRecordUri() = requireNotNull(atUri.asRecordUriOrNull())
 
     inline fun <reified T : Id> stubbedId(
         constructor: (String) -> T,
@@ -59,9 +49,14 @@ internal object Collections {
 
 fun Uri.asGenericUri(): GenericUri = GenericUri(uri)
 
-internal val AtUri.tidInstant: Instant?
+fun Id.asGenericId(): GenericId = GenericId(id)
+
+/**
+ * Attempts to fetch the timestamp from the record key if it is a valid TID.
+ */
+val RecordKey.tidInstant: Instant?
     get() = try {
-        Instant.fromEpochMilliseconds(tidTimestampFromBase32(atUri.split("/").last()))
+        Instant.fromEpochMilliseconds(tidTimestampFromBase32(value))
     } catch (e: IllegalArgumentException) {
         null
     }
@@ -81,6 +76,9 @@ fun String.getAsRawUri(host: Uri.Host): String = host.prefix + split(LeadingSlas
     .split(QueryDelimiter)
     .first()
 
+internal val AtUri.tidInstant: Instant?
+    get() = RecordKey(atUri.split("/").last()).tidInstant
+
 internal fun <T> T.asJsonContent(
     serializer: KSerializer<T>,
 ): JsonContent = BlueskyJson.decodeFromString(
@@ -94,36 +92,44 @@ internal inline fun <reified T : Any> JsonContent.safeDecodeAs(): T? =
         null
     }
 
-private fun tidTimestampFromBase32(base32Tid: String): Long {
-    val tidLong = base32ToLong(base32Tid)
-    return extractTimestampFromTid(tidLong)
-}
+/**
+ * @see [TID definition](https://atproto.com/specs/tid)
+ */
+fun tidTimestampFromBase32(tid: String): Long {
+    require(tid.length == 13) { "TID must be 13 characters long" }
 
-private fun base32ToLong(base32String: String): Long {
-    if (base32String.length != 13) {
-        throw IllegalArgumentException("Base32 string must be 13 characters long.")
-    }
+    var result = 0L
 
-    var result: Long = 0
-    for (char in base32String) {
-        val value = Alphabet.indexOf(char)
-        if (value == -1) {
-            throw IllegalArgumentException("Invalid base32 character: $char")
-        }
+    // 1. Decode the Base32-sortable string into the original 64-bit integer
+    for (char in tid) {
+        val value = decodeBase32Char(char)
+        // Shift left by 5 bits (base32) and add the new value
         result = (result shl 5) or value.toLong()
     }
 
-    return result
+    // 2. Extract the timestamp
+    // The layout is: [0 (1 bit)] [Micros (53 bits)] [ClockID (10 bits)]
+    // We strictly need the 53 bits representing microseconds.
+    // Right shifting by 10 discards the ClockID and moves the micros to the least significant position.
+    // The top bit is guaranteed to be 0, so unsigned vs signed shift doesn't matter here,
+    // but 'ushr' is semantically safer for bitwise operations.
+    val micros = result ushr 10
+
+    // 3. Convert microseconds to milliseconds
+    return micros / 1000
 }
 
-private fun extractTimestampFromTid(tid: Long): Long {
-    // Shift to remove the clock identifier (10 bits)
-    return tid shr 10
-}
+// Helper to map Base32-sortable characters to their 5-bit integer values (0-31)
+// Alphabet: 234567abcdefghijklmnopqrstuvwxyz
+private fun decodeBase32Char(char: Char): Int =
+    when (char) {
+        in '2'..'7' -> char - '2' // '2' is 0, '7' is 5
+        in 'a'..'z' -> char - 'a' + 6 // 'a' is 6, 'z' is 31
+        else -> throw IllegalArgumentException("Invalid TID character: $char")
+    }
 
 private const val SchemeSeparator = "://"
 private const val QueryDelimiter = "?"
 private const val LeadingSlash = "/"
 
-private const val Alphabet = "234567abcdefghijklmnopqrstuvwxyz"
 internal const val StubbedId = "bafyreipendingunknownstub2222222222222222222222222222222222"

@@ -22,6 +22,7 @@ import com.tunjid.heron.conversation.di.ConversationBindings
 import com.tunjid.heron.conversation.di.ConversationNavigationBindings
 import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.data.di.DataBindings
+import com.tunjid.heron.data.logging.Logger
 import com.tunjid.heron.di.AppGraph
 import com.tunjid.heron.di.AppNavigationGraph
 import com.tunjid.heron.di.allRouteMatchers
@@ -55,6 +56,7 @@ import com.tunjid.heron.profiles.di.ProfilesBindings
 import com.tunjid.heron.profiles.di.ProfilesNavigationBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindingArgs
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.scaffold.notifications.Notifier
 import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.heron.search.di.SearchBindings
 import com.tunjid.heron.search.di.SearchNavigationBindings
@@ -77,9 +79,13 @@ expect fun getPlatform(): Platform
 
 fun createAppState(
     imageLoader: () -> ImageLoader,
+    notifier: (appScope: CoroutineScope) -> Notifier,
+    logger: () -> Logger,
     videoPlayerController: (appScope: CoroutineScope) -> VideoPlayerController,
     args: (appScope: CoroutineScope) -> DataBindingArgs,
 ): AppState {
+    logger().install()
+
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     val navigationComponent = createGraphFactory<AppNavigationGraph.Factory>().create(
@@ -111,6 +117,7 @@ fun createAppState(
     val scaffoldBindings = ScaffoldBindings(
         args = ScaffoldBindingArgs(
             imageLoader = imageLoader(),
+            notifier = notifier(appScope),
             videoPlayerController = videoPlayerController(appScope),
             routeMatchers = navigationComponent.allRouteMatchers,
         ),

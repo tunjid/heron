@@ -25,6 +25,7 @@ internal data class NavItem(
     val index: Int,
     val selected: Boolean,
     val hasBadge: Boolean,
+    val badgeCount: Int? = null,
 )
 
 internal fun MultiStackNav.navItemSelected(item: NavItem) =

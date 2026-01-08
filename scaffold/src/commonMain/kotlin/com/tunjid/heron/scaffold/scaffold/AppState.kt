@@ -32,6 +32,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigationevent.NavigationEvent
@@ -39,9 +40,11 @@ import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.splitlayout.SplitLayoutState
+import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.NotificationsRepository
+import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
@@ -51,6 +54,8 @@ import com.tunjid.heron.scaffold.navigation.NavigationStateHolder
 import com.tunjid.heron.scaffold.navigation.deepLinkTo
 import com.tunjid.heron.scaffold.navigation.isShowingSplashScreen
 import com.tunjid.heron.scaffold.navigation.navItemSelected
+import com.tunjid.heron.scaffold.notifications.NotificationAction
+import com.tunjid.heron.scaffold.notifications.NotificationStateHolder
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.MinPaneWidth
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.MultiStackNav
@@ -67,26 +72,30 @@ import com.tunjid.treenav.requireCurrent
 import com.tunjid.treenav.strings.PathPattern
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.toRouteTrie
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 @Stable
 class AppState(
     entryMap: Map<String, PaneEntry<ThreePane, Route>>,
     private val authRepository: AuthRepository,
-    private val notificationsRepository: NotificationsRepository,
+    private val userDataRepository: UserDataRepository,
     private val navigationStateHolder: NavigationStateHolder,
+    private val notificationStateHolder: NotificationStateHolder,
     internal val imageLoader: ImageLoader,
     internal val videoPlayerController: VideoPlayerController,
     private val writeQueue: WriteQueue,
-    private val appScope: CoroutineScope,
 ) {
-    private var hasNotifications by mutableStateOf(false)
+    private var notificationCount by mutableStateOf(0L)
 
     internal var isSignedIn by mutableStateOf(false)
+
+    internal var preferences by mutableStateOf<Preferences?>(null)
 
     private val multiStackNavState = mutableStateOf(navigationStateHolder.state.value)
 
@@ -167,16 +176,33 @@ class AppState(
 
         // TODO: Figure out a way to do this in the background with KMP
         LaunchedEffect(Unit) {
-            writeQueue.drain()
-        }
-        LaunchedEffect(Unit) {
-            notificationsRepository.unreadCount.collect { count ->
-                hasNotifications = count != 0L
+            launch {
+                writeQueue.drain()
+            }
+            launch {
+                notificationStateHolder.state.collect { notificationState ->
+                    notificationCount = notificationState.unreadCount
+                }
+            }
+            launch {
+                authRepository.isSignedIn.collect { signedIn ->
+                    isSignedIn = signedIn
+                }
+            }
+            launch {
+                userDataRepository.preferences.collect { currentPreferences ->
+                    preferences = currentPreferences
+                }
             }
         }
-        LaunchedEffect(Unit) {
-            authRepository.isSignedIn.collect { signedIn ->
-                isSignedIn = signedIn
+        LifecycleResumeEffect(Unit) {
+            notificationStateHolder.accept(
+                NotificationAction.ToggleUnreadNotificationsMonitor(monitor = true),
+            )
+            onPauseOrDispose {
+                notificationStateHolder.accept(
+                    NotificationAction.ToggleUnreadNotificationsMonitor(monitor = false),
+                )
             }
         }
 
@@ -217,9 +243,12 @@ class AppState(
     fun onDeepLink(uri: GenericUri) =
         navigationStateHolder.accept(deepLinkTo(uri))
 
-    fun registerPushNotificationToken(token: String) {
-        appScope.launch {
-            notificationsRepository.registerPushNotificationToken(token)
+    fun onNotificationAction(action: NotificationAction) =
+        notificationStateHolder.accept(action)
+
+    suspend fun awaitNotificationProcessing(recordUri: RecordUri) {
+        notificationStateHolder.state.first { state ->
+            recordUri in state.processedNotificationRecordUris
         }
     }
 
@@ -243,7 +272,10 @@ class AppState(
                     stack = stack,
                     index = index,
                     selected = multiStackNav.currentIndex == index,
-                    hasBadge = stack == AppStack.Notifications && hasNotifications,
+                    hasBadge = stack == AppStack.Notifications && notificationCount > 0L,
+                    badgeCount = stack.takeIf {
+                        it == AppStack.Notifications && notificationCount > 0L
+                    }?.let { notificationCount.toInt() },
                 )
             }
     }
@@ -256,6 +288,10 @@ class AppState(
             data object ScaleToPop : Gesture()
         }
     }
+
+    companion object {
+        val NOTIFICATION_PROCESSING_TIMEOUT_SECONDS = 10.seconds
+    }
 }
 
 val AppState.isShowingSplashScreen: Boolean
@@ -266,6 +302,7 @@ internal class SplitPaneState(
     paneNavigationState: () -> PaneNavigationState<ThreePane, Route>,
     density: Density,
     private val windowWidth: State<Dp>,
+    private val hasCompatBottomNav: () -> Boolean,
 ) {
     internal var density by mutableStateOf(density)
 
@@ -276,7 +313,9 @@ internal class SplitPaneState(
     }
 
     internal val minPaneWidth: Dp
-        get() = (windowWidth.value * 0.5f) - UiTokens.bottomNavHeight
+        get() = (windowWidth.value * 0.5f) - UiTokens.bottomNavHeight(
+            isCompact = hasCompatBottomNav(),
+        )
 
     internal val splitLayoutState = SplitLayoutState(
         orientation = Orientation.Horizontal,
@@ -304,6 +343,9 @@ internal class SplitPaneState(
     }
 }
 
+internal val AppState.prefersCompactBottomNav: Boolean
+    get() = preferences?.useCompactNavigation ?: false
+
 private val PaneRenderOrder = listOf(
     ThreePane.Tertiary,
     ThreePane.Secondary,
@@ -311,9 +353,9 @@ private val PaneRenderOrder = listOf(
 )
 
 internal val LocalSplitPaneState = staticCompositionLocalOf<SplitPaneState> {
-    TODO()
+    throw IllegalStateException("No SplitPaneState provided")
 }
 
 internal val LocalAppState = staticCompositionLocalOf<AppState> {
-    TODO()
+    throw IllegalStateException("No AppState provided")
 }

@@ -37,10 +37,8 @@ import com.tunjid.heron.conversation.RouteViewModelInitializer
 import com.tunjid.heron.conversation.pendingRecord
 import com.tunjid.heron.conversation.ui.ConversationTitle
 import com.tunjid.heron.conversation.ui.UserInput
-import com.tunjid.heron.conversation.ui.conversationSharedElementKey
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.types.ConversationId
-import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -54,6 +52,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
+import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.text.links
 import com.tunjid.treenav.compose.PaneEntry
@@ -63,7 +62,6 @@ import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.mappedRoutePath
-import com.tunjid.treenav.strings.optionalMappedRouteQuery
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
@@ -133,11 +131,14 @@ class ConversationBindings(
                 )
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
+            val paneScaffoldState = rememberPaneScaffoldState()
 
             val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection()
+                bottomNavigationNestedScrollConnection(
+                    isCompact = paneScaffoldState.prefersCompactBottomNav,
+                )
 
-            rememberPaneScaffoldState().PaneScaffold(
+            paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
@@ -151,7 +152,7 @@ class ConversationBindings(
                     PoppableDestinationTopAppBar(
                         title = {
                             ConversationTitle(
-                                conversationId = state.id,
+                                sharedElementPrefix = state.sharedElementPrefix,
                                 signedInProfileId = state.signedInProfile?.did,
                                 participants = state.members,
                                 paneScaffoldState = this,
@@ -161,8 +162,8 @@ class ConversationBindings(
                                             profileDestination(
                                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                 profile = profile,
-                                                avatarSharedElementKey = profile.conversationSharedElementKey(
-                                                    conversationId = state.id,
+                                                avatarSharedElementKey = profile.avatarSharedElementKey(
+                                                    prefix = state.sharedElementPrefix,
                                                 ),
                                             ),
                                         ),

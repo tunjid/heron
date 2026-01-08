@@ -18,10 +18,8 @@
     <string name="top">Top</string>
     <string name="latest">Latest</string>
     <string name="people">People</string>
-    <string name="search">Search</string>
     <string name="trending_title">Trending</string>
     <string name="suggested_accounts">Suggested Accounts</string>
-    <string name="clear_search">Clear search</string>
     <string name="post_count">%1$s posts</string>
     <string name="trend_started">%1$s ago</string>
     <string name="by_creator">by %1$s</string>

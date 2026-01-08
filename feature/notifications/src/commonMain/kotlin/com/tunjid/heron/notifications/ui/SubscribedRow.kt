@@ -35,11 +35,12 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.timeline.ui.TimeDelta
+import com.tunjid.heron.ui.UiTokens.BookmarkBlue
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import heron.feature.notifications.generated.resources.Res
-import heron.feature.notifications.generated.resources.multiple_post_subscription
-import heron.feature.notifications.generated.resources.post_subscription
-import heron.feature.notifications.generated.resources.post_subscription_description
+import heron.ui.core.generated.resources.notifications_multiple_post_subscription
+import heron.ui.core.generated.resources.notifications_post_subscription
+import heron.ui.core.generated.resources.notifications_post_subscription_description
 import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
@@ -66,8 +67,8 @@ fun SubscribedRow(
         icon = {
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.FiberNew),
-                tint = Color.Red,
-                contentDescription = stringResource(Res.string.post_subscription_description),
+                tint = BookmarkBlue,
+                contentDescription = stringResource(CommonStrings.notifications_post_subscription_description),
             )
         },
         content = {
@@ -78,8 +79,8 @@ fun SubscribedRow(
                         text = notificationText(
                             notification = notification,
                             aggregatedSize = aggregatedProfiles.size,
-                            singularResource = Res.string.post_subscription,
-                            pluralResource = Res.string.multiple_post_subscription,
+                            singularResource = CommonStrings.notifications_post_subscription,
+                            pluralResource = CommonStrings.notifications_multiple_post_subscription,
                         ),
                     )
 

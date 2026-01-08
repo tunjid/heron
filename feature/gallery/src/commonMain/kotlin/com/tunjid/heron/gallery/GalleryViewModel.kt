@@ -72,6 +72,7 @@ class ActualGalleryViewModel(
     messageRepository: MessageRepository,
     postRepository: PostRepository,
     profileRepository: ProfileRepository,
+    userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
@@ -96,6 +97,9 @@ class ActualGalleryViewModel(
             ),
             recentConversationMutations(
                 messageRepository = messageRepository,
+            ),
+            loadPreferencesMutations(
+                userDataRepository = userDataRepository,
             ),
         ),
         actionTransform = transform@{ actions ->
@@ -141,6 +145,14 @@ private fun loadPostMutations(
             .mapToMutation { copy(post = it) },
     )
 }
+
+private fun loadPreferencesMutations(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    userDataRepository.preferences
+        .mapToMutation {
+            copy(preferences = it)
+        }
 
 fun recentConversationMutations(
     messageRepository: MessageRepository,

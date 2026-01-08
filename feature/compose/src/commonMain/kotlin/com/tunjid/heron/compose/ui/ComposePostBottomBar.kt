@@ -128,9 +128,7 @@ fun PostTextLimit(
     modifier: Modifier = Modifier,
     postText: TextFieldValue,
 ) {
-    val postByteCount = postText.text.codePointCount(0, postText.text.length)
-    val unboundedProgress = postByteCount / PostTextLimit.toFloat()
-
+    val postByteCount = postText.text.codePointCount()
     Row(
         modifier = modifier,
         horizontalArrangement = spacedBy(8.dp),
@@ -141,24 +139,36 @@ fun PostTextLimit(
             text = (PostTextLimit - postByteCount).toString(),
         )
 
-        val progress = min(1f, unboundedProgress)
-        val easing = remember { CubicBezierEasing(.42f, 0f, 1f, 0.58f) }
-
-        CircularProgressIndicator(
-            modifier = Modifier.requiredSize(24.dp),
-            progress = { progress },
-            strokeWidth = lerp(
-                start = 2.dp,
-                stop = 8.dp,
-                fraction = ((unboundedProgress - 1) * 4).coerceIn(0f, 1f),
-            ),
-            color = lerp(
-                start = MaterialTheme.colorScheme.primary,
-                stop = Color.Red,
-                fraction = easing.transform(progress),
-            ),
+        TextCircularProgress(
+            byteCount = postByteCount,
+            characterLimit = PostTextLimit,
         )
     }
+}
+
+@Composable
+fun TextCircularProgress(
+    byteCount: Int,
+    characterLimit: Int,
+) {
+    val unboundedProgress = byteCount / characterLimit.toFloat()
+    val progress = min(1f, unboundedProgress)
+    val easing = remember { CubicBezierEasing(.42f, 0f, 1f, 0.58f) }
+
+    CircularProgressIndicator(
+        modifier = Modifier.requiredSize(24.dp),
+        progress = { progress },
+        strokeWidth = lerp(
+            start = 2.dp,
+            stop = 8.dp,
+            fraction = ((unboundedProgress - 1) * 4).coerceIn(0f, 1f),
+        ),
+        color = lerp(
+            start = MaterialTheme.colorScheme.primary,
+            stop = Color.Red,
+            fraction = easing.transform(progress),
+        ),
+    )
 }
 
 private const val PostTextLimit = 300

@@ -16,7 +16,8 @@
 
 package com.tunjid.heron.data.core.models
 
-import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.BlockUri
+import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.ListId
 import kotlinx.serialization.Serializable
 
@@ -25,10 +26,10 @@ data class ProfileViewerState(
     val muted: Boolean?,
     val mutedByList: ListId?,
     val blockedBy: Boolean?,
-    val blocking: GenericUri?,
+    val blocking: BlockUri?,
     val blockingByList: ListId?,
-    val following: GenericUri?,
-    val followedBy: GenericUri?,
+    val following: FollowUri?,
+    val followedBy: FollowUri?,
     val commonFollowersCount: Long?,
 )
 

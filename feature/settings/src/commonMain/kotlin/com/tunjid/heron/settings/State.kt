@@ -37,6 +37,14 @@ sealed class Action(val key: String) {
         val refreshHomeTimelinesOnLaunch: Boolean,
     ) : Action(key = "SetRefreshHomeTimelinesOnLaunch")
 
+    data class SetDynamicThemingPreference(
+        val dynamicTheming: Boolean,
+    ) : Action(key = "SetDynamicThemingPreference")
+
+    data class SetCompactNavigation(
+        val compactNavigation: Boolean,
+    ) : Action(key = "SetCompactNavigation")
+
     data class SnackbarDismissed(
         val message: Memo,
     ) : Action(key = "SnackbarDismissed")

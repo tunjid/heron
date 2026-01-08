@@ -18,10 +18,16 @@ package com.tunjid.heron.data.utilities
 
 import androidx.collection.MutableObjectIntMap
 import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.logging.LogPriority
+import com.tunjid.heron.data.logging.logcat
+import com.tunjid.heron.data.logging.loggableText
+import com.tunjid.heron.data.network.NetworkConnectionException
 import com.tunjid.heron.data.network.NetworkMonitor
 import io.ktor.client.plugins.ResponseException
 import kotlin.jvm.JvmInline
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -32,7 +38,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.io.IOException
-import sh.christian.ozone.api.response.AtpResponse
 
 internal inline fun <R> runCatchingUnlessCancelled(block: () -> R): Result<R> {
     return try {
@@ -50,15 +55,25 @@ internal inline fun <R, T> Result<T>.mapCatchingUnlessCancelled(
     onSuccess = {
         runCatchingUnlessCancelled { transform(it) }
     },
-    onFailure = { Result.failure(it) },
+    onFailure = Result.Companion::failure,
 )
 
+internal inline fun <R, T> Result<T>.mapToResult(
+    transform: (value: T) -> Result<R>,
+): Result<R> = fold(
+    onSuccess = transform,
+    onFailure = Result.Companion::failure,
+)
+
+/**
+ * Catches network related exceptions and wraps them in a failure result.
+ */
 internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry(
-    times: Int,
-    initialDelay: Duration,
-    maxDelay: Duration,
-    factor: Double,
-    crossinline block: suspend () -> AtpResponse<T>,
+    times: Int = 3,
+    initialDelay: Duration = 100.milliseconds,
+    maxDelay: Duration = 4.seconds,
+    factor: Double = 2.0,
+    crossinline block: suspend () -> T,
 ): Result<T> = coroutineScope scope@{
     var connected = true
     // Monitor connection status async
@@ -69,26 +84,21 @@ internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry
     var lastError: Throwable? = null
     repeat(times) { retry ->
         try {
-            return@scope when (val atpResponse = block()) {
-                is AtpResponse.Failure -> Result.failure(
-                    AtProtoException(
-                        statusCode = atpResponse.statusCode.code,
-                        error = atpResponse.error?.error,
-                        message = atpResponse.error?.message,
-                    ),
-                )
-                is AtpResponse.Success -> Result.success(
-                    atpResponse.response,
-                )
-            }.also { connectivityJob.cancel() }
-        } catch (e: IOException) {
-            lastError = e
-            // TODO: Log this exception
-            e.printStackTrace()
-        } catch (e: ResponseException) {
-            lastError = e
-            // TODO: Log this exception
-            e.printStackTrace()
+            return@scope Result.success(block()).also { connectivityJob.cancel() }
+        } catch (e: Exception) {
+            when (e) {
+                is NetworkConnectionException,
+                is IOException,
+                is ResponseException,
+                -> {
+                    lastError = e
+                    logcat(LogPriority.VERBOSE) {
+                        "Network error on ${retry + 1} of $times retries. Cause:\n${e.loggableText()}"
+                    }
+                }
+
+                else -> throw e
+            }
         }
         if (retry != times) {
             if (connected) delay(currentDelay)
@@ -99,7 +109,9 @@ internal suspend inline fun <T : Any> NetworkMonitor.runCatchingWithNetworkRetry
     }
     // Cancel the connectivity job before returning
     connectivityJob.cancel()
-    // TODO: Be more descriptive with this error
+    logcat(LogPriority.WARN) {
+        "Exponential backoff failed after $times retries. Cause: ${lastError?.loggableText()} "
+    }
     return@scope Result.failure(lastError ?: Exception("There was an error")) // last attempt
 }
 
@@ -122,6 +134,19 @@ internal value class LazyList<T>(
     fun add(element: T): Boolean =
         lazyList.value.add(element)
 }
+
+internal inline fun <K, V> Map<K, V>.updateOrPutValue(
+    key: K,
+    update: V.() -> V,
+    put: () -> V? = { null },
+): Map<K, V> =
+    when (val existingValue = this[key]) {
+        null -> when (val newValue = put()) {
+            null -> this
+            else -> this + Pair(key, newValue)
+        }
+        else -> this + Pair(key, existingValue.update())
+    }
 
 internal inline fun <T> Iterable<T>.triage(
     crossinline firstPredicate: (T) -> Boolean,
@@ -169,19 +194,15 @@ internal inline fun <T, R, K> List<T>.sortedWithNetworkList(
 
 internal inline fun <T> Result<T>.toOutcome(
     onSuccess: (T) -> Unit = {},
-): Outcome = fold(
-    onSuccess = {
-        try {
-            onSuccess(it)
-            Outcome.Success
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Outcome.Failure(e)
-        }
-    },
-    onFailure = Outcome::Failure,
-)
+): Outcome = mapCatchingUnlessCancelled { value ->
+    if (value is Outcome.Failure) return@mapCatchingUnlessCancelled value
+    onSuccess(value)
+    Outcome.Success
+}
+    .fold(
+        onSuccess = { it },
+        onFailure = Outcome::Failure,
+    )
 
 internal class InvalidTokenException : Exception("Invalid tokens")
 

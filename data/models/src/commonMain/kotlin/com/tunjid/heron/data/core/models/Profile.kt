@@ -16,8 +16,9 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.BlockUri
+import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.GenericId
-import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
@@ -50,22 +51,59 @@ data class Profile(
     sealed class Connection {
         abstract val signedInProfileId: ProfileId
         abstract val profileId: ProfileId
-        abstract val followedBy: GenericUri?
+        abstract val followedBy: FollowUri?
 
         @Serializable
         data class Follow(
             override val signedInProfileId: ProfileId,
             override val profileId: ProfileId,
-            override val followedBy: GenericUri?,
+            override val followedBy: FollowUri?,
         ) : Connection()
 
         @Serializable
         data class Unfollow(
             override val signedInProfileId: ProfileId,
             override val profileId: ProfileId,
-            override val followedBy: GenericUri?,
-            val followUri: GenericUri,
+            override val followedBy: FollowUri?,
+            val followUri: FollowUri,
         ) : Connection()
+    }
+
+    @Serializable
+    sealed class Restriction {
+        abstract val signedInProfileId: ProfileId
+        abstract val profileId: ProfileId
+
+        @Serializable
+        sealed class Block : Restriction() {
+            @Serializable
+            data class Add(
+                override val signedInProfileId: ProfileId,
+                override val profileId: ProfileId,
+            ) : Block()
+
+            @Serializable
+            data class Remove(
+                override val signedInProfileId: ProfileId,
+                override val profileId: ProfileId,
+                val blockUri: BlockUri,
+            ) : Block()
+        }
+
+        @Serializable
+        sealed class Mute : Restriction() {
+            @Serializable
+            data class Add(
+                override val signedInProfileId: ProfileId,
+                override val profileId: ProfileId,
+            ) : Mute()
+
+            @Serializable
+            data class Remove(
+                override val signedInProfileId: ProfileId,
+                override val profileId: ProfileId,
+            ) : Mute()
+        }
     }
 
     @Serializable
@@ -73,6 +111,7 @@ data class Profile(
         val createdListCount: Long,
         val createdFeedGeneratorCount: Long,
         val createdStarterPackCount: Long,
+        val chat: ChatInfo,
     )
 
     @Serializable
@@ -115,6 +154,23 @@ data class Profile(
             }
         }
     }
+
+    @Serializable
+    data class ChatInfo(
+        val allowed: Allowed,
+    ) {
+        @Serializable
+        sealed class Allowed {
+            @Serializable
+            data object Everyone : Allowed()
+
+            @Serializable
+            data object Following : Allowed()
+
+            @Serializable
+            data object NoOne : Allowed()
+        }
+    }
 }
 
 @Serializable
@@ -147,6 +203,9 @@ fun stubProfile(
         createdListCount = 0,
         createdFeedGeneratorCount = 0,
         createdStarterPackCount = 0,
+        chat = Profile.ChatInfo(
+            allowed = Profile.ChatInfo.Allowed.NoOne,
+        ),
     ),
     labels = emptyList(),
     isLabeler = false,

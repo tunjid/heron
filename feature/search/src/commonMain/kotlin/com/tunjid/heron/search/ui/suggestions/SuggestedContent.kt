@@ -62,6 +62,7 @@ import com.tunjid.heron.data.core.models.Trend
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.search.ui.searchresults.avatarSharedElementKey
 import com.tunjid.heron.timeline.ui.feed.FeedGenerator
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
@@ -70,7 +71,6 @@ import com.tunjid.heron.timeline.utilities.roundComponent
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.feature.search.generated.resources.Res
 import heron.feature.search.generated.resources.discover_feeds
 import heron.feature.search.generated.resources.hot
@@ -86,7 +86,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun SuggestedContent(
     modifier: Modifier = Modifier,
-    movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneScaffoldState: PaneScaffoldState,
     trends: List<Trend>,
     suggestedProfiles: List<ProfileWithViewerState>,
     starterPacksWithMembers: List<SuggestedStarterPack>,
@@ -105,6 +105,7 @@ internal fun SuggestedContent(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = bottomNavAndInsetPaddingValues(
             top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+            isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),
     ) {
         item {
@@ -156,7 +157,7 @@ internal fun SuggestedContent(
                         }
                         .padding(horizontal = 16.dp)
                         .animateItem(),
-                    movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+                    movableElementSharedTransitionScope = paneScaffoldState,
                     signedInProfileId = null,
                     profile = profileWithViewerState.profile,
                     viewerState = profileWithViewerState.viewerState,
@@ -191,7 +192,7 @@ internal fun SuggestedContent(
                         .fillParentMaxWidth()
                         .padding(horizontal = 16.dp)
                         .animateItem(),
-                    movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+                    movableElementSharedTransitionScope = paneScaffoldState,
                     starterPackWithMembers = starterPackWithMember,
                     onListMemberClicked = onListMemberClicked,
                 )
@@ -224,7 +225,7 @@ internal fun SuggestedContent(
                             )
                         }
                         .animateItem(),
-                    movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+                    movableElementSharedTransitionScope = paneScaffoldState,
                     sharedElementPrefix = SuggestedFeedsSharedElementPrefix,
                     feedGenerator = feedGenerator,
                     status = when (timelineRecordUrisToPinnedStatus[feedGenerator.uri]) {
@@ -240,7 +241,11 @@ internal fun SuggestedContent(
             Spacer(
                 Modifier
                     .padding(WindowInsets.navigationBars.asPaddingValues())
-                    .height(UiTokens.bottomNavHeight),
+                    .height(
+                        UiTokens.bottomNavHeight(
+                            isCompact = paneScaffoldState.prefersCompactBottomNav,
+                        ),
+                    ),
             )
         }
     }

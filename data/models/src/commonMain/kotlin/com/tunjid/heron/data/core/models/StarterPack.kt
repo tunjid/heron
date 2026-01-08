@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.StarterPackId
 import com.tunjid.heron.data.core.types.StarterPackUri
 import kotlin.time.Instant
@@ -34,11 +35,14 @@ data class StarterPack(
     val indexedAt: Instant,
     val labels: List<Label>,
 ) : UrlEncodableModel,
-    Record.Post {
+    Record.Embeddable {
 
     override val reference: Record.Reference =
         Record.Reference(
             id = cid,
             uri = uri,
         )
+
+    override val embeddableRecordUri: EmbeddableRecordUri
+        get() = uri
 }

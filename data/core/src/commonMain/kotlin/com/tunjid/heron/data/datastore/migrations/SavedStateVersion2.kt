@@ -16,9 +16,11 @@
 
 package com.tunjid.heron.data.datastore.migrations
 
+import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.SavedState
+import com.tunjid.heron.data.utilities.updateOrPutValue
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
@@ -41,31 +43,31 @@ internal class SavedStateVersion2(
     ): VersionedSavedState =
         VersionedSavedState(
             version = currentVersion,
-            auth = when (auth) {
-                is AuthTokensV2.Authenticated.Bearer -> SavedState.AuthTokens.Authenticated.Bearer(
-                    authProfileId = auth.authProfileId,
-                    auth = auth.auth,
-                    refresh = auth.refresh,
-                    didDoc = auth.didDoc,
-                    authEndpoint = Server.BlueSky.endpoint,
+            navigation = navigation,
+            profileData = when (val currentAuth = auth) {
+                is AuthTokensV2.Authenticated.Bearer -> profileData.updateOrPutValue(
+                    key = currentAuth.authProfileId,
+                    update = { copy(auth = currentAuth.asAuthTokens()) },
+                    put = { SavedState.ProfileData.fromTokens(auth = currentAuth.asAuthTokens()) },
                 )
-                is AuthTokensV2.Authenticated.DPoP -> SavedState.AuthTokens.Authenticated.DPoP(
-                    authProfileId = auth.authProfileId,
-                    auth = auth.auth,
-                    refresh = auth.refresh,
-                    pdsUrl = auth.pdsUrl,
-                    clientId = auth.clientId,
-                    nonce = auth.nonce,
-                    keyPair = auth.keyPair,
-                    issuerEndpoint = Server.BlueSky.endpoint,
+                is AuthTokensV2.Authenticated.DPoP -> profileData.updateOrPutValue(
+                    key = currentAuth.authProfileId,
+                    update = { copy(auth = currentAuth.asAuthTokens()) },
+                    put = { SavedState.ProfileData.fromTokens(auth = currentAuth.asAuthTokens()) },
                 )
-                AuthTokensV2.Guest -> SavedState.AuthTokens.Guest(
-                    server = Server.BlueSky,
-                )
+                AuthTokensV2.Guest,
+                null,
+                -> profileData
+            } + Pair(
+                Constants.guestProfileId,
+                SavedState.ProfileData.defaultGuestData,
+            ),
+            activeProfileId = when (val currentAuth = auth) {
+                is AuthTokensV2.Authenticated.Bearer -> currentAuth.authProfileId
+                is AuthTokensV2.Authenticated.DPoP -> currentAuth.authProfileId
+                AuthTokensV2.Guest -> Constants.guestProfileId
                 null -> null
             },
-            navigation = navigation,
-            profileData = profileData,
         )
 
     @Serializable
@@ -105,5 +107,28 @@ internal class SavedStateVersion2(
 
     companion object {
         const val SnapshotVersion = 2
+
+        private fun AuthTokensV2.asAuthTokens() = when (this) {
+            is AuthTokensV2.Authenticated.Bearer -> SavedState.AuthTokens.Authenticated.Bearer(
+                authProfileId = authProfileId,
+                auth = auth,
+                refresh = refresh,
+                didDoc = didDoc,
+                authEndpoint = Server.BlueSky.endpoint,
+            )
+            is AuthTokensV2.Authenticated.DPoP -> SavedState.AuthTokens.Authenticated.DPoP(
+                authProfileId = authProfileId,
+                auth = auth,
+                refresh = refresh,
+                pdsUrl = pdsUrl,
+                clientId = clientId,
+                nonce = nonce,
+                keyPair = keyPair,
+                issuerEndpoint = Server.BlueSky.endpoint,
+            )
+            AuthTokensV2.Guest -> SavedState.AuthTokens.Guest(
+                server = Server.BlueSky,
+            )
+        }
     }
 }

@@ -219,7 +219,7 @@ internal fun SearchScreen(
                 modifier = modifier
                     .fillMaxSize()
                     .padding(top = 16.dp),
-                movableElementSharedTransitionScope = paneScaffoldState,
+                paneScaffoldState = paneScaffoldState,
                 trends = state.trends,
                 suggestedProfiles = state.categoriesToSuggestedProfiles[state.suggestedProfileCategory]
                     ?: emptyList(),

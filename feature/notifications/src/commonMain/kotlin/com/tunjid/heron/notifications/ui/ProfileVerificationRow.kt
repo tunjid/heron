@@ -31,11 +31,11 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.timeline.ui.TimeDelta
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import heron.feature.notifications.generated.resources.Res
-import heron.feature.notifications.generated.resources.account_unverified
-import heron.feature.notifications.generated.resources.account_verified
-import heron.feature.notifications.generated.resources.joined_from_your_started_pack_description
+import heron.ui.core.generated.resources.notifications_account_unverified
+import heron.ui.core.generated.resources.notifications_account_verified
+import heron.ui.core.generated.resources.notifications_joined_from_your_started_pack_description
 import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
@@ -63,7 +63,10 @@ fun ProfileVerificationRow(
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.Person),
                 tint = MaterialTheme.colorScheme.primary,
-                contentDescription = stringResource(Res.string.joined_from_your_started_pack_description),
+                contentDescription = stringResource(
+                    if (isVerified) CommonStrings.notifications_account_verified
+                    else CommonStrings.notifications_account_unverified,
+                ),
             )
         },
         content = {
@@ -71,8 +74,8 @@ fun ProfileVerificationRow(
                 Text(
                     modifier = Modifier.alignByBaseline(),
                     text = stringResource(
-                        if (isVerified) Res.string.account_verified
-                        else Res.string.account_unverified,
+                        if (isVerified) CommonStrings.notifications_account_verified
+                        else CommonStrings.notifications_account_unverified,
                     ),
                 )
                 TimeDelta(

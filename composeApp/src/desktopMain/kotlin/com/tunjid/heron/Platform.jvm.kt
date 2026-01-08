@@ -18,8 +18,10 @@ package com.tunjid.heron
 
 import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataBindingArgs
+import com.tunjid.heron.data.logging.JvmLogger
 import com.tunjid.heron.images.imageLoader
 import com.tunjid.heron.media.video.StubVideoPlayerController
+import com.tunjid.heron.scaffold.notifications.NoOpNotifier
 import com.tunjid.heron.scaffold.scaffold.AppState
 import dev.jordond.connectivity.Connectivity
 import java.io.File
@@ -36,6 +38,12 @@ actual fun getPlatform(): Platform = JVMPlatform()
 fun createAppState(): AppState =
     createAppState(
         imageLoader = ::imageLoader,
+        notifier = {
+            NoOpNotifier
+        },
+        logger = {
+            JvmLogger()
+        },
         videoPlayerController = {
             StubVideoPlayerController
         },

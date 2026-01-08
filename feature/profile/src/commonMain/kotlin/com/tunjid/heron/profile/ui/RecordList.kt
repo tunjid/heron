@@ -38,6 +38,7 @@ import com.tunjid.tiler.compose.PivotedTilingEffect
 @Composable
 internal fun <T : Record> RecordList(
     collectionStateHolder: ProfileScreenStateHolders.Records<T>,
+    prefersCompactBottomNav: Boolean,
     itemKey: (T) -> Any,
     itemContent: @Composable (LazyItemScope.(T) -> Unit),
 ) {
@@ -51,6 +52,7 @@ internal fun <T : Record> RecordList(
         state = listState,
         contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
             horizontal = 8.dp,
+            isCompact = prefersCompactBottomNav,
         ),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {

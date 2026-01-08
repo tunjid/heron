@@ -111,7 +111,7 @@ data class PopulatedMessageEntity(
 )
 
 fun PopulatedMessageEntity.asExternalModel(
-    embeddedRecord: Record? = null,
+    embeddedRecord: Record.Embeddable? = null,
 ) = Message(
     id = entity.id,
     conversationId = entity.conversationId,

@@ -33,17 +33,39 @@ sealed interface Uri {
 @Serializable
 sealed interface RecordUri : Uri
 
+@Serializable
+sealed interface EmbeddableRecordUri : RecordUri
+
 /**
  * Extracts the [ProfileId] component from an AT URI string.
  */
 fun RecordUri.profileId(): ProfileId =
-    ProfileId(requireNotNull(uri.toAtUriComponentsOrNull()).authority)
+    requireNotNull(
+        uri.atUriComponents { authorityRange, _, _ ->
+            ProfileId(uri.substring(authorityRange.start, authorityRange.endExclusive))
+        },
+    )
 
-val RecordUri.recordKey
-    get() = RecordKey(requireNotNull(uri.toAtUriComponentsOrNull()).rkey)
+fun RecordUri.requireCollection(): String =
+    when (this) {
+        is FeedGeneratorUri -> FeedGeneratorUri.NAMESPACE
+        is LabelerUri -> LabelerUri.NAMESPACE
+        is ListUri -> ListUri.NAMESPACE
+        is PostUri -> PostUri.NAMESPACE
+        is StarterPackUri -> StarterPackUri.NAMESPACE
+        is FollowUri -> FollowUri.NAMESPACE
+        is LikeUri -> LikeUri.NAMESPACE
+        is RepostUri -> RepostUri.NAMESPACE
+        is BlockUri -> BlockUri.NAMESPACE
+        is UnknownRecordUri -> throw UnresolvableRecordException(this)
+    }
 
-fun GenericUri.recordKeyOrNull() =
-    uri.toAtUriComponentsOrNull()?.rkey?.let(::RecordKey)
+val RecordUri.recordKey: RecordKey
+    get() = requireNotNull(
+        uri.atUriComponents { _, _, rKeyRange ->
+            RecordKey(uri.substring(rKeyRange.start, rKeyRange.endExclusive))
+        },
+    )
 
 val Uri.domain get() = Url(uri).host.removePrefix("www.")
 
@@ -52,7 +74,8 @@ val Uri.domain get() = Url(uri).host.removePrefix("www.")
 value class PostUri(
     override val uri: String,
 ) : Uri,
-    RecordUri {
+    RecordUri,
+    EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -78,7 +101,8 @@ value class ProfileUri(
 value class FeedGeneratorUri(
     override val uri: String,
 ) : Uri,
-    RecordUri {
+    RecordUri,
+    EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -91,7 +115,8 @@ value class FeedGeneratorUri(
 value class ListUri(
     override val uri: String,
 ) : Uri,
-    RecordUri {
+    RecordUri,
+    EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -104,7 +129,8 @@ value class ListUri(
 value class StarterPackUri(
     override val uri: String,
 ) : Uri,
-    RecordUri {
+    RecordUri,
+    EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -117,12 +143,74 @@ value class StarterPackUri(
 value class LabelerUri(
     override val uri: String,
 ) : Uri,
-    RecordUri {
+    RecordUri,
+    EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
         const val NAMESPACE = "app.bsky.labeler.service"
     }
+}
+
+@Serializable
+@JvmInline
+value class LikeUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.bsky.feed.like"
+    }
+}
+
+@Serializable
+@JvmInline
+value class RepostUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.bsky.feed.repost"
+    }
+}
+
+@Serializable
+@JvmInline
+value class FollowUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.bsky.graph.follow"
+    }
+}
+
+@Serializable
+@JvmInline
+value class BlockUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.bsky.graph.block"
+    }
+}
+
+@Serializable
+@JvmInline
+value class UnknownRecordUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
 }
 
 @Serializable
@@ -175,66 +263,116 @@ value class FileUri(
 fun Uri.asRecordUriOrNull(): RecordUri? = uri.asRecordUriOrNull()
 
 /**
+ * Returns this [Uri] as a [RecordUri] if applicable.
+ */
+fun Uri.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? = uri.asEmbeddableRecordUriOrNull()
+
+/**
  * Parses a string into a specific [RecordUri] object based on its collection.
  *
  * @receiver The string to parse.
  * @return A specific [RecordUri] (e.g., [FeedGeneratorUri], [ListUri], e.t.c)
  * if parsing is successful, or `null` if the string is not a valid AT URI.
  */
-fun String.asRecordUriOrNull(): RecordUri? {
-    // We must validate the string and parse components first.
-    // If components are null, the string was invalid, so return null.
-    val components = this.toAtUriComponentsOrNull() ?: return null
-
-    // We know 'this' is not null here because toAtUriComponentsOrNull would have returned null.
-    return when (components.collection) {
+fun String.asRecordUriOrNull(): RecordUri? = atUriComponents { _, collectionRange, _ ->
+    when (substring(collectionRange.start, collectionRange.endExclusive)) {
         PostUri.NAMESPACE -> PostUri(this)
         FeedGeneratorUri.NAMESPACE -> FeedGeneratorUri(this)
         ListUri.NAMESPACE -> ListUri(this)
         StarterPackUri.NAMESPACE -> StarterPackUri(this)
         LabelerUri.NAMESPACE -> LabelerUri(this)
-        else -> null
+        LikeUri.NAMESPACE -> LikeUri(this)
+        RepostUri.NAMESPACE -> RepostUri(this)
+        FollowUri.NAMESPACE -> FollowUri(this)
+        BlockUri.NAMESPACE -> BlockUri(this)
+        else -> UnknownRecordUri(this)
     }
 }
 
+fun String.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? =
+    atUriComponents { _, collectionRange, _ ->
+        when (substring(collectionRange.start, collectionRange.endExclusive)) {
+            PostUri.NAMESPACE -> PostUri(this)
+            FeedGeneratorUri.NAMESPACE -> FeedGeneratorUri(this)
+            ListUri.NAMESPACE -> ListUri(this)
+            StarterPackUri.NAMESPACE -> StarterPackUri(this)
+            LabelerUri.NAMESPACE -> LabelerUri(this)
+            else -> null
+        }
+    }
+
 /**
- * Internal function to parse a string into its raw components.
+ * Parses an AT URI string into its components without using Regex or intermediate data classes.
  *
- * @receiver The string to parse.
- * @return An [AtUriComponents] data class if parsing is successful, or `null`.
+ * Format expected: at://{authority}/{collection}/{rkey}
+ * Example: at://did:plc:12345/app.bsky.feed.post/98765
+ *
+ * @param action A lambda to consume the parsed parts.
+ * @return The result of [action] if parsing is successful, or `null` if the format is invalid.
  */
-private fun String?.toAtUriComponentsOrNull(): AtUriComponents? {
-    // Check for null or blank string
-    if (this.isNullOrBlank()) {
-        return null
-    }
+private inline fun <T> String.atUriComponents(
+    action: (authorityRange: StringRange, collectionRange: StringRange, rKeyRange: StringRange) -> T,
+): T? {
+    // 1. Validate Prefix "at://"
+    if (!this.startsWith(Uri.Host.AtProto.prefix)) return null
 
-    // Use matchEntire to ensure the whole string matches the regex
-    val match = AT_URI_REGEX.matchEntire(this) ?: return null
+    val authorityStart = 5
+    val length = this.length
 
-    // Regex groups are 1-indexed. Group 0 is the full match.
-    // We expect 4 groups total: [full_match, authority, collection, rkey]
-    if (match.groupValues.size != 4) {
-        return null
-    }
+    // 2. Find the first separator '/' after authority
+    // returns -1 if not found
+    val firstSlashIndex = this.indexOf('/', startIndex = authorityStart)
 
-    return AtUriComponents(
-        authority = match.groupValues[1],
-        collection = match.groupValues[2],
-        rkey = match.groupValues[3],
+    // Validation:
+    // - Must have a slash
+    // - Slash cannot be immediately after prefix (would mean empty authority)
+    if (firstSlashIndex <= authorityStart) return null
+
+    // 3. Find the second separator '/' after collection
+    val secondSlashIndex = this.indexOf('/', startIndex = firstSlashIndex + 1)
+
+    // Validation:
+    // - Must have a second slash
+    // - Second slash cannot be immediately after first slash (would mean empty collection)
+    if (secondSlashIndex <= firstSlashIndex + 1) return null
+
+    // 4. Validate rKey (must not be empty)
+    if (secondSlashIndex + 1 >= length) return null
+
+    // 5. Extract components
+    return action(
+        StringRange(authorityStart, firstSlashIndex),
+        StringRange(firstSlashIndex + 1, secondSlashIndex),
+        StringRange(secondSlashIndex + 1, length),
     )
 }
 
-/**
- * An internal data class to hold the structured components of a parsed AT URI.
- * This is used by the extension functions to avoid parsing multiple times.
- */
-private data class AtUriComponents(
-    val authority: String,
-    val collection: String,
-    val rkey: String,
+@JvmInline
+private value class StringRange(
+    val packed: Long,
 )
 
-// Regex to validate and capture the three main parts of an AT URI.
-// at://[authority]/[collection]/[rkey]
-private val AT_URI_REGEX = "^at://([^/]+)/([^/]+)/(.+)$".toRegex()
+private fun StringRange(
+    start: Int,
+    endExclusive: Int,
+) = StringRange(
+    packed = packInts(start, endExclusive),
+)
+
+private val StringRange.start
+    get() = unpackInt1(packed)
+
+private val StringRange.endExclusive
+    get() = unpackInt2(packed)
+
+private fun packInts(val1: Int, val2: Int): Long {
+    return (val1.toLong() shl 32) or (val2.toLong() and 0xFFFFFFFF)
+}
+
+private fun unpackInt1(value: Long): Int {
+    return (value shr 32).toInt()
+}
+
+private fun unpackInt2(value: Long): Int {
+    return (value and 0xFFFFFFFF).toInt()
+}
