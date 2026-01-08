@@ -26,6 +26,7 @@ import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.PostDataQuery
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.UserDataRepository
+import com.tunjid.heron.data.repository.readPreferences
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -76,6 +77,7 @@ class ActualPostsViewModel(
     navActions: (NavigationMutation) -> Unit,
     postsRepository: PostRepository,
     messageRepository: MessageRepository,
+    userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
@@ -108,6 +110,9 @@ class ActualPostsViewModel(
         inputs = listOf(
             recentConversationMutations(
                 messageRepository = messageRepository,
+            ),
+            loadPreferencesMutations(
+                userDataRepository = userDataRepository,
             ),
         ),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
@@ -166,6 +171,14 @@ private fun recentConversationMutations(
     messageRepository.recentConversations()
         .mapToMutation { conversations ->
             copy(recentConversations = conversations)
+        }
+
+private fun loadPreferencesMutations(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    userDataRepository.readPreferences()
+        .mapToMutation {
+            copy(preferences = it)
         }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(

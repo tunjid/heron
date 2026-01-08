@@ -23,6 +23,7 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
+import com.tunjid.heron.data.repository.readPreferences
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -193,10 +194,10 @@ fun recentConversationMutations(
 private fun loadPreferencesMutations(
     userDataRepository: UserDataRepository,
 ): Flow<Mutation<State>> =
-    userDataRepository.preferences
+    userDataRepository.readPreferences()
         .mapToMutation {
-        copy(preferences = it)
-    }
+            copy(preferences = it)
+        }
 
 private fun Flow<Action.UpdatePageWithUpdates>.pageWithUpdateMutations(): Flow<Mutation<State>> =
     mapToMutation { (sourceId, hasUpdates) ->

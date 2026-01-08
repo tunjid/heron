@@ -26,6 +26,7 @@ import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.UserDataRepository
+import com.tunjid.heron.data.repository.readPreferences
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -149,7 +150,7 @@ private fun loadPostMutations(
 private fun loadPreferencesMutations(
     userDataRepository: UserDataRepository,
 ): Flow<Mutation<State>> =
-    userDataRepository.preferences
+    userDataRepository.readPreferences()
         .mapToMutation {
             copy(preferences = it)
         }
