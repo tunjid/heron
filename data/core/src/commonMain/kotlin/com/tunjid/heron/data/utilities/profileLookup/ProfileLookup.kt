@@ -28,6 +28,8 @@ import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.UnresolvableProfileException
+import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
@@ -36,10 +38,9 @@ import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.profile
 import com.tunjid.heron.data.network.models.profileViewerStateEntities
-import com.tunjid.heron.data.repository.SavedStateDataSource
-import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import com.tunjid.heron.data.utilities.toOutcome
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -62,6 +63,19 @@ internal interface ProfileLookup {
         responseProfileViews: NetworkResponse.() -> List<ProfileView>,
         responseCursor: NetworkResponse.() -> String?,
     ): Flow<CursorList<ProfileWithViewerState>>
+
+    suspend fun lookupProfileDid(
+        profileId: Id.Profile,
+    ): Did?
+
+    suspend fun resolveProfileHandleLinks(
+        links: List<Link>,
+    ): List<Link>
+
+    suspend fun refreshProfile(
+        signedInProfileId: ProfileId?,
+        profileId: Id.Profile,
+    ): Outcome
 }
 
 internal class OfflineProfileLookup @Inject constructor(
@@ -123,149 +137,137 @@ internal class OfflineProfileLookup @Inject constructor(
                 },
         )
     }
-}
 
-internal suspend fun lookupProfileDid(
-    profileId: Id.Profile,
-    profileDao: ProfileDao,
-    networkService: NetworkService,
-): Did? {
-    val profileHandleOrId = profileId.id
-    return when {
-        Did.Regex.matches(profileHandleOrId) -> Did(profileHandleOrId)
-        Handle.Regex.matches(profileHandleOrId) -> profileDao.profiles(
-            ids = listOf(ProfileHandleOrId(profileHandleOrId)),
-        )
-            .first()
-            .takeIf(List<PopulatedProfileEntity>::isNotEmpty)
-            ?.first()
-            ?.entity
-            ?.did
-            ?.id
-            ?.let(::Did)
-            ?: networkService.runCatchingWithMonitoredNetworkRetry {
-                resolveHandle(
-                    params = ResolveHandleQueryParams(
-                        Handle(profileHandleOrId),
-                    ),
-                )
-            }
-                .getOrNull()
+    override suspend fun lookupProfileDid(
+        profileId: Id.Profile,
+    ): Did? {
+        val profileHandleOrId = profileId.id
+        return when {
+            Did.Regex.matches(profileHandleOrId) -> Did(profileHandleOrId)
+            Handle.Regex.matches(profileHandleOrId) -> profileDao.profiles(
+                ids = listOf(ProfileHandleOrId(profileHandleOrId)),
+            )
+                .first()
+                .takeIf(List<PopulatedProfileEntity>::isNotEmpty)
+                ?.first()
+                ?.entity
                 ?.did
-
-        else -> null
+                ?.id
+                ?.let(::Did)
+                ?: networkService.runCatchingWithMonitoredNetworkRetry {
+                    resolveHandle(
+                        params = ResolveHandleQueryParams(
+                            Handle(profileHandleOrId),
+                        ),
+                    )
+                }
+                    .getOrNull()
+                    ?.did
+            else -> null
+        }
     }
-}
 
-internal suspend fun resolveLinks(
-    profileDao: ProfileDao,
-    networkService: NetworkService,
-    links: List<Link>,
-): List<Link> =
-    coroutineScope {
-        links.map { link ->
-            async {
-                when (val target = link.target) {
-                    is LinkTarget.ExternalLink -> link
-                    is LinkTarget.UserDidMention -> link
-                    is LinkTarget.Hashtag -> link
-                    is LinkTarget.UserHandleMention -> {
-                        lookupProfileDid(
-                            profileId = target.handle,
-                            profileDao = profileDao,
-                            networkService = networkService,
-                        )?.let { did ->
-                            link.copy(
-                                target = LinkTarget.UserDidMention(did.did.let(::ProfileId)),
-                            )
+    override suspend fun resolveProfileHandleLinks(
+        links: List<Link>,
+    ): List<Link> =
+        coroutineScope {
+            links.map { link ->
+                async {
+                    when (val target = link.target) {
+                        is LinkTarget.ExternalLink -> link
+                        is LinkTarget.UserDidMention -> link
+                        is LinkTarget.Hashtag -> link
+                        // Drop unresolvable handles deliberately.
+                        is LinkTarget.UserHandleMention -> {
+                            lookupProfileDid(
+                                profileId = target.handle,
+                            )?.let { did ->
+                                link.copy(
+                                    target = LinkTarget.UserDidMention(did.did.let(::ProfileId)),
+                                )
+                            }
                         }
                     }
                 }
-            }
-        }.awaitAll()
-    }.filterNotNull()
+            }.awaitAll()
+        }.filterNotNull()
 
-internal suspend fun refreshProfile(
-    profileId: Id.Profile,
-    profileDao: ProfileDao,
-    networkService: NetworkService,
-    multipleEntitySaverProvider: MultipleEntitySaverProvider,
-    savedStateDataSource: SavedStateDataSource,
-) = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-    val profileDid = lookupProfileDid(
-        profileId = profileId,
-        profileDao = profileDao,
-        networkService = networkService,
-    ) ?: return@inCurrentProfileSession
+    override suspend fun refreshProfile(
+        signedInProfileId: ProfileId?,
+        profileId: Id.Profile,
+    ): Outcome {
+        val profileDid = lookupProfileDid(
+            profileId = profileId,
+        ) ?: return Outcome.Failure(UnresolvableProfileException(profileId))
 
-    networkService.runCatchingWithMonitoredNetworkRetry {
-        getProfile(GetProfileQueryParams(actor = profileDid))
-    }
-        .getOrNull()
-        ?.let { response ->
-            multipleEntitySaverProvider.saveInTransaction {
-                add(
-                    viewingProfileId = signedInProfileId,
-                    profileView = response,
-                )
-            }
+        return networkService.runCatchingWithMonitoredNetworkRetry {
+            getProfile(GetProfileQueryParams(actor = profileDid))
         }
-}
-
-private inline fun <ProfileViewType> List<ProfileViewType>.toProfileWithViewerStates(
-    signedInProfileId: ProfileId?,
-    crossinline profileMapper: ProfileViewType.() -> Profile,
-    crossinline profileViewerStateEntities: ProfileViewType.(ProfileId) -> List<ProfileViewerStateEntity>,
-): List<ProfileWithViewerState> = map { profileView ->
-    ProfileWithViewerState(
-        profile = profileView.profileMapper(),
-        viewerState =
-        if (signedInProfileId == null) null
-        else profileView.profileViewerStateEntities(
-            signedInProfileId,
-        )
-            .first()
-            .asExternalModel(),
-    )
-}
-
-private inline fun <ProfileViewType> List<ProfileViewType>.observeProfileWithViewerStates(
-    profileDao: ProfileDao,
-    signedInProfileId: ProfileId?,
-    crossinline profileMapper: ProfileViewType.() -> Profile,
-    crossinline idMapper: ProfileViewType.() -> ProfileId,
-): Flow<List<ProfileWithViewerState>> {
-    val profileViews = this
-    return when (signedInProfileId) {
-        null -> flowOf(
-            map { profileView ->
-                ProfileWithViewerState(
-                    profile = profileView.profileMapper(),
-                    viewerState = null,
-                )
-            },
-        )
-
-        else -> profileDao.viewerState(
-            profileId = signedInProfileId.id,
-            otherProfileIds = mapTo(
-                destination = mutableSetOf(),
-                transform = idMapper,
-            ),
-        )
-            .distinctUntilChanged()
-            .map { viewerStates ->
-                val profileIdsToViewerStates = viewerStates.associateBy(
-                    ProfileViewerStateEntity::otherProfileId,
-                )
-
-                profileViews.map { profileViewBasic ->
-                    val profile = profileViewBasic.profileMapper()
-                    ProfileWithViewerState(
-                        profile = profile,
-                        viewerState = profileIdsToViewerStates[profile.did]?.asExternalModel(),
+            .toOutcome { response ->
+                multipleEntitySaverProvider.saveInTransaction {
+                    add(
+                        viewingProfileId = signedInProfileId,
+                        profileView = response,
                     )
                 }
             }
+    }
+
+    private inline fun <ProfileViewType> List<ProfileViewType>.toProfileWithViewerStates(
+        signedInProfileId: ProfileId?,
+        crossinline profileMapper: ProfileViewType.() -> Profile,
+        crossinline profileViewerStateEntities: ProfileViewType.(ProfileId) -> List<ProfileViewerStateEntity>,
+    ): List<ProfileWithViewerState> = map { profileView ->
+        ProfileWithViewerState(
+            profile = profileView.profileMapper(),
+            viewerState =
+            if (signedInProfileId == null) null
+            else profileView.profileViewerStateEntities(
+                signedInProfileId,
+            )
+                .first()
+                .asExternalModel(),
+        )
+    }
+
+    private inline fun <ProfileViewType> List<ProfileViewType>.observeProfileWithViewerStates(
+        profileDao: ProfileDao,
+        signedInProfileId: ProfileId?,
+        crossinline profileMapper: ProfileViewType.() -> Profile,
+        crossinline idMapper: ProfileViewType.() -> ProfileId,
+    ): Flow<List<ProfileWithViewerState>> {
+        val profileViews = this
+        return when (signedInProfileId) {
+            null -> flowOf(
+                map { profileView ->
+                    ProfileWithViewerState(
+                        profile = profileView.profileMapper(),
+                        viewerState = null,
+                    )
+                },
+            )
+
+            else -> profileDao.viewerState(
+                profileId = signedInProfileId.id,
+                otherProfileIds = mapTo(
+                    destination = mutableSetOf(),
+                    transform = idMapper,
+                ),
+            )
+                .distinctUntilChanged()
+                .map { viewerStates ->
+                    val profileIdsToViewerStates = viewerStates.associateBy(
+                        ProfileViewerStateEntity::otherProfileId,
+                    )
+
+                    profileViews.map { profileViewBasic ->
+                        val profile = profileViewBasic.profileMapper()
+                        ProfileWithViewerState(
+                            profile = profile,
+                            viewerState = profileIdsToViewerStates[profile.did]?.asExternalModel(),
+                        )
+                    }
+                }
+        }
     }
 }

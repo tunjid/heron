@@ -79,8 +79,6 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
-import com.tunjid.heron.data.utilities.profileLookup.lookupProfileDid
-import com.tunjid.heron.data.utilities.profileLookup.refreshProfile
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
@@ -92,9 +90,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.serialization.Serializable
@@ -194,19 +190,18 @@ internal class OfflineProfileRepository @Inject constructor(
     override fun profile(
         profileId: Id.Profile,
     ): Flow<Profile> =
-        profileDao.profiles(listOf(profileId))
-            .distinctUntilChanged()
-            .mapNotNull { it.firstOrNull()?.asExternalModel() }
-            .withRefresh {
-                refreshProfile(
-                    profileId = profileId,
-                    profileDao = profileDao,
-                    networkService = networkService,
-                    multipleEntitySaverProvider = multipleEntitySaverProvider,
-                    savedStateDataSource = savedStateDataSource,
-                )
-            }
-            .distinctUntilChanged()
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            profileDao.profiles(listOf(profileId))
+                .distinctUntilChanged()
+                .mapNotNull { it.firstOrNull()?.asExternalModel() }
+                .withRefresh {
+                    profileLookup.refreshProfile(
+                        signedInProfileId = signedInProfileId,
+                        profileId = profileId,
+                    )
+                }
+                .distinctUntilChanged()
+        }
 
     override fun profileRelationships(
         profileIds: Set<Id.Profile>,
@@ -227,10 +222,8 @@ internal class OfflineProfileRepository @Inject constructor(
         limit: Long,
     ): Flow<List<Profile>> =
         savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
-            val otherProfileResolvedId = lookupProfileDid(
+            val otherProfileResolvedId = profileLookup.lookupProfileDid(
                 profileId = otherProfileId,
-                profileDao = profileDao,
-                networkService = networkService,
             )?.did ?: return@singleAuthorizedSessionFlow emptyFlow()
 
             profileDao.commonFollowers(
@@ -293,10 +286,8 @@ internal class OfflineProfileRepository @Inject constructor(
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            val profileDid = lookupProfileDid(
+            val profileDid = profileLookup.lookupProfileDid(
                 profileId = query.profileId,
-                profileDao = profileDao,
-                networkService = networkService,
             ) ?: return@singleSessionFlow emptyFlow()
 
             profileLookup.profilesWithViewerState(
@@ -324,10 +315,8 @@ internal class OfflineProfileRepository @Inject constructor(
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            val profileDid = lookupProfileDid(
+            val profileDid = profileLookup.lookupProfileDid(
                 profileId = query.profileId,
-                profileDao = profileDao,
-                networkService = networkService,
             ) ?: return@singleSessionFlow emptyFlow()
 
             profileLookup.profilesWithViewerState(
@@ -353,14 +342,12 @@ internal class OfflineProfileRepository @Inject constructor(
     override fun starterPacks(
         query: ProfilesQuery,
         cursor: Cursor,
-    ): Flow<CursorList<StarterPack>> = flow {
-        val profileDid = lookupProfileDid(
-            profileId = query.profileId,
-            profileDao = profileDao,
-            networkService = networkService,
-        ) ?: return@flow
+    ): Flow<CursorList<StarterPack>> =
+        savedStateDataSource.singleSessionFlow {
+            val profileDid = profileLookup.lookupProfileDid(
+                profileId = query.profileId,
+            ) ?: return@singleSessionFlow emptyFlow()
 
-        emitAll(
             combine(
                 starterPackDao.profileStarterPacks(
                     creatorId = profileDid.did,
@@ -390,21 +377,18 @@ internal class OfflineProfileRepository @Inject constructor(
                 ),
                 ::CursorList,
             )
-                .distinctUntilChanged(),
-        )
-    }
+                .distinctUntilChanged()
+        }
 
     override fun lists(
         query: ProfilesQuery,
         cursor: Cursor,
-    ): Flow<CursorList<FeedList>> = flow {
-        val profileDid = lookupProfileDid(
-            profileId = query.profileId,
-            profileDao = profileDao,
-            networkService = networkService,
-        ) ?: return@flow
+    ): Flow<CursorList<FeedList>> =
+        savedStateDataSource.singleSessionFlow {
+            val profileDid = profileLookup.lookupProfileDid(
+                profileId = query.profileId,
+            ) ?: return@singleSessionFlow emptyFlow()
 
-        emitAll(
             combine(
                 listDao.profileLists(
                     creatorId = profileDid.did,
@@ -434,21 +418,18 @@ internal class OfflineProfileRepository @Inject constructor(
                 ),
                 ::CursorList,
             )
-                .distinctUntilChanged(),
-        )
-    }
+                .distinctUntilChanged()
+        }
 
     override fun feedGenerators(
         query: ProfilesQuery,
         cursor: Cursor,
-    ): Flow<CursorList<FeedGenerator>> = flow {
-        val profileDid = lookupProfileDid(
-            profileId = query.profileId,
-            profileDao = profileDao,
-            networkService = networkService,
-        ) ?: return@flow
+    ): Flow<CursorList<FeedGenerator>> =
+        savedStateDataSource.singleSessionFlow {
+            val profileDid = profileLookup.lookupProfileDid(
+                profileId = query.profileId,
+            ) ?: return@singleSessionFlow emptyFlow()
 
-        emitAll(
             combine(
                 feedGeneratorDao.profileFeedGenerators(
                     creatorId = profileDid.did,
@@ -478,9 +459,8 @@ internal class OfflineProfileRepository @Inject constructor(
                 ),
                 ::CursorList,
             )
-                .distinctUntilChanged(),
-        )
-    }
+                .distinctUntilChanged()
+        }
 
     override suspend fun sendConnection(
         connection: Profile.Connection,
@@ -607,77 +587,78 @@ internal class OfflineProfileRepository @Inject constructor(
 
     override suspend fun updateProfile(
         update: Profile.Update,
-    ): Outcome = coroutineScope {
-        val (avatarBlob, bannerBlob) = @Suppress("DEPRECATION")
-        when {
-            update.avatarFile != null || update.bannerFile != null -> listOf(
-                update.avatarFile,
-                update.bannerFile,
-            ).map { file ->
-                async {
-                    if (file == null) return@async null
-                    networkService.runCatchingWithMonitoredNetworkRetry {
-                        fileManager.source(file).use { source ->
-                            uploadBlob(ByteReadChannel(source))
+    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+
+        coroutineScope {
+            val (avatarBlob, bannerBlob) = @Suppress("DEPRECATION")
+            when {
+                update.avatarFile != null || update.bannerFile != null -> listOf(
+                    update.avatarFile,
+                    update.bannerFile,
+                ).map { file ->
+                    async {
+                        if (file == null) return@async null
+                        networkService.runCatchingWithMonitoredNetworkRetry {
+                            fileManager.source(file).use { source ->
+                                uploadBlob(ByteReadChannel(source))
+                            }
                         }
+                            .onSuccess { fileManager.delete(file) }
+                            .getOrNull()
+                            ?.blob
                     }
-                        .onSuccess { fileManager.delete(file) }
-                        .getOrNull()
-                        ?.blob
-                }
-            }.awaitAll()
-            else -> listOf(
-                update.avatar,
-                update.banner,
-            ).map { file ->
-                async {
-                    if (file == null) null
-                    else networkService.runCatchingWithMonitoredNetworkRetry {
-                        uploadBlob(ByteReadChannel(file.data))
+                }.awaitAll()
+                else -> listOf(
+                    update.avatar,
+                    update.banner,
+                ).map { file ->
+                    async {
+                        if (file == null) null
+                        else networkService.runCatchingWithMonitoredNetworkRetry {
+                            uploadBlob(ByteReadChannel(file.data))
+                        }
+                            .getOrNull()
+                            ?.blob
                     }
-                        .getOrNull()
-                        ?.blob
-                }
-            }.awaitAll()
-        }
+                }.awaitAll()
+            }
 
-        networkService.runCatchingWithMonitoredNetworkRetry {
-            getRecord(
-                GetRecordQueryParams(
-                    repo = update.profileId.id.let(::Did),
-                    collection = Nsid(Collections.Profile),
-                    rkey = Collections.SelfRecordKey,
-                ),
-            )
-        }
-            .mapCatchingUnlessCancelled {
-                val existingProfile = it.value.decodeAs<BskyProfile>()
-
-                val request = PutRecordRequest(
-                    repo = update.profileId.id.let(::Did),
-                    collection = Nsid(Collections.Profile),
-                    rkey = Collections.SelfRecordKey,
-                    record = existingProfile.copy(
-                        displayName = update.displayName,
-                        description = update.description,
-                        avatar = avatarBlob ?: existingProfile.avatar,
-                        banner = bannerBlob ?: existingProfile.banner,
-                    )
-                        .asJsonContent(BskyProfile.serializer()),
-                )
-
-                networkService.runCatchingWithMonitoredNetworkRetry {
-                    putRecord(request)
-                }.getOrThrow()
-
-                refreshProfile(
-                    profileId = update.profileId,
-                    profileDao = profileDao,
-                    networkService = networkService,
-                    multipleEntitySaverProvider = multipleEntitySaverProvider,
-                    savedStateDataSource = savedStateDataSource,
+            networkService.runCatchingWithMonitoredNetworkRetry {
+                getRecord(
+                    GetRecordQueryParams(
+                        repo = update.profileId.id.let(::Did),
+                        collection = Nsid(Collections.Profile),
+                        rkey = Collections.SelfRecordKey,
+                    ),
                 )
             }
-            .toOutcome()
-    }
+                .mapCatchingUnlessCancelled {
+                    val existingProfile = it.value.decodeAs<BskyProfile>()
+
+                    val request = PutRecordRequest(
+                        repo = update.profileId.id.let(::Did),
+                        collection = Nsid(Collections.Profile),
+                        rkey = Collections.SelfRecordKey,
+                        record = existingProfile.copy(
+                            displayName = update.displayName,
+                            description = update.description,
+                            avatar = avatarBlob ?: existingProfile.avatar,
+                            banner = bannerBlob ?: existingProfile.banner,
+                        )
+                            .asJsonContent(BskyProfile.serializer()),
+                    )
+
+                    networkService.runCatchingWithMonitoredNetworkRetry {
+                        putRecord(request)
+                    }.getOrThrow()
+
+                    profileLookup.refreshProfile(
+                        signedInProfileId = signedInProfileId,
+                        profileId = update.profileId,
+                    )
+                }
+                .toOutcome()
+        }
+    } ?: expiredSessionOutcome()
 }

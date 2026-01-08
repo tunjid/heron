@@ -71,7 +71,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
-import com.tunjid.heron.data.utilities.profileLookup.lookupProfileDid
+import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.toOutcome
@@ -214,6 +214,7 @@ internal class OfflineTimelineRepository(
     private val networkService: NetworkService,
     private val savedStateDataSource: SavedStateDataSource,
     private val preferenceUpdater: PreferenceUpdater,
+    private val profileLookup: ProfileLookup,
     private val recordResolver: RecordResolver,
     private val authRepository: AuthRepository,
 ) : TimelineRepository {
@@ -666,10 +667,8 @@ internal class OfflineTimelineRepository(
                         )
 
                         is TimelineRequest.OfFeed.WithProfile -> {
-                            val profileDid = lookupProfileDid(
+                            val profileDid = profileLookup.lookupProfileDid(
                                 profileId = request.profileHandleOrDid,
-                                profileDao = profileDao,
-                                networkService = networkService,
                             ) ?: return@flow
                             val uri = FeedGeneratorUri(
                                 uri = "at://${profileDid.did}/${FeedGeneratorUri.NAMESPACE}/${request.feedUriSuffix}",
@@ -687,10 +686,8 @@ internal class OfflineTimelineRepository(
                         }
 
                         is TimelineRequest.OfList.WithProfile -> {
-                            val profileDid = lookupProfileDid(
+                            val profileDid = profileLookup.lookupProfileDid(
                                 profileId = request.profileHandleOrDid,
-                                profileDao = profileDao,
-                                networkService = networkService,
                             ) ?: return@flow
                             val uri = ListUri(
                                 uri = "at://${profileDid.did}/${ListUri.NAMESPACE}/${request.listUriSuffix}",
@@ -716,10 +713,8 @@ internal class OfflineTimelineRepository(
                         )
 
                         is TimelineRequest.OfStarterPack.WithProfile -> {
-                            val profileDid = lookupProfileDid(
+                            val profileDid = profileLookup.lookupProfileDid(
                                 profileId = request.profileHandleOrDid,
-                                profileDao = profileDao,
-                                networkService = networkService,
                             ) ?: return@flow
                             val uri = StarterPackUri(
                                 uri = "at://${profileDid.did}/${StarterPackUri.NAMESPACE}/${request.starterPackUriSuffix}",
@@ -1156,7 +1151,11 @@ internal class OfflineTimelineRepository(
             thread.generation <= -1L ->
                 if (lastItem is TimelineItem.Thread) list[list.lastIndex] = lastItem.copy(
                     posts = lastItem.posts + post,
-                    postUrisToThreadGates = lastItem.postUrisToThreadGates + (post.uri to threadGate(post.uri)),
+                    postUrisToThreadGates = lastItem.postUrisToThreadGates + (
+                        post.uri to threadGate(
+                            post.uri,
+                        )
+                        ),
                 )
                 else Unit
 

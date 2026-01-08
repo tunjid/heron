@@ -195,7 +195,7 @@ internal inline fun <T, R, K> List<T>.sortedWithNetworkList(
 internal inline fun <T> Result<T>.toOutcome(
     onSuccess: (T) -> Unit = {},
 ): Outcome = mapCatchingUnlessCancelled { value ->
-    if (value is Outcome.Failure) return@mapCatchingUnlessCancelled value
+    if (value is Outcome.Failure) throw value.exception
     onSuccess(value)
     Outcome.Success
 }

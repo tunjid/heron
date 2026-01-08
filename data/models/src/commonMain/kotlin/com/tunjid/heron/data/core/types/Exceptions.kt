@@ -18,6 +18,10 @@ package com.tunjid.heron.data.core.types
 
 import com.tunjid.heron.data.core.models.ProfileViewerState
 
+class UnresolvableProfileException(
+    profileId: Id.Profile,
+) : IllegalArgumentException("The profile with $profileId is not resolvable")
+
 class UnresolvableRecordException(
     uri: RecordUri,
 ) : IllegalArgumentException("The record URI $uri is not resolvable")
