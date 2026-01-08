@@ -37,6 +37,7 @@ import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.state.TimelineStateHolder
+import com.tunjid.heron.timeline.utilities.MutedWordUpdateAction
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.treenav.strings.Route
@@ -163,8 +164,9 @@ typealias MembersStateHolder = ActionStateMutator<TilingState.Action, StateFlow<
 sealed class Action(val key: String) {
 
     data class UpdateMutedWord(
-        val mutedWordPreferences: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
+        override val mutedWordPreference: List<MutedWordPreference>,
+    ) : Action(key = "UpdateMutedWord"),
+        MutedWordUpdateAction
 
     data class SendPostInteraction(
         val interaction: Post.Interaction,

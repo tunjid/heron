@@ -43,7 +43,6 @@ import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.repository.UserDataRepository
-import com.tunjid.heron.data.repository.readPreferences
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -58,6 +57,7 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.heron.timeline.state.timelineStateHolder
+import com.tunjid.heron.timeline.utilities.updateMutedWordMutations
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -203,7 +203,7 @@ fun recentConversationMutations(
 private fun loadPreferencesMutations(
     userDataRepository: UserDataRepository,
 ): Flow<Mutation<State>> =
-    userDataRepository.readPreferences()
+    userDataRepository.preferences
         .mapToMutation {
             copy(preferences = it)
         }
@@ -361,19 +361,6 @@ private fun feedGeneratorUrisToStatusMutations(
 private fun Flow<Action.UpdatePageWithUpdates>.pageWithUpdateMutations(): Flow<Mutation<State>> =
     mapToMutation { (sourceId, hasUpdates) ->
         copy(sourceIdsToHasUpdates = sourceIdsToHasUpdates + (sourceId to hasUpdates))
-    }
-
-private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
-    writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        writeQueue.enqueue(
-            Writable.TimelineUpdate(
-                Timeline.Update.OfMutedWord.ReplaceAll(
-                    mutedWordPreferences = action.mutedWordPreferences,
-                ),
-            ),
-        )
     }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(

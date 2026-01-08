@@ -19,14 +19,12 @@ package com.tunjid.heron.gallery
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.UserDataRepository
-import com.tunjid.heron.data.repository.readPreferences
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -38,6 +36,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.scaffold.duplicateWriteMessage
 import com.tunjid.heron.scaffold.scaffold.failedWriteMessage
+import com.tunjid.heron.timeline.utilities.updateMutedWordMutations
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -150,7 +149,7 @@ private fun loadPostMutations(
 private fun loadPreferencesMutations(
     userDataRepository: UserDataRepository,
 ): Flow<Mutation<State>> =
-    userDataRepository.readPreferences()
+    userDataRepository.preferences
         .mapToMutation {
             copy(preferences = it)
         }
@@ -176,20 +175,6 @@ private fun profileRelationshipMutations(
     profileRepository.profileRelationships(setOf(profileId)).mapToMutation {
         copy(viewerState = it.firstOrNull())
     }
-
-private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
-    writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        writeQueue.enqueue(
-            Writable.TimelineUpdate(
-                Timeline.Update.OfMutedWord.ReplaceAll(
-                    mutedWordPreferences = action.mutedWordPreferences,
-                ),
-            ),
-        )
-    }
-
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =

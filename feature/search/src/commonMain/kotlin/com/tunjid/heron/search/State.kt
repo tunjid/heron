@@ -34,6 +34,7 @@ import com.tunjid.heron.data.repository.SearchQuery.OfPosts
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.search.ui.suggestions.SuggestedStarterPack
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.timeline.utilities.MutedWordUpdateAction
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
 import kotlinx.coroutines.flow.StateFlow
@@ -147,8 +148,9 @@ sealed class Action(val key: String) {
     ) : Action(key = "FetchSuggestedProfiles")
 
     data class UpdateMutedWord(
-        val mutedWordPreferences: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
+        override val mutedWordPreference: List<MutedWordPreference>,
+    ) : Action(key = "UpdateMutedWord"),
+        MutedWordUpdateAction
 
     data class SendPostInteraction(
         val interaction: Post.Interaction,

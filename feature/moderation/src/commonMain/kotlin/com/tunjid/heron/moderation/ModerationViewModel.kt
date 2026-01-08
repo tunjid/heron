@@ -22,13 +22,13 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.EmbeddableRecordRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
-import com.tunjid.heron.data.repository.readPreferences
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
+import com.tunjid.heron.timeline.utilities.updateMutedWordMutations
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -134,7 +134,7 @@ fun subscribedLabelerMutations(
 private fun loadPreferenceMutations(
     userDataRepository: UserDataRepository,
 ): Flow<Mutation<State>> =
-    userDataRepository.readPreferences()
+    userDataRepository.preferences
         .mapToMutation {
             copy(preferences = it)
         }
@@ -161,19 +161,6 @@ private fun Flow<Action.UpdateAdultContentPreferences>.updateAdultContentPrefere
             Writable.TimelineUpdate(
                 Timeline.Update.OfAdultContent(
                     enabled = action.adultContentEnabled,
-                ),
-            ),
-        )
-    }
-
-private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
-    writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        writeQueue.enqueue(
-            Writable.TimelineUpdate(
-                Timeline.Update.OfMutedWord.ReplaceAll(
-                    mutedWordPreferences = action.mutedWordPreferences,
                 ),
             ),
         )
