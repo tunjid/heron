@@ -330,8 +330,8 @@ private fun PostInteraction(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = ripple(bounded = false),
                 onClick = {
-                    // Opportunistic clicks must sync with the latest seen version.
-                    // Consecutive clicks should no-op till an update.
+                    // Opportunistic clicks must be sent acting on the latest confirmed state.
+                    // Click processing is queued and de-duplicated.
                     if (button.opportunisticallyChecks) opportunisticallyChecked = !isChecked
                     onClick()
                 },
