@@ -320,8 +320,8 @@ private fun PostInteraction(
             if (isChecked) PostInteractionButton.Status.Complete.Checked
             else PostInteractionButton.Status.Complete.Unchecked
         else ->
-            if (opportunisticallyChecked) PostInteractionButton.Status.Complete.Checked
-            else PostInteractionButton.Status.Complete.Unchecked
+            if (opportunisticallyChecked) PostInteractionButton.Status.Opportunistic.Checked
+            else PostInteractionButton.Status.Opportunistic.Unchecked
     }
 
     val itemModifier = modifier
