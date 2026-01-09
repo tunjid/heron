@@ -151,7 +151,8 @@ internal class OfflineSearchRepository @Inject constructor(
     ): Flow<CursorList<TimelineItem>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
             if (query.query.isBlank()) return@singleSessionFlow emptyFlow()
-            if (cursor is Cursor.Final) return@singleSessionFlow emptyFlow()
+            if (cursor is Cursor.Final || cursor is Cursor.Pending)
+                return@singleSessionFlow emptyFlow()
 
             val response = networkService.runCatchingWithMonitoredNetworkRetry {
                 searchPosts(
@@ -239,7 +240,7 @@ internal class OfflineSearchRepository @Inject constructor(
         cursor: Cursor,
     ): Flow<CursorList<FeedGenerator>> =
         if (query.query.isBlank()) emptyFlow()
-        else if (cursor is Cursor.Final) emptyFlow()
+        else if (cursor is Cursor.Final || cursor is Cursor.Pending) emptyFlow()
         else flow {
             val response = networkService.runCatchingWithMonitoredNetworkRetry {
                 getPopularFeedGeneratorsUnspecced(

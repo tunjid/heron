@@ -91,8 +91,8 @@ internal class OfflineProfileLookup @Inject constructor(
         responseProfileViews: NetworkResponse.() -> List<ProfileView>,
         responseCursor: NetworkResponse.() -> String?,
     ): Flow<CursorList<ProfileWithViewerState>> = flow {
-        // Final cursor, nothing to fetch
-        if (cursor == Cursor.Final) return@flow
+        // Final or pending cursor, nothing to fetch
+        if (cursor is Cursor.Final || cursor is Cursor.Pending) return@flow
 
         val response = networkService.runCatchingWithMonitoredNetworkRetry(
             block = responseFetcher,
