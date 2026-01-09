@@ -29,6 +29,9 @@ internal fun <NetworkResponse : Any> NetworkService.nextCursorFlow(
     nextCursor: NetworkResponse.() -> String?,
     onResponse: suspend NetworkResponse.() -> Unit,
 ): Flow<Cursor> = flow {
+    // Do nothing, there's nothing to load
+    if (currentCursor == Cursor.Final) return@flow
+
     // Emit pending downstream
     emit(Cursor.Pending)
 

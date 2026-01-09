@@ -25,6 +25,7 @@ import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
+import com.tunjid.heron.data.core.models.canRequestData
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.ProfileId
@@ -59,6 +60,7 @@ import sh.christian.ozone.api.response.AtpResponse
 internal interface ProfileLookup {
     fun <NetworkResponse : Any> profilesWithViewerState(
         signedInProfileId: ProfileId?,
+        cursor: Cursor,
         responseFetcher: suspend BlueskyApi.() -> AtpResponse<NetworkResponse>,
         responseProfileViews: NetworkResponse.() -> List<ProfileView>,
         responseCursor: NetworkResponse.() -> String?,
@@ -85,10 +87,14 @@ internal class OfflineProfileLookup @Inject constructor(
 ) : ProfileLookup {
     override fun <NetworkResponse : Any> profilesWithViewerState(
         signedInProfileId: ProfileId?,
+        cursor: Cursor,
         responseFetcher: suspend BlueskyApi.() -> AtpResponse<NetworkResponse>,
         responseProfileViews: NetworkResponse.() -> List<ProfileView>,
         responseCursor: NetworkResponse.() -> String?,
     ): Flow<CursorList<ProfileWithViewerState>> = flow {
+        // Final or pending cursor, nothing to fetch
+        if (!cursor.canRequestData) return@flow
+
         val response = networkService.runCatchingWithMonitoredNetworkRetry(
             block = responseFetcher,
         ).getOrNull()
@@ -98,7 +104,7 @@ internal class OfflineProfileLookup @Inject constructor(
 
         val nextCursor = response.responseCursor()
             ?.let(Cursor::Next)
-            ?: Cursor.Pending
+            ?: Cursor.Final
 
         // Emit network results immediately for minimal latency
         emit(

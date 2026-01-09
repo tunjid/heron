@@ -292,16 +292,13 @@ internal class OfflineProfileRepository @Inject constructor(
 
             profileLookup.profilesWithViewerState(
                 signedInProfileId = signedInProfileId,
+                cursor = cursor,
                 responseFetcher = {
                     getFollowers(
                         GetFollowersQueryParams(
                             actor = profileDid,
                             limit = query.data.limit,
-                            cursor = when (cursor) {
-                                Cursor.Initial -> cursor.value
-                                is Cursor.Next -> cursor.value
-                                Cursor.Pending -> null
-                            },
+                            cursor = cursor.value,
                         ),
                     )
                 },
@@ -321,16 +318,13 @@ internal class OfflineProfileRepository @Inject constructor(
 
             profileLookup.profilesWithViewerState(
                 signedInProfileId = signedInProfileId,
+                cursor = cursor,
                 responseFetcher = {
                     getFollows(
                         GetFollowsQueryParams(
                             actor = profileDid,
                             limit = query.data.limit,
-                            cursor = when (cursor) {
-                                Cursor.Initial -> cursor.value
-                                is Cursor.Next -> cursor.value
-                                Cursor.Pending -> null
-                            },
+                            cursor = cursor.value,
                         ),
                     )
                 },

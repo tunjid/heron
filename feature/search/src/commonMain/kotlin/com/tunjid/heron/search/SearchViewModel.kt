@@ -346,7 +346,7 @@ private fun Flow<Action.Search>.searchQueryMutations(
                         isLocalOnly = false,
                         data = defaultSearchQueryData(),
                     ),
-                    cursor = Cursor.Pending,
+                    cursor = Cursor.Initial,
                 )
             }
             .mapToMutation { profileWithViewerStates ->

@@ -42,6 +42,7 @@ import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.Trend
+import com.tunjid.heron.data.core.models.canRequestData
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.StarterPackUri
@@ -151,6 +152,8 @@ internal class OfflineSearchRepository @Inject constructor(
     ): Flow<CursorList<TimelineItem>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
             if (query.query.isBlank()) return@singleSessionFlow emptyFlow()
+            if (!cursor.canRequestData) return@singleSessionFlow emptyFlow()
+
             val response = networkService.runCatchingWithMonitoredNetworkRetry {
                 searchPosts(
                     params = SearchPostsQueryParams(
@@ -160,11 +163,7 @@ internal class OfflineSearchRepository @Inject constructor(
                             is SearchQuery.OfPosts.Latest -> SearchPostsSort.Latest
                             is SearchQuery.OfPosts.Top -> SearchPostsSort.Top
                         },
-                        cursor = when (cursor) {
-                            Cursor.Initial -> cursor.value
-                            is Cursor.Next -> cursor.value
-                            Cursor.Pending -> null
-                        },
+                        cursor = cursor.value,
                     ),
                 )
             }
@@ -183,7 +182,7 @@ internal class OfflineSearchRepository @Inject constructor(
             val posts = response.posts.map { postView ->
                 postView.post(signedInProfileId)
             }
-            val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
+            val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Final
 
             // Using the network call as a base, observe the db for user interactions
             recordResolver.timelineItems(
@@ -221,16 +220,13 @@ internal class OfflineSearchRepository @Inject constructor(
         else savedStateDataSource.singleSessionFlow { signedInProfileId ->
             profileLookup.profilesWithViewerState(
                 signedInProfileId = signedInProfileId,
+                cursor = cursor,
                 responseFetcher = {
                     searchActors(
                         params = SearchActorsQueryParams(
                             q = query.query,
                             limit = query.data.limit,
-                            cursor = when (cursor) {
-                                Cursor.Initial -> cursor.value
-                                is Cursor.Next -> cursor.value
-                                Cursor.Pending -> null
-                            },
+                            cursor = cursor.value,
                         ),
                     )
                 },
@@ -244,17 +240,14 @@ internal class OfflineSearchRepository @Inject constructor(
         cursor: Cursor,
     ): Flow<CursorList<FeedGenerator>> =
         if (query.query.isBlank()) emptyFlow()
+        else if (!cursor.canRequestData) emptyFlow()
         else flow {
             val response = networkService.runCatchingWithMonitoredNetworkRetry {
                 getPopularFeedGeneratorsUnspecced(
                     params = GetPopularFeedGeneratorsQueryParams(
                         query = query.query,
                         limit = query.data.limit,
-                        cursor = when (cursor) {
-                            Cursor.Initial -> cursor.value
-                            is Cursor.Next -> cursor.value
-                            Cursor.Pending -> null
-                        },
+                        cursor = cursor.value,
                     ),
                 )
             }
@@ -268,7 +261,7 @@ internal class OfflineSearchRepository @Inject constructor(
                     }
             }
 
-            val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Pending
+            val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Final
             val feedUris = response.feeds.map { it.uri.atUri.let(::FeedGeneratorUri) }
 
             emitAll(
@@ -297,6 +290,7 @@ internal class OfflineSearchRepository @Inject constructor(
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
             profileLookup.profilesWithViewerState(
                 signedInProfileId = signedInProfileId,
+                cursor = cursor,
                 responseFetcher = {
                     searchActorsTypeahead(
                         params = SearchActorsTypeaheadQueryParams(
@@ -349,6 +343,7 @@ internal class OfflineSearchRepository @Inject constructor(
         savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
             profileLookup.profilesWithViewerState(
                 signedInProfileId = signedInProfileId,
+                cursor = Cursor.Initial,
                 responseFetcher = {
                     getSuggestedUsersUnspecced(
                         GetSuggestedUsersQueryParams(
