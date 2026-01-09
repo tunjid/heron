@@ -70,6 +70,8 @@ import heron.feature.profiles.generated.resources.Res
 import heron.feature.profiles.generated.resources.back
 import org.jetbrains.compose.resources.stringResource
 
+private const val BlockedProfilesPattern = "/moderation/blocked-accounts"
+private const val MutedProfilesPattern = "/moderation/muted-accounts"
 private const val PostLikesPattern = "/profile/{profileHandleOrId}/post/{postRecordKey}/liked-by"
 private const val PostRepostsPattern =
     "/profile/{profileHandleOrId}/post/{postRecordKey}/reposted-by"
@@ -77,6 +79,12 @@ private const val ProfileFollowersPattern = "/profile/{profileHandleOrId}/follow
 private const val ProfileFollowingPattern = "/profile/{profileHandleOrId}/follows"
 
 private val LoadTrie = mapOf(
+    PathPattern(BlockedProfilesPattern) to {
+        Load.Moderation.Blocks
+    },
+    PathPattern(MutedProfilesPattern) to {
+        Load.Moderation.Mutes
+    },
     PathPattern(PostLikesPattern) to { route: Route ->
         Load.Post.Likes(
             route.postRecordKey,
