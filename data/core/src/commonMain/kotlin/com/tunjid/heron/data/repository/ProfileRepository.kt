@@ -45,6 +45,7 @@ import com.atproto.repo.PutRecordRequest
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.ListMember
@@ -145,13 +146,13 @@ interface ProfileRepository {
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>>
 
-    fun muted(
-        query: CursorQuery,
+    fun mutes(
+        query: DataQuery,
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>>
 
-    fun blocked(
-        query: CursorQuery,
+    fun blocks(
+        query: DataQuery,
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>>
 
@@ -347,8 +348,8 @@ internal class OfflineProfileRepository @Inject constructor(
             )
         }
 
-    override fun muted(
-        query: CursorQuery,
+    override fun mutes(
+        query: DataQuery,
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>> =
         savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
@@ -368,8 +369,8 @@ internal class OfflineProfileRepository @Inject constructor(
             )
         }
 
-    override fun blocked(
-        query: CursorQuery,
+    override fun blocks(
+        query: DataQuery,
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>> =
         savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->

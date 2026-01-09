@@ -19,7 +19,6 @@ package com.tunjid.heron.profiles
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.types.FollowUri
-import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
@@ -38,9 +37,8 @@ data class State(
 ) : TilingState<CursorQuery, ProfileWithViewerState>
 
 sealed class Load {
-    abstract val profileId: Id.Profile
-
     sealed class Post : Load() {
+        abstract val profileId: Id.Profile
         abstract val postRecordKey: RecordKey
 
         data class Likes(
@@ -55,6 +53,7 @@ sealed class Load {
     }
 
     sealed class Profile : Load() {
+        abstract val profileId: Id.Profile
 
         data class Followers(
             override val profileId: Id.Profile,
@@ -63,6 +62,11 @@ sealed class Load {
         data class Following(
             override val profileId: Id.Profile,
         ) : Profile()
+    }
+
+    sealed class Moderation : Load() {
+        data object Blocks : Moderation()
+        data object Mutes : Moderation()
     }
 }
 

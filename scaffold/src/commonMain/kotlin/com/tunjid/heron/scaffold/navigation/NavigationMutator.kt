@@ -242,6 +242,16 @@ fun moderationDestination(): NavigationAction.Destination = pathDestination(
     referringRouteOption = ReferringRouteOption.Current,
 )
 
+fun blocksDestination(): NavigationAction.Destination = pathDestination(
+    path = "/moderation/blocked-accounts",
+    referringRouteOption = ReferringRouteOption.Current,
+)
+
+fun mutesDestination(): NavigationAction.Destination = pathDestination(
+    path = "/moderation/muted-accounts",
+    referringRouteOption = ReferringRouteOption.Current,
+)
+
 fun pathDestination(
     path: String,
     models: List<UrlEncodableModel> = emptyList(),
