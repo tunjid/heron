@@ -25,6 +25,7 @@ import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
+import com.tunjid.heron.data.core.models.isTerminal
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.ProfileId
@@ -92,7 +93,7 @@ internal class OfflineProfileLookup @Inject constructor(
         responseCursor: NetworkResponse.() -> String?,
     ): Flow<CursorList<ProfileWithViewerState>> = flow {
         // Final or pending cursor, nothing to fetch
-        if (cursor is Cursor.Final || cursor is Cursor.Pending) return@flow
+        if (cursor.isTerminal) return@flow
 
         val response = networkService.runCatchingWithMonitoredNetworkRetry(
             block = responseFetcher,

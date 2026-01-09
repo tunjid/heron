@@ -71,6 +71,9 @@ sealed class Cursor {
     data object Final : Cursor()
 }
 
+val Cursor.isTerminal: Boolean
+    get() = this is Cursor.Final || this is Cursor.Pending
+
 val Cursor.value
     get() = when (this) {
         Cursor.Initial -> null

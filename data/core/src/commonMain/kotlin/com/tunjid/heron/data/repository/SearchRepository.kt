@@ -42,6 +42,7 @@ import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.Trend
+import com.tunjid.heron.data.core.models.isTerminal
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.StarterPackUri
@@ -151,8 +152,7 @@ internal class OfflineSearchRepository @Inject constructor(
     ): Flow<CursorList<TimelineItem>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
             if (query.query.isBlank()) return@singleSessionFlow emptyFlow()
-            if (cursor is Cursor.Final || cursor is Cursor.Pending)
-                return@singleSessionFlow emptyFlow()
+            if (cursor.isTerminal) return@singleSessionFlow emptyFlow()
 
             val response = networkService.runCatchingWithMonitoredNetworkRetry {
                 searchPosts(
@@ -240,7 +240,7 @@ internal class OfflineSearchRepository @Inject constructor(
         cursor: Cursor,
     ): Flow<CursorList<FeedGenerator>> =
         if (query.query.isBlank()) emptyFlow()
-        else if (cursor is Cursor.Final || cursor is Cursor.Pending) emptyFlow()
+        else if (cursor.isTerminal) emptyFlow()
         else flow {
             val response = networkService.runCatchingWithMonitoredNetworkRetry {
                 getPopularFeedGeneratorsUnspecced(
