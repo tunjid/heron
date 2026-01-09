@@ -146,12 +146,12 @@ interface ProfileRepository {
     ): Flow<CursorList<ProfileWithViewerState>>
 
     fun muted(
-        query: ProfilesQuery,
+        query: CursorQuery,
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>>
 
     fun blocked(
-        query: ProfilesQuery,
+        query: CursorQuery,
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>>
 
@@ -348,10 +348,10 @@ internal class OfflineProfileRepository @Inject constructor(
         }
 
     override fun muted(
-        query: ProfilesQuery,
+        query: CursorQuery,
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>> =
-        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
             profileLookup.profilesWithViewerState(
                 signedInProfileId = signedInProfileId,
                 cursor = cursor,
@@ -369,10 +369,10 @@ internal class OfflineProfileRepository @Inject constructor(
         }
 
     override fun blocked(
-        query: ProfilesQuery,
+        query: CursorQuery,
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>> =
-        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
             profileLookup.profilesWithViewerState(
                 signedInProfileId = signedInProfileId,
                 cursor = cursor,
