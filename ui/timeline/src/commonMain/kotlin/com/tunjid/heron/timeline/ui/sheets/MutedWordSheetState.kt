@@ -6,13 +6,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -43,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -99,7 +105,7 @@ class MutedWordsSheetState(
             Clock.System.now().plus(it)
         }
 
-        if (mutedWords.any { it.value == newWord }) {
+        if (mutedWords.any { it.value.contentEquals(newWord, ignoreCase = true) }) {
             error = "Word already muted"
             return
         }
@@ -145,7 +151,9 @@ class MutedWordsSheetState(
             onSave: (List<MutedWordPreference>) -> Unit,
             onShown: () -> Unit,
         ): MutedWordsSheetState {
-            val state = rememberBottomSheetState { scope ->
+            val state = rememberBottomSheetState(
+                skipPartiallyExpanded = false,
+            ) { scope ->
                 MutedWordsSheetState(
                     scope = scope,
                 )
@@ -173,13 +181,17 @@ private fun MutedWordsBottomSheet(
     state.ModalBottomSheet {
         LazyColumn(
             modifier = modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            item {
+            item(
+                key = MainTitleKey,
+            ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateItem(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -198,13 +210,23 @@ private fun MutedWordsBottomSheet(
                 }
             }
             state.error?.let { error ->
-                item {
-                    ErrorMessage(error)
+                item(
+                    key = ErrorKey,
+                ) {
+                    ErrorMessage(
+                        modifier = Modifier
+                            .animateItem(),
+                        error = error,
+                    )
                 }
             }
-            item {
+            item(
+                key = InputKey,
+            ) {
                 Surface(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateItem(),
                     shape = MaterialTheme.shapes.medium,
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.12f),
                     border = BorderStroke(
@@ -249,6 +271,12 @@ private fun MutedWordsBottomSheet(
                                         Icon(Icons.Default.Close, contentDescription = null)
                                     }
                                 }
+                            },
+                            keyboardOptions = KeyboardOptions(
+                                imeAction = ImeAction.Done,
+                            ),
+                            keyboardActions = KeyboardActions {
+                                state.addMutedWord()
                             },
                         )
 
@@ -346,7 +374,6 @@ private fun MutedWordsBottomSheet(
                         Button(
                             onClick = {
                                 state.addMutedWord()
-                                onSave(state.mutedWords)
                             },
                             modifier = Modifier.fillMaxWidth(),
                             enabled = state.newWord.isNotBlank() &&
@@ -361,9 +388,13 @@ private fun MutedWordsBottomSheet(
                     }
                 }
             }
-            item {
+            item(
+                key = MutedWordsSubtitleKey,
+            ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateItem(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -374,10 +405,11 @@ private fun MutedWordsBottomSheet(
                     )
 
                     if (state.mutedWords.isNotEmpty()) {
-                        TextButton(onClick = {
-                            state.clearAll()
-                            onSave(state.mutedWords)
-                        }) {
+                        TextButton(
+                            onClick = {
+                                state.clearAll()
+                            },
+                        ) {
                             Text(
                                 stringResource(Res.string.clear_all),
                                 color = MaterialTheme.colorScheme.error,
@@ -387,8 +419,13 @@ private fun MutedWordsBottomSheet(
                 }
             }
             if (state.mutedWords.isEmpty()) {
-                item {
-                    EmptyState()
+                item(
+                    key = EmptyKey,
+                ) {
+                    EmptyState(
+                        modifier = Modifier
+                            .animateItem(),
+                    )
                 }
             } else {
                 items(
@@ -396,18 +433,32 @@ private fun MutedWordsBottomSheet(
                     key = { it.value },
                 ) { mutedWord ->
                     MutedWordItem(
+                        modifier = Modifier
+                            .animateItem(),
                         mutedWord = mutedWord,
                         onRemove = {
                             state.removeMutedWord(mutedWord.value)
-                            onSave(state.mutedWords)
                         },
                     )
                 }
             }
+
+            item(
+                key = BottomPaddingKey,
+            ) {
+                Spacer(
+                    modifier = Modifier
+                        .height(40.dp)
+                        .navigationBarsPadding()
+                        .imePadding(),
+                )
+            }
         }
         DisposableEffect(Unit) {
             onShown()
-            onDispose { }
+            onDispose {
+                onSave(state.mutedWords)
+            }
         }
     }
 }
@@ -516,11 +567,12 @@ private fun MuteTargetChip(
 
 @Composable
 private fun MutedWordItem(
+    modifier: Modifier = Modifier,
     mutedWord: MutedWordPreference,
     onRemove: () -> Unit,
 ) {
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f),
         tonalElevation = 0.dp,
@@ -574,9 +626,11 @@ private fun MutedWordItem(
 }
 
 @Composable
-private fun EmptyState() {
+private fun EmptyState(
+    modifier: Modifier = Modifier,
+) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -604,9 +658,12 @@ private fun EmptyState() {
 }
 
 @Composable
-private fun ErrorMessage(error: String) {
+private fun ErrorMessage(
+    modifier: Modifier = Modifier,
+    error: String,
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.errorContainer,
         ),
@@ -695,3 +752,10 @@ private data class MuteTargetOption(
     val label: StringResource,
     val targets: List<String>,
 )
+
+private const val MainTitleKey = "com.tunjid.heron.title_key"
+private const val InputKey = "com.tunjid.heron.input"
+private const val ErrorKey = "com.tunjid.heron.error"
+private const val EmptyKey = "com.tunjid.heron.empty"
+private const val MutedWordsSubtitleKey = "com.tunjid.heron.muted_words_subtitle"
+private const val BottomPaddingKey = "com.tunjid.heron.bottom_padding"

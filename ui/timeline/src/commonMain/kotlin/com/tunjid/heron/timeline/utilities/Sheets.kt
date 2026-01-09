@@ -33,7 +33,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.icons.filled.FilterAlt
-import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -62,9 +61,7 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.asClipEntry
 import heron.ui.timeline.generated.resources.Res
-import heron.ui.timeline.generated.resources.block_user
 import heron.ui.timeline.generated.resources.copy_link_to_clipboard
-import heron.ui.timeline.generated.resources.moderation_options_title
 import heron.ui.timeline.generated.resources.mute_words_tags
 import heron.ui.timeline.generated.resources.send_via_direct_message
 import heron.ui.timeline.generated.resources.share_in_post
@@ -173,7 +170,9 @@ internal fun ModerationMenuSection(
     modifier: Modifier = Modifier,
     onMuteWordsClicked: () -> Unit,
 ) {
-    ModerationMenuCard {
+    ModerationMenuCard(
+        modifier = modifier,
+    ) {
         ModerationMenuItemRow(
             title = stringResource(Res.string.mute_words_tags),
             icon = Icons.Default.FilterAlt,

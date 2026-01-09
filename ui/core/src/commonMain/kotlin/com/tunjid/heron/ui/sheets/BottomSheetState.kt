@@ -64,10 +64,11 @@ class BottomSheetScope(
 
         @Composable
         fun <T : BottomSheetState> rememberBottomSheetState(
+            skipPartiallyExpanded: Boolean = true,
             block: (BottomSheetScope) -> T,
         ): T {
             val sheetState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = true,
+                skipPartiallyExpanded = skipPartiallyExpanded,
             )
             val scope = rememberCoroutineScope()
 
