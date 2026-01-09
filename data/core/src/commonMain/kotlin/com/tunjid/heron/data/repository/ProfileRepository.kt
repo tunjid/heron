@@ -23,6 +23,8 @@ import app.bsky.graph.Block as BskyBlock
 import app.bsky.graph.Follow as BskyFollow
 import app.bsky.graph.GetActorStarterPacksQueryParams
 import app.bsky.graph.GetActorStarterPacksResponse
+import app.bsky.graph.GetBlocksQueryParams
+import app.bsky.graph.GetBlocksResponse
 import app.bsky.graph.GetFollowersQueryParams
 import app.bsky.graph.GetFollowersResponse
 import app.bsky.graph.GetFollowsQueryParams
@@ -31,6 +33,8 @@ import app.bsky.graph.GetListQueryParams
 import app.bsky.graph.GetListResponse
 import app.bsky.graph.GetListsQueryParams
 import app.bsky.graph.GetListsResponse
+import app.bsky.graph.GetMutesQueryParams
+import app.bsky.graph.GetMutesResponse
 import app.bsky.graph.MuteActorRequest
 import app.bsky.graph.UnmuteActorRequest
 import com.atproto.repo.CreateRecordRequest
@@ -136,6 +140,21 @@ interface ProfileRepository {
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>>
 
+    fun following(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<ProfileWithViewerState>>
+
+    fun muted(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<ProfileWithViewerState>>
+
+    fun blocked(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<ProfileWithViewerState>>
+
     fun starterPacks(
         query: ProfilesQuery,
         cursor: Cursor,
@@ -150,11 +169,6 @@ interface ProfileRepository {
         query: ProfilesQuery,
         cursor: Cursor,
     ): Flow<CursorList<FeedGenerator>>
-
-    fun following(
-        query: ProfilesQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<ProfileWithViewerState>>
 
     suspend fun sendConnection(
         connection: Profile.Connection,
@@ -330,6 +344,48 @@ internal class OfflineProfileRepository @Inject constructor(
                 },
                 responseProfileViews = GetFollowsResponse::follows,
                 responseCursor = GetFollowsResponse::cursor,
+            )
+        }
+
+    override fun muted(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<ProfileWithViewerState>> =
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            profileLookup.profilesWithViewerState(
+                signedInProfileId = signedInProfileId,
+                cursor = cursor,
+                responseFetcher = {
+                    getMutes(
+                        GetMutesQueryParams(
+                            limit = query.data.limit,
+                            cursor = cursor.value,
+                        ),
+                    )
+                },
+                responseProfileViews = GetMutesResponse::mutes,
+                responseCursor = GetMutesResponse::cursor,
+            )
+        }
+
+    override fun blocked(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<ProfileWithViewerState>> =
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            profileLookup.profilesWithViewerState(
+                signedInProfileId = signedInProfileId,
+                cursor = cursor,
+                responseFetcher = {
+                    getBlocks(
+                        GetBlocksQueryParams(
+                            limit = query.data.limit,
+                            cursor = cursor.value,
+                        ),
+                    )
+                },
+                responseProfileViews = GetBlocksResponse::blocks,
+                responseCursor = GetBlocksResponse::cursor,
             )
         }
 
