@@ -25,7 +25,6 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.timeline.state.TimelineStateHolder
-import com.tunjid.heron.timeline.utilities.MutedWordUpdateAction
 import com.tunjid.heron.ui.text.Memo
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -100,9 +99,8 @@ sealed class Action(val key: String) {
     ) : Action(key = "SetTabLayout")
 
     data class UpdateMutedWord(
-        override val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord"),
-        MutedWordUpdateAction
+        val mutedWordPreference: List<MutedWordPreference>,
+    ) : Action(key = "UpdateMutedWord")
 
     data object RefreshCurrentTab : Action(key = "RefreshCurrentTab")
 

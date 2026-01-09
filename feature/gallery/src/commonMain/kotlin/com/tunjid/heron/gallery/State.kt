@@ -36,7 +36,6 @@ import com.tunjid.heron.gallery.di.startIndex
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
-import com.tunjid.heron.timeline.utilities.MutedWordUpdateAction
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.treenav.strings.Route
 import kotlinx.serialization.Serializable
@@ -102,9 +101,8 @@ val GalleryItem.key
 sealed class Action(val key: String) {
 
     data class UpdateMutedWord(
-        override val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord"),
-        MutedWordUpdateAction
+        val mutedWordPreference: List<MutedWordPreference>,
+    ) : Action(key = "UpdateMutedWord")
 
     data class SendPostInteraction(
         val interaction: Post.Interaction,

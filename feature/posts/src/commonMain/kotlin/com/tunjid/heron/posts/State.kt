@@ -28,7 +28,6 @@ import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.repository.PostDataQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.tiling.TilingState
-import com.tunjid.heron.timeline.utilities.MutedWordUpdateAction
 import com.tunjid.heron.ui.text.Memo
 import kotlin.time.Clock
 import kotlinx.serialization.Serializable
@@ -70,9 +69,8 @@ sealed class Action(val key: String) {
     ) : Action(key = "SendPostInteraction")
 
     data class UpdateMutedWord(
-        override val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord"),
-        MutedWordUpdateAction
+        val mutedWordPreference: List<MutedWordPreference>,
+    ) : Action(key = "UpdateMutedWord")
 
     data class SnackbarDismissed(
         val message: Memo,

@@ -28,7 +28,6 @@ import com.tunjid.heron.data.repository.NotificationsQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
-import com.tunjid.heron.timeline.utilities.MutedWordUpdateAction
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.tiler.buildTiledList
 import kotlin.time.Clock
@@ -93,9 +92,8 @@ sealed class Action(val key: String) {
     ) : Action(key = "Tile")
 
     data class UpdateMutedWord(
-        override val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord"),
-        MutedWordUpdateAction
+        val mutedWordPreference: List<MutedWordPreference>,
+    ) : Action(key = "UpdateMutedWord")
 
     data class SendPostInteraction(
         val interaction: Post.Interaction,

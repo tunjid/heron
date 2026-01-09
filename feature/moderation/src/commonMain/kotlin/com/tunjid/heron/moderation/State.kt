@@ -23,7 +23,6 @@ import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.timeline.utilities.MutedWordUpdateAction
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.Memo
 import heron.ui.core.generated.resources.graphic_media_label
@@ -111,9 +110,8 @@ sealed class Action(val key: String) {
     ) : Action(key = "UpdateAdultContentPreferences")
 
     data class UpdateMutedWord(
-        override val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord"),
-        MutedWordUpdateAction
+        val mutedWordPreference: List<MutedWordPreference>,
+    ) : Action(key = "UpdateMutedWord")
 
     data class SnackbarDismissed(
         val message: Memo,
