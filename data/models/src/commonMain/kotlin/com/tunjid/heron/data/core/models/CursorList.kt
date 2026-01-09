@@ -47,6 +47,9 @@ sealed class Cursor {
     data class Next(
         val cursor: String,
     ) : Cursor()
+
+    @Serializable
+    data object Final : Cursor()
 }
 
 val Cursor.value
@@ -57,6 +60,10 @@ val Cursor.value
         )
 
         is Cursor.Next -> cursor
+
+        Cursor.Final -> throw IllegalArgumentException(
+            "Final cursors cannot be used to fetch data, there is nothing more to fetch",
+        )
     }
 
 private val EmptyCursorList = CursorList<Nothing>(

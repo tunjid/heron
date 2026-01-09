@@ -59,6 +59,7 @@ import sh.christian.ozone.api.response.AtpResponse
 internal interface ProfileLookup {
     fun <NetworkResponse : Any> profilesWithViewerState(
         signedInProfileId: ProfileId?,
+        cursor: Cursor,
         responseFetcher: suspend BlueskyApi.() -> AtpResponse<NetworkResponse>,
         responseProfileViews: NetworkResponse.() -> List<ProfileView>,
         responseCursor: NetworkResponse.() -> String?,
@@ -85,10 +86,14 @@ internal class OfflineProfileLookup @Inject constructor(
 ) : ProfileLookup {
     override fun <NetworkResponse : Any> profilesWithViewerState(
         signedInProfileId: ProfileId?,
+        cursor: Cursor,
         responseFetcher: suspend BlueskyApi.() -> AtpResponse<NetworkResponse>,
         responseProfileViews: NetworkResponse.() -> List<ProfileView>,
         responseCursor: NetworkResponse.() -> String?,
     ): Flow<CursorList<ProfileWithViewerState>> = flow {
+        // Final cursor, nothing to fetch
+        if (cursor == Cursor.Final) return@flow
+
         val response = networkService.runCatchingWithMonitoredNetworkRetry(
             block = responseFetcher,
         ).getOrNull()
@@ -98,7 +103,7 @@ internal class OfflineProfileLookup @Inject constructor(
 
         val nextCursor = response.responseCursor()
             ?.let(Cursor::Next)
-            ?: Cursor.Pending
+            ?: Cursor.Final
 
         // Emit network results immediately for minimal latency
         emit(
