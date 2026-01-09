@@ -137,7 +137,7 @@ object ProfilesNavigationBindings {
     @StringKey(BlockedProfilesPattern)
     fun provideBlocksRouteMatcher(): RouteMatcher =
         urlRouteMatcher(
-            routePattern = PostLikesPattern,
+            routePattern = BlockedProfilesPattern,
             routeMapper = ::createRoute,
         )
 
@@ -146,9 +146,10 @@ object ProfilesNavigationBindings {
     @StringKey(MutedProfilesPattern)
     fun provideMutesRouteMatcher(): RouteMatcher =
         urlRouteMatcher(
-            routePattern = PostLikesPattern,
+            routePattern = MutedProfilesPattern,
             routeMapper = ::createRoute,
         )
+
     @Provides
     @IntoMap
     @StringKey(PostLikesPattern)
