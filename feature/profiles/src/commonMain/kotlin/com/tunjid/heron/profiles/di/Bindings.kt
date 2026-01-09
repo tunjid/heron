@@ -134,6 +134,23 @@ object ProfilesNavigationBindings {
 
     @Provides
     @IntoMap
+    @StringKey(BlockedProfilesPattern)
+    fun provideBlocksRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
+            routePattern = PostLikesPattern,
+            routeMapper = ::createRoute,
+        )
+
+    @Provides
+    @IntoMap
+    @StringKey(MutedProfilesPattern)
+    fun provideMutesRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
+            routePattern = PostLikesPattern,
+            routeMapper = ::createRoute,
+        )
+    @Provides
+    @IntoMap
     @StringKey(PostLikesPattern)
     fun providePostLikesRouteMatcher(): RouteMatcher =
         urlRouteMatcher(
@@ -174,6 +191,28 @@ class ProfilesBindings(
     @Includes dataBindings: DataBindings,
     @Includes scaffoldBindings: ScaffoldBindings,
 ) {
+
+    @Provides
+    @IntoMap
+    @StringKey(BlockedProfilesPattern)
+    fun provideBlocksPaneEntry(
+        routeParser: RouteParser,
+        viewModelInitializer: RouteViewModelInitializer,
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
+        routeParser = routeParser,
+        viewModelInitializer = viewModelInitializer,
+    )
+
+    @Provides
+    @IntoMap
+    @StringKey(MutedProfilesPattern)
+    fun provideMutesPaneEntry(
+        routeParser: RouteParser,
+        viewModelInitializer: RouteViewModelInitializer,
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
+        routeParser = routeParser,
+        viewModelInitializer = viewModelInitializer,
+    )
 
     @Provides
     @IntoMap
