@@ -148,6 +148,7 @@ suspend fun Flow<Action.Tile>.profilesLoadMutations(
                 when (this) {
                     is PostDataQuery -> copy(data = it)
                     is ProfilesQuery -> copy(data = it)
+                    is DataQuery -> copy(data = it)
                     else -> throw IllegalArgumentException("Invalid query")
                 }
             },
@@ -155,6 +156,7 @@ suspend fun Flow<Action.Tile>.profilesLoadMutations(
                 when (this) {
                     is PostDataQuery -> copy(data = data.reset())
                     is ProfilesQuery -> copy(data = data.reset())
+                    is DataQuery -> copy(data = data.reset())
                     else -> throw IllegalArgumentException("Invalid query")
                 }
             },

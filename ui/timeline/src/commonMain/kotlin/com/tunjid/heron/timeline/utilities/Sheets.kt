@@ -30,13 +30,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -173,11 +171,13 @@ internal fun ModerationMenuSection(
     ModerationMenuCard(
         modifier = modifier,
     ) {
-        ModerationMenuItemRow(
-            title = stringResource(Res.string.mute_words_tags),
+        BottomSheetItemCardRow(
+            modifier = Modifier
+                .clickable {
+                    onMuteWordsClicked()
+                },
+            text = stringResource(Res.string.mute_words_tags),
             icon = Icons.Default.FilterAlt,
-            onClick = onMuteWordsClicked,
-            showDivider = false, // First item, no divider
         )
     }
 }
@@ -196,61 +196,6 @@ internal fun ModerationMenuCard(
                 .fillMaxWidth(),
         ) {
             content()
-        }
-    }
-}
-
-@Composable
-fun ModerationMenuItemRow(
-    modifier: Modifier = Modifier,
-    title: String,
-    icon: ImageVector,
-    onClick: () -> Unit,
-    showDivider: Boolean = true,
-) {
-    Column(
-        modifier = modifier
-            .padding(
-                horizontal = 16.dp,
-                vertical = 8.dp,
-            ),
-    ) {
-        Row(
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp)
-                .clickable(onClick = onClick),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = modifier.size(20.dp),
-                tint = MaterialTheme.colorScheme.onSurface,
-            )
-
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = modifier
-                    .padding(start = 16.dp)
-                    .weight(1f),
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
-                contentDescription = null,
-                modifier = modifier.size(16.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-
-        if (showDivider) {
-            HorizontalDivider(
-                thickness = 0.5.dp,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-            )
         }
     }
 }
