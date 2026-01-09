@@ -18,9 +18,11 @@ package com.tunjid.heron.notifications
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.NotificationsRepository
+import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -69,6 +71,7 @@ class ActualNotificationsViewModel(
     authRepository: AuthRepository,
     messageRepository: MessageRepository,
     notificationsRepository: NotificationsRepository,
+    userDataRepository: UserDataRepository,
     @Assisted
     scope: CoroutineScope,
     @Suppress("UNUSED_PARAMETER")
@@ -90,6 +93,9 @@ class ActualNotificationsViewModel(
             ),
             canShowRequestPermissionsButtonMutations(
                 notificationsRepository,
+            ),
+            loadPreferencesMutations(
+                userDataRepository = userDataRepository,
             ),
         ),
         actionTransform = transform@{ actions ->
@@ -114,6 +120,9 @@ class ActualNotificationsViewModel(
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
+                    is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
+                        writeQueue = writeQueue,
+                    )
                 }
             }
         },
@@ -132,6 +141,14 @@ fun recentConversationMutations(
     messageRepository.recentConversations()
         .mapToMutation { conversations ->
             copy(recentConversations = conversations)
+        }
+
+fun loadPreferencesMutations(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    userDataRepository.preferences
+        .mapToMutation {
+            copy(preferences = it)
         }
 
 fun lastRefreshedMutations(
@@ -160,6 +177,18 @@ fun canShowRequestPermissionsButtonMutations(
         .mapToMutation { hasPreviouslyRequestedNotificationPermissions ->
             copy(canAnimateRequestPermissionsButton = !hasPreviouslyRequestedNotificationPermissions)
         }
+
+private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = mapToManyMutations {
+    writeQueue.enqueue(
+        Writable.TimelineUpdate(
+            Timeline.Update.OfMutedWord.ReplaceAll(
+                mutedWordPreferences = it.mutedWordPreference,
+            ),
+        ),
+    )
+}
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,

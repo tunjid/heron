@@ -21,7 +21,9 @@ import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.LinkTarget
+import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Record
@@ -30,7 +32,6 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
 import com.tunjid.heron.data.core.types.FollowUri
-import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
@@ -72,6 +73,8 @@ data class State(
     val commonFollowers: List<Profile> = emptyList(),
     val timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean> = emptyMap(),
     val subscribedLabelerProfileIds: Set<ProfileId> = emptySet(),
+    @Transient
+    val preferences: Preferences = Preferences.EmptyPreferences,
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
     @Transient
@@ -190,6 +193,10 @@ sealed class Action(val key: String) {
     data class BioLinkClicked(
         val target: LinkTarget,
     ) : Action(key = "BioLinkClicked")
+
+    data class UpdateMutedWord(
+        val mutedWordPreference: List<MutedWordPreference>,
+    ) : Action(key = "UpdateMutedWord")
 
     data class SendPostInteraction(
         val interaction: Post.Interaction,

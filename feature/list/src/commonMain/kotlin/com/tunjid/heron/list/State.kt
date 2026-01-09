@@ -20,7 +20,9 @@ import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.ListMember
+import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
@@ -51,6 +53,8 @@ data class State(
     val listStatus: Timeline.Home.Status = Timeline.Home.Status.None,
     @Transient
     val signedInProfileId: ProfileId? = null,
+    @Transient
+    val preferences: Preferences = Preferences.EmptyPreferences,
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
     @Transient
@@ -157,6 +161,10 @@ data class MemberState(
 typealias MembersStateHolder = ActionStateMutator<TilingState.Action, StateFlow<MemberState>>
 
 sealed class Action(val key: String) {
+
+    data class UpdateMutedWord(
+        val mutedWordPreference: List<MutedWordPreference>,
+    ) : Action(key = "UpdateMutedWord")
 
     data class SendPostInteraction(
         val interaction: Post.Interaction,

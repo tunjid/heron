@@ -19,11 +19,13 @@ package com.tunjid.heron.gallery
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
+import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -70,6 +72,7 @@ class ActualGalleryViewModel(
     messageRepository: MessageRepository,
     postRepository: PostRepository,
     profileRepository: ProfileRepository,
+    userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
@@ -95,6 +98,9 @@ class ActualGalleryViewModel(
             recentConversationMutations(
                 messageRepository = messageRepository,
             ),
+            loadPreferencesMutations(
+                userDataRepository = userDataRepository,
+            ),
         ),
         actionTransform = transform@{ actions ->
             actions.toMutationStream(
@@ -111,6 +117,9 @@ class ActualGalleryViewModel(
 
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
+                    )
+                    is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
+                        writeQueue = writeQueue,
                     )
                 }
             }
@@ -137,6 +146,14 @@ private fun loadPostMutations(
     )
 }
 
+private fun loadPreferencesMutations(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    userDataRepository.preferences
+        .mapToMutation {
+            copy(preferences = it)
+        }
+
 fun recentConversationMutations(
     messageRepository: MessageRepository,
 ): Flow<Mutation<State>> =
@@ -158,7 +175,6 @@ private fun profileRelationshipMutations(
     profileRepository.profileRelationships(setOf(profileId)).mapToMutation {
         copy(viewerState = it.firstOrNull())
     }
-
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
@@ -173,6 +189,18 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
             WriteQueue.Status.Enqueued -> Unit
         }
     }
+
+private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = mapToManyMutations {
+    writeQueue.enqueue(
+        Writable.TimelineUpdate(
+            Timeline.Update.OfMutedWord.ReplaceAll(
+                mutedWordPreferences = it.mutedWordPreference,
+            ),
+        ),
+    )
+}
 
 private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
     writeQueue: WriteQueue,

@@ -18,6 +18,7 @@ package com.tunjid.heron.postdetail
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.PostUri
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.repository.AuthRepository
@@ -53,7 +54,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.merge
 
 internal typealias PostDetailStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -71,6 +71,7 @@ class ActualPostDetailViewModel(
     messageRepository: MessageRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
+    userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
@@ -93,6 +94,9 @@ class ActualPostDetailViewModel(
             recentConversationMutations(
                 messageRepository = messageRepository,
             ),
+            loadPreferencesMutations(
+                userDataRepository = userDataRepository,
+            ),
         ),
         actionTransform = transform@{ actions ->
             actions.toMutationStream(
@@ -106,6 +110,9 @@ class ActualPostDetailViewModel(
 
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
+                    )
+                    is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
+                        writeQueue = writeQueue,
                     )
                 }
             }
@@ -165,6 +172,14 @@ fun recentConversationMutations(
             copy(recentConversations = conversations)
         }
 
+private fun loadPreferencesMutations(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    userDataRepository.preferences
+        .mapToMutation {
+            copy(preferences = it)
+        }
+
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
@@ -179,6 +194,18 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
             WriteQueue.Status.Enqueued -> Unit
         }
     }
+
+private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = mapToManyMutations {
+    writeQueue.enqueue(
+        Writable.TimelineUpdate(
+            Timeline.Update.OfMutedWord.ReplaceAll(
+                mutedWordPreferences = it.mutedWordPreference,
+            ),
+        ),
+    )
+}
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->

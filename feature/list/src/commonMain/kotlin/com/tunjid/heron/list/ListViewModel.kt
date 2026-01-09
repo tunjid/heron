@@ -28,6 +28,7 @@ import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
+import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -86,6 +87,7 @@ class ActualListViewModel(
     timelineRepository: TimelineRepository,
     profileRepository: ProfileRepository,
     authRepository: AuthRepository,
+    userDataRepository: UserDataRepository,
     @Assisted
     scope: CoroutineScope,
     @Assisted
@@ -100,6 +102,9 @@ class ActualListViewModel(
             ),
             recentConversationMutations(
                 messageRepository = messageRepository,
+            ),
+            loadPreferencesMutations(
+                userDataRepository = userDataRepository,
             ),
         ),
         actionTransform = transform@{ actions ->
@@ -135,6 +140,9 @@ class ActualListViewModel(
                         is Action.Navigate -> action.flow.consumeNavigationActions(
                             navigationMutationConsumer = navActions,
                         )
+                        is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
+                            writeQueue = writeQueue,
+                        )
                     }
                 },
             )
@@ -155,6 +163,14 @@ private fun recentConversationMutations(
     messageRepository.recentConversations()
         .mapToMutation { conversations ->
             copy(recentConversations = conversations)
+        }
+
+private fun loadPreferencesMutations(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    userDataRepository.preferences
+        .mapToMutation {
+            copy(preferences = it)
         }
 
 private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
@@ -276,7 +292,6 @@ private fun SuspendingStateHolder<State>.listMemberStateHolderMutations(
         )
     }
 }
-
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
@@ -291,6 +306,18 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
             WriteQueue.Status.Enqueued -> Unit
         }
     }
+
+private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = mapToManyMutations {
+    writeQueue.enqueue(
+        Writable.TimelineUpdate(
+            Timeline.Update.OfMutedWord.ReplaceAll(
+                mutedWordPreferences = it.mutedWordPreference,
+            ),
+        ),
+    )
+}
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->

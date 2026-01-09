@@ -19,7 +19,9 @@ package com.tunjid.heron.feed
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
@@ -41,6 +43,8 @@ data class State(
     val creator: Profile? = null,
     val sharedElementPrefix: String? = null,
     val scrollToTopRequestId: String? = null,
+    @Transient
+    val preferences: Preferences = Preferences.EmptyPreferences,
     @Transient
     val feedStatus: Timeline.Home.Status = Timeline.Home.Status.None,
     @Transient
@@ -79,6 +83,10 @@ fun State(
 )
 
 sealed class Action(val key: String) {
+
+    data class UpdateMutedWord(
+        val mutedWordPreference: List<MutedWordPreference>,
+    ) : Action(key = "UpdateMutedWord")
 
     data class SendPostInteraction(
         val interaction: Post.Interaction,

@@ -1,15 +1,8 @@
 package com.tunjid.heron.data.repository
 
-import app.bsky.actor.PutPreferencesRequest
-import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Preferences
-import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.utilities.Outcome
-import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
-import com.tunjid.heron.data.utilities.mapToResult
-import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.toOutcome
 import dev.zacsweers.metro.Inject
@@ -42,16 +35,10 @@ interface UserDataRepository {
     suspend fun setCompactNavigation(
         compactNavigation: Boolean,
     ): Outcome
-
-    suspend fun updateMutedWords(
-        mutedWordPreferences: List<MutedWordPreference>,
-    ): Outcome
 }
 
 internal class OfflineUserDataRepository @Inject constructor(
     private val savedStateDataSource: SavedStateDataSource,
-    private val preferenceUpdater: PreferenceUpdater,
-    private val networkService: NetworkService,
 ) : UserDataRepository {
 
     override val preferences: Flow<Preferences> =
@@ -95,41 +82,6 @@ internal class OfflineUserDataRepository @Inject constructor(
     ): Outcome = updatePreferences {
         copy(useCompactNavigation = compactNavigation)
     }
-
-    override suspend fun updateMutedWords(
-        mutedWordPreferences: List<MutedWordPreference>,
-    ): Outcome =
-        networkService.runCatchingWithMonitoredNetworkRetry {
-            getPreferencesForActor()
-        }
-            .mapCatchingUnlessCancelled { response ->
-                preferenceUpdater.update(
-                    networkPreferences = response.preferences,
-                    update = Timeline.Update.OfMutedWord.ReplaceAll(
-                        mutedWordPreferences = mutedWordPreferences,
-                    ),
-                )
-            }
-            .mapToResult { networkPreferences ->
-                networkService.runCatchingWithMonitoredNetworkRetry {
-                    putPreferences(
-                        PutPreferencesRequest(
-                            preferences = networkPreferences,
-                        ),
-                    )
-                }.mapCatchingUnlessCancelled {
-                    networkPreferences
-                }
-            }
-            .mapCatchingUnlessCancelled { networkPreferences ->
-                updatePreferences {
-                    preferenceUpdater.update(
-                        networkPreferences = networkPreferences,
-                        preferences = this,
-                    )
-                }
-            }
-            .toOutcome()
 
     private suspend inline fun updatePreferences(
         crossinline updater: suspend Preferences.() -> Preferences,

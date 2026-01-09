@@ -17,7 +17,9 @@
 package com.tunjid.heron.postdetail
 
 import com.tunjid.heron.data.core.models.Conversation
+import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.appliedLabels
 import com.tunjid.heron.data.core.types.ProfileId
@@ -33,6 +35,8 @@ import kotlinx.serialization.Transient
 data class State(
     val anchorPost: Post?,
     val sharedElementPrefix: String,
+    @Transient
+    val preferences: Preferences = Preferences.EmptyPreferences,
     @Transient
     val signedInProfileId: ProfileId? = null,
     @Transient
@@ -66,6 +70,10 @@ fun State(route: Route) = State(
 )
 
 sealed class Action(val key: String) {
+
+    data class UpdateMutedWord(
+        val mutedWordPreference: List<MutedWordPreference>,
+    ) : Action(key = "UpdateMutedWord")
 
     data class SendPostInteraction(
         val interaction: Post.Interaction,
