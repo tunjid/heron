@@ -137,11 +137,7 @@ internal fun AppState.PaneNavigationBar(
                         icon = {
                             BadgedBox(
                                 badge = {
-                                    if (item.hasBadge) {
-                                        item.badgeCount?.let { count ->
-                                            Badge { Text("$count") }
-                                        } ?: Badge(Modifier.size(4.dp))
-                                    }
+                                    Badge(item.badgeCount)
                                 },
                                 content = {
                                     Icon(
@@ -177,7 +173,7 @@ internal fun AppState.PaneNavigationRail(
                 icon = {
                     BadgedBox(
                         badge = {
-                            if (item.hasBadge) Badge(Modifier.size(4.dp))
+                            Badge(item.badgeCount)
                         },
                         content = {
                             Icon(
@@ -193,6 +189,16 @@ internal fun AppState.PaneNavigationRail(
                 },
             )
         }
+    }
+}
+
+@Composable
+private fun Badge(
+    count: Long,
+) {
+    when (count) {
+        in 1..<MaxBadgeCount -> Badge { Text("$count") }
+        in MaxBadgeCount..Long.MAX_VALUE -> Badge(Modifier.size(4.dp))
     }
 }
 
@@ -218,5 +224,6 @@ private data object NavigationBarSharedElementKey
 private data object NavigationRailSharedElementKey
 
 private const val NavigationSharedElementZIndex = 2f
+private const val MaxBadgeCount = 100L
 
 private val NavigationRailBoundsTransform = BoundsTransform { _, _ -> snap() }
