@@ -33,7 +33,9 @@ import com.tunjid.heron.data.core.models.isFollowing
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.edit
 import heron.ui.timeline.generated.resources.follow
+import heron.ui.timeline.generated.resources.follow_back
 import heron.ui.timeline.generated.resources.following
+import heron.ui.timeline.generated.resources.mutuals
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -43,10 +45,15 @@ fun ProfileViewerState(
     onClick: () -> Unit,
 ) {
     val follows = viewerState.isFollowing
+    val followsYou = viewerState?.followedBy != null
     val followStatusText = stringResource(
-        if (isSignedInProfile) Res.string.edit
-        else if (follows) Res.string.following
-        else Res.string.follow,
+        when {
+            isSignedInProfile -> Res.string.edit
+            follows && followsYou -> Res.string.mutuals
+            follows -> Res.string.following
+            followsYou -> Res.string.follow_back
+            else -> Res.string.follow
+        },
     )
     FilterChip(
         modifier = Modifier
