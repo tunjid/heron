@@ -41,29 +41,48 @@ internal class SavedStateVersion1(
 
     override fun toVersionedSavedState(
         currentVersion: Int,
-    ): VersionedSavedState = VersionedSavedState(
-        version = currentVersion,
-        profileData = profileData.mapValues { (profileId, preferencesV0) ->
-            preferencesV0.asProfileData(
-                when (auth?.authProfileId) {
-                    profileId -> auth.asBearerToken()
-                    Constants.unknownAuthorId -> SavedState.AuthTokens.Guest(
-                        server = Server.BlueSky,
-                    )
-                    else -> null
-                },
-            )
-        } + Pair(
-            Constants.guestProfileId,
-            SavedState.ProfileData.defaultGuestData,
-        ),
-        navigation = navigation,
-        activeProfileId = when (val authProfileId = auth?.authProfileId) {
-            null -> null
-            Constants.unknownAuthorId -> Constants.guestProfileId
-            else -> authProfileId
-        },
-    )
+    ): VersionedSavedState {
+        val convertedProfileData = profileData.mapValues { (_, preferencesV0) ->
+            preferencesV0.asProfileData(auth = null)
+        }
+        return VersionedSavedState(
+            version = currentVersion,
+            profileData = when (val currentAuth = auth) {
+                null -> convertedProfileData
+                else -> convertedProfileData.updateOrPutValue(
+                    key = currentAuth.authProfileId,
+                    update = {
+                        copy(
+                            auth = when (currentAuth.authProfileId) {
+                                Constants.unknownAuthorId -> SavedState.AuthTokens.Guest(
+                                    server = Server.BlueSky,
+                                )
+                                else -> currentAuth.asBearerToken()
+                            },
+                        )
+                    },
+                    put = {
+                        when (currentAuth.authProfileId) {
+                            // No op on unknown users
+                            Constants.unknownAuthorId -> null
+                            else -> SavedState.ProfileData.fromTokens(
+                                auth = currentAuth.asBearerToken(),
+                            )
+                        }
+                    },
+                )
+            } + Pair(
+                Constants.guestProfileId,
+                SavedState.ProfileData.defaultGuestData,
+            ),
+            navigation = navigation,
+            activeProfileId = when (val authProfileId = auth?.authProfileId) {
+                null -> null
+                Constants.unknownAuthorId -> Constants.guestProfileId
+                else -> authProfileId
+            },
+        )
+    }
 
     @Serializable
     data class AuthTokensV1(
