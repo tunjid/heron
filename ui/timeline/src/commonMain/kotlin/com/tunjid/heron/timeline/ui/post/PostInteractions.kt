@@ -381,7 +381,7 @@ private fun PostInteractionElements(
     status: PostInteractionButton.Status,
     button: PostInteractionButton,
 ) {
-    val displayedValue = when (status) {
+    val targetValue = when (status) {
         is PostInteractionButton.Status.Complete -> value
         is PostInteractionButton.Status.Opportunistic.Checked -> value + 1
         is PostInteractionButton.Status.Opportunistic.Unchecked -> value - 1
@@ -424,7 +424,11 @@ private fun PostInteractionElements(
         BasicText(
             modifier = Modifier
                 .padding(vertical = 1.dp),
-            text = PostInteractionButton.buttonText(displayedValue),
+            text = PostInteractionButton.buttonText(
+                if (checked == status.isChecked) targetValue
+                else if (checked) targetValue + 1
+                else targetValue - 1,
+            ),
             maxLines = 1,
             color = { textColor },
             autoSize = TextAutoSize.StepBased(
