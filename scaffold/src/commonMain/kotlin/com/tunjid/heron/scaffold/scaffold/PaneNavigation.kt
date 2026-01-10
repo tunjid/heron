@@ -197,8 +197,8 @@ private fun Badge(
     count: Long,
 ) {
     when (count) {
-        in 1..<100 -> Badge { Text("$count") }
-        in 100..Int.MAX_VALUE -> Badge(Modifier.size(4.dp))
+        in 1..<MaxBadgeCount -> Badge { Text("$count") }
+        in MaxBadgeCount..Long.MAX_VALUE -> Badge(Modifier.size(4.dp))
     }
 }
 
@@ -224,5 +224,6 @@ private data object NavigationBarSharedElementKey
 private data object NavigationRailSharedElementKey
 
 private const val NavigationSharedElementZIndex = 2f
+private const val MaxBadgeCount = 100L
 
 private val NavigationRailBoundsTransform = BoundsTransform { _, _ -> snap() }
