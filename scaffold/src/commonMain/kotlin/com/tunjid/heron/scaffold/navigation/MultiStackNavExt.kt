@@ -19,7 +19,6 @@ package com.tunjid.heron.scaffold.navigation
 import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.popToRoot
 import com.tunjid.treenav.switch
-import kotlin.jvm.JvmInline
 
 internal data class NavItem(
     val stack: AppStack,
