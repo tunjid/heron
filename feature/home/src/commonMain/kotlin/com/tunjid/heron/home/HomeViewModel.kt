@@ -154,6 +154,7 @@ private fun timelineMutations(
     ).mapToMutation { (preferences, homeTimelines) ->
         val tabUri = currentTabUri
             ?: preferences
+                .local
                 .lastViewedHomeTimelineUri
                 .takeIf { uri ->
                     homeTimelines.any { it.isPinned && it.uri == uri }
@@ -168,7 +169,7 @@ private fun timelineMutations(
                     .firstOrNull { it.state.value.timeline.sourceId == timeline.sourceId }
                     ?.mutator
                     ?: scope.timelineStateHolder(
-                        refreshOnStart = preferences.refreshHomeTimelineOnLaunch,
+                        refreshOnStart = preferences.local.refreshHomeTimelineOnLaunch,
                         timeline = timeline,
                         startNumColumns = 1,
                         timelineRepository = timelineRepository,

@@ -56,7 +56,7 @@ fun AppearanceItem(
                 .fillMaxWidth(),
             text = stringResource(Res.string.use_dynamic_theming),
             enabled = isDynamicThemingSupported,
-            checked = signedInProfilePreferences.useDynamicTheming,
+            checked = signedInProfilePreferences.local.useDynamicTheming,
             onCheckedChange = setDynamicThemingPreference,
         )
         SettingsToggleItem(
@@ -64,7 +64,7 @@ fun AppearanceItem(
                 .fillMaxWidth(),
             text = stringResource(Res.string.use_compact_navigation),
             enabled = isCompactNavigationSupported,
-            checked = signedInProfilePreferences.useCompactNavigation,
+            checked = signedInProfilePreferences.local.useCompactNavigation,
             onCheckedChange = setCompactNavigation,
         )
     }

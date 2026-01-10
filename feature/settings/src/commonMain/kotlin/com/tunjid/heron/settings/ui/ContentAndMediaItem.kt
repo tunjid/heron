@@ -44,7 +44,7 @@ fun ContentAndMediaItem(
                 .fillMaxWidth(),
             text = stringResource(Res.string.refresh_timelines_on_launch),
             enabled = true,
-            checked = signedInProfilePreferences.refreshHomeTimelineOnLaunch,
+            checked = signedInProfilePreferences.local.refreshHomeTimelineOnLaunch,
             onCheckedChange = setRefreshHomeTimelineOnLaunch,
         )
     }

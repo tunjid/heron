@@ -58,7 +58,7 @@ fun App(
     appState: AppState,
 ) {
     AppTheme(
-        dynamicColor = appState.preferences?.useDynamicTheming ?: false,
+        dynamicColor = appState.preferences?.local?.useDynamicTheming ?: false,
     ) {
         CompositionLocalProvider(
             LocalAppState provides appState,
@@ -111,7 +111,7 @@ fun App(
                                 density = density,
                                 windowWidth = windowWidth,
                                 hasCompatBottomNav = {
-                                    appState.preferences?.useCompactNavigation ?: false
+                                    appState.prefersCompactBottomNav
                                 },
                             )
                         }.also {

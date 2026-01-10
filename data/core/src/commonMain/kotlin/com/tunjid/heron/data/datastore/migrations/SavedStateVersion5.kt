@@ -17,14 +17,12 @@
 package com.tunjid.heron.data.datastore.migrations
 
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.datastore.migrations.migrated.PreferencesV0
 import com.tunjid.heron.data.repository.SavedState
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
 
 @Serializable
-internal class SavedStateVersion4(
+internal class SavedStateVersion5(
     @Suppress("unused")
     @ProtoNumber(1)
     private val version: Int,
@@ -33,37 +31,22 @@ internal class SavedStateVersion4(
     @ProtoNumber(3)
     private val navigation: SavedState.Navigation,
     @ProtoNumber(4)
-    private val profileData: Map<ProfileId, ProfileDataV4>,
+    private val profileData: Map<ProfileId, SavedState.ProfileData>,
     @ProtoNumber(5)
     private val activeProfileId: ProfileId?,
 ) : SavedStateVersion {
 
     override fun toVersionedSavedState(
         currentVersion: Int,
-    ): VersionedSavedState = VersionedSavedState(
-        version = currentVersion,
-        navigation = navigation,
-        profileData = profileData.mapValues { it.value.asProfileData() },
-        activeProfileId = activeProfileId,
-    )
-
-    @Serializable
-    @SerialName("com.tunjid.heron.data.repository.SavedState.ProfileData")
-    data class ProfileDataV4(
-        val preferences: PreferencesV0,
-        val notifications: SavedState.Notifications,
-        val writes: SavedState.Writes = SavedState.Writes(),
-        val auth: SavedState.AuthTokens? = null,
-    ) {
-        fun asProfileData() = SavedState.ProfileData(
-            preferences = preferences.asPreferences(),
-            notifications = notifications,
-            writes = writes,
-            auth = auth,
+    ): VersionedSavedState =
+        VersionedSavedState(
+            version = currentVersion,
+            navigation = navigation,
+            profileData = profileData,
+            activeProfileId = activeProfileId,
         )
-    }
 
     companion object {
-        const val SnapshotVersion = 4
+        const val SnapshotVersion = 5
     }
 }
