@@ -19,13 +19,13 @@ package com.tunjid.heron.scaffold.navigation
 import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.popToRoot
 import com.tunjid.treenav.switch
+import kotlin.jvm.JvmInline
 
 internal data class NavItem(
     val stack: AppStack,
     val index: Int,
     val selected: Boolean,
-    val hasBadge: Boolean,
-    val badgeCount: Int? = null,
+    val badgeCount: Long = 0L,
 )
 
 internal fun MultiStackNav.navItemSelected(item: NavItem) =

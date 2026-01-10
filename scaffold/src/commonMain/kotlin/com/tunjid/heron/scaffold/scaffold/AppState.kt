@@ -272,10 +272,7 @@ class AppState(
                     stack = stack,
                     index = index,
                     selected = multiStackNav.currentIndex == index,
-                    hasBadge = stack == AppStack.Notifications && notificationCount > 0L,
-                    badgeCount = stack.takeIf {
-                        it == AppStack.Notifications && notificationCount > 0L
-                    }?.let { notificationCount.toInt() },
+                    badgeCount = if (stack == AppStack.Notifications) notificationCount else 0L,
                 )
             }
     }
