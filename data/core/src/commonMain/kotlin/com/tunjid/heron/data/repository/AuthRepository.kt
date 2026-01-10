@@ -99,15 +99,15 @@ internal class AuthTokenRepository(
 
     override val signedInUser: Flow<Profile?> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            val signedInUserFlow = signedInProfileId
-                ?.let(::listOf)
-                ?.let(profileDao::profiles)
-                ?.filter(List<PopulatedProfileEntity>::isNotEmpty)
-                ?.map { it.first().asExternalModel() }
-                ?: flowOf(null)
-            signedInUserFlow.withRefresh {
-                if (signedInProfileId != null) updateSignedInUser()
-            }
+            if (signedInProfileId == null) flowOf(null)
+            else profileDao.profiles(
+                signedInProfiledId = signedInProfileId.id,
+                ids = listOf(signedInProfileId),
+            )
+                .distinctUntilChanged()
+                .filter(List<PopulatedProfileEntity>::isNotEmpty)
+                .map { it.first().asExternalModel() }
+                .withRefresh(::updateSignedInUser)
         }
 
     override fun isSignedInProfile(id: ProfileId): Flow<Boolean> =

@@ -23,12 +23,14 @@ import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
+import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import kotlin.time.Instant
 
 @Entity(
@@ -146,6 +148,12 @@ fun PopulatedProfileEntity.asExternalModel() = with(entity) {
         isLabeler = associated.labeler ?: false,
     )
 }
+
+fun PopulatedProfileEntity.asExternalModelWithViewerState() =
+    ProfileWithViewerState(
+        profile = asExternalModel(),
+        viewerState = relationship?.asExternalModel(),
+    )
 
 private fun ProfileEntity.Associated?.allowedChat(): Profile.ChatInfo.Allowed =
     when (this?.allowDms) {

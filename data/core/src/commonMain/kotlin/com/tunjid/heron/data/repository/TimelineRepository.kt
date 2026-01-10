@@ -1009,6 +1009,7 @@ internal class OfflineTimelineRepository(
         profileHandleOrDid: Id.Profile,
         type: Timeline.Profile.Type,
     ): Flow<Timeline.Profile> = profileDao.profiles(
+        signedInProfiledId = signedInProfileId?.id,
         ids = listOf(profileHandleOrDid),
     )
         .mapNotNull(List<PopulatedProfileEntity>::firstOrNull)
