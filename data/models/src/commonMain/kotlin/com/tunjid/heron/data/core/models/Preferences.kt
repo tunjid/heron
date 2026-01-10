@@ -32,27 +32,33 @@ typealias ContentLabelPreferences = List<ContentLabelPreference>
 @Serializable
 data class Preferences(
     @ProtoNumber(1)
-    val timelinePreferences: List<TimelinePreference>,
-    // Needs default value for serialization to disk
+    val local: Local = Local(),
     @ProtoNumber(2)
-    val contentLabelPreferences: ContentLabelPreferences = emptyList(),
+    val allowAdultContent: Boolean = false,
     @ProtoNumber(3)
-    val lastViewedHomeTimelineUri: Uri? = null,
+    val timelinePreferences: List<TimelinePreference> = emptyList(),
     @ProtoNumber(4)
-    val refreshHomeTimelineOnLaunch: Boolean = false,
+    val contentLabelPreferences: ContentLabelPreferences = emptyList(),
     @ProtoNumber(5)
     val labelerPreferences: List<LabelerPreference> = emptyList(),
     @ProtoNumber(6)
-    val allowAdultContent: Boolean = false,
-    @ProtoNumber(7)
     val hiddenPostPreferences: List<HiddenPostPreference> = emptyList(),
-    @ProtoNumber(8)
+    @ProtoNumber(7)
     val mutedWordPreferences: List<MutedWordPreference> = emptyList(),
-    @ProtoNumber(9)
-    val useDynamicTheming: Boolean = false,
-    @ProtoNumber(10)
-    val useCompactNavigation: Boolean = false,
 ) : UrlEncodableModel {
+
+    @Serializable
+    data class Local(
+        @ProtoNumber(1)
+        val lastViewedHomeTimelineUri: Uri? = null,
+        @ProtoNumber(2)
+        val refreshHomeTimelineOnLaunch: Boolean = false,
+        @ProtoNumber(3)
+        val useDynamicTheming: Boolean = false,
+        @ProtoNumber(4)
+        val useCompactNavigation: Boolean = false,
+    )
+
     companion object {
         val EmptyPreferences = Preferences(
             timelinePreferences = emptyList(),

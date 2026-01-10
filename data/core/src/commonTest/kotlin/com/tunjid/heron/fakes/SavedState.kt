@@ -37,8 +37,10 @@ fun samplePreferences() = Preferences(
             visibility = Label.Visibility.Hide,
         ),
     ),
-    lastViewedHomeTimelineUri = GenericUri("https://example.com/home"),
-    refreshHomeTimelineOnLaunch = true,
+    local = Preferences.Local(
+        lastViewedHomeTimelineUri = GenericUri("https://example.com/home"),
+        refreshHomeTimelineOnLaunch = true,
+    ),
 )
 
 fun sampleNotifications() = SavedState.Notifications(

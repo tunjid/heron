@@ -19,6 +19,7 @@ package com.tunjid.heron.data.datastore.migrations
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.datastore.migrations.migrated.ProfileDataV0
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedState.AuthTokens.DidDoc
 import com.tunjid.heron.data.utilities.updateOrPutValue
@@ -35,17 +36,20 @@ internal class SavedStateVersion1(
     @ProtoNumber(3)
     private val navigation: SavedState.Navigation,
     @ProtoNumber(4)
-    private val profileData: Map<ProfileId, SavedState.ProfileData>,
+    private val profileData: Map<ProfileId, ProfileDataV0>,
 ) : SavedStateVersion {
 
     override fun toVersionedSavedState(
         currentVersion: Int,
-    ): VersionedSavedState =
-        VersionedSavedState(
+    ): VersionedSavedState {
+        val convertedProfileData = profileData.mapValues { (_, preferencesV0) ->
+            preferencesV0.asProfileData(auth = null)
+        }
+        return VersionedSavedState(
             version = currentVersion,
             profileData = when (val currentAuth = auth) {
-                null -> profileData
-                else -> profileData.updateOrPutValue(
+                null -> convertedProfileData
+                else -> convertedProfileData.updateOrPutValue(
                     key = currentAuth.authProfileId,
                     update = {
                         copy(
@@ -78,6 +82,7 @@ internal class SavedStateVersion1(
                 else -> authProfileId
             },
         )
+    }
 
     @Serializable
     data class AuthTokensV1(

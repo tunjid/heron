@@ -18,6 +18,7 @@ package com.tunjid.heron.data.datastore.migrations
 
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.datastore.migrations.migrated.ProfileDataV0
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.utilities.updateOrPutValue
 import kotlinx.serialization.Serializable
@@ -33,30 +34,33 @@ internal class SavedStateVersion3(
     @ProtoNumber(3)
     private val navigation: SavedState.Navigation,
     @ProtoNumber(4)
-    private val profileData: Map<ProfileId, SavedState.ProfileData>,
+    private val profileData: Map<ProfileId, ProfileDataV0>,
 ) : SavedStateVersion {
 
     override fun toVersionedSavedState(
         currentVersion: Int,
-    ): VersionedSavedState =
-        VersionedSavedState(
+    ): VersionedSavedState {
+        val convertedProfileData = profileData.mapValues {
+            it.value.asProfileData(auth = null)
+        }
+        return VersionedSavedState(
             version = currentVersion,
             navigation = navigation,
             profileData = when (val currentAuth = auth) {
-                is SavedState.AuthTokens.Authenticated.Bearer -> profileData.updateOrPutValue(
+                is SavedState.AuthTokens.Authenticated.Bearer -> convertedProfileData.updateOrPutValue(
                     key = currentAuth.authProfileId,
                     update = { copy(auth = currentAuth) },
                     put = { SavedState.ProfileData.fromTokens(auth = currentAuth) },
                 )
-                is SavedState.AuthTokens.Authenticated.DPoP -> profileData.updateOrPutValue(
+                is SavedState.AuthTokens.Authenticated.DPoP -> convertedProfileData.updateOrPutValue(
                     key = currentAuth.authProfileId,
                     update = { copy(auth = currentAuth) },
                     put = { SavedState.ProfileData.fromTokens(auth = currentAuth) },
                 )
-                is SavedState.AuthTokens.Pending.DPoP -> profileData
+                is SavedState.AuthTokens.Pending.DPoP -> convertedProfileData
                 is SavedState.AuthTokens.Guest,
                 null,
-                -> profileData
+                -> convertedProfileData
             } + Pair(
                 Constants.guestProfileId,
                 SavedState.ProfileData.defaultGuestData,
@@ -69,6 +73,7 @@ internal class SavedStateVersion3(
                 null -> null
             },
         )
+    }
 
     companion object {
         const val SnapshotVersion = 3

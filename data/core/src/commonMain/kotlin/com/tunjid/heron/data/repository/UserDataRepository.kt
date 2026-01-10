@@ -62,25 +62,25 @@ internal class OfflineUserDataRepository @Inject constructor(
     override suspend fun setLastViewedHomeTimelineUri(
         uri: Uri,
     ): Outcome = updatePreferences {
-        copy(lastViewedHomeTimelineUri = uri)
+        copy(local = local.copy(lastViewedHomeTimelineUri = uri))
     }
 
     override suspend fun setRefreshedHomeTimelineOnLaunch(
         refreshOnLaunch: Boolean,
     ): Outcome = updatePreferences {
-        copy(refreshHomeTimelineOnLaunch = refreshOnLaunch)
+        copy(local = local.copy(refreshHomeTimelineOnLaunch = refreshOnLaunch))
     }
 
     override suspend fun setDynamicTheming(
         dynamicTheming: Boolean,
     ): Outcome = updatePreferences {
-        copy(useDynamicTheming = dynamicTheming)
+        copy(local = local.copy(useDynamicTheming = dynamicTheming))
     }
 
     override suspend fun setCompactNavigation(
         compactNavigation: Boolean,
     ): Outcome = updatePreferences {
-        copy(useCompactNavigation = compactNavigation)
+        copy(local = local.copy(useCompactNavigation = compactNavigation))
     }
 
     private suspend inline fun updatePreferences(

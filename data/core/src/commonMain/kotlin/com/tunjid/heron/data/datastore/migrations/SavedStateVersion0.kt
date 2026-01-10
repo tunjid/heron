@@ -19,6 +19,7 @@ package com.tunjid.heron.data.datastore.migrations
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.datastore.migrations.migrated.ProfileDataV0
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedState.AuthTokens.DidDoc
 import kotlinx.serialization.Serializable
@@ -31,7 +32,7 @@ internal class SavedStateVersion0(
     @ProtoNumber(2)
     private val navigation: SavedState.Navigation,
     @ProtoNumber(3)
-    private val profileData: Map<String, SavedState.ProfileData>,
+    private val profileData: Map<String, ProfileDataV0>,
 ) : SavedStateVersion {
 
     override fun toVersionedSavedState(
@@ -42,8 +43,12 @@ internal class SavedStateVersion0(
             navigation = navigation,
             profileData = profileData.entries.associate { (profileId, profileData) ->
                 ProfileId(profileId) to when (auth?.authProfileId?.id) {
-                    profileId -> profileData.copy(auth = auth.asBearerToken())
-                    else -> profileData
+                    profileId -> profileData.asProfileData(
+                        auth = auth.asBearerToken(),
+                    )
+                    else -> profileData.asProfileData(
+                        auth = null,
+                    )
                 }
             },
             activeProfileId = when (val authProfileId = auth?.authProfileId) {
