@@ -16,11 +16,9 @@
 
 package com.tunjid.heron.migrations
 
-import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.datastore.migrations.SavedStateVersion4
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
-import com.tunjid.heron.data.datastore.migrations.migrated.PreferencesV0
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.fakes.sampleNotifications
 import com.tunjid.heron.fakes.samplePreferences
@@ -121,17 +119,4 @@ class SavedStateVersion4To5MigrationTest {
         // Verify auth is null
         assertEquals(null, migratedProfileData.auth)
     }
-
-    private fun Preferences.asV0() = PreferencesV0(
-        timelinePreferences = timelinePreferences,
-        contentLabelPreferences = contentLabelPreferences,
-        lastViewedHomeTimelineUri = local.lastViewedHomeTimelineUri,
-        refreshHomeTimelineOnLaunch = local.refreshHomeTimelineOnLaunch,
-        labelerPreferences = labelerPreferences,
-        allowAdultContent = allowAdultContent,
-        hiddenPostPreferences = hiddenPostPreferences,
-        mutedWordPreferences = mutedWordPreferences,
-        useDynamicTheming = local.useDynamicTheming,
-        useCompactNavigation = local.useCompactNavigation,
-    )
 }

@@ -2,7 +2,6 @@ package com.tunjid.heron.migrations
 
 import app.cash.burst.Burst
 import app.cash.burst.burstValues
-import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.datastore.migrations.SavedStateVersion
@@ -13,7 +12,6 @@ import com.tunjid.heron.data.datastore.migrations.SavedStateVersion3
 import com.tunjid.heron.data.datastore.migrations.SavedStateVersion4
 import com.tunjid.heron.data.datastore.migrations.SavedStateVersion5
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
-import com.tunjid.heron.data.datastore.migrations.migrated.PreferencesV0
 import com.tunjid.heron.data.datastore.migrations.migrated.ProfileDataV0
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.fakes.sampleNotifications
@@ -186,17 +184,4 @@ private fun sampleVersion5() = SavedStateVersion5(
         ),
     ),
     activeProfileId = ProfileId("p5"),
-)
-
-private fun Preferences.asV0() = PreferencesV0(
-    timelinePreferences = timelinePreferences,
-    contentLabelPreferences = contentLabelPreferences,
-    lastViewedHomeTimelineUri = local.lastViewedHomeTimelineUri,
-    refreshHomeTimelineOnLaunch = local.refreshHomeTimelineOnLaunch,
-    labelerPreferences = labelerPreferences,
-    allowAdultContent = allowAdultContent,
-    hiddenPostPreferences = hiddenPostPreferences,
-    mutedWordPreferences = mutedWordPreferences,
-    useDynamicTheming = local.useDynamicTheming,
-    useCompactNavigation = local.useCompactNavigation,
 )
