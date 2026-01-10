@@ -36,7 +36,7 @@ data class Preferences(
     @ProtoNumber(2)
     val allowAdultContent: Boolean = false,
     @ProtoNumber(3)
-    val timelinePreferences: List<TimelinePreference>,
+    val timelinePreferences: List<TimelinePreference> = emptyList(),
     @ProtoNumber(4)
     val contentLabelPreferences: ContentLabelPreferences = emptyList(),
     @ProtoNumber(5)
