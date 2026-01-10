@@ -19,7 +19,6 @@ package com.tunjid.heron.data.utilities.multipleEntitysaver
 import app.bsky.embed.RecordViewRecordUnion
 import app.bsky.feed.PostView
 import app.bsky.feed.PostViewEmbedUnion
-import app.bsky.feed.ThreadgateView
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.postembeds.PostPostEntity
 import com.tunjid.heron.data.network.models.embedEntities
@@ -27,7 +26,7 @@ import com.tunjid.heron.data.network.models.postEntity
 import com.tunjid.heron.data.network.models.postViewerStatisticsEntity
 import com.tunjid.heron.data.network.models.quotedPostEmbedEntities
 import com.tunjid.heron.data.network.models.quotedPostEntity
-import com.tunjid.heron.data.network.models.quotedPostProfileEntity
+import com.tunjid.heron.data.network.models.quotedPostProfileView
 
 internal fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId?,
@@ -96,5 +95,10 @@ internal fun MultipleEntitySaver.add(
         null,
         -> Unit
     }
-    postView.quotedPostProfileEntity()?.let(::add)
+    postView.quotedPostProfileView()?.let {
+        add(
+            viewingProfileId = viewingProfileId,
+            profileView = it,
+        )
+    }
 }

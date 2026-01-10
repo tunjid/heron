@@ -38,7 +38,7 @@ import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.profile
-import com.tunjid.heron.data.network.models.profileViewerStateEntities
+import com.tunjid.heron.data.network.models.profileViewerStateEntity
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.toOutcome
@@ -112,7 +112,7 @@ internal class OfflineProfileLookup @Inject constructor(
                 items = profileViews.toProfileWithViewerStates(
                     signedInProfileId = signedInProfileId,
                     profileMapper = ProfileView::profile,
-                    profileViewerStateEntities = ProfileView::profileViewerStateEntities,
+                    profileViewerStateMapper = ProfileView::profileViewerStateEntity,
                 ),
                 nextCursor = nextCursor,
             ),
@@ -151,6 +151,8 @@ internal class OfflineProfileLookup @Inject constructor(
         return when {
             Did.Regex.matches(profileHandleOrId) -> Did(profileHandleOrId)
             Handle.Regex.matches(profileHandleOrId) -> profileDao.profiles(
+                // Any matching profile will do, the relationship does not matter
+                signedInProfiledId = null,
                 ids = listOf(ProfileHandleOrId(profileHandleOrId)),
             )
                 .first()
@@ -222,17 +224,14 @@ internal class OfflineProfileLookup @Inject constructor(
     private inline fun <ProfileViewType> List<ProfileViewType>.toProfileWithViewerStates(
         signedInProfileId: ProfileId?,
         crossinline profileMapper: ProfileViewType.() -> Profile,
-        crossinline profileViewerStateEntities: ProfileViewType.(ProfileId) -> List<ProfileViewerStateEntity>,
+        crossinline profileViewerStateMapper: ProfileViewType.(ProfileId) -> ProfileViewerStateEntity?,
     ): List<ProfileWithViewerState> = map { profileView ->
         ProfileWithViewerState(
             profile = profileView.profileMapper(),
             viewerState =
             if (signedInProfileId == null) null
-            else profileView.profileViewerStateEntities(
-                signedInProfileId,
-            )
-                .first()
-                .asExternalModel(),
+            else profileView.profileViewerStateMapper(signedInProfileId)
+                ?.asExternalModel(),
         )
     }
 

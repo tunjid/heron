@@ -68,8 +68,8 @@ import com.tunjid.heron.data.database.daos.partialUpsert
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.database.entities.asExternalModelWithViewerState
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
-import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.VideoUploadService
@@ -746,12 +746,7 @@ internal class OfflinePostRepository @Inject constructor(
 }
 
 private fun List<PopulatedProfileEntity>.asExternalModels() =
-    map {
-        ProfileWithViewerState(
-            profile = it.asExternalModel(),
-            viewerState = it.relationship?.asExternalModel(),
-        )
-    }
+    map(PopulatedProfileEntity::asExternalModelWithViewerState)
 
 private fun CreateRecordResponse.successWithUri(): Pair<Boolean, String> =
     Pair(validationStatus is CreateRecordValidationStatus.Valid, uri.atUri)

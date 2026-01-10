@@ -24,7 +24,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.network.models.profileEntity
-import com.tunjid.heron.data.network.models.profileViewerStateEntities
+import com.tunjid.heron.data.network.models.profileViewerStateEntity
 import sh.christian.ozone.api.Did
 
 internal fun MultipleEntitySaver.add(
@@ -34,9 +34,9 @@ internal fun MultipleEntitySaver.add(
     add(profileView.profileEntity())
     profileView.labels?.forEach(::add)
 
-    if (viewingProfileId != null) profileView.profileViewerStateEntities(
+    if (viewingProfileId != null) profileView.profileViewerStateEntity(
         viewingProfileId = viewingProfileId,
-    ).forEach(::add)
+    )?.let(::add)
 
     profileView.viewer
         ?.knownFollowers
@@ -62,9 +62,9 @@ internal fun MultipleEntitySaver.add(
     profileView: ProfileView,
 ) {
     add(profileView.profileEntity())
-    if (viewingProfileId != null) profileView.profileViewerStateEntities(
+    if (viewingProfileId != null) profileView.profileViewerStateEntity(
         viewingProfileId = viewingProfileId,
-    ).forEach(::add)
+    )?.let(::add)
 
     profileView.viewer
         ?.knownFollowers
@@ -90,9 +90,9 @@ internal fun MultipleEntitySaver.add(
     profileView: ProfileViewDetailed,
 ) {
     add(profileView.profileEntity())
-    if (viewingProfileId != null) profileView.profileViewerStateEntities(
+    if (viewingProfileId != null) profileView.profileViewerStateEntity(
         viewingProfileId = viewingProfileId,
-    ).forEach(::add)
+    )?.let(::add)
 
     profileView.viewer
         ?.knownFollowers

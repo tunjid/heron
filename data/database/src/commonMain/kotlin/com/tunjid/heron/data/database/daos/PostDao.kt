@@ -112,6 +112,10 @@ interface PostDao {
             SELECT * FROM posts
             LEFT JOIN postViewerStatistics
                 ON posts.uri = postViewerStatistics.postUri AND postViewerStatistics.viewingProfileId = :viewingProfileId
+            LEFT JOIN profileViewerStates
+                ON profileViewerStates.profileId = :viewingProfileId
+                AND posts.authorId = profileViewerStates.otherProfileId
+                AND :viewingProfileId IS NOT NULL
             WHERE uri IN (:postUris)
         """,
     )
@@ -145,6 +149,10 @@ interface PostDao {
             FROM posts AS posts
             LEFT JOIN postViewerStatistics
                 ON posts.uri = postViewerStatistics.postUri AND postViewerStatistics.viewingProfileId = :viewingProfileId
+            LEFT JOIN profileViewerStates
+                ON profileViewerStates.profileId = :viewingProfileId
+                AND posts.authorId = profileViewerStates.otherProfileId
+                AND :viewingProfileId IS NOT NULL
             INNER JOIN postPosts AS postPosts
                 ON posts.uri = postPosts.embeddedPostUri
 	        WHERE postPosts.postUri IN (:postUris)

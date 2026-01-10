@@ -72,6 +72,8 @@ import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
+import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.utilities.safeDecodeAs
 import sh.christian.ozone.api.model.JsonContent
 
@@ -101,13 +103,18 @@ internal fun PostView.post(
 ): Post {
     val postEntity = postEntity()
     val quotedPostEntity = quotedPostEntity()
-    val quotedPostProfileEntity = quotedPostProfileEntity()
+    val quotedPostProfileView = quotedPostProfileView()
 
     val quotedPost =
-        if (quotedPostEntity != null && quotedPostProfileEntity != null) post(
+        if (quotedPostEntity != null && quotedPostProfileView != null) post(
             postEntity = quotedPostEntity,
-            profileEntity = quotedPostProfileEntity,
+            profileEntity = quotedPostProfileView.profileEntity(),
             embeds = quotedPostEmbedEntities(),
+            viewerStateEntity =
+            if (viewingProfileId == null) null
+            else quotedPostProfileView.profileViewerStateEntity(
+                viewingProfileId = viewingProfileId,
+            ),
             viewerStatisticsEntity = null,
             labels = emptyList(),
             embeddedRecord = null,
@@ -121,6 +128,11 @@ internal fun PostView.post(
         postEntity = postEntity,
         profileEntity = profileEntity(),
         embeds = embedEntities(),
+        viewerStateEntity =
+        if (viewingProfileId == null) null
+        else author.profileViewerStateEntity(
+            viewingProfileId = viewingProfileId,
+        ),
         viewerStatisticsEntity = viewer
             ?.postViewerStatisticsEntity(
                 postUri = postEntity.uri,
@@ -136,6 +148,7 @@ private fun post(
     postEntity: PostEntity,
     profileEntity: ProfileEntity,
     embeds: List<PostEmbed>,
+    viewerStateEntity: ProfileViewerStateEntity?,
     viewerStatisticsEntity: PostViewerStatisticsEntity?,
     quote: Post?,
     labels: List<Label>,
@@ -162,6 +175,7 @@ private fun post(
     },
     quote = quote,
     viewerStats = viewerStatisticsEntity?.asExternalModel(),
+    viewerState = viewerStateEntity?.asExternalModel(),
     labels = labels,
     embeddedRecord = embeddedRecord,
 )
@@ -321,6 +335,7 @@ internal fun JsonContent.asPostEntityRecordData(): PostEntity.RecordData? =
     } catch (_: Exception) {
         null
     }
+
 private fun BskyPost.toPostRecord() =
     Post.Record(
         text = text,

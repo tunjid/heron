@@ -198,7 +198,10 @@ internal class OfflineProfileRepository @Inject constructor(
 
     override fun signedInProfile(): Flow<Profile> =
         savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
-            profileDao.profiles(listOf(signedInProfileId))
+            profileDao.profiles(
+                signedInProfiledId = signedInProfileId.id,
+                ids = listOf(signedInProfileId),
+            )
                 .mapNotNull { it.firstOrNull()?.asExternalModel() }
         }
 
@@ -206,7 +209,10 @@ internal class OfflineProfileRepository @Inject constructor(
         profileId: Id.Profile,
     ): Flow<Profile> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            profileDao.profiles(listOf(profileId))
+            profileDao.profiles(
+                signedInProfiledId = signedInProfileId?.id,
+                ids = listOf(profileId),
+            )
                 .distinctUntilChanged()
                 .mapNotNull { it.firstOrNull()?.asExternalModel() }
                 .withRefresh {

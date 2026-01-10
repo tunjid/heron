@@ -54,6 +54,7 @@ data class Post(
     val viewerStats: ViewerStats?,
     val labels: List<Label>,
     val embeddedRecord: com.tunjid.heron.data.core.models.Record.Embeddable?,
+    val viewerState: ProfileViewerState? = null,
 ) : UrlEncodableModel,
     Record,
     Record.Embeddable {

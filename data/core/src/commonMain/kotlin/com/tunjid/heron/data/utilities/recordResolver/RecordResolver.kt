@@ -30,6 +30,7 @@ import com.atproto.repo.GetRecordQueryParams
 import com.atproto.repo.GetRecordResponse
 import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Block
+import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.Follow
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
@@ -41,6 +42,7 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Repost
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.isRestricted
 import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
@@ -82,7 +84,7 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.asExternalModel
 import com.tunjid.heron.data.network.models.post
 import com.tunjid.heron.data.repository.SavedStateDataSource
-import com.tunjid.heron.data.repository.distinctUntilChangedAdultContentAndLabelVisibilityPreferences
+import com.tunjid.heron.data.repository.distinctUntilChangedSignedProfilePreferencesOrDefault
 import com.tunjid.heron.data.repository.expiredSessionResult
 import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.repository.singleSessionFlow
@@ -431,8 +433,14 @@ internal class OfflineRecordResolver @Inject constructor(
         associatedProfileIds: (T) -> List<ProfileId>,
         block: TimelineItemCreationContext.(T) -> Unit,
     ): Flow<List<TimelineItem>> =
-        savedStateDataSource.distinctUntilChangedAdultContentAndLabelVisibilityPreferences()
-            .flatMapLatest { (allowAdultContent, labelsVisibilityMap) ->
+        savedStateDataSource.distinctUntilChangedSignedProfilePreferencesOrDefault()
+            .flatMapLatest { preferences ->
+                val allowAdultContent = preferences.allowAdultContent
+                val labelsVisibilityMap = preferences.contentLabelPreferences.associateBy(
+                    keySelector = ContentLabelPreference::label,
+                    valueTransform = ContentLabelPreference::visibility,
+                )
+
                 val recordUris = mutableSetOf<EmbeddableRecordUri>()
                 val threadGatePostUris = mutableListOf<PostUri>()
                 val profileIds = mutableSetOf<ProfileId>()
@@ -460,11 +468,15 @@ internal class OfflineRecordResolver @Inject constructor(
                     flow2 = threadGatePostUris
                         .toDistinctUntilChangedFlowOrEmpty(threadGateDao::threadGates),
                     flow3 = profileIds
-                        .toDistinctUntilChangedFlowOrEmpty(profileDao::profiles),
+                        .toDistinctUntilChangedFlowOrEmpty {
+                            profileDao.profiles(
+                                signedInProfiledId = signedInProfileId?.id,
+                                ids = it,
+                            )
+                        },
                     flow4 = subscribedLabelers,
                     transform = { associatedRecords, threadGateEntities, profileEntities, labelers ->
                         if (associatedRecords.isEmpty()) return@combine emptyList()
-
                         items.fold(
                             MutableTimelineItemCreationContext(
                                 signedInProfileId = signedInProfileId,
@@ -475,6 +487,8 @@ internal class OfflineRecordResolver @Inject constructor(
                         ) { context, item ->
                             val post = context.record(postUri(item)) as? Post
                                 ?: return@fold context
+
+                            if (post.viewerState.isRestricted) return@fold context
 
                             val postLabels = when {
                                 post.labels.isEmpty() -> emptySet()

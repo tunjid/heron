@@ -37,11 +37,15 @@ interface ProfileDao {
     @Query(
         """
             SELECT * FROM profiles
+            LEFT JOIN profileViewerStates
+                ON profileViewerStates.profileId = :signedInProfiledId
+                AND profiles.did = profileViewerStates.otherProfileId
             WHERE did IN (:ids)
             OR handle IN (:ids)
         """,
     )
     fun profiles(
+        signedInProfiledId: String?,
         ids: Collection<Id.Profile>,
     ): Flow<List<PopulatedProfileEntity>>
 
