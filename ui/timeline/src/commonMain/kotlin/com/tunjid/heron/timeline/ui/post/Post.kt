@@ -79,6 +79,10 @@ import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.label.locale
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
 import com.tunjid.heron.timeline.ui.post.threadtraversal.videoId
+import com.tunjid.heron.timeline.utilities.Label
+import com.tunjid.heron.timeline.utilities.LabelFlowRow
+import com.tunjid.heron.timeline.utilities.LabelIconSize
+import com.tunjid.heron.timeline.utilities.LabelText
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.AttributionLayout
@@ -232,15 +236,12 @@ private fun LabelContent(
     when (data.presentation) {
         Timeline.Presentation.Text.WithEmbed,
         Timeline.Presentation.Media.Expanded,
-        -> FlowRow(
+        -> LabelFlowRow(
             modifier = Modifier
                 .contentPresentationPadding(
                     content = PostContent.Labels,
                     presentation = data.presentation,
                 ),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            itemVerticalAlignment = Alignment.CenterVertically,
             content = {
                 data.post.author.labels.forEach { label ->
                     data.withPreferredLabelerAndLocaleInfo(label) { labeler, localeInfo ->
@@ -248,48 +249,39 @@ private fun LabelContent(
                             Res.string.post_author_label,
                             localeInfo.description,
                         )
-                        Row(
+                        Label(
                             modifier = Modifier
-                                .padding(2.dp)
-                                .semantics {
-                                    role = Role.Button
-                                    contentDescription = authorLabelContentDescription
-                                }
-                                .clip(CircleShape)
-                                .clickable {
-                                    data.selectedLabel = label
-                                },
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            PaneStickySharedElement(
-                                modifier = Modifier
-                                    .size(12.dp),
-                                sharedContentState = rememberSharedContentState(
-                                    data.sharedElementKey(label),
-                                ),
-                            ) {
-                                AsyncImage(
-                                    args = remember(labeler.creator.avatar) {
-                                        ImageArgs(
-                                            url = labeler.creator.avatar?.uri,
-                                            contentScale = ContentScale.Crop,
-                                            contentDescription = null,
-                                            shape = data.avatarShape,
-                                        )
-                                    },
+                                .padding(2.dp),
+                            contentDescription = authorLabelContentDescription,
+                            icon = {
+                                PaneStickySharedElement(
                                     modifier = Modifier
-                                        .fillParentAxisIfFixedOrWrap(),
-                                )
-                            }
-                            Text(
-                                text = localeInfo.name,
-                                overflow = TextOverflow.Ellipsis,
-                                maxLines = 1,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.outline,
-                            )
-                        }
+                                        .size(LabelIconSize),
+                                    sharedContentState = rememberSharedContentState(
+                                        data.sharedElementKey(label),
+                                    ),
+                                ) {
+                                    AsyncImage(
+                                        args = remember(labeler.creator.avatar) {
+                                            ImageArgs(
+                                                url = labeler.creator.avatar?.uri,
+                                                contentScale = ContentScale.Crop,
+                                                contentDescription = null,
+                                                shape = data.avatarShape,
+                                            )
+                                        },
+                                        modifier = Modifier
+                                            .fillParentAxisIfFixedOrWrap(),
+                                    )
+                                }
+                            },
+                            description = {
+                                LabelText(localeInfo.name)
+                            },
+                            onClick = {
+                                data.selectedLabel = label
+                            },
+                        )
                     }
                 }
                 data.selectedLabel?.let { selectedLabel ->

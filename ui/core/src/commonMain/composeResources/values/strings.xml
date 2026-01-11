@@ -55,6 +55,15 @@
     <string name="record_list">List</string>
     <string name="record_post">Post</string>
     <string name="record_starter_pack">Starter Pack</string>
+    <string name="viewer_state_follow">Follow</string>
+    <string name="viewer_state_following">Following</string>
+    <string name="viewer_state_follows_you">Follows you</string>
+    <string name="viewer_state_mute">Mute</string>
+    <string name="viewer_state_unmute">Unmute</string>
+    <string name="viewer_state_muted">Muted</string>
+    <string name="viewer_state_block">Block</string>
+    <string name="viewer_state_unblock">Unblock</string>
+    <string name="viewer_state_blocked">Blocked</string>
     <string name="notifications_followed_you_description">Followed you</string>
     <string name="notifications_followed_you">%1$s followed you</string>
     <string name="notifications_multiple_followed">%1$s and %2$d others followed you</string>
