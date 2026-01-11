@@ -46,7 +46,7 @@ sealed class Action(val key: String) {
     ) : Action(key = "SetCompactNavigation")
 
     data class SetAutoHideBottomNavigation(
-        val persistentBottomNavigation: Boolean,
+        val autoHideBottomNavigation: Boolean,
     ) : Action(key = "SetAutoHideBottomNavigation")
 
     data class SnackbarDismissed(

@@ -149,8 +149,8 @@ private fun Flow<Action.SetCompactNavigation>.toggleCompactNavigation(
 private fun Flow<Action.SetAutoHideBottomNavigation>.toggleAutoHideBottomNavigation(
     userDataRepository: UserDataRepository,
 ): Flow<Mutation<State>> =
-    mapToManyMutations { (persistentBottomNavigation) ->
-        userDataRepository.setAutoHideBottomNavigation(persistentBottomNavigation)
+    mapToManyMutations { (autoHideBottomNavigation) ->
+        userDataRepository.setAutoHideBottomNavigation(autoHideBottomNavigation)
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =

@@ -42,7 +42,7 @@ fun AppearanceItem(
     signedInProfilePreferences: Preferences,
     setDynamicThemingPreference: (Boolean) -> Unit,
     setCompactNavigation: (Boolean) -> Unit,
-    setPersistentBottomNavigation: (Boolean) -> Unit,
+    setAutoHideBottomNavigation: (Boolean) -> Unit,
 ) {
     val isDynamicThemingSupported = isDynamicThemingSupported()
     val isCompactNavigationSupported = isCompactNavigationSupported()
@@ -75,7 +75,7 @@ fun AppearanceItem(
             text = stringResource(Res.string.autohide_bottom_navigation),
             enabled = isCompactNavigationSupported,
             checked = signedInProfilePreferences.local.autoHideBottomNavigation,
-            onCheckedChange = setPersistentBottomNavigation,
+            onCheckedChange = setAutoHideBottomNavigation,
         )
     }
 }
