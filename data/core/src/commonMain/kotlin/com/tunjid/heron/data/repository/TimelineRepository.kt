@@ -927,14 +927,27 @@ internal class OfflineTimelineRepository(
                         associatedProfileIds = {
                             listOfNotNull(it.reposter)
                         },
-                        block = { entity ->
+                        block = block@{ entity ->
+                            // Muted posts should only show up on profile timelines
+                            val hideMuted = query.timeline !is Timeline.Profile
+                            var isMuted = isMuted(post)
+                            if (hideMuted && isMuted) return@block
+
                             val replyParent = entity.reply?.parentPostUri?.let(::record) as? Post
+                            isMuted =
+                                isMuted || (replyParent != null && isMuted(replyParent))
+                            if (hideMuted && isMuted) return@block
+
                             val replyRoot = entity.reply?.rootPostUri?.let(::record) as? Post
+                            isMuted = isMuted || (replyRoot != null && isMuted(replyRoot))
+                            if (hideMuted && isMuted) return@block
+
                             val repostedBy = entity.reposter?.let(::profile)
 
                             list += when {
                                 replyRoot != null && replyParent != null -> TimelineItem.Thread(
                                     id = entity.id,
+                                    isMuted = isMuted,
                                     generation = null,
                                     anchorPostIndex = 2,
                                     hasBreak = entity.reply?.grandParentPostAuthorId != null,
@@ -954,6 +967,7 @@ internal class OfflineTimelineRepository(
 
                                 repostedBy != null -> TimelineItem.Repost(
                                     id = entity.id,
+                                    isMuted = isMuted,
                                     post = post,
                                     by = repostedBy,
                                     at = entity.indexedAt,
@@ -964,6 +978,7 @@ internal class OfflineTimelineRepository(
 
                                 entity.isPinned -> TimelineItem.Pinned(
                                     id = entity.id,
+                                    isMuted = isMuted,
                                     post = post,
                                     threadGate = threadGate(post.uri),
                                     appliedLabels = appliedLabels,
@@ -972,6 +987,7 @@ internal class OfflineTimelineRepository(
 
                                 else -> TimelineItem.Single(
                                     id = entity.id,
+                                    isMuted = isMuted,
                                     post = post,
                                     threadGate = threadGate(post.uri),
                                     appliedLabels = appliedLabels,
@@ -1141,6 +1157,7 @@ internal class OfflineTimelineRepository(
             lastItem == null || thread.generation == 0L -> list += TimelineItem.Thread(
                 id = thread.entity.uri.uri,
                 generation = thread.generation,
+                isMuted = isMuted(post),
                 anchorPostIndex = 0,
                 hasBreak = false,
                 posts = listOf(post),
@@ -1152,11 +1169,11 @@ internal class OfflineTimelineRepository(
             thread.generation <= -1L ->
                 if (lastItem is TimelineItem.Thread) list[list.lastIndex] = lastItem.copy(
                     posts = lastItem.posts + post,
-                    postUrisToThreadGates = lastItem.postUrisToThreadGates + (
-                        post.uri to threadGate(
-                            post.uri,
-                        )
-                        ),
+                    isMuted = lastItem.isMuted || isMuted(post),
+                    postUrisToThreadGates = lastItem.postUrisToThreadGates + Pair(
+                        post.uri,
+                        threadGate(post.uri),
+                    ),
                 )
                 else Unit
 
@@ -1165,6 +1182,7 @@ internal class OfflineTimelineRepository(
                 lastItem.posts.first().uri != thread.rootPostUri -> list += TimelineItem.Thread(
                 id = thread.entity.uri.uri,
                 generation = thread.generation,
+                isMuted = isMuted(post),
                 anchorPostIndex = 0,
                 hasBreak = false,
                 posts = listOf(post),
@@ -1177,10 +1195,15 @@ internal class OfflineTimelineRepository(
                 // Make sure only consecutive generations are added to the thread.
                 // Nonconsecutive generations are dropped. Users can see these replies by
                 // diving into the thread.
-                if (lastItem.nextGeneration == thread.generation) list[list.lastIndex] = lastItem.copy(
-                    posts = lastItem.posts + post,
-                    postUrisToThreadGates = lastItem.postUrisToThreadGates + (post.uri to threadGate(post.uri)),
-                )
+                if (lastItem.nextGeneration == thread.generation) list[list.lastIndex] =
+                    lastItem.copy(
+                        posts = lastItem.posts + post,
+                        isMuted = lastItem.isMuted || isMuted(post),
+                        postUrisToThreadGates = lastItem.postUrisToThreadGates + Pair(
+                            post.uri,
+                            threadGate(post.uri),
+                        ),
+                    )
             else -> Unit
         }
     }

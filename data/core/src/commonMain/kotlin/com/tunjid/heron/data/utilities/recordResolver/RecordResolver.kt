@@ -42,7 +42,7 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Repost
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.core.models.isRestricted
+import com.tunjid.heron.data.core.models.isBlocked
 import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
@@ -72,9 +72,7 @@ import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedLabelerEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedPostEntity
-import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
-import com.tunjid.heron.data.database.entities.PopulatedThreadGateEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.AppCoroutineScope
 import com.tunjid.heron.data.logging.LogPriority
@@ -143,6 +141,7 @@ internal interface RecordResolver {
         fun record(recordUri: EmbeddableRecordUri): Record?
         fun profile(profileId: ProfileId): Profile?
         fun threadGate(postUri: PostUri): ThreadGate?
+        fun isMuted(post: Post): Boolean
     }
 }
 
@@ -480,6 +479,7 @@ internal class OfflineRecordResolver @Inject constructor(
                         items.fold(
                             MutableTimelineItemCreationContext(
                                 signedInProfileId = signedInProfileId,
+                                preferences = preferences,
                                 associatedRecords = associatedRecords,
                                 associatedThreadGateEntities = threadGateEntities,
                                 associatedProfileEntities = profileEntities,
@@ -488,7 +488,8 @@ internal class OfflineRecordResolver @Inject constructor(
                             val post = context.record(postUri(item)) as? Post
                                 ?: return@fold context
 
-                            if (post.viewerState.isRestricted) return@fold context
+                            // Always omit blocked users
+                            if (post.viewerState.isBlocked) return@fold context
 
                             val postLabels = when {
                                 post.labels.isEmpty() -> emptySet()
@@ -554,66 +555,6 @@ internal class OfflineRecordResolver @Inject constructor(
                     rkey = recordUri.recordKey.value.let(::RKey),
                 ),
             )
-        }
-    }
-
-    private class MutableTimelineItemCreationContext(
-        override val signedInProfileId: ProfileId?,
-        associatedRecords: List<Record.Embeddable>,
-        associatedThreadGateEntities: List<PopulatedThreadGateEntity>,
-        associatedProfileEntities: List<PopulatedProfileEntity>,
-    ) : TimelineItemCreationContext,
-        MutableList<TimelineItem> by mutableListOf() {
-
-        override var list: MutableList<TimelineItem> = this
-
-        override val post: Post
-            get() = requireNotNull(currentPost)
-
-        override var appliedLabels: AppliedLabels = AppliedLabels(
-            adultContentEnabled = false,
-            labels = emptyList(),
-            labelers = emptyList(),
-            contentLabelPreferences = emptyList(),
-        )
-
-        private var currentPost: Post? = null
-
-        private val recordUrisToRecords =
-            if (associatedRecords.isEmpty()) emptyMap()
-            else associatedRecords.associateBy {
-                it.reference.uri
-            }
-
-        private val postUrisToThreadGateEntities =
-            if (associatedThreadGateEntities.isEmpty()) emptyMap()
-            else associatedThreadGateEntities.associateBy(
-                keySelector = { it.entity.gatedPostUri },
-                valueTransform = PopulatedThreadGateEntity::asExternalModel,
-            )
-
-        private val profileIdsToProfiles =
-            if (associatedProfileEntities.isEmpty()) emptyMap()
-            else associatedProfileEntities.associateBy(
-                keySelector = { it.entity.did },
-                valueTransform = PopulatedProfileEntity::asExternalModel,
-            )
-
-        override fun record(recordUri: EmbeddableRecordUri): Record? =
-            recordUrisToRecords[recordUri]
-
-        override fun threadGate(postUri: PostUri): ThreadGate? =
-            postUrisToThreadGateEntities[postUri]
-
-        override fun profile(profileId: ProfileId): Profile? =
-            profileIdsToProfiles[profileId]
-
-        fun update(
-            currentPost: Post,
-            appliedLabels: AppliedLabels,
-        ) {
-            this.currentPost = currentPost
-            this.appliedLabels = appliedLabels
         }
     }
 }

@@ -291,6 +291,7 @@ internal class OfflinePostRepository @Inject constructor(
                                     list += TimelineItem.Single(
                                         id = item.uri.uri,
                                         post = post,
+                                        isMuted = isMuted(post),
                                         threadGate = threadGate(item.uri),
                                         appliedLabels = appliedLabels,
                                         signedInProfileId = signedInProfileId,
@@ -357,6 +358,7 @@ internal class OfflinePostRepository @Inject constructor(
                                 list += TimelineItem.Single(
                                     id = item.uri.uri,
                                     post = post,
+                                    isMuted = isMuted(post),
                                     threadGate = threadGate(item.uri),
                                     appliedLabels = appliedLabels,
                                     signedInProfileId = signedInProfileId,

@@ -195,10 +195,13 @@ internal class OfflineSearchRepository @Inject constructor(
                 associatedProfileIds = {
                     emptyList()
                 },
-                block = { item ->
+                block = block@{ item ->
+                    // Muted items should not show upp in search
+                    if (isMuted(post)) return@block
                     list += TimelineItem.Single(
                         id = item.uri.uri,
                         post = post,
+                        isMuted = false,
                         threadGate = threadGate(item.uri),
                         appliedLabels = appliedLabels,
                         signedInProfileId = signedInProfileId,
