@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.profile.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -30,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.AppliedLabels
@@ -162,7 +164,12 @@ private fun IconLabel(
             )
         },
         description = {
-            LabelText(contentDescription)
+            Box(
+                modifier = Modifier
+                    .clearAndSetSemantics {},
+            ) {
+                LabelText(contentDescription)
+            }
         },
         onClick = onClick,
     )
