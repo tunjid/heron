@@ -48,6 +48,7 @@ import com.tunjid.heron.search.SearchScreen
 import com.tunjid.heron.search.SearchViewModel
 import com.tunjid.heron.ui.SearchBar
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.treenav.compose.PaneEntry
@@ -150,7 +151,9 @@ class SearchBindings(
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
                     .nestedScroll(topAppBarNestedScrollConnection)
-                    .nestedScroll(bottomNavigationNestedScrollConnection),
+                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                        nestedScroll(bottomNavigationNestedScrollConnection)
+                    },
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {

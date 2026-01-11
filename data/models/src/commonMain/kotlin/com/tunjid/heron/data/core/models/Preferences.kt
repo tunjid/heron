@@ -57,6 +57,8 @@ data class Preferences(
         val useDynamicTheming: Boolean = false,
         @ProtoNumber(4)
         val useCompactNavigation: Boolean = false,
+        @ProtoNumber(5)
+        val autoHideBottomNavigation: Boolean = true,
     )
 
     companion object {

@@ -343,6 +343,9 @@ internal class SplitPaneState(
 internal val AppState.prefersCompactBottomNav: Boolean
     get() = preferences?.local?.useCompactNavigation ?: false
 
+internal val AppState.prefersAutoHidingBottomNav: Boolean
+    get() = preferences?.local?.autoHideBottomNavigation ?: true
+
 private val PaneRenderOrder = listOf(
     ThreePane.Tertiary,
     ThreePane.Secondary,

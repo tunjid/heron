@@ -54,6 +54,7 @@ import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.text.links
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -142,7 +143,9 @@ class ConversationBindings(
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
-                    .nestedScroll(bottomNavigationNestedScrollConnection),
+                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                        nestedScroll(bottomNavigationNestedScrollConnection)
+                    },
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {

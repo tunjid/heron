@@ -298,7 +298,9 @@ class FeedBindings(
                     PaneFab(
                         text = stringResource(Res.string.scroll_to_top),
                         icon = Icons.Rounded.Straight,
-                        expanded = isFabExpanded(topAppBarNestedScrollConnection.offset * -1f),
+                        expanded = isFabExpanded {
+                            topAppBarNestedScrollConnection.offset * -1f
+                        },
                         onClick = {
                             viewModel.accept(Action.ScrollToTop)
                         },
