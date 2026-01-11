@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.notifications.ui
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
@@ -75,6 +74,7 @@ internal fun NotificationPostScaffold(
         PostAttribution(
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
             avatarShape = RoundedPolygonShape.Circle,
+            onPostClicked = onPostClicked,
             onProfileClicked = onProfileClicked,
             notification = notification,
             sharedElementPrefix = notification.sharedElementPrefix(),
@@ -138,11 +138,11 @@ internal fun NotificationPostScaffold(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun PostAttribution(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     avatarShape: RoundedPolygonShape,
+    onPostClicked: (Notification.PostAssociated) -> Unit,
     onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
     notification: Notification.PostAssociated,
     sharedElementPrefix: String,
@@ -183,6 +183,12 @@ private fun PostAttribution(
                 postId = post.cid,
                 sharedElementPrefix = sharedElementPrefix,
                 paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                onPostClicked = {
+                    onPostClicked(notification)
+                },
+                onAuthorClicked = {
+                    onProfileClicked(notification, post.author)
+                },
             )
         },
     )
