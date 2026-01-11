@@ -58,7 +58,9 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.text.CommonStrings
+import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -167,6 +169,9 @@ class ProfileBindings(
             val state by viewModel.state.collectAsStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
+            val topAppBarNestedScrollConnection =
+                topAppBarNestedScrollConnection()
+
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection(
                     isCompact = paneScaffoldState.prefersCompactBottomNav,
@@ -176,7 +181,10 @@ class ProfileBindings(
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
-                    .nestedScroll(bottomNavigationNestedScrollConnection),
+                    .nestedScroll(topAppBarNestedScrollConnection)
+                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                        nestedScroll(bottomNavigationNestedScrollConnection)
+                    },
                 showNavigation = true,
                 topBar = {
                     PoppableDestinationTopAppBar(
@@ -212,7 +220,10 @@ class ProfileBindings(
                             state.isSignedInProfile -> Icons.Rounded.Edit
                             else -> Icons.Rounded.AlternateEmail
                         },
-                        expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
+                        expanded = isFabExpanded {
+                            if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
+                            else topAppBarNestedScrollConnection.offset * -1f
+                        },
                         onClick = {
                             viewModel.accept(
                                 Action.Navigate.To(

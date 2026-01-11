@@ -52,3 +52,8 @@ fun Modifier.blur(
     this.shape = shape
     this.clip = clip()
 }
+
+inline fun Modifier.ifTrue(
+    predicate: Boolean,
+    block: Modifier.() -> Modifier,
+) = if (predicate) block() else this

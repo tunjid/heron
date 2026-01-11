@@ -35,6 +35,10 @@ interface UserDataRepository {
     suspend fun setCompactNavigation(
         compactNavigation: Boolean,
     ): Outcome
+
+    suspend fun setAutoHideBottomNavigation(
+        autoHideBottomNavigation: Boolean,
+    ): Outcome
 }
 
 internal class OfflineUserDataRepository @Inject constructor(
@@ -81,6 +85,12 @@ internal class OfflineUserDataRepository @Inject constructor(
         compactNavigation: Boolean,
     ): Outcome = updatePreferences {
         copy(local = local.copy(useCompactNavigation = compactNavigation))
+    }
+
+    override suspend fun setAutoHideBottomNavigation(
+        autoHideBottomNavigation: Boolean,
+    ): Outcome = updatePreferences {
+        copy(local = local.copy(autoHideBottomNavigation = autoHideBottomNavigation))
     }
 
     private suspend inline fun updatePreferences(

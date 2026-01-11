@@ -92,6 +92,10 @@ class ActualSettingsViewModel(
                         userDataRepository = userDataRepository,
                     )
 
+                    is Action.SetAutoHideBottomNavigation -> action.flow.toggleAutoHideBottomNavigation(
+                        userDataRepository = userDataRepository,
+                    )
+
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
@@ -140,6 +144,13 @@ private fun Flow<Action.SetCompactNavigation>.toggleCompactNavigation(
 ): Flow<Mutation<State>> =
     mapToManyMutations { (compactNavigation) ->
         userDataRepository.setCompactNavigation(compactNavigation)
+    }
+
+private fun Flow<Action.SetAutoHideBottomNavigation>.toggleAutoHideBottomNavigation(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    mapToManyMutations { (persistentBottomNavigation) ->
+        userDataRepository.setAutoHideBottomNavigation(persistentBottomNavigation)
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =

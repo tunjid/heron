@@ -55,6 +55,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
@@ -182,7 +183,9 @@ class PostDetailBindings(
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
                     .nestedScroll(topAppBarNestedScrollConnection)
-                    .nestedScroll(bottomNavigationNestedScrollConnection),
+                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                        nestedScroll(bottomNavigationNestedScrollConnection)
+                    },
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
@@ -218,7 +221,10 @@ class PostDetailBindings(
                             isSignedOut -> Icons.AutoMirrored.Rounded.Login
                             else -> Icons.AutoMirrored.Rounded.Reply
                         },
-                        expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
+                        expanded = isFabExpanded {
+                            if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
+                            else topAppBarNestedScrollConnection.offset * -1f
+                        },
                         onClick = onClick@{
                             val anchorPost = state.anchorPost ?: return@onClick
                             viewModel.accept(
