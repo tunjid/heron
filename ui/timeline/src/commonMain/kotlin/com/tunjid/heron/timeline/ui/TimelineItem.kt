@@ -55,7 +55,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.PostUri
@@ -86,9 +85,6 @@ fun TimelineItem(
         item = item,
         modifier = modifier,
         presentation = presentation,
-        onPostClicked = { post ->
-            postActions.onPostAction(PostAction.OfPost(post))
-        },
         content = {
             Column(
                 modifier = Modifier
@@ -363,7 +359,6 @@ fun TimelineCard(
     item: TimelineItem,
     modifier: Modifier = Modifier,
     presentation: Timeline.Presentation,
-    onPostClicked: (Post) -> Unit,
     content: @Composable () -> Unit,
 ) {
     val cornerRadius =
@@ -379,7 +374,6 @@ fun TimelineCard(
         if (isFlat) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         else CardDefaults.elevatedCardColors(),
         elevation = CardDefaults.cardElevation(),
-        onClick = { onPostClicked(item.post) },
         content = { content() },
     )
 }

@@ -220,6 +220,22 @@ private fun AttributionContent(
                     postId = data.post.cid,
                     sharedElementPrefix = data.sharedElementPrefix,
                     paneMovableElementSharedTransitionScope = this,
+                    onPostClicked = {
+                        data.postActions.onPostAction(
+                            PostAction.OfPost(
+                                post = data.post,
+                            ),
+                        )
+                    },
+                    onAuthorClicked = {
+                        data.postActions.onPostAction(
+                            PostAction.OfProfile(
+                                profile = data.post.author,
+                                post = data.post,
+                                quotingPostUri = null,
+                            ),
+                        )
+                    },
                 )
             },
         )

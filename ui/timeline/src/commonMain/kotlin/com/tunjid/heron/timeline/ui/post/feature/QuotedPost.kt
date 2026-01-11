@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.timeline.ui.post.feature
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
@@ -56,7 +55,6 @@ import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import kotlin.time.Clock
 import kotlin.time.Instant
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun QuotedPost(
     modifier: Modifier = Modifier,
@@ -110,6 +108,10 @@ fun QuotedPost(
                     postId = quotedPost.cid,
                     sharedElementPrefix = sharedElementPrefix,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    onPostClicked = onClick,
+                    onAuthorClicked = {
+                        onProfileClicked(quotedPost, author)
+                    },
                 )
             }
             Spacer(Modifier.height(2.dp))
