@@ -19,6 +19,7 @@ package com.tunjid.heron.timeline.utilities
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.FlowRowScope
 import androidx.compose.foundation.layout.Row
@@ -38,10 +39,24 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.AppliedLabels
+import com.tunjid.heron.data.core.models.Label
+import com.tunjid.heron.data.core.models.Labeler
+import com.tunjid.heron.ui.NeutralDialogButton
+import com.tunjid.heron.ui.PrimaryDialogButton
+import com.tunjid.heron.ui.SimpleDialog
+import com.tunjid.heron.ui.SimpleDialogText
+import com.tunjid.heron.ui.SimpleDialogTitle
 import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.heron.ui.text.CommonStrings
+import heron.ui.core.generated.resources.dismiss
+import heron.ui.timeline.generated.resources.Res
+import heron.ui.timeline.generated.resources.label_source
+import heron.ui.timeline.generated.resources.view_labeler
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
-internal inline fun LabelFlowRow(
+inline fun LabelFlowRow(
     modifier: Modifier = Modifier,
     crossinline content: @Composable FlowRowScope.() -> Unit,
 ) {
@@ -57,7 +72,7 @@ internal inline fun LabelFlowRow(
 }
 
 @Composable
-internal inline fun Label(
+inline fun Label(
     modifier: Modifier = Modifier,
     contentDescription: String,
     isElevated: Boolean = false,
@@ -97,7 +112,7 @@ internal inline fun Label(
 }
 
 @Composable
-internal fun LabelText(
+fun LabelText(
     text: String,
 ) {
     Text(
@@ -108,5 +123,12 @@ internal fun LabelText(
         color = MaterialTheme.colorScheme.outline,
     )
 }
+
+fun Label.Definition.locale(
+    currentLanguageTag: String,
+) = locales.list
+    .firstOrNull { it.lang == currentLanguageTag }
+    ?: locales.list
+        .firstOrNull()
 
 internal val LabelIconSize = 12.dp

@@ -31,7 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.profile.LabelerSettingsStateHolder
 import com.tunjid.heron.timeline.ui.label.LabelSetting
-import com.tunjid.heron.timeline.ui.label.locale
+import com.tunjid.heron.timeline.utilities.locale
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.profile.generated.resources.Res

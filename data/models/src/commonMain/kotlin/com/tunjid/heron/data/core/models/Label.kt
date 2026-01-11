@@ -217,8 +217,16 @@ data class AppliedLabels(
         }
     }
 
-    fun visibility(label: Label.Value) =
-        labelVisibilityMap[label] ?: Label.Visibility.Ignore
+    private val labelerDefinitionLookup by lazy {
+        labelers.associateBy(
+            keySelector = { it.creator.did },
+            valueTransform = { labeler ->
+                labeler to labeler.definitions.associateBy(
+                    keySelector = Label.Definition::identifier,
+                )
+            },
+        )
+    }
 
     val shouldHide: Boolean
         get() = postLabels.any { labelValue ->
@@ -245,4 +253,13 @@ data class AppliedLabels(
 
     val canAutoPlayVideo: Boolean
         get() = !shouldBlurMedia
+
+    fun visibility(label: Label.Value): Label.Visibility =
+        labelVisibilityMap[label] ?: Label.Visibility.Ignore
+
+    fun definition(label: Label): Label.Definition? =
+        labelerDefinitionLookup[label.creatorId]?.second?.get(label.value)
+
+    fun labeler(label: Label): Labeler? =
+        labelerDefinitionLookup[label.creatorId]?.first
 }

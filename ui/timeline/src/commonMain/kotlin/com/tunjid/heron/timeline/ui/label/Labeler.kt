@@ -77,10 +77,3 @@ fun Labeler(
         },
     )
 }
-
-fun Label.Definition.locale(
-    currentLanguageTag: String,
-) = locales.list
-    .firstOrNull { it.lang == currentLanguageTag }
-    ?: locales.list
-        .firstOrNull()

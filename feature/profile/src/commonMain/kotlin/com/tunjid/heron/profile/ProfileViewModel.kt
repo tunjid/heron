@@ -212,12 +212,7 @@ fun subscribedLabelerMutations(
 ): Flow<Mutation<State>> =
     embeddableRecordRepository.subscribedLabelers
         .mapToMutation { labelers ->
-            copy(
-                subscribedLabelerProfileIds = labelers.mapTo(
-                    destination = mutableSetOf(),
-                    transform = { it.creator.did },
-                ),
-            )
+            copy(subscribedLabelers = labelers)
         }
 
 private fun commonFollowerMutations(

@@ -20,6 +20,7 @@ import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Label
+import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
@@ -72,7 +73,7 @@ data class State(
     val avatarSharedElementKey: String,
     val commonFollowers: List<Profile> = emptyList(),
     val timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean> = emptyMap(),
-    val subscribedLabelerProfileIds: Set<ProfileId> = emptySet(),
+    val subscribedLabelers: Labelers = emptyList(),
     @Transient
     val preferences: Preferences = Preferences.EmptyPreferences,
     @Transient
@@ -95,7 +96,7 @@ fun State(route: Route) = State(
 )
 
 val State.isSubscribedToLabeler
-    get() = profile.isLabeler && subscribedLabelerProfileIds.contains(profile.did)
+    get() = profile.isLabeler && subscribedLabelers.any { it.creator.did == profile.did }
 
 sealed class ProfileScreenStateHolders {
 

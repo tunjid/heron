@@ -92,7 +92,6 @@
     <string name="send_via_direct_message">Send via Direct Message</string>
     <string name="share_in_post">Share in a post</string>
     <string name="send_icon">Send icon</string>
-    <string name="post_author_label">Post author label: %1$s</string>
     <string name="label_source">Label by: %1$s</string>
     <string name="view_labeler">View Labeler</string>
     <string name="thread_gate_who_can_reply">Who can reply</string>

@@ -25,14 +25,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
@@ -41,18 +36,12 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -62,7 +51,6 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Label
-import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ThreadGate
@@ -71,36 +59,27 @@ import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.allowsAll
 import com.tunjid.heron.data.core.models.allowsNone
-import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
-import com.tunjid.heron.timeline.ui.label.locale
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
 import com.tunjid.heron.timeline.ui.post.threadtraversal.videoId
+import com.tunjid.heron.timeline.utilities.AppliedLabelDialog
 import com.tunjid.heron.timeline.utilities.Label
 import com.tunjid.heron.timeline.utilities.LabelFlowRow
 import com.tunjid.heron.timeline.utilities.LabelIconSize
 import com.tunjid.heron.timeline.utilities.LabelText
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.createdAt
+import com.tunjid.heron.timeline.utilities.forEach
 import com.tunjid.heron.ui.AttributionLayout
-import com.tunjid.heron.ui.NeutralDialogButton
-import com.tunjid.heron.ui.PrimaryDialogButton
-import com.tunjid.heron.ui.SimpleDialog
-import com.tunjid.heron.ui.SimpleDialogText
-import com.tunjid.heron.ui.SimpleDialogTitle
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
-import heron.ui.core.generated.resources.dismiss
-import heron.ui.timeline.generated.resources.Res
-import heron.ui.timeline.generated.resources.label_source
-import heron.ui.timeline.generated.resources.post_author_label
-import heron.ui.timeline.generated.resources.view_labeler
+import heron.ui.core.generated.resources.post_author_label
 import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
@@ -259,55 +238,68 @@ private fun LabelContent(
                     presentation = data.presentation,
                 ),
             content = {
-                data.post.author.labels.forEach { label ->
-                    data.withPreferredLabelerAndLocaleInfo(label) { labeler, localeInfo ->
-                        val authorLabelContentDescription = stringResource(
-                            Res.string.post_author_label,
-                            localeInfo.description,
-                        )
-                        Label(
-                            modifier = Modifier
-                                .padding(2.dp),
-                            contentDescription = authorLabelContentDescription,
-                            icon = {
-                                PaneStickySharedElement(
+                data.appliedLabels.forEach(
+                    languageTag = data.languageTag,
+                    labels = data.post.author.labels,
+                ) { label, labeler, localeInfo ->
+                    val authorLabelContentDescription = stringResource(
+                        CommonStrings.post_author_label,
+                        localeInfo.description,
+                    )
+                    Label(
+                        modifier = Modifier
+                            .padding(2.dp),
+                        contentDescription = authorLabelContentDescription,
+                        icon = {
+                            PaneStickySharedElement(
+                                modifier = Modifier
+                                    .size(LabelIconSize),
+                                sharedContentState = rememberSharedContentState(
+                                    data.sharedElementKey(label),
+                                ),
+                            ) {
+                                AsyncImage(
+                                    args = remember(labeler.creator.avatar) {
+                                        ImageArgs(
+                                            url = labeler.creator.avatar?.uri,
+                                            contentScale = ContentScale.Crop,
+                                            contentDescription = null,
+                                            shape = data.avatarShape,
+                                        )
+                                    },
                                     modifier = Modifier
-                                        .size(LabelIconSize),
-                                    sharedContentState = rememberSharedContentState(
-                                        data.sharedElementKey(label),
-                                    ),
-                                ) {
-                                    AsyncImage(
-                                        args = remember(labeler.creator.avatar) {
-                                            ImageArgs(
-                                                url = labeler.creator.avatar?.uri,
-                                                contentScale = ContentScale.Crop,
-                                                contentDescription = null,
-                                                shape = data.avatarShape,
-                                            )
-                                        },
-                                        modifier = Modifier
-                                            .fillParentAxisIfFixedOrWrap(),
-                                    )
-                                }
-                            },
-                            description = {
-                                LabelText(localeInfo.name)
-                            },
-                            onClick = {
-                                data.selectedLabel = label
-                            },
-                        )
-                    }
+                                        .fillParentAxisIfFixedOrWrap(),
+                                )
+                            }
+                        },
+                        description = {
+                            LabelText(localeInfo.name)
+                        },
+                        onClick = {
+                            data.selectedLabel = label
+                        },
+                    )
                 }
                 data.selectedLabel?.let { selectedLabel ->
-                    data.withPreferredLabelerAndLocaleInfo(selectedLabel) { labeler, localeInfo ->
-                        LabelDialog(
-                            data = data,
-                            localeInfo = localeInfo,
-                            labelerHandle = labeler.creator.handle,
-                        )
-                    }
+                    AppliedLabelDialog(
+                        label = selectedLabel,
+                        languageTag = data.languageTag,
+                        appliedLabels = data.appliedLabels,
+                        onDismiss = {
+                            data.selectedLabel = null
+                        },
+                        onLabelerClicked = { labeler ->
+                            data.selectedLabel = null
+                            data.postActions.onPostAction(
+                                PostAction.OfLinkTarget(
+                                    post = data.post,
+                                    linkTarget = LinkTarget.UserHandleMention(
+                                        labeler.creator.handle,
+                                    ),
+                                ),
+                            )
+                        },
+                    )
                 }
             },
         )
@@ -481,57 +473,6 @@ private fun MetadataContent(
         likes = data.post.likeCount,
         onMetadataClicked = {
             data.postActions.onPostAction(PostAction.OfMetadata(it))
-        },
-    )
-}
-
-@Composable
-private fun LabelDialog(
-    data: PostData,
-    labelerHandle: ProfileHandle,
-    localeInfo: Labeler.LocaleInfo,
-) {
-    SimpleDialog(
-        onDismissRequest = {
-            data.selectedLabel = null
-        },
-        title = {
-            SimpleDialogTitle(text = localeInfo.name)
-        },
-        text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                SimpleDialogText(
-                    text = localeInfo.description,
-                )
-                SimpleDialogText(
-                    text = stringResource(
-                        Res.string.label_source,
-                        labelerHandle.id,
-                    ),
-                )
-            }
-        },
-        dismissButton = {
-            NeutralDialogButton(
-                text = stringResource(CommonStrings.dismiss),
-                onClick = { data.selectedLabel = null },
-            )
-        },
-        confirmButton = {
-            PrimaryDialogButton(
-                text = stringResource(Res.string.view_labeler),
-                onClick = {
-                    data.selectedLabel = null
-                    data.postActions.onPostAction(
-                        PostAction.OfLinkTarget(
-                            post = data.post,
-                            linkTarget = LinkTarget.UserHandleMention(labelerHandle),
-                        ),
-                    )
-                },
-            )
         },
     )
 }
@@ -770,22 +711,6 @@ private class PostData(
 
     val boundsTransform = BoundsTransform { _, _ ->
         SpringSpec.skipIf { !presentationChanged }
-    }
-
-    inline fun withPreferredLabelerAndLocaleInfo(
-        label: Label,
-        labeler: (Labeler, Labeler.LocaleInfo) -> Unit,
-    ) {
-        val visibility = appliedLabels.visibility(label.value)
-        if (visibility != Label.Visibility.Warn) return
-
-        labelerDefinitionLookup[label.creatorId]?.let { (labeler, definitionMap) ->
-            definitionMap[label.value]?.let { definition ->
-                definition.locale(languageTag)?.let { localeInfo ->
-                    labeler(labeler, localeInfo)
-                }
-            }
-        }
     }
 
     fun sharedElementKey(
