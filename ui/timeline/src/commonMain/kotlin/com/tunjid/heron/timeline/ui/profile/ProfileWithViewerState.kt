@@ -73,6 +73,9 @@ fun ProfileWithViewerState(
     onProfileClicked: (Profile) -> Unit,
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
 ) = with(movableElementSharedTransitionScope) {
+    val profileClicked = {
+        onProfileClicked(profile)
+    }
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -92,7 +95,7 @@ fun ProfileWithViewerState(
                                 progress = ::BlockedContentBlurProgress,
                             )
                         }
-                        .clickable { onProfileClicked(profile) },
+                        .clickable(onClick = profileClicked),
                     sharedContentState = with(movableElementSharedTransitionScope) {
                         rememberSharedContentState(
                             key = profileSharedElementKey(profile),
@@ -145,14 +148,17 @@ fun ProfileWithViewerState(
             if (viewerState.followsYou) IconLabel(
                 icon = null,
                 contentDescription = stringResource(CommonStrings.viewer_state_follows_you),
+                onClick = profileClicked,
             )
             if (viewerState.isBlocked) IconLabel(
                 icon = Icons.Rounded.Block,
                 contentDescription = stringResource(CommonStrings.viewer_state_blocked),
+                onClick = profileClicked,
             )
             if (viewerState.isMuted) IconLabel(
                 icon = Icons.AutoMirrored.Rounded.VolumeOff,
                 contentDescription = stringResource(CommonStrings.viewer_state_muted),
+                onClick = profileClicked,
             )
         }
     }
@@ -162,6 +168,7 @@ fun ProfileWithViewerState(
 private fun IconLabel(
     icon: ImageVector?,
     contentDescription: String,
+    onClick: () -> Unit,
 ) {
     Label(
         isElevated = true,
@@ -177,7 +184,7 @@ private fun IconLabel(
         description = {
             LabelText(contentDescription)
         },
-        onClick = {},
+        onClick = onClick,
     )
 }
 
