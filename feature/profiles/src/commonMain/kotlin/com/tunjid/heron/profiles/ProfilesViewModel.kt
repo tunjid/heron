@@ -77,25 +77,7 @@ class ActualProfilesViewModel(
 ) : ViewModel(viewModelScope = scope),
     ProfilesStateHolder by scope.actionStateFlowMutator(
         initialState = State(
-            tilingData = TilingState.Data(
-                currentQuery = when (val load = route.load) {
-                    is Load.Post -> PostDataQuery(
-                        profileId = load.profileId,
-                        postRecordKey = load.postRecordKey,
-                        data = CursorQuery.defaultStartData(),
-                    )
-
-                    is Load.Profile -> ProfilesQuery(
-                        profileId = load.profileId,
-                        data = CursorQuery.defaultStartData(),
-                    )
-                    Load.Moderation.Blocks,
-                    Load.Moderation.Mutes,
-                    -> DataQuery(
-                        data = CursorQuery.defaultStartData(),
-                    )
-                },
-            ),
+            route = route,
         ),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         inputs = listOf(
