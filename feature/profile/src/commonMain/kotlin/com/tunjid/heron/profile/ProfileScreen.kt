@@ -89,9 +89,11 @@ import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import com.tunjid.composables.lazy.rememberLazyScrollableState
 import com.tunjid.composables.ui.lerp
 import com.tunjid.heron.data.core.models.Conversation
+import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Timeline
@@ -109,6 +111,7 @@ import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.profile.ui.LabelerSettings
 import com.tunjid.heron.profile.ui.LabelerState
 import com.tunjid.heron.profile.ui.ProfileCollectionSharedElementPrefix
+import com.tunjid.heron.profile.ui.ProfileLabels
 import com.tunjid.heron.profile.ui.RecordList
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
@@ -265,9 +268,13 @@ internal fun ProfileScreen(
                 profile = state.profile,
                 commonFollowerCount = state.viewerState?.commonFollowersCount,
                 commonFollowers = state.commonFollowers,
+                subscribedLabelers = state.subscribedLabelers,
+                preferences = state.preferences,
                 isRefreshing = isRefreshing,
                 isSignedInProfile = state.isSignedInProfile,
-                isSubscribedToLabeler = state.isSubscribedToLabeler,
+                isSubscribedToLabeler = remember(state.profile.isLabeler, state.subscribedLabelers) {
+                    state.isSubscribedToLabeler
+                },
                 viewerState = state.viewerState,
                 timelineStateHolders = remember(updatedStateHolders) {
                     updatedStateHolders.filterIsInstance<ProfileScreenStateHolders.Timeline>()
@@ -498,6 +505,8 @@ private fun ProfileHeader(
     profile: Profile,
     commonFollowerCount: Long?,
     commonFollowers: List<Profile>,
+    subscribedLabelers: List<Labeler>,
+    preferences: Preferences,
     isRefreshing: Boolean,
     isSignedInProfile: Boolean,
     isSubscribedToLabeler: Boolean,
@@ -590,13 +599,29 @@ private fun ProfileHeader(
                     onLinkTargetClicked = onLinkTargetClicked,
                 )
                 if (!isSignedInProfile && commonFollowers.isNotEmpty()) {
-                    Spacer(Modifier.height(Dp.Hairline))
                     CommonFollowers(
                         commonFollowerCount = commonFollowerCount,
                         commonFollowers = commonFollowers,
                     )
                 }
-                Spacer(Modifier.height(4.dp))
+                ProfileLabels(
+                    adultContentEnabled = preferences.allowAdultContent,
+                    viewerState = viewerState,
+                    labels = profile.labels,
+                    labelers = subscribedLabelers,
+                    contentLabelPreferences = preferences.contentLabelPreferences,
+                    onLabelerClicked = { labeler ->
+                        onNavigate(
+                            profileDestination(
+                                profile = labeler.creator,
+                                avatarSharedElementKey = labeler.avatarSharedElementKey(
+                                    prefix = null,
+                                ),
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            ),
+                        )
+                    },
+                )
             }
             ProfileTabs(
                 modifier = Modifier

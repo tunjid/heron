@@ -19,9 +19,7 @@ package com.tunjid.heron.timeline.ui.profile
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.FilterChip
@@ -31,14 +29,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ProfileViewerState
-import com.tunjid.heron.data.core.models.isBlocked
 import com.tunjid.heron.data.core.models.isFollowing
-import com.tunjid.heron.data.core.models.isMuted
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.viewer_state_follow
 import heron.ui.core.generated.resources.viewer_state_following
-import heron.ui.core.generated.resources.viewer_state_unblock
-import heron.ui.core.generated.resources.viewer_state_unmute
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.edit
 import org.jetbrains.compose.resources.stringResource
