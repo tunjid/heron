@@ -29,6 +29,8 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="go_back">Go Back</string>
+    <string name="hide">Hide</string>
+    <string name="show">Show</string>
     <string name="save">Save</string>
     <string name="close">Close</string>
     <string name="go_to_settings">Go to Settings</string>

@@ -28,13 +28,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -70,16 +74,23 @@ import com.tunjid.heron.timeline.utilities.Label
 import com.tunjid.heron.timeline.utilities.LabelFlowRow
 import com.tunjid.heron.timeline.utilities.LabelIconSize
 import com.tunjid.heron.timeline.utilities.LabelText
+import com.tunjid.heron.timeline.utilities.SensitiveContentBox
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.timeline.utilities.forEach
+import com.tunjid.heron.timeline.utilities.icon
+import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.ui.core.generated.resources.post_author_label
+import heron.ui.timeline.generated.resources.Res
+import heron.ui.timeline.generated.resources.mute_words_post_hidden
+import heron.ui.timeline.generated.resources.sensitive_media
 import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
@@ -90,6 +101,7 @@ internal fun Post(
     modifier: Modifier = Modifier,
     now: Instant,
     post: Post,
+    hasMutedWords: Boolean,
     threadGate: ThreadGate?,
     isAnchoredInTimeline: Boolean,
     avatarShape: RoundedPolygonShape,
@@ -118,28 +130,46 @@ internal fun Post(
             threadGate = threadGate,
             presentation = presentation,
             appliedLabels = appliedLabels,
+            hasMutedWords = hasMutedWords,
             sharedElementPrefix = sharedElementPrefix,
             avatarShape = avatarShape,
             now = now,
             createdAt = createdAt,
             languageTag = Locale.current.toLanguageTag(),
         )
-        Column(
+        SensitiveContentBox(
             modifier = Modifier
-                .padding(vertical = presentation.postVerticalPadding)
                 .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(presentation.postContentSpacing),
+            isBlurred = postData.textBlurred,
+            canUnblur = true,
+            label = stringResource(Res.string.mute_words_post_hidden),
+            icon = Icons.Rounded.VisibilityOff,
+            onUnblurClicked = {
+                postData.hasClickedThroughMutedWords = true
+            },
         ) {
-            presentation.contentOrder.forEach { order ->
-                key(order.key) {
-                    when (order) {
-                        PostContent.Actions -> ActionsContent(postData)
-                        PostContent.Attribution -> AttributionContent(postData)
-                        PostContent.Embed.Link -> EmbedContent(postData)
-                        PostContent.Embed.Media -> EmbedContent(postData)
-                        PostContent.Metadata -> if (isAnchoredInTimeline) MetadataContent(postData)
-                        PostContent.Text -> TextContent(postData)
-                        PostContent.Labels -> if (postData.hasLabels) LabelContent(postData)
+            Column(
+                modifier = Modifier
+                    .ifTrue(postData.textBlurred) {
+                        sensitiveContentBlur(MutedWordShape)
+                    }
+                    .padding(vertical = presentation.postVerticalPadding)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(presentation.postContentSpacing),
+            ) {
+                presentation.contentOrder.forEach { order ->
+                    key(order.key) {
+                        when (order) {
+                            PostContent.Actions -> ActionsContent(postData)
+                            PostContent.Attribution -> AttributionContent(postData)
+                            PostContent.Embed.Link -> EmbedContent(postData)
+                            PostContent.Embed.Media -> EmbedContent(postData)
+                            PostContent.Metadata -> if (isAnchoredInTimeline) MetadataContent(
+                                postData,
+                            )
+                            PostContent.Text -> TextContent(postData)
+                            PostContent.Labels -> if (postData.hasLabels) LabelContent(postData)
+                        }
                     }
                 }
             }
@@ -383,10 +413,17 @@ private fun EmbedContent(
         embed = data.post.embed,
         embeddedRecord = data.post.embeddedRecord,
         postUri = data.post.uri,
+        isBlurred = data.mediaBlurred,
+        canUnblur = data.canUnblurMedia,
+        blurIcon = data.appliedLabels.blurredMediaSeverity.icon(),
+        blurLabel = stringResource(Res.string.sensitive_media),
         appliedLabels = data.appliedLabels,
         presentation = data.presentation,
         sharedElementPrefix = data.sharedElementPrefix,
         paneMovableElementSharedTransitionScope = data.paneMovableElementSharedTransitionScope,
+        onUnblurClicked = {
+            data.hasClickedThroughSensitiveMedia = true
+        },
         onLinkTargetClicked = { post, linkTarget ->
             data.postActions.onPostAction(
                 PostAction.OfLinkTarget(
@@ -614,42 +651,71 @@ private fun rememberUpdatedPostData(
     threadGate: ThreadGate?,
     presentation: Timeline.Presentation,
     appliedLabels: AppliedLabels,
+    hasMutedWords: Boolean,
     sharedElementPrefix: String,
     avatarShape: RoundedPolygonShape,
     now: Instant,
     createdAt: Instant,
     languageTag: String,
-): PostData {
-    return remember {
-        PostData(
-            postActions = postActions,
-            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-            presentationLookaheadScope = presentationLookaheadScope,
-            post = post,
-            threadGate = threadGate,
-            presentation = presentation,
-            appliedLabels = appliedLabels,
-            sharedElementPrefix = sharedElementPrefix,
-            avatarShape = avatarShape,
-            now = now,
-            created = createdAt,
-            languageTag = languageTag,
-        )
-    }.also {
-        if (it.presentation != presentation) it.presentationChanged = true
-        it.postActions = postActions
-        it.paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope
-        it.presentationLookaheadScope = presentationLookaheadScope
-        it.post = post
-        it.threadGate = threadGate
-        it.presentation = presentation
-        it.appliedLabels = appliedLabels
-        it.sharedElementPrefix = sharedElementPrefix
-        it.avatarShape = avatarShape
-        it.now = now
-        it.createdAt = createdAt
-        it.languageTag = languageTag
-    }
+): PostData = rememberSaveable(
+    saver = listSaver(
+        save = { data ->
+            listOf(
+                data.hasClickedThroughMutedWords,
+                data.hasClickedThroughSensitiveMedia,
+            )
+        },
+        restore = { (hasClickedThroughMutedWords, hasClickedThroughSensitiveMedia) ->
+            PostData(
+                postActions = postActions,
+                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                presentationLookaheadScope = presentationLookaheadScope,
+                post = post,
+                threadGate = threadGate,
+                presentation = presentation,
+                appliedLabels = appliedLabels,
+                hasMutedWords = hasMutedWords,
+                sharedElementPrefix = sharedElementPrefix,
+                avatarShape = avatarShape,
+                now = now,
+                created = createdAt,
+                languageTag = languageTag,
+                hasClickedThroughMutedWords = hasClickedThroughMutedWords,
+                hasClickedThroughSensitiveMedia = hasClickedThroughSensitiveMedia,
+            )
+        },
+    ),
+) {
+    PostData(
+        postActions = postActions,
+        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+        presentationLookaheadScope = presentationLookaheadScope,
+        post = post,
+        threadGate = threadGate,
+        presentation = presentation,
+        appliedLabels = appliedLabels,
+        hasMutedWords = hasMutedWords,
+        sharedElementPrefix = sharedElementPrefix,
+        avatarShape = avatarShape,
+        now = now,
+        created = createdAt,
+        languageTag = languageTag,
+    )
+}.also {
+    if (it.presentation != presentation) it.presentationChanged = true
+    it.postActions = postActions
+    it.paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope
+    it.presentationLookaheadScope = presentationLookaheadScope
+    it.post = post
+    it.threadGate = threadGate
+    it.presentation = presentation
+    it.appliedLabels = appliedLabels
+    it.hasMutedWords = hasMutedWords
+    it.sharedElementPrefix = sharedElementPrefix
+    it.avatarShape = avatarShape
+    it.now = now
+    it.createdAt = createdAt
+    it.languageTag = languageTag
 }
 
 @Stable
@@ -661,11 +727,14 @@ private class PostData(
     threadGate: ThreadGate?,
     presentation: Timeline.Presentation,
     appliedLabels: AppliedLabels,
+    hasMutedWords: Boolean,
     sharedElementPrefix: String,
     avatarShape: RoundedPolygonShape,
     now: Instant,
     created: Instant,
     languageTag: String,
+    hasClickedThroughMutedWords: Boolean = false,
+    hasClickedThroughSensitiveMedia: Boolean = false,
 ) {
     var postActions by mutableStateOf(postActions)
     var paneMovableElementSharedTransitionScope by mutableStateOf(
@@ -676,6 +745,7 @@ private class PostData(
     var threadGate by mutableStateOf(threadGate)
     var presentation by mutableStateOf(presentation)
     var appliedLabels by mutableStateOf(appliedLabels)
+    var hasMutedWords by mutableStateOf(hasMutedWords)
     var sharedElementPrefix by mutableStateOf(sharedElementPrefix)
     var avatarShape by mutableStateOf(avatarShape)
     var now by mutableStateOf(now)
@@ -684,6 +754,9 @@ private class PostData(
 
     var presentationChanged by mutableStateOf(false)
     var selectedLabel by mutableStateOf<Label?>(null)
+
+    var hasClickedThroughMutedWords by mutableStateOf(hasClickedThroughMutedWords)
+    var hasClickedThroughSensitiveMedia by mutableStateOf(hasClickedThroughSensitiveMedia)
 
     val hasLabels
         get() = post.labels.isNotEmpty() || post.author.labels.isNotEmpty()
@@ -698,17 +771,6 @@ private class PostData(
             }
         }
 
-    private val labelerDefinitionLookup by derivedStateOf {
-        appliedLabels.labelers.associateBy(
-            keySelector = { it.creator.did },
-            valueTransform = { labeler ->
-                labeler to labeler.definitions.associateBy(
-                    keySelector = Label.Definition::identifier,
-                )
-            },
-        )
-    }
-
     val boundsTransform = BoundsTransform { _, _ ->
         SpringSpec.skipIf { !presentationChanged }
     }
@@ -717,6 +779,15 @@ private class PostData(
         label: Label,
     ) = "$sharedElementPrefix-${post.uri.uri}-${label.creatorId}-${label.value}"
 }
+
+private val PostData.textBlurred: Boolean
+    get() = hasMutedWords && !hasClickedThroughMutedWords
+
+private val PostData.mediaBlurred: Boolean
+    get() = appliedLabels.shouldBlurMedia && !hasClickedThroughSensitiveMedia
+
+private val PostData.canUnblurMedia: Boolean
+    get() = appliedLabels.blurredMediaSeverity != Label.Severity.None
 
 private sealed class PostContent(val key: String) {
     data object Attribution : PostContent(key = "Attribution")
@@ -782,3 +853,5 @@ private val GridMediaOrder = listOf(
 
 private const val EmbedContentZIndex = 2f
 private const val TextContentZIndex = 1f
+
+private val MutedWordShape = RoundedCornerShape(8.dp)
