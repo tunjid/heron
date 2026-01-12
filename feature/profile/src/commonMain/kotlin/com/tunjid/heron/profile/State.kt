@@ -32,6 +32,7 @@ import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
+import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
@@ -194,6 +195,17 @@ sealed class Action(val key: String) {
     data class BioLinkClicked(
         val target: LinkTarget,
     ) : Action(key = "BioLinkClicked")
+
+    data class BlockAccount(
+        val signedInProfileId: ProfileId,
+        val profileId: ProfileId,
+    ) : Action(key = "BlockAccount")
+
+    data class UnblockAccount(
+        val signedInProfileId: ProfileId,
+        val profileId: ProfileId,
+        val blockUri: BlockUri,
+    ) : Action(key = "BlockAccount")
 
     data class UpdateMutedWord(
         val mutedWordPreference: List<MutedWordPreference>,
