@@ -67,11 +67,11 @@ import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.preferredPresentationPartial
 import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.utilities.lookupProfileDid
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
+import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.toOutcome
@@ -214,6 +214,7 @@ internal class OfflineTimelineRepository(
     private val networkService: NetworkService,
     private val savedStateDataSource: SavedStateDataSource,
     private val preferenceUpdater: PreferenceUpdater,
+    private val profileLookup: ProfileLookup,
     private val recordResolver: RecordResolver,
     private val authRepository: AuthRepository,
 ) : TimelineRepository {
@@ -666,10 +667,8 @@ internal class OfflineTimelineRepository(
                         )
 
                         is TimelineRequest.OfFeed.WithProfile -> {
-                            val profileDid = lookupProfileDid(
+                            val profileDid = profileLookup.lookupProfileDid(
                                 profileId = request.profileHandleOrDid,
-                                profileDao = profileDao,
-                                networkService = networkService,
                             ) ?: return@flow
                             val uri = FeedGeneratorUri(
                                 uri = "at://${profileDid.did}/${FeedGeneratorUri.NAMESPACE}/${request.feedUriSuffix}",
@@ -687,10 +686,8 @@ internal class OfflineTimelineRepository(
                         }
 
                         is TimelineRequest.OfList.WithProfile -> {
-                            val profileDid = lookupProfileDid(
+                            val profileDid = profileLookup.lookupProfileDid(
                                 profileId = request.profileHandleOrDid,
-                                profileDao = profileDao,
-                                networkService = networkService,
                             ) ?: return@flow
                             val uri = ListUri(
                                 uri = "at://${profileDid.did}/${ListUri.NAMESPACE}/${request.listUriSuffix}",
@@ -716,10 +713,8 @@ internal class OfflineTimelineRepository(
                         )
 
                         is TimelineRequest.OfStarterPack.WithProfile -> {
-                            val profileDid = lookupProfileDid(
+                            val profileDid = profileLookup.lookupProfileDid(
                                 profileId = request.profileHandleOrDid,
-                                profileDao = profileDao,
-                                networkService = networkService,
                             ) ?: return@flow
                             val uri = StarterPackUri(
                                 uri = "at://${profileDid.did}/${StarterPackUri.NAMESPACE}/${request.starterPackUriSuffix}",
@@ -781,7 +776,7 @@ internal class OfflineTimelineRepository(
                     putPreferences(
                         PutPreferencesRequest(
                             preferences = preferenceUpdater.update(
-                                response = preferencesResponse,
+                                networkPreferences = preferencesResponse.preferences,
                                 update = update,
                             ),
                         ),
@@ -932,14 +927,27 @@ internal class OfflineTimelineRepository(
                         associatedProfileIds = {
                             listOfNotNull(it.reposter)
                         },
-                        block = { entity ->
+                        block = block@{ entity ->
+                            // Muted posts should only show up on profile timelines
+                            val hideMuted = query.timeline !is Timeline.Profile
+                            var isMuted = isMuted(post)
+                            if (hideMuted && isMuted) return@block
+
                             val replyParent = entity.reply?.parentPostUri?.let(::record) as? Post
+                            isMuted =
+                                isMuted || (replyParent != null && isMuted(replyParent))
+                            if (hideMuted && isMuted) return@block
+
                             val replyRoot = entity.reply?.rootPostUri?.let(::record) as? Post
+                            isMuted = isMuted || (replyRoot != null && isMuted(replyRoot))
+                            if (hideMuted && isMuted) return@block
+
                             val repostedBy = entity.reposter?.let(::profile)
 
                             list += when {
                                 replyRoot != null && replyParent != null -> TimelineItem.Thread(
                                     id = entity.id,
+                                    isMuted = isMuted,
                                     generation = null,
                                     anchorPostIndex = 2,
                                     hasBreak = entity.reply?.grandParentPostAuthorId != null,
@@ -959,6 +967,7 @@ internal class OfflineTimelineRepository(
 
                                 repostedBy != null -> TimelineItem.Repost(
                                     id = entity.id,
+                                    isMuted = isMuted,
                                     post = post,
                                     by = repostedBy,
                                     at = entity.indexedAt,
@@ -969,6 +978,7 @@ internal class OfflineTimelineRepository(
 
                                 entity.isPinned -> TimelineItem.Pinned(
                                     id = entity.id,
+                                    isMuted = isMuted,
                                     post = post,
                                     threadGate = threadGate(post.uri),
                                     appliedLabels = appliedLabels,
@@ -977,6 +987,7 @@ internal class OfflineTimelineRepository(
 
                                 else -> TimelineItem.Single(
                                     id = entity.id,
+                                    isMuted = isMuted,
                                     post = post,
                                     threadGate = threadGate(post.uri),
                                     appliedLabels = appliedLabels,
@@ -1014,6 +1025,7 @@ internal class OfflineTimelineRepository(
         profileHandleOrDid: Id.Profile,
         type: Timeline.Profile.Type,
     ): Flow<Timeline.Profile> = profileDao.profiles(
+        signedInProfiledId = signedInProfileId?.id,
         ids = listOf(profileHandleOrDid),
     )
         .mapNotNull(List<PopulatedProfileEntity>::firstOrNull)
@@ -1145,6 +1157,7 @@ internal class OfflineTimelineRepository(
             lastItem == null || thread.generation == 0L -> list += TimelineItem.Thread(
                 id = thread.entity.uri.uri,
                 generation = thread.generation,
+                isMuted = isMuted(post),
                 anchorPostIndex = 0,
                 hasBreak = false,
                 posts = listOf(post),
@@ -1156,7 +1169,11 @@ internal class OfflineTimelineRepository(
             thread.generation <= -1L ->
                 if (lastItem is TimelineItem.Thread) list[list.lastIndex] = lastItem.copy(
                     posts = lastItem.posts + post,
-                    postUrisToThreadGates = lastItem.postUrisToThreadGates + (post.uri to threadGate(post.uri)),
+                    isMuted = lastItem.isMuted || isMuted(post),
+                    postUrisToThreadGates = lastItem.postUrisToThreadGates + Pair(
+                        post.uri,
+                        threadGate(post.uri),
+                    ),
                 )
                 else Unit
 
@@ -1165,6 +1182,7 @@ internal class OfflineTimelineRepository(
                 lastItem.posts.first().uri != thread.rootPostUri -> list += TimelineItem.Thread(
                 id = thread.entity.uri.uri,
                 generation = thread.generation,
+                isMuted = isMuted(post),
                 anchorPostIndex = 0,
                 hasBreak = false,
                 posts = listOf(post),
@@ -1177,10 +1195,15 @@ internal class OfflineTimelineRepository(
                 // Make sure only consecutive generations are added to the thread.
                 // Nonconsecutive generations are dropped. Users can see these replies by
                 // diving into the thread.
-                if (lastItem.nextGeneration == thread.generation) list[list.lastIndex] = lastItem.copy(
-                    posts = lastItem.posts + post,
-                    postUrisToThreadGates = lastItem.postUrisToThreadGates + (post.uri to threadGate(post.uri)),
-                )
+                if (lastItem.nextGeneration == thread.generation) list[list.lastIndex] =
+                    lastItem.copy(
+                        posts = lastItem.posts + post,
+                        isMuted = lastItem.isMuted || isMuted(post),
+                        postUrisToThreadGates = lastItem.postUrisToThreadGates + Pair(
+                            post.uri,
+                            threadGate(post.uri),
+                        ),
+                    )
             else -> Unit
         }
     }

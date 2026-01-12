@@ -26,9 +26,9 @@ import app.bsky.actor.ViewerState
 import app.bsky.feed.BlockedAuthor
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.GenericId
-import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ListId
 import com.tunjid.heron.data.core.types.ProfileHandle
@@ -126,45 +126,39 @@ internal fun BlockedAuthor.profileEntity(): ProfileEntity =
         ),
     )
 
-internal fun ProfileViewBasic.profileViewerStateEntities(
+internal fun ProfileViewBasic.profileViewerStateEntity(
     viewingProfileId: ProfileId,
-): List<ProfileViewerStateEntity> =
+): ProfileViewerStateEntity? =
     when (val viewer = viewer) {
-        null -> emptyList()
-        else -> listOf(
-            profileViewerStateEntity(
-                viewingProfileId = viewingProfileId,
-                viewedProfileId = did.did.let(::ProfileId),
-                viewer = viewer,
-            ),
+        null -> null
+        else -> profileViewerStateEntity(
+            viewingProfileId = viewingProfileId,
+            viewedProfileId = did.did.let(::ProfileId),
+            viewer = viewer,
         )
     }
 
-internal fun ProfileView.profileViewerStateEntities(
+internal fun ProfileView.profileViewerStateEntity(
     viewingProfileId: ProfileId,
-): List<ProfileViewerStateEntity> =
+): ProfileViewerStateEntity? =
     when (val viewer = viewer) {
-        null -> emptyList()
-        else -> listOf(
-            profileViewerStateEntity(
-                viewingProfileId = viewingProfileId,
-                viewedProfileId = did.did.let(::ProfileId),
-                viewer = viewer,
-            ),
+        null -> null
+        else -> profileViewerStateEntity(
+            viewingProfileId = viewingProfileId,
+            viewedProfileId = did.did.let(::ProfileId),
+            viewer = viewer,
         )
     }
 
-internal fun ProfileViewDetailed.profileViewerStateEntities(
+internal fun ProfileViewDetailed.profileViewerStateEntity(
     viewingProfileId: ProfileId,
-): List<ProfileViewerStateEntity> =
+): ProfileViewerStateEntity? =
     when (val viewer = viewer) {
-        null -> emptyList()
-        else -> listOf(
-            profileViewerStateEntity(
-                viewingProfileId = viewingProfileId,
-                viewedProfileId = did.did.let(::ProfileId),
-                viewer = viewer,
-            ),
+        null -> null
+        else -> profileViewerStateEntity(
+            viewingProfileId = viewingProfileId,
+            viewedProfileId = did.did.let(::ProfileId),
+            viewer = viewer,
         )
     }
 
@@ -241,7 +235,7 @@ private fun profileViewerStateEntity(
     blockingByList = viewer.blockingByList?.cid?.cid?.let(::ListId),
     following = viewer.following?.atUri?.let(::FollowUri),
     followedBy = viewer.followedBy?.atUri?.let(::FollowUri),
-    blocking = viewer.blocking?.atUri?.let(::GenericUri),
+    blocking = viewer.blocking?.atUri?.let(::BlockUri),
     commonFollowersCount = viewer.knownFollowers?.count,
 )
 
@@ -251,8 +245,8 @@ private fun KnownFollowers?.profileViewers(
     viewingProfileId: ProfileId,
 ): List<ProfileViewerStateEntity> = when (this) {
     null -> emptyList()
-    else -> followers.flatMap { profileViewBasic ->
-        profileViewBasic.profileViewerStateEntities(
+    else -> followers.mapNotNull { profileViewBasic ->
+        profileViewBasic.profileViewerStateEntity(
             viewingProfileId = viewingProfileId,
         )
     }

@@ -109,6 +109,7 @@ import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.remembe
 import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
+import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -155,6 +156,13 @@ internal fun GalleryScreen(
             )
         },
     )
+    val mutedWordsSheetState = rememberUpdatedMutedWordsSheetState(
+        mutedWordPreferences = state.preferences.mutedWordPreferences,
+        onSave = {
+            actions(Action.UpdateMutedWord(it))
+        },
+        onShown = {},
+    )
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = state.signedInProfileId,
         recentConversations = state.recentConversations,
@@ -176,7 +184,7 @@ internal fun GalleryScreen(
                 // TODO
                 is PostOption.ThreadGate -> Unit
                 is PostOption.Moderation.BlockUser -> Unit
-                is PostOption.Moderation.MuteWords -> Unit
+                is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
             }
         },
     )

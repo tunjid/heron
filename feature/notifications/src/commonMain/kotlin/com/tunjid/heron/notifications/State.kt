@@ -18,8 +18,10 @@ package com.tunjid.heron.notifications
 
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.associatedPostUri
 import com.tunjid.heron.data.repository.NotificationsQuery
@@ -36,6 +38,8 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     val lastRefreshed: Instant? = null,
+    @Transient
+    val preferences: Preferences = Preferences.EmptyPreferences,
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
     @Transient
@@ -86,6 +90,10 @@ sealed class Action(val key: String) {
     data class Tile(
         val tilingAction: TilingState.Action,
     ) : Action(key = "Tile")
+
+    data class UpdateMutedWord(
+        val mutedWordPreference: List<MutedWordPreference>,
+    ) : Action(key = "UpdateMutedWord")
 
     data class SendPostInteraction(
         val interaction: Post.Interaction,

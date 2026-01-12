@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.network.models
 
+import app.bsky.actor.ProfileViewBasic
 import app.bsky.embed.RecordViewRecordEmbedUnion
 import app.bsky.embed.RecordViewRecordUnion
 import app.bsky.feed.PostView
@@ -25,10 +26,8 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
-import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.PostEntity
-import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.postembeds.ExternalEmbedEntity
 import com.tunjid.heron.data.database.entities.postembeds.ImageEntity
 import com.tunjid.heron.data.database.entities.postembeds.PostEmbed
@@ -46,20 +45,20 @@ internal fun PostView.quotedPostEntity(): PostEntity? =
         null -> null
     }
 
-internal fun PostView.quotedPostProfileEntity(): ProfileEntity? =
+internal fun PostView.quotedPostProfileView(): ProfileViewBasic? =
     when (val embed = embed) {
         is PostViewEmbedUnion.ExternalView -> null
         is PostViewEmbedUnion.ImagesView -> null
-        is PostViewEmbedUnion.RecordWithMediaView -> embed.value.record.record.profileEntity()
+        is PostViewEmbedUnion.RecordWithMediaView -> embed.value.record.record.profileView()
 
         is PostViewEmbedUnion.Unknown -> null
         is PostViewEmbedUnion.VideoView -> null
-        is PostViewEmbedUnion.RecordView -> embed.value.record.profileEntity()
+        is PostViewEmbedUnion.RecordView -> embed.value.record.profileView()
 
         null -> null
     }
 
-private fun RecordViewRecordUnion.profileEntity() =
+private fun RecordViewRecordUnion.profileView() =
     when (this) {
         is RecordViewRecordUnion.FeedGeneratorView,
         is RecordViewRecordUnion.GraphListView,
@@ -71,27 +70,7 @@ private fun RecordViewRecordUnion.profileEntity() =
         is RecordViewRecordUnion.ViewNotFound,
         -> null
 
-        is RecordViewRecordUnion.ViewRecord -> ProfileEntity(
-            did = ProfileId(value.author.did.did),
-            handle = ProfileHandle(value.author.handle.handle),
-            displayName = value.author.displayName,
-            description = null,
-            avatar = value.author.avatar?.uri?.let(::ImageUri),
-            banner = null,
-            followersCount = null,
-            followsCount = null,
-            postsCount = null,
-            joinedViaStarterPack = null,
-            indexedAt = null,
-            createdAt = value.author.createdAt,
-            associated = ProfileEntity.Associated(
-                createdListCount = value.author.associated?.lists,
-                createdFeedGeneratorCount = value.author.associated?.feedgens,
-                createdStarterPackCount = value.author.associated?.starterPacks,
-                labeler = value.author.associated?.labeler,
-                allowDms = value.author.associated?.chat?.allowIncoming?.value,
-            ),
-        )
+        is RecordViewRecordUnion.ViewRecord -> value.author
     }
 
 internal fun PostView.quotedPostEmbedEntities(): List<PostEmbed> =

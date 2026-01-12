@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.settings
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,7 +34,6 @@ import com.tunjid.heron.settings.ui.ModerationItem
 import com.tunjid.heron.settings.ui.OpenSourceLibrariesItem
 import com.tunjid.heron.settings.ui.SignOutItem
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun SettingsScreen(
     paneScaffoldState: PaneScaffoldState,
@@ -73,6 +71,9 @@ internal fun SettingsScreen(
                 },
                 setCompactNavigation = {
                     actions(Action.SetCompactNavigation(it))
+                },
+                setAutoHideBottomNavigation = {
+                    actions(Action.SetAutoHideBottomNavigation(it))
                 },
             )
         }

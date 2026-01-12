@@ -101,12 +101,29 @@ sealed interface Writable {
 
         override val queueId: String
             get() = when (connection) {
-                is Profile.Connection.Follow -> "follow-${connection.profileId}"
-                is Profile.Connection.Unfollow -> "unfollow-${connection.profileId}"
+                is Profile.Connection.Follow -> "follow-$connection"
+                is Profile.Connection.Unfollow -> "unfollow-$connection"
             }
 
         override suspend fun WriteQueue.write(): Outcome =
             profileRepository.sendConnection(connection)
+    }
+
+    @Serializable
+    data class Restriction(
+        val restriction: Profile.Restriction,
+    ) : Writable {
+
+        override val queueId: String
+            get() = when (restriction) {
+                is Profile.Restriction.Block.Add -> "block-$restriction"
+                is Profile.Restriction.Block.Remove -> "unblock-$restriction"
+                is Profile.Restriction.Mute.Add -> "mute-$restriction"
+                is Profile.Restriction.Mute.Remove -> "unmute-$restriction"
+            }
+
+        override suspend fun WriteQueue.write(): Outcome =
+            profileRepository.updateRestriction(restriction)
     }
 
     @Serializable

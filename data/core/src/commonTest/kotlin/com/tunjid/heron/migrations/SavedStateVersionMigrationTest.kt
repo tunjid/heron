@@ -10,11 +10,12 @@ import com.tunjid.heron.data.datastore.migrations.SavedStateVersion1
 import com.tunjid.heron.data.datastore.migrations.SavedStateVersion2
 import com.tunjid.heron.data.datastore.migrations.SavedStateVersion3
 import com.tunjid.heron.data.datastore.migrations.SavedStateVersion4
+import com.tunjid.heron.data.datastore.migrations.SavedStateVersion5
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
+import com.tunjid.heron.data.datastore.migrations.migrated.ProfileDataV0
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.fakes.sampleNotifications
 import com.tunjid.heron.fakes.samplePreferences
-import com.tunjid.heron.fakes.sampleProfileData
 import com.tunjid.heron.helper.SavedStateSerializationHelper
 import com.tunjid.heron.helper.toBufferedSource
 import kotlin.test.Test
@@ -34,6 +35,7 @@ internal class SavedStateVersionMigrationTest(
         sampleVersion3GuestAuth(),
         sampleVersion3BearerAuth(),
         sampleVersion4(),
+        sampleVersion5(),
     ),
 ) {
 
@@ -48,15 +50,16 @@ internal class SavedStateVersionMigrationTest(
             is SavedStateVersion2 -> SavedStateSerializationHelper.encode(oldVersion, SavedStateVersion2.serializer())
             is SavedStateVersion3 -> SavedStateSerializationHelper.encode(oldVersion, SavedStateVersion3.serializer())
             is SavedStateVersion4 -> SavedStateSerializationHelper.encode(oldVersion, SavedStateVersion4.serializer())
+            is SavedStateVersion5 -> SavedStateSerializationHelper.encode(oldVersion, SavedStateVersion5.serializer())
         }
 
         val migrated = serializer.readFrom(encoded.toBufferedSource())
-        val expected = oldVersion.toVersionedSavedState(currentVersion = 4)
+        val expected = oldVersion.toVersionedSavedState(currentVersion = 5)
 
         assertEquals(expected.auth, migrated.auth)
         assertEquals(expected.navigation, migrated.navigation)
         assertEquals(expected.profileData, migrated.profileData)
-        assertEquals(4, migrated.version)
+        assertEquals(5, migrated.version)
     }
 }
 
@@ -64,8 +67,8 @@ private fun sampleVersion0UnAuth() = SavedStateVersion0(
     auth = null,
     navigation = SavedState.Navigation(activeNav = 1),
     profileData = mapOf(
-        "p1" to SavedState.ProfileData(
-            preferences = samplePreferences(),
+        "p1" to ProfileDataV0(
+            preferences = samplePreferences().asV0(),
             notifications = sampleNotifications(),
         ),
     ),
@@ -79,8 +82,8 @@ private fun sampleVersion0BearerAuth() = SavedStateVersion0(
     ),
     navigation = SavedState.Navigation(activeNav = 1),
     profileData = mapOf(
-        "p1" to SavedState.ProfileData(
-            preferences = samplePreferences(),
+        "p1" to ProfileDataV0(
+            preferences = samplePreferences().asV0(),
             notifications = sampleNotifications(),
         ),
     ),
@@ -94,7 +97,12 @@ private fun sampleVersion1BearerAuth() = SavedStateVersion1(
         refresh = "refresh",
     ),
     navigation = SavedState.Navigation(activeNav = 2),
-    profileData = mapOf(ProfileId("p1") to sampleProfileData()),
+    profileData = mapOf(
+        ProfileId("p1") to ProfileDataV0(
+            preferences = samplePreferences().asV0(),
+            notifications = sampleNotifications(),
+        ),
+    ),
 )
 
 private fun sampleVersion2BearerAuth() = SavedStateVersion2(
@@ -105,21 +113,36 @@ private fun sampleVersion2BearerAuth() = SavedStateVersion2(
         refresh = "refresh2",
     ),
     navigation = SavedState.Navigation(activeNav = 3),
-    profileData = mapOf(ProfileId("p2") to sampleProfileData()),
+    profileData = mapOf(
+        ProfileId("p2") to ProfileDataV0(
+            preferences = samplePreferences().asV0(),
+            notifications = sampleNotifications(),
+        ),
+    ),
 )
 
 private fun sampleVersion2GuestAuth() = SavedStateVersion2(
     version = 2,
     auth = SavedStateVersion2.AuthTokensV2.Guest,
     navigation = SavedState.Navigation(activeNav = 3),
-    profileData = mapOf(ProfileId("p2") to sampleProfileData()),
+    profileData = mapOf(
+        ProfileId("p2") to ProfileDataV0(
+            preferences = samplePreferences().asV0(),
+            notifications = sampleNotifications(),
+        ),
+    ),
 )
 
 private fun sampleVersion3GuestAuth() = SavedStateVersion3(
     version = 3,
     auth = SavedState.AuthTokens.Guest(Server.BlueSky),
     navigation = SavedState.Navigation(activeNav = 4),
-    profileData = mapOf(ProfileId("p3") to sampleProfileData()),
+    profileData = mapOf(
+        ProfileId("p3") to ProfileDataV0(
+            preferences = samplePreferences().asV0(),
+            notifications = sampleNotifications(),
+        ),
+    ),
 )
 
 private fun sampleVersion3BearerAuth() = SavedStateVersion3(
@@ -131,12 +154,34 @@ private fun sampleVersion3BearerAuth() = SavedStateVersion3(
         authProfileId = ProfileId("p3"),
     ),
     navigation = SavedState.Navigation(activeNav = 4),
-    profileData = mapOf(ProfileId("p3") to sampleProfileData()),
+    profileData = mapOf(
+        ProfileId("p3") to ProfileDataV0(
+            preferences = samplePreferences().asV0(),
+            notifications = sampleNotifications(),
+        ),
+    ),
 )
 
 private fun sampleVersion4() = SavedStateVersion4(
     version = 4,
     navigation = SavedState.Navigation(activeNav = 4),
-    profileData = mapOf(ProfileId("p4") to sampleProfileData()),
+    profileData = mapOf(
+        ProfileId("p4") to SavedStateVersion4.ProfileDataV4(
+            preferences = samplePreferences().asV0(),
+            notifications = sampleNotifications(),
+        ),
+    ),
     activeProfileId = ProfileId("p4"),
+)
+
+private fun sampleVersion5() = SavedStateVersion5(
+    version = 5,
+    navigation = SavedState.Navigation(activeNav = 5),
+    profileData = mapOf(
+        ProfileId("p5") to SavedState.ProfileData(
+            preferences = samplePreferences(),
+            notifications = sampleNotifications(),
+        ),
+    ),
+    activeProfileId = ProfileId("p5"),
 )

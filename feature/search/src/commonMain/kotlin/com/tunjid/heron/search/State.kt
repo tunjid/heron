@@ -18,7 +18,9 @@ package com.tunjid.heron.search
 
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Timeline
@@ -111,6 +113,8 @@ data class State(
     val isQueryEditable: Boolean = true,
     val timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean> = emptyMap(),
     @Transient
+    val preferences: Preferences = Preferences.EmptyPreferences,
+    @Transient
     val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>> = emptyMap(),
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
@@ -141,6 +145,10 @@ sealed class Action(val key: String) {
     data class FetchSuggestedProfiles(
         val category: String? = null,
     ) : Action(key = "FetchSuggestedProfiles")
+
+    data class UpdateMutedWord(
+        val mutedWordPreference: List<MutedWordPreference>,
+    ) : Action(key = "UpdateMutedWord")
 
     data class SendPostInteraction(
         val interaction: Post.Interaction,

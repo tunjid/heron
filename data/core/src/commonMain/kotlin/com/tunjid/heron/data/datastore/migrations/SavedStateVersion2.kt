@@ -19,6 +19,7 @@ package com.tunjid.heron.data.datastore.migrations
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.datastore.migrations.migrated.ProfileDataV0
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.utilities.updateOrPutValue
 import kotlinx.serialization.SerialName
@@ -35,29 +36,32 @@ internal class SavedStateVersion2(
     @ProtoNumber(3)
     private val navigation: SavedState.Navigation,
     @ProtoNumber(4)
-    private val profileData: Map<ProfileId, SavedState.ProfileData>,
+    private val profileData: Map<ProfileId, ProfileDataV0>,
 ) : SavedStateVersion {
 
     override fun toVersionedSavedState(
         currentVersion: Int,
-    ): VersionedSavedState =
-        VersionedSavedState(
+    ): VersionedSavedState {
+        val convertedProfileData = profileData.mapValues {
+            it.value.asProfileData(auth = null)
+        }
+        return VersionedSavedState(
             version = currentVersion,
             navigation = navigation,
             profileData = when (val currentAuth = auth) {
-                is AuthTokensV2.Authenticated.Bearer -> profileData.updateOrPutValue(
+                is AuthTokensV2.Authenticated.Bearer -> convertedProfileData.updateOrPutValue(
                     key = currentAuth.authProfileId,
                     update = { copy(auth = currentAuth.asAuthTokens()) },
                     put = { SavedState.ProfileData.fromTokens(auth = currentAuth.asAuthTokens()) },
                 )
-                is AuthTokensV2.Authenticated.DPoP -> profileData.updateOrPutValue(
+                is AuthTokensV2.Authenticated.DPoP -> convertedProfileData.updateOrPutValue(
                     key = currentAuth.authProfileId,
                     update = { copy(auth = currentAuth.asAuthTokens()) },
                     put = { SavedState.ProfileData.fromTokens(auth = currentAuth.asAuthTokens()) },
                 )
                 AuthTokensV2.Guest,
                 null,
-                -> profileData
+                -> convertedProfileData
             } + Pair(
                 Constants.guestProfileId,
                 SavedState.ProfileData.defaultGuestData,
@@ -69,6 +73,7 @@ internal class SavedStateVersion2(
                 null -> null
             },
         )
+    }
 
     @Serializable
     @SerialName("com.tunjid.heron.data.repository.SavedState.AuthTokens")

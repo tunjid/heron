@@ -20,6 +20,8 @@ import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
+import com.tunjid.heron.data.core.models.MutedWordPreference
+import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.Memo
@@ -38,6 +40,8 @@ import org.jetbrains.compose.resources.StringResource
 @Serializable
 data class State(
     val adultContentEnabled: Boolean = false,
+    @Transient
+    val preferences: Preferences = Preferences.EmptyPreferences,
     @Transient
     val adultLabelItems: List<AdultLabelItem> = emptyList(),
     @Transient
@@ -104,6 +108,10 @@ sealed class Action(val key: String) {
     data class UpdateAdultContentPreferences(
         val adultContentEnabled: Boolean,
     ) : Action(key = "UpdateAdultContentPreferences")
+
+    data class UpdateMutedWord(
+        val mutedWordPreference: List<MutedWordPreference>,
+    ) : Action(key = "UpdateMutedWord")
 
     data class SnackbarDismissed(
         val message: Memo,

@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.ImageUri
@@ -66,6 +67,43 @@ data class Profile(
             override val followedBy: FollowUri?,
             val followUri: FollowUri,
         ) : Connection()
+    }
+
+    @Serializable
+    sealed class Restriction {
+        abstract val signedInProfileId: ProfileId
+        abstract val profileId: ProfileId
+
+        @Serializable
+        sealed class Block : Restriction() {
+            @Serializable
+            data class Add(
+                override val signedInProfileId: ProfileId,
+                override val profileId: ProfileId,
+            ) : Block()
+
+            @Serializable
+            data class Remove(
+                override val signedInProfileId: ProfileId,
+                override val profileId: ProfileId,
+                val blockUri: BlockUri,
+            ) : Block()
+        }
+
+        @Serializable
+        sealed class Mute : Restriction() {
+            @Serializable
+            data class Add(
+                override val signedInProfileId: ProfileId,
+                override val profileId: ProfileId,
+            ) : Mute()
+
+            @Serializable
+            data class Remove(
+                override val signedInProfileId: ProfileId,
+                override val profileId: ProfileId,
+            ) : Mute()
+        }
     }
 
     @Serializable

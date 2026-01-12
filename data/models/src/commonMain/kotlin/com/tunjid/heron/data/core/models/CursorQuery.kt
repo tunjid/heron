@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.core.models
 
+import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
@@ -41,6 +42,20 @@ interface CursorQuery {
          */
         val limit: Long = 30L,
     )
+
+    companion object {
+        fun defaultStartData(
+            limit: Long = 30L,
+        ) = Data(
+            page = 0,
+            cursorAnchor = Clock.System.now(),
+            limit = limit,
+        )
+    }
 }
+
+data class DataQuery(
+    override val data: CursorQuery.Data,
+) : CursorQuery
 
 val CursorQuery.Data.offset get() = page * limit

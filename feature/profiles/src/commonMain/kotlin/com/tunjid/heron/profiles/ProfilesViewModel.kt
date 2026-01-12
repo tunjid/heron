@@ -18,6 +18,7 @@ package com.tunjid.heron.profiles
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.PostDataQuery
@@ -46,7 +47,6 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
-import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -77,26 +77,7 @@ class ActualProfilesViewModel(
 ) : ViewModel(viewModelScope = scope),
     ProfilesStateHolder by scope.actionStateFlowMutator(
         initialState = State(
-            tilingData = TilingState.Data(
-                currentQuery = when (val load = route.load) {
-                    is Load.Post -> PostDataQuery(
-                        profileId = load.profileId,
-                        postRecordKey = load.postRecordKey,
-                        data = CursorQuery.Data(
-                            page = 0,
-                            cursorAnchor = Clock.System.now(),
-                        ),
-                    )
-
-                    is Load.Profile -> ProfilesQuery(
-                        profileId = load.profileId,
-                        data = CursorQuery.Data(
-                            page = 0,
-                            cursorAnchor = Clock.System.now(),
-                        ),
-                    )
-                },
-            ),
+            route = route,
         ),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         inputs = listOf(
@@ -149,6 +130,7 @@ suspend fun Flow<Action.Tile>.profilesLoadMutations(
                 when (this) {
                     is PostDataQuery -> copy(data = it)
                     is ProfilesQuery -> copy(data = it)
+                    is DataQuery -> copy(data = it)
                     else -> throw IllegalArgumentException("Invalid query")
                 }
             },
@@ -156,6 +138,7 @@ suspend fun Flow<Action.Tile>.profilesLoadMutations(
                 when (this) {
                     is PostDataQuery -> copy(data = data.reset())
                     is ProfilesQuery -> copy(data = data.reset())
+                    is DataQuery -> copy(data = data.reset())
                     else -> throw IllegalArgumentException("Invalid query")
                 }
             },
@@ -179,6 +162,14 @@ suspend fun Flow<Action.Tile>.profilesLoadMutations(
                     is Load.Profile.Following -> {
                         check(query is ProfilesQuery)
                         profileRepository.following(query, cursor)
+                    }
+                    is Load.Moderation.Blocks -> {
+                        check(query is DataQuery)
+                        profileRepository.blocks(query, cursor)
+                    }
+                    is Load.Moderation.Mutes -> {
+                        check(query is DataQuery)
+                        profileRepository.mutes(query, cursor)
                     }
                 }
             },

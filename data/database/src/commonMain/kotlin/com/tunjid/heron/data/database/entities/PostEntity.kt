@@ -39,6 +39,8 @@ import com.tunjid.heron.data.database.entities.postembeds.PostVideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 import com.tunjid.heron.data.database.entities.postembeds.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
+import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
+import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -138,7 +140,9 @@ data class PopulatedPostEntity(
     )
     val author: ProfileEntity?,
     @Embedded
-    val viewerStats: PostViewerStatisticsEntity?,
+    val postStatisticsEntity: PostViewerStatisticsEntity?,
+    @Embedded
+    val viewerStateEntity: ProfileViewerStateEntity?,
     @Relation(
         parentColumn = "uri",
         entityColumn = "fullSize",
@@ -227,7 +231,8 @@ fun PopulatedPostEntity.asExternalModel(
     },
     quote = null,
     record = entity.record?.asExternalModel(),
-    viewerStats = viewerStats?.asExternalModel(),
+    viewerStats = postStatisticsEntity?.asExternalModel(),
+    viewerState = viewerStateEntity?.asExternalModel(),
     labels = labelEntities.map(LabelEntity::asExternalModel),
     embeddedRecord = embeddedRecord,
 )

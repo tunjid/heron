@@ -91,7 +91,7 @@ class AppState(
     internal val videoPlayerController: VideoPlayerController,
     private val writeQueue: WriteQueue,
 ) {
-    private var hasNotifications by mutableStateOf(false)
+    private var notificationCount by mutableStateOf(0L)
 
     internal var isSignedIn by mutableStateOf(false)
 
@@ -181,7 +181,7 @@ class AppState(
             }
             launch {
                 notificationStateHolder.state.collect { notificationState ->
-                    hasNotifications = notificationState.unreadCount != 0L
+                    notificationCount = notificationState.unreadCount
                 }
             }
             launch {
@@ -272,7 +272,7 @@ class AppState(
                     stack = stack,
                     index = index,
                     selected = multiStackNav.currentIndex == index,
-                    hasBadge = stack == AppStack.Notifications && hasNotifications,
+                    badgeCount = if (stack == AppStack.Notifications) notificationCount else 0L,
                 )
             }
     }
@@ -341,7 +341,10 @@ internal class SplitPaneState(
 }
 
 internal val AppState.prefersCompactBottomNav: Boolean
-    get() = preferences?.useCompactNavigation ?: false
+    get() = preferences?.local?.useCompactNavigation ?: false
+
+internal val AppState.prefersAutoHidingBottomNav: Boolean
+    get() = preferences?.local?.autoHideBottomNavigation ?: true
 
 private val PaneRenderOrder = listOf(
     ThreePane.Tertiary,

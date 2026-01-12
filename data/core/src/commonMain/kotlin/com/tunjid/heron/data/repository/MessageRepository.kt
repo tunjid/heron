@@ -51,7 +51,6 @@ import com.tunjid.heron.data.core.types.ConversationId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.MessageDao
-import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.PopulatedConversationEntity
 import com.tunjid.heron.data.database.entities.PopulatedMessageEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
@@ -61,8 +60,8 @@ import com.tunjid.heron.data.utilities.facet
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
+import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
-import com.tunjid.heron.data.utilities.resolveLinks
 import com.tunjid.heron.data.utilities.toOutcome
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
@@ -121,10 +120,10 @@ interface MessageRepository {
 
 internal class OfflineMessageRepository @Inject constructor(
     private val messageDao: MessageDao,
-    private val profileDao: ProfileDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateDataSource: SavedStateDataSource,
+    private val profileLookup: ProfileLookup,
     private val recordResolver: RecordResolver,
 ) : MessageRepository {
 
@@ -352,9 +351,7 @@ internal class OfflineMessageRepository @Inject constructor(
     ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
         if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
 
-        val resolvedLinks: List<Link> = resolveLinks(
-            profileDao = profileDao,
-            networkService = networkService,
+        val resolvedLinks: List<Link> = profileLookup.resolveProfileHandleLinks(
             links = message.links,
         )
         networkService.runCatchingWithMonitoredNetworkRetry {

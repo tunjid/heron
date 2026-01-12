@@ -21,6 +21,7 @@ import app.bsky.feed.GetFeedGeneratorQueryParams
 import app.bsky.feed.GetPostsQueryParams
 import app.bsky.feed.Like as BskyLike
 import app.bsky.feed.Repost as BskyRepost
+import app.bsky.graph.Block as BskyBlock
 import app.bsky.graph.GetListQueryParams
 import app.bsky.graph.GetStarterPackQueryParams
 import app.bsky.labeler.GetServicesQueryParams
@@ -28,6 +29,8 @@ import app.bsky.labeler.GetServicesResponseViewUnion
 import com.atproto.repo.GetRecordQueryParams
 import com.atproto.repo.GetRecordResponse
 import com.tunjid.heron.data.core.models.AppliedLabels
+import com.tunjid.heron.data.core.models.Block
+import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.Follow
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
@@ -39,6 +42,8 @@ import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Repost
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.isBlocked
+import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.FollowUri
@@ -67,9 +72,7 @@ import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedLabelerEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedPostEntity
-import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
-import com.tunjid.heron.data.database.entities.PopulatedThreadGateEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.AppCoroutineScope
 import com.tunjid.heron.data.logging.LogPriority
@@ -79,7 +82,7 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.asExternalModel
 import com.tunjid.heron.data.network.models.post
 import com.tunjid.heron.data.repository.SavedStateDataSource
-import com.tunjid.heron.data.repository.distinctUntilChangedAdultContentAndLabelVisibilityPreferences
+import com.tunjid.heron.data.repository.distinctUntilChangedSignedProfilePreferencesOrDefault
 import com.tunjid.heron.data.repository.expiredSessionResult
 import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.repository.singleSessionFlow
@@ -138,6 +141,7 @@ internal interface RecordResolver {
         fun record(recordUri: EmbeddableRecordUri): Record?
         fun profile(profileId: ProfileId): Profile?
         fun threadGate(postUri: PostUri): ThreadGate?
+        fun isMuted(post: Post): Boolean
     }
 }
 
@@ -403,6 +407,15 @@ internal class OfflineRecordResolver @Inject constructor(
                         via = bskyRepost.via?.uri?.requireRecordUri(),
                     )
                 }
+            is BlockUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
+                .mapCatchingUnlessCancelled {
+                    val bskyBlock = it.value.decodeAs<BskyBlock>()
+                    Block(
+                        uri = uri,
+                        cid = GenericId(requireNotNull(it.cid).cid),
+                        subject = bskyBlock.subject.did.let(::ProfileId),
+                    )
+                }
             is UnknownRecordUri -> Result.failure(UnresolvableRecordException(uri))
         }
     }?.onFailure {
@@ -419,8 +432,14 @@ internal class OfflineRecordResolver @Inject constructor(
         associatedProfileIds: (T) -> List<ProfileId>,
         block: TimelineItemCreationContext.(T) -> Unit,
     ): Flow<List<TimelineItem>> =
-        savedStateDataSource.distinctUntilChangedAdultContentAndLabelVisibilityPreferences()
-            .flatMapLatest { (allowAdultContent, labelsVisibilityMap) ->
+        savedStateDataSource.distinctUntilChangedSignedProfilePreferencesOrDefault()
+            .flatMapLatest { preferences ->
+                val allowAdultContent = preferences.allowAdultContent
+                val labelsVisibilityMap = preferences.contentLabelPreferences.associateBy(
+                    keySelector = ContentLabelPreference::label,
+                    valueTransform = ContentLabelPreference::visibility,
+                )
+
                 val recordUris = mutableSetOf<EmbeddableRecordUri>()
                 val threadGatePostUris = mutableListOf<PostUri>()
                 val profileIds = mutableSetOf<ProfileId>()
@@ -448,14 +467,19 @@ internal class OfflineRecordResolver @Inject constructor(
                     flow2 = threadGatePostUris
                         .toDistinctUntilChangedFlowOrEmpty(threadGateDao::threadGates),
                     flow3 = profileIds
-                        .toDistinctUntilChangedFlowOrEmpty(profileDao::profiles),
+                        .toDistinctUntilChangedFlowOrEmpty {
+                            profileDao.profiles(
+                                signedInProfiledId = signedInProfileId?.id,
+                                ids = it,
+                            )
+                        },
                     flow4 = subscribedLabelers,
                     transform = { associatedRecords, threadGateEntities, profileEntities, labelers ->
                         if (associatedRecords.isEmpty()) return@combine emptyList()
-
                         items.fold(
                             MutableTimelineItemCreationContext(
                                 signedInProfileId = signedInProfileId,
+                                preferences = preferences,
                                 associatedRecords = associatedRecords,
                                 associatedThreadGateEntities = threadGateEntities,
                                 associatedProfileEntities = profileEntities,
@@ -463,6 +487,9 @@ internal class OfflineRecordResolver @Inject constructor(
                         ) { context, item ->
                             val post = context.record(postUri(item)) as? Post
                                 ?: return@fold context
+
+                            // Always omit blocked users
+                            if (post.viewerState.isBlocked) return@fold context
 
                             val postLabels = when {
                                 post.labels.isEmpty() -> emptySet()
@@ -528,66 +555,6 @@ internal class OfflineRecordResolver @Inject constructor(
                     rkey = recordUri.recordKey.value.let(::RKey),
                 ),
             )
-        }
-    }
-
-    private class MutableTimelineItemCreationContext(
-        override val signedInProfileId: ProfileId?,
-        associatedRecords: List<Record.Embeddable>,
-        associatedThreadGateEntities: List<PopulatedThreadGateEntity>,
-        associatedProfileEntities: List<PopulatedProfileEntity>,
-    ) : TimelineItemCreationContext,
-        MutableList<TimelineItem> by mutableListOf() {
-
-        override var list: MutableList<TimelineItem> = this
-
-        override val post: Post
-            get() = requireNotNull(currentPost)
-
-        override var appliedLabels: AppliedLabels = AppliedLabels(
-            adultContentEnabled = false,
-            labels = emptyList(),
-            labelers = emptyList(),
-            contentLabelPreferences = emptyList(),
-        )
-
-        private var currentPost: Post? = null
-
-        private val recordUrisToRecords =
-            if (associatedRecords.isEmpty()) emptyMap()
-            else associatedRecords.associateBy {
-                it.reference.uri
-            }
-
-        private val postUrisToThreadGateEntities =
-            if (associatedThreadGateEntities.isEmpty()) emptyMap()
-            else associatedThreadGateEntities.associateBy(
-                keySelector = { it.entity.gatedPostUri },
-                valueTransform = PopulatedThreadGateEntity::asExternalModel,
-            )
-
-        private val profileIdsToProfiles =
-            if (associatedProfileEntities.isEmpty()) emptyMap()
-            else associatedProfileEntities.associateBy(
-                keySelector = { it.entity.did },
-                valueTransform = PopulatedProfileEntity::asExternalModel,
-            )
-
-        override fun record(recordUri: EmbeddableRecordUri): Record? =
-            recordUrisToRecords[recordUri]
-
-        override fun threadGate(postUri: PostUri): ThreadGate? =
-            postUrisToThreadGateEntities[postUri]
-
-        override fun profile(profileId: ProfileId): Profile? =
-            profileIdsToProfiles[profileId]
-
-        fun update(
-            currentPost: Post,
-            appliedLabels: AppliedLabels,
-        ) {
-            this.currentPost = currentPost
-            this.appliedLabels = appliedLabels
         }
     }
 }

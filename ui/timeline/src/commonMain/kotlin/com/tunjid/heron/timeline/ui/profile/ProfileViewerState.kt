@@ -30,10 +30,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.isFollowing
+import com.tunjid.heron.ui.text.CommonStrings
+import heron.ui.core.generated.resources.viewer_state_follow
+import heron.ui.core.generated.resources.viewer_state_following
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.edit
-import heron.ui.timeline.generated.resources.follow
-import heron.ui.timeline.generated.resources.following
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -45,8 +46,8 @@ fun ProfileViewerState(
     val follows = viewerState.isFollowing
     val followStatusText = stringResource(
         if (isSignedInProfile) Res.string.edit
-        else if (follows) Res.string.following
-        else Res.string.follow,
+        else if (follows) CommonStrings.viewer_state_following
+        else CommonStrings.viewer_state_follow,
     )
     FilterChip(
         modifier = Modifier

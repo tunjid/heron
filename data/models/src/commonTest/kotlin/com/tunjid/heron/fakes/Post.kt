@@ -31,6 +31,7 @@ fun samplePost(): Post {
             pinned = false,
             bookmarked = false,
         ),
+        viewerState = null,
         labels = emptyList(),
         embeddedRecord = null,
     )

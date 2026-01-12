@@ -1,6 +1,9 @@
 # Heron
 
-Heron is a Jetpack Compose adaptive, reactive and offline-first bluesky client.
+Heron is a Jetpack Compose adaptive, reactive and offline-first Bluesky client.
+
+## Download
+<a href="https://play.google.com/store/apps/details?id=com.tunjid.heron&referrer=utm_campaign%3Dandroid_metadata%26utm_medium%3Dweb%26utm_source%3Dgithub.com%26utm_content%3Dbadge" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" height="48"></a>
 
 ## Screenshots
 

@@ -54,6 +54,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
@@ -139,7 +140,9 @@ class HomeBindings(
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScope = this)
                     .nestedScroll(topAppBarNestedScrollConnection)
-                    .nestedScroll(bottomNavigationNestedScrollConnection),
+                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                        nestedScroll(bottomNavigationNestedScrollConnection)
+                    },
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
@@ -191,7 +194,10 @@ class HomeBindings(
                             state.tabLayout is TabLayout.Expanded -> Icons.Rounded.Save
                             else -> Icons.Rounded.Edit
                         },
-                        expanded = isFabExpanded(bottomNavigationNestedScrollConnection.offset),
+                        expanded = isFabExpanded {
+                            if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
+                            else topAppBarNestedScrollConnection.offset * -1f
+                        },
                         onClick = {
                             viewModel.accept(
                                 when {

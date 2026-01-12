@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.scaffold.scaffold
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,7 +23,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,7 +58,7 @@ fun App(
     appState: AppState,
 ) {
     AppTheme(
-        dynamicColor = appState.preferences?.useDynamicTheming ?: false,
+        dynamicColor = appState.preferences?.local?.useDynamicTheming ?: false,
     ) {
         CompositionLocalProvider(
             LocalAppState provides appState,
@@ -113,7 +111,7 @@ fun App(
                                 density = density,
                                 windowWidth = windowWidth,
                                 hasCompatBottomNav = {
-                                    appState.preferences?.useCompactNavigation ?: false
+                                    appState.prefersCompactBottomNav
                                 },
                             )
                         }.also {

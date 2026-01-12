@@ -19,6 +19,12 @@
     <string name="labeler_subscriptions">Labeler subscriptions</string>
     <string name="content_filters">Content Filters</string>
     <string name="enable_adult_content">Enable adult content</string>
+    <string name="moderation_options_title">Moderation Tools</string>
+    <string name="moderation_options_menu">Moderation tools menu</string>
+    <string name="moderation_options_blocked_accounts">Blocked accounts</string>
+    <string name="moderation_options_muted_accounts">Muted accounts</string>
+    <string name="block_user">Block User</string>
+    <string name="mute_words_tags">Mute words &amp; tags</string>
     <string name="label_show">Show</string>
     <string name="label_warn">Warn</string>
     <string name="label_hide">Hide</string>

@@ -43,6 +43,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -156,8 +157,16 @@ private fun FabIcon(icon: ImageVector) {
     }
 }
 
-fun PaneScaffoldState.isFabExpanded(offset: Offset): Boolean {
-    return offset.y < with(splitPaneState.density) { 56.dp.toPx() }
+@Composable
+fun PaneScaffoldState.isFabExpanded(
+    offset: () -> Offset,
+): Boolean {
+    val derivedState = remember(splitPaneState.density) {
+        derivedStateOf {
+            offset().y < with(splitPaneState.density) { 56.dp.toPx() }
+        }
+    }
+    return derivedState.value
 }
 
 fun PaneScaffoldState.fabOffset(offset: Offset): IntOffset {

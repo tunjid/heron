@@ -25,34 +25,27 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -62,7 +55,6 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Label
-import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.ThreadGate
@@ -71,32 +63,34 @@ import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.allowsAll
 import com.tunjid.heron.data.core.models.allowsNone
-import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
-import com.tunjid.heron.timeline.ui.label.locale
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
 import com.tunjid.heron.timeline.ui.post.threadtraversal.videoId
+import com.tunjid.heron.timeline.utilities.AppliedLabelDialog
+import com.tunjid.heron.timeline.utilities.Label
+import com.tunjid.heron.timeline.utilities.LabelFlowRow
+import com.tunjid.heron.timeline.utilities.LabelIconSize
+import com.tunjid.heron.timeline.utilities.LabelText
+import com.tunjid.heron.timeline.utilities.SensitiveContentBox
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.createdAt
+import com.tunjid.heron.timeline.utilities.forEach
+import com.tunjid.heron.timeline.utilities.icon
+import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.AttributionLayout
-import com.tunjid.heron.ui.NeutralDialogButton
-import com.tunjid.heron.ui.PrimaryDialogButton
-import com.tunjid.heron.ui.SimpleDialog
-import com.tunjid.heron.ui.SimpleDialogText
-import com.tunjid.heron.ui.SimpleDialogTitle
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
-import heron.ui.core.generated.resources.dismiss
+import heron.ui.core.generated.resources.post_author_label
 import heron.ui.timeline.generated.resources.Res
-import heron.ui.timeline.generated.resources.label_source
-import heron.ui.timeline.generated.resources.post_author_label
-import heron.ui.timeline.generated.resources.view_labeler
+import heron.ui.timeline.generated.resources.mute_words_post_hidden
+import heron.ui.timeline.generated.resources.sensitive_media
 import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
@@ -107,6 +101,7 @@ internal fun Post(
     modifier: Modifier = Modifier,
     now: Instant,
     post: Post,
+    hasMutedWords: Boolean,
     threadGate: ThreadGate?,
     isAnchoredInTimeline: Boolean,
     avatarShape: RoundedPolygonShape,
@@ -135,28 +130,46 @@ internal fun Post(
             threadGate = threadGate,
             presentation = presentation,
             appliedLabels = appliedLabels,
+            hasMutedWords = hasMutedWords,
             sharedElementPrefix = sharedElementPrefix,
             avatarShape = avatarShape,
             now = now,
             createdAt = createdAt,
             languageTag = Locale.current.toLanguageTag(),
         )
-        Column(
+        SensitiveContentBox(
             modifier = Modifier
-                .padding(vertical = presentation.postVerticalPadding)
                 .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(presentation.postContentSpacing),
+            isBlurred = postData.textBlurred,
+            canUnblur = true,
+            label = stringResource(Res.string.mute_words_post_hidden),
+            icon = Icons.Rounded.VisibilityOff,
+            onUnblurClicked = {
+                postData.hasClickedThroughMutedWords = true
+            },
         ) {
-            presentation.contentOrder.forEach { order ->
-                key(order.key) {
-                    when (order) {
-                        PostContent.Actions -> ActionsContent(postData)
-                        PostContent.Attribution -> AttributionContent(postData)
-                        PostContent.Embed.Link -> EmbedContent(postData)
-                        PostContent.Embed.Media -> EmbedContent(postData)
-                        PostContent.Metadata -> if (isAnchoredInTimeline) MetadataContent(postData)
-                        PostContent.Text -> TextContent(postData)
-                        PostContent.Labels -> if (postData.hasLabels) LabelContent(postData)
+            Column(
+                modifier = Modifier
+                    .ifTrue(postData.textBlurred) {
+                        sensitiveContentBlur(MutedWordShape)
+                    }
+                    .padding(vertical = presentation.postVerticalPadding)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(presentation.postContentSpacing),
+            ) {
+                presentation.contentOrder.forEach { order ->
+                    key(order.key) {
+                        when (order) {
+                            PostContent.Actions -> ActionsContent(postData)
+                            PostContent.Attribution -> AttributionContent(postData)
+                            PostContent.Embed.Link -> EmbedContent(postData)
+                            PostContent.Embed.Media -> EmbedContent(postData)
+                            PostContent.Metadata -> if (isAnchoredInTimeline) MetadataContent(
+                                postData,
+                            )
+                            PostContent.Text -> TextContent(postData)
+                            PostContent.Labels -> if (postData.hasLabels) LabelContent(postData)
+                        }
                     }
                 }
             }
@@ -216,6 +229,22 @@ private fun AttributionContent(
                     postId = data.post.cid,
                     sharedElementPrefix = data.sharedElementPrefix,
                     paneMovableElementSharedTransitionScope = this,
+                    onPostClicked = {
+                        data.postActions.onPostAction(
+                            PostAction.OfPost(
+                                post = data.post,
+                            ),
+                        )
+                    },
+                    onAuthorClicked = {
+                        data.postActions.onPostAction(
+                            PostAction.OfProfile(
+                                profile = data.post.author,
+                                post = data.post,
+                                quotingPostUri = null,
+                            ),
+                        )
+                    },
                 )
             },
         )
@@ -232,39 +261,29 @@ private fun LabelContent(
     when (data.presentation) {
         Timeline.Presentation.Text.WithEmbed,
         Timeline.Presentation.Media.Expanded,
-        -> FlowRow(
+        -> LabelFlowRow(
             modifier = Modifier
                 .contentPresentationPadding(
                     content = PostContent.Labels,
                     presentation = data.presentation,
                 ),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            itemVerticalAlignment = Alignment.CenterVertically,
             content = {
-                data.post.author.labels.forEach { label ->
-                    data.withPreferredLabelerAndLocaleInfo(label) { labeler, localeInfo ->
-                        val authorLabelContentDescription = stringResource(
-                            Res.string.post_author_label,
-                            localeInfo.description,
-                        )
-                        Row(
-                            modifier = Modifier
-                                .padding(2.dp)
-                                .semantics {
-                                    role = Role.Button
-                                    contentDescription = authorLabelContentDescription
-                                }
-                                .clip(CircleShape)
-                                .clickable {
-                                    data.selectedLabel = label
-                                },
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
+                data.appliedLabels.forEach(
+                    languageTag = data.languageTag,
+                    labels = data.post.author.labels,
+                ) { label, labeler, localeInfo ->
+                    val authorLabelContentDescription = stringResource(
+                        CommonStrings.post_author_label,
+                        localeInfo.description,
+                    )
+                    Label(
+                        modifier = Modifier
+                            .padding(2.dp),
+                        contentDescription = authorLabelContentDescription,
+                        icon = {
                             PaneStickySharedElement(
                                 modifier = Modifier
-                                    .size(12.dp),
+                                    .size(LabelIconSize),
                                 sharedContentState = rememberSharedContentState(
                                     data.sharedElementKey(label),
                                 ),
@@ -282,24 +301,35 @@ private fun LabelContent(
                                         .fillParentAxisIfFixedOrWrap(),
                                 )
                             }
-                            Text(
-                                text = localeInfo.name,
-                                overflow = TextOverflow.Ellipsis,
-                                maxLines = 1,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.outline,
-                            )
-                        }
-                    }
+                        },
+                        description = {
+                            LabelText(localeInfo.name)
+                        },
+                        onClick = {
+                            data.selectedLabel = label
+                        },
+                    )
                 }
                 data.selectedLabel?.let { selectedLabel ->
-                    data.withPreferredLabelerAndLocaleInfo(selectedLabel) { labeler, localeInfo ->
-                        LabelDialog(
-                            data = data,
-                            localeInfo = localeInfo,
-                            labelerHandle = labeler.creator.handle,
-                        )
-                    }
+                    AppliedLabelDialog(
+                        label = selectedLabel,
+                        languageTag = data.languageTag,
+                        appliedLabels = data.appliedLabels,
+                        onDismiss = {
+                            data.selectedLabel = null
+                        },
+                        onLabelerClicked = { labeler ->
+                            data.selectedLabel = null
+                            data.postActions.onPostAction(
+                                PostAction.OfLinkTarget(
+                                    post = data.post,
+                                    linkTarget = LinkTarget.UserHandleMention(
+                                        labeler.creator.handle,
+                                    ),
+                                ),
+                            )
+                        },
+                    )
                 }
             },
         )
@@ -383,10 +413,17 @@ private fun EmbedContent(
         embed = data.post.embed,
         embeddedRecord = data.post.embeddedRecord,
         postUri = data.post.uri,
+        isBlurred = data.mediaBlurred,
+        canUnblur = data.canUnblurMedia,
+        blurIcon = data.appliedLabels.blurredMediaSeverity.icon(),
+        blurLabel = stringResource(Res.string.sensitive_media),
         appliedLabels = data.appliedLabels,
         presentation = data.presentation,
         sharedElementPrefix = data.sharedElementPrefix,
         paneMovableElementSharedTransitionScope = data.paneMovableElementSharedTransitionScope,
+        onUnblurClicked = {
+            data.hasClickedThroughSensitiveMedia = true
+        },
         onLinkTargetClicked = { post, linkTarget ->
             data.postActions.onPostAction(
                 PostAction.OfLinkTarget(
@@ -473,57 +510,6 @@ private fun MetadataContent(
         likes = data.post.likeCount,
         onMetadataClicked = {
             data.postActions.onPostAction(PostAction.OfMetadata(it))
-        },
-    )
-}
-
-@Composable
-private fun LabelDialog(
-    data: PostData,
-    labelerHandle: ProfileHandle,
-    localeInfo: Labeler.LocaleInfo,
-) {
-    SimpleDialog(
-        onDismissRequest = {
-            data.selectedLabel = null
-        },
-        title = {
-            SimpleDialogTitle(text = localeInfo.name)
-        },
-        text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                SimpleDialogText(
-                    text = localeInfo.description,
-                )
-                SimpleDialogText(
-                    text = stringResource(
-                        Res.string.label_source,
-                        labelerHandle.id,
-                    ),
-                )
-            }
-        },
-        dismissButton = {
-            NeutralDialogButton(
-                text = stringResource(CommonStrings.dismiss),
-                onClick = { data.selectedLabel = null },
-            )
-        },
-        confirmButton = {
-            PrimaryDialogButton(
-                text = stringResource(Res.string.view_labeler),
-                onClick = {
-                    data.selectedLabel = null
-                    data.postActions.onPostAction(
-                        PostAction.OfLinkTarget(
-                            post = data.post,
-                            linkTarget = LinkTarget.UserHandleMention(labelerHandle),
-                        ),
-                    )
-                },
-            )
         },
     )
 }
@@ -665,42 +651,71 @@ private fun rememberUpdatedPostData(
     threadGate: ThreadGate?,
     presentation: Timeline.Presentation,
     appliedLabels: AppliedLabels,
+    hasMutedWords: Boolean,
     sharedElementPrefix: String,
     avatarShape: RoundedPolygonShape,
     now: Instant,
     createdAt: Instant,
     languageTag: String,
-): PostData {
-    return remember {
-        PostData(
-            postActions = postActions,
-            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-            presentationLookaheadScope = presentationLookaheadScope,
-            post = post,
-            threadGate = threadGate,
-            presentation = presentation,
-            appliedLabels = appliedLabels,
-            sharedElementPrefix = sharedElementPrefix,
-            avatarShape = avatarShape,
-            now = now,
-            created = createdAt,
-            languageTag = languageTag,
-        )
-    }.also {
-        if (it.presentation != presentation) it.presentationChanged = true
-        it.postActions = postActions
-        it.paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope
-        it.presentationLookaheadScope = presentationLookaheadScope
-        it.post = post
-        it.threadGate = threadGate
-        it.presentation = presentation
-        it.appliedLabels = appliedLabels
-        it.sharedElementPrefix = sharedElementPrefix
-        it.avatarShape = avatarShape
-        it.now = now
-        it.createdAt = createdAt
-        it.languageTag = languageTag
-    }
+): PostData = rememberSaveable(
+    saver = listSaver(
+        save = { data ->
+            listOf(
+                data.hasClickedThroughMutedWords,
+                data.hasClickedThroughSensitiveMedia,
+            )
+        },
+        restore = { (hasClickedThroughMutedWords, hasClickedThroughSensitiveMedia) ->
+            PostData(
+                postActions = postActions,
+                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                presentationLookaheadScope = presentationLookaheadScope,
+                post = post,
+                threadGate = threadGate,
+                presentation = presentation,
+                appliedLabels = appliedLabels,
+                hasMutedWords = hasMutedWords,
+                sharedElementPrefix = sharedElementPrefix,
+                avatarShape = avatarShape,
+                now = now,
+                created = createdAt,
+                languageTag = languageTag,
+                hasClickedThroughMutedWords = hasClickedThroughMutedWords,
+                hasClickedThroughSensitiveMedia = hasClickedThroughSensitiveMedia,
+            )
+        },
+    ),
+) {
+    PostData(
+        postActions = postActions,
+        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+        presentationLookaheadScope = presentationLookaheadScope,
+        post = post,
+        threadGate = threadGate,
+        presentation = presentation,
+        appliedLabels = appliedLabels,
+        hasMutedWords = hasMutedWords,
+        sharedElementPrefix = sharedElementPrefix,
+        avatarShape = avatarShape,
+        now = now,
+        created = createdAt,
+        languageTag = languageTag,
+    )
+}.also {
+    if (it.presentation != presentation) it.presentationChanged = true
+    it.postActions = postActions
+    it.paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope
+    it.presentationLookaheadScope = presentationLookaheadScope
+    it.post = post
+    it.threadGate = threadGate
+    it.presentation = presentation
+    it.appliedLabels = appliedLabels
+    it.hasMutedWords = hasMutedWords
+    it.sharedElementPrefix = sharedElementPrefix
+    it.avatarShape = avatarShape
+    it.now = now
+    it.createdAt = createdAt
+    it.languageTag = languageTag
 }
 
 @Stable
@@ -712,11 +727,14 @@ private class PostData(
     threadGate: ThreadGate?,
     presentation: Timeline.Presentation,
     appliedLabels: AppliedLabels,
+    hasMutedWords: Boolean,
     sharedElementPrefix: String,
     avatarShape: RoundedPolygonShape,
     now: Instant,
     created: Instant,
     languageTag: String,
+    hasClickedThroughMutedWords: Boolean = false,
+    hasClickedThroughSensitiveMedia: Boolean = false,
 ) {
     var postActions by mutableStateOf(postActions)
     var paneMovableElementSharedTransitionScope by mutableStateOf(
@@ -727,6 +745,7 @@ private class PostData(
     var threadGate by mutableStateOf(threadGate)
     var presentation by mutableStateOf(presentation)
     var appliedLabels by mutableStateOf(appliedLabels)
+    var hasMutedWords by mutableStateOf(hasMutedWords)
     var sharedElementPrefix by mutableStateOf(sharedElementPrefix)
     var avatarShape by mutableStateOf(avatarShape)
     var now by mutableStateOf(now)
@@ -735,6 +754,9 @@ private class PostData(
 
     var presentationChanged by mutableStateOf(false)
     var selectedLabel by mutableStateOf<Label?>(null)
+
+    var hasClickedThroughMutedWords by mutableStateOf(hasClickedThroughMutedWords)
+    var hasClickedThroughSensitiveMedia by mutableStateOf(hasClickedThroughSensitiveMedia)
 
     val hasLabels
         get() = post.labels.isNotEmpty() || post.author.labels.isNotEmpty()
@@ -749,41 +771,23 @@ private class PostData(
             }
         }
 
-    private val labelerDefinitionLookup by derivedStateOf {
-        appliedLabels.labelers.associateBy(
-            keySelector = { it.creator.did },
-            valueTransform = { labeler ->
-                labeler to labeler.definitions.associateBy(
-                    keySelector = Label.Definition::identifier,
-                )
-            },
-        )
-    }
-
     val boundsTransform = BoundsTransform { _, _ ->
         SpringSpec.skipIf { !presentationChanged }
-    }
-
-    inline fun withPreferredLabelerAndLocaleInfo(
-        label: Label,
-        labeler: (Labeler, Labeler.LocaleInfo) -> Unit,
-    ) {
-        val visibility = appliedLabels.visibility(label.value)
-        if (visibility != Label.Visibility.Warn) return
-
-        labelerDefinitionLookup[label.creatorId]?.let { (labeler, definitionMap) ->
-            definitionMap[label.value]?.let { definition ->
-                definition.locale(languageTag)?.let { localeInfo ->
-                    labeler(labeler, localeInfo)
-                }
-            }
-        }
     }
 
     fun sharedElementKey(
         label: Label,
     ) = "$sharedElementPrefix-${post.uri.uri}-${label.creatorId}-${label.value}"
 }
+
+private val PostData.textBlurred: Boolean
+    get() = hasMutedWords && !hasClickedThroughMutedWords
+
+private val PostData.mediaBlurred: Boolean
+    get() = appliedLabels.shouldBlurMedia && !hasClickedThroughSensitiveMedia
+
+private val PostData.canUnblurMedia: Boolean
+    get() = appliedLabels.blurredMediaSeverity != Label.Severity.None
 
 private sealed class PostContent(val key: String) {
     data object Attribution : PostContent(key = "Attribution")
@@ -849,3 +853,5 @@ private val GridMediaOrder = listOf(
 
 private const val EmbedContentZIndex = 2f
 private const val TextContentZIndex = 1f
+
+private val MutedWordShape = RoundedCornerShape(8.dp)

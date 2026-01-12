@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.EmbeddableRecordRepository
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -59,6 +60,7 @@ class ActualModerationViewModel(
     authRepository: AuthRepository,
     timelineRepository: TimelineRepository,
     embeddableRecordRepository: EmbeddableRecordRepository,
+    userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
@@ -75,6 +77,9 @@ class ActualModerationViewModel(
             ),
             subscribedLabelerMutations(
                 embeddableRecordRepository = embeddableRecordRepository,
+            ),
+            loadPreferenceMutations(
+                userDataRepository = userDataRepository,
             ),
         ),
         actionTransform = transform@{ actions ->
@@ -93,7 +98,9 @@ class ActualModerationViewModel(
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
-
+                    is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
+                        writeQueue = writeQueue,
+                    )
                     Action.SignOut -> action.flow.mapToManyMutations {
                         authRepository.signOut()
                     }
@@ -122,6 +129,26 @@ fun subscribedLabelerMutations(
         .mapToMutation {
             copy(subscribedLabelers = it)
         }
+
+private fun loadPreferenceMutations(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    userDataRepository.preferences
+        .mapToMutation {
+            copy(preferences = it)
+        }
+
+private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = mapToManyMutations {
+    writeQueue.enqueue(
+        Writable.TimelineUpdate(
+            Timeline.Update.OfMutedWord.ReplaceAll(
+                mutedWordPreferences = it.mutedWordPreference,
+            ),
+        ),
+    )
+}
 
 private fun Flow<Action.UpdateAdultLabelVisibility>.updateGlobalLabelMutations(
     writeQueue: WriteQueue,

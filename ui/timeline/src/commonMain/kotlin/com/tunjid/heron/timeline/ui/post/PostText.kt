@@ -20,6 +20,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -60,21 +61,23 @@ fun PostText(
             ),
         ),
     ) {
-        Text(
-            modifier = Modifier
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                ) { onClick() },
-            text = rememberFormattedTextPost(
-                text = text,
-                textLinks = post.record?.links ?: emptyList(),
-                onLinkTargetClicked = { onLinkTargetClicked(post, it) },
-            ),
-            maxLines = maxLines,
-            overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
-        )
+        SelectionContainer {
+            Text(
+                modifier = Modifier
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) { onClick() },
+                text = rememberFormattedTextPost(
+                    text = text,
+                    textLinks = post.record?.links ?: emptyList(),
+                    onLinkTargetClicked = { onLinkTargetClicked(post, it) },
+                ),
+                maxLines = maxLines,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
+            )
+        }
     }
 }
 

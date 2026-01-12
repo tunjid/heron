@@ -64,13 +64,12 @@ import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.PostDao
-import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.partialUpsert
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.database.entities.asExternalModelWithViewerState
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
-import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.VideoUploadService
@@ -78,15 +77,13 @@ import com.tunjid.heron.data.network.models.toNetworkRecord
 import com.tunjid.heron.data.utilities.MediaBlob
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.facet
-import com.tunjid.heron.data.utilities.lookupProfileDid
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.postEmbedUnion
+import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
-import com.tunjid.heron.data.utilities.refreshProfile
-import com.tunjid.heron.data.utilities.resolveLinks
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.with
@@ -161,13 +158,13 @@ interface PostRepository {
 
 internal class OfflinePostRepository @Inject constructor(
     private val postDao: PostDao,
-    private val profileDao: ProfileDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val videoUploadService: VideoUploadService,
     private val transactionWriter: TransactionWriter,
     private val fileManager: FileManager,
     private val savedStateDataSource: SavedStateDataSource,
+    private val profileLookup: ProfileLookup,
     private val recordResolver: RecordResolver,
 ) : PostRepository {
 
@@ -177,6 +174,7 @@ internal class OfflinePostRepository @Inject constructor(
     ): Flow<CursorList<ProfileWithViewerState>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
             withResolvedPostUri(
+                signedInProfileId = signedInProfileId,
                 profileId = query.profileId,
                 postRecordKey = query.postRecordKey,
             ) { postUri ->
@@ -225,6 +223,7 @@ internal class OfflinePostRepository @Inject constructor(
     ): Flow<CursorList<ProfileWithViewerState>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
             withResolvedPostUri(
+                signedInProfileId = signedInProfileId,
                 profileId = query.profileId,
                 postRecordKey = query.postRecordKey,
             ) { postUri ->
@@ -266,6 +265,7 @@ internal class OfflinePostRepository @Inject constructor(
     ): Flow<CursorList<TimelineItem>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
             withResolvedPostUri(
+                signedInProfileId = signedInProfileId,
                 profileId = query.profileId,
                 postRecordKey = query.postRecordKey,
             ) { postUri ->
@@ -291,6 +291,7 @@ internal class OfflinePostRepository @Inject constructor(
                                     list += TimelineItem.Single(
                                         id = item.uri.uri,
                                         post = post,
+                                        isMuted = isMuted(post),
                                         threadGate = threadGate(item.uri),
                                         appliedLabels = appliedLabels,
                                         signedInProfileId = signedInProfileId,
@@ -357,6 +358,7 @@ internal class OfflinePostRepository @Inject constructor(
                                 list += TimelineItem.Single(
                                     id = item.uri.uri,
                                     post = post,
+                                    isMuted = isMuted(post),
                                     threadGate = threadGate(item.uri),
                                     appliedLabels = appliedLabels,
                                     signedInProfileId = signedInProfileId,
@@ -411,9 +413,7 @@ internal class OfflinePostRepository @Inject constructor(
     ): Outcome = savedStateDataSource.inCurrentProfileSession currentSession@{ signedInProfileId ->
         if (signedInProfileId == null) return@currentSession expiredSessionOutcome()
 
-        val resolvedLinks: List<Link> = resolveLinks(
-            profileDao = profileDao,
-            networkService = networkService,
+        val resolvedLinks: List<Link> = profileLookup.resolveProfileHandleLinks(
             links = request.links,
         )
 
@@ -720,14 +720,13 @@ internal class OfflinePostRepository @Inject constructor(
     }
 
     private fun <T> withResolvedPostUri(
+        signedInProfileId: ProfileId?,
         profileId: Id.Profile,
         postRecordKey: RecordKey,
         block: (PostUri) -> Flow<T>,
     ): Flow<T> = flow {
-        val profileDid = lookupProfileDid(
+        val profileDid = profileLookup.lookupProfileDid(
             profileId = profileId,
-            profileDao = profileDao,
-            networkService = networkService,
         ) ?: return@flow
 
         val resolvedId = ProfileId(profileDid.did)
@@ -739,12 +738,9 @@ internal class OfflinePostRepository @Inject constructor(
         emitAll(
             block(postUri)
                 .withRefresh {
-                    refreshProfile(
+                    profileLookup.refreshProfile(
+                        signedInProfileId = signedInProfileId,
                         profileId = resolvedId,
-                        profileDao = profileDao,
-                        networkService = networkService,
-                        multipleEntitySaverProvider = multipleEntitySaverProvider,
-                        savedStateDataSource = savedStateDataSource,
                     )
                 },
         )
@@ -752,12 +748,7 @@ internal class OfflinePostRepository @Inject constructor(
 }
 
 private fun List<PopulatedProfileEntity>.asExternalModels() =
-    map {
-        ProfileWithViewerState(
-            profile = it.asExternalModel(),
-            viewerState = it.relationship?.asExternalModel(),
-        )
-    }
+    map(PopulatedProfileEntity::asExternalModelWithViewerState)
 
 private fun CreateRecordResponse.successWithUri(): Pair<Boolean, String> =
     Pair(validationStatus is CreateRecordValidationStatus.Valid, uri.atUri)

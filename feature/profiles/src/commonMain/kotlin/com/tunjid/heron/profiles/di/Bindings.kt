@@ -16,21 +16,11 @@
 
 package com.tunjid.heron.profiles.di
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
@@ -45,6 +35,7 @@ import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
@@ -66,10 +57,9 @@ import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
-import heron.feature.profiles.generated.resources.Res
-import heron.feature.profiles.generated.resources.back
-import org.jetbrains.compose.resources.stringResource
 
+private const val BlockedProfilesPattern = "/moderation/blocked-accounts"
+private const val MutedProfilesPattern = "/moderation/muted-accounts"
 private const val PostLikesPattern = "/profile/{profileHandleOrId}/post/{postRecordKey}/liked-by"
 private const val PostRepostsPattern =
     "/profile/{profileHandleOrId}/post/{postRecordKey}/reposted-by"
@@ -77,6 +67,12 @@ private const val ProfileFollowersPattern = "/profile/{profileHandleOrId}/follow
 private const val ProfileFollowingPattern = "/profile/{profileHandleOrId}/follows"
 
 private val LoadTrie = mapOf(
+    PathPattern(BlockedProfilesPattern) to {
+        Load.Moderation.Blocks
+    },
+    PathPattern(MutedProfilesPattern) to {
+        Load.Moderation.Mutes
+    },
     PathPattern(PostLikesPattern) to { route: Route ->
         Load.Post.Likes(
             route.postRecordKey,
@@ -126,6 +122,24 @@ object ProfilesNavigationBindings {
 
     @Provides
     @IntoMap
+    @StringKey(BlockedProfilesPattern)
+    fun provideBlocksRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
+            routePattern = BlockedProfilesPattern,
+            routeMapper = ::createRoute,
+        )
+
+    @Provides
+    @IntoMap
+    @StringKey(MutedProfilesPattern)
+    fun provideMutesRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
+            routePattern = MutedProfilesPattern,
+            routeMapper = ::createRoute,
+        )
+
+    @Provides
+    @IntoMap
     @StringKey(PostLikesPattern)
     fun providePostLikesRouteMatcher(): RouteMatcher =
         urlRouteMatcher(
@@ -166,6 +180,28 @@ class ProfilesBindings(
     @Includes dataBindings: DataBindings,
     @Includes scaffoldBindings: ScaffoldBindings,
 ) {
+
+    @Provides
+    @IntoMap
+    @StringKey(BlockedProfilesPattern)
+    fun provideBlocksPaneEntry(
+        routeParser: RouteParser,
+        viewModelInitializer: RouteViewModelInitializer,
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
+        routeParser = routeParser,
+        viewModelInitializer = viewModelInitializer,
+    )
+
+    @Provides
+    @IntoMap
+    @StringKey(MutedProfilesPattern)
+    fun provideMutesPaneEntry(
+        routeParser: RouteParser,
+        viewModelInitializer: RouteViewModelInitializer,
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
+        routeParser = routeParser,
+        viewModelInitializer = viewModelInitializer,
+    )
 
     @Provides
     @IntoMap
@@ -241,7 +277,9 @@ class ProfilesBindings(
                     viewModel.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
-                    TopBar { viewModel.accept(Action.Navigate.Pop) }
+                    PoppableDestinationTopAppBar(
+                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                    )
                 },
                 content = { paddingValues ->
                     ProfilesScreen(
@@ -258,33 +296,5 @@ class ProfilesBindings(
                 },
             )
         },
-    )
-}
-
-@Composable
-private fun TopBar(
-    onBackPressed: () -> Unit,
-) {
-    TopAppBar(
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent,
-        ),
-        navigationIcon = {
-            FilledTonalIconButton(
-                modifier = Modifier,
-                colors = IconButtonDefaults.filledTonalIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(
-                        alpha = 0.9f,
-                    ),
-                ),
-                onClick = onBackPressed,
-            ) {
-                Image(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = stringResource(Res.string.back),
-                )
-            }
-        },
-        title = {},
     )
 }

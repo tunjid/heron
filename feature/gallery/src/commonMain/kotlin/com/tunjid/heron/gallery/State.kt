@@ -20,8 +20,10 @@ import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Image as EmbeddedImage
 import com.tunjid.heron.data.core.models.ImageList
+import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
+import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.Video as EmbeddedVideo
@@ -48,6 +50,8 @@ data class State(
     val viewedProfileId: ProfileId,
     val signedInProfileId: ProfileId? = null,
     val viewerState: ProfileViewerState?,
+    @Transient
+    val preferences: Preferences = Preferences.EmptyPreferences,
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
     @Transient
@@ -95,6 +99,10 @@ val GalleryItem.key
     }
 
 sealed class Action(val key: String) {
+
+    data class UpdateMutedWord(
+        val mutedWordPreference: List<MutedWordPreference>,
+    ) : Action(key = "UpdateMutedWord")
 
     data class SendPostInteraction(
         val interaction: Post.Interaction,

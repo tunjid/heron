@@ -35,19 +35,44 @@ inline fun <T, R> CursorList<T>.mapCursorList(
     nextCursor = nextCursor,
 )
 
+/**
+ * Class for representing paginated queries from the network.
+ */
 @Serializable
 sealed class Cursor {
+    /**
+     * Initial cursor, always has a null value
+     */
     @Serializable
     data object Initial : Cursor()
 
+    /**
+     * Pending cursor. Used when paging from the local database with a network refresh.
+     * A Pending cursor is used when data can be fetched from the database alone.
+     * At some point it may be updated to a [Next] cursor after which a network request is made
+     * and refreshes the local db.
+     */
     @Serializable
     data object Pending : Cursor()
 
+    /**
+     * A Cursor that can be used to refresh data from the network. Can be used when paging from
+     * both the database and network, or just the network alone.
+     */
     @Serializable
     data class Next(
         val cursor: String,
     ) : Cursor()
+
+    /**
+     * Cursor signifying there is no more data to load.
+     */
+    @Serializable
+    data object Final : Cursor()
 }
+
+val Cursor.canRequestData: Boolean
+    get() = this is Cursor.Initial || this is Cursor.Next
 
 val Cursor.value
     get() = when (this) {
@@ -57,6 +82,10 @@ val Cursor.value
         )
 
         is Cursor.Next -> cursor
+
+        Cursor.Final -> throw IllegalArgumentException(
+            "Final cursors cannot be used to fetch data; there is nothing more to fetch",
+        )
     }
 
 private val EmptyCursorList = CursorList<Nothing>(

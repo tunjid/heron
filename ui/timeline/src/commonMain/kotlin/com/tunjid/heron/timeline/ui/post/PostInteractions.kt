@@ -16,9 +16,15 @@
 
 package com.tunjid.heron.timeline.ui.post
 
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -60,13 +66,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tunjid.composables.ui.animate
@@ -77,7 +84,13 @@ import com.tunjid.heron.data.core.models.canReply
 import com.tunjid.heron.data.core.models.isBookmarked
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.timeline.ui.PostAction
+import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.IconTransform
+import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.TextCheckedTransform
+import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.TextUncheckedTransform
+import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.displaysText
+import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.hasPopAnimation
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.icon
+import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.opportunisticallyChecks
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.stringResource
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.UiTokens.BookmarkBlue
@@ -183,48 +196,26 @@ private inline fun PostInteractionsButtons(
                     ),
                 ),
             ) {
-                PostInteraction(
-                    modifier = Modifier,
-                    icon = when (button) {
-                        PostInteractionButton.Comment -> button.icon(isChecked = false)
-                        PostInteractionButton.Like -> button.icon(isChecked = post.viewerStats?.likeUri != null)
-                        PostInteractionButton.Repost -> button.icon(isChecked = post.viewerStats?.repostUri != null)
-                        PostInteractionButton.Bookmark -> button.icon(isChecked = post.viewerStats.isBookmarked)
-                        PostInteractionButton.MoreOptions -> button.icon(isChecked = false)
-                    },
-                    iconSize = iconSize,
-                    orientation = orientation,
-                    contentDescription = stringResource(button.stringResource),
-                    text = when (button) {
-                        PostInteractionButton.Comment ->
-                            if (post.replyCount > 0) format(post.replyCount)
-                            else ""
-                        PostInteractionButton.Like ->
-                            if (post.likeCount > 0) format(post.likeCount)
-                            else ""
-                        PostInteractionButton.Repost ->
-                            if (post.repostCount > 0) format(post.repostCount)
-                            else ""
-                        PostInteractionButton.Bookmark -> ""
-                        PostInteractionButton.MoreOptions -> ""
-                    },
-                    tint = animateColorAsState(
-                        targetValue = when (button) {
-                            PostInteractionButton.Comment -> MaterialTheme.colorScheme.outline
-                            PostInteractionButton.Like ->
-                                if (post.viewerStats?.likeUri != null) LikeRed
-                                else MaterialTheme.colorScheme.outline
+                val isChecked = when (button) {
+                    PostInteractionButton.Comment -> false
+                    PostInteractionButton.Like -> post.viewerStats?.likeUri != null
+                    PostInteractionButton.Repost -> post.viewerStats?.repostUri != null
+                    PostInteractionButton.Bookmark -> post.viewerStats.isBookmarked
+                    PostInteractionButton.MoreOptions -> false
+                }
 
-                            PostInteractionButton.Repost ->
-                                if (post.viewerStats?.repostUri != null) RepostGreen
-                                else MaterialTheme.colorScheme.outline
-                            PostInteractionButton.Bookmark ->
-                                if (post.viewerStats.isBookmarked) BookmarkBlue
-                                else MaterialTheme.colorScheme.outline
-                            PostInteractionButton.MoreOptions -> MaterialTheme.colorScheme.outline
-                        },
-                        animationSpec = ColorTween,
-                    ).value,
+                PostInteraction(
+                    iconSize = iconSize,
+                    contentDescription = stringResource(button.stringResource),
+                    modifier = Modifier,
+                    orientation = orientation,
+                    value = when (button) {
+                        PostInteractionButton.Comment -> post.replyCount
+                        PostInteractionButton.Like -> post.likeCount
+                        PostInteractionButton.Repost -> post.repostCount
+                        PostInteractionButton.Bookmark -> 0L
+                        PostInteractionButton.MoreOptions -> 0L
+                    },
                     enabled = when (button) {
                         PostInteractionButton.Bookmark -> true
                         PostInteractionButton.Comment -> post.viewerStats.canReply
@@ -237,6 +228,7 @@ private inline fun PostInteractionsButtons(
                             PostInteractionButton.Comment -> onInteraction(
                                 PostAction.OfReply(post),
                             )
+
                             PostInteractionButton.Like -> onInteraction(
                                 PostAction.OfInteraction(
                                     interaction = when (val likeUri = post.viewerStats?.likeUri) {
@@ -270,6 +262,7 @@ private inline fun PostInteractionsButtons(
                                     post.viewerStats,
                                 ),
                             )
+
                             PostInteractionButton.Bookmark -> onInteraction(
                                 PostAction.OfInteraction(
                                     when (post.viewerStats.isBookmarked) {
@@ -285,11 +278,21 @@ private inline fun PostInteractionsButtons(
                                     post.viewerStats,
                                 ),
                             )
+
                             PostInteractionButton.MoreOptions -> onInteraction(
                                 PostAction.OfMore(post),
                             )
                         }
                     },
+                    checkedTint = when (button) {
+                        PostInteractionButton.Comment -> MaterialTheme.colorScheme.outline
+                        PostInteractionButton.Like -> LikeRed
+                        PostInteractionButton.Repost -> RepostGreen
+                        PostInteractionButton.Bookmark -> BookmarkBlue
+                        PostInteractionButton.MoreOptions -> MaterialTheme.colorScheme.outline
+                    },
+                    isChecked = isChecked,
+                    button = button,
                 )
             }
         }
@@ -298,22 +301,40 @@ private inline fun PostInteractionsButtons(
 
 @Composable
 private fun PostInteraction(
-    icon: ImageVector,
+    button: PostInteractionButton,
     iconSize: Dp,
+    isChecked: Boolean,
     contentDescription: String,
     modifier: Modifier = Modifier,
     orientation: Orientation,
-    text: String?,
+    value: Long,
     enabled: Boolean,
     onClick: () -> Unit,
-    tint: Color,
+    checkedTint: Color,
 ) {
+    var opportunisticallyChecked by remember(isChecked) {
+        mutableStateOf(isChecked)
+    }
+    val status = when (isChecked) {
+        opportunisticallyChecked ->
+            if (isChecked) PostInteractionButton.Status.Complete.Checked
+            else PostInteractionButton.Status.Complete.Unchecked
+        else ->
+            if (opportunisticallyChecked) PostInteractionButton.Status.Opportunistic.Checked
+            else PostInteractionButton.Status.Opportunistic.Unchecked
+    }
+
     val itemModifier = modifier
         .then(
             if (enabled) Modifier.clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = ripple(bounded = false),
-                onClick = onClick,
+                onClick = {
+                    // Opportunistic clicks must be sent acting on the latest confirmed state.
+                    // Click processing is queued and de-duplicated.
+                    if (button.opportunisticallyChecks) opportunisticallyChecked = !isChecked
+                    onClick()
+                },
             )
             else Modifier,
         )
@@ -325,24 +346,27 @@ private fun PostInteraction(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             PostInteractionElements(
-                icon = icon,
                 iconSize = iconSize,
                 contentDescription = contentDescription,
-                text = text,
-                tint = tint.withDim(!enabled),
+                value = value,
+                checkedTint = checkedTint.withDim(!enabled),
+                status = status,
+                button = button,
             )
         }
+
         Orientation.Horizontal -> Row(
             modifier = itemModifier,
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             PostInteractionElements(
-                icon = icon,
                 iconSize = iconSize,
                 contentDescription = contentDescription,
-                text = text,
-                tint = tint.withDim(!enabled),
+                value = value,
+                checkedTint = checkedTint.withDim(!enabled),
+                status = status,
+                button = button,
             )
         }
     }
@@ -350,31 +374,75 @@ private fun PostInteraction(
 
 @Composable
 private fun PostInteractionElements(
-    icon: ImageVector,
     iconSize: Dp,
     contentDescription: String,
-    text: String?,
-    tint: Color,
+    value: Long,
+    checkedTint: Color,
+    status: PostInteractionButton.Status,
+    button: PostInteractionButton,
 ) {
-    Icon(
-        modifier = Modifier.size(iconSize),
-        painter = rememberVectorPainter(icon),
-        contentDescription = contentDescription,
-        tint = tint,
-    )
-
-    if (text != null) {
+    val targetValue = when (status) {
+        is PostInteractionButton.Status.Complete -> value
+        is PostInteractionButton.Status.Opportunistic.Checked -> value + 1
+        is PostInteractionButton.Status.Opportunistic.Unchecked -> value - 1
+    }
+    val popAnimatable = remember {
+        if (button.hasPopAnimation) Animatable(
+            initialValue = PostInteractionButton.BUTTON_MIN_SCALE,
+        ) else null
+    }
+    AnimatedContent(
+        modifier = when (popAnimatable) {
+            null -> Modifier
+            else ->
+                Modifier
+                    .graphicsLayer {
+                        scaleX = popAnimatable.value
+                        scaleY = popAnimatable.value
+                    }
+        },
+        targetState = status.isChecked,
+        transitionSpec = { IconTransform },
+    ) { checked ->
+        Icon(
+            modifier = Modifier.size(iconSize),
+            painter = rememberVectorPainter(
+                button.icon(isChecked = checked),
+            ),
+            contentDescription = contentDescription,
+            tint = if (checked) checkedTint else MaterialTheme.colorScheme.outline,
+        )
+    }
+    if (button.displaysText) AnimatedContent(
+        targetState = status.isChecked,
+        transitionSpec = {
+            if (targetState) TextCheckedTransform
+            else TextUncheckedTransform
+        },
+    ) { checked ->
+        val textColor = if (checked) checkedTint else MaterialTheme.colorScheme.outline
         BasicText(
             modifier = Modifier
                 .padding(vertical = 1.dp),
-            text = text,
+            text = PostInteractionButton.buttonText(
+                if (checked == status.isChecked) targetValue
+                else if (checked) targetValue + 1
+                else targetValue - 1,
+            ),
             maxLines = 1,
-            color = { tint },
+            color = { textColor },
             autoSize = TextAutoSize.StepBased(
                 minFontSize = 4.sp,
                 maxFontSize = 16.sp,
             ),
         )
+    }
+
+    popAnimatable?.let { animatable ->
+        LaunchedEffect(status.isChecked) {
+            animatable.animateTo(PostInteractionButton.BUTTON_MAX_SCALE)
+            animatable.animateTo(PostInteractionButton.BUTTON_MIN_SCALE)
+        }
     }
 }
 
@@ -478,10 +546,12 @@ private fun PostInteractionsBottomSheet(
                                             onInteractionConfirmed(currentInteraction)
                                             state.hide()
                                         }
+
                                         action.viewerStats.canQuote -> Modifier.clickable {
                                             onQuotePostClicked(currentInteraction)
                                             state.hide()
                                         }
+
                                         else -> Modifier.alpha(0.6f)
                                     },
                                 )
@@ -512,6 +582,7 @@ private fun PostInteractionsBottomSheet(
                         )
                     }
                 }
+
                 else -> Unit
             }
 
@@ -541,8 +612,6 @@ private fun PostInteractionsBottomSheet(
     }
 }
 
-private val ColorTween = tween<Color>(durationMillis = 100)
-
 private val Timeline.Presentation.postInteractionArrangement: Arrangement.Horizontal
     get() = when (this) {
         Timeline.Presentation.Text.WithEmbed -> Arrangement.SpaceBetween
@@ -553,7 +622,7 @@ private val Timeline.Presentation.postInteractionArrangement: Arrangement.Horizo
 
 private val Timeline.Presentation.actionIconSize
     get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 16.dp
+        Timeline.Presentation.Text.WithEmbed -> 18.dp
         Timeline.Presentation.Media.Condensed -> 0.dp
         Timeline.Presentation.Media.Expanded -> 24.dp
         Timeline.Presentation.Media.Grid -> 0.dp
@@ -573,7 +642,60 @@ private sealed class PostInteractionButton {
     data object Bookmark : PostInteractionButton()
     data object MoreOptions : PostInteractionButton()
 
+    sealed class Status {
+        sealed class Complete : Status() {
+            data object Checked : Complete()
+            data object Unchecked : Complete()
+        }
+
+        sealed class Opportunistic : Status() {
+            data object Checked : Opportunistic()
+            data object Unchecked : Opportunistic()
+        }
+
+        val isChecked
+            get() = when (this) {
+                Complete.Checked -> true
+                Opportunistic.Checked -> true
+                Complete.Unchecked -> false
+                Opportunistic.Unchecked -> false
+            }
+    }
+
     companion object {
+        const val BUTTON_MIN_SCALE = 1f
+        const val BUTTON_MAX_SCALE = 1.2f
+        private const val ICON_ANIMATION_DURATION_MILLIS = 600
+
+        private val IconAnimationSpec = tween<Float>(ICON_ANIMATION_DURATION_MILLIS)
+        private val TextAnimationSpec = tween<IntOffset>(ICON_ANIMATION_DURATION_MILLIS)
+
+        val IconTransform = fadeIn(
+            animationSpec = IconAnimationSpec,
+        ) togetherWith fadeOut(
+            animationSpec = IconAnimationSpec,
+        )
+
+        val TextCheckedTransform = slideInVertically(
+            animationSpec = TextAnimationSpec,
+            initialOffsetY = { -it },
+        ) togetherWith slideOutVertically(
+            animationSpec = TextAnimationSpec,
+            targetOffsetY = { it },
+        )
+
+        val TextUncheckedTransform = slideInVertically(
+            animationSpec = TextAnimationSpec,
+            initialOffsetY = { it },
+        ) togetherWith slideOutVertically(
+            animationSpec = TextAnimationSpec,
+            targetOffsetY = { -it },
+        )
+
+        fun buttonText(
+            value: Long,
+        ) = if (value > 0) format(value) else ""
+
         fun PostInteractionButton.icon(
             isChecked: Boolean,
         ) = when (this) {
@@ -591,6 +713,33 @@ private sealed class PostInteractionButton {
                 Repost -> Res.string.repost
                 Bookmark -> Res.string.bookmarked
                 MoreOptions -> Res.string.expand_options
+            }
+
+        val PostInteractionButton.opportunisticallyChecks
+            get() = when (this) {
+                Comment -> false
+                Like -> true
+                Repost -> false
+                Bookmark -> true
+                MoreOptions -> false
+            }
+
+        val PostInteractionButton.hasPopAnimation
+            get() = when (this) {
+                Comment -> false
+                Like -> true
+                Repost -> false
+                Bookmark -> true
+                MoreOptions -> false
+            }
+
+        val PostInteractionButton.displaysText
+            get() = when (this) {
+                Comment -> true
+                Like -> true
+                Repost -> true
+                Bookmark -> false
+                MoreOptions -> false
             }
 
         val PostButtons = listOf(

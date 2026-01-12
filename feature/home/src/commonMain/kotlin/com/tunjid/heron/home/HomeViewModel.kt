@@ -97,6 +97,9 @@ class ActualHomeViewModel(
             recentConversationMutations(
                 messageRepository = messageRepository,
             ),
+            loadPreferencesMutations(
+                userDataRepository = userDataRepository,
+            ),
         ),
         actionTransform = transform@{ actions ->
             actions.toMutationStream(
@@ -124,6 +127,9 @@ class ActualHomeViewModel(
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
+                    is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
+                        writeQueue = writeQueue,
+                    )
                 }
             }
         },
@@ -148,6 +154,7 @@ private fun timelineMutations(
     ).mapToMutation { (preferences, homeTimelines) ->
         val tabUri = currentTabUri
             ?: preferences
+                .local
                 .lastViewedHomeTimelineUri
                 .takeIf { uri ->
                     homeTimelines.any { it.isPinned && it.uri == uri }
@@ -162,7 +169,7 @@ private fun timelineMutations(
                     .firstOrNull { it.state.value.timeline.sourceId == timeline.sourceId }
                     ?.mutator
                     ?: scope.timelineStateHolder(
-                        refreshOnStart = preferences.refreshHomeTimelineOnLaunch,
+                        refreshOnStart = preferences.local.refreshHomeTimelineOnLaunch,
                         timeline = timeline,
                         startNumColumns = 1,
                         timelineRepository = timelineRepository,
@@ -182,6 +189,14 @@ fun recentConversationMutations(
     messageRepository.recentConversations()
         .mapToMutation { conversations ->
             copy(recentConversations = conversations)
+        }
+
+private fun loadPreferencesMutations(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    userDataRepository.preferences
+        .mapToMutation {
+            copy(preferences = it)
         }
 
 private fun Flow<Action.UpdatePageWithUpdates>.pageWithUpdateMutations(): Flow<Mutation<State>> =
@@ -230,6 +245,18 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
             WriteQueue.Status.Enqueued -> Unit
         }
     }
+
+private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = mapToManyMutations {
+    writeQueue.enqueue(
+        Writable.TimelineUpdate(
+            Timeline.Update.OfMutedWord.ReplaceAll(
+                mutedWordPreferences = it.mutedWordPreference,
+            ),
+        ),
+    )
+}
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->

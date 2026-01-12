@@ -71,6 +71,7 @@ import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.remembe
 import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
+import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
@@ -135,6 +136,13 @@ internal fun PostsScreen(
             actions(Action.SendPostInteraction(it))
         },
     )
+    val mutedWordsSheetState = rememberUpdatedMutedWordsSheetState(
+        mutedWordPreferences = state.preferences.mutedWordPreferences,
+        onSave = {
+            actions(Action.UpdateMutedWord(it))
+        },
+        onShown = {},
+    )
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = state.signedInProfileId,
         recentConversations = state.recentConversations,
@@ -158,7 +166,7 @@ internal fun PostsScreen(
                         ?.let(threadGateSheetState::show)
 
                 is PostOption.Moderation.BlockUser -> Unit
-                is PostOption.Moderation.MuteWords -> Unit
+                is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
             }
         },
     )

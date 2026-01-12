@@ -42,6 +42,7 @@ import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
+import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -105,6 +106,7 @@ class ActualProfileViewModel(
     messageRepository: MessageRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
+    userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
@@ -132,6 +134,9 @@ class ActualProfileViewModel(
             ),
             subscribedLabelerMutations(
                 embeddableRecordRepository = embeddableRecordRepository,
+            ),
+            loadPreferencesMutations(
+                userDataRepository = userDataRepository,
             ),
         ),
         actionTransform = transform@{ actions ->
@@ -177,6 +182,9 @@ class ActualProfileViewModel(
                                 else -> Unit
                             }
                         }
+                        is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
+                            writeQueue = writeQueue,
+                        )
                     }
                 },
             )
@@ -191,17 +199,20 @@ fun recentConversationMutations(
             copy(recentConversations = conversations)
         }
 
+private fun loadPreferencesMutations(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    userDataRepository.preferences
+        .mapToMutation {
+            copy(preferences = it)
+        }
+
 fun subscribedLabelerMutations(
     embeddableRecordRepository: EmbeddableRecordRepository,
 ): Flow<Mutation<State>> =
     embeddableRecordRepository.subscribedLabelers
         .mapToMutation { labelers ->
-            copy(
-                subscribedLabelerProfileIds = labelers.mapTo(
-                    destination = mutableSetOf(),
-                    transform = { it.creator.did },
-                ),
-            )
+            copy(subscribedLabelers = labelers)
         }
 
 private fun commonFollowerMutations(
@@ -345,6 +356,18 @@ private fun Flow<Action.UpdatePageWithUpdates>.pageWithUpdateMutations(): Flow<M
     mapToMutation { (sourceId, hasUpdates) ->
         copy(sourceIdsToHasUpdates = sourceIdsToHasUpdates + (sourceId to hasUpdates))
     }
+
+private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = mapToManyMutations {
+    writeQueue.enqueue(
+        Writable.TimelineUpdate(
+            Timeline.Update.OfMutedWord.ReplaceAll(
+                mutedWordPreferences = it.mutedWordPreference,
+            ),
+        ),
+    )
+}
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,

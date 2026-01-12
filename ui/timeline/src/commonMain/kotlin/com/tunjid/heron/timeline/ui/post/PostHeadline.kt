@@ -16,7 +16,7 @@
 
 package com.tunjid.heron.timeline.ui.post
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,7 +33,6 @@ import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import kotlin.time.Instant
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun PostHeadline(
     now: Instant,
@@ -42,6 +41,8 @@ fun PostHeadline(
     postId: PostId,
     sharedElementPrefix: String,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    onPostClicked: () -> Unit,
+    onAuthorClicked: () -> Unit,
 ) = with(paneMovableElementSharedTransitionScope) {
     Column {
         val primaryText = author.displayName ?: author.handle.id
@@ -49,8 +50,6 @@ fun PostHeadline(
 
         Row(horizontalArrangement = spacedBy(4.dp)) {
             PaneStickySharedElement(
-                modifier = Modifier
-                    .weight(1f),
                 sharedContentState = rememberSharedContentState(
                     key = author.textSharedElementKey(
                         prefix = sharedElementPrefix,
@@ -60,11 +59,16 @@ fun PostHeadline(
                 ),
             ) {
                 ProfileName(
-                    modifier = Modifier,
+                    modifier = Modifier
+                        .clickable { onAuthorClicked() },
                     profile = author,
                 )
             }
-
+            Spacer(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onPostClicked() },
+            )
             TimeDelta(
                 modifier = Modifier.alignByBaseline(),
                 delta = now - createdAt,
@@ -72,19 +76,27 @@ fun PostHeadline(
         }
         if (secondaryText != null) {
             Spacer(Modifier.height(2.dp))
-            PaneStickySharedElement(
-                modifier = Modifier,
-                sharedContentState = rememberSharedContentState(
-                    key = author.textSharedElementKey(
-                        prefix = sharedElementPrefix,
-                        postId = postId,
-                        text = secondaryText,
-                    ),
-                ),
-            ) {
-                ProfileHandle(
+            Row(horizontalArrangement = spacedBy(4.dp)) {
+                PaneStickySharedElement(
                     modifier = Modifier,
-                    profile = author,
+                    sharedContentState = rememberSharedContentState(
+                        key = author.textSharedElementKey(
+                            prefix = sharedElementPrefix,
+                            postId = postId,
+                            text = secondaryText,
+                        ),
+                    ),
+                ) {
+                    ProfileHandle(
+                        modifier = Modifier
+                            .clickable { onAuthorClicked() },
+                        profile = author,
+                    )
+                }
+                Spacer(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onPostClicked() },
                 )
             }
         }

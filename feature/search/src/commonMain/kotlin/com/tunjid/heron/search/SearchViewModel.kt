@@ -20,6 +20,7 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.models.timelineRecordUri
 import com.tunjid.heron.data.repository.AuthRepository
@@ -29,6 +30,7 @@ import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -65,7 +67,6 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
@@ -90,6 +91,7 @@ class SearchViewModel(
     searchRepository: SearchRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
+    userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
@@ -126,6 +128,9 @@ class SearchViewModel(
             recentConversationMutations(
                 messageRepository = messageRepository,
             ),
+            loadPreferencesMutations(
+                userDataRepository = userDataRepository,
+            ),
         ),
         actionTransform = transform@{ actions ->
             actions.toMutationStream(
@@ -157,6 +162,9 @@ class SearchViewModel(
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
+                    is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
+                        writeQueue = writeQueue,
+                    )
                 }
             }
         },
@@ -185,6 +193,14 @@ fun recentConversationMutations(
     messageRepository.recentConversations()
         .mapToMutation { conversations ->
             copy(recentConversations = conversations)
+        }
+
+private fun loadPreferencesMutations(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    userDataRepository.preferences
+        .mapToMutation {
+            copy(preferences = it)
         }
 
 private fun trendsMutations(
@@ -346,7 +362,7 @@ private fun Flow<Action.Search>.searchQueryMutations(
                         isLocalOnly = false,
                         data = defaultSearchQueryData(),
                     ),
-                    cursor = Cursor.Pending,
+                    cursor = Cursor.Initial,
                 )
             }
             .mapToMutation { profileWithViewerStates ->
@@ -381,6 +397,18 @@ private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
             ),
         )
     }
+
+private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = mapToManyMutations {
+    writeQueue.enqueue(
+        Writable.TimelineUpdate(
+            Timeline.Update.OfMutedWord.ReplaceAll(
+                mutedWordPreferences = it.mutedWordPreference,
+            ),
+        ),
+    )
+}
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,

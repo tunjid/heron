@@ -37,11 +37,15 @@ interface ProfileDao {
     @Query(
         """
             SELECT * FROM profiles
+            LEFT JOIN profileViewerStates
+                ON profileViewerStates.profileId = :signedInProfiledId
+                AND profiles.did = profileViewerStates.otherProfileId
             WHERE did IN (:ids)
             OR handle IN (:ids)
         """,
     )
     fun profiles(
+        signedInProfiledId: String?,
         ids: Collection<Id.Profile>,
     ): Flow<List<PopulatedProfileEntity>>
 
@@ -131,5 +135,15 @@ interface ProfileDao {
     @Update(entity = ProfileViewerStateEntity::class)
     suspend fun updatePartialProfileViewers(
         entities: List<ProfileViewerStateEntity.Partial>,
+    )
+
+    @Update(entity = ProfileViewerStateEntity::class)
+    suspend fun updatePartialProfileViewer(
+        partial: ProfileViewerStateEntity.BlockPartial,
+    )
+
+    @Update(entity = ProfileViewerStateEntity::class)
+    suspend fun updatePartialProfileViewer(
+        partial: ProfileViewerStateEntity.MutedPartial,
     )
 }

@@ -328,6 +328,7 @@ sealed class TimelineItem {
 
     abstract val id: String
     abstract val post: Post
+    abstract val isMuted: Boolean
     abstract val threadGate: ThreadGate?
     abstract val appliedLabels: AppliedLabels
     abstract val signedInProfileId: ProfileId?
@@ -345,6 +346,7 @@ sealed class TimelineItem {
     data class Pinned(
         override val id: String,
         override val post: Post,
+        override val isMuted: Boolean,
         override val threadGate: ThreadGate?,
         override val appliedLabels: AppliedLabels,
         override val signedInProfileId: ProfileId?,
@@ -353,6 +355,7 @@ sealed class TimelineItem {
     data class Repost(
         override val id: String,
         override val post: Post,
+        override val isMuted: Boolean,
         override val threadGate: ThreadGate?,
         override val appliedLabels: AppliedLabels,
         override val signedInProfileId: ProfileId?,
@@ -362,6 +365,7 @@ sealed class TimelineItem {
 
     data class Thread(
         override val id: String,
+        override val isMuted: Boolean,
         override val appliedLabels: AppliedLabels,
         override val signedInProfileId: ProfileId?,
         val anchorPostIndex: Int,
@@ -379,6 +383,7 @@ sealed class TimelineItem {
     data class Single(
         override val id: String,
         override val post: Post,
+        override val isMuted: Boolean,
         override val threadGate: ThreadGate?,
         override val appliedLabels: AppliedLabels,
         override val signedInProfileId: ProfileId?,

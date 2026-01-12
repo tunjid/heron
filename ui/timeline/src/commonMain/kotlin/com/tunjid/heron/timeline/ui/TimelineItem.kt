@@ -55,13 +55,13 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.post.PostReasonLine
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
+import com.tunjid.heron.timeline.utilities.authorMuted
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
@@ -86,9 +86,6 @@ fun TimelineItem(
         item = item,
         modifier = modifier,
         presentation = presentation,
-        onPostClicked = { post ->
-            postActions.onPostAction(PostAction.OfPost(post))
-        },
         content = {
             Column(
                 modifier = Modifier
@@ -134,6 +131,7 @@ fun TimelineItem(
                             .fillMaxWidth(),
                         paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                         presentationLookaheadScope = presentationLookaheadScope,
+                        hasMutedWords = item.isMuted && !item.post.authorMuted,
                         now = now,
                         post = item.post,
                         threadGate = item.threadGate,
@@ -178,6 +176,7 @@ private fun ThreadedPost(
                         modifier = Modifier,
                         paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                         presentationLookaheadScope = presentationLookaheadScope,
+                        hasMutedWords = item.isMuted && !item.post.authorMuted,
                         now = now,
                         post = post,
                         threadGate = item.postUrisToThreadGates[post.uri],
@@ -363,7 +362,6 @@ fun TimelineCard(
     item: TimelineItem,
     modifier: Modifier = Modifier,
     presentation: Timeline.Presentation,
-    onPostClicked: (Post) -> Unit,
     content: @Composable () -> Unit,
 ) {
     val cornerRadius =
@@ -379,7 +377,6 @@ fun TimelineCard(
         if (isFlat) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         else CardDefaults.elevatedCardColors(),
         elevation = CardDefaults.cardElevation(),
-        onClick = { onPostClicked(item.post) },
         content = { content() },
     )
 }
