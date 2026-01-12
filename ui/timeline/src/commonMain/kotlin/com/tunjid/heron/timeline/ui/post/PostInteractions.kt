@@ -678,18 +678,18 @@ private sealed class PostInteractionButton {
 
         val TextCheckedTransform = slideInVertically(
             animationSpec = TextAnimationSpec,
-            initialOffsetY = { -it },
-        ) togetherWith slideOutVertically(
-            animationSpec = TextAnimationSpec,
-            targetOffsetY = { it },
-        )
-
-        val TextUncheckedTransform = slideInVertically(
-            animationSpec = TextAnimationSpec,
             initialOffsetY = { it },
         ) togetherWith slideOutVertically(
             animationSpec = TextAnimationSpec,
             targetOffsetY = { -it },
+        )
+
+        val TextUncheckedTransform = slideInVertically(
+            animationSpec = TextAnimationSpec,
+            initialOffsetY = { -it },
+        ) togetherWith slideOutVertically(
+            animationSpec = TextAnimationSpec,
+            targetOffsetY = { it },
         )
 
         fun buttonText(
