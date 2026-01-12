@@ -19,6 +19,7 @@ package com.tunjid.heron.profiles.di
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -57,6 +58,15 @@ import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
+import heron.feature.profiles.generated.resources.Res
+import heron.feature.profiles.generated.resources.blocked_accounts
+import heron.feature.profiles.generated.resources.followers
+import heron.feature.profiles.generated.resources.following
+import heron.feature.profiles.generated.resources.likes
+import heron.feature.profiles.generated.resources.muted_accounts
+import heron.feature.profiles.generated.resources.reposts
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 private const val BlockedProfilesPattern = "/moderation/blocked-accounts"
 private const val MutedProfilesPattern = "/moderation/muted-accounts"
@@ -259,6 +269,10 @@ class ProfilesBindings(
             )
         },
         render = { route ->
+            val hydratedRoute = routeParser.hydrate(route)
+            val load = hydratedRoute.load
+            val titleRes = load.titleRes()
+
             val viewModel = viewModel<ActualProfilesViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
@@ -279,6 +293,11 @@ class ProfilesBindings(
                 topBar = {
                     PoppableDestinationTopAppBar(
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        title = {
+                            Text(
+                                text = stringResource(titleRes),
+                            )
+                        },
                     )
                 },
                 content = { paddingValues ->
@@ -297,4 +316,13 @@ class ProfilesBindings(
             )
         },
     )
+}
+
+fun Load.titleRes(): StringResource = when (this) {
+    is Load.Post.Likes -> Res.string.likes
+    is Load.Post.Reposts -> Res.string.reposts
+    is Load.Profile.Followers -> Res.string.followers
+    is Load.Profile.Following -> Res.string.following
+    Load.Moderation.Blocks -> Res.string.blocked_accounts
+    Load.Moderation.Mutes -> Res.string.muted_accounts
 }
