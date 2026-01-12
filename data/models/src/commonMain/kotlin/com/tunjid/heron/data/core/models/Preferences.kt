@@ -149,4 +149,9 @@ data class MutedWordPreference(
     value class Target(
         val value: String,
     )
+
+    companion object {
+        val ContentTarget = Target("content")
+        val TagTarget = Target("tag")
+    }
 }

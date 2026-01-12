@@ -46,6 +46,7 @@ data class State(
         anchorPost?.let {
             TimelineItem.Thread(
                 id = it.uri.uri,
+                isMuted = false,
                 anchorPostIndex = 0,
                 posts = listOf(it),
                 generation = 0,
