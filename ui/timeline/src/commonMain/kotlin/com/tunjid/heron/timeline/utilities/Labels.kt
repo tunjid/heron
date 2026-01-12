@@ -25,6 +25,10 @@ import androidx.compose.foundation.layout.FlowRowScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Report
+import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
@@ -130,5 +134,14 @@ fun Label.Definition.locale(
     .firstOrNull { it.lang == currentLanguageTag }
     ?: locales.list
         .firstOrNull()
+
+internal fun Label.Severity?.icon() =
+    when (this) {
+        Label.Severity.Alert -> Icons.Rounded.Report
+        Label.Severity.Inform -> Icons.Rounded.Warning
+        Label.Severity.None,
+        null,
+        -> null
+    }
 
 internal val LabelIconSize = 12.dp

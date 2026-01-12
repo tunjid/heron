@@ -16,32 +16,14 @@
 
 package com.tunjid.heron.timeline.ui.post
 
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Report
-import androidx.compose.material.icons.rounded.Warning
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.AppliedLabels
@@ -51,7 +33,6 @@ import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.ImageList
-import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
@@ -72,11 +53,9 @@ import com.tunjid.heron.timeline.ui.post.feature.InvisiblePostPost
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
 import com.tunjid.heron.timeline.ui.post.feature.UnknownPostPost
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
+import com.tunjid.heron.timeline.utilities.SensitiveContentBox
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import heron.ui.timeline.generated.resources.Res
-import heron.ui.timeline.generated.resources.sensitive_content
 import kotlin.time.Instant
-import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun PostEmbed(
@@ -85,9 +64,14 @@ internal fun PostEmbed(
     embed: Embed?,
     embeddedRecord: Record.Embeddable?,
     postUri: PostUri,
+    isBlurred: Boolean,
+    canUnblur: Boolean,
+    blurLabel: String,
+    blurIcon: ImageVector?,
     sharedElementPrefix: String,
     appliedLabels: AppliedLabels,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    onUnblurClicked: () -> Unit,
     onLinkTargetClicked: (Post, LinkTarget) -> Unit,
     onPostMediaClicked: (media: Embed.Media, index: Int, quote: Post?) -> Unit,
     onEmbeddedRecordClicked: (Record) -> Unit,
@@ -97,9 +81,12 @@ internal fun PostEmbed(
     val uriHandler = LocalUriHandler.current
     SensitiveContentBox(
         modifier = modifier,
-        postUri = postUri,
-        appliedLabels = appliedLabels,
-    ) { isBlurred ->
+        isBlurred = isBlurred,
+        canUnblur = canUnblur,
+        label = blurLabel,
+        icon = blurIcon,
+        onUnblurClicked = onUnblurClicked,
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth(),
@@ -227,92 +214,3 @@ internal fun PostEmbed(
         }
     }
 }
-
-@Composable
-private fun SensitiveContentBox(
-    modifier: Modifier,
-    postUri: PostUri,
-    appliedLabels: AppliedLabels,
-    content: @Composable (isBlurred: Boolean) -> Unit,
-) {
-    var hasClickedThroughBlurredMedia by rememberSaveable(postUri) {
-        mutableStateOf(false)
-    }
-    val isBlurred = appliedLabels.shouldBlurMedia && !hasClickedThroughBlurredMedia
-
-    Box(
-        modifier = modifier,
-        content = {
-            Box(
-                modifier = when {
-                    // Prevent clicks on other things
-                    isBlurred -> Modifier.blockClickEvents()
-                    else -> Modifier
-                },
-                content = {
-                    content(isBlurred)
-                },
-            )
-
-            val canClickThrough = appliedLabels.blurredMediaSeverity != Label.Severity.None
-            if (isBlurred && canClickThrough && !hasClickedThroughBlurredMedia) {
-                SensitiveContentButton(
-                    modifier = Modifier
-                        .align(Alignment.Center),
-                    severity = appliedLabels.blurredMediaSeverity,
-                    onClick = {
-                        hasClickedThroughBlurredMedia = true
-                    },
-                )
-            }
-        },
-    )
-}
-
-@Composable
-private fun SensitiveContentButton(
-    modifier: Modifier,
-    severity: Label.Severity?,
-    onClick: () -> Unit,
-) {
-    FilledTonalButton(
-        modifier = modifier,
-        onClick = {
-            onClick()
-        },
-        content = {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                when (severity) {
-                    Label.Severity.Alert -> Icon(
-                        imageVector = Icons.Rounded.Report,
-                        contentDescription = "",
-                    )
-
-                    Label.Severity.Inform -> Icon(
-                        imageVector = Icons.Rounded.Warning,
-                        contentDescription = "",
-                    )
-
-                    Label.Severity.None,
-                    null,
-                    -> Unit
-                }
-                Text(
-                    text = stringResource(Res.string.sensitive_content),
-                )
-            }
-        },
-    )
-}
-
-private fun Modifier.blockClickEvents() =
-    pointerInput(Unit) {
-        awaitEachGesture {
-            val down = awaitFirstDown(pass = PointerEventPass.Initial)
-            down.consume()
-            waitForUpOrCancellation(PointerEventPass.Initial)?.consume()
-        }
-    }

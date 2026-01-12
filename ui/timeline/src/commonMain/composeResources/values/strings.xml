@@ -40,7 +40,7 @@
     <string name="condensed_media">condensed media</string>
     <string name="expanded_media">expanded media</string>
     <string name="grid_media">grid media</string>
-    <string name="sensitive_content">Sensitive Content</string>
+    <string name="sensitive_media">Sensitive media</string>
     <string name="feed_by">Feed by %1$s</string>
     <string name="liked_by">Liked by %1$s users</string>
     <string name="starter_pack_by">Starter Pack by %1$s</string>
@@ -77,6 +77,7 @@
     <string name="mute_words">Mute Words</string>
     <string name="mute_words_title">Add Word or phrase to mute</string>
     <string name="mute_words_placeholder">e.g., spoiler</string>
+    <string name="mute_words_post_hidden">Post hidden by muted word</string>
     <string name="close_icon">Close</string>
     <string name="forward_icon">Forward</string>
     <string name="clear_icon">Clear</string>

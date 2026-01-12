@@ -61,6 +61,7 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.post.PostReasonLine
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
+import com.tunjid.heron.timeline.utilities.authorMuted
 import com.tunjid.heron.timeline.utilities.createdAt
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
@@ -130,6 +131,7 @@ fun TimelineItem(
                             .fillMaxWidth(),
                         paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                         presentationLookaheadScope = presentationLookaheadScope,
+                        hasMutedWords = item.isMuted && !item.post.authorMuted,
                         now = now,
                         post = item.post,
                         threadGate = item.threadGate,
@@ -174,6 +176,7 @@ private fun ThreadedPost(
                         modifier = Modifier,
                         paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                         presentationLookaheadScope = presentationLookaheadScope,
+                        hasMutedWords = item.isMuted && !item.post.authorMuted,
                         now = now,
                         post = post,
                         threadGate = item.postUrisToThreadGates[post.uri],
