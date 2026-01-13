@@ -54,6 +54,7 @@ tunjid-tiler = "1.2.0"
 tunjid-tree-nav = "0.0.48"
 tunjid-composables = "0.0.24"
 vinceglb-filekit = "0.12.0"
+vlcj = "4.9.0"
 aboutLibraries = "13.1.0"
 
 
@@ -180,6 +181,7 @@ tunjid-treenav-compose = { group = "com.tunjid.treenav", name = "compose", versi
 tunjid-treenav-compose-threepane = { group = "com.tunjid.treenav", name = "compose-threepane", version.ref = "tunjid-tree-nav" }
 tunjid-treenav-core = { group = "com.tunjid.treenav", name = "treenav", version.ref = "tunjid-tree-nav" }
 tunjid-treenav-strings = { group = "com.tunjid.treenav", name = "strings", version.ref = "tunjid-tree-nav" }
+vlc-java = { group = "uk.co.caprica", name = "vlcj", version.ref = "vlcj" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
