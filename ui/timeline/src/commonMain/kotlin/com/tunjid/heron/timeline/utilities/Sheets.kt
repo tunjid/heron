@@ -61,9 +61,10 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.asClipEntry
+import heron.ui.core.generated.resources.block_account
 import heron.ui.timeline.generated.resources.Res
-import heron.ui.timeline.generated.resources.block_account
 import heron.ui.timeline.generated.resources.copy_link_to_clipboard
 import heron.ui.timeline.generated.resources.mute_words_tags
 import heron.ui.timeline.generated.resources.send_via_direct_message
@@ -169,7 +170,7 @@ internal fun CopyToClipboardCard(
 }
 
 @Composable
-internal fun BlockAccount(
+internal fun BlockAccountCard(
     modifier: Modifier = Modifier,
     onBlockAccountClicked: () -> Unit,
 ) {
@@ -183,7 +184,7 @@ internal fun BlockAccount(
     ) {
         BottomSheetItemCardRow(
             icon = Icons.Rounded.PersonRemoveAlt1,
-            text = stringResource(Res.string.block_account),
+            text = stringResource(CommonStrings.block_account),
         )
     }
 

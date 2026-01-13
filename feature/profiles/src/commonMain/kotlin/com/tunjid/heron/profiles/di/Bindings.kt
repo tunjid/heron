@@ -19,7 +19,6 @@ package com.tunjid.heron.profiles.di
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -35,12 +34,14 @@ import com.tunjid.heron.profiles.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
+import com.tunjid.heron.scaffold.scaffold.AppBarTitle
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -58,13 +59,12 @@ import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
-import heron.feature.profiles.generated.resources.Res
-import heron.feature.profiles.generated.resources.blocked_accounts
-import heron.feature.profiles.generated.resources.followers
-import heron.feature.profiles.generated.resources.following
-import heron.feature.profiles.generated.resources.likes
-import heron.feature.profiles.generated.resources.muted_accounts
-import heron.feature.profiles.generated.resources.reposts
+import heron.ui.core.generated.resources.blocked_accounts
+import heron.ui.core.generated.resources.followers
+import heron.ui.core.generated.resources.following
+import heron.ui.core.generated.resources.likes
+import heron.ui.core.generated.resources.muted_accounts
+import heron.ui.core.generated.resources.reposts
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -294,8 +294,8 @@ class ProfilesBindings(
                     PoppableDestinationTopAppBar(
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                         title = {
-                            Text(
-                                text = stringResource(titleRes),
+                            AppBarTitle(
+                                title = stringResource(titleRes),
                             )
                         },
                     )
@@ -319,10 +319,10 @@ class ProfilesBindings(
 }
 
 fun Load.titleRes(): StringResource = when (this) {
-    is Load.Post.Likes -> Res.string.likes
-    is Load.Post.Reposts -> Res.string.reposts
-    is Load.Profile.Followers -> Res.string.followers
-    is Load.Profile.Following -> Res.string.following
-    Load.Moderation.Blocks -> Res.string.blocked_accounts
-    Load.Moderation.Mutes -> Res.string.muted_accounts
+    is Load.Post.Likes -> CommonStrings.likes
+    is Load.Post.Reposts -> CommonStrings.reposts
+    is Load.Profile.Followers -> CommonStrings.followers
+    is Load.Profile.Following -> CommonStrings.following
+    Load.Moderation.Blocks -> CommonStrings.blocked_accounts
+    Load.Moderation.Mutes -> CommonStrings.muted_accounts
 }

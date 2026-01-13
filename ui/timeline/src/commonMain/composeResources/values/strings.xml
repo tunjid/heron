@@ -53,14 +53,10 @@
     <string name="expand_options">Expand options</string>
     <string name="remove_feed">Remove</string>
     <string name="mute_video">Mute video</string>
-    <string name="block_user">Blocked Accounts</string>
-    <string name="block_account">Block Account</string>
     <string name="block_account_dialog_title">Block Account?</string>
     <string name="block_account_dialog_description">Are you sure you want to block this account?</string>
-    <string name="block_account_dialog_confirm">Block</string>
     <string name="unblock_account_dialog_title">Unblock Account?</string>
-    <string name="unblock_account_dialog_description">Are you sure you want to block this account?</string>
-    <string name="unblock_account_dialog_confirm">Unblock</string>
+    <string name="unblock_account_dialog_description">Are you sure you want to unblock this account?</string>
     <string name="muted_meta_format">Muted in %1$s · %2$s</string>
     <string name="mute_words_tags">Mute words &amp; tags</string>
     <string name="moderation_options_title">Moderation tools</string>

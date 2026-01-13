@@ -17,12 +17,4 @@
 <resources>
     <string name="heron">Heron</string>
     <string name="back">Back</string>
-    <string name="likes">Likes</string>
-    <string name="reposts">Reposts</string>
-
-    <string name="followers">Followers</string>
-    <string name="following">Following</string>
-
-    <string name="blocked_accounts">Blocked Accounts</string>
-    <string name="muted_accounts">Muted Accounts</string>
 </resources>
