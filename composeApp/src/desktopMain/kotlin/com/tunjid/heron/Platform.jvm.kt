@@ -21,6 +21,7 @@ import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.data.logging.JvmLogger
 import com.tunjid.heron.images.imageLoader
 import com.tunjid.heron.media.video.StubVideoPlayerController
+import com.tunjid.heron.media.video.VlcPlayerController
 import com.tunjid.heron.scaffold.notifications.NoOpNotifier
 import com.tunjid.heron.scaffold.scaffold.AppState
 import dev.jordond.connectivity.Connectivity
@@ -44,8 +45,10 @@ fun createAppState(): AppState =
         logger = {
             JvmLogger()
         },
-        videoPlayerController = {
-            StubVideoPlayerController
+        videoPlayerController = { appScope ->
+            VlcPlayerController(
+                scope = appScope,
+            )
         },
         args = { appScope ->
             DataBindingArgs(
