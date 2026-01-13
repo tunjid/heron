@@ -205,7 +205,7 @@ sealed class Action(val key: String) {
         val signedInProfileId: ProfileId,
         val profileId: ProfileId,
         val blockUri: BlockUri,
-    ) : Action(key = "BlockAccount")
+    ) : Action(key = "UnblockAccount")
 
     data class UpdateMutedWord(
         val mutedWordPreference: List<MutedWordPreference>,
