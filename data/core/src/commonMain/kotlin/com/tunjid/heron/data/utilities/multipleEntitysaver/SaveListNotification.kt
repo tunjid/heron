@@ -70,6 +70,8 @@ internal fun MultipleEntitySaver.add(
                     ListNotificationsNotificationReason.LikeViaRepost -> Notification.Reason.LikeViaRepost
                     ListNotificationsNotificationReason.RepostViaRepost -> Notification.Reason.RepostViaRepost
                     ListNotificationsNotificationReason.SubscribedPost -> Notification.Reason.SubscribedPost
+                    // This feature isn't supported
+                    ListNotificationsNotificationReason.ContactMatch -> Notification.Reason.Unknown
                 },
                 reasonSubject = notification.reasonSubject?.atUri?.let(::GenericUri),
                 associatedPostUri = notification.associatedPostUri()
@@ -97,4 +99,5 @@ internal fun ListNotificationsNotification.associatedPostUri(): AtUri? = when (r
     ListNotificationsNotificationReason.LikeViaRepost -> record.safeDecodeAs<Like>()?.subject?.uri
     ListNotificationsNotificationReason.RepostViaRepost -> record.safeDecodeAs<Repost>()?.subject?.uri
     ListNotificationsNotificationReason.SubscribedPost -> reasonSubject
+    ListNotificationsNotificationReason.ContactMatch -> null
 }
