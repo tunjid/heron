@@ -58,6 +58,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun ProfileLabels(
+    modifier: Modifier = Modifier,
     adultContentEnabled: Boolean,
     viewerState: ProfileViewerState?,
     labels: List<Label>,
@@ -82,7 +83,9 @@ internal fun ProfileLabels(
             contentLabelPreferences = contentLabelPreferences,
         )
     }
-    LabelFlowRow {
+    LabelFlowRow(
+        modifier = modifier,
+    ) {
         if (viewerState.isBlocked) IconLabel(
             icon = Icons.Rounded.Block,
             contentDescription = stringResource(CommonStrings.viewer_state_blocked),

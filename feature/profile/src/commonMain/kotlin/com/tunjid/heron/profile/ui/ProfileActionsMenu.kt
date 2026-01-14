@@ -155,7 +155,7 @@ internal fun ProfileViewerState?.profileActionMenuItems() = buildList {
             if (isMuted) ProfileActionMenu.Item(
                 title = CommonStrings.viewer_state_unmute_account,
                 icon = Icons.AutoMirrored.Rounded.VolumeUp,
-                isDestructive = true,
+                isDestructive = false,
             )
             else ProfileActionMenu.Item(
                 title = CommonStrings.viewer_state_mute_account,

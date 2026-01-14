@@ -216,12 +216,10 @@ internal fun ProfileScreen(
         actions(Action.Navigate.To(signInDestination()))
     }
 
-    val collapsedHeight = with(density) {
-        (UiTokens.toolbarHeight + UiTokens.statusBarHeight).toPx()
-    }
+    val collapsedHeight = UiTokens.toolbarHeight + UiTokens.statusBarHeight
 
     val collapsingHeaderState = rememberCollapsingHeaderState(
-        collapsedHeight = collapsedHeight,
+        collapsedHeight = with(density) { collapsedHeight.toPx() },
         initialExpandedHeight = with(density) { 800.dp.toPx() },
     )
     val headerState = remember(collapsingHeaderState) {
@@ -469,6 +467,7 @@ internal fun ProfileScreen(
                             )
 
                             is ProfileScreenStateHolders.Timeline -> ProfileTimeline(
+                                bottomPadding = collapsedHeight,
                                 signedInProfileId = state.signedInProfileId,
                                 paneScaffoldState = paneScaffoldState,
                                 timelineStateHolder = stateHolder,
@@ -541,6 +540,7 @@ private fun ProfileHeader(
 ) = with(paneScaffoldState) {
     Box(
         modifier = modifier
+            .animateContentSize()
             .fillMaxWidth(),
     ) {
         ProfileBanner(
@@ -625,6 +625,8 @@ private fun ProfileHeader(
                     )
                 }
                 ProfileLabels(
+                    modifier = Modifier
+                        .animateContentSize(),
                     adultContentEnabled = preferences.allowAdultContent,
                     viewerState = viewerState,
                     labels = profile.labels,
@@ -1142,6 +1144,7 @@ private fun ProfileTabs(
 
 @Composable
 private fun ProfileTimeline(
+    bottomPadding: Dp,
     signedInProfileId: ProfileId?,
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
@@ -1251,6 +1254,7 @@ private fun ProfileTimeline(
             columns = StaggeredGridCells.Adaptive(presentation.cardSize),
             contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
                 isCompact = paneScaffoldState.prefersCompactBottomNav,
+                extraBottom = bottomPadding,
             ),
             verticalItemSpacing = presentation.lazyGridVerticalItemSpacing,
             horizontalArrangement = Arrangement.spacedBy(
