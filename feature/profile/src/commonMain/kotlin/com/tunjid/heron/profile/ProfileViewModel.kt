@@ -185,6 +185,12 @@ class ActualProfileViewModel(
                         is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
                             writeQueue = writeQueue,
                         )
+                        is Action.BlockAccount -> action.flow.updateBlockAccountMutations(
+                            writeQueue = writeQueue,
+                        )
+                        is Action.UnblockAccount -> action.flow.updateUnblockAccountMutations(
+                            writeQueue = writeQueue,
+                        )
                     }
                 },
             )
@@ -364,6 +370,33 @@ private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
         Writable.TimelineUpdate(
             Timeline.Update.OfMutedWord.ReplaceAll(
                 mutedWordPreferences = it.mutedWordPreference,
+            ),
+        ),
+    )
+}
+
+private fun Flow<Action.BlockAccount>.updateBlockAccountMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = mapToManyMutations { action ->
+    writeQueue.enqueue(
+        Writable.Restriction(
+            Profile.Restriction.Block.Add(
+                signedInProfileId = action.signedInProfileId,
+                profileId = action.profileId,
+            ),
+        ),
+    )
+}
+
+private fun Flow<Action.UnblockAccount>.updateUnblockAccountMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = mapToManyMutations { action ->
+    writeQueue.enqueue(
+        Writable.Restriction(
+            Profile.Restriction.Block.Remove(
+                signedInProfileId = action.signedInProfileId,
+                profileId = action.profileId,
+                blockUri = action.blockUri,
             ),
         ),
     )

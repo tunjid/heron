@@ -44,8 +44,12 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.PersonRemoveAlt1
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -98,6 +102,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.isBlocked
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri.Companion.asSelfLabelerUri
@@ -110,6 +115,8 @@ import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.profile.ui.LabelerSettings
 import com.tunjid.heron.profile.ui.LabelerState
+import com.tunjid.heron.profile.ui.ProfileActionMenuItem
+import com.tunjid.heron.profile.ui.ProfileActionsMenu
 import com.tunjid.heron.profile.ui.ProfileCollectionSharedElementPrefix
 import com.tunjid.heron.profile.ui.ProfileLabels
 import com.tunjid.heron.profile.ui.RecordList
@@ -149,6 +156,8 @@ import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
+import com.tunjid.heron.timeline.utilities.BlockAccountDialog
+import com.tunjid.heron.timeline.utilities.UnblockAccountDialog
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
@@ -171,6 +180,7 @@ import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.navigableLinkTargetHandler
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.links
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -179,11 +189,13 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.feature.profile.generated.resources.Res
 import heron.feature.profile.generated.resources.followed_by_others
 import heron.feature.profile.generated.resources.followed_by_profiles
-import heron.feature.profile.generated.resources.followers
-import heron.feature.profile.generated.resources.following
 import heron.feature.profile.generated.resources.follows_you
 import heron.feature.profile.generated.resources.labels
 import heron.feature.profile.generated.resources.posts
+import heron.ui.core.generated.resources.block_account
+import heron.ui.core.generated.resources.followers
+import heron.ui.core.generated.resources.following
+import heron.ui.core.generated.resources.viewer_state_unblock
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
@@ -336,6 +348,29 @@ internal fun ProfileScreen(
                             ),
                         ),
                     )
+                },
+                onUnblockClicked = {
+                    state.signedInProfileId?.let { signedInProfileId ->
+                        state.viewerState?.blocking?.let { blockUri ->
+                            actions(
+                                Action.UnblockAccount(
+                                    signedInProfileId = signedInProfileId,
+                                    profileId = state.profile.did,
+                                    blockUri = blockUri,
+                                ),
+                            )
+                        }
+                    }
+                },
+                onBlockAccountClicked = {
+                    state.signedInProfileId?.let { signedInProfileId ->
+                        actions(
+                            Action.BlockAccount(
+                                signedInProfileId = signedInProfileId,
+                                profileId = state.profile.did,
+                            ),
+                        )
+                    }
                 },
             )
         },
@@ -520,6 +555,8 @@ private fun ProfileHeader(
     onLinkTargetClicked: (LinkTarget) -> Unit,
     onEditClick: () -> Unit,
     onToggleLabelerSubscription: (ProfileId, Boolean) -> Unit,
+    onUnblockClicked: () -> Unit,
+    onBlockAccountClicked: () -> Unit,
 ) = with(paneScaffoldState) {
     Box(
         modifier = modifier
@@ -587,6 +624,8 @@ private fun ProfileHeader(
                     onViewerStateClicked = onViewerStateClicked,
                     onEditClick = onEditClick,
                     onToggleLabelerSubscription = onToggleLabelerSubscription,
+                    onUnblockClicked = onUnblockClicked,
+                    onBlockAccountClicked = onBlockAccountClicked,
                 )
                 ProfileStats(
                     modifier = Modifier.fillMaxWidth(),
@@ -807,10 +846,14 @@ private fun ProfileHeadline(
     isSignedInProfile: Boolean,
     isSubscribedToLabeler: Boolean,
     viewerState: ProfileViewerState?,
+    onUnblockClicked: () -> Unit,
     onEditClick: () -> Unit,
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
     onToggleLabelerSubscription: (ProfileId, Boolean) -> Unit,
+    onBlockAccountClicked: () -> Unit,
 ) {
+    var showUnblockDialog by remember { mutableStateOf(false) }
+    var showBlockDialog by remember { mutableStateOf(false) }
     AttributionLayout(
         modifier = modifier,
         avatar = null,
@@ -830,28 +873,76 @@ private fun ProfileHeadline(
         },
         action = {
             val profileId = profile.did
+
             AnimatedVisibility(
                 visible = viewerState != null || isSignedInProfile || profile.isLabeler,
-                content = {
-                    if (profile.isLabeler) LabelerState(
-                        isSubscribed = isSubscribedToLabeler,
-                        onClick = {
-                            onToggleLabelerSubscription(
-                                profileId,
-                                isSubscribedToLabeler,
+            ) {
+                when {
+                    profile.isLabeler -> {
+                        LabelerState(
+                            isSubscribed = isSubscribedToLabeler,
+                            onClick = {
+                                onToggleLabelerSubscription(
+                                    profileId,
+                                    isSubscribedToLabeler,
+                                )
+                            },
+                        )
+                    }
+
+                    viewerState?.isBlocked == true && !isSignedInProfile -> {
+                        FilledTonalButton(
+                            onClick = { showUnblockDialog = true },
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                            ),
+                        ) {
+                            Text(stringResource(CommonStrings.viewer_state_unblock))
+                        }
+                        UnblockAccountDialog(
+                            showUnblockAccountDialog = showUnblockDialog,
+                            onDismiss = { showUnblockDialog = false },
+                            onConfirm = onUnblockClicked,
+                        )
+                    }
+                    else -> {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            ProfileViewerState(
+                                viewerState = viewerState,
+                                isSignedInProfile = isSignedInProfile,
+                                onClick = {
+                                    if (isSignedInProfile) onEditClick()
+                                    else onViewerStateClicked(viewerState)
+                                },
                             )
-                        },
-                    )
-                    else ProfileViewerState(
-                        viewerState = viewerState,
-                        isSignedInProfile = isSignedInProfile,
-                        onClick = {
-                            if (isSignedInProfile) onEditClick()
-                            else onViewerStateClicked(viewerState)
-                        },
-                    )
-                },
-            )
+                            if (!isSignedInProfile) {
+                                ProfileActionsMenu(
+                                    items = listOf(
+                                        ProfileActionMenuItem(
+                                            title = stringResource(CommonStrings.block_account),
+                                            icon = Icons.Outlined.PersonRemoveAlt1,
+                                            onClick = { showBlockDialog = true },
+                                        ),
+                                    ),
+                                )
+                                BlockAccountDialog(
+                                    showBlockAccountDialog = showBlockDialog,
+                                    onDismiss = {
+                                        showBlockDialog = false
+                                    },
+                                    onConfirm = {
+                                        showBlockDialog = false
+                                        onBlockAccountClicked()
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         },
     )
 }
@@ -870,7 +961,7 @@ private fun ProfileStats(
     ) {
         Statistic(
             value = profile.followersCount ?: 0,
-            description = stringResource(Res.string.followers),
+            description = stringResource(CommonStrings.followers),
             onClick = {
                 onNavigateToProfiles(
                     profileFollowersDestination(
@@ -881,7 +972,7 @@ private fun ProfileStats(
         )
         Statistic(
             value = profile.followsCount ?: 0,
-            description = stringResource(Res.string.following),
+            description = stringResource(CommonStrings.following),
             onClick = {
                 onNavigateToProfiles(
                     profileFollowsDestination(
