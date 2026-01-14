@@ -9,7 +9,10 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.VolumeOff
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.rounded.PersonOff
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
@@ -28,14 +31,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.ProfileViewerState
+import com.tunjid.heron.data.core.models.isBlocked
+import com.tunjid.heron.data.core.models.isMuted
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.more_options
+import heron.ui.core.generated.resources.viewer_state_block_account
+import heron.ui.core.generated.resources.viewer_state_mute_account
+import heron.ui.core.generated.resources.viewer_state_unmute_account
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun ProfileActionsMenu(
     modifier: Modifier = Modifier,
-    items: List<ProfileActionMenuItem>,
+    items: List<ProfileActionMenu>,
+    onItemClicked: (ProfileActionMenu.Item) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -66,17 +77,16 @@ internal fun ProfileActionsMenu(
             modifier = Modifier
                 .widthIn(min = 200.dp),
         ) {
-            items.forEachIndexed { index, item ->
-                ProfileActionMenuItemRow(
-                    item = item,
-                    onClick = {
-                        expanded = false
-                        item.onClick()
-                    },
-                )
-
-                if (index < items.lastIndex && item.showDividerBelow) {
-                    HorizontalDivider(
+            items.forEach { item ->
+                when (item) {
+                    is ProfileActionMenu.Item -> ProfileActionMenuItemRow(
+                        item = item,
+                        onClick = {
+                            expanded = false
+                            onItemClicked(item)
+                        },
+                    )
+                    ProfileActionMenu.Divider -> HorizontalDivider(
                         modifier = Modifier.padding(horizontal = 12.dp),
                         thickness = 0.5.dp,
                     )
@@ -88,14 +98,14 @@ internal fun ProfileActionsMenu(
 
 @Composable
 private fun ProfileActionMenuItemRow(
-    item: ProfileActionMenuItem,
+    item: ProfileActionMenu.Item,
     onClick: () -> Unit,
 ) {
     DropdownMenuItem(
         onClick = onClick,
         text = {
             Text(
-                text = item.title,
+                text = stringResource(item.title),
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (item.isDestructive)
                     MaterialTheme.colorScheme.error
@@ -120,10 +130,38 @@ private fun ProfileActionMenuItemRow(
 }
 
 @Stable
-internal data class ProfileActionMenuItem(
-    val title: String,
-    val icon: ImageVector,
-    val isDestructive: Boolean = false,
-    val showDividerBelow: Boolean = false,
-    val onClick: () -> Unit,
-)
+internal sealed class ProfileActionMenu {
+
+    data class Item(
+        val title: StringResource,
+        val icon: ImageVector,
+        val isDestructive: Boolean = false,
+    ) : ProfileActionMenu()
+
+    data object Divider : ProfileActionMenu()
+}
+
+internal fun ProfileViewerState?.profileActionMenuItems() = buildList {
+    if (this@profileActionMenuItems != null) {
+        if (!isBlocked) add(
+            ProfileActionMenu.Item(
+                title = CommonStrings.viewer_state_block_account,
+                icon = Icons.Rounded.PersonOff,
+                isDestructive = true,
+            ),
+        )
+
+        add(
+            if (isMuted) ProfileActionMenu.Item(
+                title = CommonStrings.viewer_state_unmute_account,
+                icon = Icons.AutoMirrored.Rounded.VolumeUp,
+                isDestructive = false,
+            )
+            else ProfileActionMenu.Item(
+                title = CommonStrings.viewer_state_mute_account,
+                icon = Icons.AutoMirrored.Rounded.VolumeOff,
+                isDestructive = false,
+            ),
+        )
+    }
+}

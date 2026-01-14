@@ -61,11 +61,11 @@
     <string name="viewer_state_follow">Follow</string>
     <string name="viewer_state_following">Following</string>
     <string name="viewer_state_follows_you">Follows you</string>
-    <string name="viewer_state_mute">Mute</string>
-    <string name="viewer_state_unmute">Unmute</string>
+    <string name="viewer_state_mute_account">Mute account</string>
+    <string name="viewer_state_unmute_account">Unmute account</string>
     <string name="viewer_state_muted">Muted</string>
-    <string name="viewer_state_block">Block</string>
-    <string name="viewer_state_unblock">Unblock</string>
+    <string name="viewer_state_block_account">Block account</string>
+    <string name="viewer_state_unblock_account">Unblock account</string>
     <string name="viewer_state_blocked">Blocked</string>
     <string name="notifications_followed_you_description">Followed you</string>
     <string name="notifications_followed_you">%1$s followed you</string>
@@ -96,7 +96,6 @@
     <string name="notifications_unknown">You have a new notification</string>
     <string name="notifications_create_post">Create Post</string>
     <string name="more_options">More Options</string>
-    <string name="block_account">Block Account</string>
     <string name="likes">Likes</string>
     <string name="reposts">Reposts</string>
     <string name="followers">Followers</string>

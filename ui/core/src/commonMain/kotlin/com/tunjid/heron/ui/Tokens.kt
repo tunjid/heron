@@ -67,15 +67,16 @@ object UiTokens {
     fun bottomNavAndInsetPaddingValues(
         top: Dp = 0.dp,
         horizontal: Dp = 0.dp,
+        extraBottom: Dp = 0.dp,
         isCompact: Boolean,
     ): PaddingValues {
         val padding = navigationBarHeight + bottomNavHeight(isCompact)
-        return remember(top, horizontal, padding) {
+        return remember(top, horizontal, extraBottom, padding) {
             PaddingValues(
                 top = top,
                 start = horizontal,
                 end = horizontal,
-                bottom = padding,
+                bottom = padding + extraBottom,
             )
         }
     }
