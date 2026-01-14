@@ -166,6 +166,16 @@ sealed class Action(val key: String) {
         val mutedWordPreference: List<MutedWordPreference>,
     ) : Action(key = "UpdateMutedWord")
 
+    data class BlockAccount(
+        val signedInProfileId: ProfileId,
+        val profileId: ProfileId,
+    ) : Action(key = "BlockAccount")
+
+    data class MuteAccount(
+        val signedInProfileId: ProfileId,
+        val profileId: ProfileId,
+    ) : Action(key = "MuteAccount")
+
     data class SendPostInteraction(
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")

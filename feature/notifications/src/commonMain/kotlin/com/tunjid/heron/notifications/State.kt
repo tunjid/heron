@@ -24,6 +24,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.associatedPostUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.NotificationsQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.tiling.TilingState
@@ -94,6 +95,16 @@ sealed class Action(val key: String) {
     data class UpdateMutedWord(
         val mutedWordPreference: List<MutedWordPreference>,
     ) : Action(key = "UpdateMutedWord")
+
+    data class BlockAccount(
+        val signedInProfileId: ProfileId,
+        val profileId: ProfileId,
+    ) : Action(key = "BlockAccount")
+
+    data class MuteAccount(
+        val signedInProfileId: ProfileId,
+        val profileId: ProfileId,
+    ) : Action(key = "MuteAccount")
 
     data class SendPostInteraction(
         val interaction: Post.Interaction,

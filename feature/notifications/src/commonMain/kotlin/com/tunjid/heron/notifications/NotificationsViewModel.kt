@@ -18,6 +18,7 @@ package com.tunjid.heron.notifications
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
@@ -40,6 +41,7 @@ import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
@@ -123,6 +125,12 @@ class ActualNotificationsViewModel(
                     is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
                         writeQueue = writeQueue,
                     )
+                    is Action.BlockAccount -> action.flow.blockAccountMutations(
+                        writeQueue = writeQueue,
+                    )
+                    is Action.MuteAccount -> action.flow.muteAccountMutations(
+                        writeQueue = writeQueue,
+                    )
                 }
             }
         },
@@ -185,6 +193,32 @@ private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
         Writable.TimelineUpdate(
             Timeline.Update.OfMutedWord.ReplaceAll(
                 mutedWordPreferences = it.mutedWordPreference,
+            ),
+        ),
+    )
+}
+
+private fun Flow<Action.BlockAccount>.blockAccountMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
+    writeQueue.enqueue(
+        Writable.Restriction(
+            Profile.Restriction.Block.Add(
+                signedInProfileId = action.signedInProfileId,
+                profileId = action.profileId,
+            ),
+        ),
+    )
+}
+
+private fun Flow<Action.MuteAccount>.muteAccountMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
+    writeQueue.enqueue(
+        Writable.Restriction(
+            Profile.Restriction.Mute.Add(
+                signedInProfileId = action.signedInProfileId,
+                profileId = action.profileId,
             ),
         ),
     )

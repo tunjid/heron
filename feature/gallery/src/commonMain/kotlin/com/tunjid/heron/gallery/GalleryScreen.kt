@@ -79,6 +79,7 @@ import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.utilities.asGenericUri
+import com.tunjid.heron.gallery.Action.Navigate.To
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.DownloadStatus
 import com.tunjid.heron.images.ImageArgs
@@ -110,6 +111,7 @@ import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
+import com.tunjid.heron.timeline.utilities.BlockAccountDialog
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -163,6 +165,10 @@ internal fun GalleryScreen(
         },
         onShown = {},
     )
+    var pendingModeration by remember {
+        mutableStateOf<PostOption.Moderation?>(null)
+    }
+    var showBlockDialog by remember { mutableStateOf(false) }
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = state.signedInProfileId,
         recentConversations = state.recentConversations,
@@ -170,7 +176,7 @@ internal fun GalleryScreen(
             when (option) {
                 is PostOption.ShareInConversation ->
                     actions(
-                        Action.Navigate.To(
+                        To(
                             conversationDestination(
                                 id = option.conversation.id,
                                 members = option.conversation.members,
@@ -183,9 +189,40 @@ internal fun GalleryScreen(
 
                 // TODO
                 is PostOption.ThreadGate -> Unit
-                is PostOption.Moderation.BlockUser -> Unit
+                is PostOption.Moderation.BlockAccount -> {
+                    pendingModeration = option
+                    showBlockDialog = true
+                }
                 is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
+                is PostOption.Moderation.MuteAccount -> {
+                    actions(
+                        Action.MuteAccount(
+                            signedInProfileId = option.signedInProfileId,
+                            profileId = option.post.author.did,
+                        ),
+                    )
+                }
             }
+        },
+    )
+    BlockAccountDialog(
+        showBlockAccountDialog = showBlockDialog,
+        onDismiss = {
+            showBlockDialog = false
+            pendingModeration = null
+        },
+        onConfirm = {
+            val moderation = pendingModeration
+            if (moderation is PostOption.Moderation.BlockAccount) {
+                actions(
+                    Action.BlockAccount(
+                        signedInProfileId = moderation.signedInProfileId,
+                        profileId = moderation.post.author.did,
+                    ),
+                )
+            }
+            showBlockDialog = false
+            pendingModeration = null
         },
     )
 

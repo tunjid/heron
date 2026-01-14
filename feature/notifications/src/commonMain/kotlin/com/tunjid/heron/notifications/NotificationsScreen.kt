@@ -35,8 +35,10 @@ import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +50,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.utilities.asGenericUri
+import com.tunjid.heron.notifications.Action.Navigate.To
 import com.tunjid.heron.notifications.ui.FollowRow
 import com.tunjid.heron.notifications.ui.JoinedStarterPackRow
 import com.tunjid.heron.notifications.ui.LikeRow
@@ -75,6 +78,7 @@ import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.re
 import com.tunjid.heron.timeline.ui.post.PostOption
 import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
+import com.tunjid.heron.timeline.utilities.BlockAccountDialog
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
@@ -117,6 +121,10 @@ internal fun NotificationsScreen(
         },
         onShown = {},
     )
+    var pendingModeration by remember {
+        mutableStateOf<PostOption.Moderation?>(null)
+    }
+    var showBlockDialog by remember { mutableStateOf(false) }
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = state.signedInProfile?.did,
         recentConversations = state.recentConversations,
@@ -124,7 +132,7 @@ internal fun NotificationsScreen(
             when (option) {
                 is PostOption.ShareInConversation ->
                     actions(
-                        Action.Navigate.To(
+                        To(
                             conversationDestination(
                                 id = option.conversation.id,
                                 members = option.conversation.members,
@@ -137,9 +145,40 @@ internal fun NotificationsScreen(
 
                 // Notifications UI does not present thread gate options
                 is PostOption.ThreadGate -> Unit
-                is PostOption.Moderation.BlockUser -> Unit
+                is PostOption.Moderation.BlockAccount -> {
+                    pendingModeration = option
+                    showBlockDialog = true
+                }
                 is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
+                is PostOption.Moderation.MuteAccount -> {
+                    actions(
+                        Action.MuteAccount(
+                            signedInProfileId = option.signedInProfileId,
+                            profileId = option.post.author.did,
+                        ),
+                    )
+                }
             }
+        },
+    )
+    BlockAccountDialog(
+        showBlockAccountDialog = showBlockDialog,
+        onDismiss = {
+            showBlockDialog = false
+            pendingModeration = null
+        },
+        onConfirm = {
+            val moderation = pendingModeration
+            if (moderation is PostOption.Moderation.BlockAccount) {
+                actions(
+                    Action.BlockAccount(
+                        signedInProfileId = moderation.signedInProfileId,
+                        profileId = moderation.post.author.did,
+                    ),
+                )
+            }
+            showBlockDialog = false
+            pendingModeration = null
         },
     )
 

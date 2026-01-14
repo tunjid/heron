@@ -110,6 +110,7 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
+import com.tunjid.heron.profile.Action.Navigate.To
 import com.tunjid.heron.profile.ui.LabelerSettings
 import com.tunjid.heron.profile.ui.LabelerState
 import com.tunjid.heron.profile.ui.ProfileActionsMenu
@@ -1201,6 +1202,11 @@ private fun ProfileTimeline(
         },
         onShown = {},
     )
+    var pendingModeration by remember {
+        mutableStateOf<PostOption.Moderation?>(null)
+    }
+
+    var showBlockDialog by remember { mutableStateOf(false) }
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
@@ -1208,7 +1214,7 @@ private fun ProfileTimeline(
             when (option) {
                 is PostOption.ShareInConversation ->
                     actions(
-                        Action.Navigate.To(
+                        To(
                             conversationDestination(
                                 id = option.conversation.id,
                                 members = option.conversation.members,
@@ -1223,9 +1229,40 @@ private fun ProfileTimeline(
                     items.firstOrNull { it.post.uri == option.postUri }
                         ?.let(threadGateSheetState::show)
 
-                is PostOption.Moderation.BlockUser -> Unit
+                is PostOption.Moderation.BlockAccount -> {
+                    pendingModeration = option
+                    showBlockDialog = true
+                }
                 is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
+                is PostOption.Moderation.MuteAccount -> {
+                    actions(
+                        Action.Mute.Add(
+                            signedInProfileId = option.signedInProfileId,
+                            profileId = option.post.author.did,
+                        ),
+                    )
+                }
             }
+        },
+    )
+    BlockAccountDialog(
+        showBlockAccountDialog = showBlockDialog,
+        onDismiss = {
+            showBlockDialog = false
+            pendingModeration = null
+        },
+        onConfirm = {
+            val moderation = pendingModeration
+            if (moderation is PostOption.Moderation.BlockAccount) {
+                actions(
+                    Action.Block.Add(
+                        signedInProfileId = moderation.signedInProfileId,
+                        profileId = moderation.post.author.did,
+                    ),
+                )
+            }
+            showBlockDialog = false
+            pendingModeration = null
         },
     )
 

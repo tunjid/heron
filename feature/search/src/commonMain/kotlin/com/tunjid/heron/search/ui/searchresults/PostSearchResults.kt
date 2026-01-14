@@ -26,8 +26,10 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Conversation
@@ -65,6 +67,7 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
+import com.tunjid.heron.timeline.utilities.BlockAccountDialog
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
 import com.tunjid.heron.ui.UiTokens
@@ -96,6 +99,8 @@ internal fun PostSearchResults(
     onSendPostInteraction: (Post.Interaction) -> Unit,
     onSave: (mutedWordPreferences: List<MutedWordPreference>) -> Unit,
     searchResultActions: (SearchState.Tile) -> Unit,
+    onMuteAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
+    onBlockAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
 ) {
     val now = remember { Clock.System.now() }
     val results by rememberUpdatedState(state.tiledItems)
@@ -123,6 +128,10 @@ internal fun PostSearchResults(
         onSave = onSave,
         onShown = {},
     )
+    var pendingModeration by remember {
+        mutableStateOf<PostOption.Moderation?>(null)
+    }
+    var showBlockDialog by remember { mutableStateOf(false) }
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
@@ -143,9 +152,36 @@ internal fun PostSearchResults(
                     results.firstOrNull { it.timelineItem.post.uri == option.postUri }
                         ?.timelineItem
                         ?.let(threadGateSheetState::show)
-                is PostOption.Moderation.BlockUser -> Unit
+                is PostOption.Moderation.BlockAccount -> {
+                    pendingModeration = option
+                    showBlockDialog = true
+                }
                 is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
+                is PostOption.Moderation.MuteAccount -> {
+                    onMuteAccountClicked(
+                        option.signedInProfileId,
+                        option.post.author.did,
+                    )
+                }
             }
+        },
+    )
+    BlockAccountDialog(
+        showBlockAccountDialog = showBlockDialog,
+        onDismiss = {
+            showBlockDialog = false
+            pendingModeration = null
+        },
+        onConfirm = {
+            val moderation = pendingModeration
+            if (moderation is PostOption.Moderation.BlockAccount) {
+                onBlockAccountClicked(
+                    moderation.signedInProfileId,
+                    moderation.post.author.did,
+                )
+            }
+            showBlockDialog = false
+            pendingModeration = null
         },
     )
     val postActions = remember(

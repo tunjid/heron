@@ -264,6 +264,22 @@ internal fun SearchScreen(
                 onFeedGeneratorClicked = onFeedGeneratorClicked,
                 onTimelineUpdateClicked = onTimelineUpdateClicked,
                 onSave = { actions(Action.UpdateMutedWord(it)) },
+                onMuteAccountClicked = { signInProfileId, profileId ->
+                    actions(
+                        Action.MuteAccount(
+                            signedInProfileId = signInProfileId,
+                            profileId = profileId,
+                        ),
+                    )
+                },
+                onBlockAccountClicked = { signInProfileId, profileId ->
+                    actions(
+                        Action.BlockAccount(
+                            signedInProfileId = signInProfileId,
+                            profileId = profileId,
+                        ),
+                    )
+                },
             )
         }
     }
