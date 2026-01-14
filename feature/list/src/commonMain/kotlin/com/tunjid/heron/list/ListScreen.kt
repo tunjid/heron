@@ -462,12 +462,13 @@ private fun ListTimeline(
             }
         },
     )
+    val resetBlockDialogState = {
+        showBlockDialog = false
+        pendingModeration = null
+    }
     BlockAccountDialog(
         showBlockAccountDialog = showBlockDialog,
-        onDismiss = {
-            showBlockDialog = false
-            pendingModeration = null
-        },
+        onDismiss = resetBlockDialogState,
         onConfirm = {
             val moderation = pendingModeration
             if (moderation is PostOption.Moderation.BlockAccount) {
@@ -478,8 +479,7 @@ private fun ListTimeline(
                     ),
                 )
             }
-            showBlockDialog = false
-            pendingModeration = null
+            resetBlockDialogState()
         },
     )
 

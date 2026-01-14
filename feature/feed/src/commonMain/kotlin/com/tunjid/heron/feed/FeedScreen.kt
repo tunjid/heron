@@ -231,12 +231,13 @@ private fun FeedTimeline(
             }
         },
     )
+    val resetBlockDialogState = {
+        showBlockDialog = false
+        pendingModeration = null
+    }
     BlockAccountDialog(
         showBlockAccountDialog = showBlockDialog,
-        onDismiss = {
-            showBlockDialog = false
-            pendingModeration = null
-        },
+        onDismiss = resetBlockDialogState,
         onConfirm = {
             val moderation = pendingModeration
             if (moderation is PostOption.Moderation.BlockAccount) {
@@ -247,8 +248,7 @@ private fun FeedTimeline(
                     ),
                 )
             }
-            showBlockDialog = false
-            pendingModeration = null
+            resetBlockDialogState()
         },
     )
 

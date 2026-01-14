@@ -176,12 +176,13 @@ internal fun PostDetailScreen(
             }
         },
     )
+    val resetBlockDialogState = {
+        showBlockDialog = false
+        pendingModeration = null
+    }
     BlockAccountDialog(
         showBlockAccountDialog = showBlockDialog,
-        onDismiss = {
-            showBlockDialog = false
-            pendingModeration = null
-        },
+        onDismiss = resetBlockDialogState,
         onConfirm = {
             val moderation = pendingModeration
             if (moderation is PostOption.Moderation.BlockAccount) {
@@ -192,8 +193,7 @@ internal fun PostDetailScreen(
                     ),
                 )
             }
-            showBlockDialog = false
-            pendingModeration = null
+            resetBlockDialogState()
         },
     )
 

@@ -166,12 +166,13 @@ internal fun PostSearchResults(
             }
         },
     )
+    val resetBlockDialogState = {
+        showBlockDialog = false
+        pendingModeration = null
+    }
     BlockAccountDialog(
         showBlockAccountDialog = showBlockDialog,
-        onDismiss = {
-            showBlockDialog = false
-            pendingModeration = null
-        },
+        onDismiss = resetBlockDialogState,
         onConfirm = {
             val moderation = pendingModeration
             if (moderation is PostOption.Moderation.BlockAccount) {
@@ -180,8 +181,7 @@ internal fun PostSearchResults(
                     moderation.post.author.did,
                 )
             }
-            showBlockDialog = false
-            pendingModeration = null
+            resetBlockDialogState()
         },
     )
     val postActions = remember(
