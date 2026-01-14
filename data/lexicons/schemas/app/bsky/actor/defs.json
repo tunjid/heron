@@ -276,6 +276,7 @@
           "#savedFeedsPref",
           "#savedFeedsPrefV2",
           "#personalDetailsPref",
+          "#declaredAgePref",
           "#feedViewPref",
           "#threadViewPref",
           "#interestsPref",
@@ -373,6 +374,24 @@
           "type": "string",
           "format": "datetime",
           "description": "The birth date of account owner."
+        }
+      }
+    },
+    "declaredAgePref": {
+      "type": "object",
+      "description": "Read-only preference containing value(s) inferred from the user's declared birthdate. Absence of this preference object in the response indicates that the user has not made a declaration.",
+      "properties": {
+        "isOverAge13": {
+          "type": "boolean",
+          "description": "Indicates if the user has declared that they are over 13 years of age."
+        },
+        "isOverAge16": {
+          "type": "boolean",
+          "description": "Indicates if the user has declared that they are over 16 years of age."
+        },
+        "isOverAge18": {
+          "type": "boolean",
+          "description": "Indicates if the user has declared that they are over 18 years of age."
         }
       }
     },
@@ -621,6 +640,8 @@
       "type": "object",
       "required": ["status", "record"],
       "properties": {
+        "uri": { "type": "string", "format": "at-uri" },
+        "cid": { "type": "string", "format": "cid" },
         "status": {
           "type": "string",
           "description": "The status for the account.",
@@ -640,6 +661,10 @@
         "isActive": {
           "type": "boolean",
           "description": "True if the status is not expired, false if it is expired. Only present if expiration was set."
+        },
+        "isDisabled": {
+          "type": "boolean",
+          "description": "True if the user's go-live access has been disabled by a moderator, false otherwise."
         }
       }
     }

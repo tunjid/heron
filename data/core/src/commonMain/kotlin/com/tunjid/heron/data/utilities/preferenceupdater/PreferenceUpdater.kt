@@ -21,18 +21,25 @@ import app.bsky.actor.ContentLabelPref
 import app.bsky.actor.ContentLabelPrefVisibility
 import app.bsky.actor.LabelerPrefItem
 import app.bsky.actor.LabelersPref
+import app.bsky.actor.PostInteractionSettingsPrefPostgateEmbeddingRuleUnion as BskyPostEmbedGateRule
+import app.bsky.actor.PostInteractionSettingsPrefThreadgateAllowRuleUnion as BskyPostReplyGateRule
 import app.bsky.actor.PreferencesUnion
 import app.bsky.actor.SavedFeed
 import app.bsky.actor.SavedFeedType
 import app.bsky.actor.SavedFeedsPrefV2
 import com.tunjid.heron.data.core.models.ContentLabelPreference
+import com.tunjid.heron.data.core.models.DeclaredAgePreference
 import com.tunjid.heron.data.core.models.HiddenPostPreference
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.LabelerPreference
 import com.tunjid.heron.data.core.models.MutedWordPreference
+import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
 import com.tunjid.heron.data.core.models.Preferences
+import com.tunjid.heron.data.core.models.ThreadViewPreference
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelinePreference
+import com.tunjid.heron.data.core.models.VerificationPreference
+import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.utilities.TidGenerator
@@ -68,6 +75,10 @@ internal class ThingPreferenceUpdater @Inject constructor(
             labelerPreferences = emptyList(),
             hiddenPostPreferences = emptyList(),
             mutedWordPreferences = emptyList(),
+            declaredAgePreferences = null,
+            threadViewPreferences = null,
+            postInteractionSettings = null,
+            verificationPreferences = null,
         ),
         operation = { foldedPreferences, preferencesUnion ->
             when (preferencesUnion) {
@@ -123,10 +134,58 @@ internal class ThingPreferenceUpdater @Inject constructor(
                     },
                 )
 
-                is PreferencesUnion.ThreadViewPref -> foldedPreferences
+                is PreferencesUnion.ThreadViewPref -> foldedPreferences.copy(
+                    threadViewPreferences = ThreadViewPreference(
+                        sort = preferencesUnion.value.sort?.value,
+                    ),
+                )
                 is PreferencesUnion.Unknown -> foldedPreferences
-                is PreferencesUnion.PostInteractionSettingsPref -> foldedPreferences
-                is PreferencesUnion.VerificationPrefs -> foldedPreferences
+                is PreferencesUnion.PostInteractionSettingsPref -> foldedPreferences.copy(
+                    postInteractionSettings = PostInteractionSettingsPreference(
+                        threadGateAllowed = preferencesUnion.value.threadgateAllowRules?.let { rules ->
+                            val grouped = rules.groupBy { it::class }
+                            PostInteractionSettingsPreference.AllowedReplies(
+                                allowsFollowing = BskyPostReplyGateRule.FollowingRule::class in grouped,
+                                allowsFollowers = BskyPostReplyGateRule.FollowerRule::class in grouped,
+                                allowsMentioned = BskyPostReplyGateRule.MentionRule::class in grouped,
+                                allowedLists = grouped[BskyPostReplyGateRule.ListRule::class]
+                                    .orEmpty()
+                                    .mapNotNull {
+                                        if (it is BskyPostReplyGateRule.ListRule) ListUri(it.value.list.atUri)
+                                        else null
+                                    },
+                            )
+                        },
+                        allowedEmbeds = preferencesUnion.value.postgateEmbeddingRules?.let {
+                            it.fold(
+                                initial = PostInteractionSettingsPreference.AllowedEmbeds(),
+                                operation = { allowed, value ->
+                                    when (value) {
+                                        is BskyPostEmbedGateRule.DisableRule ->
+                                            allowed.copy(none = true)
+                                        is BskyPostEmbedGateRule.Unknown ->
+                                            allowed
+                                    }
+                                },
+                            )
+                        },
+                    ),
+                )
+                is PreferencesUnion.VerificationPrefs -> foldedPreferences.copy(
+                    verificationPreferences = VerificationPreference(
+                        hideBadges = preferencesUnion.value.hideBadges ?: false,
+                    ),
+                )
+                is PreferencesUnion.DeclaredAgePref -> foldedPreferences.copy(
+                    declaredAgePreferences = DeclaredAgePreference(
+                        minAge = when {
+                            preferencesUnion.value.isOverAge18 == true -> 18
+                            preferencesUnion.value.isOverAge16 == true -> 16
+                            preferencesUnion.value.isOverAge13 == true -> 13
+                            else -> null
+                        },
+                    ),
+                )
             }
         },
     )
