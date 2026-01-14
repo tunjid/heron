@@ -185,10 +185,10 @@ class ActualProfileViewModel(
                         is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
                             writeQueue = writeQueue,
                         )
-                        is Action.BlockAccount -> action.flow.updateBlockAccountMutations(
+                        is Action.Block -> action.flow.blockAccountMutations(
                             writeQueue = writeQueue,
                         )
-                        is Action.UnblockAccount -> action.flow.updateUnblockAccountMutations(
+                        is Action.Mute -> action.flow.muteAccountMutations(
                             writeQueue = writeQueue,
                         )
                     }
@@ -375,29 +375,41 @@ private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
     )
 }
 
-private fun Flow<Action.BlockAccount>.updateBlockAccountMutations(
+private fun Flow<Action.Block>.blockAccountMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = mapToManyMutations { action ->
+): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
     writeQueue.enqueue(
         Writable.Restriction(
-            Profile.Restriction.Block.Add(
-                signedInProfileId = action.signedInProfileId,
-                profileId = action.profileId,
-            ),
+            when (action) {
+                is Action.Block.Add -> Profile.Restriction.Block.Add(
+                    signedInProfileId = action.signedInProfileId,
+                    profileId = action.profileId,
+                )
+                is Action.Block.Remove -> Profile.Restriction.Block.Remove(
+                    signedInProfileId = action.signedInProfileId,
+                    profileId = action.profileId,
+                    blockUri = action.blockUri,
+                )
+            },
         ),
     )
 }
 
-private fun Flow<Action.UnblockAccount>.updateUnblockAccountMutations(
+private fun Flow<Action.Mute>.muteAccountMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = mapToManyMutations { action ->
+): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
     writeQueue.enqueue(
         Writable.Restriction(
-            Profile.Restriction.Block.Remove(
-                signedInProfileId = action.signedInProfileId,
-                profileId = action.profileId,
-                blockUri = action.blockUri,
-            ),
+            when (action) {
+                is Action.Mute.Add -> Profile.Restriction.Mute.Add(
+                    signedInProfileId = action.signedInProfileId,
+                    profileId = action.profileId,
+                )
+                is Action.Mute.Remove -> Profile.Restriction.Mute.Remove(
+                    signedInProfileId = action.signedInProfileId,
+                    profileId = action.profileId,
+                )
+            },
         ),
     )
 }

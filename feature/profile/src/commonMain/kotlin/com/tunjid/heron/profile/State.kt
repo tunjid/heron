@@ -196,16 +196,34 @@ sealed class Action(val key: String) {
         val target: LinkTarget,
     ) : Action(key = "BioLinkClicked")
 
-    data class BlockAccount(
-        val signedInProfileId: ProfileId,
-        val profileId: ProfileId,
-    ) : Action(key = "BlockAccount")
+    sealed class Moderation(
+        key: String,
+    ) : Action(key)
 
-    data class UnblockAccount(
-        val signedInProfileId: ProfileId,
-        val profileId: ProfileId,
-        val blockUri: BlockUri,
-    ) : Action(key = "UnblockAccount")
+    sealed class Block : Moderation(key = "Block") {
+        data class Add(
+            val signedInProfileId: ProfileId,
+            val profileId: ProfileId,
+        ) : Block()
+
+        data class Remove(
+            val signedInProfileId: ProfileId,
+            val profileId: ProfileId,
+            val blockUri: BlockUri,
+        ) : Block()
+    }
+
+    sealed class Mute : Moderation(key = "Mute") {
+        data class Add(
+            val signedInProfileId: ProfileId,
+            val profileId: ProfileId,
+        ) : Mute()
+
+        data class Remove(
+            val signedInProfileId: ProfileId,
+            val profileId: ProfileId,
+        ) : Mute()
+    }
 
     data class UpdateMutedWord(
         val mutedWordPreference: List<MutedWordPreference>,

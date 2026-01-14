@@ -7,8 +7,8 @@ import com.tunjid.heron.ui.SimpleDialog
 import com.tunjid.heron.ui.SimpleDialogText
 import com.tunjid.heron.ui.SimpleDialogTitle
 import com.tunjid.heron.ui.text.CommonStrings
-import heron.ui.core.generated.resources.viewer_state_block
-import heron.ui.core.generated.resources.viewer_state_unblock
+import heron.ui.core.generated.resources.viewer_state_block_account
+import heron.ui.core.generated.resources.viewer_state_unblock_account
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.block_account_dialog_description
 import heron.ui.timeline.generated.resources.block_account_dialog_title
@@ -39,7 +39,7 @@ fun BlockAccountDialog(
         },
         confirmButton = {
             DestructiveDialogButton(
-                text = stringResource(CommonStrings.viewer_state_block),
+                text = stringResource(CommonStrings.viewer_state_block_account),
                 onClick = onConfirm,
             )
         },
@@ -74,7 +74,7 @@ fun UnblockAccountDialog(
         },
         confirmButton = {
             DestructiveDialogButton(
-                text = stringResource(CommonStrings.viewer_state_unblock),
+                text = stringResource(CommonStrings.viewer_state_unblock_account),
                 onClick = onConfirm,
             )
         },
