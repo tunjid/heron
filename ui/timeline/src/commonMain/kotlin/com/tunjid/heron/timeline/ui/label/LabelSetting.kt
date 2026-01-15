@@ -35,6 +35,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Label
+import com.tunjid.heron.ui.rememberLatchedState
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -50,6 +51,7 @@ fun LabelSetting(
     visibilityStringResource: (Label.Visibility) -> StringResource,
     onVisibilityChanged: (Label.Visibility) -> Unit,
 ) {
+    val latchedVisibilityState = rememberLatchedState(selectedVisibility)
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -74,8 +76,9 @@ fun LabelSetting(
             visibilities.forEachIndexed { index, visibility ->
                 ToggleButton(
                     enabled = enabled,
-                    checked = selectedVisibility == visibility,
+                    checked = latchedVisibilityState.value == visibility,
                     onCheckedChange = { isChecked ->
+                        latchedVisibilityState.latch(visibility)
                         if (isChecked) onVisibilityChanged(visibility)
                         // Do nothing, cannot uncheck a label setting
                         else Unit
