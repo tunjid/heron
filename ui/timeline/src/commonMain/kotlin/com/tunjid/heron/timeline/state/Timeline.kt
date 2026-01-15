@@ -35,7 +35,9 @@ import com.tunjid.mutator.coroutines.mapLatestToMutation
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.tiler.TiledList
+import com.tunjid.tiler.buildTiledList
 import com.tunjid.tiler.distinctBy
+import com.tunjid.tiler.emptyTiledList
 import com.tunjid.tiler.filter
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
@@ -70,66 +72,73 @@ fun CoroutineScope.timelineStateHolder(
     refreshOnStart: Boolean,
     timeline: Timeline,
     startNumColumns: Int,
+    initialItems: List<TimelineItem> = emptyList(),
     timelineRepository: TimelineRepository,
-): TimelineStateHolder = actionStateFlowMutator(
-    initialState = TimelineState(
+): TimelineStateHolder {
+    val initialQuery = TimelineQuery(
         timeline = timeline,
-        hasUpdates = false,
-        tilingData = TilingState.Data(
-            numColumns = startNumColumns,
-            currentQuery = TimelineQuery(
-                timeline = timeline,
-                data = CursorQuery.Data(
-                    page = 0,
-                    cursorAnchor = when (timeline) {
-                        is Timeline.Home,
-                        is Timeline.StarterPack,
-                        ->
-                            timeline.lastRefreshed
-                                .takeUnless { refreshOnStart }
-                                ?: Clock.System.now()
+        data = CursorQuery.Data(
+            page = 0,
+            cursorAnchor = when (timeline) {
+                is Timeline.Home,
+                is Timeline.StarterPack,
+                ->
+                    timeline.lastRefreshed
+                        .takeUnless { refreshOnStart }
+                        ?: Clock.System.now()
 
-                        is Timeline.Profile -> Clock.System.now()
-                    },
-                ),
+                is Timeline.Profile -> Clock.System.now()
+            },
+        ),
+    )
+    return actionStateFlowMutator(
+        initialState = TimelineState(
+            timeline = timeline,
+            hasUpdates = false,
+            tilingData = TilingState.Data(
+                items =
+                if (initialItems.isEmpty()) emptyTiledList()
+                else buildTiledList { addAll(initialQuery, initialItems) },
+                numColumns = startNumColumns,
+                currentQuery = initialQuery,
             ),
         ),
-    ),
-    inputs = listOf(
-        hasUpdatesMutations(
-            timeline = timeline,
-            timelineRepository = timelineRepository,
+        inputs = listOf(
+            hasUpdatesMutations(
+                timeline = timeline,
+                timelineRepository = timelineRepository,
+            ),
+            timelineUpdateMutations(
+                timeline = timeline,
+                timelineRepository = timelineRepository,
+            ),
         ),
-        timelineUpdateMutations(
-            timeline = timeline,
-            timelineRepository = timelineRepository,
-        ),
-    ),
-    actionTransform = transform@{ actions ->
-        actions.toMutationStream(keySelector = TimelineState.Action::key) {
-            when (val action = type()) {
-                is TimelineState.Action.Tile ->
-                    action.flow
-                        .map { it.tilingAction }
-                        .tilingMutations(
-                            // This is determined by State.hasUpdates
-                            isRefreshedOnNewItems = false,
-                            currentState = { this@transform.state() },
-                            updateQueryData = TimelineQuery::updateData,
-                            refreshQuery = TimelineQuery::refresh,
-                            cursorListLoader = timelineRepository::timelineItems,
-                            onNewItems = TiledList<TimelineQuery, TimelineItem>::filterThreadDuplicates,
-                            onTilingDataUpdated = { copy(tilingData = it) },
-                        )
+        actionTransform = transform@{ actions ->
+            actions.toMutationStream(keySelector = TimelineState.Action::key) {
+                when (val action = type()) {
+                    is TimelineState.Action.Tile ->
+                        action.flow
+                            .map { it.tilingAction }
+                            .tilingMutations(
+                                // This is determined by State.hasUpdates
+                                isRefreshedOnNewItems = false,
+                                currentState = { this@transform.state() },
+                                updateQueryData = TimelineQuery::updateData,
+                                refreshQuery = TimelineQuery::refresh,
+                                cursorListLoader = timelineRepository::timelineItems,
+                                onNewItems = TiledList<TimelineQuery, TimelineItem>::filterThreadDuplicates,
+                                onTilingDataUpdated = { copy(tilingData = it) },
+                            )
 
-                is TimelineState.Action.UpdatePreferredPresentation -> action.flow.updatePreferredPresentationMutations(
-                    timelineRepository = timelineRepository,
-                )
-                is TimelineState.Action.DismissRefresh -> action.flow.dismissRefreshMutations()
+                    is TimelineState.Action.UpdatePreferredPresentation -> action.flow.updatePreferredPresentationMutations(
+                        timelineRepository = timelineRepository,
+                    )
+                    is TimelineState.Action.DismissRefresh -> action.flow.dismissRefreshMutations()
+                }
             }
-        }
-    },
-)
+        },
+    )
+}
 
 private fun hasUpdatesMutations(
     timeline: Timeline,
@@ -214,6 +223,7 @@ private fun TiledList<TimelineQuery, TimelineItem>.filterThreadDuplicates(): Til
             }
 
             is TimelineItem.Single -> !threadRootIds.contains(item.post.cid)
+            is TimelineItem.Loading -> false
         }
     }
         .distinctBy(TimelineItem::id)

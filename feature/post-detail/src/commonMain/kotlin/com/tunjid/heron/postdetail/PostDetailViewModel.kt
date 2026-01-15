@@ -157,6 +157,7 @@ fun postThreadsMutations(
                             is TimelineItem.Thread -> item.posts.firstOrNull {
                                 it.uri.recordKey == route.postRecordKey
                             }
+                            is TimelineItem.Loading -> null
                         }
                     },
                 )
