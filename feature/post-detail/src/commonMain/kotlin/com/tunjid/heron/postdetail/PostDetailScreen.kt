@@ -30,7 +30,6 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -40,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.composables.lazy.rememberLazyScrollableState
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Post.Create.Reply
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
@@ -72,7 +72,7 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
-import com.tunjid.heron.timeline.utilities.BlockAccountDialog
+import com.tunjid.heron.timeline.utilities.ModerationDialogState.Companion.rememberModerationDialogState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.pendingOffsetFor
@@ -137,10 +137,27 @@ internal fun PostDetailScreen(
         },
         onShown = {},
     )
-    var pendingModeration by remember {
-        mutableStateOf<PostOption.Moderation?>(null)
-    }
-    var showBlockDialog by remember { mutableStateOf(false) }
+    val moderationDialogState = rememberModerationDialogState(
+        onApproved = { moderation ->
+            when (moderation) {
+                is PostAction.Moderation.OfBlockAccount ->
+                    actions(
+                        Action.BlockAccount(
+                            signedInProfileId = moderation.signedInProfileId,
+                            profileId = moderation.targetProfileId,
+                        ),
+                    )
+
+                is PostAction.Moderation.OfMuteAccount ->
+                    actions(
+                        Action.MuteAccount(
+                            signedInProfileId = moderation.signedInProfileId,
+                            profileId = moderation.targetProfileId,
+                        ),
+                    )
+            }
+        },
+    )
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = state.signedInProfileId,
         recentConversations = state.recentConversations,
@@ -161,39 +178,23 @@ internal fun PostDetailScreen(
                     items.firstOrNull { it.post.uri == option.postUri }
                         ?.let(threadGateSheetState::show)
                 is PostOption.Moderation.BlockAccount -> {
-                    pendingModeration = option
-                    showBlockDialog = true
+                    moderationDialogState.show(
+                        PostAction.Moderation.OfBlockAccount(
+                            signedInProfileId = option.signedInProfileId,
+                            targetProfileId = option.post.author.did,
+                        ),
+                    )
                 }
                 is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
                 is PostOption.Moderation.MuteAccount -> {
-                    actions(
-                        Action.MuteAccount(
+                    moderationDialogState.show(
+                        PostAction.Moderation.OfMuteAccount(
                             signedInProfileId = option.signedInProfileId,
-                            profileId = option.post.author.did,
+                            targetProfileId = option.post.author.did,
                         ),
                     )
                 }
             }
-        },
-    )
-    val resetBlockDialogState = {
-        showBlockDialog = false
-        pendingModeration = null
-    }
-    BlockAccountDialog(
-        showBlockAccountDialog = showBlockDialog,
-        onDismiss = resetBlockDialogState,
-        onConfirm = {
-            val moderation = pendingModeration
-            if (moderation is PostOption.Moderation.BlockAccount) {
-                actions(
-                    Action.BlockAccount(
-                        signedInProfileId = moderation.signedInProfileId,
-                        profileId = moderation.post.author.did,
-                    ),
-                )
-            }
-            resetBlockDialogState()
         },
     )
 
@@ -299,7 +300,7 @@ internal fun PostDetailScreen(
                                     navigateTo(
                                         if (paneScaffoldState.isSignedOut) signInDestination()
                                         else composePostDestination(
-                                            type = Post.Create.Reply(
+                                            type = Reply(
                                                 parent = action.post,
                                             ),
                                             sharedElementPrefix = state.sharedElementPrefix,
@@ -348,6 +349,8 @@ internal fun PostDetailScreen(
                                 is PostAction.OfMore -> {
                                     postOptionsSheetState.showOptions(action.post)
                                 }
+                                is PostAction.Moderation.OfBlockAccount -> Unit
+                                is PostAction.Moderation.OfMuteAccount -> Unit
                             }
                         }
                     },

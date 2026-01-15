@@ -64,6 +64,14 @@
     <string name="viewer_state_mute_account">Mute account</string>
     <string name="viewer_state_unmute_account">Unmute account</string>
     <string name="viewer_state_muted">Muted</string>
+    <string name="block_account_dialog_title">Block Account?</string>
+    <string name="block_account_dialog_description">Are you sure you want to block this account?</string>
+    <string name="unblock_account_dialog_title">Unblock Account?</string>
+    <string name="unblock_account_dialog_description">Are you sure you want to unblock this account?</string>
+    <string name="mute_account_dialog_title">Mute Account?</string>
+    <string name="mute_account_dialog_description">Are you sure you want to mute this account?</string>
+    <string name="unmute_account_dialog_title">Unmute Account?</string>
+    <string name="unmute_account_dialog_description">Are you sure you want to unmute this account?</string>
     <string name="viewer_state_block_account">Block account</string>
     <string name="viewer_state_unblock_account">Unblock account</string>
     <string name="viewer_state_blocked">Blocked</string>

@@ -99,7 +99,7 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
-import com.tunjid.heron.timeline.utilities.BlockAccountDialog
+import com.tunjid.heron.timeline.utilities.ModerationDialogState.Companion.rememberModerationDialogState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
@@ -421,10 +421,27 @@ private fun ListTimeline(
         },
         onShown = {},
     )
-    var pendingModeration by remember {
-        mutableStateOf<PostOption.Moderation?>(null)
-    }
-    var showBlockDialog by remember { mutableStateOf(false) }
+    val moderationDialogState = rememberModerationDialogState(
+        onApproved = { moderation ->
+            when (moderation) {
+                is PostAction.Moderation.OfBlockAccount ->
+                    actions(
+                        Action.BlockAccount(
+                            signedInProfileId = moderation.signedInProfileId,
+                            profileId = moderation.targetProfileId,
+                        ),
+                    )
+
+                is PostAction.Moderation.OfMuteAccount ->
+                    actions(
+                        Action.MuteAccount(
+                            signedInProfileId = moderation.signedInProfileId,
+                            profileId = moderation.targetProfileId,
+                        ),
+                    )
+            }
+        },
+    )
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
@@ -447,39 +464,23 @@ private fun ListTimeline(
                     items.firstOrNull { it.post.uri == option.postUri }
                         ?.let(threadGateSheetState::show)
                 is PostOption.Moderation.BlockAccount -> {
-                    pendingModeration = option
-                    showBlockDialog = true
+                    moderationDialogState.show(
+                        PostAction.Moderation.OfBlockAccount(
+                            signedInProfileId = option.signedInProfileId,
+                            targetProfileId = option.post.author.did,
+                        ),
+                    )
                 }
                 is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
                 is PostOption.Moderation.MuteAccount -> {
-                    actions(
-                        Action.MuteAccount(
+                    moderationDialogState.show(
+                        PostAction.Moderation.OfMuteAccount(
                             signedInProfileId = option.signedInProfileId,
-                            profileId = option.post.author.did,
+                            targetProfileId = option.post.author.did,
                         ),
                     )
                 }
             }
-        },
-    )
-    val resetBlockDialogState = {
-        showBlockDialog = false
-        pendingModeration = null
-    }
-    BlockAccountDialog(
-        showBlockAccountDialog = showBlockDialog,
-        onDismiss = resetBlockDialogState,
-        onConfirm = {
-            val moderation = pendingModeration
-            if (moderation is PostOption.Moderation.BlockAccount) {
-                actions(
-                    Action.BlockAccount(
-                        signedInProfileId = moderation.signedInProfileId,
-                        profileId = moderation.post.author.did,
-                    ),
-                )
-            }
-            resetBlockDialogState()
         },
     )
 

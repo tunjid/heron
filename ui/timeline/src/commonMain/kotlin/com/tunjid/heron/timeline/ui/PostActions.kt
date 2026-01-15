@@ -23,6 +23,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.timeline.ui.post.PostMetadata
 
 sealed interface PostAction {
@@ -71,6 +72,21 @@ sealed interface PostAction {
     data class OfMore(
         val post: Post,
     ) : Options
+
+    sealed interface Moderation : PostAction {
+        val signedInProfileId: ProfileId
+        val targetProfileId: ProfileId
+
+        data class OfBlockAccount(
+            override val signedInProfileId: ProfileId,
+            override val targetProfileId: ProfileId,
+        ) : Moderation
+
+        data class OfMuteAccount(
+            override val signedInProfileId: ProfileId,
+            override val targetProfileId: ProfileId,
+        ) : Moderation
+    }
 }
 
 @Stable

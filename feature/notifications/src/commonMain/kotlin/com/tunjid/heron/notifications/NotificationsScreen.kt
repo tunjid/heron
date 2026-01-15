@@ -78,7 +78,7 @@ import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.re
 import com.tunjid.heron.timeline.ui.post.PostOption
 import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
-import com.tunjid.heron.timeline.utilities.BlockAccountDialog
+import com.tunjid.heron.timeline.utilities.ModerationDialogState.Companion.rememberModerationDialogState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
@@ -121,10 +121,27 @@ internal fun NotificationsScreen(
         },
         onShown = {},
     )
-    var pendingModeration by remember {
-        mutableStateOf<PostOption.Moderation?>(null)
-    }
-    var showBlockDialog by remember { mutableStateOf(false) }
+    val moderationDialogState = rememberModerationDialogState(
+        onApproved = { moderation ->
+            when (moderation) {
+                is PostAction.Moderation.OfBlockAccount ->
+                    actions(
+                        Action.BlockAccount(
+                            signedInProfileId = moderation.signedInProfileId,
+                            profileId = moderation.targetProfileId,
+                        ),
+                    )
+
+                is PostAction.Moderation.OfMuteAccount ->
+                    actions(
+                        Action.MuteAccount(
+                            signedInProfileId = moderation.signedInProfileId,
+                            profileId = moderation.targetProfileId,
+                        ),
+                    )
+            }
+        },
+    )
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = state.signedInProfile?.did,
         recentConversations = state.recentConversations,
@@ -146,39 +163,23 @@ internal fun NotificationsScreen(
                 // Notifications UI does not present thread gate options
                 is PostOption.ThreadGate -> Unit
                 is PostOption.Moderation.BlockAccount -> {
-                    pendingModeration = option
-                    showBlockDialog = true
+                    moderationDialogState.show(
+                        PostAction.Moderation.OfBlockAccount(
+                            signedInProfileId = option.signedInProfileId,
+                            targetProfileId = option.post.author.did,
+                        ),
+                    )
                 }
                 is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
                 is PostOption.Moderation.MuteAccount -> {
-                    actions(
-                        Action.MuteAccount(
+                    moderationDialogState.show(
+                        PostAction.Moderation.OfMuteAccount(
                             signedInProfileId = option.signedInProfileId,
-                            profileId = option.post.author.did,
+                            targetProfileId = option.post.author.did,
                         ),
                     )
                 }
             }
-        },
-    )
-    val resetBlockDialogState = {
-        showBlockDialog = false
-        pendingModeration = null
-    }
-    BlockAccountDialog(
-        showBlockAccountDialog = showBlockDialog,
-        onDismiss = resetBlockDialogState,
-        onConfirm = {
-            val moderation = pendingModeration
-            if (moderation is PostOption.Moderation.BlockAccount) {
-                actions(
-                    Action.BlockAccount(
-                        signedInProfileId = moderation.signedInProfileId,
-                        profileId = moderation.post.author.did,
-                    ),
-                )
-            }
-            resetBlockDialogState()
         },
     )
 
