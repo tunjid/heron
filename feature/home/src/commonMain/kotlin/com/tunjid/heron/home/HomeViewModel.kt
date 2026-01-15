@@ -19,6 +19,7 @@ package com.tunjid.heron.home
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
@@ -176,6 +177,7 @@ private fun timelineMutations(
                     .firstOrNull { it.state.value.timeline.sourceId == timeline.sourceId }
                     ?.mutator
                     ?: scope.timelineStateHolder(
+                        initialItems = TimelineItem.LoadingItems,
                         refreshOnStart = preferences.local.refreshHomeTimelineOnLaunch,
                         timeline = timeline,
                         startNumColumns = 1,
