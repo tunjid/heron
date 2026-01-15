@@ -110,7 +110,6 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
-import com.tunjid.heron.profile.Action.Navigate.To
 import com.tunjid.heron.profile.ui.LabelerSettings
 import com.tunjid.heron.profile.ui.LabelerState
 import com.tunjid.heron.profile.ui.ProfileActionsMenu
@@ -153,9 +152,9 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
+import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
-import com.tunjid.heron.timeline.utilities.ModerationDialogState.Companion.rememberModerationDialogState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
@@ -1187,21 +1186,22 @@ private fun ProfileTimeline(
         },
         onShown = {},
     )
-    val moderationDialogState = rememberModerationDialogState(
-        onApproved = { moderation ->
-            when (moderation) {
-                is PostAction.Moderation.OfBlockAccount ->
+    val profileRestrictionDialogState = rememberProfileRestrictionDialogState(
+        onProfileRestricted = { profileRestriction ->
+            when (profileRestriction) {
+                is PostOption.Moderation.BlockAccount ->
                     actions(
                         Action.Block.Add(
-                            signedInProfileId = moderation.signedInProfileId,
-                            profileId = moderation.targetProfileId,
+                            signedInProfileId = profileRestriction.signedInProfileId,
+                            profileId = profileRestriction.post.author.did,
                         ),
                     )
-                is PostAction.Moderation.OfMuteAccount ->
+
+                is PostOption.Moderation.MuteAccount ->
                     actions(
                         Action.Mute.Add(
-                            signedInProfileId = moderation.signedInProfileId,
-                            profileId = moderation.targetProfileId,
+                            signedInProfileId = profileRestriction.signedInProfileId,
+                            profileId = profileRestriction.post.author.did,
                         ),
                     )
             }
@@ -1214,7 +1214,7 @@ private fun ProfileTimeline(
             when (option) {
                 is PostOption.ShareInConversation ->
                     actions(
-                        To(
+                        Action.Navigate.To(
                             conversationDestination(
                                 id = option.conversation.id,
                                 members = option.conversation.members,
@@ -1229,23 +1229,13 @@ private fun ProfileTimeline(
                     items.firstOrNull { it.post.uri == option.postUri }
                         ?.let(threadGateSheetState::show)
 
-                is PostOption.Moderation.BlockAccount -> {
-                    moderationDialogState.show(
-                        PostAction.Moderation.OfBlockAccount(
-                            signedInProfileId = option.signedInProfileId,
-                            targetProfileId = option.post.author.did,
-                        ),
-                    )
-                }
+                is PostOption.Moderation.BlockAccount ->
+                    profileRestrictionDialogState.show(option)
+
+                is PostOption.Moderation.MuteAccount ->
+                    profileRestrictionDialogState.show(option)
+
                 is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
-                is PostOption.Moderation.MuteAccount -> {
-                    moderationDialogState.show(
-                        PostAction.Moderation.OfMuteAccount(
-                            signedInProfileId = option.signedInProfileId,
-                            targetProfileId = option.post.author.did,
-                        ),
-                    )
-                }
             }
         },
     )

@@ -166,15 +166,19 @@ sealed class PostOption {
 
         data object MuteWords : Moderation()
 
+        sealed interface ProfileRestriction
+
         data class BlockAccount(
             val signedInProfileId: ProfileId,
             val post: Post,
-        ) : Moderation()
+        ) : Moderation(),
+            ProfileRestriction
 
         data class MuteAccount(
             val signedInProfileId: ProfileId,
             val post: Post,
-        ) : Moderation()
+        ) : Moderation(),
+            ProfileRestriction
     }
 }
 

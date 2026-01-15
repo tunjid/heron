@@ -65,7 +65,6 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.tunjid.heron.conversation.Action.Navigate.To
 import com.tunjid.heron.conversation.ui.EmojiPickerBottomSheet
 import com.tunjid.heron.conversation.ui.EmojiPickerSheetState.Companion.rememberEmojiPickerState
 import com.tunjid.heron.data.core.models.LinkTarget
@@ -477,7 +476,7 @@ private fun MessageRecord(
                     is PostAction.OfLinkTarget -> {
                         val linkTarget = action.linkTarget
                         if (linkTarget is LinkTarget.Navigable) actions(
-                            To(
+                            Action.Navigate.To(
                                 pathDestination(
                                     path = linkTarget.path,
                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
@@ -487,7 +486,7 @@ private fun MessageRecord(
                     }
 
                     is PostAction.OfPost -> actions(
-                        To(
+                        Action.Navigate.To(
                             recordDestination(
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                 sharedElementPrefix = item.id,
@@ -497,7 +496,7 @@ private fun MessageRecord(
                     )
 
                     is PostAction.OfProfile -> actions(
-                        To(
+                        Action.Navigate.To(
                             profileDestination(
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                 profile = action.profile,
@@ -512,7 +511,7 @@ private fun MessageRecord(
                     )
 
                     is PostAction.OfRecord -> actions(
-                        To(
+                        Action.Navigate.To(
                             recordDestination(
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                 sharedElementPrefix = item.id.withQuotingPostUriPrefix(
@@ -524,7 +523,7 @@ private fun MessageRecord(
                     )
 
                     is PostAction.OfMedia -> actions(
-                        To(
+                        Action.Navigate.To(
                             galleryDestination(
                                 post = action.post,
                                 media = action.media,
@@ -539,7 +538,6 @@ private fun MessageRecord(
                         Action.SendPostInteraction(action.interaction),
                     )
                     is PostAction.Options -> Unit
-                    is PostAction.Moderation -> Unit
                 }
             }
         },
