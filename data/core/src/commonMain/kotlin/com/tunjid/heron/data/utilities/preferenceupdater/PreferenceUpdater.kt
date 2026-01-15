@@ -422,12 +422,9 @@ internal class ThingPreferenceUpdater @Inject constructor(
                 if (it.allowsMentioned) add(
                     BskyPostReplyGateRule.MentionRule(ThreadgateMentionRule),
                 )
-                preference.threadGateAllowed
-                    ?.allowedLists
-                    ?.map {
-                        BskyPostReplyGateRule.ListRule(ThreadgateListRule(it.uri.let(::AtUri)))
-                    }
-                    ?.let(::addAll)
+                it.allowedLists
+                    .map { BskyPostReplyGateRule.ListRule(ThreadgateListRule(it.uri.let(::AtUri))) }
+                    .let(::addAll)
             }
         }
         return listOf(

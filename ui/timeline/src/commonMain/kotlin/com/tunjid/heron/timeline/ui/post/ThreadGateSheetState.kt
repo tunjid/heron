@@ -52,6 +52,9 @@ import androidx.compose.ui.unit.sp
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
+import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference.Companion.followersAllowed
+import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference.Companion.followingAllowed
+import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference.Companion.mentionsAllowed
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.allowsFollowers
 import com.tunjid.heron.data.core.models.allowsFollowing
@@ -133,9 +136,9 @@ sealed class ThreadGateSheetState private constructor(
         ) {
             this.mode = Mode.Preferences(preference)
             this.allowed = Mode.Allowed(
-                allowsFollowing = preference?.threadGateAllowed?.allowsFollowing ?: true,
-                allowsFollowers = preference?.threadGateAllowed?.allowsFollowers ?: true,
-                allowsMentioned = preference?.threadGateAllowed?.allowsMentioned ?: true,
+                allowsFollowing = preference?.threadGateAllowed.followingAllowed,
+                allowsFollowers = preference?.threadGateAllowed.followersAllowed,
+                allowsMentioned = preference?.threadGateAllowed.mentionsAllowed,
                 allowedLists = preference?.threadGateAllowed?.allowedLists.orEmpty(),
             )
 

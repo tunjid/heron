@@ -193,17 +193,14 @@ data class PostInteractionSettingsPreference(
     )
 
     companion object {
-        val AllowedReplies?.allowsFollowing
+        val AllowedReplies?.followingAllowed
             get() = this == null || allowsFollowing
 
-        val AllowedReplies?.allowsFollowers
+        val AllowedReplies?.followersAllowed
             get() = this == null || allowsFollowers
 
-        val AllowedReplies?.allowsMentioned
+        val AllowedReplies?.mentionsAllowed
             get() = this == null || allowsMentioned
-
-        val AllowedReplies?.allowsLists
-            get() = this != null && allowedLists.isNotEmpty()
     }
 }
 
