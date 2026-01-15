@@ -115,6 +115,7 @@ import com.tunjid.heron.profile.ui.LabelerState
 import com.tunjid.heron.profile.ui.ProfileActionsMenu
 import com.tunjid.heron.profile.ui.ProfileCollectionSharedElementPrefix
 import com.tunjid.heron.profile.ui.ProfileLabels
+import com.tunjid.heron.profile.ui.ProfileRestrictionsDialogState.Companion.rememberProfileRestrictionsDialogState
 import com.tunjid.heron.profile.ui.RecordList
 import com.tunjid.heron.profile.ui.profileActionMenuItems
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -151,10 +152,9 @@ import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionSt
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
+import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
-import com.tunjid.heron.timeline.utilities.BlockAccountDialog
-import com.tunjid.heron.timeline.utilities.UnblockAccountDialog
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
@@ -835,6 +835,9 @@ private fun ProfileHeadline(
     onToggleLabelerSubscription: (ProfileId, Boolean) -> Unit,
     onModerationAction: (Action.Moderation) -> Unit,
 ) {
+    val profileRestrictionsDialogState = rememberProfileRestrictionsDialogState(
+        onApproved = onModerationAction,
+    )
     AttributionLayout(
         modifier = modifier,
         avatar = null,
@@ -873,21 +876,9 @@ private fun ProfileHeadline(
                     }
 
                     blockUri != null && !isSignedInProfile && signedInProfileId != null -> {
-                        var showUnblockDialog by remember { mutableStateOf(false) }
                         FilledTonalButton(
-                            onClick = { showUnblockDialog = true },
-                            colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer,
-                            ),
-                        ) {
-                            Text(stringResource(CommonStrings.viewer_state_unblock_account))
-                        }
-                        UnblockAccountDialog(
-                            showUnblockAccountDialog = showUnblockDialog,
-                            onDismiss = { showUnblockDialog = false },
-                            onConfirm = {
-                                showUnblockDialog = false
-                                onModerationAction(
+                            onClick = {
+                                profileRestrictionsDialogState.show(
                                     Action.Block.Remove(
                                         signedInProfileId = signedInProfileId,
                                         profileId = profile.did,
@@ -895,7 +886,12 @@ private fun ProfileHeadline(
                                     ),
                                 )
                             },
-                        )
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                            ),
+                        ) {
+                            Text(stringResource(CommonStrings.viewer_state_unblock_account))
+                        }
                     }
                     else -> {
                         Row(
@@ -911,43 +907,32 @@ private fun ProfileHeadline(
                                 },
                             )
                             if (!isSignedInProfile && signedInProfileId != null) {
-                                var showBlockDialog by remember { mutableStateOf(false) }
                                 ProfileActionsMenu(
                                     items = viewerState.profileActionMenuItems(),
                                     onItemClicked = { item ->
                                         when (item.title) {
                                             CommonStrings.viewer_state_block_account ->
-                                                showBlockDialog = true
+                                                profileRestrictionsDialogState.show(
+                                                    Action.Block.Add(
+                                                        signedInProfileId = signedInProfileId,
+                                                        profileId = profile.did,
+                                                    ),
+                                                )
                                             CommonStrings.viewer_state_mute_account ->
-                                                onModerationAction(
+                                                profileRestrictionsDialogState.show(
                                                     Action.Mute.Add(
                                                         signedInProfileId = signedInProfileId,
                                                         profileId = profile.did,
                                                     ),
                                                 )
                                             CommonStrings.viewer_state_unmute_account ->
-                                                onModerationAction(
+                                                profileRestrictionsDialogState.show(
                                                     Action.Mute.Remove(
                                                         signedInProfileId = signedInProfileId,
                                                         profileId = profile.did,
                                                     ),
                                                 )
                                         }
-                                    },
-                                )
-                                BlockAccountDialog(
-                                    showBlockAccountDialog = showBlockDialog,
-                                    onDismiss = {
-                                        showBlockDialog = false
-                                    },
-                                    onConfirm = {
-                                        showBlockDialog = false
-                                        onModerationAction(
-                                            Action.Block.Add(
-                                                signedInProfileId = signedInProfileId,
-                                                profileId = profile.did,
-                                            ),
-                                        )
                                     },
                                 )
                             }
@@ -1201,6 +1186,27 @@ private fun ProfileTimeline(
         },
         onShown = {},
     )
+    val profileRestrictionDialogState = rememberProfileRestrictionDialogState(
+        onProfileRestricted = { profileRestriction ->
+            when (profileRestriction) {
+                is PostOption.Moderation.BlockAccount ->
+                    actions(
+                        Action.Block.Add(
+                            signedInProfileId = profileRestriction.signedInProfileId,
+                            profileId = profileRestriction.post.author.did,
+                        ),
+                    )
+
+                is PostOption.Moderation.MuteAccount ->
+                    actions(
+                        Action.Mute.Add(
+                            signedInProfileId = profileRestriction.signedInProfileId,
+                            profileId = profileRestriction.post.author.did,
+                        ),
+                    )
+            }
+        },
+    )
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
@@ -1223,7 +1229,12 @@ private fun ProfileTimeline(
                     items.firstOrNull { it.post.uri == option.postUri }
                         ?.let(threadGateSheetState::show)
 
-                is PostOption.Moderation.BlockUser -> Unit
+                is PostOption.Moderation.BlockAccount ->
+                    profileRestrictionDialogState.show(option)
+
+                is PostOption.Moderation.MuteAccount ->
+                    profileRestrictionDialogState.show(option)
+
                 is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
             }
         },

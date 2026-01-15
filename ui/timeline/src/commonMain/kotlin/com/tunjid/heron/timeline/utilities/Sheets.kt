@@ -31,10 +31,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Article
-import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -52,15 +52,17 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Conversation
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.timeline.ui.post.PostModerationTools
+import com.tunjid.heron.timeline.ui.post.PostOption
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.asClipEntry
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.copy_link_to_clipboard
-import heron.ui.timeline.generated.resources.mute_words_tags
 import heron.ui.timeline.generated.resources.send_via_direct_message
 import heron.ui.timeline.generated.resources.share_in_post
 import kotlinx.coroutines.launch
@@ -164,21 +166,47 @@ internal fun CopyToClipboardCard(
 }
 
 @Composable
-internal fun ModerationMenuSection(
+internal fun PostModerationMenuSection(
     modifier: Modifier = Modifier,
-    onMuteWordsClicked: () -> Unit,
+    signedInProfileId: ProfileId,
+    post: Post,
+    onOptionClicked: (PostOption) -> Unit,
 ) {
-    ModerationMenuCard(
-        modifier = modifier,
-    ) {
-        BottomSheetItemCardRow(
-            modifier = Modifier
-                .clickable {
-                    onMuteWordsClicked()
-                },
-            text = stringResource(Res.string.mute_words_tags),
-            icon = Icons.Default.FilterAlt,
-        )
+    ModerationMenuCard(modifier) {
+        PostModerationTools.entries.forEachIndexed { index, tool ->
+            val isLast = index == PostModerationTools.entries.lastIndex
+
+            BottomSheetItemCardRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        val option = when (tool) {
+                            PostModerationTools.MuteWords -> PostOption.Moderation.MuteWords
+                            PostModerationTools.BlockAccount -> PostOption.Moderation.BlockAccount(
+                                signedInProfileId = signedInProfileId,
+                                post = post,
+                            )
+                            PostModerationTools.MuteAccount -> PostOption.Moderation.MuteAccount(
+                                signedInProfileId = signedInProfileId,
+                                post = post,
+                            )
+                        }
+                        onOptionClicked(option)
+                    }
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                icon = tool.icon,
+                text = stringResource(tool.stringRes),
+                isModerationItem = true,
+            )
+            if (!isLast) {
+                HorizontalDivider(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 0.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f),
+                )
+            }
+        }
     }
 }
 
@@ -189,6 +217,7 @@ internal fun ModerationMenuCard(
 ) {
     BottomSheetItemCard(
         modifier = modifier,
+        isModerationMenu = true,
         onClick = null, // Card itself is not clickable, only items inside
     ) {
         Column(
@@ -203,6 +232,7 @@ internal fun ModerationMenuCard(
 @Composable
 internal fun BottomSheetItemCard(
     modifier: Modifier = Modifier,
+    isModerationMenu: Boolean = false,
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -214,7 +244,10 @@ internal fun BottomSheetItemCard(
         colors = CardDefaults.elevatedCardColors(containerColor = cardColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
     ) {
-        BottomSheetItemCardColumn(content)
+        BottomSheetItemCardColumn(
+            content = content,
+            isModerationMenu = isModerationMenu,
+        )
     }
     else ElevatedCard(
         modifier = modifier.fillMaxWidth(),
@@ -223,20 +256,24 @@ internal fun BottomSheetItemCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         onClick = onClick,
     ) {
-        BottomSheetItemCardColumn(content)
+        BottomSheetItemCardColumn(
+            content = content,
+            isModerationMenu = isModerationMenu,
+        )
     }
 }
 
 @Composable
 internal inline fun BottomSheetItemCardRow(
     modifier: Modifier = Modifier,
+    isModerationItem: Boolean = false,
     icon: ImageVector,
     text: String,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = if (isModerationItem) 0.dp else 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -254,13 +291,14 @@ internal inline fun BottomSheetItemCardRow(
 
 @Composable
 private inline fun BottomSheetItemCardColumn(
+    isModerationMenu: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(
-                horizontal = 16.dp,
+                horizontal = if (isModerationMenu) 0.dp else 16.dp,
                 vertical = 8.dp,
             ),
     ) {
