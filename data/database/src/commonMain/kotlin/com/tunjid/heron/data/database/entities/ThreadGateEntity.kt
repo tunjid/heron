@@ -22,9 +22,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.Junction
 import androidx.room.Relation
-import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.ThreadGate
-import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ThreadGateId
 import com.tunjid.heron.data.core.types.ThreadGateUri
@@ -97,15 +95,8 @@ fun PopulatedThreadGateEntity.asExternalModel() = ThreadGate(
             allowsFollowing = allowed.allowsFollowing,
             allowsFollowers = allowed.allowsFollowers,
             allowsMentioned = allowed.allowsMentioned,
-            allowedLists = allowedLists.map { listEntity ->
-                listEntity.asExternalModel(
-                    creator = stubProfile(
-                        did = listEntity.creatorId,
-                        handle = Constants.unknownAuthorHandle,
-                    ),
-                    labels = emptyList(),
-                )
-            },
+            allowedLists = emptyList(),
+            allowedListUris = allowedLists.map(ListEntity::uri),
         )
     },
 )

@@ -279,6 +279,11 @@ sealed interface Timeline {
                 val mutedWordPreferences: List<MutedWordPreference>,
             ) : OfMutedWord()
         }
+
+        @Serializable
+        data class OfInteractionSettings(
+            val preference: PostInteractionSettingsPreference,
+        ) : Update
     }
 
     @Serializable
