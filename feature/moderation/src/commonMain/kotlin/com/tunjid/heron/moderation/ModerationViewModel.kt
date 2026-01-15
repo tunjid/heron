@@ -101,6 +101,9 @@ class ActualModerationViewModel(
                     is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
                         writeQueue = writeQueue,
                     )
+                    is Action.UpdateThreadGates -> action.flow.updateThreadGateMutations(
+                        writeQueue = writeQueue,
+                    )
                     Action.SignOut -> action.flow.mapToManyMutations {
                         authRepository.signOut()
                     }
@@ -145,6 +148,18 @@ private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
         Writable.TimelineUpdate(
             Timeline.Update.OfMutedWord.ReplaceAll(
                 mutedWordPreferences = it.mutedWordPreference,
+            ),
+        ),
+    )
+}
+
+private fun Flow<Action.UpdateThreadGates>.updateThreadGateMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = mapToManyMutations {
+    writeQueue.enqueue(
+        Writable.TimelineUpdate(
+            Timeline.Update.OfInteractionSettings(
+                preference = it.preference,
             ),
         ),
     )

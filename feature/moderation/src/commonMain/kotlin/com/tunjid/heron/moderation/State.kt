@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.MutedWordPreference
+import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.CommonStrings
@@ -112,6 +113,10 @@ sealed class Action(val key: String) {
     data class UpdateMutedWord(
         val mutedWordPreference: List<MutedWordPreference>,
     ) : Action(key = "UpdateMutedWord")
+
+    data class UpdateThreadGates(
+        val preference: PostInteractionSettingsPreference,
+    ) : Action(key = "UpdateThreadGates")
 
     data class SnackbarDismissed(
         val message: Memo,

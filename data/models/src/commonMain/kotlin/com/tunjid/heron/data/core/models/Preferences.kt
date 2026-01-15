@@ -191,6 +191,20 @@ data class PostInteractionSettingsPreference(
     data class AllowedEmbeds(
         val none: Boolean = false,
     )
+
+    companion object {
+        val AllowedReplies?.allowsFollowing
+            get() = this == null || allowsFollowing
+
+        val AllowedReplies?.allowsFollowers
+            get() = this == null || allowsFollowers
+
+        val AllowedReplies?.allowsMentioned
+            get() = this == null || allowsMentioned
+
+        val AllowedReplies?.allowsLists
+            get() = this != null && allowedLists.isNotEmpty()
+    }
 }
 
 @Serializable

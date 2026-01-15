@@ -21,12 +21,21 @@ import app.bsky.actor.ContentLabelPref
 import app.bsky.actor.ContentLabelPrefVisibility
 import app.bsky.actor.LabelerPrefItem
 import app.bsky.actor.LabelersPref
+import app.bsky.actor.MutedWord
+import app.bsky.actor.MutedWordActorTarget
+import app.bsky.actor.MutedWordTarget
+import app.bsky.actor.MutedWordsPref
+import app.bsky.actor.PostInteractionSettingsPref
 import app.bsky.actor.PostInteractionSettingsPrefPostgateEmbeddingRuleUnion as BskyPostEmbedGateRule
 import app.bsky.actor.PostInteractionSettingsPrefThreadgateAllowRuleUnion as BskyPostReplyGateRule
 import app.bsky.actor.PreferencesUnion
 import app.bsky.actor.SavedFeed
 import app.bsky.actor.SavedFeedType
 import app.bsky.actor.SavedFeedsPrefV2
+import app.bsky.feed.ThreadgateFollowerRule
+import app.bsky.feed.ThreadgateFollowingRule
+import app.bsky.feed.ThreadgateListRule
+import app.bsky.feed.ThreadgateMentionRule
 import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.DeclaredAgePreference
 import com.tunjid.heron.data.core.models.HiddenPostPreference
@@ -45,6 +54,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.utilities.TidGenerator
 import dev.zacsweers.metro.Inject
 import kotlin.reflect.KClass
+import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 
 internal interface PreferenceUpdater {
@@ -379,16 +389,16 @@ internal class ThingPreferenceUpdater @Inject constructor(
         when (this) {
             is Timeline.Update.OfMutedWord.ReplaceAll -> listOf(
                 PreferencesUnion.MutedWordsPref(
-                    value = app.bsky.actor.MutedWordsPref(
+                    value = MutedWordsPref(
                         items = mutedWordPreferences.map { pref ->
-                            app.bsky.actor.MutedWord(
+                            MutedWord(
                                 id = null,
                                 value = pref.value,
                                 targets = pref.targets.map {
-                                    app.bsky.actor.MutedWordTarget.safeValueOf(it.value)
+                                    MutedWordTarget.safeValueOf(it.value)
                                 },
                                 actorTarget = pref.actorTarget?.let {
-                                    app.bsky.actor.MutedWordActorTarget.safeValueOf(it.value)
+                                    MutedWordActorTarget.safeValueOf(it.value)
                                 },
                                 expiresAt = pref.expiresAt,
                             )
@@ -397,6 +407,44 @@ internal class ThingPreferenceUpdater @Inject constructor(
                 ),
             )
         }
+
+    private fun Timeline.Update.OfInteractionSettings.updatePostInteractionPreferences(
+        existingPreference: PreferencesUnion.PostInteractionSettingsPref?,
+    ): List<PreferencesUnion.PostInteractionSettingsPref> {
+        val threadGateAllowRules = preference.threadGateAllowed?.let {
+            buildList {
+                if (it.allowsFollowing) add(
+                    BskyPostReplyGateRule.FollowingRule(ThreadgateFollowingRule),
+                )
+                if (it.allowsFollowers) add(
+                    BskyPostReplyGateRule.FollowerRule(ThreadgateFollowerRule),
+                )
+                if (it.allowsMentioned) add(
+                    BskyPostReplyGateRule.MentionRule(ThreadgateMentionRule),
+                )
+                preference.threadGateAllowed
+                    ?.allowedLists
+                    ?.map {
+                        BskyPostReplyGateRule.ListRule(ThreadgateListRule(it.uri.let(::AtUri)))
+                    }
+                    ?.let(::addAll)
+            }
+        }
+        return listOf(
+            PreferencesUnion.PostInteractionSettingsPref(
+                value = when (existingPreference) {
+                    null -> PostInteractionSettingsPref(
+                        threadgateAllowRules = threadGateAllowRules,
+                        postgateEmbeddingRules = null,
+                    )
+
+                    else -> existingPreference.value.copy(
+                        threadgateAllowRules = threadGateAllowRules,
+                    )
+                },
+            ),
+        )
+    }
 
     private suspend fun Timeline.Update.updatePreferences(
         existingPreferences: List<PreferencesUnion>,
@@ -413,6 +461,11 @@ internal class ThingPreferenceUpdater @Inject constructor(
                 existingPreferences = existingPreferences.filterIsInstance<PreferencesUnion.LabelersPref>(),
             )
             is Timeline.Update.OfMutedWord -> updateMutedWordPreferences()
+            // Only one of these should exist
+            is Timeline.Update.OfInteractionSettings -> updatePostInteractionPreferences(
+                existingPreference = existingPreferences.filterIsInstance<PreferencesUnion.PostInteractionSettingsPref>()
+                    .firstOrNull(),
+            )
         }
 }
 
@@ -423,6 +476,7 @@ private fun Timeline.Update.targetClass() =
         is Timeline.Update.OfContentLabel -> PreferencesUnion.ContentLabelPref::class
         is Timeline.Update.OfLabeler -> PreferencesUnion.LabelersPref::class
         is Timeline.Update.OfMutedWord -> PreferencesUnion.MutedWordsPref::class
+        is Timeline.Update.OfInteractionSettings -> PreferencesUnion.PostInteractionSettingsPref::class
     }
 
 private fun PreferencesUnion.ContentLabelPref.asExternalModel() = ContentLabelPreference(
