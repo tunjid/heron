@@ -68,13 +68,13 @@ private class SingleWriteLatchedState<T>(
 ) : LatchedState<T> {
 
     private val state = mutableStateOf(initialValue)
-    var latchedValue by mutableStateOf(initialValue)
+    var upstreamValue by mutableStateOf(initialValue)
 
     override val value: T
         get() = state.value
 
     override val isCurrent: Boolean
-        get() = value == latchedValue
+        get() = value == upstreamValue
 
     override fun latch(newValue: T) {
         // Already latched
@@ -83,7 +83,7 @@ private class SingleWriteLatchedState<T>(
     }
 
     fun reset(actualValue: T) {
-        latchedValue = actualValue
+        upstreamValue = actualValue
         state.value = actualValue
     }
 }
