@@ -54,9 +54,8 @@ fun <T> rememberLatchedState(actualValue: T): LatchedState<T> {
         SingleWriteLatchedState(actualValue)
     }
 
-    if (actualValue == state.value) {
-        state.reset(actualValue)
-    }
+    // If caught up or diverged, update
+    remember(actualValue) { state.reset(actualValue) }
 
     return state
 }
@@ -69,7 +68,7 @@ private class SingleWriteLatchedState<T>(
 ) : LatchedState<T> {
 
     private val state = mutableStateOf(initialValue)
-    private var latchedValue by mutableStateOf(initialValue)
+    var latchedValue by mutableStateOf(initialValue)
 
     override val value: T
         get() = state.value
@@ -78,6 +77,7 @@ private class SingleWriteLatchedState<T>(
         get() = value == latchedValue
 
     override fun latch(newValue: T) {
+        // Already latched
         if (!isCurrent) return
         state.value = newValue
     }
