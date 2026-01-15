@@ -448,19 +448,22 @@ internal class ThingPreferenceUpdater @Inject constructor(
                     .let(::addAll)
             }
         }
+        val postgateEmbeddingRules = if (preference.allowedEmbeds.embedsDisabled) {
+            listOf(BskyPostEmbedGateRule.DisableRule(PostgateDisableRule))
+        } else {
+            null
+        }
         return listOf(
             PreferencesUnion.PostInteractionSettingsPref(
                 value = when (existingPreference) {
                     null -> PostInteractionSettingsPref(
                         threadgateAllowRules = threadGateAllowRules,
-                        postgateEmbeddingRules =
-                        if (preference.allowedEmbeds.embedsDisabled) listOf(
-                            BskyPostEmbedGateRule.DisableRule(PostgateDisableRule),
-                        ) else null,
+                        postgateEmbeddingRules = postgateEmbeddingRules,
                     )
 
                     else -> existingPreference.value.copy(
                         threadgateAllowRules = threadGateAllowRules,
+                        postgateEmbeddingRules = postgateEmbeddingRules,
                     )
                 },
             ),
