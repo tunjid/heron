@@ -49,17 +49,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
-import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference.Companion.followersAllowed
-import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference.Companion.followingAllowed
-import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference.Companion.mentionsAllowed
+import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.allowedListUrisOrEmpty
+import com.tunjid.heron.data.core.models.allowsAll
 import com.tunjid.heron.data.core.models.allowsFollowers
 import com.tunjid.heron.data.core.models.allowsFollowing
 import com.tunjid.heron.data.core.models.allowsMentioned
-import com.tunjid.heron.data.core.types.ListUri
+import com.tunjid.heron.data.core.models.allowsNone
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
@@ -82,18 +81,18 @@ sealed class ThreadGateSheetState private constructor(
 ) : BottomSheetState(scope) {
 
     protected var mode by mutableStateOf<Mode?>(null)
-    internal var allowed by mutableStateOf<Mode.Allowed?>(null)
+    internal var allowed by mutableStateOf<ThreadGate.Allowed?>(null)
 
     internal val isForSinglePost get() = mode is Mode.Timeline
 
     internal inline fun updateAllowed(
-        block: Mode.Allowed.() -> Mode.Allowed?,
+        block: ThreadGate.Allowed.() -> ThreadGate.Allowed?,
     ) {
         allowed = (allowed ?: NoneAllowed).block()
     }
 
     internal inline fun onUpdated(
-        block: (Mode, Mode.Allowed?) -> Unit,
+        block: (Mode, ThreadGate.Allowed?) -> Unit,
     ) {
         val currentMode = mode
         val currentAllowed = allowed
@@ -114,14 +113,7 @@ sealed class ThreadGateSheetState private constructor(
             timelineItem: TimelineItem,
         ) {
             this.mode = Mode.Timeline(timelineItem)
-            this.allowed = Mode.Allowed(
-                allowsFollowing = timelineItem.threadGate?.allowed.allowsFollowing,
-                allowsFollowers = timelineItem.threadGate?.allowed.allowsFollowers,
-                allowsMentioned = timelineItem.threadGate?.allowed.allowsMentioned,
-                allowedLists = timelineItem.threadGate?.allowed?.allowedLists
-                    ?.map(FeedList::uri)
-                    .orEmpty(),
-            )
+            this.allowed = timelineItem.threadGate?.allowed
 
             show()
         }
@@ -135,12 +127,7 @@ sealed class ThreadGateSheetState private constructor(
             preference: PostInteractionSettingsPreference?,
         ) {
             this.mode = Mode.Preferences(preference)
-            this.allowed = Mode.Allowed(
-                allowsFollowing = preference?.threadGateAllowed.followingAllowed,
-                allowsFollowers = preference?.threadGateAllowed.followersAllowed,
-                allowsMentioned = preference?.threadGateAllowed.mentionsAllowed,
-                allowedLists = preference?.threadGateAllowed?.allowedLists.orEmpty(),
-            )
+            this.allowed = preference?.threadGateAllowed
 
             show()
         }
@@ -171,7 +158,7 @@ sealed class ThreadGateSheetState private constructor(
         @Composable
         private inline fun <T : ThreadGateSheetState> rememberUpdatedGenericThreadGateSheetState(
             crossinline initializer: (BottomSheetScope) -> T,
-            crossinline onThreadGateUpdated: (Mode, Mode.Allowed?) -> Unit,
+            crossinline onThreadGateUpdated: (Mode, ThreadGate.Allowed?) -> Unit,
         ): T {
             val state = rememberBottomSheetState {
                 initializer(it)
@@ -192,7 +179,7 @@ sealed class ThreadGateSheetState private constructor(
 @Composable
 private fun ThreadGateBottomSheet(
     state: ThreadGateSheetState,
-    onThreadGateUpdated: (Mode, Mode.Allowed?) -> Unit,
+    onThreadGateUpdated: (Mode, ThreadGate.Allowed?) -> Unit,
 ) {
     state.ModalBottomSheet {
         Column(
@@ -456,64 +443,31 @@ sealed class Mode {
     data class Timeline(
         val item: TimelineItem,
     ) : Mode() {
-        internal fun update(allowed: Allowed?) = Post.Interaction.Upsert.Gate(
+        internal fun update(allowed: ThreadGate.Allowed?) = Post.Interaction.Upsert.Gate(
             postUri = item.post.uri,
             threadGateUri = item.threadGate?.uri,
             allowsFollowing = allowed.allowsFollowing,
             allowsFollowers = allowed.allowsFollowers,
             allowsMentioned = allowed.allowsMentioned,
-            allowedListUris = allowed?.allowedLists.orEmpty(),
+            allowedListUris = allowed.allowedListUrisOrEmpty,
         )
     }
 
     data class Preferences(
         val preference: PostInteractionSettingsPreference?,
     ) : Mode() {
-        internal fun update(allowed: Allowed?) = PostInteractionSettingsPreference(
-            threadGateAllowed = allowed?.let {
-                PostInteractionSettingsPreference.AllowedReplies(
-                    allowsFollowing = it.allowsFollowing,
-                    allowsFollowers = it.allowsFollowers,
-                    allowsMentioned = it.allowsMentioned,
-                    allowedLists = it.allowedLists,
-                )
-            },
+        internal fun update(
+            allowed: ThreadGate.Allowed?,
+        ) = PostInteractionSettingsPreference(
+            threadGateAllowed = allowed,
             allowedEmbeds = preference?.allowedEmbeds,
         )
     }
-
-    data class Allowed(
-        val allowsFollowing: Boolean,
-        val allowsFollowers: Boolean,
-        val allowsMentioned: Boolean,
-        val allowedLists: List<ListUri>,
-    )
 }
 
-private val NoneAllowed = Mode.Allowed(
+private val NoneAllowed = ThreadGate.Allowed(
     allowsFollowing = false,
     allowsFollowers = false,
     allowsMentioned = false,
     allowedLists = emptyList(),
 )
-
-val Mode.Allowed?.allowsFollowing
-    get() = this == null || allowsFollowing
-
-val Mode.Allowed?.allowsFollowers
-    get() = this == null || allowsFollowers
-
-val Mode.Allowed?.allowsMentioned
-    get() = this == null || allowsMentioned
-
-val Mode.Allowed?.allowsLists
-    get() = this != null && allowedLists.isNotEmpty()
-
-val Mode.Allowed?.allowsAll
-    get() = this == null
-
-val Mode.Allowed?.allowsNone
-    get() = !allowsFollowing &&
-        !allowsFollowers &&
-        !allowsMentioned &&
-        !allowsLists

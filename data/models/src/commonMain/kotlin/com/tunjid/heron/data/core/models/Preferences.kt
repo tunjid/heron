@@ -176,16 +176,9 @@ data class ThreadViewPreference(
 
 @Serializable
 data class PostInteractionSettingsPreference(
-    val threadGateAllowed: AllowedReplies? = null,
+    val threadGateAllowed: ThreadGate.Allowed? = null,
     val allowedEmbeds: AllowedEmbeds? = null,
 ) {
-    @Serializable
-    data class AllowedReplies(
-        val allowsFollowing: Boolean = false,
-        val allowsFollowers: Boolean = false,
-        val allowsMentioned: Boolean = false,
-        val allowedLists: List<ListUri> = emptyList(),
-    )
 
     @Serializable
     data class AllowedEmbeds(
@@ -193,14 +186,8 @@ data class PostInteractionSettingsPreference(
     )
 
     companion object {
-        val AllowedReplies?.followingAllowed
-            get() = this == null || allowsFollowing
-
-        val AllowedReplies?.followersAllowed
-            get() = this == null || allowsFollowers
-
-        val AllowedReplies?.mentionsAllowed
-            get() = this == null || allowsMentioned
+        val AllowedEmbeds?.embedsDisabled: Boolean
+            get() = this != null && this.none
     }
 }
 

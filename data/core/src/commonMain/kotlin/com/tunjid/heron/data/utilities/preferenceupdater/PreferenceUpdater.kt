@@ -32,6 +32,7 @@ import app.bsky.actor.PreferencesUnion
 import app.bsky.actor.SavedFeed
 import app.bsky.actor.SavedFeedType
 import app.bsky.actor.SavedFeedsPrefV2
+import app.bsky.feed.PostgateDisableRule
 import app.bsky.feed.ThreadgateFollowerRule
 import app.bsky.feed.ThreadgateFollowingRule
 import app.bsky.feed.ThreadgateListRule
@@ -43,7 +44,9 @@ import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.LabelerPreference
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
+import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference.Companion.embedsDisabled
 import com.tunjid.heron.data.core.models.Preferences
+import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.ThreadViewPreference
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelinePreference
@@ -152,19 +155,37 @@ internal class ThingPreferenceUpdater @Inject constructor(
                 is PreferencesUnion.Unknown -> foldedPreferences
                 is PreferencesUnion.PostInteractionSettingsPref -> foldedPreferences.copy(
                     postInteractionSettings = PostInteractionSettingsPreference(
-                        threadGateAllowed = preferencesUnion.value.threadgateAllowRules?.let { rules ->
-                            val grouped = rules.groupBy { it::class }
-                            PostInteractionSettingsPreference.AllowedReplies(
-                                allowsFollowing = BskyPostReplyGateRule.FollowingRule::class in grouped,
-                                allowsFollowers = BskyPostReplyGateRule.FollowerRule::class in grouped,
-                                allowsMentioned = BskyPostReplyGateRule.MentionRule::class in grouped,
-                                allowedLists = grouped[BskyPostReplyGateRule.ListRule::class]
-                                    .orEmpty()
-                                    .mapNotNull {
-                                        if (it is BskyPostReplyGateRule.ListRule) ListUri(it.value.list.atUri)
-                                        else null
-                                    },
+                        threadGateAllowed = when (
+                            val allow =
+                                preferencesUnion.value.threadgateAllowRules
+                        ) {
+                            // All can reply
+                            null -> null
+                            // None can reply
+                            emptyList<BskyPostReplyGateRule>() -> ThreadGate.Allowed(
+                                allowsFollowing = false,
+                                allowsFollowers = false,
+                                allowsMentioned = false,
                             )
+                            else ->
+                                allow
+                                    .groupBy { it::class }
+                                    .let { grouped ->
+                                        // ThreadgateAllowUnion.ListRule is handled with the list views above
+                                        ThreadGate.Allowed(
+                                            allowsFollowing = BskyPostReplyGateRule.FollowingRule::class in grouped,
+                                            allowsFollowers = BskyPostReplyGateRule.FollowerRule::class in grouped,
+                                            allowsMentioned = BskyPostReplyGateRule.MentionRule::class in grouped,
+                                            allowedListUris = grouped[BskyPostReplyGateRule.ListRule::class]
+                                                .orEmpty()
+                                                .mapNotNull {
+                                                    if (it is BskyPostReplyGateRule.ListRule) ListUri(
+                                                        it.value.list.atUri,
+                                                    )
+                                                    else null
+                                                },
+                                        )
+                                    }
                         },
                         allowedEmbeds = preferencesUnion.value.postgateEmbeddingRules?.let {
                             it.fold(
@@ -422,7 +443,7 @@ internal class ThingPreferenceUpdater @Inject constructor(
                 if (it.allowsMentioned) add(
                     BskyPostReplyGateRule.MentionRule(ThreadgateMentionRule),
                 )
-                it.allowedLists
+                it.allowedListUris
                     .map { BskyPostReplyGateRule.ListRule(ThreadgateListRule(it.uri.let(::AtUri))) }
                     .let(::addAll)
             }
@@ -432,7 +453,10 @@ internal class ThingPreferenceUpdater @Inject constructor(
                 value = when (existingPreference) {
                     null -> PostInteractionSettingsPref(
                         threadgateAllowRules = threadGateAllowRules,
-                        postgateEmbeddingRules = null,
+                        postgateEmbeddingRules =
+                        if (preference.allowedEmbeds.embedsDisabled) listOf(
+                            BskyPostEmbedGateRule.DisableRule(PostgateDisableRule),
+                        ) else null,
                     )
 
                     else -> existingPreference.value.copy(
