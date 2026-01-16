@@ -23,6 +23,7 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
+import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.recentConversations
@@ -73,6 +74,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 @AssistedInject
 class ActualHomeViewModel(
     authRepository: AuthRepository,
+    searchRepository: SearchRepository,
     messageRepository: MessageRepository,
     timelineRepository: TimelineRepository,
     userDataRepository: UserDataRepository,
@@ -92,6 +94,9 @@ class ActualHomeViewModel(
                 scope = scope,
                 timelineRepository = timelineRepository,
                 userDataRepository = userDataRepository,
+            ),
+            trendsMutations(
+                searchRepository = searchRepository,
             ),
             loadProfileMutations(
                 authRepository,
@@ -207,6 +212,13 @@ private fun loadPreferencesMutations(
         .mapToMutation {
             copy(preferences = it)
         }
+
+private fun trendsMutations(
+    searchRepository: SearchRepository,
+): Flow<Mutation<State>> =
+    searchRepository.trends().mapToMutation {
+        copy(trends = it)
+    }
 
 private fun Flow<Action.UpdatePageWithUpdates>.pageWithUpdateMutations(): Flow<Mutation<State>> =
     mapToMutation { (sourceId, hasUpdates) ->
