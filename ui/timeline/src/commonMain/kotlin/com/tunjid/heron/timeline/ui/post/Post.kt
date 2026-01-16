@@ -61,8 +61,6 @@ import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
-import com.tunjid.heron.data.core.models.allowsAll
-import com.tunjid.heron.data.core.models.allowsNone
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.PostAction
@@ -502,7 +500,7 @@ private fun MetadataContent(
                 vertical = 4.dp,
             ),
         time = data.post.createdAt,
-        replyStatus = data.replyStatus,
+        interactionStatus = data.interactionStatus,
         postUri = data.post.uri,
         profileId = data.post.author.did,
         reposts = data.post.repostCount,
@@ -761,15 +759,10 @@ private class PostData(
     val hasLabels
         get() = post.labels.isNotEmpty() || post.author.labels.isNotEmpty()
 
-    val replyStatus
-        get() = when (val gate = threadGate) {
-            null -> PostReplyStatus.All
-            else -> when {
-                gate.allowed.allowsAll -> PostReplyStatus.All
-                gate.allowed.allowsNone -> PostReplyStatus.None
-                else -> PostReplyStatus.Some
-            }
-        }
+    val interactionStatus
+        get() = postInteractionStatus(
+            allowed = threadGate?.allowed,
+        )
 
     val boundsTransform = BoundsTransform { _, _ ->
         SpringSpec.skipIf { !presentationChanged }

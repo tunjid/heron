@@ -21,6 +21,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.ProfileId
@@ -41,6 +42,8 @@ data class State(
     val signedInProfile: Profile? = null,
     val fabExpanded: Boolean = true,
     val embeddedRecord: Record.Embeddable? = null,
+    @Transient
+    val interactionsPreference: PostInteractionSettingsPreference? = null,
     @Serializable(with = TextFieldValueSerializer::class)
     val postText: TextFieldValue = TextFieldValue(),
     @Transient
@@ -101,11 +104,16 @@ sealed class Action(val key: String) {
         val links: List<Link>,
         val media: List<RestrictedFile.Media>,
         val embeddedRecordReference: Record.Reference?,
+        val interactionPreference: PostInteractionSettingsPreference?,
     ) : Action("CreatePost")
 
     data class SetFabExpanded(
         val expanded: Boolean,
     ) : Action("SetFabExpanded")
+
+    data class UpdateInteractionSettings(
+        val interactionSettingsPreference: PostInteractionSettingsPreference?,
+    ) : Action("UpdateInteractionSettings")
 
     data class SnackbarDismissed(
         val message: Memo,

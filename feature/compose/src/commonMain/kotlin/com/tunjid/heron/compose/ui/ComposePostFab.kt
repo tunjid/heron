@@ -16,14 +16,19 @@
 
 package com.tunjid.heron.compose.ui
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
@@ -37,7 +42,6 @@ import heron.feature.compose.generated.resources.Res
 import heron.feature.compose.generated.resources.post
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun PaneScaffoldState.TopAppBarFab(
     modifier: Modifier,
@@ -67,23 +71,39 @@ fun PaneScaffoldState.TopAppBarFab(
 }
 
 @Composable
-fun PaneScaffoldState.BottomAppBarFab(
+fun PaneScaffoldState.ComposePostFabRow(
     modifier: Modifier,
     state: State,
-    onCreatePost: (Action.CreatePost) -> Unit,
+    onAction: (Action) -> Unit,
 ) {
-    val show = if (inPredictiveBack) !state.hasLongPost else true
-    if (show) ComposePostFab(
-        modifier = modifier,
-        state = state,
-        onCreatePost = onCreatePost,
-    )
+    Row(
+        modifier = modifier
+            .fillMaxWidth(),
+        verticalAlignment = Alignment.Bottom,
+    ) {
+        Box(
+            modifier = Modifier
+                .padding(horizontal = 32.dp),
+        ) {
+            ComposeThreadGate(
+                interactionSettingsPreference = state.interactionsPreference,
+                onInteractionSettingsUpdated = {
+                    onAction(Action.UpdateInteractionSettings(it))
+                },
+            )
+        }
+        Spacer(Modifier.weight(1f))
+        val show = if (inPredictiveBack) !state.hasLongPost else true
+        if (show) ComposePostFab(
+            state = state,
+            onCreatePost = onAction,
+        )
+    }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun PaneScaffoldState.ComposePostFab(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     state: State,
     onCreatePost: (Action.CreatePost) -> Unit,
 ) {
@@ -113,6 +133,7 @@ private fun State.createPostAction(): Action.CreatePost? {
         links = postText.annotatedString.links(),
         media = video?.let(::listOf) ?: photos,
         embeddedRecordReference = embeddedRecord?.reference,
+        interactionPreference = interactionsPreference,
     )
 }
 
