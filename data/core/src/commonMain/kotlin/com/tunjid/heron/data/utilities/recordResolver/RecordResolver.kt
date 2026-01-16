@@ -279,8 +279,6 @@ internal class OfflineRecordResolver @Inject constructor(
     override suspend fun resolve(
         uri: RecordUri,
     ): Result<Record> = savedStateDataSource.inCurrentProfileSession { viewingProfileId ->
-        if (viewingProfileId == null) return@inCurrentProfileSession expiredSessionResult()
-
         when (uri) {
             is FeedGeneratorUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
                 getFeedGenerator(
