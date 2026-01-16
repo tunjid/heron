@@ -239,6 +239,10 @@ value class PostGateUri(
     override val uri: String,
 ) : Uri {
     override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.bsky.feed.postgate"
+    }
 }
 
 @Serializable

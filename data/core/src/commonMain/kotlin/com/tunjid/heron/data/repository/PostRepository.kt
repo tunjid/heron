@@ -430,12 +430,17 @@ internal class OfflinePostRepository @Inject constructor(
             postRecordKey = RecordKey(postTid),
         )
 
+        val blobsResult = request.mediaBlobs()
+        val blobs = blobsResult.getOrNull() ?: return@currentSession Outcome.Failure(
+            requireNotNull(blobsResult.exceptionOrNull()),
+        )
+
         writes.add(
             ApplyWritesCreate(
                 collection = Nsid(PostUri.NAMESPACE),
                 rkey = rKey,
                 value = request.postNetworkRecord(
-                    blobs = request.mediaBlobs(),
+                    blobs = blobs,
                     createdAt = now,
                 ),
             ),
@@ -759,9 +764,9 @@ internal class OfflinePostRepository @Inject constructor(
             .asJsonContent(BskyPost.serializer())
     }
 
-    private suspend fun Post.Create.Request.mediaBlobs(): List<MediaBlob> {
-        val blobs = runCatchingUnlessCancelled {
-            when {
+    private suspend fun Post.Create.Request.mediaBlobs(): Result<List<MediaBlob>> =
+        runCatchingUnlessCancelled {
+            val blobs = when {
                 metadata.embeddedMedia.isNotEmpty() -> coroutineScope {
                     metadata.embeddedMedia.map { file ->
                         async {
@@ -785,16 +790,16 @@ internal class OfflinePostRepository @Inject constructor(
                 metadata.mediaFiles.isNotEmpty() -> emptyList()
                 else -> emptyList()
             }
-        }.getOrNull() ?: emptyList()
 
-        val mediaToUploadCount = metadata.embeddedMedia.size.takeIf { it > 0 }
-            ?: @Suppress("DEPRECATION") metadata.mediaFiles.size
+            val mediaToUploadCount = metadata.embeddedMedia.size.takeIf { it > 0 }
+                ?: @Suppress("DEPRECATION") metadata.mediaFiles.size
 
-        if (mediaToUploadCount > 0 && blobs.size != mediaToUploadCount) {
-            throw Exception("Media upload failed")
+            if (mediaToUploadCount > 0 && blobs.size != mediaToUploadCount) {
+                throw Exception("Media upload failed")
+            }
+
+            return@runCatchingUnlessCancelled blobs
         }
-        return blobs
-    }
 }
 
 private fun List<PopulatedProfileEntity>.asExternalModels() =

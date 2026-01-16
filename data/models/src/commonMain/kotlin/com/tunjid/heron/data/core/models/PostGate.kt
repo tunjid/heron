@@ -20,7 +20,7 @@ import com.tunjid.heron.data.core.types.PostGateUri
 import com.tunjid.heron.data.core.types.PostUri
 import kotlinx.serialization.Serializable
 
-class PostGate(
+data class PostGate(
     val uri: PostGateUri,
     val gatedPostUri: PostUri,
     val allowed: AllowedEmbeds?,
