@@ -41,6 +41,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.TrendingUp
+import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -61,12 +62,15 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Trend
+import com.tunjid.heron.ui.text.CommonStrings
+import heron.ui.core.generated.resources.close
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun TrendsTicker(
@@ -189,7 +193,7 @@ private fun HorizontalTicker(
     val state = rememberLazyListState(
         initialFirstVisibleItemIndex = focusedIndex,
     )
-    LazyRow(
+    Row(
         modifier = modifier
             .fillMaxSize()
             .pointerInput(Unit) {
@@ -197,41 +201,58 @@ private fun HorizontalTicker(
                     onDragStart = { onCollapsed(state.middleItemIndex) },
                     onVerticalDrag = { _, _ -> },
                 )
-            }
-            .clickable { onCollapsed(state.middleItemIndex) },
-        state = state,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            },
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        items(
-            items = trends,
-            key = Trend::link,
-            itemContent = { trend ->
-                Box(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .clickable { onTrendClicked(trend) }
-                        .padding(
-                            vertical = 4.dp,
-                            horizontal = 6.dp,
-                        )
-                        .animateItem(),
-                ) {
-                    Text(
+        LazyRow(
+            modifier = Modifier
+                .weight(1f)
+                .clip(CircleShape),
+            state = state,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            items(
+                items = trends,
+                key = Trend::link,
+                itemContent = { trend ->
+                    Box(
                         modifier = Modifier
-                            .sharedElement(
-                                sharedContentState = rememberSharedContentState(
-                                    key = trend.link,
+                            .clip(CircleShape)
+                            .clickable { onTrendClicked(trend) }
+                            .padding(
+                                vertical = 4.dp,
+                                horizontal = 6.dp,
+                            )
+                            .animateItem(),
+                    ) {
+                        Text(
+                            modifier = Modifier
+                                .sharedElement(
+                                    sharedContentState = rememberSharedContentState(
+                                        key = trend.link,
+                                    ),
+                                    animatedVisibilityScope = animatedVisibilityScope,
                                 ),
-                                animatedVisibilityScope = animatedVisibilityScope,
-                            ),
-                        text = trend.tickerValue,
-                        color = MaterialTheme.colorScheme.outline,
-                        style = MaterialTheme.typography.bodyMediumEmphasized,
-                    )
-                }
-            },
-        )
+                            text = trend.tickerValue,
+                            color = MaterialTheme.colorScheme.outline,
+                            style = MaterialTheme.typography.bodyMediumEmphasized,
+                        )
+                    }
+                },
+            )
+        }
+        Box(
+            modifier = Modifier
+                .clip(CircleShape)
+                .clickable { onCollapsed(state.middleItemIndex) }
+                .padding(all = 8.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Cancel,
+                contentDescription = stringResource(CommonStrings.close),
+            )
+        }
     }
 
     LaunchedEffect(state.isScrollInProgress) {
