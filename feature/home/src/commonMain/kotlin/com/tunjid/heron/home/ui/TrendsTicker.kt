@@ -214,7 +214,8 @@ private fun HorizontalTicker(
                         .padding(
                             vertical = 4.dp,
                             horizontal = 6.dp,
-                        ),
+                        )
+                        .animateItem(),
                 ) {
                     Text(
                         modifier = Modifier
