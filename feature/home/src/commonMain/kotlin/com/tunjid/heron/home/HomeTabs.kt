@@ -221,6 +221,7 @@ internal fun HomeTabs(
                     tabsState = collapsedTabsState,
                     sharedTransitionScope = this@with,
                     animatedContentScope = this@AnimatedContent,
+                    isSignedIn = isSignedIn,
                     currentTabUri = currentTabUri,
                     timelines = timelines,
                     onTimelinePresentationUpdated = onTimelinePresentationUpdated,
@@ -432,6 +433,7 @@ private fun CollapsedTabs(
     tabsState: TabsState,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
+    isSignedIn: Boolean,
     currentTabUri: Uri?,
     timelines: List<Timeline>,
     onTimelinePresentationUpdated: (Int, Timeline.Presentation) -> Unit,
@@ -474,7 +476,7 @@ private fun CollapsedTabs(
             onTimelinePresentationUpdated = onTimelinePresentationUpdated,
         )
         // Space for the Expand Button
-        Spacer(
+        if (isSignedIn) Spacer(
             modifier = Modifier
                 .width(UiTokens.appBarButtonSize),
         )

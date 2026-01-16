@@ -111,7 +111,7 @@ fun TimelineTitle(
             sharedContentState = rememberSharedContentState(
                 key = timeline.avatarSharedElementKey(sharedElementPrefix),
             ),
-            zIndexInOverlay = UiTokens.appBarSharedElementOverlayZIndex,
+            zIndexInOverlay = UiTokens.appBarSharedElementZIndex,
         ) {
             AsyncImage(
                 modifier = Modifier
@@ -136,7 +136,7 @@ fun TimelineTitle(
                     sharedContentState = rememberSharedContentState(
                         key = timeline.titleSharedElementKey(sharedElementPrefix),
                     ),
-                    zIndexInOverlay = UiTokens.appBarSharedElementOverlayZIndex,
+                    zIndexInOverlay = UiTokens.appBarSharedElementZIndex,
                 ) {
                     Text(
                         modifier = Modifier,
@@ -151,7 +151,7 @@ fun TimelineTitle(
                     sharedContentState = rememberSharedContentState(
                         key = timeline.subtitleSharedElementKey(sharedElementPrefix),
                     ),
-                    zIndexInOverlay = UiTokens.appBarSharedElementOverlayZIndex,
+                    zIndexInOverlay = UiTokens.appBarSharedElementZIndex,
                 ) {
                     Text(
                         modifier = Modifier,
