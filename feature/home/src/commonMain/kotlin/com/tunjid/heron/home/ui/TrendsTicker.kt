@@ -25,14 +25,16 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -48,24 +50,29 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Trend
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 @Composable
-fun Trends(
+fun TrendsTicker(
     modifier: Modifier,
     sharedTransitionScope: SharedTransitionScope,
     trends: List<Trend>,
+    onTrendClicked: (Trend) -> Unit,
 ) {
     Box(
         modifier = modifier,
@@ -82,24 +89,44 @@ fun Trends(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                var isExpanded by rememberSaveable {
-                    mutableStateOf(false)
-                }
+                var isExpanded by rememberSaveable { mutableStateOf(false) }
+                var ticker by rememberSaveable { mutableStateOf(0) }
+                val focusedIndex = ticker % trends.size
+                val trend = trends[focusedIndex]
 
                 AnimatedContent(
                     targetState = isExpanded,
                 ) { currentlyExpanded ->
-                    if (currentlyExpanded) TrendsChyron(
+                    if (currentlyExpanded) HorizontalTicker(
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp),
                         sharedTransitionScope = sharedTransitionScope,
                         animatedVisibilityScope = this@AnimatedContent,
+                        focusedIndex = focusedIndex,
                         trends = trends,
-                        onClick = { isExpanded = false },
-                    ) else TrendsButton(
+                        onCollapsed = { firstCompletelyVisibleIndex ->
+                            ticker = firstCompletelyVisibleIndex
+                            isExpanded = false
+                        },
+                        onTrendClicked = onTrendClicked,
+                    ) else VerticalTicker(
                         sharedTransitionScope = sharedTransitionScope,
                         animatedVisibilityScope = this@AnimatedContent,
-                        trends = trends,
-                        onClick = { isExpanded = true },
+                        trend = trend,
+                        onClick = {
+                            isExpanded = true
+                        },
                     )
+                }
+
+                LaunchedEffect(Unit) {
+                    snapshotFlow { !isExpanded }
+                        .collectLatest { collapsed ->
+                            if (collapsed) while (isActive) {
+                                delay(VerticalTickerChangeDelay)
+                                ++ticker
+                            }
+                        }
                 }
             }
         }
@@ -108,27 +135,21 @@ fun Trends(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun TrendsButton(
+private fun VerticalTicker(
     modifier: Modifier = Modifier,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
-    trends: List<Trend>,
+    trend: Trend,
     onClick: () -> Unit,
 ) = with(sharedTransitionScope) {
     Row(
         modifier = modifier
-            .padding(
-                horizontal = 12.dp,
-            )
             .fillMaxHeight()
+            .padding(horizontal = 12.dp)
             .clickable { onClick() },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        var index by remember { mutableStateOf(0) }
-        val trend = trends[index % trends.size]
-        val text = trend.displayName ?: ""
-
         Icon(
             modifier = Modifier,
             imageVector = Icons.AutoMirrored.Rounded.TrendingUp,
@@ -143,7 +164,7 @@ private fun TrendsButton(
                     ),
                     animatedVisibilityScope = animatedVisibilityScope,
                 ),
-            targetState = text,
+            targetState = trend.displayName ?: "",
             transitionSpec = { TextCheckedTransform },
         ) { currentText ->
             Text(
@@ -153,34 +174,37 @@ private fun TrendsButton(
                 style = MaterialTheme.typography.bodyMediumEmphasized,
             )
         }
-
-        LaunchedEffect(Unit) {
-            while (isActive) {
-                delay(4.seconds)
-                ++index
-            }
-        }
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun TrendsChyron(
+private fun HorizontalTicker(
     modifier: Modifier = Modifier,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
+    focusedIndex: Int,
     trends: List<Trend>,
-    onClick: () -> Unit,
+    onCollapsed: (Int) -> Unit,
+    onTrendClicked: (Trend) -> Unit,
 ) = with(sharedTransitionScope) {
-    val state = rememberLazyListState()
-
+    val state = rememberLazyListState(
+        initialFirstVisibleItemIndex = focusedIndex,
+    )
     LazyRow(
         modifier = modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectVerticalDragGestures(
+                    onDragStart = { onCollapsed(state.middleItemIndex) },
+                    onVerticalDrag = { _, _ -> },
+                )
+            }
+            .clickable { onCollapsed(state.middleItemIndex) },
         state = state,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-
         items(
             items = trends,
             key = Trend::link,
@@ -194,12 +218,15 @@ private fun TrendsChyron(
                                 ),
                                 animatedVisibilityScope = animatedVisibilityScope,
                             )
-                            .padding(4.dp),
+                            .padding(
+                                vertical = 4.dp,
+                                horizontal = 8.dp,
+                            )
+                            .clickable { onTrendClicked(trend) },
                         text = it,
                         color = MaterialTheme.colorScheme.outline,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyMediumEmphasized,
                     )
-
                 }
             },
         )
@@ -207,17 +234,35 @@ private fun TrendsChyron(
 
     LaunchedEffect(state.isScrollInProgress) {
         if (state.isScrollInProgress) return@LaunchedEffect
+        launch {
+            // Wait till scrolled to the end
+            snapshotFlow { state.canScrollForward }
+                .first(false::equals)
+            delay(HorizontalTickerDismissDelay)
+            onCollapsed(state.middleItemIndex)
+        }
 
         while (isActive) {
             withFrameNanos {}
-            state.scrollBy(.5f * if (state.canScrollForward) 1f else -1f)
+            state.scrollBy(CHYRON_SCROLL_DELTA)
         }
     }
 }
 
-private const val ICON_ANIMATION_DURATION_MILLIS = 600
+private val LazyListState.middleItemIndex: Int
+    get() {
+        val visibleItemsInfo = layoutInfo.visibleItemsInfo
+        val middleItem = visibleItemsInfo[visibleItemsInfo.size / 2]
+        return middleItem.index
+    }
 
-private val TextAnimationSpec = tween<IntOffset>(ICON_ANIMATION_DURATION_MILLIS)
+private const val CHYRON_SCROLL_DELTA = 0.5f
+private const val BUTTON_ANIMATION_DURATION_MILLIS = 600
+
+private val TextAnimationSpec = tween<IntOffset>(BUTTON_ANIMATION_DURATION_MILLIS)
+
+private val VerticalTickerChangeDelay = 4.seconds
+private val HorizontalTickerDismissDelay = 3.seconds
 
 private val TextCheckedTransform = slideInVertically(
     animationSpec = TextAnimationSpec,

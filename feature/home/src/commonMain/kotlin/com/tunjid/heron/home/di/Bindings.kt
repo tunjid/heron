@@ -39,10 +39,11 @@ import com.tunjid.heron.home.HomeScreen
 import com.tunjid.heron.home.RouteViewModelInitializer
 import com.tunjid.heron.home.TabLayout
 import com.tunjid.heron.home.ui.TabsExpansionEffect
-import com.tunjid.heron.home.ui.Trends
+import com.tunjid.heron.home.ui.TrendsTicker
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
+import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneFab
@@ -160,12 +161,22 @@ class HomeBindings(
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         signedInProfile = state.signedInProfile,
                         title = {
-                            Trends(
+                            TrendsTicker(
                                 modifier = Modifier
                                     .padding(horizontal = 20.dp)
                                     .fillMaxWidth(),
                                 sharedTransitionScope = paneScaffoldState,
                                 trends = state.trends,
+                                onTrendClicked = { trend ->
+                                    viewModel.accept(
+                                        Action.Navigate.To(
+                                            pathDestination(
+                                                path = trend.link,
+                                                referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                            ),
+                                        ),
+                                    )
+                                },
                             )
                         },
                         onSignedInProfileClicked = { profile, sharedElementKey ->
