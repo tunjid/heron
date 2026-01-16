@@ -21,7 +21,7 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ThreadGateUri
 import kotlinx.serialization.Serializable
 
-class ThreadGate(
+data class ThreadGate(
     val uri: ThreadGateUri,
     val gatedPostUri: PostUri,
     val allowed: Allowed?,
