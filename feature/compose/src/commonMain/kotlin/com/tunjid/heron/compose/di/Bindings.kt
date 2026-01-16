@@ -41,8 +41,8 @@ import com.tunjid.heron.compose.Action
 import com.tunjid.heron.compose.ActualComposeViewModel
 import com.tunjid.heron.compose.ComposeScreen
 import com.tunjid.heron.compose.RouteViewModelInitializer
-import com.tunjid.heron.compose.ui.BottomAppBarFab
 import com.tunjid.heron.compose.ui.ComposePostBottomBar
+import com.tunjid.heron.compose.ui.ComposePostFabRow
 import com.tunjid.heron.compose.ui.TopAppBarFab
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
@@ -141,10 +141,10 @@ class ComposeBindings(
                     )
                 },
                 floatingActionButton = {
-                    BottomAppBarFab(
+                    ComposePostFabRow(
                         modifier = Modifier,
                         state = state,
-                        onCreatePost = viewModel.accept,
+                        onAction = viewModel.accept,
                     )
                 },
                 navigationBar = {

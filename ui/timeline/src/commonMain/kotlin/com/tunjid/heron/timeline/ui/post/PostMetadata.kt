@@ -36,9 +36,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
+import com.tunjid.heron.data.core.models.ThreadGate
+import com.tunjid.heron.data.core.models.allowsAll
+import com.tunjid.heron.data.core.models.allowsNone
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
@@ -65,7 +71,7 @@ import org.jetbrains.compose.resources.stringResource
 internal fun PostMetadata(
     modifier: Modifier = Modifier,
     time: Instant,
-    replyStatus: PostReplyStatus,
+    interactionStatus: PostInteractionStatus,
     postUri: PostUri,
     profileId: ProfileId,
     reposts: Long,
@@ -90,27 +96,16 @@ internal fun PostMetadata(
                 text = "${time.formatDate()} • ${time.formatTime()}",
                 style = textStyle,
             )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            PostInteractionStatus(
                 modifier = Modifier
-                    .clip(CircleShape)
                     .clickable {
                         onMetadataClicked(PostMetadata.Gate(postUri))
                     },
-            ) {
-                Icon(
-                    modifier = Modifier.size(16.dp),
-                    imageVector = replyStatus.icon,
-                    contentDescription = null,
-                    tint = textColor,
-                )
-                Text(
-                    modifier = Modifier,
-                    text = stringResource(replyStatus.stringRes),
-                    style = textStyle,
-                )
-            }
+                iconSize = 16.dp,
+                textColor = textColor,
+                textStyle = textStyle,
+                interactionStatus = interactionStatus,
+            )
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -184,24 +179,81 @@ internal fun MetadataText(
     }
 }
 
-internal enum class PostReplyStatus {
+@Composable
+fun PostInteractionStatus(
+    modifier: Modifier = Modifier,
+    preference: PostInteractionSettingsPreference?,
+) {
+    PostInteractionStatus(
+        modifier = modifier,
+        iconSize = 24.dp,
+        interactionStatus = postInteractionStatus(
+            allowed = preference?.threadGateAllowed,
+        ),
+        textColor = MaterialTheme.colorScheme.outline,
+        textStyle = MaterialTheme.typography.bodyMedium.copy(
+            color = MaterialTheme.colorScheme.outline,
+        ),
+    )
+}
+
+@Composable
+private fun PostInteractionStatus(
+    modifier: Modifier = Modifier,
+    interactionStatus: PostInteractionStatus,
+    iconSize: Dp,
+    textColor: Color,
+    textStyle: TextStyle,
+) {
+    Row(
+        modifier = modifier
+            .clip(CircleShape),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            modifier = Modifier.size(iconSize),
+            imageVector = interactionStatus.icon,
+            contentDescription = null,
+            tint = textColor,
+        )
+        Text(
+            modifier = Modifier,
+            text = stringResource(interactionStatus.stringRes),
+            style = textStyle,
+        )
+    }
+}
+
+internal fun postInteractionStatus(
+    allowed: ThreadGate.Allowed?,
+) = when (allowed) {
+    null -> PostInteractionStatus.All
+    else -> when {
+        allowed.allowsAll -> PostInteractionStatus.All
+        allowed.allowsNone -> PostInteractionStatus.None
+        else -> PostInteractionStatus.Some
+    }
+}
+
+internal enum class PostInteractionStatus {
     All,
     Some,
     None,
 }
 
-private val PostReplyStatus.stringRes
+private val PostInteractionStatus.stringRes
     get() = when (this) {
-        PostReplyStatus.All -> Res.string.post_replies_all
-        PostReplyStatus.Some -> Res.string.post_replies_some
-        PostReplyStatus.None -> Res.string.post_replies_none
+        PostInteractionStatus.All -> Res.string.post_replies_all
+        PostInteractionStatus.Some -> Res.string.post_replies_some
+        PostInteractionStatus.None -> Res.string.post_replies_none
     }
 
-private val PostReplyStatus.icon
+private val PostInteractionStatus.icon
     get() = when (this) {
-        PostReplyStatus.All -> Icons.Rounded.Public
-        PostReplyStatus.Some -> Icons.Rounded.Groups
-        PostReplyStatus.None -> Icons.Rounded.Block
+        PostInteractionStatus.All -> Icons.Rounded.Public
+        PostInteractionStatus.Some -> Icons.Rounded.Groups
+        PostInteractionStatus.None -> Icons.Rounded.Block
     }
 
 sealed class PostMetadata {
