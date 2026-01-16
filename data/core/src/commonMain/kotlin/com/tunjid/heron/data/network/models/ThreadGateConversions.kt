@@ -23,11 +23,14 @@ import app.bsky.feed.ThreadgateFollowingRule
 import app.bsky.feed.ThreadgateListRule
 import app.bsky.feed.ThreadgateMentionRule
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.ThreadGate
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.utilities.asJsonContent
 import kotlin.time.Clock
+import kotlin.time.Instant
 import sh.christian.ozone.api.AtUri
 
-fun Post.Interaction.Upsert.Gate.toNetworkRecord() = BskyThreadGate(
+internal fun Post.Interaction.Upsert.Gate.toNetworkRecord() = BskyThreadGate(
     createdAt = Clock.System.now(),
     post = postUri.uri.let(::AtUri),
     allow = when {
@@ -56,5 +59,30 @@ fun Post.Interaction.Upsert.Gate.toNetworkRecord() = BskyThreadGate(
         }
     },
     hiddenReplies = emptyList(),
+)
+    .asJsonContent(BskyThreadGate.serializer())
+
+internal fun ThreadGate.Allowed.toNetworkRecord(
+    postUri: PostUri,
+    createdAt: Instant,
+) = BskyThreadGate(
+    post = AtUri(postUri.uri),
+    allow = buildList {
+        if (allowsFollowers) add(
+            ThreadgateAllowUnion.FollowerRule(ThreadgateFollowerRule),
+        )
+        if (allowsFollowing) add(
+            ThreadgateAllowUnion.FollowingRule(ThreadgateFollowingRule),
+        )
+        if (allowsMentioned) add(
+            ThreadgateAllowUnion.MentionRule(ThreadgateMentionRule),
+        )
+        if (allowedListUris.isNotEmpty()) addAll(
+            allowedListUris.map { listUri ->
+                ThreadgateAllowUnion.ListRule(ThreadgateListRule(AtUri(listUri.uri)))
+            },
+        )
+    },
+    createdAt = createdAt,
 )
     .asJsonContent(BskyThreadGate.serializer())

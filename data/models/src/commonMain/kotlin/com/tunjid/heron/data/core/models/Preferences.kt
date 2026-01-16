@@ -177,19 +177,8 @@ data class ThreadViewPreference(
 @Serializable
 data class PostInteractionSettingsPreference(
     val threadGateAllowed: ThreadGate.Allowed? = null,
-    val allowedEmbeds: AllowedEmbeds? = null,
-) {
-
-    @Serializable
-    data class AllowedEmbeds(
-        val none: Boolean = false,
-    )
-
-    companion object {
-        val AllowedEmbeds?.embedsDisabled: Boolean
-            get() = this != null && this.none
-    }
-}
+    val allowedEmbeds: PostGate.AllowedEmbeds? = null,
+)
 
 @Serializable
 data class VerificationPreference(

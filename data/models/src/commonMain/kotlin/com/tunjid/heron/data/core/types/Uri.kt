@@ -235,6 +235,14 @@ value class ThreadGateUri(
 
 @Serializable
 @JvmInline
+value class PostGateUri(
+    override val uri: String,
+) : Uri {
+    override fun toString(): String = uri
+}
+
+@Serializable
+@JvmInline
 value class ImageUri(
     override val uri: String,
 ) : Uri {
