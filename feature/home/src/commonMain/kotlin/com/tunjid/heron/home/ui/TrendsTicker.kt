@@ -56,6 +56,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -77,10 +78,12 @@ fun TrendsTicker(
     Box(
         modifier = modifier,
     ) {
+        var isVertical by rememberSaveable { mutableStateOf(true) }
         if (trends.isNotEmpty()) ElevatedCard(
             modifier = Modifier
                 .height(46.dp),
             shape = CircleShape,
+            onClick = { isVertical = !isVertical },
         ) {
             Row(
                 modifier = Modifier
@@ -89,15 +92,19 @@ fun TrendsTicker(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                var isExpanded by rememberSaveable { mutableStateOf(false) }
                 var ticker by rememberSaveable { mutableStateOf(0) }
                 val focusedIndex = ticker % trends.size
                 val trend = trends[focusedIndex]
 
                 AnimatedContent(
-                    targetState = isExpanded,
-                ) { currentlyExpanded ->
-                    if (currentlyExpanded) HorizontalTicker(
+                    targetState = isVertical,
+                ) { vertical ->
+                    if (vertical) VerticalTicker(
+                        sharedTransitionScope = sharedTransitionScope,
+                        animatedVisibilityScope = this@AnimatedContent,
+                        trend = trend,
+                    )
+                    else HorizontalTicker(
                         modifier = Modifier
                             .padding(horizontal = 8.dp),
                         sharedTransitionScope = sharedTransitionScope,
@@ -106,23 +113,16 @@ fun TrendsTicker(
                         trends = trends,
                         onCollapsed = { firstCompletelyVisibleIndex ->
                             ticker = firstCompletelyVisibleIndex
-                            isExpanded = false
+                            isVertical = true
                         },
                         onTrendClicked = onTrendClicked,
-                    ) else VerticalTicker(
-                        sharedTransitionScope = sharedTransitionScope,
-                        animatedVisibilityScope = this@AnimatedContent,
-                        trend = trend,
-                        onClick = {
-                            isExpanded = true
-                        },
                     )
                 }
 
                 LaunchedEffect(Unit) {
-                    snapshotFlow { !isExpanded }
-                        .collectLatest { collapsed ->
-                            if (collapsed) while (isActive) {
+                    snapshotFlow { isVertical }
+                        .collectLatest { vertical ->
+                            if (vertical) while (isActive) {
                                 delay(VerticalTickerChangeDelay)
                                 ++ticker
                             }
@@ -140,13 +140,11 @@ private fun VerticalTicker(
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     trend: Trend,
-    onClick: () -> Unit,
 ) = with(sharedTransitionScope) {
     Row(
         modifier = modifier
             .fillMaxHeight()
-            .padding(horizontal = 12.dp)
-            .clickable { onClick() },
+            .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -164,7 +162,7 @@ private fun VerticalTicker(
                     ),
                     animatedVisibilityScope = animatedVisibilityScope,
                 ),
-            targetState = trend.displayName ?: "",
+            targetState = trend.tickerValue,
             transitionSpec = { TextCheckedTransform },
         ) { currentText ->
             Text(
@@ -209,7 +207,15 @@ private fun HorizontalTicker(
             items = trends,
             key = Trend::link,
             itemContent = { trend ->
-                trend.displayName?.let {
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable { onTrendClicked(trend) }
+                        .padding(
+                            vertical = 4.dp,
+                            horizontal = 6.dp,
+                        ),
+                ) {
                     Text(
                         modifier = Modifier
                             .sharedElement(
@@ -217,13 +223,8 @@ private fun HorizontalTicker(
                                     key = trend.link,
                                 ),
                                 animatedVisibilityScope = animatedVisibilityScope,
-                            )
-                            .padding(
-                                vertical = 4.dp,
-                                horizontal = 8.dp,
-                            )
-                            .clickable { onTrendClicked(trend) },
-                        text = it,
+                            ),
+                        text = trend.tickerValue,
                         color = MaterialTheme.colorScheme.outline,
                         style = MaterialTheme.typography.bodyMediumEmphasized,
                     )
@@ -244,19 +245,24 @@ private fun HorizontalTicker(
 
         while (isActive) {
             withFrameNanos {}
-            state.scrollBy(CHYRON_SCROLL_DELTA)
+            state.scrollBy(HORIZONTAL_TICKER_SCROLL_DELTA)
         }
     }
 }
 
+private val Trend.tickerValue
+    get() = displayName ?: topic
+
 private val LazyListState.middleItemIndex: Int
     get() {
         val visibleItemsInfo = layoutInfo.visibleItemsInfo
+        if (visibleItemsInfo.isEmpty()) return firstVisibleItemIndex
+
         val middleItem = visibleItemsInfo[visibleItemsInfo.size / 2]
         return middleItem.index
     }
 
-private const val CHYRON_SCROLL_DELTA = 0.5f
+private const val HORIZONTAL_TICKER_SCROLL_DELTA = 1f
 private const val BUTTON_ANIMATION_DURATION_MILLIS = 600
 
 private val TextAnimationSpec = tween<IntOffset>(BUTTON_ANIMATION_DURATION_MILLIS)
@@ -271,4 +277,3 @@ private val TextCheckedTransform = slideInVertically(
     animationSpec = TextAnimationSpec,
     targetOffsetY = { -it },
 )
-
