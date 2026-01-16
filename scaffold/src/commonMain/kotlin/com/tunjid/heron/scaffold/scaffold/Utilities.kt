@@ -54,5 +54,3 @@ fun Post.Interaction.duplicateWriteMessage() = Memo.Resource(
 fun Post.Interaction.failedWriteMessage() = Memo.Resource(
     stringResource = Res.string.failed_post_interaction,
 )
-
-internal val FabSharedElementZIndex = 4f

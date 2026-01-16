@@ -37,6 +37,7 @@ import com.tunjid.heron.compose.State
 import com.tunjid.heron.compose.hasLongPost
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.text.links
 import heron.feature.compose.generated.resources.Res
 import heron.feature.compose.generated.resources.post
@@ -55,6 +56,7 @@ fun PaneScaffoldState.TopAppBarFab(
                 if (isActive) sharedElementWithCallerManagedVisibility(
                     sharedContentState = rememberSharedContentState(ComposePostFabSharedElementKey),
                     visible = state.hasLongPost,
+                    zIndexInOverlay = UiTokens.fabSharedElementZIndex,
                 )
                 else this
             },
@@ -112,6 +114,7 @@ private fun PaneScaffoldState.ComposePostFab(
             .sharedElementWithCallerManagedVisibility(
                 sharedContentState = rememberSharedContentState(ComposePostFabSharedElementKey),
                 visible = !state.hasLongPost,
+                zIndexInOverlay = UiTokens.fabSharedElementZIndex,
             )
             .alpha(if (state.postText.text.isNotBlank()) 1f else 0.6f),
         text = stringResource(Res.string.post),

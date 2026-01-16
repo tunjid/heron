@@ -35,6 +35,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material3.FloatingActionButton
@@ -102,10 +103,11 @@ fun PaneScaffoldState.PaneFab(
                 sharedContentState = rememberSharedContentState(
                     key = FabSharedElementKey,
                 ),
-                zIndexInOverlay = FabSharedElementZIndex,
+                zIndexInOverlay = UiTokens.fabSharedElementZIndex,
             ) {
                 FloatingActionButton(
                     modifier = Modifier
+                        .requiredHeight(56.dp)
                         .graphicsLayer { alpha = fabAlpha.value },
                     onClick = { if (enabled) onClick() },
                     shape = MaterialTheme.shapes.small.copy(CornerSize(percent = 50)),

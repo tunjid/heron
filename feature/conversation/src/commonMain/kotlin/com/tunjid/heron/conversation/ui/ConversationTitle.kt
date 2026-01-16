@@ -104,7 +104,7 @@ private fun MultipleParticipantTitle(
                         contentDescription = null,
                     )
                 },
-                zIndexInOverlay = UiTokens.appBarSharedElementOverlayZIndex,
+                zIndexInOverlay = UiTokens.appBarSharedElementZIndex,
                 modifier = Modifier
                     .size(32.dp)
                     .offset(x = index * (-8).dp)
@@ -147,7 +147,7 @@ private fun SingleMemberTitle(
                         prefix = sharedElementPrefix,
                     ),
                 ),
-                zIndexInOverlay = UiTokens.appBarSharedElementOverlayZIndex,
+                zIndexInOverlay = UiTokens.appBarSharedElementZIndex,
                 state = remember(profile.avatar) {
                     ImageArgs(
                         url = profile.avatar?.uri,

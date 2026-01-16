@@ -47,7 +47,9 @@ object UiTokens {
 
     val BookmarkBlue: Color = Color(0xFF1D9BF0)
 
-    const val appBarSharedElementOverlayZIndex = 12f
+    const val fabSharedElementZIndex = 14f
+    const val appBarSharedElementZIndex = 12f
+    const val navigationBarSharedElementZIndex = 2f
 
     val statusBarHeight: Dp
         @Composable get() = WindowInsets.statusBars.asPaddingValues().run {
