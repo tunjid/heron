@@ -29,6 +29,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.models.timelineRecordUri
@@ -314,6 +315,7 @@ private fun loadProfileMutations(
                                         timelines.map { timeline ->
                                             ProfileScreenStateHolders.Timeline(
                                                 scope.timelineStateHolder(
+                                                    initialItems = TimelineItem.LoadingItems,
                                                     refreshOnStart = true,
                                                     timeline = timeline,
                                                     startNumColumns = 1,
