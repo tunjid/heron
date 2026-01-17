@@ -95,7 +95,7 @@ internal fun MultipleEntitySaver.add(
 
 /**
  * Allows up to [ITEM_SORT_BUFFER] items (333 pages, 30 items per page) before sorting logic breaks.
- * Safe from Long overflow for ~200,000 years.
+ * Safe from Long overflow for ~29,000 years.
  */
 private fun CursorQuery.itemSortKey(
     index: Int,
