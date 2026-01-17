@@ -135,7 +135,7 @@ fun TimelineTitle(
                     sharedContentState = rememberSharedContentState(
                         key = timeline.titleSharedElementKey(sharedElementPrefix),
                     ),
-                    zIndexInOverlay = UiTokens.appBarSharedElementZIndex,
+                    zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),
                 ) {
                     Text(
                         modifier = Modifier,
@@ -150,7 +150,7 @@ fun TimelineTitle(
                     sharedContentState = rememberSharedContentState(
                         key = timeline.subtitleSharedElementKey(sharedElementPrefix),
                     ),
-                    zIndexInOverlay = UiTokens.appBarSharedElementZIndex,
+                    zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),
                 ) {
                     Text(
                         modifier = Modifier,
