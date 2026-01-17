@@ -248,25 +248,22 @@ private fun HorizontalTicker(
     LaunchedEffect(state.isScrollInProgress) {
         if (state.isScrollInProgress) return@LaunchedEffect
 
-        while (isActive) {
-            val shouldScrollForward = when {
-                // Scroll forward by default
-                !state.lastScrolledForward && !state.lastScrolledBackward -> state.canScrollForward
-                // Continue scrolling in the last scrolled direction
-                state.lastScrolledForward -> state.canScrollForward
-                state.lastScrolledBackward -> !state.canScrollBackward
-                else -> true
+        while (isActive) with(state) {
+            // When scrolling backward, continue until the start, then reverse.
+            // Otherwise, scroll forward until the end, then reverse.
+            val shouldScrollForward =
+                if (lastScrolledBackward) !canScrollBackward
+                else canScrollForward
+
+            val reachedEndWhileScrollingForward = lastScrolledForward && !canScrollForward
+            val reachedStartWhileScrollingBackward = lastScrolledBackward && !canScrollBackward
+
+            if (reachedEndWhileScrollingForward || reachedStartWhileScrollingBackward) {
+                delay(HorizontalTickerDirectionChangeDelay)
             }
 
-            if (state.lastScrolledForward && !state.canScrollForward) delay(
-                HorizontalTickerDirectionChangeDelay,
-            )
-            else if (state.lastScrolledBackward && !state.canScrollBackward) delay(
-                HorizontalTickerDirectionChangeDelay,
-            )
-
             withFrameNanos {}
-            state.scrollBy(
+            scrollBy(
                 if (shouldScrollForward) HORIZONTAL_TICKER_SCROLL_DELTA
                 else -HORIZONTAL_TICKER_SCROLL_DELTA,
             )
