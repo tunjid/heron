@@ -22,6 +22,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.network.NetworkConnectionException
 import com.tunjid.heron.data.repository.MessageRepository
+import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.SavedState
@@ -63,6 +64,7 @@ sealed class WriteQueue {
     internal abstract val messageRepository: MessageRepository
 
     internal abstract val timelineRepository: TimelineRepository
+    internal abstract val notificationRepository: NotificationsRepository
 
     abstract val queueChanges: Flow<List<Writable>>
 
@@ -88,6 +90,7 @@ internal class SnapshotWriteQueue @Inject constructor(
     override val profileRepository: ProfileRepository,
     override val messageRepository: MessageRepository,
     override val timelineRepository: TimelineRepository,
+    override val notificationRepository: NotificationsRepository,
 ) : WriteQueue() {
     // At some point this queue should be persisted to disk
     private val queue = mutableStateListOf<Writable>()
@@ -139,6 +142,7 @@ internal class PersistedWriteQueue @Inject constructor(
     override val messageRepository: MessageRepository,
     override val timelineRepository: TimelineRepository,
     private val savedStateDataSource: SavedStateDataSource,
+    override val notificationRepository: NotificationsRepository,
 ) : WriteQueue() {
 
     private val processingWriteIds = mutableSetOf<String>()

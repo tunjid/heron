@@ -53,6 +53,8 @@ data class Preferences(
     val postInteractionSettings: PostInteractionSettingsPreference? = null,
     @ProtoNumber(11)
     val verificationPreferences: VerificationPreference? = null,
+    @ProtoNumber(12)
+    val notificationPreferences: NotificationPreferences? = null,
 ) : UrlEncodableModel {
 
     @Serializable

@@ -19,10 +19,14 @@ package com.tunjid.heron.data.repository
 import app.bsky.feed.GetPostsQueryParams
 import app.bsky.feed.GetPostsResponse
 import app.bsky.feed.PostView
+import app.bsky.notification.FilterablePreference
+import app.bsky.notification.FilterablePreferenceInclude
 import app.bsky.notification.GetUnreadCountQueryParams
 import app.bsky.notification.ListNotificationsNotification
 import app.bsky.notification.ListNotificationsQueryParams
 import app.bsky.notification.ListNotificationsResponse
+import app.bsky.notification.Preference
+import app.bsky.notification.PutPreferencesV2Request
 import app.bsky.notification.UpdateSeenRequest
 import com.tunjid.heron.data.InternalEndpoints
 import com.tunjid.heron.data.core.models.Block
@@ -36,7 +40,9 @@ import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Like
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Repost
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.isRestricted
@@ -67,6 +73,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.multipleEntitysaver.associatedPostUri
 import com.tunjid.heron.data.utilities.nextCursorFlow
+import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.toOutcome
@@ -136,6 +143,10 @@ interface NotificationsRepository {
         token: String,
     ): Outcome
 
+    suspend fun updateNotificationPreferences(
+        update: NotificationPreferences.Update,
+    ): Outcome
+
     suspend fun markNotificationPermissionsRequested(): Outcome
 }
 
@@ -150,6 +161,8 @@ internal class OfflineNotificationsRepository @Inject constructor(
     private val networkService: NetworkService,
     private val networkMonitor: NetworkMonitor,
     private val savedStateDataSource: SavedStateDataSource,
+    private val preferenceUpdater: PreferenceUpdater,
+    private val userDataRepository: UserDataRepository,
     httpClient: HttpClient,
 ) : NotificationsRepository {
 
@@ -293,6 +306,77 @@ internal class OfflineNotificationsRepository @Inject constructor(
             },
         ).toOutcome()
     } ?: expiredSessionOutcome()
+
+    override suspend fun updateNotificationPreferences(
+        update: NotificationPreferences.Update,
+    ): Outcome =
+        networkService.runCatchingWithMonitoredNetworkRetry {
+            getPreferencesForNotification()
+        }.toOutcome { it ->
+            val currentPrefs = it.preferences
+            val updateRequest = when (update) {
+                is NotificationPreferences.Update.Filterable -> {
+                    val filterablePref = FilterablePreference(
+                        include = FilterablePreferenceInclude.safeValueOf(update.preference.include.value),
+                        list = update.preference.list,
+                        push = update.preference.push,
+                    )
+                    PutPreferencesV2Request(
+                        follow = if (update.reason == NotificationPreferences.Update.Reason.Follow) filterablePref else currentPrefs.follow,
+                        like = if (update.reason == NotificationPreferences.Update.Reason.Like) filterablePref else currentPrefs.like,
+                        likeViaRepost = if (update.reason == NotificationPreferences.Update.Reason.LikeViaRepost) filterablePref else currentPrefs.likeViaRepost,
+                        mention = if (update.reason == NotificationPreferences.Update.Reason.Mention) filterablePref else currentPrefs.mention,
+                        quote = if (update.reason == NotificationPreferences.Update.Reason.Quote) filterablePref else currentPrefs.quote,
+                        reply = if (update.reason == NotificationPreferences.Update.Reason.Reply) filterablePref else currentPrefs.reply,
+                        repost = if (update.reason == NotificationPreferences.Update.Reason.Repost) filterablePref else currentPrefs.repost,
+                        repostViaRepost = if (update.reason == NotificationPreferences.Update.Reason.RepostViaRepost) filterablePref else currentPrefs.repostViaRepost,
+                        starterpackJoined = currentPrefs.starterpackJoined,
+                        subscribedPost = currentPrefs.subscribedPost,
+                        unverified = currentPrefs.unverified,
+                        verified = currentPrefs.verified,
+                        chat = currentPrefs.chat,
+                    )
+                }
+                is NotificationPreferences.Update.Simple -> {
+                    val simplePref = Preference(
+                        list = update.preference.list,
+                        push = update.preference.push,
+                    )
+                    PutPreferencesV2Request(
+                        follow = currentPrefs.follow,
+                        like = currentPrefs.like,
+                        likeViaRepost = currentPrefs.likeViaRepost,
+                        mention = currentPrefs.mention,
+                        quote = currentPrefs.quote,
+                        reply = currentPrefs.reply,
+                        repost = currentPrefs.repost,
+                        repostViaRepost = currentPrefs.repostViaRepost,
+                        starterpackJoined = if (update.reason == NotificationPreferences.Update.Reason.StarterpackJoined) simplePref else currentPrefs.starterpackJoined,
+                        subscribedPost = if (update.reason == NotificationPreferences.Update.Reason.SubscribedPost) simplePref else currentPrefs.subscribedPost,
+                        unverified = if (update.reason == NotificationPreferences.Update.Reason.Unverified) simplePref else currentPrefs.unverified,
+                        verified = if (update.reason == NotificationPreferences.Update.Reason.Verified) simplePref else currentPrefs.verified,
+                        chat = currentPrefs.chat,
+                    )
+                }
+            }
+            networkService.runCatchingWithMonitoredNetworkRetry {
+                putPreferencesV2(request = updateRequest)
+            }.toOutcome {
+                val preferences = savedStateDataSource
+                    .savedState.value
+                    .signedInProfileData
+                    ?.preferences
+                    ?: Preferences.EmptyPreferences.copy(notificationPreferences = null)
+
+                val updateNotificationPreferences = preferenceUpdater.update(
+                    notificationPreferences = it.preferences,
+                    preferences = preferences,
+                )
+                savedStateDataSource.updateSignedInUserNotifications {
+                    copy(preferences = updateNotificationPreferences.notificationPreferences)
+                }
+            }
+        }
 
     override suspend fun resolvePushNotification(
         query: NotificationsQuery.Push,
