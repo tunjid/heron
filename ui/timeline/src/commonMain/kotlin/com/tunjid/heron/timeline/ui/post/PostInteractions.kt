@@ -599,8 +599,7 @@ private fun PostInteractionsBottomSheet(
                         text = stringResource(
                             if (state.isSignedIn) CommonStrings.cancel
                             else CommonStrings.sign_in,
-                        )
-                            .capitalize(Locale.current),
+                        ),
                         style = MaterialTheme.typography.bodyLarge,
                     )
                 },
