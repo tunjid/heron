@@ -102,16 +102,17 @@ import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
+import heron.ui.core.generated.resources.cancel
+import heron.ui.core.generated.resources.sign_in
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.bookmarked
-import heron.ui.timeline.generated.resources.cancel
 import heron.ui.timeline.generated.resources.expand_options
 import heron.ui.timeline.generated.resources.liked
 import heron.ui.timeline.generated.resources.quote
 import heron.ui.timeline.generated.resources.reply
 import heron.ui.timeline.generated.resources.repost
-import heron.ui.timeline.generated.resources.sign_in
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -596,8 +597,8 @@ private fun PostInteractionsBottomSheet(
                 content = {
                     Text(
                         text = stringResource(
-                            if (state.isSignedIn) Res.string.cancel
-                            else Res.string.sign_in,
+                            if (state.isSignedIn) CommonStrings.cancel
+                            else CommonStrings.sign_in,
                         )
                             .capitalize(Locale.current),
                         style = MaterialTheme.typography.bodyLarge,
