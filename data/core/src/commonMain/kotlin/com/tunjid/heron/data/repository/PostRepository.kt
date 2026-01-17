@@ -34,6 +34,9 @@ import app.bsky.feed.PostReplyRef
 import app.bsky.feed.PostView
 import app.bsky.feed.Repost
 import app.bsky.feed.Repost as BskyRepost
+import com.atproto.repo.ApplyWritesCreate
+import com.atproto.repo.ApplyWritesRequest
+import com.atproto.repo.ApplyWritesRequestWriteUnion
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.CreateRecordResponse
 import com.atproto.repo.CreateRecordValidationStatus
@@ -75,9 +78,11 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.VideoUploadService
 import com.tunjid.heron.data.network.models.toNetworkRecord
 import com.tunjid.heron.data.utilities.MediaBlob
+import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.facet
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.mapNotNullDistinctUntilChanged
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
@@ -92,6 +97,7 @@ import dev.zacsweers.metro.Inject
 import io.ktor.utils.io.ByteReadChannel
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -104,7 +110,6 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.io.Source
 import kotlinx.serialization.Serializable
 import sh.christian.ozone.api.AtUri
@@ -113,6 +118,7 @@ import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
 import sh.christian.ozone.api.model.Blob
+import sh.christian.ozone.api.model.JsonContent
 
 @Serializable
 data class PostDataQuery(
@@ -162,6 +168,7 @@ internal class OfflinePostRepository @Inject constructor(
     private val networkService: NetworkService,
     private val videoUploadService: VideoUploadService,
     private val transactionWriter: TransactionWriter,
+    private val tidGenerator: TidGenerator,
     private val fileManager: FileManager,
     private val savedStateDataSource: SavedStateDataSource,
     private val profileLookup: ProfileLookup,
@@ -400,8 +407,7 @@ internal class OfflinePostRepository @Inject constructor(
                 viewingProfileId = signedInProfileId?.id,
                 postUris = setOf(uri),
             )
-                .distinctUntilChanged()
-                .mapNotNull {
+                .mapNotNullDistinctUntilChanged {
                     it.firstOrNull()?.asExternalModel(
                         embeddedRecord = null,
                     )
@@ -413,87 +419,52 @@ internal class OfflinePostRepository @Inject constructor(
     ): Outcome = savedStateDataSource.inCurrentProfileSession currentSession@{ signedInProfileId ->
         if (signedInProfileId == null) return@currentSession expiredSessionOutcome()
 
-        val resolvedLinks: List<Link> = profileLookup.resolveProfileHandleLinks(
-            links = request.links,
+        val writes = mutableListOf<ApplyWritesCreate>()
+        val now = Clock.System.now()
+
+        val postTid = tidGenerator.generate()
+        val rKey = RKey(postTid)
+        val postUri = PostUri(
+            profileId = request.authorId,
+            postRecordKey = RecordKey(postTid),
         )
 
-        val reply = request.metadata.reply?.parent?.let { parent ->
-            val parentRef = StrongRef(
-                uri = parent.uri.uri.let(::AtUri),
-                cid = parent.cid.id.let(::Cid),
-            )
-            when (val ref = parent.record?.replyRef) {
-                // Starting a new thread
-                null -> PostReplyRef(
-                    root = parentRef,
-                    parent = parentRef,
-                )
-                // Continuing a thread
-                else -> PostReplyRef(
-                    root = StrongRef(
-                        uri = ref.rootUri.uri.let(::AtUri),
-                        cid = ref.rootCid.id.let(::Cid),
-                    ),
-                    parent = parentRef,
-                )
-            }
-        }
-        val blobs = runCatchingUnlessCancelled {
-            when {
-                request.metadata.embeddedMedia.isNotEmpty() -> coroutineScope {
-                    request.metadata.embeddedMedia.map { file ->
-                        async {
-                            when (file) {
-                                is File.Media.Photo -> fileManager.source(file).use {
-                                    networkService.uploadImageBlob(data = it)
-                                }
-                                is File.Media.Video -> videoUploadService.uploadVideo(
-                                    file = file,
-                                )
-                            }
-                                .map(file::with)
-                                .onSuccess { fileManager.delete(file) }
-                        }
-                    }
-                        .awaitAll()
-                        .mapNotNull(Result<MediaBlob?>::getOrNull)
-                }
-                @Suppress("DEPRECATION")
-                // Deprecated media upload path is no longer supported
-                request.metadata.mediaFiles.isNotEmpty() -> emptyList()
-                else -> emptyList()
-            }
-        }.getOrNull() ?: emptyList()
+        val blobsResult = request.mediaBlobs()
+        val blobs = blobsResult.getOrNull() ?: return@currentSession Outcome.Failure(
+            requireNotNull(blobsResult.exceptionOrNull()),
+        )
 
-        val mediaToUploadCount = request.metadata.embeddedMedia.size.takeIf { it > 0 }
-            ?: @Suppress("DEPRECATION") request.metadata.mediaFiles.size
-
-        if (mediaToUploadCount > 0 && blobs.size != mediaToUploadCount) {
-            return@currentSession Outcome.Failure(Exception("Media upload failed"))
-        }
-
-        val createRecordRequest = CreateRecordRequest(
-            repo = request.authorId.id.let(::Did),
-            collection = Nsid(PostUri.NAMESPACE),
-            record = BskyPost(
-                text = request.text,
-                reply = reply,
-                embed = postEmbedUnion(
-                    embeddedRecordReference = request.metadata.embeddedRecordReference
-                        ?: request.metadata
-                            .quote
-                            ?.interaction
-                            ?.let { Record.Reference(it.postId, it.postUri) },
-                    mediaBlobs = blobs,
+        writes.add(
+            ApplyWritesCreate(
+                collection = Nsid(PostUri.NAMESPACE),
+                rkey = rKey,
+                value = request.postNetworkRecord(
+                    blobs = blobs,
+                    createdAt = now,
                 ),
-                facets = resolvedLinks.facet(),
-                createdAt = Clock.System.now(),
-            )
-                .asJsonContent(BskyPost.serializer()),
+            ),
+        )
+
+        val threadGateAllowed = request.metadata.allowed
+        if (threadGateAllowed != null) writes.add(
+            ApplyWritesCreate(
+                collection = Nsid(ThreadGateUri.NAMESPACE),
+                rkey = rKey,
+                value = threadGateAllowed.toNetworkRecord(
+                    postUri = postUri,
+                    createdAt = now,
+                ),
+            ),
         )
 
         networkService.runCatchingWithMonitoredNetworkRetry {
-            createRecord(createRecordRequest)
+            applyWrites(
+                ApplyWritesRequest(
+                    repo = request.authorId.id.let(::Did),
+                    writes = writes.map(ApplyWritesRequestWriteUnion::Create),
+                    validate = true,
+                ),
+            )
         }.toOutcome()
     } ?: expiredSessionOutcome()
 
@@ -663,16 +634,17 @@ internal class OfflinePostRepository @Inject constructor(
                         var updatedPostView: PostView? = null
 
                         for (i in 0 until MaxThreadGateUpdateAttempts) {
-                            val fetchedPostView = networkService.runCatchingWithMonitoredNetworkRetry {
-                                getPosts(
-                                    GetPostsQueryParams(
-                                        listOf(interaction.postUri.uri.let(::AtUri)),
-                                    ),
-                                )
-                            }
-                                .getOrNull()
-                                ?.posts
-                                ?.firstOrNull()
+                            val fetchedPostView =
+                                networkService.runCatchingWithMonitoredNetworkRetry {
+                                    getPosts(
+                                        GetPostsQueryParams(
+                                            listOf(interaction.postUri.uri.let(::AtUri)),
+                                        ),
+                                    )
+                                }
+                                    .getOrNull()
+                                    ?.posts
+                                    ?.firstOrNull()
 
                             if (fetchedPostView != null && updatedRecordId == fetchedPostView.threadgate?.cid) {
                                 updatedPostView = fetchedPostView
@@ -745,6 +717,88 @@ internal class OfflinePostRepository @Inject constructor(
                 },
         )
     }
+
+    private suspend fun Post.Create.Request.postNetworkRecord(
+        blobs: List<MediaBlob>,
+        createdAt: Instant,
+    ): JsonContent {
+        val resolvedLinks: List<Link> = profileLookup.resolveProfileHandleLinks(
+            links = links,
+        )
+        val reply = metadata.reply?.parent?.let { parent ->
+            val parentRef = StrongRef(
+                uri = parent.uri.uri.let(::AtUri),
+                cid = parent.cid.id.let(::Cid),
+            )
+            when (val ref = parent.record?.replyRef) {
+                // Starting a new thread
+                null -> PostReplyRef(
+                    root = parentRef,
+                    parent = parentRef,
+                )
+                // Continuing a thread
+                else -> PostReplyRef(
+                    root = StrongRef(
+                        uri = ref.rootUri.uri.let(::AtUri),
+                        cid = ref.rootCid.id.let(::Cid),
+                    ),
+                    parent = parentRef,
+                )
+            }
+        }
+        return BskyPost(
+            text = text,
+            reply = reply,
+            embed = postEmbedUnion(
+                embeddedRecordReference = metadata.embeddedRecordReference
+                    ?: metadata
+                        .quote
+                        ?.interaction
+                        ?.let { Record.Reference(it.postId, it.postUri) },
+                mediaBlobs = blobs,
+            ),
+            facets = resolvedLinks.facet(),
+            createdAt = createdAt,
+        )
+            .asJsonContent(BskyPost.serializer())
+    }
+
+    private suspend fun Post.Create.Request.mediaBlobs(): Result<List<MediaBlob>> =
+        runCatchingUnlessCancelled {
+            val blobs = when {
+                metadata.embeddedMedia.isNotEmpty() -> coroutineScope {
+                    metadata.embeddedMedia.map { file ->
+                        async {
+                            when (file) {
+                                is File.Media.Photo -> fileManager.source(file).use {
+                                    networkService.uploadImageBlob(data = it)
+                                }
+                                is File.Media.Video -> videoUploadService.uploadVideo(
+                                    file = file,
+                                )
+                            }
+                                .map(file::with)
+                                .onSuccess { fileManager.delete(file) }
+                        }
+                    }
+                        .awaitAll()
+                        .mapNotNull(Result<MediaBlob?>::getOrNull)
+                }
+                @Suppress("DEPRECATION")
+                // Deprecated media upload path is no longer supported
+                metadata.mediaFiles.isNotEmpty() -> emptyList()
+                else -> emptyList()
+            }
+
+            val mediaToUploadCount = metadata.embeddedMedia.size.takeIf { it > 0 }
+                ?: @Suppress("DEPRECATION") metadata.mediaFiles.size
+
+            if (mediaToUploadCount > 0 && blobs.size != mediaToUploadCount) {
+                throw Exception("Media upload failed")
+            }
+
+            return@runCatchingUnlessCancelled blobs
+        }
 }
 
 private fun List<PopulatedProfileEntity>.asExternalModels() =

@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.CommonStrings
@@ -142,7 +143,7 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
     TopAppBar(
         modifier = modifier
             .renderInSharedTransitionScopeOverlay(
-                zIndexInOverlay = PoppableDestinationTopAppBarSharedElementZIndex,
+                zIndexInOverlay = UiTokens.appBarSharedElementZIndex,
                 renderInOverlay = {
                     paneState.pane == ThreePane.Primary &&
                         isTransitionActive &&
@@ -227,6 +228,5 @@ private val BackArrowExit: ExitTransition = slideOutHorizontally { -it }
 private val RootAppBarBlurRadius = 60.dp
 
 private const val SignedInUserAvatarSharedElementKey = "self"
-private const val PoppableDestinationTopAppBarSharedElementZIndex = 10f
 private const val MaxTransparency = 0.1f
 private const val HundredPercent = 1f

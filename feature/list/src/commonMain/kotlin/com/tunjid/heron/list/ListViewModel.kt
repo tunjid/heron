@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.timelineRecordUri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
@@ -211,6 +212,7 @@ private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
 
     val createdHolder = ListScreenStateHolders.Timeline(
         mutator = scope.timelineStateHolder(
+            initialItems = TimelineItem.LoadingItems,
             refreshOnStart = true,
             timeline = timeline,
             startNumColumns = 1,

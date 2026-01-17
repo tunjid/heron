@@ -121,6 +121,8 @@ data class Post(
             val embeddedMedia: List<File.Media> = emptyList(),
             @ProtoNumber(5)
             val embeddedRecordReference: com.tunjid.heron.data.core.models.Record.Reference? = null,
+            @ProtoNumber(6)
+            val allowed: ThreadGate.Allowed? = null,
         ) {
             init {
                 @Suppress("DEPRECATION")

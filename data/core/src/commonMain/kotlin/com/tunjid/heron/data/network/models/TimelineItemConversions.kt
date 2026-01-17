@@ -38,11 +38,13 @@ import kotlin.time.Instant
 
 internal fun FeedViewPost.feedItemEntity(
     sourceId: String,
+    itemSort: Long,
     viewingProfileId: ProfileId?,
 ) = TimelineItemEntity(
     postUri = PostUri(post.uri.atUri),
     viewingProfileId = viewingProfileId,
     sourceId = sourceId,
+    itemSort = itemSort,
     reply = reply?.let {
         val rootPostEntity = it.root.postEntity()
         val parentPostEntity = it.parent.postEntity()

@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.timeline.utilities
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -87,7 +86,7 @@ fun Timeline.displayName() = when (this) {
     }.capitalize(Locale.current)
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun TimelineTitle(
     modifier: Modifier = Modifier,
@@ -111,7 +110,7 @@ fun TimelineTitle(
             sharedContentState = rememberSharedContentState(
                 key = timeline.avatarSharedElementKey(sharedElementPrefix),
             ),
-            zIndexInOverlay = UiTokens.appBarSharedElementOverlayZIndex,
+            zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),
         ) {
             AsyncImage(
                 modifier = Modifier
@@ -136,7 +135,7 @@ fun TimelineTitle(
                     sharedContentState = rememberSharedContentState(
                         key = timeline.titleSharedElementKey(sharedElementPrefix),
                     ),
-                    zIndexInOverlay = UiTokens.appBarSharedElementOverlayZIndex,
+                    zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),
                 ) {
                     Text(
                         modifier = Modifier,
@@ -151,7 +150,7 @@ fun TimelineTitle(
                     sharedContentState = rememberSharedContentState(
                         key = timeline.subtitleSharedElementKey(sharedElementPrefix),
                     ),
-                    zIndexInOverlay = UiTokens.appBarSharedElementOverlayZIndex,
+                    zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),
                 ) {
                     Text(
                         modifier = Modifier,

@@ -214,6 +214,7 @@ fun ConversationMembers(
                         prefix = conversationListSharedElementPrefix(conversationId),
                     ),
                 ),
+                zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),
                 state = remember(profile.did) {
                     ImageArgs(
                         url = profile.avatar?.uri,

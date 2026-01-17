@@ -19,6 +19,7 @@ package com.tunjid.heron.feed
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.timelineRecordUri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
@@ -191,6 +192,7 @@ private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
     val timeline = timelineRepository.timeline(request)
         .first()
     val createdHolder = scope.timelineStateHolder(
+        initialItems = TimelineItem.LoadingItems,
         refreshOnStart = true,
         timeline = timeline,
         startNumColumns = 1,

@@ -29,7 +29,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ProfileViewerState
+import com.tunjid.heron.data.core.models.isBlocked
+import com.tunjid.heron.data.core.models.isBlockedBy
 import com.tunjid.heron.data.core.models.isFollowing
+import com.tunjid.heron.ui.rememberLatchedState
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.viewer_state_follow
 import heron.ui.core.generated.resources.viewer_state_following
@@ -44,23 +47,38 @@ fun ProfileViewerState(
     onClick: () -> Unit,
 ) {
     val follows = viewerState.isFollowing
-    val followStatusText = stringResource(
-        if (isSignedInProfile) Res.string.edit
-        else if (follows) CommonStrings.viewer_state_following
-        else CommonStrings.viewer_state_follow,
+    val latchedStatus = rememberLatchedState(
+        if (isSignedInProfile) FollowStatus.Edit
+        else if (follows) FollowStatus.Following
+        else FollowStatus.NotFollowing,
     )
-    FilterChip(
+    val followStatusText = stringResource(
+        when (latchedStatus.value) {
+            FollowStatus.Edit -> Res.string.edit
+            FollowStatus.Following -> CommonStrings.viewer_state_following
+            FollowStatus.NotFollowing -> CommonStrings.viewer_state_follow
+        },
+    )
+    if (!viewerState.isBlocked && !viewerState.isBlockedBy) FilterChip(
         modifier = Modifier
             .animateContentSize(),
-        selected = follows,
-        onClick = onClick,
+        selected = latchedStatus.value == FollowStatus.Following,
+        onClick = {
+            // Try to show feedback as quickly as possible
+            if (!isSignedInProfile && viewerState != null) latchedStatus.latch(
+                if (follows) FollowStatus.NotFollowing
+                else FollowStatus.Following,
+            )
+            onClick()
+        },
         shape = FollowChipShape,
         leadingIcon = {
             Icon(
-                imageVector =
-                if (isSignedInProfile) Icons.Rounded.Edit
-                else if (follows) Icons.Rounded.Check
-                else Icons.Rounded.Add,
+                imageVector = when (latchedStatus.value) {
+                    FollowStatus.Edit -> Icons.Rounded.Edit
+                    FollowStatus.Following -> Icons.Rounded.Check
+                    FollowStatus.NotFollowing -> Icons.Rounded.Add
+                },
                 contentDescription = followStatusText,
             )
         },
@@ -68,6 +86,12 @@ fun ProfileViewerState(
             Text(followStatusText)
         },
     )
+}
+
+private enum class FollowStatus {
+    Edit,
+    NotFollowing,
+    Following,
 }
 
 private val FollowChipShape = RoundedCornerShape(16.dp)

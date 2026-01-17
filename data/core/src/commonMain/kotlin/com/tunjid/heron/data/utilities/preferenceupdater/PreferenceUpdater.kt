@@ -45,8 +45,9 @@ import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.LabelerPreference
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.NotificationPreferences
+import com.tunjid.heron.data.core.models.PostGate
+import com.tunjid.heron.data.core.models.PostGate.Companion.embedsDisabled
 import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
-import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference.Companion.embedsDisabled
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.ThreadViewPreference
@@ -196,7 +197,7 @@ internal class ThingPreferenceUpdater @Inject constructor(
                         },
                         allowedEmbeds = preferencesUnion.value.postgateEmbeddingRules?.let {
                             it.fold(
-                                initial = PostInteractionSettingsPreference.AllowedEmbeds(),
+                                initial = PostGate.AllowedEmbeds(),
                                 operation = { allowed, value ->
                                     when (value) {
                                         is BskyPostEmbedGateRule.DisableRule ->
