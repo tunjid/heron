@@ -31,12 +31,11 @@ import com.tunjid.heron.ui.SimpleDialogTitle
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.block_account_dialog_description
 import heron.ui.core.generated.resources.block_account_dialog_title
+import heron.ui.core.generated.resources.cancel
 import heron.ui.core.generated.resources.mute_account_dialog_description
 import heron.ui.core.generated.resources.mute_account_dialog_title
 import heron.ui.core.generated.resources.viewer_state_block_account
 import heron.ui.core.generated.resources.viewer_state_mute_account
-import heron.ui.timeline.generated.resources.Res
-import heron.ui.timeline.generated.resources.cancel
 import org.jetbrains.compose.resources.stringResource
 
 @Stable
@@ -107,7 +106,7 @@ private fun ProfileRestrictionDialog(
         },
         dismissButton = {
             NeutralDialogButton(
-                text = stringResource(Res.string.cancel),
+                text = stringResource(CommonStrings.cancel),
                 onClick = onDismiss,
             )
         },
