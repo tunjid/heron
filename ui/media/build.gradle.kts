@@ -70,6 +70,7 @@ kotlin {
         desktopMain {
             dependencies {
                 implementation(libs.ktor.client.java)
+                implementation(libs.vlc.java)
             }
         }
 //        iosMain {

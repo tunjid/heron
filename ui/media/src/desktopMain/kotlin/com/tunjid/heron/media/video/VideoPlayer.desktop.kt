@@ -16,27 +16,93 @@
 
 package com.tunjid.heron.media.video
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
-import com.tunjid.heron.images.AsyncImage
-import com.tunjid.heron.images.ImageArgs
+import androidx.compose.ui.awt.SwingPanel
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.IntSize
+import java.awt.Canvas
+import java.awt.Color as AwtColor
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.delay
 
 @Composable
 actual fun VideoPlayer(
     modifier: Modifier,
     state: VideoPlayerState,
 ) {
-    AsyncImage(
-        modifier = modifier,
-        args = remember(state.thumbnailUrl, state.contentScale, state.alignment, state.shape) {
-            ImageArgs(
-                url = state.thumbnailUrl,
-                contentDescription = null,
-                alignment = state.alignment,
-                contentScale = state.contentScale,
-                shape = state.shape,
+    check(state is VlcPlayerState)
+
+    Box(modifier = modifier) {
+        if (state.canShowVideo) {
+            VideoSurface(
+                modifier = Modifier.fillMaxSize(),
+                state = state,
             )
+        }
+        if (state.canShowStill) {
+            VideoStill(
+                modifier = Modifier.fillMaxSize(),
+                state = state,
+            )
+        }
+    }
+
+    // Keep player position up to date
+    LaunchedEffect(state) {
+        while (true) {
+            if (state.status is PlayerStatus.Play) {
+                state.updateFromPlayer()
+            }
+            delay(1.seconds)
+        }
+    }
+
+    DisposableEffect(state) {
+        state.status = PlayerStatus.Idle.Initial
+        onDispose {
+            state.hasRenderedFirstFrame = false
+            state.status = PlayerStatus.Idle.Evicted
+        }
+    }
+}
+
+@Composable
+private fun VideoSurface(
+    modifier: Modifier,
+    state: VlcPlayerState,
+) {
+    SwingPanel(
+        background = Color.Black,
+        modifier = modifier,
+        factory = {
+            Canvas().apply {
+                background = AwtColor.BLACK
+            }
+        },
+        update = { canvas ->
+            state.setVideoSurface(canvas)
         },
     )
 }
+
+private val VlcPlayerState.canShowVideo
+    get() = when (status) {
+        is PlayerStatus.Idle -> false
+        is PlayerStatus.Play -> true
+        is PlayerStatus.Pause -> true
+    }
+
+private val VlcPlayerState.canShowStill
+    get() = videoSize == IntSize.Zero ||
+        !hasRenderedFirstFrame ||
+        when (status) {
+            is PlayerStatus.Idle -> true
+            is PlayerStatus.Pause -> false
+            PlayerStatus.Play.Requested -> true
+            PlayerStatus.Play.Confirmed -> false
+        }

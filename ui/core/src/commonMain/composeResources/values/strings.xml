@@ -61,11 +61,19 @@
     <string name="viewer_state_follow">Follow</string>
     <string name="viewer_state_following">Following</string>
     <string name="viewer_state_follows_you">Follows you</string>
-    <string name="viewer_state_mute">Mute</string>
-    <string name="viewer_state_unmute">Unmute</string>
+    <string name="viewer_state_mute_account">Mute account</string>
+    <string name="viewer_state_unmute_account">Unmute account</string>
     <string name="viewer_state_muted">Muted</string>
-    <string name="viewer_state_block">Block</string>
-    <string name="viewer_state_unblock">Unblock</string>
+    <string name="block_account_dialog_title">Block Account?</string>
+    <string name="block_account_dialog_description">Are you sure you want to block this account?</string>
+    <string name="unblock_account_dialog_title">Unblock Account?</string>
+    <string name="unblock_account_dialog_description">Are you sure you want to unblock this account?</string>
+    <string name="mute_account_dialog_title">Mute Account?</string>
+    <string name="mute_account_dialog_description">Are you sure you want to mute this account?</string>
+    <string name="unmute_account_dialog_title">Unmute Account?</string>
+    <string name="unmute_account_dialog_description">Are you sure you want to unmute this account?</string>
+    <string name="viewer_state_block_account">Block account</string>
+    <string name="viewer_state_unblock_account">Unblock account</string>
     <string name="viewer_state_blocked">Blocked</string>
     <string name="notifications_followed_you_description">Followed you</string>
     <string name="notifications_followed_you">%1$s followed you</string>
@@ -95,4 +103,11 @@
     <string name="notifications_replied_to_you">%1$s replied to your post</string>
     <string name="notifications_unknown">You have a new notification</string>
     <string name="notifications_create_post">Create Post</string>
+    <string name="more_options">More Options</string>
+    <string name="likes">Likes</string>
+    <string name="reposts">Reposts</string>
+    <string name="followers">Followers</string>
+    <string name="following">Following</string>
+    <string name="blocked_accounts">Blocked Accounts</string>
+    <string name="muted_accounts">Muted Accounts</string>
 </resources>

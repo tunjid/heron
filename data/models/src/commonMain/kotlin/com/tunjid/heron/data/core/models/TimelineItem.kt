@@ -25,6 +25,8 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.Uri
 import kotlin.time.Instant
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -279,6 +281,11 @@ sealed interface Timeline {
                 val mutedWordPreferences: List<MutedWordPreference>,
             ) : OfMutedWord()
         }
+
+        @Serializable
+        data class OfInteractionSettings(
+            val preference: PostInteractionSettingsPreference,
+        ) : Update
     }
 
     @Serializable
@@ -338,6 +345,7 @@ sealed class TimelineItem {
             is Pinned,
             is Thread,
             is Single,
+            is Loading,
             -> post.indexedAt
 
             is Repost -> at
@@ -388,6 +396,53 @@ sealed class TimelineItem {
         override val appliedLabels: AppliedLabels,
         override val signedInProfileId: ProfileId?,
     ) : TimelineItem()
+
+    class Loading @OptIn(ExperimentalUuidApi::class) internal constructor(
+        override val id: String = Uuid.random().toString(),
+    ) : TimelineItem() {
+
+        override val post: Post
+            get() = LoadingPost
+
+        override val isMuted: Boolean = false
+        override val threadGate: ThreadGate? = null
+        override val appliedLabels: AppliedLabels = LoadingAppliedLabels
+        override val signedInProfileId: ProfileId? = null
+    }
+
+    companion object {
+
+        private val LoadingPost = Post(
+            cid = Constants.blockedPostId,
+            uri = Constants.unknownPostUri,
+            author = stubProfile(
+                did = Constants.unknownAuthorId,
+                handle = Constants.unknownAuthorHandle,
+            ),
+            replyCount = 0,
+            repostCount = 0,
+            likeCount = 0,
+            quoteCount = 0,
+            bookmarkCount = 0,
+            indexedAt = Instant.DISTANT_PAST,
+            embed = null,
+            quote = null,
+            record = null,
+            viewerStats = null,
+            labels = emptyList(),
+            embeddedRecord = null,
+            viewerState = null,
+        )
+
+        private val LoadingAppliedLabels = AppliedLabels(
+            adultContentEnabled = false,
+            labels = emptyList(),
+            labelers = emptyList(),
+            preferenceLabelsVisibilityMap = emptyMap(),
+        )
+
+        val LoadingItems = (0..16).map { Loading() }
+    }
 }
 
 private val TextOnlyPresentations: List<Timeline.Presentation> = listOf(

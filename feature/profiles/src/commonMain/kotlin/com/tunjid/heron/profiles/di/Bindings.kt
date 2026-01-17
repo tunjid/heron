@@ -34,12 +34,14 @@ import com.tunjid.heron.profiles.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
+import com.tunjid.heron.scaffold.scaffold.AppBarTitle
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -57,6 +59,14 @@ import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
+import heron.ui.core.generated.resources.blocked_accounts
+import heron.ui.core.generated.resources.followers
+import heron.ui.core.generated.resources.following
+import heron.ui.core.generated.resources.likes
+import heron.ui.core.generated.resources.muted_accounts
+import heron.ui.core.generated.resources.reposts
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 private const val BlockedProfilesPattern = "/moderation/blocked-accounts"
 private const val MutedProfilesPattern = "/moderation/muted-accounts"
@@ -259,6 +269,10 @@ class ProfilesBindings(
             )
         },
         render = { route ->
+            val hydratedRoute = routeParser.hydrate(route)
+            val load = hydratedRoute.load
+            val titleRes = load.titleRes()
+
             val viewModel = viewModel<ActualProfilesViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
@@ -279,6 +293,11 @@ class ProfilesBindings(
                 topBar = {
                     PoppableDestinationTopAppBar(
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        title = {
+                            AppBarTitle(
+                                title = stringResource(titleRes),
+                            )
+                        },
                     )
                 },
                 content = { paddingValues ->
@@ -297,4 +316,13 @@ class ProfilesBindings(
             )
         },
     )
+}
+
+fun Load.titleRes(): StringResource = when (this) {
+    is Load.Post.Likes -> CommonStrings.likes
+    is Load.Post.Reposts -> CommonStrings.reposts
+    is Load.Profile.Followers -> CommonStrings.followers
+    is Load.Profile.Following -> CommonStrings.following
+    Load.Moderation.Blocks -> CommonStrings.blocked_accounts
+    Load.Moderation.Mutes -> CommonStrings.muted_accounts
 }

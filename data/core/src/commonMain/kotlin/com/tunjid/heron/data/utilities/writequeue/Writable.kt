@@ -143,6 +143,7 @@ sealed interface Writable {
                 is Timeline.Update.OfLabeler.Subscription -> "labeler-subscription-$update"
                 is Timeline.Update.OfAdultContent -> "adult-content-change-$update"
                 is Timeline.Update.OfMutedWord -> "muted-words-change-$update"
+                is Timeline.Update.OfInteractionSettings -> "interaction-settings-$update"
             }
 
         override suspend fun WriteQueue.write(): Outcome =

@@ -16,7 +16,13 @@
 
 package com.tunjid.heron.timeline.ui
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -50,8 +56,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -60,6 +69,7 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.post.PostReasonLine
+import com.tunjid.heron.timeline.ui.post.feature.LoadingPost
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
 import com.tunjid.heron.timeline.utilities.authorMuted
 import com.tunjid.heron.timeline.utilities.createdAt
@@ -114,6 +124,12 @@ fun TimelineItem(
                     )
                 }
                 when {
+                    item is TimelineItem.Loading -> LoadingPost(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        presentation = presentation,
+                    )
+
                     item is TimelineItem.Thread && presentation == Timeline.Presentation.Text.WithEmbed -> ThreadedPost(
                         modifier = Modifier
                             .fillMaxWidth(),

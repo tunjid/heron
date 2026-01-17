@@ -53,7 +53,6 @@
     <string name="expand_options">Expand options</string>
     <string name="remove_feed">Remove</string>
     <string name="mute_video">Mute video</string>
-    <string name="block_user">Block User</string>
     <string name="muted_meta_format">Muted in %1$s · %2$s</string>
     <string name="mute_words_tags">Mute words &amp; tags</string>
     <string name="moderation_options_title">Moderation tools</string>

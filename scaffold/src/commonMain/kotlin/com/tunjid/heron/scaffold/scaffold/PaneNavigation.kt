@@ -62,7 +62,7 @@ fun PaneScaffoldState.PaneNavigationBar(
             .sharedElement(
                 sharedContentState = rememberSharedContentState(NavigationBarSharedElementKey),
                 animatedVisibilityScope = this,
-                zIndexInOverlay = NavigationSharedElementZIndex,
+                zIndexInOverlay = UiTokens.navigationBarSharedElementZIndex,
             ),
         visible = canShowNavigationBar,
         enter = enterTransition,
@@ -92,7 +92,7 @@ fun PaneScaffoldState.PaneNavigationRail(
             .sharedElement(
                 sharedContentState = rememberSharedContentState(NavigationRailSharedElementKey),
                 animatedVisibilityScope = this,
-                zIndexInOverlay = NavigationSharedElementZIndex,
+                zIndexInOverlay = UiTokens.navigationBarSharedElementZIndex,
                 boundsTransform = NavigationRailBoundsTransform,
             ),
         visible = canShowNavigationRail,
@@ -223,7 +223,6 @@ fun Modifier.bottomNavigationSharedBounds(
 private data object NavigationBarSharedElementKey
 private data object NavigationRailSharedElementKey
 
-private const val NavigationSharedElementZIndex = 2f
 private const val MaxBadgeCount = 100L
 
 private val NavigationRailBoundsTransform = BoundsTransform { _, _ -> snap() }

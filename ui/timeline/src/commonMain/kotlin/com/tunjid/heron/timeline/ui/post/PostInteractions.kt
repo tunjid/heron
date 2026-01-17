@@ -97,6 +97,7 @@ import com.tunjid.heron.ui.UiTokens.BookmarkBlue
 import com.tunjid.heron.ui.UiTokens.LikeRed
 import com.tunjid.heron.ui.UiTokens.RepostGreen
 import com.tunjid.heron.ui.UiTokens.withDim
+import com.tunjid.heron.ui.rememberLatchedState
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
@@ -312,15 +313,13 @@ private fun PostInteraction(
     onClick: () -> Unit,
     checkedTint: Color,
 ) {
-    var opportunisticallyChecked by remember(isChecked) {
-        mutableStateOf(isChecked)
-    }
-    val status = when (isChecked) {
-        opportunisticallyChecked ->
-            if (isChecked) PostInteractionButton.Status.Complete.Checked
+    val latchedCheckedState = rememberLatchedState(isChecked)
+    val status = when {
+        latchedCheckedState.isCurrent ->
+            if (latchedCheckedState.value) PostInteractionButton.Status.Complete.Checked
             else PostInteractionButton.Status.Complete.Unchecked
         else ->
-            if (opportunisticallyChecked) PostInteractionButton.Status.Opportunistic.Checked
+            if (latchedCheckedState.value) PostInteractionButton.Status.Opportunistic.Checked
             else PostInteractionButton.Status.Opportunistic.Unchecked
     }
 
@@ -332,7 +331,7 @@ private fun PostInteraction(
                 onClick = {
                     // Opportunistic clicks must be sent acting on the latest confirmed state.
                     // Click processing is queued and de-duplicated.
-                    if (button.opportunisticallyChecks) opportunisticallyChecked = !isChecked
+                    if (button.opportunisticallyChecks) latchedCheckedState.latch(!isChecked)
                     onClick()
                 },
             )
@@ -678,18 +677,18 @@ private sealed class PostInteractionButton {
 
         val TextCheckedTransform = slideInVertically(
             animationSpec = TextAnimationSpec,
-            initialOffsetY = { -it },
-        ) togetherWith slideOutVertically(
-            animationSpec = TextAnimationSpec,
-            targetOffsetY = { it },
-        )
-
-        val TextUncheckedTransform = slideInVertically(
-            animationSpec = TextAnimationSpec,
             initialOffsetY = { it },
         ) togetherWith slideOutVertically(
             animationSpec = TextAnimationSpec,
             targetOffsetY = { -it },
+        )
+
+        val TextUncheckedTransform = slideInVertically(
+            animationSpec = TextAnimationSpec,
+            initialOffsetY = { -it },
+        ) togetherWith slideOutVertically(
+            animationSpec = TextAnimationSpec,
+            targetOffsetY = { it },
         )
 
         fun buttonText(

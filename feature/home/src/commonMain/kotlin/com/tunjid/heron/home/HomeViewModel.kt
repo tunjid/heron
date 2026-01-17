@@ -17,10 +17,13 @@
 package com.tunjid.heron.home
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
+import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.recentConversations
@@ -71,6 +74,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 @AssistedInject
 class ActualHomeViewModel(
     authRepository: AuthRepository,
+    searchRepository: SearchRepository,
     messageRepository: MessageRepository,
     timelineRepository: TimelineRepository,
     userDataRepository: UserDataRepository,
@@ -90,6 +94,9 @@ class ActualHomeViewModel(
                 scope = scope,
                 timelineRepository = timelineRepository,
                 userDataRepository = userDataRepository,
+            ),
+            trendsMutations(
+                searchRepository = searchRepository,
             ),
             loadProfileMutations(
                 authRepository,
@@ -128,6 +135,12 @@ class ActualHomeViewModel(
                         navigationMutationConsumer = navActions,
                     )
                     is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
+                        writeQueue = writeQueue,
+                    )
+                    is Action.BlockAccount -> action.flow.blockAccountMutations(
+                        writeQueue = writeQueue,
+                    )
+                    is Action.MuteAccount -> action.flow.muteAccountMutations(
                         writeQueue = writeQueue,
                     )
                 }
@@ -169,6 +182,7 @@ private fun timelineMutations(
                     .firstOrNull { it.state.value.timeline.sourceId == timeline.sourceId }
                     ?.mutator
                     ?: scope.timelineStateHolder(
+                        initialItems = TimelineItem.LoadingItems,
                         refreshOnStart = preferences.local.refreshHomeTimelineOnLaunch,
                         timeline = timeline,
                         startNumColumns = 1,
@@ -198,6 +212,13 @@ private fun loadPreferencesMutations(
         .mapToMutation {
             copy(preferences = it)
         }
+
+private fun trendsMutations(
+    searchRepository: SearchRepository,
+): Flow<Mutation<State>> =
+    searchRepository.trends().mapToMutation {
+        copy(trends = it)
+    }
 
 private fun Flow<Action.UpdatePageWithUpdates>.pageWithUpdateMutations(): Flow<Mutation<State>> =
     mapToMutation { (sourceId, hasUpdates) ->
@@ -258,6 +279,31 @@ private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
     )
 }
 
+private fun Flow<Action.BlockAccount>.blockAccountMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
+    writeQueue.enqueue(
+        Writable.Restriction(
+            Profile.Restriction.Block.Add(
+                signedInProfileId = action.signedInProfileId,
+                profileId = action.profileId,
+            ),
+        ),
+    )
+}
+
+private fun Flow<Action.MuteAccount>.muteAccountMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
+    writeQueue.enqueue(
+        Writable.Restriction(
+            Profile.Restriction.Mute.Add(
+                signedInProfileId = action.signedInProfileId,
+                profileId = action.profileId,
+            ),
+        ),
+    )
+}
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(messages = messages - action.message)

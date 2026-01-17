@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.compose
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -261,7 +260,6 @@ private fun Post(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ReplyingTo(
     modifier: Modifier = Modifier,

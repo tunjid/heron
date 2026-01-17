@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.ConnectWithoutContact
 import androidx.compose.material.icons.rounded.FilterAlt
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -53,6 +54,7 @@ import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.label.LabelSetting
 import com.tunjid.heron.timeline.ui.label.Labeler
+import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.UiTokens
@@ -65,6 +67,7 @@ import heron.feature.moderation.generated.resources.label_show
 import heron.feature.moderation.generated.resources.label_warn
 import heron.feature.moderation.generated.resources.labeler_subscriptions
 import heron.feature.moderation.generated.resources.moderation_options_blocked_accounts
+import heron.feature.moderation.generated.resources.moderation_options_interaction_settings
 import heron.feature.moderation.generated.resources.moderation_options_muted_accounts
 import heron.feature.moderation.generated.resources.moderation_options_title
 import heron.feature.moderation.generated.resources.mute_words_tags
@@ -79,6 +82,11 @@ internal fun ModerationScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val threadGateSheetState = rememberUpdatedThreadGateSheetState(
+        onDefaultThreadGateUpdated = {
+            actions(Action.UpdateThreadGates(it))
+        },
+    )
     val mutedWordSheetState = rememberUpdatedMutedWordsSheetState(
         mutedWordPreferences = state.preferences.mutedWordPreferences,
         onSave = { actions(Action.UpdateMutedWord(it)) },
@@ -93,6 +101,11 @@ internal fun ModerationScreen(
         ),
     ) {
         moderationToolsMenuSection(
+            onInteractionSettingsClicked = {
+                threadGateSheetState.show(
+                    preference = state.preferences.postInteractionSettings,
+                )
+            },
             onMutedWordsClicked = mutedWordSheetState::show,
             navigate = {
                 actions(Action.Navigate.To(it))
@@ -262,6 +275,7 @@ private fun LazyListScope.subscribedLabelersSection(
 }
 
 private fun LazyListScope.moderationToolsMenuSection(
+    onInteractionSettingsClicked: () -> Unit,
     onMutedWordsClicked: () -> Unit,
     navigate: (NavigationAction.Destination) -> Unit,
 ) {
@@ -291,6 +305,7 @@ private fun LazyListScope.moderationToolsMenuSection(
                 showDivider = !isLastItem,
                 onItemClicked = {
                     when (tool) {
+                        ModerationTools.InteractionSettings -> onInteractionSettingsClicked()
                         ModerationTools.MutedWords -> onMutedWordsClicked()
                         ModerationTools.BlockedAccounts -> navigate(blocksDestination())
                         ModerationTools.MutedAccounts -> navigate(mutesDestination())
@@ -389,6 +404,10 @@ private enum class ModerationTools(
     val stringResource: StringResource,
     val icon: ImageVector,
 ) {
+    InteractionSettings(
+        stringResource = Res.string.moderation_options_interaction_settings,
+        icon = Icons.Rounded.ConnectWithoutContact,
+    ),
     MutedWords(
         stringResource = Res.string.mute_words_tags,
         icon = Icons.Rounded.FilterAlt,

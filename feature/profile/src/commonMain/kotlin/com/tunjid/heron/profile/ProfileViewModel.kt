@@ -29,6 +29,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.models.timelineRecordUri
@@ -185,6 +186,12 @@ class ActualProfileViewModel(
                         is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
                             writeQueue = writeQueue,
                         )
+                        is Action.Block -> action.flow.blockAccountMutations(
+                            writeQueue = writeQueue,
+                        )
+                        is Action.Mute -> action.flow.muteAccountMutations(
+                            writeQueue = writeQueue,
+                        )
                     }
                 },
             )
@@ -308,6 +315,7 @@ private fun loadProfileMutations(
                                         timelines.map { timeline ->
                                             ProfileScreenStateHolders.Timeline(
                                                 scope.timelineStateHolder(
+                                                    initialItems = TimelineItem.LoadingItems,
                                                     refreshOnStart = true,
                                                     timeline = timeline,
                                                     startNumColumns = 1,
@@ -365,6 +373,45 @@ private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
             Timeline.Update.OfMutedWord.ReplaceAll(
                 mutedWordPreferences = it.mutedWordPreference,
             ),
+        ),
+    )
+}
+
+private fun Flow<Action.Block>.blockAccountMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
+    writeQueue.enqueue(
+        Writable.Restriction(
+            when (action) {
+                is Action.Block.Add -> Profile.Restriction.Block.Add(
+                    signedInProfileId = action.signedInProfileId,
+                    profileId = action.profileId,
+                )
+                is Action.Block.Remove -> Profile.Restriction.Block.Remove(
+                    signedInProfileId = action.signedInProfileId,
+                    profileId = action.profileId,
+                    blockUri = action.blockUri,
+                )
+            },
+        ),
+    )
+}
+
+private fun Flow<Action.Mute>.muteAccountMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
+    writeQueue.enqueue(
+        Writable.Restriction(
+            when (action) {
+                is Action.Mute.Add -> Profile.Restriction.Mute.Add(
+                    signedInProfileId = action.signedInProfileId,
+                    profileId = action.profileId,
+                )
+                is Action.Mute.Remove -> Profile.Restriction.Mute.Remove(
+                    signedInProfileId = action.signedInProfileId,
+                    profileId = action.profileId,
+                )
+            },
         ),
     )
 }

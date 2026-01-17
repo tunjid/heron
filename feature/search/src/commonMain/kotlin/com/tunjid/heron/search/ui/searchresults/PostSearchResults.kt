@@ -63,6 +63,7 @@ import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.remembe
 import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
+import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.cardSize
@@ -96,6 +97,8 @@ internal fun PostSearchResults(
     onSendPostInteraction: (Post.Interaction) -> Unit,
     onSave: (mutedWordPreferences: List<MutedWordPreference>) -> Unit,
     searchResultActions: (SearchState.Tile) -> Unit,
+    onMuteAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
+    onBlockAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
 ) {
     val now = remember { Clock.System.now() }
     val results by rememberUpdatedState(state.tiledItems)
@@ -123,6 +126,23 @@ internal fun PostSearchResults(
         onSave = onSave,
         onShown = {},
     )
+    val profileRestrictionDialogState = rememberProfileRestrictionDialogState(
+        onProfileRestricted = { profileRestriction ->
+            when (profileRestriction) {
+                is PostOption.Moderation.BlockAccount ->
+                    onBlockAccountClicked(
+                        profileRestriction.signedInProfileId,
+                        profileRestriction.post.author.did,
+                    )
+
+                is PostOption.Moderation.MuteAccount ->
+                    onMuteAccountClicked(
+                        profileRestriction.signedInProfileId,
+                        profileRestriction.post.author.did,
+                    )
+            }
+        },
+    )
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
@@ -143,7 +163,13 @@ internal fun PostSearchResults(
                     results.firstOrNull { it.timelineItem.post.uri == option.postUri }
                         ?.timelineItem
                         ?.let(threadGateSheetState::show)
-                is PostOption.Moderation.BlockUser -> Unit
+
+                is PostOption.Moderation.BlockAccount ->
+                    profileRestrictionDialogState.show(option)
+
+                is PostOption.Moderation.MuteAccount ->
+                    profileRestrictionDialogState.show(option)
+
                 is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
             }
         },

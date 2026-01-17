@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.composables.lazy.rememberLazyScrollableState
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.data.core.models.Post.Create.Reply
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
@@ -69,6 +70,7 @@ import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.remembe
 import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.threadedVideoPosition
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionStates
+import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
@@ -135,6 +137,27 @@ internal fun PostDetailScreen(
         },
         onShown = {},
     )
+    val profileRestrictionDialogState = rememberProfileRestrictionDialogState(
+        onProfileRestricted = { profileRestriction ->
+            when (profileRestriction) {
+                is PostOption.Moderation.BlockAccount ->
+                    actions(
+                        Action.BlockAccount(
+                            signedInProfileId = profileRestriction.signedInProfileId,
+                            profileId = profileRestriction.post.author.did,
+                        ),
+                    )
+
+                is PostOption.Moderation.MuteAccount ->
+                    actions(
+                        Action.MuteAccount(
+                            signedInProfileId = profileRestriction.signedInProfileId,
+                            profileId = profileRestriction.post.author.did,
+                        ),
+                    )
+            }
+        },
+    )
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = state.signedInProfileId,
         recentConversations = state.recentConversations,
@@ -154,7 +177,10 @@ internal fun PostDetailScreen(
                 is PostOption.ThreadGate ->
                     items.firstOrNull { it.post.uri == option.postUri }
                         ?.let(threadGateSheetState::show)
-                is PostOption.Moderation.BlockUser -> Unit
+                is PostOption.Moderation.BlockAccount ->
+                    profileRestrictionDialogState.show(option)
+                is PostOption.Moderation.MuteAccount ->
+                    profileRestrictionDialogState.show(option)
                 is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
             }
         },
@@ -262,7 +288,7 @@ internal fun PostDetailScreen(
                                     navigateTo(
                                         if (paneScaffoldState.isSignedOut) signInDestination()
                                         else composePostDestination(
-                                            type = Post.Create.Reply(
+                                            type = Reply(
                                                 parent = action.post,
                                             ),
                                             sharedElementPrefix = state.sharedElementPrefix,

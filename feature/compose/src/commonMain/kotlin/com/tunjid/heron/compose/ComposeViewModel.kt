@@ -30,6 +30,7 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.EmbeddableRecordRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
+import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -78,6 +79,7 @@ class ActualComposeViewModel(
     navActions: (NavigationMutation) -> Unit,
     authRepository: AuthRepository,
     searchRepository: SearchRepository,
+    userDataRepository: UserDataRepository,
     embeddableRecordRepository: EmbeddableRecordRepository,
     fileManager: FileManager,
     writeQueue: WriteQueue,
@@ -100,6 +102,9 @@ class ActualComposeViewModel(
                 },
                 embeddableRecordRepository = embeddableRecordRepository,
             ),
+            interactionSettingsMutations(
+                userDataRepository = userDataRepository,
+            ),
         ),
         actionTransform = transform@{ actions ->
             actions.toMutationStream(
@@ -109,6 +114,7 @@ class ActualComposeViewModel(
                     is Action.PostTextChanged -> action.flow.postTextMutations()
                     is Action.SetFabExpanded -> action.flow.fabExpansionMutations()
                     is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+                    is Action.UpdateInteractionSettings -> action.flow.updateInteractionSettingsMutations()
                     is Action.EditMedia -> action.flow.editMediaMutations()
                     is Action.CreatePost -> action.flow.createPostMutations(
                         navActions = navActions,
@@ -134,6 +140,13 @@ private fun loadSignedInProfileMutations(
 ): Flow<Mutation<State>> =
     authRepository.signedInUser.mapToMutation {
         copy(signedInProfile = it)
+    }
+
+private fun interactionSettingsMutations(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    userDataRepository.preferences.mapToMutation {
+        copy(interactionsPreference = it.postInteractionSettings)
     }
 
 private fun embeddedRecordMutations(
@@ -165,6 +178,11 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
 private fun Flow<Action.RemoveEmbeddedRecord>.removeEmbeddedMutations(): Flow<Mutation<State>> =
     mapToMutation {
         copy(embeddedRecord = null)
+    }
+
+private fun Flow<Action.UpdateInteractionSettings>.updateInteractionSettingsMutations(): Flow<Mutation<State>> =
+    mapToMutation {
+        copy(interactionsPreference = it.interactionSettingsPreference)
     }
 
 private fun Flow<Action.EditMedia>.editMediaMutations(): Flow<Mutation<State>> =
@@ -236,6 +254,7 @@ private fun Flow<Action.CreatePost>.createPostMutations(
                             )
                         }
                     }.filterIsInstance<File.Media>(),
+                    allowed = action.interactionPreference?.threadGateAllowed,
                 ),
             ),
         )

@@ -74,6 +74,7 @@ import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostOption
 import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
+import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.UiTokens
@@ -117,6 +118,27 @@ internal fun NotificationsScreen(
         },
         onShown = {},
     )
+    val profileRestrictionDialogState = rememberProfileRestrictionDialogState(
+        onProfileRestricted = { profileRestriction ->
+            when (profileRestriction) {
+                is PostOption.Moderation.BlockAccount ->
+                    actions(
+                        Action.BlockAccount(
+                            signedInProfileId = profileRestriction.signedInProfileId,
+                            profileId = profileRestriction.post.author.did,
+                        ),
+                    )
+
+                is PostOption.Moderation.MuteAccount ->
+                    actions(
+                        Action.MuteAccount(
+                            signedInProfileId = profileRestriction.signedInProfileId,
+                            profileId = profileRestriction.post.author.did,
+                        ),
+                    )
+            }
+        },
+    )
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = state.signedInProfile?.did,
         recentConversations = state.recentConversations,
@@ -137,7 +159,13 @@ internal fun NotificationsScreen(
 
                 // Notifications UI does not present thread gate options
                 is PostOption.ThreadGate -> Unit
-                is PostOption.Moderation.BlockUser -> Unit
+
+                is PostOption.Moderation.BlockAccount ->
+                    profileRestrictionDialogState.show(option)
+
+                is PostOption.Moderation.MuteAccount ->
+                    profileRestrictionDialogState.show(option)
+
                 is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
             }
         },

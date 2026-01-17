@@ -5,9 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FilterAlt
-import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.rounded.EditAttributes
+import androidx.compose.material.icons.rounded.FilterAlt
+import androidx.compose.material.icons.rounded.PersonOff
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -23,15 +24,17 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.timeline.utilities.BottomSheetItemCard
 import com.tunjid.heron.timeline.utilities.BottomSheetItemCardRow
 import com.tunjid.heron.timeline.utilities.CopyToClipboardCard
-import com.tunjid.heron.timeline.utilities.ModerationMenuSection
+import com.tunjid.heron.timeline.utilities.PostModerationMenuSection
 import com.tunjid.heron.timeline.utilities.SendDirectMessageCard
 import com.tunjid.heron.timeline.utilities.shareUri
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
+import com.tunjid.heron.ui.text.CommonStrings
+import heron.ui.core.generated.resources.viewer_state_block_account
+import heron.ui.core.generated.resources.viewer_state_mute_account
 import heron.ui.timeline.generated.resources.Res
-import heron.ui.timeline.generated.resources.block_user
 import heron.ui.timeline.generated.resources.mute_words_tags
 import heron.ui.timeline.generated.resources.thread_gate_post_reply_settings
 import org.jetbrains.compose.resources.StringResource
@@ -119,7 +122,8 @@ private fun PostOptionsBottomSheet(
                 },
             )
             state.currentPost?.let {
-                if (it.author.did == signedInProfileId) BottomSheetItemCard(
+                val isOwnPost = it.author.did == signedInProfileId
+                if (isOwnPost) BottomSheetItemCard(
                     modifier = Modifier
                         .fillMaxWidth(),
                     onClick = {
@@ -135,9 +139,12 @@ private fun PostOptionsBottomSheet(
                     },
                 )
                 CopyToClipboardCard(it.uri.shareUri())
-                ModerationMenuSection(
-                    onMuteWordsClicked = {
-                        onOptionClicked(PostOption.Moderation.MuteWords)
+                if (!isOwnPost) PostModerationMenuSection(
+                    signedInProfileId = signedInProfileId,
+                    post = it,
+                    onOptionClicked = { option ->
+                        state.hide()
+                        onOptionClicked(option)
                     },
                 )
             }
@@ -156,7 +163,39 @@ sealed class PostOption {
     ) : PostOption()
 
     sealed class Moderation : PostOption() {
+
         data object MuteWords : Moderation()
-        data object BlockUser : Moderation()
+
+        sealed interface ProfileRestriction
+
+        data class BlockAccount(
+            val signedInProfileId: ProfileId,
+            val post: Post,
+        ) : Moderation(),
+            ProfileRestriction
+
+        data class MuteAccount(
+            val signedInProfileId: ProfileId,
+            val post: Post,
+        ) : Moderation(),
+            ProfileRestriction
     }
+}
+
+enum class PostModerationTools(
+    val stringRes: StringResource,
+    val icon: ImageVector,
+) {
+    MuteWords(
+        stringRes = Res.string.mute_words_tags,
+        icon = Icons.Rounded.FilterAlt,
+    ),
+    BlockAccount(
+        stringRes = CommonStrings.viewer_state_block_account,
+        icon = Icons.Rounded.PersonOff,
+    ),
+    MuteAccount(
+        stringRes = CommonStrings.viewer_state_mute_account,
+        icon = Icons.AutoMirrored.Rounded.VolumeOff,
+    ),
 }

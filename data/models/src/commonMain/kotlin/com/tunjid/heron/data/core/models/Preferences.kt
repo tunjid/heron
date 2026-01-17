@@ -45,6 +45,14 @@ data class Preferences(
     val hiddenPostPreferences: List<HiddenPostPreference> = emptyList(),
     @ProtoNumber(7)
     val mutedWordPreferences: List<MutedWordPreference> = emptyList(),
+    @ProtoNumber(8)
+    val declaredAgePreferences: DeclaredAgePreference? = null,
+    @ProtoNumber(9)
+    val threadViewPreferences: ThreadViewPreference? = null,
+    @ProtoNumber(10)
+    val postInteractionSettings: PostInteractionSettingsPreference? = null,
+    @ProtoNumber(11)
+    val verificationPreferences: VerificationPreference? = null,
 ) : UrlEncodableModel {
 
     @Serializable
@@ -155,3 +163,24 @@ data class MutedWordPreference(
         val TagTarget = Target("tag")
     }
 }
+
+@Serializable
+data class DeclaredAgePreference(
+    val minAge: Int? = null,
+)
+
+@Serializable
+data class ThreadViewPreference(
+    val sort: String? = null,
+)
+
+@Serializable
+data class PostInteractionSettingsPreference(
+    val threadGateAllowed: ThreadGate.Allowed? = null,
+    val allowedEmbeds: PostGate.AllowedEmbeds? = null,
+)
+
+@Serializable
+data class VerificationPreference(
+    val hideBadges: Boolean = false,
+)
