@@ -25,7 +25,6 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -58,7 +57,6 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Trend
@@ -195,13 +193,7 @@ private fun HorizontalTicker(
     )
     Row(
         modifier = modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                detectVerticalDragGestures(
-                    onDragStart = { onCollapsed(state.middleItemIndex) },
-                    onVerticalDrag = { _, _ -> },
-                )
-            },
+            .fillMaxSize(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         LazyRow(
