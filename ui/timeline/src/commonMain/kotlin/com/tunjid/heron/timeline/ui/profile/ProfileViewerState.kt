@@ -62,10 +62,10 @@ fun ProfileViewerState(
     if (!viewerState.isBlocked && !viewerState.isBlockedBy) FilterChip(
         modifier = Modifier
             .animateContentSize(),
-        selected = follows,
+        selected = latchedStatus.value == FollowStatus.Following,
         onClick = {
             // Try to show feedback as quickly as possible
-            if (!isSignedInProfile) latchedStatus.latch(
+            if (!isSignedInProfile && viewerState != null) latchedStatus.latch(
                 if (follows) FollowStatus.NotFollowing
                 else FollowStatus.Following,
             )
