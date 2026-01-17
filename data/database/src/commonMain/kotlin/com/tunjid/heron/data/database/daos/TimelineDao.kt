@@ -56,7 +56,7 @@ interface TimelineDao {
                 THEN viewingProfileId = :viewingProfileId
                 ELSE viewingProfileId IS NULL
             END
-            ORDER BY indexedAt
+            ORDER BY itemSort
             DESC
             LIMIT :limit
             OFFSET :offset

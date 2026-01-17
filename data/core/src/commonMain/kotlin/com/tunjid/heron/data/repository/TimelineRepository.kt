@@ -37,6 +37,7 @@ import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Timeline
@@ -400,11 +401,11 @@ internal class OfflineTimelineRepository(
         is Timeline.Home.Feed -> pollForTimelineUpdates(
             timeline = timeline,
             pollInterval = 10.seconds,
-            networkRequestBlock = {
+            networkRequestBlock = { query ->
                 getFeed(
                     GetFeedQueryParams(
                         feed = AtUri(timeline.source.uri),
-                        limit = 1,
+                        limit = query.data.limit,
                         cursor = null,
                     ),
                 )
@@ -415,10 +416,10 @@ internal class OfflineTimelineRepository(
         is Timeline.Home.Following -> pollForTimelineUpdates(
             timeline = timeline,
             pollInterval = 10.seconds,
-            networkRequestBlock = {
+            networkRequestBlock = { query ->
                 getTimeline(
                     GetTimelineQueryParams(
-                        limit = 1,
+                        limit = query.data.limit,
                         cursor = null,
                     ),
                 )
@@ -429,11 +430,11 @@ internal class OfflineTimelineRepository(
         is Timeline.Home.List -> pollForTimelineUpdates(
             timeline = timeline,
             pollInterval = 10.seconds,
-            networkRequestBlock = {
+            networkRequestBlock = { query ->
                 getListFeed(
                     GetListFeedQueryParams(
                         list = AtUri(timeline.source.uri),
-                        limit = 1,
+                        limit = query.data.limit,
                         cursor = null,
                     ),
                 )
@@ -445,11 +446,11 @@ internal class OfflineTimelineRepository(
             Timeline.Profile.Type.Likes -> pollForTimelineUpdates(
                 timeline = timeline,
                 pollInterval = 15.seconds,
-                networkRequestBlock = {
+                networkRequestBlock = { query ->
                     getActorLikes(
                         GetActorLikesQueryParams(
                             actor = Did(timeline.profileId.id),
-                            limit = 1,
+                            limit = query.data.limit,
                             cursor = null,
                         ),
                     )
@@ -460,11 +461,11 @@ internal class OfflineTimelineRepository(
             Timeline.Profile.Type.Media -> pollForTimelineUpdates(
                 timeline = timeline,
                 pollInterval = 15.seconds,
-                networkRequestBlock = {
+                networkRequestBlock = { query ->
                     getAuthorFeed(
                         GetAuthorFeedQueryParams(
                             actor = Did(timeline.profileId.id),
-                            limit = 1,
+                            limit = query.data.limit,
                             cursor = null,
                             filter = GetAuthorFeedFilter.PostsWithMedia,
                         ),
@@ -476,11 +477,11 @@ internal class OfflineTimelineRepository(
             Timeline.Profile.Type.Posts -> pollForTimelineUpdates(
                 timeline = timeline,
                 pollInterval = 15.seconds,
-                networkRequestBlock = {
+                networkRequestBlock = { query ->
                     getAuthorFeed(
                         GetAuthorFeedQueryParams(
                             actor = Did(timeline.profileId.id),
-                            limit = 1,
+                            limit = query.data.limit,
                             cursor = null,
                             filter = GetAuthorFeedFilter.PostsNoReplies,
                         ),
@@ -492,11 +493,11 @@ internal class OfflineTimelineRepository(
             Timeline.Profile.Type.Replies -> pollForTimelineUpdates(
                 timeline = timeline,
                 pollInterval = 15.seconds,
-                networkRequestBlock = {
+                networkRequestBlock = { query ->
                     getAuthorFeed(
                         GetAuthorFeedQueryParams(
                             actor = Did(timeline.profileId.id),
-                            limit = 1,
+                            limit = query.data.limit,
                             cursor = null,
                             filter = GetAuthorFeedFilter.PostsWithReplies,
                         ),
@@ -508,11 +509,11 @@ internal class OfflineTimelineRepository(
             Timeline.Profile.Type.Videos -> pollForTimelineUpdates(
                 timeline = timeline,
                 pollInterval = 15.seconds,
-                networkRequestBlock = {
+                networkRequestBlock = { query ->
                     getAuthorFeed(
                         GetAuthorFeedQueryParams(
                             actor = Did(timeline.profileId.id),
-                            limit = 1,
+                            limit = query.data.limit,
                             cursor = null,
                             filter = GetAuthorFeedFilter.PostsWithVideo,
                         ),
@@ -803,7 +804,7 @@ internal class OfflineTimelineRepository(
                 nextCursor = nextCursor,
                 onResponse = {
                     multipleEntitySaverProvider.saveInTransaction {
-                        if (timelineDao.isFirstRequest(signedInProfileId, query)) {
+                        if (timelineDao.isFirstPageForDifferentAnchor(signedInProfileId, query)) {
                             timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
                             timelineDao.insertOrPartiallyUpdateTimelineFetchedAt(
                                 listOf(
@@ -818,6 +819,7 @@ internal class OfflineTimelineRepository(
                         }
                         add(
                             viewingProfileId = signedInProfileId,
+                            query = query,
                             timeline = query.timeline,
                             feedViewPosts = networkFeed(),
                         )
@@ -826,17 +828,25 @@ internal class OfflineTimelineRepository(
             )
         }
 
-    private fun <T : Any> pollForTimelineUpdates(
+    private inline fun <T : Any> pollForTimelineUpdates(
         timeline: Timeline,
         pollInterval: Duration,
-        networkRequestBlock: suspend BlueskyApi.() -> AtpResponse<T>,
-        networkResponseToFeedViews: (T) -> List<FeedViewPost>,
+        crossinline networkRequestBlock: suspend BlueskyApi.(CursorQuery) -> AtpResponse<T>,
+        crossinline networkResponseToFeedViews: (T) -> List<FeedViewPost>,
     ) = savedStateDataSource.singleSessionFlow { signedInProfileId ->
         flow {
             while (true) {
-                val pollInstant = Clock.System.now()
+                val query = DataQuery(
+                    data = CursorQuery.Data(
+                        page = 0,
+                        cursorAnchor = Clock.System.now(),
+                        limit = 1,
+                    ),
+                )
                 val succeeded = networkService.runCatchingWithMonitoredNetworkRetry(
-                    block = networkRequestBlock,
+                    block = {
+                        networkRequestBlock(query)
+                    },
                 )
                     .getOrNull()
                     ?.let(networkResponseToFeedViews)
@@ -844,13 +854,14 @@ internal class OfflineTimelineRepository(
                         multipleEntitySaverProvider.saveInTransaction {
                             add(
                                 viewingProfileId = signedInProfileId,
+                                query = query,
                                 timeline = timeline,
                                 feedViewPosts = fetchedFeedViewPosts,
                             )
                         }
                     } != null
 
-                if (succeeded) emit(signedInProfileId to pollInstant)
+                if (succeeded) emit(signedInProfileId to query.data.cursorAnchor)
                 delay(pollInterval.inWholeMilliseconds)
             }
         }
@@ -1221,7 +1232,7 @@ private fun TimelinePreferencesEntity?.preferredPresentation(): Timeline.Present
         else -> Timeline.Presentation.Text.WithEmbed
     }
 
-private suspend fun TimelineDao.isFirstRequest(
+private suspend fun TimelineDao.isFirstPageForDifferentAnchor(
     signedInProfileId: ProfileId?,
     query: TimelineQuery,
 ): Boolean {
