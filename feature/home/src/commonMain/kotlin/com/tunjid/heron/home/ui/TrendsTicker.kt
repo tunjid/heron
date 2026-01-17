@@ -25,7 +25,6 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -58,7 +57,6 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Trend
@@ -67,9 +65,7 @@ import heron.ui.core.generated.resources.close
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -195,13 +191,7 @@ private fun HorizontalTicker(
     )
     Row(
         modifier = modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                detectVerticalDragGestures(
-                    onDragStart = { onCollapsed(state.middleItemIndex) },
-                    onVerticalDrag = { _, _ -> },
-                )
-            },
+            .fillMaxSize(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         LazyRow(
@@ -257,17 +247,28 @@ private fun HorizontalTicker(
 
     LaunchedEffect(state.isScrollInProgress) {
         if (state.isScrollInProgress) return@LaunchedEffect
-        launch {
-            // Wait till scrolled to the end
-            snapshotFlow { state.canScrollForward }
-                .first(false::equals)
-            delay(HorizontalTickerDismissDelay)
-            onCollapsed(state.middleItemIndex)
-        }
 
         while (isActive) {
-            withFrameNanos {}
-            state.scrollBy(HORIZONTAL_TICKER_SCROLL_DELTA)
+            with(state) {
+                // When scrolling backward, continue until the start, then reverse.
+                // Otherwise, scroll forward until the end, then reverse.
+                val shouldScrollForward =
+                    if (lastScrolledBackward) !canScrollBackward
+                    else canScrollForward
+
+                val reachedEndWhileScrollingForward = lastScrolledForward && !canScrollForward
+                val reachedStartWhileScrollingBackward = lastScrolledBackward && !canScrollBackward
+
+                if (reachedEndWhileScrollingForward || reachedStartWhileScrollingBackward) {
+                    delay(HorizontalTickerDirectionChangeDelay)
+                }
+
+                withFrameNanos {}
+                scrollBy(
+                    if (shouldScrollForward) HORIZONTAL_TICKER_SCROLL_DELTA
+                    else -HORIZONTAL_TICKER_SCROLL_DELTA,
+                )
+            }
         }
     }
 }
@@ -290,7 +291,7 @@ private const val BUTTON_ANIMATION_DURATION_MILLIS = 600
 private val TextAnimationSpec = tween<IntOffset>(BUTTON_ANIMATION_DURATION_MILLIS)
 
 private val VerticalTickerChangeDelay = 4.seconds
-private val HorizontalTickerDismissDelay = 3.seconds
+private val HorizontalTickerDirectionChangeDelay = 2.seconds
 
 private val TextCheckedTransform = slideInVertically(
     animationSpec = TextAnimationSpec,
