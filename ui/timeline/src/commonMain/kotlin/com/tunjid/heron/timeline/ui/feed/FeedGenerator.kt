@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.timeline.ui.feed
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -41,7 +40,6 @@ import heron.ui.timeline.generated.resources.feed_by
 import heron.ui.timeline.generated.resources.liked_by
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun FeedGenerator(
     modifier: Modifier = Modifier,
