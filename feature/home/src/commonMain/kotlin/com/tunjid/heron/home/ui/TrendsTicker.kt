@@ -65,9 +65,7 @@ import heron.ui.core.generated.resources.close
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -249,17 +247,29 @@ private fun HorizontalTicker(
 
     LaunchedEffect(state.isScrollInProgress) {
         if (state.isScrollInProgress) return@LaunchedEffect
-        launch {
-            // Wait till scrolled to the end
-            snapshotFlow { state.canScrollForward }
-                .first(false::equals)
-            delay(HorizontalTickerDismissDelay)
-            onCollapsed(state.middleItemIndex)
-        }
 
         while (isActive) {
+            val shouldScrollForward = when {
+                // Scroll forward by default
+                !state.lastScrolledForward && !state.lastScrolledBackward -> state.canScrollForward
+                // Continue scrolling in the last scrolled direction
+                state.lastScrolledForward -> state.canScrollForward
+                state.lastScrolledBackward -> !state.canScrollBackward
+                else -> true
+            }
+
+            if (state.lastScrolledForward && !state.canScrollForward) delay(
+                HorizontalTickerDirectionChangeDelay,
+            )
+            else if (state.lastScrolledBackward && !state.canScrollBackward) delay(
+                HorizontalTickerDirectionChangeDelay,
+            )
+
             withFrameNanos {}
-            state.scrollBy(HORIZONTAL_TICKER_SCROLL_DELTA)
+            state.scrollBy(
+                if (shouldScrollForward) HORIZONTAL_TICKER_SCROLL_DELTA
+                else -HORIZONTAL_TICKER_SCROLL_DELTA,
+            )
         }
     }
 }
@@ -282,7 +292,7 @@ private const val BUTTON_ANIMATION_DURATION_MILLIS = 600
 private val TextAnimationSpec = tween<IntOffset>(BUTTON_ANIMATION_DURATION_MILLIS)
 
 private val VerticalTickerChangeDelay = 4.seconds
-private val HorizontalTickerDismissDelay = 3.seconds
+private val HorizontalTickerDirectionChangeDelay = 2.seconds
 
 private val TextCheckedTransform = slideInVertically(
     animationSpec = TextAnimationSpec,
