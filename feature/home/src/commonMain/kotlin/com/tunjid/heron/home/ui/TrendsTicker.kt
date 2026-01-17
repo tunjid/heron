@@ -248,25 +248,27 @@ private fun HorizontalTicker(
     LaunchedEffect(state.isScrollInProgress) {
         if (state.isScrollInProgress) return@LaunchedEffect
 
-        while (isActive) with(state) {
-            // When scrolling backward, continue until the start, then reverse.
-            // Otherwise, scroll forward until the end, then reverse.
-            val shouldScrollForward =
-                if (lastScrolledBackward) !canScrollBackward
-                else canScrollForward
+        while (isActive) {
+            with(state) {
+                // When scrolling backward, continue until the start, then reverse.
+                // Otherwise, scroll forward until the end, then reverse.
+                val shouldScrollForward =
+                    if (lastScrolledBackward) !canScrollBackward
+                    else canScrollForward
 
-            val reachedEndWhileScrollingForward = lastScrolledForward && !canScrollForward
-            val reachedStartWhileScrollingBackward = lastScrolledBackward && !canScrollBackward
+                val reachedEndWhileScrollingForward = lastScrolledForward && !canScrollForward
+                val reachedStartWhileScrollingBackward = lastScrolledBackward && !canScrollBackward
 
-            if (reachedEndWhileScrollingForward || reachedStartWhileScrollingBackward) {
-                delay(HorizontalTickerDirectionChangeDelay)
+                if (reachedEndWhileScrollingForward || reachedStartWhileScrollingBackward) {
+                    delay(HorizontalTickerDirectionChangeDelay)
+                }
+
+                withFrameNanos {}
+                scrollBy(
+                    if (shouldScrollForward) HORIZONTAL_TICKER_SCROLL_DELTA
+                    else -HORIZONTAL_TICKER_SCROLL_DELTA,
+                )
             }
-
-            withFrameNanos {}
-            scrollBy(
-                if (shouldScrollForward) HORIZONTAL_TICKER_SCROLL_DELTA
-                else -HORIZONTAL_TICKER_SCROLL_DELTA,
-            )
         }
     }
 }
