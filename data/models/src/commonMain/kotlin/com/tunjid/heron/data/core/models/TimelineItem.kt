@@ -397,7 +397,7 @@ sealed class TimelineItem {
         override val signedInProfileId: ProfileId?,
     ) : TimelineItem()
 
-    class Loading @OptIn(ExperimentalUuidApi::class) internal constructor(
+    data class Loading @OptIn(ExperimentalUuidApi::class) constructor(
         override val id: String = Uuid.random().toString(),
     ) : TimelineItem() {
 

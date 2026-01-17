@@ -17,7 +17,9 @@
 package com.tunjid.heron.data.utilities.multipleEntitysaver
 
 import app.bsky.feed.FeedViewPost
+import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.PostThreadEntity
@@ -29,14 +31,17 @@ import com.tunjid.heron.data.network.models.profileEntity
 
 internal fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId?,
+    query: CursorQuery,
     timeline: Timeline,
     feedViewPosts: List<FeedViewPost>,
 ) {
-    for (feedView in feedViewPosts) {
+    for (index in feedViewPosts.indices) {
+        val feedView = feedViewPosts[index]
         // Extract data from feed
         add(
             feedView.feedItemEntity(
                 sourceId = timeline.sourceId,
+                itemSort = query.itemSortKey(index),
                 viewingProfileId = viewingProfileId,
             ),
         )
@@ -87,3 +92,13 @@ internal fun MultipleEntitySaver.add(
         }
     }
 }
+
+/**
+ * Allows up to [ITEM_SORT_BUFFER] items (333 pages, 30 items per page) before sorting logic breaks.
+ * Safe from Long overflow for ~200,000 years.
+ */
+private fun CursorQuery.itemSortKey(
+    index: Int,
+) = (data.cursorAnchor.toEpochMilliseconds() * ITEM_SORT_BUFFER) - (data.offset + index)
+
+private const val ITEM_SORT_BUFFER = 10_000L

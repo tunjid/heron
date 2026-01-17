@@ -63,6 +63,7 @@ import kotlin.time.Instant
         Index(value = ["rootPostUri"]),
         Index(value = ["parentPostUri"]),
         Index(value = ["grandParentPostAuthorId"]),
+        Index(value = ["itemSort"]),
     ],
 )
 data class TimelineItemEntity(
@@ -78,6 +79,7 @@ data class TimelineItemEntity(
     )
     val hasMedia: Boolean,
     val isPinned: Boolean,
+    val itemSort: Long,
     val indexedAt: Instant,
     // Timeline items are unique to the profile viewing them, and these other fields
     @PrimaryKey
