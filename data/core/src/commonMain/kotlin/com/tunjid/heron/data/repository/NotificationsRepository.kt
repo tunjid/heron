@@ -63,6 +63,7 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.asGenericId
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.mapDistinctUntilChanged
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.multipleEntitysaver.associatedPostUri
@@ -474,7 +475,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
         postUris = populatedNotificationEntities
             .mapNotNull { it.entity.associatedPostUri }
             .toSet(),
-    ).map { posts ->
+    ).mapDistinctUntilChanged { posts ->
         val urisToPosts = posts.associateBy { it.entity.uri }
         populatedNotificationEntities.map {
             it.asExternalModel(

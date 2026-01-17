@@ -30,12 +30,12 @@ import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.utilities.mapDistinctUntilChanged
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.map
 
 interface EmbeddableRecordRepository {
 
@@ -64,21 +64,21 @@ internal class OfflineEmbeddableRecordRepository @Inject constructor(
             is FeedGeneratorUri -> feedGeneratorDao.feedGenerators(
                 listOf(uri),
             )
-                .map { it.firstOrNull()?.asExternalModel() }
+                .mapDistinctUntilChanged { it.firstOrNull()?.asExternalModel() }
 
             is ListUri -> listDao.lists(
                 listOf(uri),
             )
-                .map { it.firstOrNull()?.asExternalModel() }
+                .mapDistinctUntilChanged { it.firstOrNull()?.asExternalModel() }
 
             is StarterPackUri -> starterPackDao.starterPacks(
                 listOf(uri),
             )
-                .map { it.firstOrNull()?.asExternalModel() }
+                .mapDistinctUntilChanged { it.firstOrNull()?.asExternalModel() }
             is LabelerUri -> labelDao.labelers(
                 listOf(uri),
             )
-                .map { it.firstOrNull()?.asExternalModel() }
+                .mapDistinctUntilChanged { it.firstOrNull()?.asExternalModel() }
 
             is PostUri ->
                 savedStateDataSource
@@ -87,11 +87,11 @@ internal class OfflineEmbeddableRecordRepository @Inject constructor(
                             viewingProfileId = profileId?.id,
                             postUris = listOf(uri),
                         )
-                    }
-                    .map {
-                        it.firstOrNull()?.asExternalModel(
-                            embeddedRecord = null,
-                        )
+                            .mapDistinctUntilChanged {
+                                it.firstOrNull()?.asExternalModel(
+                                    embeddedRecord = null,
+                                )
+                            }
                     }
         }
             .filterNotNull()

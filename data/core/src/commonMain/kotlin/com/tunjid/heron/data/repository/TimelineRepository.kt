@@ -918,7 +918,9 @@ internal class OfflineTimelineRepository(
                 offset = query.data.offset,
                 limit = query.data.limit,
             )
-                .distinctUntilChanged()
+                .distinctUntilChangedBy { itemEntities ->
+                    itemEntities.map(TimelineItemEntity::id)
+                }
                 .flatMapLatest latestFeedItems@{ itemEntities ->
                     if (itemEntities.isEmpty()) return@latestFeedItems emptyFlow()
 

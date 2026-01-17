@@ -82,6 +82,7 @@ import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.facet
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.mapNotNullDistinctUntilChanged
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
@@ -109,7 +110,6 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.io.Source
 import kotlinx.serialization.Serializable
 import sh.christian.ozone.api.AtUri
@@ -407,8 +407,7 @@ internal class OfflinePostRepository @Inject constructor(
                 viewingProfileId = signedInProfileId?.id,
                 postUris = setOf(uri),
             )
-                .distinctUntilChanged()
-                .mapNotNull {
+                .mapNotNullDistinctUntilChanged {
                     it.firstOrNull()?.asExternalModel(
                         embeddedRecord = null,
                     )
