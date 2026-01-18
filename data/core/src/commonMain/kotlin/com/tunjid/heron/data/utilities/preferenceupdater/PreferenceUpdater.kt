@@ -57,6 +57,7 @@ import com.tunjid.heron.data.core.models.VerificationPreference
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.utilities.TidGenerator
 import dev.zacsweers.metro.Inject
 import kotlin.reflect.KClass
@@ -76,8 +77,8 @@ internal interface PreferenceUpdater {
 
     suspend fun update(
         notificationPreferences: app.bsky.notification.Preferences,
-        preferences: Preferences,
-    ): Preferences
+        notifications: SavedState.Notifications,
+    ): SavedState.Notifications
 }
 
 internal class ThingPreferenceUpdater @Inject constructor(
@@ -252,8 +253,8 @@ internal class ThingPreferenceUpdater @Inject constructor(
 
     override suspend fun update(
         notificationPreferences: app.bsky.notification.Preferences,
-        preferences: Preferences,
-    ): Preferences {
+        notifications: SavedState.Notifications,
+    ): SavedState.Notifications {
         val updatedNotificationPrefs = NotificationPreferences(
             follow = NotificationPreferences.Preference.Filterable(
                 include = FilterablePreferenceInclude.safeValueOf(notificationPreferences.follow.include.value).asExternalInclude(),
@@ -312,9 +313,7 @@ internal class ThingPreferenceUpdater @Inject constructor(
                 push = notificationPreferences.verified.push,
             ),
         )
-        return preferences.copy(
-            notificationPreferences = updatedNotificationPrefs,
-        )
+        return notifications.copy(preferences = updatedNotificationPrefs)
     }
 
     /** Map the lexicon Include to enum model Include */

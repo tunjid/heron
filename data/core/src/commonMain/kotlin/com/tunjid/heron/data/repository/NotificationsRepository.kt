@@ -42,7 +42,6 @@ import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Repost
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.isRestricted
@@ -163,7 +162,6 @@ internal class OfflineNotificationsRepository @Inject constructor(
     private val networkMonitor: NetworkMonitor,
     private val savedStateDataSource: SavedStateDataSource,
     private val preferenceUpdater: PreferenceUpdater,
-    private val userDataRepository: UserDataRepository,
     httpClient: HttpClient,
 ) : NotificationsRepository {
 
@@ -363,18 +361,18 @@ internal class OfflineNotificationsRepository @Inject constructor(
             networkService.runCatchingWithMonitoredNetworkRetry {
                 putPreferencesV2(request = updateRequest)
             }.toOutcome {
-                val preferences = savedStateDataSource
+                val notifications = savedStateDataSource
                     .savedState.value
                     .signedInProfileData
-                    ?.preferences
-                    ?: Preferences.EmptyPreferences
+                    ?.notifications
+                    ?: SavedState.Notifications()
 
-                val updateNotificationPreferences = preferenceUpdater.update(
+                val updatedNotificationPreferences = preferenceUpdater.update(
                     notificationPreferences = it.preferences,
-                    preferences = preferences,
+                    notifications = notifications,
                 )
                 savedStateDataSource.updateSignedInUserNotifications {
-                    copy(preferences = updateNotificationPreferences.notificationPreferences)
+                    copy(preferences = updatedNotificationPreferences.preferences)
                 }
             }
         }
