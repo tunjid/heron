@@ -245,11 +245,13 @@ private fun Flow<Action.SharedRecord>.recordSharingMutations(
 ): Flow<Mutation<State>> =
     mapLatestToManyMutations { action ->
         when (action) {
-            is Action.SharedRecord.Add -> sharedRecordMutations(
-                sharedUri = action.uri,
-                overrideExisting = true,
-                embeddableRecordRepository = embeddableRecordRepository,
-                state = state,
+            is Action.SharedRecord.Add -> emitAll(
+                sharedRecordMutations(
+                    sharedUri = action.uri,
+                    overrideExisting = true,
+                    embeddableRecordRepository = embeddableRecordRepository,
+                    state = state,
+                ),
             )
             Action.SharedRecord.Remove -> {
                 emit { copy(sharedRecord = SharedRecord.Consumed) }

@@ -20,6 +20,7 @@
     <string name="post">Post</string>
     <string name="remove_quoted_post">Remove quoted post.</string>
     <string name="remove_shared_record">Remove shared %1$s.</string>
+    <string name="sending_post">Sending post…</string>
     <string name="remove_media">Remove media.</string>
     <string name="alt_text_add">Add alt text</string>
     <string name="alt_text_descriptive">Descriptive Alt text</string>
