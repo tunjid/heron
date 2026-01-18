@@ -63,8 +63,7 @@ fun State(
     route: Route,
 ) = State(
     sharedElementPrefix = route.sharedElementPrefix,
-    timelineState = route.model?.let { model ->
-        if (model !is FeedGenerator) return@let null
+    timelineState = route.model<FeedGenerator>()?.let { model ->
         val timeline = Timeline.Home.Feed.stub(feedGenerator = model)
         TimelineState(
             timeline = timeline,
