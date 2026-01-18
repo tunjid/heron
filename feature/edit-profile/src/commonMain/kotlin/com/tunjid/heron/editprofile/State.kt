@@ -98,7 +98,7 @@ data class State(
 
 @OptIn(ExperimentalUuidApi::class)
 fun State(route: Route) = State(
-    profile = (route.model<Profile>()) ?: stubProfile(
+    profile = route.model<Profile>() ?: stubProfile(
         did = ProfileId(route.profileHandleOrId.id),
         handle = ProfileHandle(route.profileHandleOrId.id),
         avatar = null,

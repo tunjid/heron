@@ -89,7 +89,7 @@ data class State(
 
 fun State(route: Route) = State(
     avatarSharedElementKey = route.avatarSharedElementKey ?: "",
-    profile = (route.model<Profile>()) ?: stubProfile(
+    profile = route.model<Profile>() ?: stubProfile(
         did = ProfileId(route.profileHandleOrId.id),
         handle = ProfileHandle(route.profileHandleOrId.id),
         avatar = null,
