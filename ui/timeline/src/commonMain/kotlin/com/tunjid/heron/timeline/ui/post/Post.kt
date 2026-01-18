@@ -274,18 +274,18 @@ private fun LabelContent(
                         CommonStrings.post_author_label,
                         localeInfo.description,
                     )
-                    Label(
-                        modifier = Modifier
-                            .padding(2.dp),
-                        contentDescription = authorLabelContentDescription,
-                        icon = {
-                            PaneStickySharedElement(
-                                modifier = Modifier
-                                    .size(LabelIconSize),
-                                sharedContentState = rememberSharedContentState(
-                                    data.sharedElementKey(label),
-                                ),
-                            ) {
+                    PaneStickySharedElement(
+                        modifier = Modifier,
+                        sharedContentState = rememberSharedContentState(
+                            data.sharedElementKey(label),
+                        ),
+                    ) {
+                        Label(
+                            modifier = Modifier
+                                .padding(2.dp)
+                                .fillParentAxisIfFixedOrWrap(),
+                            contentDescription = authorLabelContentDescription,
+                            icon = {
                                 AsyncImage(
                                     args = remember(labeler.creator.avatar) {
                                         ImageArgs(
@@ -296,17 +296,17 @@ private fun LabelContent(
                                         )
                                     },
                                     modifier = Modifier
-                                        .fillParentAxisIfFixedOrWrap(),
+                                        .size(LabelIconSize),
                                 )
-                            }
-                        },
-                        description = {
-                            LabelText(localeInfo.name)
-                        },
-                        onClick = {
-                            data.selectedLabel = label
-                        },
-                    )
+                            },
+                            description = {
+                                LabelText(localeInfo.name)
+                            },
+                            onClick = {
+                                data.selectedLabel = label
+                            },
+                        )
+                    }
                 }
                 data.selectedLabel?.let { selectedLabel ->
                     AppliedLabelDialog(
