@@ -180,6 +180,37 @@ sealed interface AppliedLabels {
         val creatorAvatar: ImageUri?,
     )
 
+    /**
+     * A subset of applied labels matching a [Label.Visibility].
+     * This is useful for serializing to preserve visual context.
+     */
+    @Serializable
+    class Filtered internal constructor(
+        override val shouldHide: Boolean,
+        override val shouldBlurMedia: Boolean,
+        override val canAutoPlayVideo: Boolean,
+        override val blurredMediaSeverity: Label.Severity,
+        override val labels: Collection<Label>,
+        private val visibleSummaries: List<LabelerSummary>,
+        private val visibleDefinitions: List<Label.Definition>,
+    ) : AppliedLabels,
+        UrlEncodableModel {
+
+        override fun visibility(
+            label: Label.Value,
+        ): Label.Visibility = Label.Visibility.Warn
+
+        override fun definition(
+            label: Label,
+        ): Label.Definition? =
+            visibleDefinitions.firstOrNull { it.identifier == label.value }
+
+        override fun labelerSummary(
+            label: Label,
+        ): LabelerSummary? =
+            visibleSummaries.firstOrNull { it.creatorId == label.creatorId }
+    }
+
     companion object {
         operator fun invoke(
             adultContentEnabled: Boolean,
@@ -208,7 +239,7 @@ sealed interface AppliedLabels {
             ),
         )
 
-        fun AppliedLabels.warnedAppliedLabels(): FilteredAppliedLabels {
+        fun AppliedLabels.warnedAppliedLabels(): Filtered {
             val visibleDefinitions = mutableListOf<Label.Definition>()
             val visibleSummaries = mutableListOf<LabelerSummary>()
             val visibleLabels = mutableListOf<Label>()
@@ -225,7 +256,7 @@ sealed interface AppliedLabels {
                 visibleDefinitions.add(definition)
             }
 
-            return FilteredAppliedLabels(
+            return Filtered(
                 labels = visibleLabels,
                 shouldHide = shouldHide,
                 shouldBlurMedia = shouldBlurMedia,
@@ -236,37 +267,6 @@ sealed interface AppliedLabels {
             )
         }
     }
-}
-
-/**
- * A subset of applied labels matching a [Label.Visibility].
- * This is useful for serializing to preserve visual context.
- */
-@Serializable
-class FilteredAppliedLabels internal constructor(
-    override val shouldHide: Boolean,
-    override val shouldBlurMedia: Boolean,
-    override val canAutoPlayVideo: Boolean,
-    override val blurredMediaSeverity: Label.Severity,
-    override val labels: Collection<Label>,
-    private val visibleSummaries: List<AppliedLabels.LabelerSummary>,
-    private val visibleDefinitions: List<Label.Definition>,
-) : AppliedLabels,
-    UrlEncodableModel {
-
-    override fun visibility(
-        label: Label.Value,
-    ): Label.Visibility = Label.Visibility.Warn
-
-    override fun definition(
-        label: Label,
-    ): Label.Definition? =
-        visibleDefinitions.firstOrNull { it.identifier == label.value }
-
-    override fun labelerSummary(
-        label: Label,
-    ): AppliedLabels.LabelerSummary? =
-        visibleSummaries.firstOrNull { it.creatorId == label.creatorId }
 }
 
 private data class AppliedLabelsImpl(
