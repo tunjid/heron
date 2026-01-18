@@ -173,6 +173,7 @@ sealed interface AppliedLabels {
     fun definition(label: Label): Label.Definition?
     fun labelerSummary(label: Label): LabelerSummary?
 
+    @Serializable
     data class LabelerSummary(
         val creatorId: ProfileId,
         val creatorHandle: ProfileHandle,
@@ -206,7 +207,66 @@ sealed interface AppliedLabels {
                 valueTransform = ContentLabelPreference::visibility,
             ),
         )
+
+        fun AppliedLabels.warnedAppliedLabels(): FilteredAppliedLabels {
+            val visibleDefinitions = mutableListOf<Label.Definition>()
+            val visibleSummaries = mutableListOf<LabelerSummary>()
+            val visibleLabels = mutableListOf<Label>()
+
+            for (label in labels) {
+                val visibility = visibility(label.value)
+                if (visibility != Label.Visibility.Warn) continue
+
+                val definition = definition(label) ?: continue
+                val summary = labelerSummary(label) ?: continue
+
+                visibleLabels.add(label)
+                visibleSummaries.add(summary)
+                visibleDefinitions.add(definition)
+            }
+
+            return FilteredAppliedLabels(
+                labels = visibleLabels,
+                shouldHide = shouldHide,
+                shouldBlurMedia = shouldBlurMedia,
+                blurredMediaSeverity = blurredMediaSeverity,
+                canAutoPlayVideo = canAutoPlayVideo,
+                visibleSummaries = visibleSummaries,
+                visibleDefinitions = visibleDefinitions,
+            )
+        }
     }
+}
+
+/**
+ * A subset of applied labels matching a [Label.Visibility].
+ * This is useful for serializing to preserve visual context.
+ */
+@Serializable
+class FilteredAppliedLabels internal constructor(
+    override val shouldHide: Boolean,
+    override val shouldBlurMedia: Boolean,
+    override val canAutoPlayVideo: Boolean,
+    override val blurredMediaSeverity: Label.Severity,
+    override val labels: Collection<Label>,
+    private val visibleSummaries: List<AppliedLabels.LabelerSummary>,
+    private val visibleDefinitions: List<Label.Definition>,
+) : AppliedLabels,
+    UrlEncodableModel {
+
+    override fun visibility(
+        label: Label.Value,
+    ): Label.Visibility = Label.Visibility.Warn
+
+    override fun definition(
+        label: Label,
+    ): Label.Definition? =
+        visibleDefinitions.firstOrNull { it.identifier == label.value }
+
+    override fun labelerSummary(
+        label: Label,
+    ): AppliedLabels.LabelerSummary? =
+        visibleSummaries.firstOrNull { it.creatorId == label.creatorId }
 }
 
 private data class AppliedLabelsImpl(
@@ -263,7 +323,9 @@ private data class AppliedLabelsImpl(
 
     override val canAutoPlayVideo: Boolean = !shouldBlurMedia
 
-    override fun visibility(label: Label.Value): Label.Visibility {
+    override fun visibility(
+        label: Label.Value,
+    ): Label.Visibility {
         // Check in custom labelers first
         val definition = findDefinition(label)
         if (definition != null) {
@@ -280,12 +342,16 @@ private data class AppliedLabelsImpl(
         return Label.Visibility.Ignore
     }
 
-    override fun definition(label: Label): Label.Definition? =
+    override fun definition(
+        label: Label,
+    ): Label.Definition? =
         labelers.find { it.creator.did == label.creatorId }
             ?.definitions
             ?.find { it.identifier == label.value }
 
-    override fun labelerSummary(label: Label): AppliedLabels.LabelerSummary? =
+    override fun labelerSummary(
+        label: Label,
+    ): AppliedLabels.LabelerSummary? =
         labelers.find { it.creator.did == label.creatorId }?.let { labeler ->
             AppliedLabels.LabelerSummary(
                 creatorId = labeler.creator.did,
@@ -294,7 +360,9 @@ private data class AppliedLabelsImpl(
             )
         }
 
-    private fun findDefinition(label: Label.Value): Label.Definition? {
+    private fun findDefinition(
+        label: Label.Value,
+    ): Label.Definition? {
         for (i in labelers.lastIndex downTo 0) {
             val labeler = labelers[i]
             val def = labeler.definitions.find { it.identifier == label }
