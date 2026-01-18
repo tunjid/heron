@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.tunjid.composables.ui.skipIf
 import com.tunjid.heron.data.core.models.AppliedLabels
+import com.tunjid.heron.data.core.models.AppliedLabels.Companion.warned
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
@@ -231,6 +232,7 @@ private fun AttributionContent(
                         data.postActions.onPostAction(
                             PostAction.OfPost(
                                 post = data.post,
+                                warnedAppliedLabels = data.appliedLabels.warned(),
                             ),
                         )
                     },
@@ -269,44 +271,44 @@ private fun LabelContent(
                 data.appliedLabels.forEach(
                     languageTag = data.languageTag,
                     labels = data.post.author.labels,
-                ) { label, labeler, localeInfo ->
+                ) { label, labelerSummary, localeInfo ->
                     val authorLabelContentDescription = stringResource(
                         CommonStrings.post_author_label,
                         localeInfo.description,
                     )
-                    Label(
-                        modifier = Modifier
-                            .padding(2.dp),
-                        contentDescription = authorLabelContentDescription,
-                        icon = {
-                            PaneStickySharedElement(
-                                modifier = Modifier
-                                    .size(LabelIconSize),
-                                sharedContentState = rememberSharedContentState(
-                                    data.sharedElementKey(label),
-                                ),
-                            ) {
+                    PaneStickySharedElement(
+                        modifier = Modifier,
+                        sharedContentState = rememberSharedContentState(
+                            data.sharedElementKey(label),
+                        ),
+                    ) {
+                        Label(
+                            modifier = Modifier
+                                .padding(2.dp)
+                                .fillParentAxisIfFixedOrWrap(),
+                            contentDescription = authorLabelContentDescription,
+                            icon = {
                                 AsyncImage(
-                                    args = remember(labeler.creator.avatar) {
+                                    args = remember(labelerSummary.creatorAvatar) {
                                         ImageArgs(
-                                            url = labeler.creator.avatar?.uri,
+                                            url = labelerSummary.creatorAvatar?.uri,
                                             contentScale = ContentScale.Crop,
                                             contentDescription = null,
                                             shape = data.avatarShape,
                                         )
                                     },
                                     modifier = Modifier
-                                        .fillParentAxisIfFixedOrWrap(),
+                                        .size(LabelIconSize),
                                 )
-                            }
-                        },
-                        description = {
-                            LabelText(localeInfo.name)
-                        },
-                        onClick = {
-                            data.selectedLabel = label
-                        },
-                    )
+                            },
+                            description = {
+                                LabelText(localeInfo.name)
+                            },
+                            onClick = {
+                                data.selectedLabel = label
+                            },
+                        )
+                    }
                 }
                 data.selectedLabel?.let { selectedLabel ->
                     AppliedLabelDialog(
@@ -316,13 +318,13 @@ private fun LabelContent(
                         onDismiss = {
                             data.selectedLabel = null
                         },
-                        onLabelerClicked = { labeler ->
+                        onLabelerSummaryClicked = { labeler ->
                             data.selectedLabel = null
                             data.postActions.onPostAction(
                                 PostAction.OfLinkTarget(
                                     post = data.post,
                                     linkTarget = LinkTarget.UserHandleMention(
-                                        labeler.creator.handle,
+                                        labeler.creatorHandle,
                                     ),
                                 ),
                             )
@@ -373,6 +375,7 @@ private fun TextContent(
                 data.postActions.onPostAction(
                     PostAction.OfPost(
                         post = data.post,
+                        warnedAppliedLabels = data.appliedLabels.warned(),
                     ),
                 )
             },

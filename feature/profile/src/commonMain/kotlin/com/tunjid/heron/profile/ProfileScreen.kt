@@ -101,6 +101,7 @@ import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
+import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri.Companion.asSelfLabelerUri
 import com.tunjid.heron.data.core.types.RecordUri
@@ -632,11 +633,16 @@ private fun ProfileHeader(
                     labels = profile.labels,
                     labelers = subscribedLabelers,
                     contentLabelPreferences = preferences.contentLabelPreferences,
-                    onLabelerClicked = { labeler ->
+                    onLabelerSummaryClicked = { labelerSummary ->
+                        val labelerCreator = stubProfile(
+                            did = labelerSummary.creatorId,
+                            handle = labelerSummary.creatorHandle,
+                            avatar = labelerSummary.creatorAvatar,
+                        )
                         onNavigate(
                             profileDestination(
-                                profile = labeler.creator,
-                                avatarSharedElementKey = labeler.avatarSharedElementKey(
+                                profile = labelerCreator,
+                                avatarSharedElementKey = labelerCreator.avatarSharedElementKey(
                                     prefix = null,
                                 ),
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
@@ -1311,6 +1317,7 @@ private fun ProfileTimeline(
                                                 recordDestination(
                                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                     sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                                                    otherModels = listOfNotNull(action.warnedAppliedLabels),
                                                     record = action.post,
                                                 ),
                                             ),

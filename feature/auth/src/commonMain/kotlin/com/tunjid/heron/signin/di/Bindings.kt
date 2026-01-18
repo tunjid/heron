@@ -162,11 +162,12 @@ class SignInBindings(
                 )
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
+            val paneScaffoldState = rememberPaneScaffoldState()
 
-            rememberPaneScaffoldState().PaneScaffold(
+            paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
-                    .predictiveBackPlacement(paneScope = this),
+                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
                 showNavigation = false,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {

@@ -35,6 +35,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.io.IOException
@@ -179,6 +181,16 @@ internal inline fun <T, R> Collection<T>.toDistinctUntilChangedFlowOrEmpty(
     }
         .onStart { emit(emptyList()) }
         .distinctUntilChanged()
+
+internal inline fun <T, R> Flow<T>.mapDistinctUntilChanged(
+    crossinline transform: suspend (value: T) -> R,
+) = map(transform)
+    .distinctUntilChanged()
+
+internal inline fun <T, R> Flow<T>.mapNotNullDistinctUntilChanged(
+    crossinline transform: suspend (value: T) -> R?,
+) = mapNotNull(transform)
+    .distinctUntilChanged()
 
 internal inline fun <T, R, K> List<T>.sortedWithNetworkList(
     networkList: List<R>,

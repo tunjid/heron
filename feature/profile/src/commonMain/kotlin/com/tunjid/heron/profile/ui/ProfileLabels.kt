@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.ContentLabelPreferences
 import com.tunjid.heron.data.core.models.Label
-import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Labelers
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.isBlocked
@@ -64,7 +63,7 @@ internal fun ProfileLabels(
     labels: List<Label>,
     labelers: Labelers,
     contentLabelPreferences: ContentLabelPreferences,
-    onLabelerClicked: (Labeler) -> Unit,
+    onLabelerSummaryClicked: (AppliedLabels.LabelerSummary) -> Unit,
 ) {
     val languageTag = Locale.current.toLanguageTag()
     var selectedLabel by remember {
@@ -100,7 +99,7 @@ internal fun ProfileLabels(
         appliedLabels.forEach(
             languageTag = languageTag,
             labels = labels,
-        ) { label, labeler, localeInfo ->
+        ) { label, labelerSummary, localeInfo ->
             val authorLabelContentDescription = stringResource(
                 CommonStrings.post_author_label,
                 localeInfo.description,
@@ -112,9 +111,9 @@ internal fun ProfileLabels(
                 contentDescription = authorLabelContentDescription,
                 icon = {
                     AsyncImage(
-                        args = remember(labeler.creator.avatar) {
+                        args = remember(labelerSummary.creatorAvatar) {
                             ImageArgs(
-                                url = labeler.creator.avatar?.uri,
+                                url = labelerSummary.creatorAvatar?.uri,
                                 contentScale = ContentScale.Crop,
                                 contentDescription = null,
                                 shape = RoundedPolygonShape.Circle,
@@ -140,9 +139,9 @@ internal fun ProfileLabels(
                 onDismiss = {
                     selectedLabel = null
                 },
-                onLabelerClicked = { labeler ->
+                onLabelerSummaryClicked = { labeler ->
                     selectedLabel = null
-                    onLabelerClicked(labeler)
+                    onLabelerSummaryClicked(labeler)
                 },
             )
         }

@@ -25,16 +25,7 @@
     <string name="post">Post</string>
     <string name="sign_in_prompt">Sign in to perform this action.</string>
     <string name="signed_out">You're signed out</string>
-    <string name="duplicate_post_interaction">Your %1$s for this post is processing.</string>
-    <string name="failed_post_interaction">Cannot process this action on this post right now.</string>
-    <string name="bookmark">bookmark</string>
-    <string name="bookmark_removal">bookmark removal</string>
-    <string name="like">like</string>
-    <string name="unlike">unlike</string>
-    <string name="repost">repost</string>
     <string name="share">Share</string>
-    <string name="repost_removal">repost removal</string>
-    <string name="thread_gate_update">post reply update</string>
     <string name="notification_channel_new_followers">New followers</string>
     <string name="notification_channel_likes">Likes</string>
     <string name="notification_channel_likes_repost">Likes of your reposts</string>

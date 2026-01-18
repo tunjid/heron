@@ -80,6 +80,7 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.mapNotNullDistinctUntilChanged
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
@@ -202,7 +203,7 @@ internal class OfflineProfileRepository @Inject constructor(
                 signedInProfiledId = signedInProfileId.id,
                 ids = listOf(signedInProfileId),
             )
-                .mapNotNull { it.firstOrNull()?.asExternalModel() }
+                .mapNotNullDistinctUntilChanged { it.firstOrNull()?.asExternalModel() }
         }
 
     override fun profile(
@@ -213,15 +214,13 @@ internal class OfflineProfileRepository @Inject constructor(
                 signedInProfiledId = signedInProfileId?.id,
                 ids = listOf(profileId),
             )
-                .distinctUntilChanged()
-                .mapNotNull { it.firstOrNull()?.asExternalModel() }
+                .mapNotNullDistinctUntilChanged { it.firstOrNull()?.asExternalModel() }
                 .withRefresh {
                     profileLookup.refreshProfile(
                         signedInProfileId = signedInProfileId,
                         profileId = profileId,
                     )
                 }
-                .distinctUntilChanged()
         }
 
     override fun profileRelationships(

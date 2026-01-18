@@ -143,7 +143,7 @@ class HomeBindings(
             paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
-                    .predictiveBackPlacement(paneScope = this)
+                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
                     .nestedScroll(topAppBarNestedScrollConnection)
                     .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
                         nestedScroll(bottomNavigationNestedScrollConnection)

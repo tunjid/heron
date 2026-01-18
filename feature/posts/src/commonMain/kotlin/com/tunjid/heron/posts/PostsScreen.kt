@@ -290,6 +290,7 @@ internal fun PostsScreen(
                                                     recordDestination(
                                                         referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                         sharedElementPrefix = SharedElementPrefix,
+                                                        otherModels = listOfNotNull(action.warnedAppliedLabels),
                                                         record = action.post,
                                                     ),
                                                 ),

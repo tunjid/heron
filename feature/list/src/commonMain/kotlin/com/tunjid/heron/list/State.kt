@@ -27,7 +27,6 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.FollowUri
-import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.TimelineQuery
@@ -69,51 +68,42 @@ fun State(
     route: Route,
 ) = State(
     sharedElementPrefix = route.sharedElementPrefix,
-    timelineState = route.model?.let { model ->
-        when (model) {
-            is FeedList -> {
-                val timeline = Timeline.Home.List.stub(list = model)
-                TimelineState(
-                    timeline = timeline,
-                    hasUpdates = false,
-                    tilingData = TilingState.Data(
-                        currentQuery = TimelineQuery(
-                            data = CursorQuery.Data(
-                                page = 0,
-                                cursorAnchor = Clock.System.now(),
-                            ),
-                            timeline = timeline,
-                        ),
+    timelineState = route.model<FeedList>()?.let { model ->
+        val timeline = Timeline.Home.List.stub(list = model)
+        TimelineState(
+            timeline = timeline,
+            hasUpdates = false,
+            tilingData = TilingState.Data(
+                currentQuery = TimelineQuery(
+                    data = CursorQuery.Data(
+                        page = 0,
+                        cursorAnchor = Clock.System.now(),
                     ),
-                )
-            }
-
-            is StarterPack -> when (val starterPackList = model.list) {
-                null -> null
-                else -> {
-                    val timeline = Timeline.StarterPack.stub(
-                        starterPack = model,
-                        list = starterPackList,
-                    )
-                    TimelineState(
-                        timeline = timeline,
-                        hasUpdates = false,
-                        tilingData = TilingState.Data(
-                            currentQuery = TimelineQuery(
-                                data = CursorQuery.Data(
-                                    page = 0,
-                                    cursorAnchor = Clock.System.now(),
-                                ),
-                                timeline = timeline,
-                            ),
+                    timeline = timeline,
+                ),
+            ),
+        )
+    }
+        ?: route.model<StarterPack>()?.let { model ->
+            val starterPackList = model.list ?: return@let null
+            val timeline = Timeline.StarterPack.stub(
+                starterPack = model,
+                list = starterPackList,
+            )
+            TimelineState(
+                timeline = timeline,
+                hasUpdates = false,
+                tilingData = TilingState.Data(
+                    currentQuery = TimelineQuery(
+                        data = CursorQuery.Data(
+                            page = 0,
+                            cursorAnchor = Clock.System.now(),
                         ),
-                    )
-                }
-            }
-
-            else -> null
-        }
-    },
+                        timeline = timeline,
+                    ),
+                ),
+            )
+        },
 )
 
 sealed class ListScreenStateHolders {

@@ -83,7 +83,10 @@ fun EmbeddedRecord(
                 sharedElementPrefix = sharedElementPrefix,
                 onClick = {
                     postActions.onPostAction(
-                        PostAction.OfPost(post = record),
+                        PostAction.OfPost(
+                            post = record,
+                            warnedAppliedLabels = null,
+                        ),
                     )
                 },
                 onLinkTargetClicked = { post, linkTarget ->
