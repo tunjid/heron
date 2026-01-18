@@ -199,39 +199,45 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
 private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> = mapToManyMutations {
-    writeQueue.enqueue(
-        Writable.TimelineUpdate(
-            Timeline.Update.OfMutedWord.ReplaceAll(
-                mutedWordPreferences = it.mutedWordPreference,
-            ),
+    val writable = Writable.TimelineUpdate(
+        Timeline.Update.OfMutedWord.ReplaceAll(
+            mutedWordPreferences = it.mutedWordPreference,
         ),
     )
+    val status = writeQueue.enqueue(writable)
+    writable.writeStatusMessage(status)?.let {
+        emit { copy(messages = messages + it) }
+    }
 }
 
 private fun Flow<Action.BlockAccount>.blockAccountMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
-    writeQueue.enqueue(
-        Writable.Restriction(
-            Profile.Restriction.Block.Add(
-                signedInProfileId = action.signedInProfileId,
-                profileId = action.profileId,
-            ),
+    val writable = Writable.Restriction(
+        Profile.Restriction.Block.Add(
+            signedInProfileId = action.signedInProfileId,
+            profileId = action.profileId,
         ),
     )
+    val status = writeQueue.enqueue(writable)
+    writable.writeStatusMessage(status)?.let {
+        emit { copy(messages = messages + it) }
+    }
 }
 
 private fun Flow<Action.MuteAccount>.muteAccountMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
-    writeQueue.enqueue(
-        Writable.Restriction(
-            Profile.Restriction.Mute.Add(
-                signedInProfileId = action.signedInProfileId,
-                profileId = action.profileId,
-            ),
+    val writable = Writable.Restriction(
+        Profile.Restriction.Mute.Add(
+            signedInProfileId = action.signedInProfileId,
+            profileId = action.profileId,
         ),
     )
+    val status = writeQueue.enqueue(writable)
+    writable.writeStatusMessage(status)?.let {
+        emit { copy(messages = messages + it) }
+    }
 }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =

@@ -226,7 +226,11 @@ private fun Flow<Action.UpdateMessageReaction>.updateMessageReactionMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
-        writeQueue.enqueue(Writable.Reaction(action.reaction))
+        val writable = Writable.Reaction(action.reaction)
+        val status = writeQueue.enqueue(writable)
+        writable.writeStatusMessage(status)?.let {
+            emit { copy(messages = messages + it) }
+        }
     }
 
 private fun Flow<Action.TextChanged>.inputTextChangeMutations(): Flow<Mutation<State>> =
@@ -293,7 +297,11 @@ private fun Flow<Action.SendMessage>.sendMessageMutations(
         if (action.message.recordReference != null) navActions(ConsumeSharedUriQueryParam)
 
         // Write the message
-        writeQueue.enqueue(Writable.Send(action.message))
+        val writable = Writable.Send(action.message)
+        val status = writeQueue.enqueue(writable)
+        writable.writeStatusMessage(status)?.let {
+            emit { copy(messages = messages + it) }
+        }
     }
 
 private suspend fun Flow<Action.Tile>.messagingTilingMutations(

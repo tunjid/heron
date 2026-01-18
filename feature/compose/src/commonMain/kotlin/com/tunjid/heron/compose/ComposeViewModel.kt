@@ -39,6 +39,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedUri
+import com.tunjid.heron.timeline.utilities.writeStatusMessage
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -259,7 +260,10 @@ private fun Flow<Action.CreatePost>.createPostMutations(
             ),
         )
 
-        writeQueue.enqueue(postWrite)
+        val status = writeQueue.enqueue(postWrite)
+        postWrite.writeStatusMessage(status)?.let {
+            emit { copy(messages = messages + it) }
+        }
         writeQueue.awaitDequeue(postWrite)
         emitAll(
             flowOf(Action.Navigate.Pop).consumeNavigationActions(
