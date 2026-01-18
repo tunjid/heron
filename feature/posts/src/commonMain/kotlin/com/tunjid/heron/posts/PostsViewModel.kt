@@ -36,11 +36,10 @@ import com.tunjid.heron.posts.di.PostsRequest
 import com.tunjid.heron.posts.di.postsRequest
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
-import com.tunjid.heron.scaffold.scaffold.duplicateWriteMessage
-import com.tunjid.heron.scaffold.scaffold.failedWriteMessage
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
+import com.tunjid.heron.timeline.utilities.writeStatusMessage
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
@@ -190,14 +189,10 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
-        when (writeQueue.enqueue(Writable.Interaction(action.interaction))) {
-            WriteQueue.Status.Dropped -> emit {
-                copy(messages = messages + action.interaction.failedWriteMessage())
-            }
-            WriteQueue.Status.Duplicate -> emit {
-                copy(messages = messages + action.interaction.duplicateWriteMessage())
-            }
-            WriteQueue.Status.Enqueued -> Unit
+        val writable = Writable.Interaction(action.interaction)
+        val status = writeQueue.enqueue(writable)
+        writable.writeStatusMessage(status)?.let {
+            emit { copy(messages = messages + it) }
         }
     }
 

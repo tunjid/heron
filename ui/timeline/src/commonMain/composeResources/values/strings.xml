@@ -107,4 +107,27 @@
     <string name="post_replies_all">Everybody can reply</string>
     <string name="post_replies_some">Some people can reply</string>
     <string name="post_replies_none">Replies Disabled</string>
+    <string name="writable_duplicate_post_interaction">Your %1$s for this post is processing.</string>
+    <string name="writable_failed_post_interaction">Cannot process this action on this post right now.</string>
+    <string name="writable_duplicate">Your %1$s is processing.</string>
+    <string name="writable_failed">Cannot process %1$s right now.</string>
+    <string name="writable_post">post</string>
+    <string name="writable_message">message</string>
+    <string name="writable_reaction">reaction</string>
+    <string name="writable_reaction_removal">reaction removal</string>
+    <string name="writable_follow">follow</string>
+    <string name="writable_unfollow">unfollow</string>
+    <string name="writable_block">block</string>
+    <string name="writable_unblock">unblock</string>
+    <string name="writable_mute">mute</string>
+    <string name="writable_unmute">unmute</string>
+    <string name="writable_profile_update">profile update</string>
+    <string name="writable_timeline_update">timeline update</string>
+    <string name="writable_bookmark">bookmark</string>
+    <string name="writable_bookmark_removal">bookmark removal</string>
+    <string name="writable_like">like</string>
+    <string name="writable_unlike">unlike</string>
+    <string name="writable_repost">repost</string>
+    <string name="writable_repost_removal">repost removal</string>
+    <string name="writable_thread_gate_update">post reply update</string>
 </resources>
