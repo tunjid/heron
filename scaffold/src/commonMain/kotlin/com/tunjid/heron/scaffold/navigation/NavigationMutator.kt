@@ -126,11 +126,15 @@ fun profileDestination(
 
 fun recordDestination(
     record: Record,
+    otherModels: List<UrlEncodableModel> = emptyList(),
     sharedElementPrefix: String,
     referringRouteOption: ReferringRouteOption,
 ): NavigationAction.Destination = pathDestination(
     path = record.reference.uri.path,
-    models = listOf(record).filterIsInstance<UrlEncodableModel>(),
+    models = buildList {
+        if (record is UrlEncodableModel) add(record)
+        addAll(otherModels)
+    },
     sharedElementPrefix = sharedElementPrefix,
     referringRouteOption = referringRouteOption,
 )

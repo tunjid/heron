@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.postdetail
 
+import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
@@ -42,33 +43,37 @@ data class State(
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
     @Transient
-    val items: List<TimelineItem> = listOfNotNull(
-        anchorPost?.let {
-            TimelineItem.Thread(
-                id = it.uri.uri,
-                isMuted = false,
-                anchorPostIndex = 0,
-                posts = listOf(it),
-                generation = 0,
-                hasBreak = false,
-                signedInProfileId = null,
-                postUrisToThreadGates = emptyMap(),
-                appliedLabels = it.appliedLabels(
-                    adultContentEnabled = false,
-                    labelers = emptyList(),
-                    labelPreferences = emptyList(),
-                ),
-            )
-        },
-    ),
+    val items: List<TimelineItem> = emptyList(),
     @Transient
     val messages: List<Memo> = emptyList(),
 )
 
-fun State(route: Route) = State(
-    anchorPost = route.model<Post>(),
-    sharedElementPrefix = route.sharedElementPrefix,
-)
+fun State(route: Route): State {
+    val anchorPost = route.model<Post>()
+    return State(
+        anchorPost = anchorPost,
+        sharedElementPrefix = route.sharedElementPrefix,
+        items = listOfNotNull(
+            anchorPost?.let {
+                TimelineItem.Thread(
+                    id = it.uri.uri,
+                    isMuted = false,
+                    anchorPostIndex = 0,
+                    posts = listOf(it),
+                    generation = 0,
+                    hasBreak = false,
+                    signedInProfileId = null,
+                    postUrisToThreadGates = emptyMap(),
+                    appliedLabels = route.model<AppliedLabels.Filtered>() ?: it.appliedLabels(
+                        adultContentEnabled = false,
+                        labelers = emptyList(),
+                        labelPreferences = emptyList(),
+                    ),
+                )
+            },
+        ),
+    )
+}
 
 sealed class Action(val key: String) {
 

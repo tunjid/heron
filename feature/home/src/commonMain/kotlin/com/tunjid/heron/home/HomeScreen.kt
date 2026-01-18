@@ -492,6 +492,7 @@ private fun HomeTimeline(
                                                     recordDestination(
                                                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                                                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                                                        otherModels = listOfNotNull(action.warnedAppliedLabels),
                                                         record = action.post,
                                                     ),
                                                 ),
