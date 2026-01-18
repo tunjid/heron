@@ -160,26 +160,53 @@ typealias Labelers = List<Labeler>
 /**
  * A class holding metadata about a profile's preferences for labels.
  */
-data class AppliedLabels(
-    val adultContentEnabled: Boolean,
-    val labels: Collection<Label>,
-    val labelers: Labelers,
-    val preferenceLabelsVisibilityMap: Map<Label.Value, Label.Visibility>,
-) {
-    constructor(
-        adultContentEnabled: Boolean,
-        labels: Collection<Label>,
-        labelers: Labelers,
-        contentLabelPreferences: ContentLabelPreferences,
-    ) : this(
-        adultContentEnabled = adultContentEnabled,
-        labels = labels,
-        labelers = labelers,
-        preferenceLabelsVisibilityMap = contentLabelPreferences.associateBy(
-            keySelector = ContentLabelPreference::label,
-            valueTransform = ContentLabelPreference::visibility,
-        ),
-    )
+sealed interface AppliedLabels {
+    val labels: Collection<Label>
+    val shouldHide: Boolean
+    val shouldBlurMedia: Boolean
+    val blurredMediaSeverity: Label.Severity
+    val canAutoPlayVideo: Boolean
+
+    fun visibility(label: Label.Value): Label.Visibility
+    fun definition(label: Label): Label.Definition?
+    fun labeler(label: Label): Labeler?
+
+    companion object {
+        operator fun invoke(
+            adultContentEnabled: Boolean,
+            labels: Collection<Label>,
+            labelers: Labelers,
+            preferenceLabelsVisibilityMap: Map<Label.Value, Label.Visibility>,
+        ): AppliedLabels = AppliedLabelsImpl(
+            adultContentEnabled = adultContentEnabled,
+            labels = labels,
+            labelers = labelers,
+            preferenceLabelsVisibilityMap = preferenceLabelsVisibilityMap,
+        )
+
+        operator fun invoke(
+            adultContentEnabled: Boolean,
+            labels: Collection<Label>,
+            labelers: Labelers,
+            contentLabelPreferences: ContentLabelPreferences,
+        ): AppliedLabels = AppliedLabelsImpl(
+            adultContentEnabled = adultContentEnabled,
+            labels = labels,
+            labelers = labelers,
+            preferenceLabelsVisibilityMap = contentLabelPreferences.associateBy(
+                keySelector = ContentLabelPreference::label,
+                valueTransform = ContentLabelPreference::visibility,
+            ),
+        )
+    }
+}
+
+private data class AppliedLabelsImpl(
+    private val adultContentEnabled: Boolean,
+    override val labels: Collection<Label>,
+    private val labelers: Labelers,
+    private val preferenceLabelsVisibilityMap: Map<Label.Value, Label.Visibility>,
+) : AppliedLabels {
 
     private val postLabels =
         if (labels.isEmpty()) emptySet()
@@ -228,13 +255,13 @@ data class AppliedLabels(
         )
     }
 
-    val shouldHide: Boolean
+    override val shouldHide: Boolean
         get() = postLabels.any { labelValue ->
             if (labelValue == Label.Hidden) return@any true
             visibility(labelValue) == Label.Visibility.Hide
         }
 
-    val shouldBlurMedia: Boolean
+    override val shouldBlurMedia: Boolean
         get() = postLabels.any { labelValue ->
             if (labelValue == Label.Warn) return@any true
 
@@ -244,22 +271,22 @@ data class AppliedLabels(
             isBlurTarget && visibility(labelValue) == Label.Visibility.Warn
         }
 
-    val blurredMediaSeverity: Label.Severity
+    override val blurredMediaSeverity: Label.Severity
         get() = postLabels.firstNotNullOfOrNull { labelValue ->
             labelValuesToDefinitions[labelValue]
                 ?.takeIf { it.blurs == Label.BlurTarget.Media || it.adultOnly }
                 ?.severity
         } ?: Label.Severity.Inform
 
-    val canAutoPlayVideo: Boolean
+    override val canAutoPlayVideo: Boolean
         get() = !shouldBlurMedia
 
-    fun visibility(label: Label.Value): Label.Visibility =
+    override fun visibility(label: Label.Value): Label.Visibility =
         labelVisibilityMap[label] ?: Label.Visibility.Ignore
 
-    fun definition(label: Label): Label.Definition? =
+    override fun definition(label: Label): Label.Definition? =
         labelerDefinitionLookup[label.creatorId]?.second?.get(label.value)
 
-    fun labeler(label: Label): Labeler? =
+    override fun labeler(label: Label): Labeler? =
         labelerDefinitionLookup[label.creatorId]?.first
 }
