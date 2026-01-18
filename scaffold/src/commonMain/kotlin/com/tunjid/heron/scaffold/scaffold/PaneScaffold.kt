@@ -123,7 +123,11 @@ fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(): PaneScaffoldState {
     val splitPaneState = LocalSplitPaneState.current
     val paneMovableElementSharedTransitionScope =
         rememberThreePaneMovableElementSharedTransitionScope()
-    return remember(appState, splitPaneState) {
+    return remember(
+        appState,
+        splitPaneState,
+        paneMovableElementSharedTransitionScope,
+    ) {
         PaneScaffoldState(
             appState = appState,
             splitPaneState = splitPaneState,
