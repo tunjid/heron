@@ -18,9 +18,11 @@ package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.LabelerId
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import kotlin.jvm.JvmInline
@@ -169,8 +171,13 @@ sealed interface AppliedLabels {
 
     fun visibility(label: Label.Value): Label.Visibility
     fun definition(label: Label): Label.Definition?
-    fun labeler(label: Label): Labeler?
+    fun labelerSummary(label: Label): LabelerSummary?
 
+    data class LabelerSummary(
+        val creatorId: ProfileId,
+        val creatorHandle: ProfileHandle,
+        val creatorAvatar: ImageUri?,
+    )
     companion object {
         operator fun invoke(
             adultContentEnabled: Boolean,
@@ -287,6 +294,12 @@ private data class AppliedLabelsImpl(
     override fun definition(label: Label): Label.Definition? =
         labelerDefinitionLookup[label.creatorId]?.second?.get(label.value)
 
-    override fun labeler(label: Label): Labeler? =
-        labelerDefinitionLookup[label.creatorId]?.first
+    override fun labelerSummary(label: Label): AppliedLabels.LabelerSummary? =
+        labelerDefinitionLookup[label.creatorId]?.first?.let { labeler ->
+            AppliedLabels.LabelerSummary(
+                creatorId = labeler.creator.did,
+                creatorHandle = labeler.creator.handle,
+                creatorAvatar = labeler.creator.avatar,
+            )
+        }
 }

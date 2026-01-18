@@ -41,12 +41,12 @@ fun AppliedLabelDialog(
     label: Label,
     appliedLabels: AppliedLabels,
     onDismiss: () -> Unit,
-    onLabelerClicked: (Labeler) -> Unit,
+    onLabelerSummaryClicked: (AppliedLabels.LabelerSummary) -> Unit,
 ) {
     appliedLabels.withPreferredLabelerAndLocaleInfo(
         languageTag = languageTag,
         label = label,
-    ) { labeler, localeInfo ->
+    ) { summary, localeInfo ->
         SimpleDialog(
             onDismissRequest = onDismiss,
             title = {
@@ -62,7 +62,7 @@ fun AppliedLabelDialog(
                     SimpleDialogText(
                         text = stringResource(
                             Res.string.label_source,
-                            labeler.creator.handle.id,
+                            summary.creatorHandle.id,
                         ),
                     )
                 }
@@ -77,7 +77,7 @@ fun AppliedLabelDialog(
                 PrimaryDialogButton(
                     text = stringResource(Res.string.view_labeler),
                     onClick = {
-                        onLabelerClicked(labeler)
+                        onLabelerSummaryClicked(summary)
                     },
                 )
             },
@@ -88,14 +88,14 @@ fun AppliedLabelDialog(
 inline fun AppliedLabels.forEach(
     languageTag: String,
     labels: List<Label>,
-    block: (Label, Labeler, Labeler.LocaleInfo) -> Unit,
+    block: (Label, AppliedLabels.LabelerSummary, Labeler.LocaleInfo) -> Unit,
 ) {
     labels.forEach { label ->
         withPreferredLabelerAndLocaleInfo(
             languageTag = languageTag,
             label = label,
-            block = { labeler, localeInfo ->
-                block(label, labeler, localeInfo)
+            block = { summary, localeInfo ->
+                block(label, summary, localeInfo)
             },
         )
     }
@@ -104,15 +104,15 @@ inline fun AppliedLabels.forEach(
 inline fun AppliedLabels.withPreferredLabelerAndLocaleInfo(
     languageTag: String,
     label: Label,
-    block: (Labeler, Labeler.LocaleInfo) -> Unit,
+    block: (AppliedLabels.LabelerSummary, Labeler.LocaleInfo) -> Unit,
 ) {
     val visibility = visibility(label.value)
     if (visibility != Label.Visibility.Warn) return
 
     val definition = definition(label) ?: return
-    val labeler = labeler(label) ?: return
+    val summary = labelerSummary(label) ?: return
 
     definition.locale(languageTag)?.let { localeInfo ->
-        block(labeler, localeInfo)
+        block(summary, localeInfo)
     }
 }
