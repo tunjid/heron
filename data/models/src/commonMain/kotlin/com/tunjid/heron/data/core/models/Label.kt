@@ -216,6 +216,10 @@ private data class AppliedLabelsImpl(
     private val preferenceLabelsVisibilityMap: Map<Label.Value, Label.Visibility>,
 ) : AppliedLabels {
 
+    private var lazyShouldHide: Boolean? = null
+    private var lazyShouldBlur: Boolean? = null
+    private var lazyBlurredMediaSeverity: Label.Severity? = null
+
     private val postLabels =
         if (labels.isEmpty()) emptySet()
         else labels.mapNotNullTo(mutableSetOf()) {
@@ -223,14 +227,15 @@ private data class AppliedLabelsImpl(
             if (isPostUri) it.value else null
         }
 
-    override val shouldHide: Boolean =
-        postLabels.any { labelValue ->
+    override val shouldHide: Boolean
+        get() = lazyShouldHide ?: postLabels.any { labelValue ->
             if (labelValue == Label.Hidden) return@any true
             visibility(labelValue) == Label.Visibility.Hide
         }
+            .also { lazyShouldHide = it }
 
-    override val shouldBlurMedia: Boolean =
-        postLabels.any { labelValue ->
+    override val shouldBlurMedia: Boolean
+        get() = lazyShouldBlur ?: postLabels.any { labelValue ->
             if (labelValue == Label.Warn) return@any true
 
             val isBlurTarget = Label.AdultLabels.contains(labelValue) ||
@@ -238,13 +243,23 @@ private data class AppliedLabelsImpl(
 
             isBlurTarget && visibility(labelValue) == Label.Visibility.Warn
         }
+            .also { lazyShouldBlur = it }
 
-    override val blurredMediaSeverity: Label.Severity =
-        postLabels.firstNotNullOfOrNull { labelValue ->
-            findDefinition(labelValue)
-                ?.takeIf { it.blurs == Label.BlurTarget.Media || it.adultOnly }
-                ?.severity
-        } ?: Label.Severity.Inform
+    override val blurredMediaSeverity: Label.Severity
+        get() {
+            var severity = lazyBlurredMediaSeverity
+            if (severity != null) return severity
+
+            severity = postLabels.firstNotNullOfOrNull { labelValue ->
+                findDefinition(labelValue)
+                    ?.takeIf { it.blurs == Label.BlurTarget.Media || it.adultOnly }
+                    ?.severity
+            } ?: Label.Severity.Inform
+
+            lazyBlurredMediaSeverity = severity
+
+            return severity
+        }
 
     override val canAutoPlayVideo: Boolean = !shouldBlurMedia
 
