@@ -30,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.AppliedLabels.Companion.warned
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
@@ -297,7 +298,10 @@ private fun PostSearchResult(
         modifier = modifier,
         onClick = {
             postActions.onPostAction(
-                PostAction.OfPost(result.timelineItem.post),
+                PostAction.OfPost(
+                    post = result.timelineItem.post,
+                    warnedAppliedLabels = result.timelineItem.appliedLabels.warned(),
+                ),
             )
         },
         content = {

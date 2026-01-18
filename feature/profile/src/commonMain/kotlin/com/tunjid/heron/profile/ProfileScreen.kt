@@ -1317,6 +1317,7 @@ private fun ProfileTimeline(
                                                 recordDestination(
                                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                     sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                                                    otherModels = listOfNotNull(action.warnedAppliedLabels),
                                                     record = action.post,
                                                 ),
                                             ),

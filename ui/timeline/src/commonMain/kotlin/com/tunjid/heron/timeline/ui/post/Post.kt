@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.tunjid.composables.ui.skipIf
 import com.tunjid.heron.data.core.models.AppliedLabels
+import com.tunjid.heron.data.core.models.AppliedLabels.Companion.warned
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.ImageList
@@ -231,6 +232,7 @@ private fun AttributionContent(
                         data.postActions.onPostAction(
                             PostAction.OfPost(
                                 post = data.post,
+                                warnedAppliedLabels = data.appliedLabels.warned(),
                             ),
                         )
                     },
@@ -373,6 +375,7 @@ private fun TextContent(
                 data.postActions.onPostAction(
                     PostAction.OfPost(
                         post = data.post,
+                        warnedAppliedLabels = data.appliedLabels.warned(),
                     ),
                 )
             },

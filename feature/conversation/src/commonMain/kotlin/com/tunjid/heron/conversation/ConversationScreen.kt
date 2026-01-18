@@ -491,6 +491,7 @@ private fun MessageRecord(
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                 sharedElementPrefix = item.id,
                                 record = action.post,
+                                otherModels = listOfNotNull(action.warnedAppliedLabels),
                             ),
                         ),
                     )

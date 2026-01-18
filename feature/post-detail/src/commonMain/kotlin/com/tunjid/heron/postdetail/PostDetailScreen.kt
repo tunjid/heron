@@ -236,6 +236,7 @@ internal fun PostDetailScreen(
                                         recordDestination(
                                             referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
                                             sharedElementPrefix = state.sharedElementPrefix,
+                                            otherModels = listOfNotNull(action.warnedAppliedLabels),
                                             record = action.post,
                                         ),
                                     )

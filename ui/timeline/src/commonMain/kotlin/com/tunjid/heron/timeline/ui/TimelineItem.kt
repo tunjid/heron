@@ -16,13 +16,7 @@
 
 package com.tunjid.heron.timeline.ui
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -56,14 +50,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.AppliedLabels.Companion.warned
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.PostUri
@@ -232,7 +224,10 @@ private fun ThreadedPost(
                                 .childThreadNode(videoId = null),
                             onClick = {
                                 postActions.onPostAction(
-                                    PostAction.OfPost(post = post),
+                                    PostAction.OfPost(
+                                        post = post,
+                                        warnedAppliedLabels = item.appliedLabels.warned(),
+                                    ),
                                 )
                             },
                         )
