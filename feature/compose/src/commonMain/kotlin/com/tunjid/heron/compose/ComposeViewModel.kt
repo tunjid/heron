@@ -102,7 +102,7 @@ class ActualComposeViewModel(
                 authRepository = authRepository,
             ),
             embeddedRecordMutations(
-                embeddedRecordUri = when (val creationType = route.model) {
+                embeddedRecordUri = when (val creationType = route.model<Post.Create.Quote >()) {
                     is Post.Create.Quote -> creationType.interaction.postUri
                     else -> route.sharedUri?.asEmbeddableRecordUriOrNull()
                 },

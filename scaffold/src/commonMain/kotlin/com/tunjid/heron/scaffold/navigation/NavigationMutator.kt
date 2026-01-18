@@ -92,15 +92,13 @@ import org.jetbrains.compose.resources.StringResource
 interface NavigationStateHolder : ActionStateMutator<NavigationMutation, StateFlow<MultiStackNav>>
 typealias NavigationMutation = NavigationContext.() -> MultiStackNav
 
-val Route.model: UrlEncodableModel? by optionalMappedRouteQuery(
-    mapper = String::fromBase64EncodedUrl,
-)
-
 val Route.sharedUri: GenericUri? by optionalMappedRouteQuery(
     mapper = ::GenericUri,
 )
 
-inline fun <reified T> Route.model(): T? = model as? T
+inline fun <reified T> Route.model(): T? = models.asSequence()
+    .filterIsInstance<T>()
+    .firstOrNull()
 
 val Route.models: List<UrlEncodableModel>
     get() = routeParams.queryParams["model"]

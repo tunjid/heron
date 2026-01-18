@@ -66,7 +66,7 @@ data class State(
 )
 
 fun State(route: Route) = State(
-    anchorPost = route.model as? Post,
+    anchorPost = route.model<Post>(),
     sharedElementPrefix = route.sharedElementPrefix,
 )
 

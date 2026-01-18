@@ -56,7 +56,7 @@ data class State(
     val suggestedProfiles: List<Profile> = emptyList(),
 )
 
-fun State(route: Route): State = when (val model = route.model) {
+fun State(route: Route): State = when (val model = route.model<Post.Create >()) {
     is Post.Create -> State(
         postText = TextFieldValue(
             annotatedString = AnnotatedString(
