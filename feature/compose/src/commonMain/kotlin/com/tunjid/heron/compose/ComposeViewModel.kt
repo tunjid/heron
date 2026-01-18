@@ -40,6 +40,7 @@ import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedUri
 import com.tunjid.heron.timeline.utilities.writeStatusMessage
+import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -50,10 +51,14 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
+import heron.feature.compose.generated.resources.Res
+import heron.feature.compose.generated.resources.sending_post
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -264,7 +269,14 @@ private fun Flow<Action.CreatePost>.createPostMutations(
         postWrite.writeStatusMessage(status)?.let {
             emit { copy(messages = messages + it) }
         }
-        writeQueue.awaitDequeue(postWrite)
+
+        if (status !is WriteQueue.Status.Enqueued) return@mapToManyMutations
+
+        emit { copy(messages = messages + Memo.Resource(stringResource = Res.string.sending_post)) }
+
+        // Wait for the user to read the message
+        delay(1400.milliseconds)
+
         emitAll(
             flowOf(Action.Navigate.Pop).consumeNavigationActions(
                 navigationMutationConsumer = navActions,
