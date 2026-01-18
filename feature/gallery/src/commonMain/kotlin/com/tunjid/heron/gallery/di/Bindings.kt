@@ -112,11 +112,12 @@ class GalleryBindings(
                 )
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
+            val paneScaffoldState = rememberPaneScaffoldState()
 
-            rememberPaneScaffoldState().PaneScaffold(
+            paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
-                    .predictiveBackPlacement(paneScope = this),
+                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
                 showNavigation = false,
                 containerColor = Color.Transparent,
                 snackBarMessages = state.messages,

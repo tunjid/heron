@@ -17,38 +17,31 @@
 package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.ContentTransform
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.tunjid.composables.backpreview.backPreview
+import com.tunjid.heron.ui.modifiers.animatedRoundedCornerClip
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.treenav.compose.PaneScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.adaptTo
 
-@Composable
 fun Modifier.predictiveBackPlacement(
-    paneScope: PaneScope<ThreePane, *>,
-): Modifier = with(paneScope) {
-    val appState = LocalAppState.current
+    paneScaffoldState: PaneScaffoldState,
+): Modifier = with(paneScaffoldState) {
     val shouldDrawBackground = paneState.pane == ThreePane.Primary &&
         inPredictiveBack &&
         isActive &&
         appState.dismissBehavior != AppState.DismissBehavior.Gesture.DragToPop
 
-    val clipRadius by animateDpAsState(
-        if (shouldDrawBackground) 16.dp
-        else 0.dp,
-    )
-
-    if (shouldDrawBackground) backPreview(appState.backPreviewState)
-        .clip(RoundedCornerShape(clipRadius))
-    else this@predictiveBackPlacement
+    ifTrue(shouldDrawBackground) {
+        backPreview(appState.backPreviewState)
+    }
+        .animatedRoundedCornerClip(
+            cornerRadius = if (shouldDrawBackground) 16.dp else 0.dp,
+        )
 }
 
 val predictiveBackContentTransform: PaneScope<ThreePane, *>.() -> ContentTransform =

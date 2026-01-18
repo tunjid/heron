@@ -133,7 +133,7 @@ class ModerationBindings(
             paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
-                    .predictiveBackPlacement(paneScope = this)
+                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
                     .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
                         nestedScroll(bottomNavigationNestedScrollConnection)
                     },

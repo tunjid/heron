@@ -195,6 +195,7 @@ class FeedBindings(
                 )
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
+            val paneScaffoldState = rememberPaneScaffoldState()
 
             val recordOptionsSheetState = rememberUpdatedEmbeddableRecordOptionsState(
                 signedInProfileId = state.signedInProfileId,
@@ -225,11 +226,11 @@ class FeedBindings(
             val topAppBarNestedScrollConnection =
                 topAppBarNestedScrollConnection()
 
-            rememberPaneScaffoldState().PaneScaffold(
+            paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
                     .nestedScroll(topAppBarNestedScrollConnection)
-                    .predictiveBackPlacement(paneScope = this),
+                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
