@@ -239,7 +239,7 @@ sealed interface AppliedLabels {
             ),
         )
 
-        fun AppliedLabels.warnedAppliedLabels(): Filtered {
+        fun AppliedLabels.warned(): Filtered {
             val visibleDefinitions = mutableListOf<Label.Definition>()
             val visibleSummaries = mutableListOf<LabelerSummary>()
             val visibleLabels = mutableListOf<Label>()
