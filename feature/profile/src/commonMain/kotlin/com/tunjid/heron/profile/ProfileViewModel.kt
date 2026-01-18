@@ -52,12 +52,11 @@ import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.profile.di.profileHandleOrId
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
-import com.tunjid.heron.scaffold.scaffold.duplicateWriteMessage
-import com.tunjid.heron.scaffold.scaffold.failedWriteMessage
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
 import com.tunjid.heron.timeline.state.timelineStateHolder
+import com.tunjid.heron.timeline.utilities.writeStatusMessage
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -368,66 +367,68 @@ private fun Flow<Action.UpdatePageWithUpdates>.pageWithUpdateMutations(): Flow<M
 private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> = mapToManyMutations {
-    writeQueue.enqueue(
-        Writable.TimelineUpdate(
-            Timeline.Update.OfMutedWord.ReplaceAll(
-                mutedWordPreferences = it.mutedWordPreference,
-            ),
+    val writable = Writable.TimelineUpdate(
+        Timeline.Update.OfMutedWord.ReplaceAll(
+            mutedWordPreferences = it.mutedWordPreference,
         ),
     )
+    val status = writeQueue.enqueue(writable)
+    writable.writeStatusMessage(status)?.let {
+        emit { copy(messages = messages + it) }
+    }
 }
 
 private fun Flow<Action.Block>.blockAccountMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
-    writeQueue.enqueue(
-        Writable.Restriction(
-            when (action) {
-                is Action.Block.Add -> Profile.Restriction.Block.Add(
-                    signedInProfileId = action.signedInProfileId,
-                    profileId = action.profileId,
-                )
-                is Action.Block.Remove -> Profile.Restriction.Block.Remove(
-                    signedInProfileId = action.signedInProfileId,
-                    profileId = action.profileId,
-                    blockUri = action.blockUri,
-                )
-            },
-        ),
+    val writable = Writable.Restriction(
+        when (action) {
+            is Action.Block.Add -> Profile.Restriction.Block.Add(
+                signedInProfileId = action.signedInProfileId,
+                profileId = action.profileId,
+            )
+            is Action.Block.Remove -> Profile.Restriction.Block.Remove(
+                signedInProfileId = action.signedInProfileId,
+                profileId = action.profileId,
+                blockUri = action.blockUri,
+            )
+        },
     )
+    val status = writeQueue.enqueue(writable)
+    writable.writeStatusMessage(status)?.let {
+        emit { copy(messages = messages + it) }
+    }
 }
 
 private fun Flow<Action.Mute>.muteAccountMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
-    writeQueue.enqueue(
-        Writable.Restriction(
-            when (action) {
-                is Action.Mute.Add -> Profile.Restriction.Mute.Add(
-                    signedInProfileId = action.signedInProfileId,
-                    profileId = action.profileId,
-                )
-                is Action.Mute.Remove -> Profile.Restriction.Mute.Remove(
-                    signedInProfileId = action.signedInProfileId,
-                    profileId = action.profileId,
-                )
-            },
-        ),
+    val writable = Writable.Restriction(
+        when (action) {
+            is Action.Mute.Add -> Profile.Restriction.Mute.Add(
+                signedInProfileId = action.signedInProfileId,
+                profileId = action.profileId,
+            )
+            is Action.Mute.Remove -> Profile.Restriction.Mute.Remove(
+                signedInProfileId = action.signedInProfileId,
+                profileId = action.profileId,
+            )
+        },
     )
+    val status = writeQueue.enqueue(writable)
+    writable.writeStatusMessage(status)?.let {
+        emit { copy(messages = messages + it) }
+    }
 }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
-        when (writeQueue.enqueue(Writable.Interaction(action.interaction))) {
-            WriteQueue.Status.Dropped -> emit {
-                copy(messages = messages + action.interaction.failedWriteMessage())
-            }
-            WriteQueue.Status.Duplicate -> emit {
-                copy(messages = messages + action.interaction.duplicateWriteMessage())
-            }
-            WriteQueue.Status.Enqueued -> Unit
+        val writable = Writable.Interaction(action.interaction)
+        val status = writeQueue.enqueue(writable)
+        writable.writeStatusMessage(status)?.let {
+            emit { copy(messages = messages + it) }
         }
     }
 
@@ -440,31 +441,37 @@ private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
-        writeQueue.enqueue(
-            Writable.Connection(
-                when (val following = action.following) {
-                    null -> Profile.Connection.Follow(
-                        signedInProfileId = action.signedInProfileId,
-                        profileId = action.viewedProfileId,
-                        followedBy = action.followedBy,
-                    )
+        val writable = Writable.Connection(
+            when (val following = action.following) {
+                null -> Profile.Connection.Follow(
+                    signedInProfileId = action.signedInProfileId,
+                    profileId = action.viewedProfileId,
+                    followedBy = action.followedBy,
+                )
 
-                    else -> Profile.Connection.Unfollow(
-                        signedInProfileId = action.signedInProfileId,
-                        profileId = action.viewedProfileId,
-                        followUri = following,
-                        followedBy = action.followedBy,
-                    )
-                },
-            ),
+                else -> Profile.Connection.Unfollow(
+                    signedInProfileId = action.signedInProfileId,
+                    profileId = action.viewedProfileId,
+                    followUri = following,
+                    followedBy = action.followedBy,
+                )
+            },
         )
+        val status = writeQueue.enqueue(writable)
+        writable.writeStatusMessage(status)?.let {
+            emit { copy(messages = messages + it) }
+        }
     }
 
 private fun Flow<Action.UpdatePreferences>.feedGeneratorStatusMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
-        writeQueue.enqueue(Writable.TimelineUpdate(action.update))
+        val writable = Writable.TimelineUpdate(action.update)
+        val status = writeQueue.enqueue(writable)
+        writable.writeStatusMessage(status)?.let {
+            emit { copy(messages = messages + it) }
+        }
     }
 
 private fun CoroutineScope.recordStateHolders(
