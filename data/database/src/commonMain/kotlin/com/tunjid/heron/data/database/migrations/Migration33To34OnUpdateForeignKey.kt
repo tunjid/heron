@@ -32,7 +32,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`externalEmbedUri`) REFERENCES `externalEmbeds`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -44,7 +44,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `postUri`,
                 `externalEmbedUri`
             FROM postExternalEmbeds
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE postExternalEmbeds")
         connection.execSQL("ALTER TABLE postExternalEmbeds_new RENAME TO postExternalEmbeds")
@@ -61,7 +61,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`imageUri`) REFERENCES `images`(`fullSize`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -73,7 +73,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `postUri`,
                 `imageUri`
             FROM postImages
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE postImages")
         connection.execSQL("ALTER TABLE postImages_new RENAME TO postImages")
@@ -90,7 +90,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`videoId`) REFERENCES `videos`(`cid`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -102,7 +102,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `postUri`,
                 `videoId`
             FROM postVideos
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE postVideos")
         connection.execSQL("ALTER TABLE postVideos_new RENAME TO postVideos")
@@ -119,7 +119,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`embeddedPostUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -131,7 +131,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `postUri`,
                 `embeddedPostUri`
             FROM postPosts
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE postPosts")
         connection.execSQL("ALTER TABLE postPosts_new RENAME TO postPosts")
@@ -158,7 +158,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 PRIMARY KEY(`uri`),
                 FOREIGN KEY(`authorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -192,7 +192,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `embeddedRecordUri`,
                 `createdAt`
             FROM posts
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE posts")
         connection.execSQL("ALTER TABLE posts_new RENAME TO posts")
@@ -210,7 +210,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`authorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -222,7 +222,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `postUri`,
                 `authorId`
             FROM postAuthors
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE postAuthors")
         connection.execSQL("ALTER TABLE postAuthors_new RENAME TO postAuthors")
@@ -239,7 +239,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`parentPostUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -251,7 +251,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `parentPostUri`,
                 `postUri`
             FROM postThreads
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE postThreads")
         connection.execSQL("ALTER TABLE postThreads_new RENAME TO postThreads")
@@ -275,7 +275,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`viewingProfileId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -301,7 +301,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `pinned`,
                 `bookmarked`
             FROM postViewerStatistics
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE postViewerStatistics")
         connection.execSQL("ALTER TABLE postViewerStatistics_new RENAME TO postViewerStatistics")
@@ -326,7 +326,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`profileId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`otherProfileId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -354,7 +354,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `followedBy`,
                 `commonFollowersCount`
             FROM profileViewerStates
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE profileViewerStates")
         connection.execSQL("ALTER TABLE profileViewerStates_new RENAME TO profileViewerStates")
@@ -371,7 +371,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`authorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -387,7 +387,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `createdAt`,
                 `indexedAt`
             FROM postLikes
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE postLikes")
         connection.execSQL("ALTER TABLE postLikes_new RENAME TO postLikes")
@@ -408,7 +408,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`authorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -424,7 +424,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `createdAt`,
                 `indexedAt`
             FROM postReposts
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE postReposts")
         connection.execSQL("ALTER TABLE postReposts_new RENAME TO postReposts")
@@ -445,7 +445,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 PRIMARY KEY(`uri`, `value`),
                 FOREIGN KEY(`creatorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -465,7 +465,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `version`,
                 `createdAt`
             FROM labels
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE labels")
         connection.execSQL("ALTER TABLE labels_new RENAME TO labels")
@@ -485,7 +485,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 PRIMARY KEY(`uri`),
                 FOREIGN KEY(`creatorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -501,7 +501,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `creatorId`,
                 `likeCount`
             FROM labelers
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE labelers")
         connection.execSQL("ALTER TABLE labelers_new RENAME TO labelers")
@@ -522,7 +522,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 PRIMARY KEY(`creatorId`, `identifier`),
                 FOREIGN KEY(`creatorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -544,7 +544,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `severity`,
                 `localeInfoCbor`
             FROM labelDefinitions
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE labelDefinitions")
         connection.execSQL("ALTER TABLE labelDefinitions_new RENAME TO labelDefinitions")
@@ -568,7 +568,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 PRIMARY KEY(`uri`),
                 FOREIGN KEY(`creatorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -596,7 +596,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `indexedAt`,
                 `createdAt`
             FROM lists
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE lists")
         connection.execSQL("ALTER TABLE lists_new RENAME TO lists")
@@ -618,7 +618,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`subjectId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`listUri`) REFERENCES `lists`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -634,7 +634,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `subjectId`,
                 `createdAt`
             FROM listMembers
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE listMembers")
         connection.execSQL("ALTER TABLE listMembers_new RENAME TO listMembers")
@@ -659,7 +659,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 PRIMARY KEY(`uri`),
                 FOREIGN KEY(`creatorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -691,7 +691,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `indexedAt`,
                 `createdAt`
             FROM feedGenerators
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE feedGenerators")
         connection.execSQL("ALTER TABLE feedGenerators_new RENAME TO feedGenerators")
@@ -719,7 +719,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`authorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`ownerId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -745,7 +745,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `isRead`,
                 `indexedAt`
             FROM notifications
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE notifications")
         connection.execSQL("ALTER TABLE notifications_new RENAME TO notifications")
@@ -780,7 +780,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`parentPostUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`grandParentPostAuthorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -818,7 +818,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `parentPostEmbeddedRecordUri`,
                 `grandParentPostAuthorId`
             FROM timelineItems
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE timelineItems")
         connection.execSQL("ALTER TABLE timelineItems_new RENAME TO timelineItems")
@@ -848,7 +848,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 PRIMARY KEY(`uri`),
                 FOREIGN KEY(`creatorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -876,7 +876,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `indexedAt`,
                 `createdAt`
             FROM starterPacks
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE starterPacks")
         connection.execSQL("ALTER TABLE starterPacks_new RENAME TO starterPacks")
@@ -901,7 +901,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 PRIMARY KEY(`id`, `ownerId`),
                 FOREIGN KEY(`ownerId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -925,7 +925,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `status`,
                 `unreadCount`
             FROM conversations
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE conversations")
         connection.execSQL("ALTER TABLE conversations_new RENAME TO conversations")
@@ -943,7 +943,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`conversationId`, `conversationOwnerId`) REFERENCES `conversations`(`id`, `ownerId`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`memberId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -957,7 +957,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `conversationOwnerId`,
                 `memberId`
             FROM conversationMembers
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE conversationMembers")
         connection.execSQL("ALTER TABLE conversationMembers_new RENAME TO conversationMembers")
@@ -979,7 +979,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`conversationId`, `conversationOwnerId`) REFERENCES `conversations`(`id`, `ownerId`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`senderId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -1005,7 +1005,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `sentAt`,
                 `base64EncodedMetadata`
             FROM messages
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE messages")
         connection.execSQL("ALTER TABLE messages_new RENAME TO messages")
@@ -1021,7 +1021,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`messageId`) REFERENCES `messages`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`feedGeneratorUri`) REFERENCES `feedGenerators`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -1033,7 +1033,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `messageId`,
                 `feedGeneratorUri`
             FROM messageFeedGenerators
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE messageFeedGenerators")
         connection.execSQL("ALTER TABLE messageFeedGenerators_new RENAME TO messageFeedGenerators")
@@ -1050,7 +1050,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`messageId`) REFERENCES `messages`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`listUri`) REFERENCES `lists`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -1062,7 +1062,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `messageId`,
                 `listUri`
             FROM messageLists
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE messageLists")
         connection.execSQL("ALTER TABLE messageLists_new RENAME TO messageLists")
@@ -1079,7 +1079,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`messageId`) REFERENCES `messages`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -1091,7 +1091,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `messageId`,
                 `postUri`
             FROM messagePosts
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE messagePosts")
         connection.execSQL("ALTER TABLE messagePosts_new RENAME TO messagePosts")
@@ -1110,7 +1110,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`messageId`) REFERENCES `messages`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`senderId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -1126,7 +1126,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `senderId`,
                 `createdAt`
             FROM messageReactions
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE messageReactions")
         connection.execSQL("ALTER TABLE messageReactions_new RENAME TO messageReactions")
@@ -1142,7 +1142,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`messageId`) REFERENCES `messages`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`starterPackUri`) REFERENCES `starterPacks`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -1154,7 +1154,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `messageId`,
                 `starterPackUri`
             FROM messageStarterPacks
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE messageStarterPacks")
         connection.execSQL("ALTER TABLE messageStarterPacks_new RENAME TO messageStarterPacks")
@@ -1175,7 +1175,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 PRIMARY KEY(`uri`),
                 FOREIGN KEY(`gatedPostUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -1197,7 +1197,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `allowsFollowers`,
                 `allowsMentioned`
             FROM threadGates
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE threadGates")
         connection.execSQL("ALTER TABLE threadGates_new RENAME TO threadGates")
@@ -1215,7 +1215,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`threadGateUri`) REFERENCES `threadGates`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`allowedListUri`) REFERENCES `lists`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -1227,7 +1227,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `threadGateUri`,
                 `allowedListUri`
             FROM threadGateAllowedLists
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE threadGateAllowedLists")
         connection.execSQL("ALTER TABLE threadGateAllowedLists_new RENAME TO threadGateAllowedLists")
@@ -1244,7 +1244,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`threadGateUri`) REFERENCES `threadGates`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`hiddenPostUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL(
             """
@@ -1256,7 +1256,7 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `threadGateUri`,
                 `hiddenPostUri`
             FROM threadGateHiddenPosts
-            """.trimIndent()
+            """.trimIndent(),
         )
         connection.execSQL("DROP TABLE threadGateHiddenPosts")
         connection.execSQL("ALTER TABLE threadGateHiddenPosts_new RENAME TO threadGateHiddenPosts")
