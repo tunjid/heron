@@ -269,7 +269,7 @@ private fun LabelContent(
                 data.appliedLabels.forEach(
                     languageTag = data.languageTag,
                     labels = data.post.author.labels,
-                ) { label, labeler, localeInfo ->
+                ) { label, labelerSummary, localeInfo ->
                     val authorLabelContentDescription = stringResource(
                         CommonStrings.post_author_label,
                         localeInfo.description,
@@ -287,9 +287,9 @@ private fun LabelContent(
                             contentDescription = authorLabelContentDescription,
                             icon = {
                                 AsyncImage(
-                                    args = remember(labeler.creator.avatar) {
+                                    args = remember(labelerSummary.creatorAvatar) {
                                         ImageArgs(
-                                            url = labeler.creator.avatar?.uri,
+                                            url = labelerSummary.creatorAvatar?.uri,
                                             contentScale = ContentScale.Crop,
                                             contentDescription = null,
                                             shape = data.avatarShape,
@@ -316,13 +316,13 @@ private fun LabelContent(
                         onDismiss = {
                             data.selectedLabel = null
                         },
-                        onLabelerClicked = { labeler ->
+                        onLabelerSummaryClicked = { labeler ->
                             data.selectedLabel = null
                             data.postActions.onPostAction(
                                 PostAction.OfLinkTarget(
                                     post = data.post,
                                     linkTarget = LinkTarget.UserHandleMention(
-                                        labeler.creator.handle,
+                                        labeler.creatorHandle,
                                     ),
                                 ),
                             )
