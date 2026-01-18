@@ -83,6 +83,7 @@ import com.tunjid.heron.data.database.migrations.Migration27To28LabelEntityPrima
 import com.tunjid.heron.data.database.migrations.Migration29To30PostBookmarkViewingProfileId
 import com.tunjid.heron.data.database.migrations.Migration30To31ThreadGateAutoMigration
 import com.tunjid.heron.data.database.migrations.Migration32To33ItemSortOnTimelineEntity
+import com.tunjid.heron.data.database.migrations.Migration33To34OnUpdateForeignKey
 import com.tunjid.heron.data.database.migrations.Migration5To6NonNullPostUriAndAuthor
 import com.tunjid.heron.data.database.migrations.Migration6To7PostViewerStatisticsAutoMigration
 import com.tunjid.heron.data.database.migrations.Migration8To9ProfileViewersAutoMigration
@@ -91,7 +92,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 33,
+    version = 34,
     entities = [
         BookmarkEntity::class,
         ExternalEmbedEntity::class,
@@ -200,6 +201,7 @@ import kotlinx.coroutines.IO
         // Add embedded record uris to root and parent posts for TimelineItemEntity
         AutoMigration(from = 31, to = 32),
         // Migration 32 - 33 is a manual migration
+        // Migration 33 - 34 is a manual migration
     ],
     exportSchema = true,
 )
@@ -249,6 +251,7 @@ fun RoomDatabase.Builder<AppDatabase>.configureAndBuild() =
             Migration27To28LabelEntityPrimaryKeys,
             Migration29To30PostBookmarkViewingProfileId,
             Migration32To33ItemSortOnTimelineEntity,
+            Migration33To34OnUpdateForeignKey,
         )
         .addCallback(UnknownProfileInsertionCallback)
         .setDriver(BundledSQLiteDriver())

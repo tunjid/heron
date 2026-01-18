@@ -38,12 +38,14 @@ import kotlin.time.Instant
             parentColumns = ["did"],
             childColumns = ["subjectId"],
             onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = ListEntity::class,
             parentColumns = ["uri"],
             childColumns = ["listUri"],
             onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
         ),
     ],
     indices = [

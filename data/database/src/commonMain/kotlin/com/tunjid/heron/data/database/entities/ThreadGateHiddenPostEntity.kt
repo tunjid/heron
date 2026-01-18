@@ -35,12 +35,14 @@ import com.tunjid.heron.data.core.types.ThreadGateUri
             parentColumns = ["uri"],
             childColumns = ["threadGateUri"],
             onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = PostEntity::class,
             parentColumns = ["uri"],
             childColumns = ["hiddenPostUri"],
             onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
         ),
     ],
     indices = [

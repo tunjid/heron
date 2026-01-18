@@ -39,6 +39,7 @@ import kotlin.time.Instant
             parentColumns = ["uri"],
             childColumns = ["gatedPostUri"],
             onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
         ),
     ],
     indices = [

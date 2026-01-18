@@ -30,12 +30,14 @@ import com.tunjid.heron.data.core.types.PostUri
             parentColumns = ["uri"],
             childColumns = ["parentPostUri"],
             onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = PostEntity::class,
             parentColumns = ["uri"],
             childColumns = ["postUri"],
             onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
         ),
     ],
     primaryKeys = [
