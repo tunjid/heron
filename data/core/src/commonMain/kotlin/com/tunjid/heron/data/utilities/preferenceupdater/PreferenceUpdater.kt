@@ -257,42 +257,42 @@ internal class ThingPreferenceUpdater @Inject constructor(
     ): SavedState.Notifications {
         val updatedNotificationPrefs = NotificationPreferences(
             follow = NotificationPreferences.Preference.Filterable(
-                include = FilterablePreferenceInclude.safeValueOf(notificationPreferences.follow.include.value).asExternalInclude(),
+                include = FilterablePreferenceInclude.safeValueOf(notificationPreferences.follow.include.value).asExternalModel(),
                 list = notificationPreferences.follow.list,
                 push = notificationPreferences.follow.push,
             ),
             like = NotificationPreferences.Preference.Filterable(
-                include = FilterablePreferenceInclude.safeValueOf(notificationPreferences.like.include.value).asExternalInclude(),
+                include = FilterablePreferenceInclude.safeValueOf(notificationPreferences.like.include.value).asExternalModel(),
                 list = notificationPreferences.like.list,
                 push = notificationPreferences.like.push,
             ),
             likeViaRepost = NotificationPreferences.Preference.Filterable(
-                include = FilterablePreferenceInclude.safeValueOf(notificationPreferences.likeViaRepost.include.value).asExternalInclude(),
+                include = FilterablePreferenceInclude.safeValueOf(notificationPreferences.likeViaRepost.include.value).asExternalModel(),
                 list = notificationPreferences.likeViaRepost.list,
                 push = notificationPreferences.likeViaRepost.push,
             ),
             mention = NotificationPreferences.Preference.Filterable(
-                include = FilterablePreferenceInclude.safeValueOf(notificationPreferences.mention.include.value).asExternalInclude(),
+                include = FilterablePreferenceInclude.safeValueOf(notificationPreferences.mention.include.value).asExternalModel(),
                 list = notificationPreferences.mention.list,
                 push = notificationPreferences.mention.push,
             ),
             quote = NotificationPreferences.Preference.Filterable(
-                include = FilterablePreferenceInclude.safeValueOf(notificationPreferences.quote.include.value).asExternalInclude(),
+                include = FilterablePreferenceInclude.safeValueOf(notificationPreferences.quote.include.value).asExternalModel(),
                 list = notificationPreferences.quote.list,
                 push = notificationPreferences.quote.push,
             ),
             reply = NotificationPreferences.Preference.Filterable(
-                include = FilterablePreferenceInclude.safeValueOf(notificationPreferences.reply.include.value).asExternalInclude(),
+                include = FilterablePreferenceInclude.safeValueOf(notificationPreferences.reply.include.value).asExternalModel(),
                 list = notificationPreferences.reply.list,
                 push = notificationPreferences.reply.push,
             ),
             repost = NotificationPreferences.Preference.Filterable(
-                include = FilterablePreferenceInclude.safeValueOf(notificationPreferences.repost.include.value).asExternalInclude(),
+                include = FilterablePreferenceInclude.safeValueOf(notificationPreferences.repost.include.value).asExternalModel(),
                 list = notificationPreferences.repost.list,
                 push = notificationPreferences.repost.push,
             ),
             repostViaRepost = NotificationPreferences.Preference.Filterable(
-                include = FilterablePreferenceInclude.safeValueOf(notificationPreferences.repostViaRepost.include.value).asExternalInclude(),
+                include = FilterablePreferenceInclude.safeValueOf(notificationPreferences.repostViaRepost.include.value).asExternalModel(),
                 list = notificationPreferences.repostViaRepost.list,
                 push = notificationPreferences.repostViaRepost.push,
             ),
@@ -317,7 +317,7 @@ internal class ThingPreferenceUpdater @Inject constructor(
     }
 
     /** Map the lexicon Include to enum model Include */
-    private fun FilterablePreferenceInclude.asExternalInclude(): NotificationPreferences.Preference.Filterable.Include =
+    private fun FilterablePreferenceInclude.asExternalModel(): NotificationPreferences.Preference.Filterable.Include =
         when (this) {
             FilterablePreferenceInclude.All -> NotificationPreferences.Preference.Filterable.Include.All
             FilterablePreferenceInclude.Follows -> NotificationPreferences.Preference.Filterable.Include.Follows
