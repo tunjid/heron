@@ -213,6 +213,7 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
                     },
             )
         }
+        .distinctUntilChanged()
         .flowOn(currentCoroutineContext().requireStateProducingBackgroundDispatcher())
         .mapToMutation { tilingDataMutation ->
             val updatedTilingData = tilingDataMutation(this.tilingData)
