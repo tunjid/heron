@@ -39,12 +39,14 @@ import com.tunjid.heron.data.database.entities.ProfileEntity
             parentColumns = ["uri"],
             childColumns = ["postUri"],
             onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = ProfileEntity::class,
             parentColumns = ["did"],
             childColumns = ["viewingProfileId"],
             onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
         ),
     ],
     indices = [

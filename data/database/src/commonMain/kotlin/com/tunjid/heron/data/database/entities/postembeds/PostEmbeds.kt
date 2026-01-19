@@ -37,12 +37,14 @@ sealed interface PostEmbed
             parentColumns = ["uri"],
             childColumns = ["postUri"],
             onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = PostEntity::class,
             parentColumns = ["uri"],
             childColumns = ["embeddedPostUri"],
             onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
         ),
     ],
     indices = [
