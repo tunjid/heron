@@ -75,7 +75,7 @@ import com.tunjid.heron.data.database.entities.PopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.AppCoroutineScope
-import com.tunjid.heron.data.di.IODispatcher
+import com.tunjid.heron.data.di.DefaultDispatcher
 import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.logging.loggableText
@@ -151,8 +151,8 @@ internal interface RecordResolver {
 internal class OfflineRecordResolver @Inject constructor(
     @AppCoroutineScope
     appScope: CoroutineScope,
-    @param:IODispatcher
-    private val ioDispatcher: CoroutineDispatcher,
+    @param:DefaultDispatcher
+    private val defaultDispatcher: CoroutineDispatcher,
     private val feedGeneratorDao: FeedGeneratorDao,
     private val labelDao: LabelDao,
     private val listDao: ListDao,
@@ -479,7 +479,7 @@ internal class OfflineRecordResolver @Inject constructor(
                     flow4 = subscribedLabelers,
                     transform = { associatedRecords, threadGateEntities, profileEntities, labelers ->
                         if (associatedRecords.isEmpty()) return@combine emptyList()
-                        withContext(ioDispatcher) {
+                        withContext(defaultDispatcher) {
                             items.fold(
                                 MutableTimelineItemCreationContext(
                                     signedInProfileId = signedInProfileId,

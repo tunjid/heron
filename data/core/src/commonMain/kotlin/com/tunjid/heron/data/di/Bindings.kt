@@ -107,6 +107,10 @@ annotation class AppCoroutineScope
 @Retention(AnnotationRetention.RUNTIME)
 annotation class IODispatcher
 
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+annotation class DefaultDispatcher
+
 class DataBindingArgs(
     val appScope: CoroutineScope,
     val connectivity: Connectivity,
@@ -129,6 +133,11 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     fun provideIODispatcher(): CoroutineDispatcher = Dispatchers.IO
+
+    @DefaultDispatcher
+    @SingleIn(AppScope::class)
+    @Provides
+    fun provideDefaultDispatcher(): CoroutineDispatcher = Dispatchers.Default
 
     @SingleIn(AppScope::class)
     @Provides
