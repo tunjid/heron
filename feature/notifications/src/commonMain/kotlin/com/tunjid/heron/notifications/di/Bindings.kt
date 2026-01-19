@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -36,6 +37,7 @@ import com.tunjid.heron.notifications.ui.RequestNotificationsButton
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
+import com.tunjid.heron.scaffold.navigation.notificationSettingsDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.notifications.hasNotificationPermissions
 import com.tunjid.heron.scaffold.scaffold.PaneFab
@@ -50,6 +52,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.ui.AppBarButton
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.text.CommonStrings
@@ -68,6 +71,7 @@ import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
+import heron.ui.core.generated.resources.notification_settings
 import heron.ui.core.generated.resources.notifications_create_post
 import org.jetbrains.compose.resources.stringResource
 
@@ -161,12 +165,22 @@ class NotificationsBindings(
                             )
                         },
                         actions = {
-                            androidx.compose.animation.AnimatedVisibility(
-                                visible = !hasNotificationPermissions(),
-                            ) {
-                                RequestNotificationsButton(
-                                    animateIcon = state.canAnimateRequestPermissionsButton,
+                            if (hasNotificationPermissions()) {
+                                AppBarButton(
+                                    icon = Icons.Rounded.Settings,
+                                    iconDescription = stringResource(CommonStrings.notification_settings),
+                                    onClick = {
+                                        viewModel.accept(Action.Navigate.To(notificationSettingsDestination()))
+                                    },
                                 )
+                            } else {
+                                androidx.compose.animation.AnimatedVisibility(
+                                    visible = !hasNotificationPermissions(),
+                                ) {
+                                    RequestNotificationsButton(
+                                        animateIcon = state.canAnimateRequestPermissionsButton,
+                                    )
+                                }
                             }
                         },
                     )
