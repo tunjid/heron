@@ -75,6 +75,7 @@ import com.tunjid.heron.data.database.entities.PopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.AppCoroutineScope
+import com.tunjid.heron.data.di.DefaultDispatcher
 import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.logging.loggableText
@@ -96,6 +97,7 @@ import com.tunjid.heron.data.utilities.recordResolver.RecordResolver.TimelineIte
 import com.tunjid.heron.data.utilities.toDistinctUntilChangedFlowOrEmpty
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -106,6 +108,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
@@ -148,6 +151,8 @@ internal interface RecordResolver {
 internal class OfflineRecordResolver @Inject constructor(
     @AppCoroutineScope
     appScope: CoroutineScope,
+    @param:DefaultDispatcher
+    private val defaultDispatcher: CoroutineDispatcher,
     private val feedGeneratorDao: FeedGeneratorDao,
     private val labelDao: LabelDao,
     private val listDao: ListDao,
@@ -474,51 +479,53 @@ internal class OfflineRecordResolver @Inject constructor(
                     flow4 = subscribedLabelers,
                     transform = { associatedRecords, threadGateEntities, profileEntities, labelers ->
                         if (associatedRecords.isEmpty()) return@combine emptyList()
-                        items.fold(
-                            MutableTimelineItemCreationContext(
-                                signedInProfileId = signedInProfileId,
-                                preferences = preferences,
-                                associatedRecords = associatedRecords,
-                                associatedThreadGateEntities = threadGateEntities,
-                                associatedProfileEntities = profileEntities,
-                            ),
-                        ) { context, item ->
-                            val post = context.record(postUri(item)) as? Post
-                                ?: return@fold context
+                        withContext(defaultDispatcher) {
+                            items.fold(
+                                MutableTimelineItemCreationContext(
+                                    signedInProfileId = signedInProfileId,
+                                    preferences = preferences,
+                                    associatedRecords = associatedRecords,
+                                    associatedThreadGateEntities = threadGateEntities,
+                                    associatedProfileEntities = profileEntities,
+                                ),
+                            ) { context, item ->
+                                val post = context.record(postUri(item)) as? Post
+                                    ?: return@fold context
 
-                            // Always omit blocked users
-                            if (post.viewerState.isBlocked) return@fold context
+                                // Always omit blocked users
+                                if (post.viewerState.isBlocked) return@fold context
 
-                            val postLabels = when {
-                                post.labels.isEmpty() -> emptySet()
-                                else -> post.labels.mapTo(
-                                    destination = mutableSetOf(),
-                                    transform = Label::value,
+                                val postLabels = when {
+                                    post.labels.isEmpty() -> emptySet()
+                                    else -> post.labels.mapTo(
+                                        destination = mutableSetOf(),
+                                        transform = Label::value,
+                                    )
+                                }
+
+                                // Check for global hidden label
+                                if (postLabels.contains(Label.Hidden)) return@fold context
+
+                                // Check for global non authenticated label
+                                val isSignedIn = signedInProfileId != null
+                                if (!isSignedIn && postLabels.contains(Label.NonAuthenticated)) return@fold context
+
+                                val appliedLabels = AppliedLabels(
+                                    adultContentEnabled = allowAdultContent,
+                                    labels = post.labels + post.author.labels,
+                                    labelers = labelers,
+                                    preferenceLabelsVisibilityMap = labelsVisibilityMap,
                                 )
-                            }
 
-                            // Check for global hidden label
-                            if (postLabels.contains(Label.Hidden)) return@fold context
+                                if (appliedLabels.shouldHide) return@fold context
 
-                            // Check for global non authenticated label
-                            val isSignedIn = signedInProfileId != null
-                            if (!isSignedIn && postLabels.contains(Label.NonAuthenticated)) return@fold context
-
-                            val appliedLabels = AppliedLabels(
-                                adultContentEnabled = allowAdultContent,
-                                labels = post.labels + post.author.labels,
-                                labelers = labelers,
-                                preferenceLabelsVisibilityMap = labelsVisibilityMap,
-                            )
-
-                            if (appliedLabels.shouldHide) return@fold context
-
-                            context.apply {
-                                update(
-                                    currentPost = post,
-                                    appliedLabels = appliedLabels,
-                                )
-                                block(item)
+                                context.apply {
+                                    update(
+                                        currentPost = post,
+                                        appliedLabels = appliedLabels,
+                                    )
+                                    block(item)
+                                }
                             }
                         }
                     },

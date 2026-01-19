@@ -36,12 +36,14 @@ import com.tunjid.heron.data.database.entities.MessageEntity
             parentColumns = ["id"],
             childColumns = ["messageId"],
             onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = FeedGeneratorEntity::class,
             parentColumns = ["uri"],
             childColumns = ["feedGeneratorUri"],
             onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
         ),
     ],
     indices = [

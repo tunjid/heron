@@ -53,12 +53,14 @@ data class VideoEntity(
             parentColumns = ["uri"],
             childColumns = ["postUri"],
             onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = VideoEntity::class,
             parentColumns = ["cid"],
             childColumns = ["videoId"],
             onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
         ),
     ],
     indices = [

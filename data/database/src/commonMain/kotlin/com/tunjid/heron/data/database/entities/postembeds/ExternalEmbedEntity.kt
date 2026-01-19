@@ -51,12 +51,14 @@ data class ExternalEmbedEntity(
             parentColumns = ["uri"],
             childColumns = ["postUri"],
             onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = ExternalEmbedEntity::class,
             parentColumns = ["uri"],
             childColumns = ["externalEmbedUri"],
             onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
         ),
     ],
     indices = [

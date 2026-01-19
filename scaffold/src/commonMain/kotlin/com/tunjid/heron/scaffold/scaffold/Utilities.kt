@@ -16,10 +16,15 @@
 
 package com.tunjid.heron.scaffold.scaffold
 
+import com.tunjid.heron.ui.coroutines.UIStateProducerElement
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
 fun viewModelCoroutineScope() = CoroutineScope(
-    SupervisorJob() + Dispatchers.Main.immediate,
+    context = SupervisorJob() +
+        Dispatchers.Main.immediate +
+        UIStateProducerElement(
+            backgroundDispatcher = Dispatchers.Default,
+        ),
 )
