@@ -194,6 +194,7 @@ class ComposeBindings(
                         modifier = Modifier
                             .padding(
                                 top = paddingValues.calculateTopPadding(),
+                                // This padding is solely for the post interaction button
                                 bottom = UiTokens.toolbarHeight,
                             )
                             .imePadding(),
