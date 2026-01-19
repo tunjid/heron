@@ -20,6 +20,7 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.mapCursorList
+import com.tunjid.heron.ui.coroutines.requireStateProducingBackgroundDispatcher
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.tiler.ListTiler
@@ -36,11 +37,13 @@ import com.tunjid.tiler.utilities.neighboredQueryFetcher
 import kotlin.math.max
 import kotlin.time.Clock
 import kotlin.time.Instant
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.scan
@@ -210,6 +213,7 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
                     },
             )
         }
+        .flowOn(currentCoroutineContext().requireStateProducingBackgroundDispatcher())
         .mapToMutation { tilingDataMutation ->
             val updatedTilingData = tilingDataMutation(this.tilingData)
             onTilingDataUpdated(updatedTilingData)

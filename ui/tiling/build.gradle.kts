@@ -28,6 +28,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":data:models"))
+                implementation(project(":ui:core"))
 
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.core)
