@@ -91,7 +91,10 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.serialization.protobuf.ProtoBuf
 import okio.FileSystem
 import okio.Path
@@ -99,6 +102,10 @@ import okio.Path
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
 annotation class AppCoroutineScope
+
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+annotation class IODispatcher
 
 class DataBindingArgs(
     val appScope: CoroutineScope,
@@ -117,6 +124,11 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     fun provideAppScope(): CoroutineScope = args.appScope
+
+    @IODispatcher
+    @SingleIn(AppScope::class)
+    @Provides
+    fun provideIODispatcher(): CoroutineDispatcher = Dispatchers.IO
 
     @SingleIn(AppScope::class)
     @Provides
