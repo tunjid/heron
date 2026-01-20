@@ -169,10 +169,7 @@ sealed interface Writable {
     ) : Writable {
 
         override val queueId: String
-            get() = when (update) {
-                is NotificationPreferences.Update.Filterable -> "notification-pref-${update.reason.apiValue}-${update.preference.include.value}-${update.preference.list}-${update.preference.push}"
-                is NotificationPreferences.Update.Simple -> "notification-pref-${update.reason.apiValue}-${update.preference.list}-${update.preference.push}"
-            }
+            get() = "notification-pref-$update"
 
         override suspend fun WriteQueue.write(): Outcome =
             notificationRepository.updateNotificationPreferences(update)

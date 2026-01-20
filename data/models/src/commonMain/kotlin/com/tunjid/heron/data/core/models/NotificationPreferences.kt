@@ -1,5 +1,6 @@
 package com.tunjid.heron.data.core.models
 
+import kotlin.jvm.JvmInline
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -45,49 +46,35 @@ data class NotificationPreferences(
                     Include.All -> true
                     Include.Follows -> isFollowed
                     Include.Unknown -> false
+                    else -> false
                 }
+        }
+    }
 
-            @Serializable
-            enum class Include(val value: String) {
-                All("all"),
-                Follows("follows"),
-                Unknown("unknown"),
+    @Serializable
+    @JvmInline
+    value class Include(val value: String) {
+        companion object {
+            val All = Include("all")
+            val Follows = Include("follows")
+            val Unknown = Include("unknown")
+
+            fun safeValueOf(value: String): Include = when (value) {
+                "all" -> All
+                "follows" -> Follows
+                "unknown" -> Unknown
+                else -> Include(value)
             }
         }
     }
 
     @Serializable
-    sealed class Update {
-        abstract val reason: Reason
-
-        @Serializable
-        data class Filterable(
-            override val reason: Reason,
-            val preference: Preference.Filterable,
-        ) : Update()
-
-        @Serializable
-        data class Simple(
-            override val reason: Reason,
-            val preference: Preference.Simple,
-        ) : Update()
-
-        @Serializable
-        sealed class Reason(val apiValue: String) {
-            object Follow : Reason("follow")
-            object Like : Reason("like")
-            object LikeViaRepost : Reason("likeViaRepost")
-            object Mention : Reason("mention")
-            object Quote : Reason("quote")
-            object Reply : Reason("reply")
-            object Repost : Reason("repost")
-            object RepostViaRepost : Reason("repostViaRepost")
-            object StarterpackJoined : Reason("starterpackJoined")
-            object SubscribedPost : Reason("subscribedPost")
-            object Unverified : Reason("unverified")
-            object Verified : Reason("verified")
-        }
-    }
+    data class Update(
+        val reason: Notification.Reason,
+        val list: Boolean,
+        val push: Boolean,
+        val include: Include?,
+    )
 }
 
 // Helper to check if notification should be shown

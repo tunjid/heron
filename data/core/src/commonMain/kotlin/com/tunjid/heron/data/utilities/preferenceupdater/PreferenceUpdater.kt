@@ -317,11 +317,11 @@ internal class ThingPreferenceUpdater @Inject constructor(
     }
 
     /** Map the lexicon Include to enum model Include */
-    private fun FilterablePreferenceInclude.asExternalModel(): NotificationPreferences.Preference.Filterable.Include =
+    private fun FilterablePreferenceInclude.asExternalModel(): NotificationPreferences.Include =
         when (this) {
-            FilterablePreferenceInclude.All -> NotificationPreferences.Preference.Filterable.Include.All
-            FilterablePreferenceInclude.Follows -> NotificationPreferences.Preference.Filterable.Include.Follows
-            is FilterablePreferenceInclude.Unknown -> NotificationPreferences.Preference.Filterable.Include.Unknown
+            FilterablePreferenceInclude.All -> NotificationPreferences.Include.All
+            FilterablePreferenceInclude.Follows -> NotificationPreferences.Include.Follows
+            is FilterablePreferenceInclude.Unknown -> NotificationPreferences.Include.Unknown
         }
 
     /**
