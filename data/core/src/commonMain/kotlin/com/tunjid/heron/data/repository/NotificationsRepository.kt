@@ -73,6 +73,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.multipleEntitysaver.associatedPostUri
 import com.tunjid.heron.data.utilities.nextCursorFlow
+import com.tunjid.heron.data.utilities.preferenceupdater.NotificationPreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
@@ -161,7 +162,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
     private val networkService: NetworkService,
     private val networkMonitor: NetworkMonitor,
     private val savedStateDataSource: SavedStateDataSource,
-    private val preferenceUpdater: PreferenceUpdater,
+    private val notificationPreferenceUpdater: NotificationPreferenceUpdater,
     httpClient: HttpClient,
 ) : NotificationsRepository {
 
@@ -308,7 +309,8 @@ internal class OfflineNotificationsRepository @Inject constructor(
 
     override suspend fun updateNotificationPreferences(
         update: NotificationPreferences.Update,
-    ): Outcome =
+    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
         networkService.runCatchingWithMonitoredNetworkRetry {
             getPreferencesForNotification()
         }.toOutcome { it ->
@@ -341,7 +343,6 @@ internal class OfflineNotificationsRepository @Inject constructor(
                     list = update.list,
                     push = update.push,
                 )
-
                 PutPreferencesV2Request(
                     follow = currentPrefs.follow,
                     like = currentPrefs.like,
@@ -368,7 +369,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                     ?.notifications
                     ?: SavedState.Notifications()
 
-                val updatedNotificationPreferences = preferenceUpdater.update(
+                val updatedNotificationPreferences = notificationPreferenceUpdater.update(
                     notificationPreferences = it.preferences,
                     notifications = notifications,
                 )
@@ -377,6 +378,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                 }
             }
         }
+    } ?: expiredSessionOutcome()
 
     override suspend fun resolvePushNotification(
         query: NotificationsQuery.Push,
@@ -549,6 +551,35 @@ internal class OfflineNotificationsRepository @Inject constructor(
                     )
                 }
         }
+
+    suspend fun loadNotificationPreferences() {
+        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+            if (signedInProfileId == null) {
+                return@inCurrentProfileSession
+            }
+
+            val response = networkService.runCatchingWithMonitoredNetworkRetry {
+                getPreferencesForNotification()
+            }.getOrThrow()
+
+            val notifications = savedStateDataSource
+                .savedState.value
+                .signedInProfileData
+                ?.notifications
+                ?: SavedState.Notifications()
+
+            val updatedNotifications = notificationPreferenceUpdater.update(
+                notificationPreferences = response.preferences,
+                notifications = notifications,
+            )
+
+            savedStateDataSource.updateSignedInUserNotifications {
+                copy(
+                    preferences = updatedNotifications.preferences,
+                )
+            }
+        }
+    }
 
     private fun asExternalModel(
         signedInProfileId: ProfileId,
