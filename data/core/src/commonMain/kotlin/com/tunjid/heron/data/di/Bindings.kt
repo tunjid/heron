@@ -68,7 +68,9 @@ import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.TidGenerator
+import com.tunjid.heron.data.utilities.preferenceupdater.NotificationPreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
+import com.tunjid.heron.data.utilities.preferenceupdater.ThingNotificationPreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.ThingPreferenceUpdater
 import com.tunjid.heron.data.utilities.profileLookup.OfflineProfileLookup
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
@@ -159,6 +161,12 @@ class DataBindings(
     ): PreferenceUpdater = ThingPreferenceUpdater(
         tidGenerator = tidGenerator,
     )
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideNotificationPreferenceUpdater(
+        thingNotificationPreferenceUpdater: ThingNotificationPreferenceUpdater,
+    ): NotificationPreferenceUpdater = thingNotificationPreferenceUpdater
 
     @SingleIn(AppScope::class)
     @Provides
