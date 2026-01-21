@@ -16,41 +16,15 @@
 
 package com.tunjid.heron.scaffold.scaffold
 
-import com.tunjid.heron.data.core.models.Post
-import com.tunjid.heron.ui.text.Memo
-import heron.scaffold.generated.resources.Res
-import heron.scaffold.generated.resources.bookmark
-import heron.scaffold.generated.resources.bookmark_removal
-import heron.scaffold.generated.resources.duplicate_post_interaction
-import heron.scaffold.generated.resources.failed_post_interaction
-import heron.scaffold.generated.resources.like
-import heron.scaffold.generated.resources.repost
-import heron.scaffold.generated.resources.repost_removal
-import heron.scaffold.generated.resources.thread_gate_update
-import heron.scaffold.generated.resources.unlike
+import com.tunjid.heron.ui.coroutines.UIStateProducerElement
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
 fun viewModelCoroutineScope() = CoroutineScope(
-    SupervisorJob() + Dispatchers.Main.immediate,
-)
-
-fun Post.Interaction.duplicateWriteMessage() = Memo.Resource(
-    stringResource = Res.string.duplicate_post_interaction,
-    args = listOf(
-        when (this) {
-            is Post.Interaction.Create.Bookmark -> Res.string.bookmark
-            is Post.Interaction.Create.Like -> Res.string.like
-            is Post.Interaction.Create.Repost -> Res.string.repost
-            is Post.Interaction.Delete.RemoveBookmark -> Res.string.bookmark_removal
-            is Post.Interaction.Delete.RemoveRepost -> Res.string.repost_removal
-            is Post.Interaction.Delete.Unlike -> Res.string.unlike
-            is Post.Interaction.Upsert.Gate -> Res.string.thread_gate_update
-        },
-    ),
-)
-
-fun Post.Interaction.failedWriteMessage() = Memo.Resource(
-    stringResource = Res.string.failed_post_interaction,
+    context = SupervisorJob() +
+        Dispatchers.Main.immediate +
+        UIStateProducerElement(
+            backgroundDispatcher = Dispatchers.Default,
+        ),
 )

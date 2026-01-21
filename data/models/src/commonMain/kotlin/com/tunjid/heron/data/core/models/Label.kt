@@ -18,9 +18,11 @@ package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.LabelerId
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import kotlin.jvm.JvmInline
@@ -160,26 +162,123 @@ typealias Labelers = List<Labeler>
 /**
  * A class holding metadata about a profile's preferences for labels.
  */
-data class AppliedLabels(
-    val adultContentEnabled: Boolean,
-    val labels: Collection<Label>,
-    val labelers: Labelers,
-    val preferenceLabelsVisibilityMap: Map<Label.Value, Label.Visibility>,
-) {
-    constructor(
-        adultContentEnabled: Boolean,
-        labels: Collection<Label>,
-        labelers: Labelers,
-        contentLabelPreferences: ContentLabelPreferences,
-    ) : this(
-        adultContentEnabled = adultContentEnabled,
-        labels = labels,
-        labelers = labelers,
-        preferenceLabelsVisibilityMap = contentLabelPreferences.associateBy(
-            keySelector = ContentLabelPreference::label,
-            valueTransform = ContentLabelPreference::visibility,
-        ),
+sealed interface AppliedLabels {
+    val labels: Collection<Label>
+    val shouldHide: Boolean
+    val shouldBlurMedia: Boolean
+    val blurredMediaSeverity: Label.Severity
+    val canAutoPlayVideo: Boolean
+
+    fun visibility(label: Label.Value): Label.Visibility
+    fun definition(label: Label): Label.Definition?
+    fun labelerSummary(label: Label): LabelerSummary?
+
+    @Serializable
+    data class LabelerSummary(
+        val creatorId: ProfileId,
+        val creatorHandle: ProfileHandle,
+        val creatorAvatar: ImageUri?,
     )
+
+    /**
+     * A subset of applied labels matching a [Label.Visibility].
+     * This is useful for serializing to preserve visual context.
+     */
+    @Serializable
+    class Filtered internal constructor(
+        override val shouldHide: Boolean,
+        override val shouldBlurMedia: Boolean,
+        override val canAutoPlayVideo: Boolean,
+        override val blurredMediaSeverity: Label.Severity,
+        override val labels: Collection<Label>,
+        private val visibleSummaries: List<LabelerSummary>,
+        private val visibleDefinitions: List<Label.Definition>,
+    ) : AppliedLabels,
+        UrlEncodableModel {
+
+        override fun visibility(
+            label: Label.Value,
+        ): Label.Visibility = Label.Visibility.Warn
+
+        override fun definition(
+            label: Label,
+        ): Label.Definition? =
+            visibleDefinitions.firstOrNull { it.identifier == label.value }
+
+        override fun labelerSummary(
+            label: Label,
+        ): LabelerSummary? =
+            visibleSummaries.firstOrNull { it.creatorId == label.creatorId }
+    }
+
+    companion object {
+        operator fun invoke(
+            adultContentEnabled: Boolean,
+            labels: Collection<Label>,
+            labelers: Labelers,
+            preferenceLabelsVisibilityMap: Map<Label.Value, Label.Visibility>,
+        ): AppliedLabels = AppliedLabelsImpl(
+            adultContentEnabled = adultContentEnabled,
+            labels = labels,
+            labelers = labelers,
+            preferenceLabelsVisibilityMap = preferenceLabelsVisibilityMap,
+        )
+
+        operator fun invoke(
+            adultContentEnabled: Boolean,
+            labels: Collection<Label>,
+            labelers: Labelers,
+            contentLabelPreferences: ContentLabelPreferences,
+        ): AppliedLabels = AppliedLabelsImpl(
+            adultContentEnabled = adultContentEnabled,
+            labels = labels,
+            labelers = labelers,
+            preferenceLabelsVisibilityMap = contentLabelPreferences.associateBy(
+                keySelector = ContentLabelPreference::label,
+                valueTransform = ContentLabelPreference::visibility,
+            ),
+        )
+
+        fun AppliedLabels.warned(): Filtered {
+            val visibleDefinitions = mutableListOf<Label.Definition>()
+            val visibleSummaries = mutableListOf<LabelerSummary>()
+            val visibleLabels = mutableListOf<Label>()
+
+            for (label in labels) {
+                val visibility = visibility(label.value)
+                if (visibility != Label.Visibility.Warn) continue
+
+                val definition = definition(label) ?: continue
+                val summary = labelerSummary(label) ?: continue
+
+                visibleLabels.add(label)
+                visibleSummaries.add(summary)
+                visibleDefinitions.add(definition)
+            }
+
+            return Filtered(
+                labels = visibleLabels,
+                shouldHide = shouldHide,
+                shouldBlurMedia = shouldBlurMedia,
+                blurredMediaSeverity = blurredMediaSeverity,
+                canAutoPlayVideo = canAutoPlayVideo,
+                visibleSummaries = visibleSummaries,
+                visibleDefinitions = visibleDefinitions,
+            )
+        }
+    }
+}
+
+private data class AppliedLabelsImpl(
+    private val adultContentEnabled: Boolean,
+    override val labels: Collection<Label>,
+    private val labelers: Labelers,
+    private val preferenceLabelsVisibilityMap: Map<Label.Value, Label.Visibility>,
+) : AppliedLabels {
+
+    private var lazyShouldHide: Boolean? = null
+    private var lazyShouldBlur: Boolean? = null
+    private var lazyBlurredMediaSeverity: Label.Severity? = null
 
     private val postLabels =
         if (labels.isEmpty()) emptySet()
@@ -188,78 +287,87 @@ data class AppliedLabels(
             if (isPostUri) it.value else null
         }
 
-    private val labelValuesToDefinitions = labelers.flatMap(Labeler::definitions)
-        .associateBy(
-            keySelector = Label.Definition::identifier,
-        )
-
-    private val labelVisibilityMap: Map<Label.Value, Label.Visibility> by lazy {
-        buildMap {
-            Label.Adult.entries.forEach { adultLabel ->
-                adultLabel.labelValues.forEach { labelValue ->
-                    this[labelValue] =
-                        if (!adultContentEnabled) Label.Visibility.Hide
-                        else preferenceLabelsVisibilityMap.getOrElse(
-                            labelValue,
-                            adultLabel::defaultVisibility,
-                        )
-                }
-            }
-            labelers.flatMap(Labeler::definitions)
-                .forEach { definition ->
-                    this[definition.identifier] =
-                        if (definition.adultOnly && !adultContentEnabled) Label.Visibility.Hide
-                        else preferenceLabelsVisibilityMap.getOrElse(
-                            definition.identifier,
-                            definition::defaultSetting,
-                        )
-                }
-        }
-    }
-
-    private val labelerDefinitionLookup by lazy {
-        labelers.associateBy(
-            keySelector = { it.creator.did },
-            valueTransform = { labeler ->
-                labeler to labeler.definitions.associateBy(
-                    keySelector = Label.Definition::identifier,
-                )
-            },
-        )
-    }
-
-    val shouldHide: Boolean
-        get() = postLabels.any { labelValue ->
+    override val shouldHide: Boolean
+        get() = lazyShouldHide ?: postLabels.any { labelValue ->
             if (labelValue == Label.Hidden) return@any true
             visibility(labelValue) == Label.Visibility.Hide
         }
+            .also { lazyShouldHide = it }
 
-    val shouldBlurMedia: Boolean
-        get() = postLabels.any { labelValue ->
+    override val shouldBlurMedia: Boolean
+        get() = lazyShouldBlur ?: postLabels.any { labelValue ->
             if (labelValue == Label.Warn) return@any true
 
             val isBlurTarget = Label.AdultLabels.contains(labelValue) ||
-                labelValuesToDefinitions[labelValue]?.blurs == Label.BlurTarget.Media
+                findDefinition(labelValue)?.blurs == Label.BlurTarget.Media
 
             isBlurTarget && visibility(labelValue) == Label.Visibility.Warn
         }
+            .also { lazyShouldBlur = it }
 
-    val blurredMediaSeverity: Label.Severity
-        get() = postLabels.firstNotNullOfOrNull { labelValue ->
-            labelValuesToDefinitions[labelValue]
-                ?.takeIf { it.blurs == Label.BlurTarget.Media || it.adultOnly }
-                ?.severity
-        } ?: Label.Severity.Inform
+    override val blurredMediaSeverity: Label.Severity
+        get() {
+            var severity = lazyBlurredMediaSeverity
+            if (severity != null) return severity
 
-    val canAutoPlayVideo: Boolean
-        get() = !shouldBlurMedia
+            severity = postLabels.firstNotNullOfOrNull { labelValue ->
+                findDefinition(labelValue)
+                    ?.takeIf { it.blurs == Label.BlurTarget.Media || it.adultOnly }
+                    ?.severity
+            } ?: Label.Severity.Inform
 
-    fun visibility(label: Label.Value): Label.Visibility =
-        labelVisibilityMap[label] ?: Label.Visibility.Ignore
+            lazyBlurredMediaSeverity = severity
 
-    fun definition(label: Label): Label.Definition? =
-        labelerDefinitionLookup[label.creatorId]?.second?.get(label.value)
+            return severity
+        }
 
-    fun labeler(label: Label): Labeler? =
-        labelerDefinitionLookup[label.creatorId]?.first
+    override val canAutoPlayVideo: Boolean = !shouldBlurMedia
+
+    override fun visibility(
+        label: Label.Value,
+    ): Label.Visibility {
+        // Check in custom labelers first
+        val definition = findDefinition(label)
+        if (definition != null) {
+            if (definition.adultOnly && !adultContentEnabled) return Label.Visibility.Hide
+            return preferenceLabelsVisibilityMap[label] ?: definition.defaultSetting
+        }
+        // Next check known adult labelers
+        for (adultLabel in Label.Adult.entries) {
+            if (label in adultLabel.labelValues) {
+                if (!adultContentEnabled) return Label.Visibility.Hide
+                return preferenceLabelsVisibilityMap[label] ?: adultLabel.defaultVisibility
+            }
+        }
+        return Label.Visibility.Ignore
+    }
+
+    override fun definition(
+        label: Label,
+    ): Label.Definition? =
+        labelers.find { it.creator.did == label.creatorId }
+            ?.definitions
+            ?.find { it.identifier == label.value }
+
+    override fun labelerSummary(
+        label: Label,
+    ): AppliedLabels.LabelerSummary? =
+        labelers.find { it.creator.did == label.creatorId }?.let { labeler ->
+            AppliedLabels.LabelerSummary(
+                creatorId = labeler.creator.did,
+                creatorHandle = labeler.creator.handle,
+                creatorAvatar = labeler.creator.avatar,
+            )
+        }
+
+    private fun findDefinition(
+        label: Label.Value,
+    ): Label.Definition? {
+        for (i in labelers.lastIndex downTo 0) {
+            val labeler = labelers[i]
+            val def = labeler.definitions.find { it.identifier == label }
+            if (def != null) return def
+        }
+        return null
+    }
 }

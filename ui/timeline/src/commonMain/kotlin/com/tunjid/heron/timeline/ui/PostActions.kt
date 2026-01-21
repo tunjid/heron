@@ -17,6 +17,7 @@
 package com.tunjid.heron.timeline.ui
 
 import androidx.compose.runtime.Stable
+import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
@@ -39,6 +40,7 @@ sealed interface PostAction {
 
     data class OfPost(
         val post: Post,
+        val warnedAppliedLabels: AppliedLabels.Filtered?,
     ) : PostAction
 
     data class OfRecord(

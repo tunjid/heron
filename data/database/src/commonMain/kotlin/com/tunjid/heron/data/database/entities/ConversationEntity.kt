@@ -40,6 +40,7 @@ import com.tunjid.heron.data.core.types.ProfileId
             parentColumns = ["did"],
             childColumns = ["ownerId"],
             onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
         ),
     ],
     indices = [

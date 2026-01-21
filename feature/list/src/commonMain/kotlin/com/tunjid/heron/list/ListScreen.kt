@@ -544,6 +544,7 @@ private fun ListTimeline(
                                                 recordDestination(
                                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                     sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                                                    otherModels = listOfNotNull(action.warnedAppliedLabels),
                                                     record = post,
                                                 ),
                                             ),

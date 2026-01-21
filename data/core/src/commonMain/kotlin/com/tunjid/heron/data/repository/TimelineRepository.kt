@@ -66,6 +66,7 @@ import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.preferredPresentationPartial
+import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
@@ -82,6 +83,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -95,6 +97,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
@@ -205,6 +208,8 @@ interface TimelineRepository {
 
 @Inject
 internal class OfflineTimelineRepository(
+    @param:IODispatcher
+    private val ioDispatcher: CoroutineDispatcher,
     private val postDao: PostDao,
     private val listDao: ListDao,
     private val profileDao: ProfileDao,
@@ -906,6 +911,7 @@ internal class OfflineTimelineRepository(
             flow2 = nextCursorFlow,
             transform = ::CursorList,
         )
+            .flowOn(ioDispatcher)
 
     private fun observeTimeline(
         query: TimelineQuery,

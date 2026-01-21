@@ -36,6 +36,7 @@ import kotlin.time.Instant
             parentColumns = ["did"],
             childColumns = ["creatorId"],
             onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
         ),
     ],
     indices = [
