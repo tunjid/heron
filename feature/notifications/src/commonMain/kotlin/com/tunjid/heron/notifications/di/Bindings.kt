@@ -165,23 +165,13 @@ class NotificationsBindings(
                             )
                         },
                         actions = {
-                            if (hasNotificationPermissions()) {
-                                AppBarButton(
-                                    icon = Icons.Rounded.Settings,
-                                    iconDescription = stringResource(CommonStrings.notification_settings),
-                                    onClick = {
-                                        viewModel.accept(Action.Navigate.To(notificationSettingsDestination()))
-                                    },
-                                )
-                            } else {
-                                androidx.compose.animation.AnimatedVisibility(
-                                    visible = !hasNotificationPermissions(),
-                                ) {
-                                    RequestNotificationsButton(
-                                        animateIcon = state.canAnimateRequestPermissionsButton,
-                                    )
-                                }
-                            }
+                            AppBarButton(
+                                icon = Icons.Rounded.Settings,
+                                iconDescription = stringResource(CommonStrings.notification_settings),
+                                onClick = {
+                                    viewModel.accept(Action.Navigate.To(notificationSettingsDestination()))
+                                },
+                            )
                         },
                     )
                 },
