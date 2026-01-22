@@ -57,9 +57,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import heron.feature.settings.generated.resources.Res
-import heron.feature.settings.generated.resources.collapse_icon
-import heron.feature.settings.generated.resources.expand_icon
+import com.tunjid.heron.ui.text.CommonStrings
+import heron.ui.core.generated.resources.collapse_icon
+import heron.ui.core.generated.resources.expand_icon
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -146,8 +146,8 @@ fun ExpandableSettingsItemRow(
                 },
                 imageVector = Icons.Default.ExpandLess,
                 contentDescription = stringResource(
-                    if (isExpanded) Res.string.collapse_icon
-                    else Res.string.expand_icon,
+                    if (isExpanded) CommonStrings.collapse_icon
+                    else CommonStrings.expand_icon,
                 ),
             )
         }
