@@ -20,63 +20,28 @@ data class NotificationPreferences(
 ) {
 
     companion object {
+        private val defaultFilterable = Preference.Filterable(
+            include = Include.All,
+            list = true,
+            push = true,
+        )
+        private val defaultSimple = Preference.Simple(
+            list = true,
+            push = true,
+        )
         val Default = NotificationPreferences(
-            follow = Preference.Filterable(
-                include = Include.All,
-                list = true,
-                push = true,
-            ),
-            like = Preference.Filterable(
-                include = Include.All,
-                list = true,
-                push = true,
-            ),
-            likeViaRepost = Preference.Filterable(
-                include = Include.All,
-                list = true,
-                push = true,
-            ),
-            mention = Preference.Filterable(
-                include = Include.All,
-                list = true,
-                push = true,
-            ),
-            quote = Preference.Filterable(
-                include = Include.All,
-                list = true,
-                push = true,
-            ),
-            reply = Preference.Filterable(
-                include = Include.All,
-                list = true,
-                push = true,
-            ),
-            repost = Preference.Filterable(
-                include = Include.All,
-                list = true,
-                push = true,
-            ),
-            repostViaRepost = Preference.Filterable(
-                include = Include.All,
-                list = true,
-                push = true,
-            ),
-            joinedStarterPack = Preference.Simple(
-                list = true,
-                push = true,
-            ),
-            subscribedPost = Preference.Simple(
-                list = true,
-                push = true,
-            ),
-            unverified = Preference.Simple(
-                list = true,
-                push = true,
-            ),
-            verified = Preference.Simple(
-                list = true,
-                push = true,
-            ),
+            follow = defaultFilterable,
+            like = defaultFilterable,
+            likeViaRepost = defaultFilterable,
+            mention = defaultFilterable,
+            quote = defaultFilterable,
+            reply = defaultFilterable,
+            repost = defaultFilterable,
+            repostViaRepost = defaultFilterable,
+            joinedStarterPack = defaultSimple,
+            subscribedPost = defaultSimple,
+            unverified = defaultSimple,
+            verified = defaultSimple,
         )
     }
 

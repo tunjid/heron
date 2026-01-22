@@ -326,7 +326,7 @@ fun CombinedNotificationStatusText(
             }
         }
 
-        else -> return
+        is NotificationSettingItem.Filterable -> return
     }
 
     Text(

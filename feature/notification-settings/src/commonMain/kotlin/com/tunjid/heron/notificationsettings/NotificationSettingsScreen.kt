@@ -249,23 +249,20 @@ private fun CombinedNotificationSetting(
                     enabled = true,
                     checked = allPushEnabled,
                     onCheckedChange = { checked ->
-                        val updates = when (item) {
-                            is NotificationSettingItem.EverythingElse -> listOf(
-                                NotificationPreferences.Update(
-                                    reason = Notification.Reason.JoinedStarterPack,
-                                    list = item.preferences[0].list,
-                                    push = checked,
-                                    include = null,
-                                ),
-                                NotificationPreferences.Update(
-                                    reason = Notification.Reason.SubscribedPost,
-                                    list = item.preferences[1].list,
-                                    push = checked,
-                                    include = null,
-                                ),
-                            )
-                            else -> emptyList()
-                        }
+                        val updates = listOf(
+                            NotificationPreferences.Update(
+                                reason = Notification.Reason.JoinedStarterPack,
+                                list = combinedItem.preferences[0].list,
+                                push = checked,
+                                include = null,
+                            ),
+                            NotificationPreferences.Update(
+                                reason = Notification.Reason.SubscribedPost,
+                                list = combinedItem.preferences[1].list,
+                                push = checked,
+                                include = null,
+                            ),
+                        )
                         updates.forEach {
                             onUpdate(it)
                         }
@@ -280,23 +277,20 @@ private fun CombinedNotificationSetting(
                     enabled = true,
                     checked = combinedItem.preferences.firstOrNull()?.list ?: false,
                     onCheckedChange = { checked ->
-                        val updates = when (item) {
-                            is NotificationSettingItem.ActivityFromOthers -> listOf(
-                                NotificationPreferences.Update(
-                                    reason = Notification.Reason.Verified,
-                                    list = checked,
-                                    push = item.preferences[0].push,
-                                    include = null,
-                                ),
-                                NotificationPreferences.Update(
-                                    reason = Notification.Reason.Unverified,
-                                    list = checked,
-                                    push = item.preferences[1].push,
-                                    include = null,
-                                ),
-                            )
-                            else -> emptyList()
-                        }
+                        val updates = listOf(
+                            NotificationPreferences.Update(
+                                reason = Notification.Reason.Verified,
+                                list = checked,
+                                push = combinedItem.preferences[0].push,
+                                include = null,
+                            ),
+                            NotificationPreferences.Update(
+                                reason = Notification.Reason.Unverified,
+                                list = checked,
+                                push = combinedItem.preferences[1].push,
+                                include = null,
+                            ),
+                        )
                         updates.forEach {
                             onUpdate(it)
                         }
@@ -311,23 +305,20 @@ private fun CombinedNotificationSetting(
                     enabled = true,
                     checked = combinedItem.preferences.firstOrNull()?.push ?: false,
                     onCheckedChange = { checked ->
-                        val updates = when (item) {
-                            is NotificationSettingItem.ActivityFromOthers -> listOf(
-                                NotificationPreferences.Update(
-                                    reason = Notification.Reason.Verified,
-                                    list = item.preferences[0].list,
-                                    push = checked,
-                                    include = null,
-                                ),
-                                NotificationPreferences.Update(
-                                    reason = Notification.Reason.Unverified,
-                                    list = item.preferences[1].list,
-                                    push = checked,
-                                    include = null,
-                                ),
-                            )
-                            else -> emptyList()
-                        }
+                        val updates = listOf(
+                            NotificationPreferences.Update(
+                                reason = Notification.Reason.Verified,
+                                list = combinedItem.preferences[0].list,
+                                push = checked,
+                                include = null,
+                            ),
+                            NotificationPreferences.Update(
+                                reason = Notification.Reason.Unverified,
+                                list = combinedItem.preferences[1].list,
+                                push = checked,
+                                include = null,
+                            ),
+                        )
                         updates.forEach {
                             onUpdate(it)
                         }
