@@ -21,7 +21,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
-import com.tunjid.heron.ui.text.Memo
+import com.tunjid.heron.ui.text.Memo.Resource
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.writable_block
 import heron.ui.timeline.generated.resources.writable_bookmark
@@ -55,7 +55,7 @@ fun Writable.writeStatusMessage(
     else -> {
         val isDropped = status == WriteQueue.Status.Dropped
         when (this) {
-            is Writable.Connection -> Memo.Resource(
+            is Writable.Connection -> Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(
                     when (connection) {
@@ -65,16 +65,16 @@ fun Writable.writeStatusMessage(
                 ),
             )
 
-            is Writable.Create -> Memo.Resource(
+            is Writable.Create -> Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_post),
             )
 
             is Writable.Interaction -> when {
-                isDropped -> Memo.Resource(
+                isDropped -> Resource(
                     stringResource = Res.string.writable_failed_post_interaction,
                 )
-                else -> Memo.Resource(
+                else -> Resource(
                     stringResource = Res.string.writable_duplicate_post_interaction,
                     args = listOf(
                         when (interaction) {
@@ -90,12 +90,12 @@ fun Writable.writeStatusMessage(
                 )
             }
 
-            is Writable.ProfileUpdate -> Memo.Resource(
+            is Writable.ProfileUpdate -> Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_profile_update),
             )
 
-            is Writable.Reaction -> Memo.Resource(
+            is Writable.Reaction -> Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(
                     when (update) {
@@ -105,7 +105,7 @@ fun Writable.writeStatusMessage(
                 ),
             )
 
-            is Writable.Restriction -> Memo.Resource(
+            is Writable.Restriction -> Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(
                     when (restriction) {
@@ -117,12 +117,16 @@ fun Writable.writeStatusMessage(
                 ),
             )
 
-            is Writable.Send -> Memo.Resource(
+            is Writable.Send -> Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_message),
             )
 
-            is Writable.TimelineUpdate -> Memo.Resource(
+            is Writable.TimelineUpdate -> Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_timeline_update),
+            )
+            is Writable.NotificationUpdate -> Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_timeline_update),
             )
