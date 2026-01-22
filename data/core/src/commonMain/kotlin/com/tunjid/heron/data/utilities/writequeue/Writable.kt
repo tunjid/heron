@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.utilities.writequeue
 
 import com.tunjid.heron.data.core.models.Message
+import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
@@ -160,6 +161,18 @@ sealed interface Writable {
 
         override suspend fun WriteQueue.write(): Outcome =
             profileRepository.updateProfile(update)
+    }
+
+    @Serializable
+    data class NotificationUpdate(
+        val update: NotificationPreferences.Update,
+    ) : Writable {
+
+        override val queueId: String
+            get() = "notification-pref-$update"
+
+        override suspend fun WriteQueue.write(): Outcome =
+            notificationRepository.updateNotificationPreferences(update)
     }
 }
 

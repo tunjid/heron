@@ -126,6 +126,10 @@ fun Writable.writeStatusMessage(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_timeline_update),
             )
+            is Writable.NotificationUpdate -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_timeline_update),
+            )
         }
     }
 }
