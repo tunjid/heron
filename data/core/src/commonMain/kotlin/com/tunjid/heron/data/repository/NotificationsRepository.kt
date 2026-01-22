@@ -69,12 +69,12 @@ import com.tunjid.heron.data.utilities.asGenericId
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.mapDistinctUntilChanged
+import com.tunjid.heron.data.utilities.mapToResult
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.multipleEntitysaver.associatedPostUri
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.preferenceupdater.NotificationPreferenceUpdater
-import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import com.tunjid.heron.data.utilities.toOutcome
@@ -87,6 +87,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.takeFrom
+import kotlin.fold
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -313,56 +314,58 @@ internal class OfflineNotificationsRepository @Inject constructor(
         if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
         networkService.runCatchingWithMonitoredNetworkRetry {
             getPreferencesForNotification()
-        }.toOutcome { it ->
-            val currentPrefs = it.preferences
-            val updateRequest = if (update.include != null) {
-                val filterablePref = update.include?.value?.let { includeValue ->
-                    FilterablePreference(
-                        include = FilterablePreferenceInclude.safeValueOf(includeValue),
+        }.mapToResult { response ->
+            val currentPrefs = response.preferences
+            val updateRequest = when (val includeValue = update.include) {
+                null -> {
+                    val simplePref = Preference(
                         list = update.list,
                         push = update.push,
                     )
+                    PutPreferencesV2Request(
+                        follow = currentPrefs.follow,
+                        like = currentPrefs.like,
+                        likeViaRepost = currentPrefs.likeViaRepost,
+                        mention = currentPrefs.mention,
+                        quote = currentPrefs.quote,
+                        reply = currentPrefs.reply,
+                        repost = currentPrefs.repost,
+                        repostViaRepost = currentPrefs.repostViaRepost,
+                        starterpackJoined = if (update.reason == Notification.Reason.JoinedStarterPack) simplePref else currentPrefs.starterpackJoined,
+                        subscribedPost = if (update.reason == Notification.Reason.SubscribedPost) simplePref else currentPrefs.subscribedPost,
+                        unverified = if (update.reason == Notification.Reason.Unverified) simplePref else currentPrefs.unverified,
+                        verified = if (update.reason == Notification.Reason.Verified) simplePref else currentPrefs.verified,
+                        chat = currentPrefs.chat,
+                    )
                 }
-                PutPreferencesV2Request(
-                    follow = if (update.reason == Notification.Reason.Follow) filterablePref else currentPrefs.follow,
-                    like = if (update.reason == Notification.Reason.Like) filterablePref else currentPrefs.like,
-                    likeViaRepost = if (update.reason == Notification.Reason.LikeViaRepost) filterablePref else currentPrefs.likeViaRepost,
-                    mention = if (update.reason == Notification.Reason.Mention) filterablePref else currentPrefs.mention,
-                    quote = if (update.reason == Notification.Reason.Quote) filterablePref else currentPrefs.quote,
-                    reply = if (update.reason == Notification.Reason.Reply) filterablePref else currentPrefs.reply,
-                    repost = if (update.reason == Notification.Reason.Repost) filterablePref else currentPrefs.repost,
-                    repostViaRepost = if (update.reason == Notification.Reason.RepostViaRepost) filterablePref else currentPrefs.repostViaRepost,
-                    starterpackJoined = currentPrefs.starterpackJoined,
-                    subscribedPost = currentPrefs.subscribedPost,
-                    unverified = currentPrefs.unverified,
-                    verified = currentPrefs.verified,
-                    chat = currentPrefs.chat,
-                )
-            } else {
-                val simplePref = Preference(
-                    list = update.list,
-                    push = update.push,
-                )
-                PutPreferencesV2Request(
-                    follow = currentPrefs.follow,
-                    like = currentPrefs.like,
-                    likeViaRepost = currentPrefs.likeViaRepost,
-                    mention = currentPrefs.mention,
-                    quote = currentPrefs.quote,
-                    reply = currentPrefs.reply,
-                    repost = currentPrefs.repost,
-                    repostViaRepost = currentPrefs.repostViaRepost,
-                    starterpackJoined = if (update.reason == Notification.Reason.JoinedStarterPack) simplePref else currentPrefs.starterpackJoined,
-                    subscribedPost = if (update.reason == Notification.Reason.SubscribedPost) simplePref else currentPrefs.subscribedPost,
-                    unverified = if (update.reason == Notification.Reason.Unverified) simplePref else currentPrefs.unverified,
-                    verified = if (update.reason == Notification.Reason.Verified) simplePref else currentPrefs.verified,
-                    chat = currentPrefs.chat,
-                )
+                else -> {
+                    val filterablePreference = FilterablePreference(
+                        include = FilterablePreferenceInclude.safeValueOf(includeValue.value),
+                        list = update.list,
+                        push = update.push,
+                    )
+                    PutPreferencesV2Request(
+                        follow = if (update.reason == Notification.Reason.Follow) filterablePreference else currentPrefs.follow,
+                        like = if (update.reason == Notification.Reason.Like) filterablePreference else currentPrefs.like,
+                        likeViaRepost = if (update.reason == Notification.Reason.LikeViaRepost) filterablePreference else currentPrefs.likeViaRepost,
+                        mention = if (update.reason == Notification.Reason.Mention) filterablePreference else currentPrefs.mention,
+                        quote = if (update.reason == Notification.Reason.Quote) filterablePreference else currentPrefs.quote,
+                        reply = if (update.reason == Notification.Reason.Reply) filterablePreference else currentPrefs.reply,
+                        repost = if (update.reason == Notification.Reason.Repost) filterablePreference else currentPrefs.repost,
+                        repostViaRepost = if (update.reason == Notification.Reason.RepostViaRepost) filterablePreference else currentPrefs.repostViaRepost,
+                        starterpackJoined = currentPrefs.starterpackJoined,
+                        subscribedPost = currentPrefs.subscribedPost,
+                        unverified = currentPrefs.unverified,
+                        verified = currentPrefs.verified,
+                        chat = currentPrefs.chat,
+                    )
+                }
             }
-
             networkService.runCatchingWithMonitoredNetworkRetry {
                 putPreferencesV2(request = updateRequest)
-            }.toOutcome {
+            }
+        }.fold(
+            onSuccess = { putResponse ->
                 val notifications = savedStateDataSource
                     .savedState.value
                     .signedInProfileData
@@ -370,14 +373,16 @@ internal class OfflineNotificationsRepository @Inject constructor(
                     ?: SavedState.Notifications()
 
                 val updatedNotificationPreferences = notificationPreferenceUpdater.update(
-                    notificationPreferences = it.preferences,
+                    notificationPreferences = putResponse.preferences,
                     notifications = notifications,
                 )
                 savedStateDataSource.updateSignedInUserNotifications {
                     copy(preferences = updatedNotificationPreferences.preferences)
                 }
-            }
-        }
+                Outcome.Success
+            },
+            onFailure = Outcome::Failure,
+        )
     } ?: expiredSessionOutcome()
 
     override suspend fun resolvePushNotification(
@@ -551,35 +556,6 @@ internal class OfflineNotificationsRepository @Inject constructor(
                     )
                 }
         }
-
-    suspend fun loadNotificationPreferences() {
-        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-            if (signedInProfileId == null) {
-                return@inCurrentProfileSession
-            }
-
-            val response = networkService.runCatchingWithMonitoredNetworkRetry {
-                getPreferencesForNotification()
-            }.getOrThrow()
-
-            val notifications = savedStateDataSource
-                .savedState.value
-                .signedInProfileData
-                ?.notifications
-                ?: SavedState.Notifications()
-
-            val updatedNotifications = notificationPreferenceUpdater.update(
-                notificationPreferences = response.preferences,
-                notifications = notifications,
-            )
-
-            savedStateDataSource.updateSignedInUserNotifications {
-                copy(
-                    preferences = updatedNotifications.preferences,
-                )
-            }
-        }
-    }
 
     private fun asExternalModel(
         signedInProfileId: ProfileId,
