@@ -17,19 +17,26 @@
 package com.tunjid.heron.notificationsettings
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.repository.UserDataRepository
+import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
+import com.tunjid.heron.timeline.utilities.writeStatusMessage
 import com.tunjid.mutator.ActionStateMutator
+import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapToManyMutations
+import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 
@@ -45,6 +52,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 
 @AssistedInject
 class ActualNotificationSettingsViewModel(
+    userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
@@ -55,7 +63,11 @@ class ActualNotificationSettingsViewModel(
     NotificationSettingsStateHolder by scope.actionStateFlowMutator(
         initialState = State(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = emptyList(),
+        inputs = listOf(
+            loadNotificationPreferencesMutations(
+                userDataRepository = userDataRepository,
+            ),
+        ),
         actionTransform = transform@{ actions ->
             actions.toMutationStream(
                 keySelector = Action::key,
@@ -64,7 +76,31 @@ class ActualNotificationSettingsViewModel(
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
+                    is Action.UpdateNotificationPreferences -> action.flow.updateNotificationPreferencesMutations(
+                        writeQueue = writeQueue,
+                    )
                 }
             }
         },
     )
+
+private fun loadNotificationPreferencesMutations(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    userDataRepository.notificationPreferences
+        .mapToMutation { notificationPreferences ->
+            copy(notificationPreferences = notificationPreferences)
+        }
+
+private fun Flow<Action.UpdateNotificationPreferences>.updateNotificationPreferencesMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        val writable = Writable.NotificationUpdate(
+            update = action.update,
+        )
+        val status = writeQueue.enqueue(writable)
+        writable.writeStatusMessage(status)?.let {
+            emit { copy(messages = messages + it) }
+        }
+    }

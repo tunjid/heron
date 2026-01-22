@@ -31,6 +31,10 @@ data class State(
 
 sealed class Action(val key: String) {
 
+    data class UpdateNotificationPreferences(
+        val update: NotificationPreferences.Update,
+    ) : Action(key = "UpdateNotificationPreferences")
+
     sealed class Navigate :
         Action(key = "Navigate"),
         NavigationAction {

@@ -1,5 +1,6 @@
 package com.tunjid.heron.data.repository
 
+import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.utilities.Outcome
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
 interface UserDataRepository {
+    val notificationPreferences: Flow<NotificationPreferences>
 
     val preferences: Flow<Preferences>
 
@@ -44,6 +46,11 @@ interface UserDataRepository {
 internal class OfflineUserDataRepository @Inject constructor(
     private val savedStateDataSource: SavedStateDataSource,
 ) : UserDataRepository {
+
+    override val notificationPreferences: Flow<NotificationPreferences> =
+        savedStateDataSource.savedState
+            .map(SavedState::signedNotificationPreferencesOrDefault)
+            .distinctUntilChanged()
 
     override val preferences: Flow<Preferences> =
         savedStateDataSource.savedState
