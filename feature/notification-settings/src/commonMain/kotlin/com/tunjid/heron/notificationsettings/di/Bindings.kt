@@ -132,7 +132,7 @@ class NotificationSettingsBindings(
             paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
-                    .predictiveBackPlacement(paneScope = this)
+                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
                     .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
                         nestedScroll(bottomNavigationNestedScrollConnection)
                     },
@@ -156,7 +156,10 @@ class NotificationSettingsBindings(
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
-                        modifier = Modifier.padding(paddingValues),
+                        modifier = Modifier
+                            .padding(
+                                top = paddingValues.calculateTopPadding(),
+                            ),
                     )
                     SecondaryPaneCloseBackHandler()
                 },

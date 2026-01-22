@@ -17,4 +17,34 @@
 <resources>
     <string name="back">Go back</string>
     <string name="reply">Reply</string>
+    <string name="push">Push</string>
+    <string name="push_and_in_app">"In-app, Push"</string>
+    <string name="push_notifications">Push notifications</string>
+    <string name="off">Off</string>
+    <string name="from">From</string>
+    <string name="in_app">In-app notifications</string>
+    <string name="in_app_notifications">In-app notifications</string>
+    <string name="everyone">Everyone</string>
+    <string name="people_you_follow">People you follow</string>
+    <string name="people_i_follow">People I follow</string>
+    <string name="notif_likes_title">Likes</string>
+    <string name="notif_new_followers_title">New followers</string>
+    <string name="notif_replies_title">Replies</string>
+    <string name="notif_mentions_title">Mentions</string>
+    <string name="notif_quotes_title">Quotes</string>
+    <string name="notif_reposts_title">Reposts</string>
+    <string name="notif_everything_else_title">Everything else</string>
+    <string name="notif_activity_from_others_title">Activity from others</string>
+    <string name="notif_likes_via_repost_title">Likes via repost</string>
+    <string name="notif_reposts_via_repost_title">Reposts via repost</string>
+    <string name="notif_likes_desc">Get notifications when people like your posts</string>
+    <string name="notif_new_followers_desc">Get notifications when someone follows you</string>
+    <string name="notif_replies_desc">Get notifications when people reply to your posts</string>
+    <string name="notif_mentions_desc">Get notifications when you’re mentioned in a post</string>
+    <string name="notif_quotes_desc">Get notifications when someone quotes your posts</string>
+    <string name="notif_reposts_desc">Get notifications when people repost your content</string>
+    <string name="notif_activity_from_others_desc">Get notified about posts and replies from accounts you follow</string>
+    <string name="notif_likes_via_repost_desc">Get notifications when people like your reposts</string>
+    <string name="notif_reposts_via_repost_desc">Get notifications when people repost your repost</string>
+    <string name="notif_everything_else_desc">Notifications for everything, such as when someone joins via one of your starter packs</string>
 </resources>

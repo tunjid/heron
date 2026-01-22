@@ -19,7 +19,6 @@ plugins {
     id("kotlin-library-convention")
     id("ui-module-convention")
     id("ksp-convention")
-    alias(libs.plugins.aboutLibraries)
 }
 
 android {
@@ -31,7 +30,6 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":data:core"))
-                implementation(project(":data:models"))
                 implementation(project(":scaffold"))
                 implementation(project(":feature:template"))
 
