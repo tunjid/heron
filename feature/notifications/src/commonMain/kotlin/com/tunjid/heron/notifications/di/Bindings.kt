@@ -75,7 +75,7 @@ import heron.ui.core.generated.resources.notification_settings
 import heron.ui.core.generated.resources.notifications_create_post
 import org.jetbrains.compose.resources.stringResource
 
-private const val RoutePattern = "/notifications"
+private const val RoutePattern = "/settings/notifications"
 
 private fun createRoute(
     routeParams: RouteParams,

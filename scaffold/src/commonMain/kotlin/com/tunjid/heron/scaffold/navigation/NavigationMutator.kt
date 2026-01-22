@@ -240,7 +240,7 @@ fun settingsDestination(): NavigationAction.Destination = pathDestination(
 )
 
 fun notificationSettingsDestination(): NavigationAction.Destination = pathDestination(
-    path = "/notification-settings",
+    path = "/settings/notifications",
     referringRouteOption = ReferringRouteOption.Current,
 )
 
