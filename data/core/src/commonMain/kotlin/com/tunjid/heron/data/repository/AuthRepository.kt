@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.data.repository
 
-import app.bsky.actor.GetPreferencesResponse
 import app.bsky.actor.GetProfileQueryParams
 import app.bsky.actor.SavedFeedType
 import app.bsky.feed.GetFeedGeneratorQueryParams
@@ -37,10 +36,12 @@ import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import com.tunjid.heron.data.utilities.preferenceupdater.NotificationPreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
+import kotlin.time.Clock
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
@@ -81,6 +82,7 @@ internal class AuthTokenRepository(
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val preferenceUpdater: PreferenceUpdater,
+    private val notificationPreferenceUpdater: NotificationPreferenceUpdater,
     private val savedStateDataSource: SavedStateDataSource,
     private val sessionManager: SessionManager,
 ) : AuthRepository {
@@ -183,13 +185,20 @@ internal class AuthTokenRepository(
                     .getOrNull()
                     ?.let { savePreferences(it) } != null
             },
+            async {
+                networkService.runCatchingWithMonitoredNetworkRetry {
+                    getPreferencesForNotification()
+                }
+                    .getOrNull()
+                    ?.let { saveNotificationPreferences(it) } != null
+            },
         ).awaitAll().all(true::equals)
 
         if (succeeded) Outcome.Success else Outcome.Failure(Exception("Unable to refresh user"))
     }
 
     private suspend fun savePreferences(
-        preferencesResponse: GetPreferencesResponse,
+        preferencesResponse: app.bsky.actor.GetPreferencesResponse,
     ) = supervisorScope {
         val preferences = preferenceUpdater.update(
             networkPreferences = preferencesResponse.preferences,
@@ -236,6 +245,26 @@ internal class AuthTokenRepository(
         multipleEntitySaverProvider.saveInTransaction {
             feeds.mapNotNull { it.await().getOrNull() }.forEach { add(it.view) }
             lists.mapNotNull { it.await().getOrNull() }.forEach { add(it.list) }
+        }
+    }
+
+    private suspend fun saveNotificationPreferences(
+        notificationPreferencesResponse: app.bsky.notification.GetPreferencesResponse,
+    ) {
+        val currentNotifications = savedStateDataSource.savedState
+            .map { it.signedInProfileData?.notifications }
+            .first() ?: SavedState.Notifications()
+
+        val updatedNotifications = notificationPreferenceUpdater.update(
+            notificationPreferences = notificationPreferencesResponse.preferences,
+            notifications = currentNotifications,
+        )
+
+        savedStateDataSource.updateSignedInUserNotifications {
+            copy(
+                preferences = updatedNotifications.preferences,
+                lastRefreshed = Clock.System.now(),
+            )
         }
     }
 }
