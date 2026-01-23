@@ -239,6 +239,11 @@ fun settingsDestination(): NavigationAction.Destination = pathDestination(
     referringRouteOption = ReferringRouteOption.Current,
 )
 
+fun notificationSettingsDestination(): NavigationAction.Destination = pathDestination(
+    path = "/settings/notifications",
+    referringRouteOption = ReferringRouteOption.Current,
+)
+
 fun moderationDestination(): NavigationAction.Destination = pathDestination(
     path = "/moderation",
     referringRouteOption = ReferringRouteOption.Current,

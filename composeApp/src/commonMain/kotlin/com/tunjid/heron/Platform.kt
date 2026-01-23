@@ -44,6 +44,8 @@ import com.tunjid.heron.moderation.di.ModerationBindings
 import com.tunjid.heron.moderation.di.ModerationNavigationBindings
 import com.tunjid.heron.notifications.di.NotificationsBindings
 import com.tunjid.heron.notifications.di.NotificationsNavigationBindings
+import com.tunjid.heron.notificationsettings.di.NotificationSettingsBindings
+import com.tunjid.heron.notificationsettings.di.NotificationSettingsNavigationBindings
 import com.tunjid.heron.postdetail.di.PostDetailBindings
 import com.tunjid.heron.postdetail.di.PostDetailNavigationBindings
 import com.tunjid.heron.posts.di.PostsBindings
@@ -100,6 +102,7 @@ fun createAppState(
         messagesNavigationBindings = MessagesNavigationBindings,
         moderationNavigationBindings = ModerationNavigationBindings,
         notificationsNavigationBindings = NotificationsNavigationBindings,
+        notificationSettingsNavigationBindings = NotificationSettingsNavigationBindings,
         postDetailNavigationBindings = PostDetailNavigationBindings,
         postsNavigationBindings = PostsNavigationBindings,
         profileNavigationBindings = ProfileNavigationBindings,
@@ -169,6 +172,10 @@ fun createAppState(
             dataBindings = dataBindings,
         ),
         notificationsBindings = NotificationsBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
+        ),
+        notificationSettingsBindings = NotificationSettingsBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),

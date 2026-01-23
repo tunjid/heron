@@ -67,6 +67,7 @@ include(
     ":feature:messages",
     ":feature:moderation",
     ":feature:notifications",
+    ":feature:notification-settings",
     ":feature:post-detail",
     ":feature:posts",
     ":feature:profile",

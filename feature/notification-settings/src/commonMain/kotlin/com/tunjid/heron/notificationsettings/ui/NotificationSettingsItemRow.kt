@@ -14,8 +14,9 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.settings.ui
+package com.tunjid.heron.notificationsettings.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -31,19 +32,23 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -57,32 +62,66 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.ui.text.CommonStrings
+import heron.feature.notification_settings.generated.resources.Res
+import heron.feature.notification_settings.generated.resources.everyone
+import heron.feature.notification_settings.generated.resources.in_app
+import heron.feature.notification_settings.generated.resources.off
+import heron.feature.notification_settings.generated.resources.people_you_follow
+import heron.feature.notification_settings.generated.resources.push
+import heron.feature.notification_settings.generated.resources.push_and_in_app
 import heron.ui.core.generated.resources.collapse_icon
 import heron.ui.core.generated.resources.expand_icon
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun SettingsItemRow(
+internal fun NotificationSettingsRadioButton(
+    text: String,
+    selected: Boolean,
+    onSelect: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .toggleable(
+                value = selected,
+                onValueChange = { if (!selected) onSelect() },
+                role = Role.RadioButton,
+            )
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(
+            selected = selected,
+            onClick = null,
+            modifier = Modifier.padding(end = 8.dp),
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+        )
+    }
+}
+
+@Composable
+internal fun SettingsItemRow(
     title: String,
     icon: ImageVector,
     modifier: Modifier = Modifier,
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
-    content: @Composable RowScope.() -> Unit = {},
+    secondary: (@Composable () -> Unit)? = null,
+    trailing: @Composable RowScope.() -> Unit = {},
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = SettingsItemClipModifier
             .then(
                 modifier
-                    .semantics {
-                        contentDescription = title
-                    }
+                    .semantics { contentDescription = title }
                     .fillMaxWidth()
-                    .padding(
-                        horizontal = 24.dp,
-                        vertical = 8.dp,
-                    ),
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
             ),
     ) {
         Icon(
@@ -90,27 +129,36 @@ fun SettingsItemRow(
             contentDescription = null,
             tint = titleColor,
         )
-        Spacer(
-            modifier = Modifier.width(16.dp),
-        )
-        Text(
-            modifier = Modifier
-                .weight(1f),
-            text = title,
-            color = titleColor,
-            style = MaterialTheme.typography.bodyLarge,
-        )
-        content()
+
+        Spacer(Modifier.width(16.dp))
+
+        Column(
+            modifier = Modifier.weight(1f),
+        ) {
+            Text(
+                text = title,
+                color = titleColor,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+
+            if (secondary != null) {
+                Spacer(Modifier.height(2.dp))
+                secondary()
+            }
+        }
+
+        trailing()
     }
 }
 
 @Composable
-fun ExpandableSettingsItemRow(
+internal fun ExpandableSettingsItemRow(
     title: String,
     icon: ImageVector,
     modifier: Modifier = Modifier,
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
     content: @Composable ColumnScope.() -> Unit = {},
+    status: (@Composable () -> Unit)? = null,
 ) {
     var isExpanded by rememberSaveable { mutableStateOf(false) }
 
@@ -132,6 +180,7 @@ fun ExpandableSettingsItemRow(
             title = title,
             icon = icon,
             titleColor = titleColor,
+            secondary = if (!isExpanded) status else null,
         ) {
             val iconRotation = animateFloatAsState(
                 targetValue = if (isExpanded) 0f
@@ -151,7 +200,7 @@ fun ExpandableSettingsItemRow(
                 ),
             )
         }
-        androidx.compose.animation.AnimatedVisibility(
+        AnimatedVisibility(
             modifier = Modifier
                 .padding(horizontal = 24.dp)
                 .fillMaxWidth(),
@@ -169,6 +218,10 @@ fun ExpandableSettingsItemRow(
                     content()
                 }
             },
+        )
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+            thickness = 0.5.dp,
         )
     }
 }
@@ -214,6 +267,78 @@ fun SettingsToggleItem(
             onCheckedChange = null,
         )
     }
+}
+
+@Composable
+fun NotificationStatusText(
+    preference: NotificationPreferences.Preference.Filterable,
+) {
+    val off = stringResource(Res.string.off)
+    val inApp = stringResource(Res.string.in_app)
+    val push = stringResource(Res.string.push)
+    val everyone = stringResource(Res.string.everyone)
+    val peopleYouFollow = stringResource(Res.string.people_you_follow)
+
+    val statusText = remember(preference) {
+        buildString {
+            if (!preference.list && !preference.push) {
+                append(off)
+            } else {
+                if (preference.list) append(inApp)
+                if (preference.list && preference.push) append(", ")
+                if (preference.push) append(push)
+
+                append(" • ")
+
+                append(
+                    when (preference.include) {
+                        NotificationPreferences.Include.All -> everyone
+                        NotificationPreferences.Include.Follows -> peopleYouFollow
+                        else -> ""
+                    },
+                )
+            }
+        }
+    }
+
+    Text(
+        text = statusText,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@Composable
+fun CombinedNotificationStatusText(
+    item: NotificationSettingItem,
+) {
+    val statusRes = when (item) {
+        is NotificationSettingItem.EverythingElse -> {
+            val allPushEnabled = item.preferences.all { it.push }
+            if (allPushEnabled) Res.string.push else Res.string.off
+        }
+
+        is NotificationSettingItem.ActivityFromOthers -> {
+            val hasInApp = item.preferences.firstOrNull()?.list ?: false
+            val hasPush = item.preferences.firstOrNull()?.push ?: false
+
+            when {
+                !hasInApp && !hasPush -> Res.string.off
+                hasInApp && hasPush -> Res.string.push_and_in_app
+                hasInApp -> Res.string.in_app
+                hasPush -> Res.string.push
+                else -> Res.string.off
+            }
+        }
+
+        is NotificationSettingItem.Filterable -> return
+    }
+
+    Text(
+        text = stringResource(statusRes),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 private val EnterTransition = fadeIn() + slideInVertically { -it }

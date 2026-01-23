@@ -94,6 +94,7 @@ kotlin {
             implementation(project(":feature:messages"))
             implementation(project(":feature:moderation"))
             implementation(project(":feature:notifications"))
+            implementation(project(":feature:notification-settings"))
             implementation(project(":feature:post-detail"))
             implementation(project(":feature:posts"))
             implementation(project(":feature:profile"))
