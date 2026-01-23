@@ -2,10 +2,10 @@ package com.tunjid.heron.notificationsettings.ui
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AlternateEmail
-import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material.icons.rounded.ChatBubble
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FormatQuote
+import androidx.compose.material.icons.rounded.Interests
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.PersonAdd
 import androidx.compose.material.icons.rounded.Repeat
@@ -107,7 +107,7 @@ fun NotificationPreferences?.toNotificationSettingItems(): List<NotificationSett
             ),
             NotificationSettingItem.EverythingElse(
                 title = Res.string.notif_everything_else_title,
-                icon = Icons.Rounded.Category,
+                icon = Icons.Rounded.Interests,
                 description = Res.string.notif_everything_else_desc,
                 preferences = listOf(
                     prefs.joinedStarterPack,
