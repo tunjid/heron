@@ -16,6 +16,8 @@
 
 package com.tunjid.heron.notifications.di
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.Icons
@@ -24,6 +26,7 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -75,7 +78,7 @@ import heron.ui.core.generated.resources.notification_settings
 import heron.ui.core.generated.resources.notifications_create_post
 import org.jetbrains.compose.resources.stringResource
 
-private const val RoutePattern = "/settings/notifications"
+private const val RoutePattern = "/notifications"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -165,13 +168,26 @@ class NotificationsBindings(
                             )
                         },
                         actions = {
-                            AppBarButton(
-                                icon = Icons.Rounded.Settings,
-                                iconDescription = stringResource(CommonStrings.notification_settings),
-                                onClick = {
-                                    viewModel.accept(Action.Navigate.To(notificationSettingsDestination()))
-                                },
-                            )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                AppBarButton(
+                                    icon = Icons.Rounded.Settings,
+                                    iconDescription = stringResource(CommonStrings.notification_settings),
+                                    onClick = {
+                                        viewModel.accept(
+                                            Action.Navigate.To(notificationSettingsDestination()),
+                                        )
+                                    },
+                                )
+                                androidx.compose.animation.AnimatedVisibility(
+                                    visible = !hasNotificationPermissions(),
+                                ) {
+                                    RequestNotificationsButton(
+                                        animateIcon = state.canAnimateRequestPermissionsButton,
+                                    )
+                                }
+                            }
                         },
                     )
                 },

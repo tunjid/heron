@@ -34,6 +34,7 @@ import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.scaffold.AppBarTitle
+import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
@@ -62,7 +63,7 @@ import dev.zacsweers.metro.StringKey
 import heron.ui.core.generated.resources.notification_settings
 import org.jetbrains.compose.resources.stringResource
 
-private const val RoutePattern = "/notification-settings"
+private const val RoutePattern = "/settings/notifications"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -147,6 +148,11 @@ class NotificationSettingsBindings(
                     )
                 },
                 navigationBar = {
+                    PaneNavigationBar(
+                        modifier = Modifier.offset {
+                            bottomNavigationNestedScrollConnection.offset.round()
+                        },
+                    )
                 },
                 navigationRail = {
                     PaneNavigationRail()
