@@ -43,6 +43,10 @@ sealed class Action(val key: String) {
         val update: NotificationPreferences.Update,
     ) : Action(key = "CacheNotificationPreferenceUpdate")
 
+    data class SnackbarDismissed(
+        val message: Memo,
+    ) : Action(key = "SnackbarDismissed")
+
     sealed class Navigate :
         Action(key = "Navigate"),
         NavigationAction {

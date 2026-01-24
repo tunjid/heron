@@ -76,6 +76,7 @@ class ActualNotificationSettingsViewModel(
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
+                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
                     is Action.CacheNotificationPreferenceUpdate -> action.flow.cacheUpdateMutations()
                     is Action.UpdateNotificationPreferences -> action.flow.updateNotificationPreferencesMutations(
                         writeQueue = writeQueue,
@@ -111,4 +112,9 @@ private fun Flow<Action.UpdateNotificationPreferences>.updateNotificationPrefere
         writable.writeStatusMessage(status)?.let {
             emit { copy(messages = messages + it) }
         }
+    }
+
+private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(messages = messages - action.message)
     }

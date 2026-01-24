@@ -152,6 +152,7 @@ class NotificationSettingsBindings(
                 showNavigation = true,
                 snackBarMessages = state.messages,
                 onSnackBarMessageConsumed = {
+                    viewModel.accept(Action.SnackbarMessageConsumed(it))
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
