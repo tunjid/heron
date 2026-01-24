@@ -304,15 +304,11 @@ fun NotificationStatusText(
                 if (preference.list && preference.push) append(", ")
                 if (preference.push) append(push)
 
-                append(" • ")
-
-                append(
-                    when (preference.include) {
-                        NotificationPreferences.Include.All -> everyone
-                        NotificationPreferences.Include.Follows -> peopleYouFollow
-                        else -> ""
-                    },
-                )
+                when (preference.include) {
+                    NotificationPreferences.Include.All -> append(" • $everyone")
+                    NotificationPreferences.Include.Follows -> append(" • $peopleYouFollow")
+                    else -> Unit
+                }
             }
         }
     }
@@ -330,8 +326,8 @@ fun CombinedNotificationStatusText(
 ) {
     val statusRes = when (item) {
         is NotificationSettingItem.EverythingElse -> {
-            val allPushEnabled = item.preferences.all { it.value.push }
-            if (allPushEnabled) Res.string.push else Res.string.off
+            val anyPushEnabled = item.preferences.any { it.value.push }
+            if (anyPushEnabled) Res.string.push else Res.string.off
         }
 
         is NotificationSettingItem.ActivityFromOthers -> {
