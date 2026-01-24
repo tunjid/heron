@@ -53,25 +53,27 @@ fun State(route: Route): State {
     return State(
         anchorPost = anchorPost,
         sharedElementPrefix = route.sharedElementPrefix,
-        items = listOfNotNull(
-            anchorPost?.let {
+        items = when (anchorPost) {
+            null -> TimelineItem.LoadingItems
+            else -> listOf(
                 TimelineItem.Thread(
-                    id = it.uri.uri,
+                    id = anchorPost.uri.uri,
                     isMuted = false,
                     anchorPostIndex = 0,
-                    posts = listOf(it),
+                    posts = listOf(anchorPost),
                     generation = 0,
                     hasBreak = false,
                     signedInProfileId = null,
                     postUrisToThreadGates = emptyMap(),
-                    appliedLabels = route.model<AppliedLabels.Filtered>() ?: it.appliedLabels(
-                        adultContentEnabled = false,
-                        labelers = emptyList(),
-                        labelPreferences = emptyList(),
-                    ),
-                )
-            },
-        ),
+                    appliedLabels = route.model<AppliedLabels.Filtered>()
+                        ?: anchorPost.appliedLabels(
+                            adultContentEnabled = false,
+                            labelers = emptyList(),
+                            labelPreferences = emptyList(),
+                        ),
+                ),
+            )
+        },
     )
 }
 
