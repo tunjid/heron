@@ -6,7 +6,7 @@ import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.data.repository.SavedState
 import dev.zacsweers.metro.Inject
 
-interface NotificationPreferenceUpdater {
+internal interface NotificationPreferenceUpdater {
 
     suspend fun update(
         notificationPreferences: Preferences,

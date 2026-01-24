@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.notificationsettings
 
+import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
@@ -25,15 +26,22 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     val notificationPreferences: NotificationPreferences? = null,
+    val pendingUpdates: Map<Notification.Reason, NotificationPreferences.Update> = emptyMap(),
     @Transient
     val messages: List<Memo> = emptyList(),
 )
 
+fun State.updates() = pendingUpdates.values.toList()
+
 sealed class Action(val key: String) {
 
     data class UpdateNotificationPreferences(
-        val update: NotificationPreferences.Update,
+        val updates: List<NotificationPreferences.Update>,
     ) : Action(key = "UpdateNotificationPreferences")
+
+    data class CacheNotificationPreferenceUpdate(
+        val update: NotificationPreferences.Update,
+    ) : Action(key = "CacheNotificationPreferenceUpdate")
 
     sealed class Navigate :
         Action(key = "Navigate"),

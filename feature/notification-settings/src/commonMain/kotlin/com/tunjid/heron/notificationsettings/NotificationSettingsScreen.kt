@@ -29,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.notificationsettings.ui.CombinedNotificationStatusText
 import com.tunjid.heron.notificationsettings.ui.ExpandableSettingsItemRow
@@ -55,8 +54,13 @@ internal fun NotificationSettingsScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val items = remember(state.notificationPreferences) {
-        state.notificationPreferences?.toNotificationSettingItems() ?: emptyList()
+    val items = remember(
+        state.notificationPreferences,
+        state.pendingUpdates,
+    ) {
+        state.notificationPreferences?.toNotificationSettingItems(
+            pendingUpdates = state.pendingUpdates,
+        ) ?: emptyList()
     }
 
     LazyColumn(
@@ -78,9 +82,11 @@ internal fun NotificationSettingsScreen(
             },
         ) { item ->
             NotificationSettingRow(
+                modifier = Modifier
+                    .animateItem(),
                 item = item,
                 onUpdate = { update ->
-                    actions(Action.UpdateNotificationPreferences(update))
+                    actions(Action.CacheNotificationPreferenceUpdate(update))
                 },
             )
         }
@@ -243,28 +249,21 @@ private fun CombinedNotificationSetting(
             )
 
             if (combinedItem is NotificationSettingItem.EverythingElse) {
-                val allPushEnabled = combinedItem.preferences.all { it.push }
+                val allPushEnabled = combinedItem.preferences.all { it.value.push }
                 SettingsToggleItem(
                     text = stringResource(Res.string.push_notifications),
                     enabled = true,
                     checked = allPushEnabled,
                     onCheckedChange = { checked ->
-                        val updates = listOf(
-                            NotificationPreferences.Update(
-                                reason = Notification.Reason.JoinedStarterPack,
-                                list = combinedItem.preferences[0].list,
-                                push = checked,
-                                include = null,
-                            ),
-                            NotificationPreferences.Update(
-                                reason = Notification.Reason.SubscribedPost,
-                                list = combinedItem.preferences[1].list,
-                                push = checked,
-                                include = null,
-                            ),
-                        )
-                        updates.forEach {
-                            onUpdate(it)
+                        combinedItem.preferences.forEach { (reason, pref) ->
+                            onUpdate(
+                                NotificationPreferences.Update(
+                                    reason = reason,
+                                    list = pref.list,
+                                    push = checked,
+                                    include = null,
+                                ),
+                            )
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -275,24 +274,17 @@ private fun CombinedNotificationSetting(
                 SettingsToggleItem(
                     text = stringResource(Res.string.in_app_notifications),
                     enabled = true,
-                    checked = combinedItem.preferences.firstOrNull()?.list ?: false,
+                    checked = combinedItem.preferences.any { it.value.list },
                     onCheckedChange = { checked ->
-                        val updates = listOf(
-                            NotificationPreferences.Update(
-                                reason = Notification.Reason.Verified,
-                                list = checked,
-                                push = combinedItem.preferences[0].push,
-                                include = null,
-                            ),
-                            NotificationPreferences.Update(
-                                reason = Notification.Reason.Unverified,
-                                list = checked,
-                                push = combinedItem.preferences[1].push,
-                                include = null,
-                            ),
-                        )
-                        updates.forEach {
-                            onUpdate(it)
+                        combinedItem.preferences.forEach { (reason, pref) ->
+                            onUpdate(
+                                NotificationPreferences.Update(
+                                    reason = reason,
+                                    list = checked,
+                                    push = pref.push,
+                                    include = null,
+                                ),
+                            )
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -303,24 +295,17 @@ private fun CombinedNotificationSetting(
                 SettingsToggleItem(
                     text = stringResource(Res.string.push_notifications),
                     enabled = true,
-                    checked = combinedItem.preferences.firstOrNull()?.push ?: false,
+                    checked = combinedItem.preferences.any { it.value.push },
                     onCheckedChange = { checked ->
-                        val updates = listOf(
-                            NotificationPreferences.Update(
-                                reason = Notification.Reason.Verified,
-                                list = combinedItem.preferences[0].list,
-                                push = checked,
-                                include = null,
-                            ),
-                            NotificationPreferences.Update(
-                                reason = Notification.Reason.Unverified,
-                                list = combinedItem.preferences[1].list,
-                                push = checked,
-                                include = null,
-                            ),
-                        )
-                        updates.forEach {
-                            onUpdate(it)
+                        combinedItem.preferences.forEach { (reason, pref) ->
+                            onUpdate(
+                                NotificationPreferences.Update(
+                                    reason = reason,
+                                    list = pref.list,
+                                    push = checked,
+                                    include = null,
+                                ),
+                            )
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),

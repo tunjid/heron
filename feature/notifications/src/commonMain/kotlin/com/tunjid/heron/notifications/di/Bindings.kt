@@ -171,6 +171,13 @@ class NotificationsBindings(
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
+                                androidx.compose.animation.AnimatedVisibility(
+                                    visible = !hasNotificationPermissions(),
+                                ) {
+                                    RequestNotificationsButton(
+                                        animateIcon = state.canAnimateRequestPermissionsButton,
+                                    )
+                                }
                                 AppBarButton(
                                     icon = Icons.Rounded.Settings,
                                     iconDescription = stringResource(CommonStrings.notification_settings),
@@ -180,13 +187,6 @@ class NotificationsBindings(
                                         )
                                     },
                                 )
-                                androidx.compose.animation.AnimatedVisibility(
-                                    visible = !hasNotificationPermissions(),
-                                ) {
-                                    RequestNotificationsButton(
-                                        animateIcon = state.canAnimateRequestPermissionsButton,
-                                    )
-                                }
                             }
                         },
                     )
