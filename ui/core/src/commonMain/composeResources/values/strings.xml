@@ -33,6 +33,9 @@
     <string name="show">Show</string>
     <string name="save">Save</string>
     <string name="close">Close</string>
+    <string name="expand_icon">Expand icon</string>
+    <string name="collapse_icon">Collapse icon</string>
+    <string name="notification_settings">Notification settings</string>
     <string name="go_to_settings">Go to Settings</string>
     <string name="sign_in">Sign In</string>
     <string name="hide_label">Content Blocked</string>

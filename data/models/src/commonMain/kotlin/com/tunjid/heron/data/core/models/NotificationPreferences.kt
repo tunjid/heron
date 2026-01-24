@@ -19,6 +19,32 @@ data class NotificationPreferences(
     val verified: Preference.Simple,
 ) {
 
+    companion object {
+        private val defaultFilterable = Preference.Filterable(
+            include = Include.All,
+            list = true,
+            push = true,
+        )
+        private val defaultSimple = Preference.Simple(
+            list = true,
+            push = true,
+        )
+        val Default = NotificationPreferences(
+            follow = defaultFilterable,
+            like = defaultFilterable,
+            likeViaRepost = defaultFilterable,
+            mention = defaultFilterable,
+            quote = defaultFilterable,
+            reply = defaultFilterable,
+            repost = defaultFilterable,
+            repostViaRepost = defaultFilterable,
+            joinedStarterPack = defaultSimple,
+            subscribedPost = defaultSimple,
+            unverified = defaultSimple,
+            verified = defaultSimple,
+        )
+    }
+
     @Serializable
     sealed class Preference {
 

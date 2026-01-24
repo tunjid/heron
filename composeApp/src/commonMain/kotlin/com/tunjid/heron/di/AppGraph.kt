@@ -33,6 +33,7 @@ import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.messages.di.MessagesBindings
 import com.tunjid.heron.moderation.di.ModerationBindings
 import com.tunjid.heron.notifications.di.NotificationsBindings
+import com.tunjid.heron.notificationsettings.di.NotificationSettingsBindings
 import com.tunjid.heron.postdetail.di.PostDetailBindings
 import com.tunjid.heron.posts.di.PostsBindings
 import com.tunjid.heron.profile.avatar.di.ProfileAvatarBindings
@@ -77,6 +78,7 @@ interface AppGraph {
             @Includes messagesBindings: MessagesBindings,
             @Includes moderationBindings: ModerationBindings,
             @Includes notificationsBindings: NotificationsBindings,
+            @Includes notificationSettingsBindings: NotificationSettingsBindings,
             @Includes postDetailBindings: PostDetailBindings,
             @Includes postsBindings: PostsBindings,
             @Includes profileBindings: ProfileBindings,

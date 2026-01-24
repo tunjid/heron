@@ -165,14 +165,14 @@ sealed interface Writable {
 
     @Serializable
     data class NotificationUpdate(
-        val update: NotificationPreferences.Update,
+        val updates: List<NotificationPreferences.Update>,
     ) : Writable {
 
         override val queueId: String
-            get() = "notification-pref-$update"
+            get() = "notification-pref-$updates"
 
         override suspend fun WriteQueue.write(): Outcome =
-            notificationRepository.updateNotificationPreferences(update)
+            notificationRepository.updateNotificationPreferences(updates)
     }
 }
 
