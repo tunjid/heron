@@ -19,6 +19,8 @@ package com.tunjid.heron.notificationsettings.di
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Save
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -30,15 +32,19 @@ import com.tunjid.heron.notificationsettings.Action
 import com.tunjid.heron.notificationsettings.ActualNotificationSettingsViewModel
 import com.tunjid.heron.notificationsettings.NotificationSettingsScreen
 import com.tunjid.heron.notificationsettings.RouteViewModelInitializer
+import com.tunjid.heron.notificationsettings.updates
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.scaffold.AppBarTitle
+import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
+import com.tunjid.heron.scaffold.scaffold.fabOffset
+import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
@@ -46,6 +52,7 @@ import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.text.CommonStrings
+import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -61,6 +68,7 @@ import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.ui.core.generated.resources.notification_settings
+import heron.ui.core.generated.resources.save
 import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/settings/notifications"
@@ -125,6 +133,9 @@ class NotificationSettingsBindings(
             val state by viewModel.state.collectAsStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
+            val topAppBarNestedScrollConnection =
+                topAppBarNestedScrollConnection()
+
             val bottomNavigationNestedScrollConnection =
                 bottomNavigationNestedScrollConnection(
                     isCompact = paneScaffoldState.prefersCompactBottomNav,
@@ -134,6 +145,7 @@ class NotificationSettingsBindings(
                 modifier = Modifier
                     .fillMaxSize()
                     .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+                    .nestedScroll(topAppBarNestedScrollConnection)
                     .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
                         nestedScroll(bottomNavigationNestedScrollConnection)
                     },
@@ -145,6 +157,25 @@ class NotificationSettingsBindings(
                     PoppableDestinationTopAppBar(
                         title = { AppBarTitle(stringResource(CommonStrings.notification_settings)) },
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                    )
+                },
+                floatingActionButton = {
+                    PaneFab(
+                        modifier = Modifier
+                            .offset {
+                                fabOffset(bottomNavigationNestedScrollConnection.offset)
+                            },
+                        text = stringResource(CommonStrings.save),
+                        icon = Icons.Rounded.Save,
+                        expanded = isFabExpanded {
+                            if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
+                            else topAppBarNestedScrollConnection.offset * -1f
+                        },
+                        onClick = {
+                            viewModel.accept(
+                                Action.UpdateNotificationPreferences(state.updates()),
+                            )
+                        },
                     )
                 },
                 navigationBar = {

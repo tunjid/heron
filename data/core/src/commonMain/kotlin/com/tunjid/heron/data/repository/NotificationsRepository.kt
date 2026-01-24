@@ -87,7 +87,6 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.takeFrom
-import kotlin.fold
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -146,7 +145,7 @@ interface NotificationsRepository {
     ): Outcome
 
     suspend fun updateNotificationPreferences(
-        update: NotificationPreferences.Update,
+        updates: List<NotificationPreferences.Update>,
     ): Outcome
 
     suspend fun markNotificationPermissionsRequested(): Outcome
@@ -309,58 +308,66 @@ internal class OfflineNotificationsRepository @Inject constructor(
     } ?: expiredSessionOutcome()
 
     override suspend fun updateNotificationPreferences(
-        update: NotificationPreferences.Update,
+        updates: List<NotificationPreferences.Update>,
     ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
         if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+
         networkService.runCatchingWithMonitoredNetworkRetry {
             getPreferencesForNotification()
         }.mapToResult { response ->
-            val currentPrefs = response.preferences
-            val updateRequest = when (val includeValue = update.include) {
-                null -> {
-                    val simplePref = Preference(
-                        list = update.list,
-                        push = update.push,
-                    )
-                    PutPreferencesV2Request(
-                        follow = currentPrefs.follow,
-                        like = currentPrefs.like,
-                        likeViaRepost = currentPrefs.likeViaRepost,
-                        mention = currentPrefs.mention,
-                        quote = currentPrefs.quote,
-                        reply = currentPrefs.reply,
-                        repost = currentPrefs.repost,
-                        repostViaRepost = currentPrefs.repostViaRepost,
-                        starterpackJoined = if (update.reason == Notification.Reason.JoinedStarterPack) simplePref else currentPrefs.starterpackJoined,
-                        subscribedPost = if (update.reason == Notification.Reason.SubscribedPost) simplePref else currentPrefs.subscribedPost,
-                        unverified = if (update.reason == Notification.Reason.Unverified) simplePref else currentPrefs.unverified,
-                        verified = if (update.reason == Notification.Reason.Verified) simplePref else currentPrefs.verified,
-                        chat = currentPrefs.chat,
-                    )
-                }
-                else -> {
-                    val filterablePreference = FilterablePreference(
-                        include = FilterablePreferenceInclude.safeValueOf(includeValue.value),
-                        list = update.list,
-                        push = update.push,
-                    )
-                    PutPreferencesV2Request(
-                        follow = if (update.reason == Notification.Reason.Follow) filterablePreference else currentPrefs.follow,
-                        like = if (update.reason == Notification.Reason.Like) filterablePreference else currentPrefs.like,
-                        likeViaRepost = if (update.reason == Notification.Reason.LikeViaRepost) filterablePreference else currentPrefs.likeViaRepost,
-                        mention = if (update.reason == Notification.Reason.Mention) filterablePreference else currentPrefs.mention,
-                        quote = if (update.reason == Notification.Reason.Quote) filterablePreference else currentPrefs.quote,
-                        reply = if (update.reason == Notification.Reason.Reply) filterablePreference else currentPrefs.reply,
-                        repost = if (update.reason == Notification.Reason.Repost) filterablePreference else currentPrefs.repost,
-                        repostViaRepost = if (update.reason == Notification.Reason.RepostViaRepost) filterablePreference else currentPrefs.repostViaRepost,
-                        starterpackJoined = currentPrefs.starterpackJoined,
-                        subscribedPost = currentPrefs.subscribedPost,
-                        unverified = currentPrefs.unverified,
-                        verified = currentPrefs.verified,
-                        chat = currentPrefs.chat,
-                    )
+            val updateRequest = updates.fold(
+                initial = PutPreferencesV2Request(
+                    follow = response.preferences.follow,
+                    like = response.preferences.like,
+                    likeViaRepost = response.preferences.likeViaRepost,
+                    mention = response.preferences.mention,
+                    quote = response.preferences.quote,
+                    reply = response.preferences.reply,
+                    repost = response.preferences.repost,
+                    repostViaRepost = response.preferences.repostViaRepost,
+                    starterpackJoined = response.preferences.starterpackJoined,
+                    subscribedPost = response.preferences.subscribedPost,
+                    unverified = response.preferences.unverified,
+                    verified = response.preferences.verified,
+                    chat = response.preferences.chat,
+                ),
+            ) { currentPrefs, update ->
+                when (val includeValue = update.include) {
+                    null -> {
+                        val simplePref = Preference(
+                            list = update.list,
+                            push = update.push,
+                        )
+                        when (update.reason) {
+                            Notification.Reason.JoinedStarterPack -> currentPrefs.copy(starterpackJoined = simplePref)
+                            Notification.Reason.SubscribedPost -> currentPrefs.copy(subscribedPost = simplePref)
+                            Notification.Reason.Unverified -> currentPrefs.copy(unverified = simplePref)
+                            Notification.Reason.Verified -> currentPrefs.copy(verified = simplePref)
+                            else -> currentPrefs
+                        }
+                    }
+
+                    else -> {
+                        val filterablePreference = FilterablePreference(
+                            include = FilterablePreferenceInclude.safeValueOf(includeValue.value),
+                            list = update.list,
+                            push = update.push,
+                        )
+                        when (update.reason) {
+                            Notification.Reason.Follow -> currentPrefs.copy(follow = filterablePreference)
+                            Notification.Reason.Like -> currentPrefs.copy(like = filterablePreference)
+                            Notification.Reason.LikeViaRepost -> currentPrefs.copy(likeViaRepost = filterablePreference)
+                            Notification.Reason.Mention -> currentPrefs.copy(mention = filterablePreference)
+                            Notification.Reason.Quote -> currentPrefs.copy(quote = filterablePreference)
+                            Notification.Reason.Reply -> currentPrefs.copy(reply = filterablePreference)
+                            Notification.Reason.Repost -> currentPrefs.copy(repost = filterablePreference)
+                            Notification.Reason.RepostViaRepost -> currentPrefs.copy(repostViaRepost = filterablePreference)
+                            else -> currentPrefs
+                        }
+                    }
                 }
             }
+
             networkService.runCatchingWithMonitoredNetworkRetry {
                 putPreferencesV2(request = updateRequest)
             }

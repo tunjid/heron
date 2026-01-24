@@ -17,6 +17,7 @@
 package com.tunjid.heron.notificationsettings.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateBounds
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -33,6 +34,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
@@ -57,6 +59,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -111,7 +114,8 @@ internal fun SettingsItemRow(
     icon: ImageVector,
     modifier: Modifier = Modifier,
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
-    secondary: (@Composable () -> Unit)? = null,
+    showSecondaryContent: Boolean,
+    secondary: @Composable () -> Unit,
     trailing: @Composable RowScope.() -> Unit = {},
 ) {
     Row(
@@ -121,7 +125,7 @@ internal fun SettingsItemRow(
                 modifier
                     .semantics { contentDescription = title }
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(horizontal = 16.dp),
             ),
     ) {
         Icon(
@@ -133,17 +137,28 @@ internal fun SettingsItemRow(
         Spacer(Modifier.width(16.dp))
 
         Column(
-            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .heightIn(min = 60.dp)
+                .weight(1f),
         ) {
-            Text(
-                text = title,
-                color = titleColor,
-                style = MaterialTheme.typography.bodyLarge,
-            )
+            LookaheadScope {
+                Text(
+                    modifier = Modifier
+                        .animateBounds(this),
+                    text = title,
+                    color = titleColor,
+                    style = MaterialTheme.typography.bodyLarge,
+                )
 
-            if (secondary != null) {
-                Spacer(Modifier.height(2.dp))
-                secondary()
+                AnimatedVisibility(
+                    visible = showSecondaryContent,
+                ) {
+                    Column {
+                        Spacer(Modifier.height(2.dp))
+                        secondary()
+                    }
+                }
             }
         }
 
@@ -158,7 +173,7 @@ internal fun ExpandableSettingsItemRow(
     modifier: Modifier = Modifier,
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
     content: @Composable ColumnScope.() -> Unit = {},
-    status: (@Composable () -> Unit)? = null,
+    status: @Composable () -> Unit,
 ) {
     var isExpanded by rememberSaveable { mutableStateOf(false) }
 
@@ -180,7 +195,8 @@ internal fun ExpandableSettingsItemRow(
             title = title,
             icon = icon,
             titleColor = titleColor,
-            secondary = if (!isExpanded) status else null,
+            showSecondaryContent = !isExpanded,
+            secondary = status,
         ) {
             val iconRotation = animateFloatAsState(
                 targetValue = if (isExpanded) 0f
@@ -314,13 +330,13 @@ fun CombinedNotificationStatusText(
 ) {
     val statusRes = when (item) {
         is NotificationSettingItem.EverythingElse -> {
-            val allPushEnabled = item.preferences.all { it.push }
+            val allPushEnabled = item.preferences.all { it.value.push }
             if (allPushEnabled) Res.string.push else Res.string.off
         }
 
         is NotificationSettingItem.ActivityFromOthers -> {
-            val hasInApp = item.preferences.firstOrNull()?.list ?: false
-            val hasPush = item.preferences.firstOrNull()?.push ?: false
+            val hasInApp = item.preferences.any { it.value.list }
+            val hasPush = item.preferences.any { it.value.push }
 
             when {
                 !hasInApp && !hasPush -> Res.string.off

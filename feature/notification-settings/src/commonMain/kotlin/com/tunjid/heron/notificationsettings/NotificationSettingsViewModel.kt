@@ -76,6 +76,7 @@ class ActualNotificationSettingsViewModel(
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
+                    is Action.CacheNotificationPreferenceUpdate -> action.flow.cacheUpdateMutations()
                     is Action.UpdateNotificationPreferences -> action.flow.updateNotificationPreferencesMutations(
                         writeQueue = writeQueue,
                     )
@@ -92,12 +93,19 @@ private fun loadNotificationPreferencesMutations(
             copy(notificationPreferences = notificationPreferences)
         }
 
+private fun Flow<Action.CacheNotificationPreferenceUpdate>.cacheUpdateMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(
+            pendingUpdates = pendingUpdates + (action.update.reason to action.update),
+        )
+    }
+
 private fun Flow<Action.UpdateNotificationPreferences>.updateNotificationPreferencesMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
         val writable = Writable.NotificationUpdate(
-            update = action.update,
+            updates = action.updates,
         )
         val status = writeQueue.enqueue(writable)
         writable.writeStatusMessage(status)?.let {
