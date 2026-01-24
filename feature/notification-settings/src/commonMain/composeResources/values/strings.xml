@@ -18,7 +18,7 @@
     <string name="back">Go back</string>
     <string name="reply">Reply</string>
     <string name="push">Push</string>
-    <string name="push_and_in_app">"In-app, Push"</string>
+    <string name="push_and_in_app">In-app, Push</string>
     <string name="push_notifications">Push notifications</string>
     <string name="off">Off</string>
     <string name="from">From</string>

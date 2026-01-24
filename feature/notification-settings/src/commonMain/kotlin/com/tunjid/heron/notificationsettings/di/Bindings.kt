@@ -167,6 +167,7 @@ class NotificationSettingsBindings(
                             },
                         text = stringResource(CommonStrings.save),
                         icon = Icons.Rounded.Save,
+                        enabled = state.pendingUpdates.isNotEmpty(),
                         expanded = isFabExpanded {
                             if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
                             else topAppBarNestedScrollConnection.offset * -1f
