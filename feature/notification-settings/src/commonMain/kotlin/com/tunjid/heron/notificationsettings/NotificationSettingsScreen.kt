@@ -104,12 +104,7 @@ fun NotificationSettingRow(
             item = item,
             onUpdate = onUpdate,
         )
-        is NotificationSettingItem.EverythingElse -> CombinedNotificationSetting(
-            modifier = modifier,
-            combinedItem = item,
-            onUpdate = onUpdate,
-        )
-        is NotificationSettingItem.ActivityFromOthers -> CombinedNotificationSetting(
+        is NotificationSettingItem.Combined -> CombinedNotificationSetting(
             modifier = modifier,
             combinedItem = item,
             onUpdate = onUpdate,
