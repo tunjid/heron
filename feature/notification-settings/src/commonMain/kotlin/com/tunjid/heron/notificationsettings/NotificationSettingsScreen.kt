@@ -27,7 +27,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.notificationsettings.ui.CombinedNotificationStatusText
@@ -107,18 +106,12 @@ fun NotificationSettingRow(
         )
         is NotificationSettingItem.EverythingElse -> CombinedNotificationSetting(
             modifier = modifier,
-            item = item,
-            title = stringResource(item.title),
-            icon = item.icon,
-            description = stringResource(item.description),
+            combinedItem = item,
             onUpdate = onUpdate,
         )
         is NotificationSettingItem.ActivityFromOthers -> CombinedNotificationSetting(
             modifier = modifier,
-            item = item,
-            title = stringResource(item.title),
-            icon = item.icon,
-            description = stringResource(item.description),
+            combinedItem = item,
             onUpdate = onUpdate,
         )
     }
@@ -221,17 +214,12 @@ private fun FilterableNotificationSetting(
 @Composable
 private fun CombinedNotificationSetting(
     modifier: Modifier = Modifier,
-    item: NotificationSettingItem,
-    title: String,
-    icon: ImageVector,
-    description: String,
+    combinedItem: NotificationSettingItem.Combined,
     onUpdate: (NotificationPreferences.Update) -> Unit,
 ) {
-    val combinedItem = when (item) {
-        is NotificationSettingItem.EverythingElse -> item
-        is NotificationSettingItem.ActivityFromOthers -> item
-        else -> return
-    }
+    val title = stringResource(combinedItem.title)
+    val icon = combinedItem.icon
+    val description = stringResource(combinedItem.description)
 
     ExpandableSettingsItemRow(
         modifier = modifier,
@@ -249,11 +237,11 @@ private fun CombinedNotificationSetting(
             )
 
             if (combinedItem is NotificationSettingItem.EverythingElse) {
-                val allPushEnabled = combinedItem.preferences.all { it.value.push }
+                val anyPushEnabled = combinedItem.preferences.any { it.value.push }
                 SettingsToggleItem(
                     text = stringResource(Res.string.push_notifications),
                     enabled = true,
-                    checked = allPushEnabled,
+                    checked = anyPushEnabled,
                     onCheckedChange = { checked ->
                         combinedItem.preferences.forEach { (reason, pref) ->
                             onUpdate(

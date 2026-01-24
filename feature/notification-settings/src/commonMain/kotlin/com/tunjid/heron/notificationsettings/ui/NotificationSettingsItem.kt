@@ -154,6 +154,8 @@ sealed class NotificationSettingItem {
     abstract val icon: ImageVector
     abstract val description: StringResource
 
+    sealed class Combined : NotificationSettingItem()
+
     data class Filterable(
         override val title: StringResource,
         override val icon: ImageVector,
@@ -167,12 +169,12 @@ sealed class NotificationSettingItem {
         override val icon: ImageVector,
         override val description: StringResource,
         val preferences: Map<Notification.Reason, NotificationPreferences.Preference.Simple>,
-    ) : NotificationSettingItem()
+    ) : Combined()
 
     data class ActivityFromOthers(
         override val title: StringResource,
         override val icon: ImageVector,
         override val description: StringResource,
         val preferences: Map<Notification.Reason, NotificationPreferences.Preference.Simple>,
-    ) : NotificationSettingItem()
+    ) : Combined()
 }
