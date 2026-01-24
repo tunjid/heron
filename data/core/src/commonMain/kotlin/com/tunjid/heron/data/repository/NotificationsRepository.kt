@@ -338,43 +338,32 @@ internal class OfflineNotificationsRepository @Inject constructor(
                             list = update.list,
                             push = update.push,
                         )
-                        currentPrefs.copy(
-                            follow = currentPrefs.follow,
-                            like = currentPrefs.like,
-                            likeViaRepost = currentPrefs.likeViaRepost,
-                            mention = currentPrefs.mention,
-                            quote = currentPrefs.quote,
-                            reply = currentPrefs.reply,
-                            repost = currentPrefs.repost,
-                            repostViaRepost = currentPrefs.repostViaRepost,
-                            starterpackJoined = if (update.reason == Notification.Reason.JoinedStarterPack) simplePref else currentPrefs.starterpackJoined,
-                            subscribedPost = if (update.reason == Notification.Reason.SubscribedPost) simplePref else currentPrefs.subscribedPost,
-                            unverified = if (update.reason == Notification.Reason.Unverified) simplePref else currentPrefs.unverified,
-                            verified = if (update.reason == Notification.Reason.Verified) simplePref else currentPrefs.verified,
-                            chat = currentPrefs.chat,
-                        )
+                        when (update.reason) {
+                            Notification.Reason.JoinedStarterPack -> currentPrefs.copy(starterpackJoined = simplePref)
+                            Notification.Reason.SubscribedPost -> currentPrefs.copy(subscribedPost = simplePref)
+                            Notification.Reason.Unverified -> currentPrefs.copy(unverified = simplePref)
+                            Notification.Reason.Verified -> currentPrefs.copy(verified = simplePref)
+                            else -> currentPrefs
+                        }
                     }
+
                     else -> {
                         val filterablePreference = FilterablePreference(
                             include = FilterablePreferenceInclude.safeValueOf(includeValue.value),
                             list = update.list,
                             push = update.push,
                         )
-                        PutPreferencesV2Request(
-                            follow = if (update.reason == Notification.Reason.Follow) filterablePreference else currentPrefs.follow,
-                            like = if (update.reason == Notification.Reason.Like) filterablePreference else currentPrefs.like,
-                            likeViaRepost = if (update.reason == Notification.Reason.LikeViaRepost) filterablePreference else currentPrefs.likeViaRepost,
-                            mention = if (update.reason == Notification.Reason.Mention) filterablePreference else currentPrefs.mention,
-                            quote = if (update.reason == Notification.Reason.Quote) filterablePreference else currentPrefs.quote,
-                            reply = if (update.reason == Notification.Reason.Reply) filterablePreference else currentPrefs.reply,
-                            repost = if (update.reason == Notification.Reason.Repost) filterablePreference else currentPrefs.repost,
-                            repostViaRepost = if (update.reason == Notification.Reason.RepostViaRepost) filterablePreference else currentPrefs.repostViaRepost,
-                            starterpackJoined = currentPrefs.starterpackJoined,
-                            subscribedPost = currentPrefs.subscribedPost,
-                            unverified = currentPrefs.unverified,
-                            verified = currentPrefs.verified,
-                            chat = currentPrefs.chat,
-                        )
+                        when (update.reason) {
+                            Notification.Reason.Follow -> currentPrefs.copy(follow = filterablePreference)
+                            Notification.Reason.Like -> currentPrefs.copy(like = filterablePreference)
+                            Notification.Reason.LikeViaRepost -> currentPrefs.copy(likeViaRepost = filterablePreference)
+                            Notification.Reason.Mention -> currentPrefs.copy(mention = filterablePreference)
+                            Notification.Reason.Quote -> currentPrefs.copy(quote = filterablePreference)
+                            Notification.Reason.Reply -> currentPrefs.copy(reply = filterablePreference)
+                            Notification.Reason.Repost -> currentPrefs.copy(repost = filterablePreference)
+                            Notification.Reason.RepostViaRepost -> currentPrefs.copy(repostViaRepost = filterablePreference)
+                            else -> currentPrefs
+                        }
                     }
                 }
             }
