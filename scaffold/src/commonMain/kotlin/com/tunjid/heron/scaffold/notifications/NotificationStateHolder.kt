@@ -198,7 +198,6 @@ private fun Flow<NotificationAction.HandleNotification>.handleNotificationMutati
             val reason = action.reason ?: return@flatMapMerge emptyFlow()
 
             flow {
-
                 val notificationPreferences = userDataRepository.notificationPreferences.first()
 
                 val result = withTimeoutOrNull(AppState.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS) {
@@ -230,7 +229,7 @@ private fun Flow<NotificationAction.HandleNotification>.handleNotificationMutati
 
                         if (shouldShow) {
                             notifier.displayNotifications(
-                                notifications = listOf(notification)
+                                notifications = listOf(notification),
                             )
                         } else {
                             logcat(LogPriority.DEBUG) {
