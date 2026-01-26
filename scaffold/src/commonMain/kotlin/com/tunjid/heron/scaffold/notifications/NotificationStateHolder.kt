@@ -16,6 +16,9 @@
 
 package com.tunjid.heron.scaffold.notifications
 
+import com.tunjid.heron.data.core.models.Notification
+import com.tunjid.heron.data.core.models.isFollowing
+import com.tunjid.heron.data.core.models.shouldShowNotification
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.Uri
@@ -27,6 +30,7 @@ import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.data.repository.NotificationsQuery
 import com.tunjid.heron.data.repository.NotificationsRepository
+import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.scaffold.scaffold.AppState
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -44,6 +48,7 @@ import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withTimeoutOrNull
@@ -77,6 +82,11 @@ sealed class NotificationAction(
         val recordUri: RecordUri? = payload[NotificationAtProtoRecordUri]
             ?.let { "${Uri.Host.AtProto.prefix}$it" }
             ?.asRecordUriOrNull()
+
+        val reason: Notification.Reason? = payload[NotificationAtProtoReason]
+            ?.let { reasonString ->
+                Notification.Reason.entries.find { it.name.equals(reasonString, ignoreCase = true) }
+            }
     }
 
     data class NotificationProcessedOrDropped(
@@ -101,6 +111,7 @@ class AppNotificationStateHolder(
     appScope: CoroutineScope,
     notifier: Notifier,
     notificationsRepository: NotificationsRepository,
+    userDataRepository: UserDataRepository,
 ) : NotificationStateHolder,
     ActionStateMutator<NotificationAction, StateFlow<NotificationState>> by appScope.actionStateFlowMutator(
         initialState = NotificationState(),
@@ -114,6 +125,7 @@ class AppNotificationStateHolder(
                     is NotificationAction.HandleNotification -> action.flow.handleNotificationMutations(
                         notifier = notifier,
                         notificationsRepository = notificationsRepository,
+                        userDataRepository = userDataRepository,
                     )
                     is NotificationAction.RegisterToken -> action.flow.registerTokenMutations(
                         currentState = { state() },
@@ -176,14 +188,19 @@ private fun Flow<NotificationAction.RegisterToken>.registerTokenMutations(
 private fun Flow<NotificationAction.HandleNotification>.handleNotificationMutations(
     notifier: Notifier,
     notificationsRepository: NotificationsRepository,
+    userDataRepository: UserDataRepository,
 ): Flow<Mutation<NotificationState>> =
     buffer(NotificationProcessingBufferSize)
         // Process up NotificationProcessingMaxConcurrencyLimit in parallel
         .flatMapMerge(concurrency = NotificationProcessingMaxConcurrencyLimit) { action ->
             val senderId = action.senderDid ?: return@flatMapMerge emptyFlow()
             val recordUri = action.recordUri ?: return@flatMapMerge emptyFlow()
+            val reason = action.reason ?: return@flatMapMerge emptyFlow()
 
             flow {
+
+                val notificationPreferences = userDataRepository.notificationPreferences.first()
+
                 val result = withTimeoutOrNull(AppState.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS) {
                     notificationsRepository.resolvePushNotification(
                         NotificationsQuery.Push(
@@ -201,9 +218,26 @@ private fun Flow<NotificationAction.HandleNotification>.handleNotificationMutati
                             result.exceptionOrNull()?.loggableText()
                         }"
                     }
-                    result.isSuccess -> notifier.displayNotifications(
-                        notifications = listOf(result.getOrThrow()),
-                    )
+                    result.isSuccess -> {
+                        val notification = result.getOrThrow()
+
+                        val isAuthorFollowed = notification.viewerState?.isFollowing == true
+
+                        val shouldShow = notificationPreferences.shouldShowNotification(
+                            reason = reason,
+                            isAuthorFollowed = isAuthorFollowed,
+                        )
+
+                        if (shouldShow) {
+                            notifier.displayNotifications(
+                                notifications = listOf(notification)
+                            )
+                        } else {
+                            logcat(LogPriority.DEBUG) {
+                                "Notification dropped by preferences. Reason=$reason"
+                            }
+                        }
+                    }
                 }
                 emit {
                     copy(
@@ -236,5 +270,6 @@ private fun Flow<NotificationAction.RequestedNotificationPermission>.markNotific
 
 private const val NotificationAtProtoSenderDid = "senderDid"
 private const val NotificationAtProtoRecordUri = "recordUri"
+private const val NotificationAtProtoReason = "reason"
 private const val NotificationProcessingMaxConcurrencyLimit = 4
 private const val NotificationProcessingBufferSize = 64

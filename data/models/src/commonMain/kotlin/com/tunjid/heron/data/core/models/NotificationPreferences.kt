@@ -103,7 +103,6 @@ data class NotificationPreferences(
     )
 }
 
-// Helper to check if notification should be shown
 fun NotificationPreferences.shouldShowNotification(
     reason: Notification.Reason,
     isAuthorFollowed: Boolean = false,
@@ -115,7 +114,7 @@ fun NotificationPreferences.shouldShowNotification(
     null -> false
 }
 
-fun NotificationPreferences.forReason(
+private fun NotificationPreferences.forReason(
     reason: Notification.Reason,
 ): NotificationPreferences.Preference? = when (reason) {
     Notification.Reason.Follow -> follow
