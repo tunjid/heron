@@ -195,7 +195,12 @@ private fun Flow<NotificationAction.HandleNotification>.handleNotificationMutati
         .flatMapMerge(concurrency = NotificationProcessingMaxConcurrencyLimit) { action ->
             val senderId = action.senderDid ?: return@flatMapMerge emptyFlow()
             val recordUri = action.recordUri ?: return@flatMapMerge emptyFlow()
-            val reason = action.reason ?: return@flatMapMerge emptyFlow()
+            val reason = action.reason ?: run {
+                logcat(LogPriority.WARN) {
+                    "Notification dropped, unknown reason from payload: ${action.payload[NotificationAtProtoReason]}"
+                }
+                return@flatMapMerge emptyFlow()
+            }
 
             flow {
                 val notificationPreferences = userDataRepository.notificationPreferences.first()
