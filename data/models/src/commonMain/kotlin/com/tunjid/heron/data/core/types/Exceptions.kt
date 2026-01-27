@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.core.types
 
+import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.ProfileViewerState
 
 class UnresolvableProfileException(
@@ -34,6 +35,10 @@ class RestrictedProfileException(
 class UnknownNotificationException(
     uri: RecordUri,
 ) : IllegalArgumentException("The record URI $uri does not have a known notification")
+
+class NotificationFilteredOutException(
+    val reason: Notification.Reason,
+) : IllegalArgumentException("Notification filtered out by user preferences: $reason")
 
 class MutedThreadException(
     postUri: PostUri,

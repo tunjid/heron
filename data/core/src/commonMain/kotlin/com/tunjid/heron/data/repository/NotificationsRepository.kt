@@ -44,10 +44,13 @@ import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Repost
 import com.tunjid.heron.data.core.models.StarterPack
+import com.tunjid.heron.data.core.models.isFollowing
 import com.tunjid.heron.data.core.models.isRestricted
 import com.tunjid.heron.data.core.models.offset
+import com.tunjid.heron.data.core.models.shouldShowNotification
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.MutedThreadException
+import com.tunjid.heron.data.core.types.NotificationFilteredOutException
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.RepostUri
@@ -115,6 +118,7 @@ data class NotificationsQuery(
     data class Push(
         val senderId: ProfileId,
         val recordUri: RecordUri,
+        val reason: Notification.Reason,
     )
 }
 
@@ -163,6 +167,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
     private val networkMonitor: NetworkMonitor,
     private val savedStateDataSource: SavedStateDataSource,
     private val notificationPreferenceUpdater: NotificationPreferenceUpdater,
+    private val userDataRepository: UserDataRepository,
     httpClient: HttpClient,
 ) : NotificationsRepository {
 
@@ -394,138 +399,178 @@ internal class OfflineNotificationsRepository @Inject constructor(
 
     override suspend fun resolvePushNotification(
         query: NotificationsQuery.Push,
-    ): Result<Notification> = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionResult()
-
-        recordResolver.resolve(query.recordUri).mapCatchingUnlessCancelled { resolvedRecord ->
-            val authorEntity = profileDao.profiles(
-                signedInProfiledId = signedInProfileId.id,
-                ids = listOf(query.senderId),
-            )
-                .first { it.isNotEmpty() }
-                .first()
-
-            val now = Clock.System.now()
-
-            // Check if the author of the notification is restricted
-            val viewerState = authorEntity.relationship?.asExternalModel()
-            if (viewerState != null && viewerState.isRestricted) throw RestrictedProfileException(
-                profileId = authorEntity.entity.did,
-                profileViewerState = viewerState,
-            )
-
-            when (resolvedRecord) {
-                // These don't have notification generation logic yet
-                is FeedGenerator,
-                is FeedList,
-                is Labeler,
-                is StarterPack,
-                is Block,
-                -> throw UnknownNotificationException(query.recordUri)
-                // Reply, mention or Quote
-                is Post -> when {
-                    resolvedRecord.viewerStats?.threadMuted == true -> throw MutedThreadException(
-                        resolvedRecord.uri,
-                    )
-                    resolvedRecord.isReply(signedInProfileId) -> Notification.RepliedTo(
-                        uri = resolvedRecord.uri.asGenericUri(),
-                        cid = resolvedRecord.cid.asGenericId(),
-                        author = authorEntity.asExternalModel(),
-                        reasonSubject = null,
-                        isRead = false,
-                        indexedAt = now,
-                        associatedPost = resolvedRecord,
-                        viewerState = viewerState,
-                    )
-                    resolvedRecord.isQuote(signedInProfileId) -> Notification.Quoted(
-                        uri = resolvedRecord.uri.asGenericUri(),
-                        cid = resolvedRecord.cid.asGenericId(),
-                        author = authorEntity.asExternalModel(),
-                        reasonSubject = null,
-                        isRead = false,
-                        indexedAt = now,
-                        associatedPost = resolvedRecord,
-                        viewerState = viewerState,
-                    )
-                    resolvedRecord.isMention(signedInProfileId) -> Notification.Mentioned(
-                        uri = resolvedRecord.uri.asGenericUri(),
-                        cid = resolvedRecord.cid.asGenericId(),
-                        author = authorEntity.asExternalModel(),
-                        reasonSubject = null,
-                        isRead = false,
-                        indexedAt = now,
-                        associatedPost = resolvedRecord,
-                        viewerState = viewerState,
-                    )
-                    else -> throw UnknownNotificationException(query.recordUri)
-                }
-                // Follow
-                is Follow -> Notification.Followed(
-                    uri = resolvedRecord.uri.asGenericUri(),
-                    cid = resolvedRecord.cid.asGenericId(),
-                    author = authorEntity.asExternalModel(),
-                    reasonSubject = null,
-                    isRead = false,
-                    indexedAt = now,
-                    viewerState = viewerState,
-                )
-                // Like or Like via repost
-                is Like -> when (resolvedRecord.post.viewerStats?.threadMuted) {
-                    true -> throw MutedThreadException(resolvedRecord.post.uri)
-                    else -> when (resolvedRecord.via) {
-                        is RepostUri -> Notification.Liked.Repost(
-                            uri = resolvedRecord.uri.asGenericUri(),
-                            cid = resolvedRecord.cid.asGenericId(),
-                            author = authorEntity.asExternalModel(),
-                            reasonSubject = null,
-                            isRead = false,
-                            indexedAt = now,
-                            associatedPost = resolvedRecord.post,
-                            viewerState = viewerState,
-                        )
-                        null -> Notification.Liked.Post(
-                            uri = resolvedRecord.uri.asGenericUri(),
-                            cid = resolvedRecord.cid.asGenericId(),
-                            author = authorEntity.asExternalModel(),
-                            reasonSubject = null,
-                            isRead = false,
-                            indexedAt = now,
-                            associatedPost = resolvedRecord.post,
-                            viewerState = viewerState,
-                        )
-                        else -> throw UnknownNotificationException(query.recordUri)
-                    }
-                }
-                // Repost or repost via repost
-                is Repost -> when (resolvedRecord.post.viewerStats?.threadMuted) {
-                    true -> throw MutedThreadException(resolvedRecord.post.uri)
-                    else -> when (resolvedRecord.via) {
-                        is RepostUri -> Notification.Reposted.Repost(
-                            uri = resolvedRecord.uri.asGenericUri(),
-                            cid = resolvedRecord.cid.asGenericId(),
-                            author = authorEntity.asExternalModel(),
-                            reasonSubject = null,
-                            isRead = false,
-                            indexedAt = now,
-                            associatedPost = resolvedRecord.post,
-                            viewerState = viewerState,
-                        )
-                        null -> Notification.Reposted.Post(
-                            uri = resolvedRecord.uri.asGenericUri(),
-                            cid = resolvedRecord.cid.asGenericId(),
-                            author = authorEntity.asExternalModel(),
-                            reasonSubject = null,
-                            isRead = false,
-                            indexedAt = now,
-                            associatedPost = resolvedRecord.post,
-                            viewerState = viewerState,
-                        )
-                        else -> throw UnknownNotificationException(query.recordUri)
-                    }
-                }
+    ): Result<Notification> =
+        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+            if (signedInProfileId == null) {
+                return@inCurrentProfileSession expiredSessionResult()
             }
-        }
-    } ?: expiredSessionResult()
+
+            recordResolver.resolve(query.recordUri)
+                .mapCatchingUnlessCancelled { resolvedRecord ->
+
+                    val authorEntity = profileDao.profiles(
+                        signedInProfiledId = signedInProfileId.id,
+                        ids = listOf(query.senderId),
+                    )
+                        .first { it.isNotEmpty() }
+                        .first()
+
+                    val now = Clock.System.now()
+
+                    val viewerState = authorEntity.relationship?.asExternalModel()
+
+                    if (viewerState?.isRestricted == true) {
+                        throw RestrictedProfileException(
+                            profileId = authorEntity.entity.did,
+                            profileViewerState = viewerState,
+                        )
+                    }
+
+                    val notification = when (resolvedRecord) {
+                        // Not supported yet
+                        is FeedGenerator,
+                        is FeedList,
+                        is Labeler,
+                        is StarterPack,
+                        is Block,
+                        -> throw UnknownNotificationException(query.recordUri)
+
+                        is Post -> when {
+                            resolvedRecord.viewerStats?.threadMuted == true ->
+                                throw MutedThreadException(resolvedRecord.uri)
+
+                            resolvedRecord.isReply(signedInProfileId) ->
+                                Notification.RepliedTo(
+                                    uri = resolvedRecord.uri.asGenericUri(),
+                                    cid = resolvedRecord.cid.asGenericId(),
+                                    author = authorEntity.asExternalModel(),
+                                    reasonSubject = null,
+                                    isRead = false,
+                                    indexedAt = now,
+                                    associatedPost = resolvedRecord,
+                                    viewerState = viewerState,
+                                )
+
+                            resolvedRecord.isQuote(signedInProfileId) ->
+                                Notification.Quoted(
+                                    uri = resolvedRecord.uri.asGenericUri(),
+                                    cid = resolvedRecord.cid.asGenericId(),
+                                    author = authorEntity.asExternalModel(),
+                                    reasonSubject = null,
+                                    isRead = false,
+                                    indexedAt = now,
+                                    associatedPost = resolvedRecord,
+                                    viewerState = viewerState,
+                                )
+
+                            resolvedRecord.isMention(signedInProfileId) ->
+                                Notification.Mentioned(
+                                    uri = resolvedRecord.uri.asGenericUri(),
+                                    cid = resolvedRecord.cid.asGenericId(),
+                                    author = authorEntity.asExternalModel(),
+                                    reasonSubject = null,
+                                    isRead = false,
+                                    indexedAt = now,
+                                    associatedPost = resolvedRecord,
+                                    viewerState = viewerState,
+                                )
+
+                            else -> throw UnknownNotificationException(query.recordUri)
+                        }
+
+                        is Follow ->
+                            Notification.Followed(
+                                uri = resolvedRecord.uri.asGenericUri(),
+                                cid = resolvedRecord.cid.asGenericId(),
+                                author = authorEntity.asExternalModel(),
+                                reasonSubject = null,
+                                isRead = false,
+                                indexedAt = now,
+                                viewerState = viewerState,
+                            )
+
+                        is Like -> when (resolvedRecord.post.viewerStats?.threadMuted) {
+                            true -> throw MutedThreadException(resolvedRecord.post.uri)
+                            false -> when (resolvedRecord.via) {
+                                is RepostUri ->
+                                    Notification.Liked.Repost(
+                                        uri = resolvedRecord.uri.asGenericUri(),
+                                        cid = resolvedRecord.cid.asGenericId(),
+                                        author = authorEntity.asExternalModel(),
+                                        reasonSubject = null,
+                                        isRead = false,
+                                        indexedAt = now,
+                                        associatedPost = resolvedRecord.post,
+                                        viewerState = viewerState,
+                                    )
+
+                                null ->
+                                    Notification.Liked.Post(
+                                        uri = resolvedRecord.uri.asGenericUri(),
+                                        cid = resolvedRecord.cid.asGenericId(),
+                                        author = authorEntity.asExternalModel(),
+                                        reasonSubject = null,
+                                        isRead = false,
+                                        indexedAt = now,
+                                        associatedPost = resolvedRecord.post,
+                                        viewerState = viewerState,
+                                    )
+
+                                else -> throw UnknownNotificationException(query.recordUri)
+                            }
+                            else -> throw NotificationFilteredOutException(query.reason)
+                        }
+
+                        is Repost -> when (resolvedRecord.post.viewerStats?.threadMuted) {
+                            true -> throw MutedThreadException(resolvedRecord.post.uri)
+                            false -> when (resolvedRecord.via) {
+                                is RepostUri ->
+                                    Notification.Reposted.Repost(
+                                        uri = resolvedRecord.uri.asGenericUri(),
+                                        cid = resolvedRecord.cid.asGenericId(),
+                                        author = authorEntity.asExternalModel(),
+                                        reasonSubject = null,
+                                        isRead = false,
+                                        indexedAt = now,
+                                        associatedPost = resolvedRecord.post,
+                                        viewerState = viewerState,
+                                    )
+
+                                null ->
+                                    Notification.Reposted.Post(
+                                        uri = resolvedRecord.uri.asGenericUri(),
+                                        cid = resolvedRecord.cid.asGenericId(),
+                                        author = authorEntity.asExternalModel(),
+                                        reasonSubject = null,
+                                        isRead = false,
+                                        indexedAt = now,
+                                        associatedPost = resolvedRecord.post,
+                                        viewerState = viewerState,
+                                    )
+
+                                else -> throw UnknownNotificationException(query.recordUri)
+                            }
+                            else -> throw NotificationFilteredOutException(query.reason)
+                        }
+                    }
+
+                    val notificationPreferences =
+                        userDataRepository.notificationPreferences.first()
+
+                    val isAuthorFollowed = viewerState?.isFollowing == true
+
+                    val allowed = notificationPreferences.shouldShowNotification(
+                        reason = query.reason,
+                        isAuthorFollowed = isAuthorFollowed,
+                    )
+
+                    if (!allowed) {
+                        throw NotificationFilteredOutException(query.reason)
+                    }
+
+                    notification
+                }
+        } ?: expiredSessionResult()
 
     override suspend fun markNotificationPermissionsRequested(): Outcome =
         savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
