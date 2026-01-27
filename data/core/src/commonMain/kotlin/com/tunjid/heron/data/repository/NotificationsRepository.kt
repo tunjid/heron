@@ -167,7 +167,6 @@ internal class OfflineNotificationsRepository @Inject constructor(
     private val networkMonitor: NetworkMonitor,
     private val savedStateDataSource: SavedStateDataSource,
     private val notificationPreferenceUpdater: NotificationPreferenceUpdater,
-    private val userDataRepository: UserDataRepository,
     httpClient: HttpClient,
 ) : NotificationsRepository {
 

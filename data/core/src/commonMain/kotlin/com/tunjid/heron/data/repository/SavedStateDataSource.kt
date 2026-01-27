@@ -245,7 +245,7 @@ internal fun SavedState.signedProfilePreferencesOrDefault(): Preferences =
             null -> Server.BlueSky.endpoint
         }.let(::preferencesForUrl)
 
-fun SavedState.signedNotificationPreferencesOrDefault(): NotificationPreferences =
+internal fun SavedState.signedNotificationPreferencesOrDefault(): NotificationPreferences =
     signedInProfileData?.notifications?.preferences ?: NotificationPreferences.Default
 
 private fun SavedState.AuthTokens?.ifSignedIn(): SavedState.AuthTokens.Authenticated? =
