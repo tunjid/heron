@@ -417,8 +417,8 @@ internal class OfflineNotificationsRepository @Inject constructor(
 
                     val now = Clock.System.now()
 
+                    // Check if the author of the notification is restricted
                     val viewerState = authorEntity.relationship?.asExternalModel()
-
                     if (viewerState?.isRestricted == true) {
                         throw RestrictedProfileException(
                             profileId = authorEntity.entity.did,
@@ -427,14 +427,14 @@ internal class OfflineNotificationsRepository @Inject constructor(
                     }
 
                     val notification = when (resolvedRecord) {
-                        // Not supported yet
+                        // These don't have notification generation logic yet
                         is FeedGenerator,
                         is FeedList,
                         is Labeler,
                         is StarterPack,
                         is Block,
                         -> throw UnknownNotificationException(query.recordUri)
-
+                        // Reply, mention or Quote
                         is Post -> when {
                             resolvedRecord.viewerStats?.threadMuted == true ->
                                 throw MutedThreadException(resolvedRecord.uri)
@@ -450,7 +450,6 @@ internal class OfflineNotificationsRepository @Inject constructor(
                                     associatedPost = resolvedRecord,
                                     viewerState = viewerState,
                                 )
-
                             resolvedRecord.isQuote(signedInProfileId) ->
                                 Notification.Quoted(
                                     uri = resolvedRecord.uri.asGenericUri(),
@@ -462,7 +461,6 @@ internal class OfflineNotificationsRepository @Inject constructor(
                                     associatedPost = resolvedRecord,
                                     viewerState = viewerState,
                                 )
-
                             resolvedRecord.isMention(signedInProfileId) ->
                                 Notification.Mentioned(
                                     uri = resolvedRecord.uri.asGenericUri(),
@@ -474,10 +472,9 @@ internal class OfflineNotificationsRepository @Inject constructor(
                                     associatedPost = resolvedRecord,
                                     viewerState = viewerState,
                                 )
-
                             else -> throw UnknownNotificationException(query.recordUri)
                         }
-
+                        // Follow
                         is Follow ->
                             Notification.Followed(
                                 uri = resolvedRecord.uri.asGenericUri(),
@@ -488,10 +485,10 @@ internal class OfflineNotificationsRepository @Inject constructor(
                                 indexedAt = now,
                                 viewerState = viewerState,
                             )
-
+                        // Like or Like via repost
                         is Like -> when (resolvedRecord.post.viewerStats?.threadMuted) {
                             true -> throw MutedThreadException(resolvedRecord.post.uri)
-                            false -> when (resolvedRecord.via) {
+                            else -> when (resolvedRecord.via) {
                                 is RepostUri ->
                                     Notification.Liked.Repost(
                                         uri = resolvedRecord.uri.asGenericUri(),
@@ -518,12 +515,11 @@ internal class OfflineNotificationsRepository @Inject constructor(
 
                                 else -> throw UnknownNotificationException(query.recordUri)
                             }
-                            else -> throw NotificationFilteredOutException(query.reason)
                         }
 
                         is Repost -> when (resolvedRecord.post.viewerStats?.threadMuted) {
                             true -> throw MutedThreadException(resolvedRecord.post.uri)
-                            false -> when (resolvedRecord.via) {
+                            else -> when (resolvedRecord.via) {
                                 is RepostUri ->
                                     Notification.Reposted.Repost(
                                         uri = resolvedRecord.uri.asGenericUri(),
@@ -550,12 +546,10 @@ internal class OfflineNotificationsRepository @Inject constructor(
 
                                 else -> throw UnknownNotificationException(query.recordUri)
                             }
-                            else -> throw NotificationFilteredOutException(query.reason)
                         }
                     }
 
-                    val notificationPreferences =
-                        userDataRepository.notificationPreferences.first()
+                    val notificationPreferences = savedStateDataSource.savedState.value.signedNotificationPreferencesOrDefault()
 
                     val isAuthorFollowed = viewerState?.isFollowing == true
 
