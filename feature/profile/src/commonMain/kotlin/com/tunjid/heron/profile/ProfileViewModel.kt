@@ -37,10 +37,10 @@ import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri.Companion.asSelfLabelerUri
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.ProfilesQuery
+import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.repository.UserDataRepository

@@ -26,9 +26,9 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.MessageQuery
 import com.tunjid.heron.data.repository.MessageRepository
+import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
