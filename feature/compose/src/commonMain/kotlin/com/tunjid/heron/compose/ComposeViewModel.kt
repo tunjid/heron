@@ -27,7 +27,7 @@ import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.RestrictedFile
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.EmbeddableRecordRepository
+import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.UserDataRepository
@@ -86,7 +86,7 @@ class ActualComposeViewModel(
     authRepository: AuthRepository,
     searchRepository: SearchRepository,
     userDataRepository: UserDataRepository,
-    embeddableRecordRepository: EmbeddableRecordRepository,
+    recordRepository: RecordRepository,
     fileManager: FileManager,
     writeQueue: WriteQueue,
     @Assisted
@@ -106,7 +106,7 @@ class ActualComposeViewModel(
                     is Post.Create.Quote -> creationType.interaction.postUri
                     else -> route.sharedUri?.asEmbeddableRecordUriOrNull()
                 },
-                embeddableRecordRepository = embeddableRecordRepository,
+                recordRepository = recordRepository,
             ),
             interactionSettingsMutations(
                 userDataRepository = userDataRepository,
@@ -157,10 +157,10 @@ private fun interactionSettingsMutations(
 
 private fun embeddedRecordMutations(
     embeddedRecordUri: EmbeddableRecordUri?,
-    embeddableRecordRepository: EmbeddableRecordRepository,
+    recordRepository: RecordRepository,
 ): Flow<Mutation<State>> =
     embeddedRecordUri?.let { uri ->
-        embeddableRecordRepository.embeddableRecord(uri).mapToMutation {
+        recordRepository.embeddableRecord(uri).mapToMutation {
             copy(embeddedRecord = it)
         }
     }

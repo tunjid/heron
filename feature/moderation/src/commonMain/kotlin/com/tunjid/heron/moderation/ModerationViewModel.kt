@@ -19,7 +19,7 @@ package com.tunjid.heron.moderation
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.EmbeddableRecordRepository
+import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
@@ -60,7 +60,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualModerationViewModel(
     authRepository: AuthRepository,
     timelineRepository: TimelineRepository,
-    embeddableRecordRepository: EmbeddableRecordRepository,
+    recordRepository: RecordRepository,
     userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
@@ -77,7 +77,7 @@ class ActualModerationViewModel(
                 timelineRepository = timelineRepository,
             ),
             subscribedLabelerMutations(
-                embeddableRecordRepository = embeddableRecordRepository,
+                recordRepository = recordRepository,
             ),
             loadPreferenceMutations(
                 userDataRepository = userDataRepository,
@@ -127,9 +127,9 @@ fun adultContentAndGlobalLabelPreferenceMutations(
         }
 
 fun subscribedLabelerMutations(
-    embeddableRecordRepository: EmbeddableRecordRepository,
+    recordRepository: RecordRepository,
 ): Flow<Mutation<State>> =
-    embeddableRecordRepository.subscribedLabelers
+    recordRepository.subscribedLabelers
         .mapToMutation {
             copy(subscribedLabelers = it)
         }
