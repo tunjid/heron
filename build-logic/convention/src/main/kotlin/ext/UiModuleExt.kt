@@ -54,6 +54,7 @@ fun org.gradle.api.Project.configureUiModule(
 
                 api(libs.tunjid.mutator.core.common)
                 api(libs.tunjid.mutator.coroutines.common)
+                api(libs.tunjid.mutator.compose)
 
                 api(libs.tunjid.composables)
 
