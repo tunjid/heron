@@ -33,7 +33,7 @@ junit = "4.13.2"
 kotlin = "2.3.0"
 kotlinx-coroutines = "1.10.2"
 kotlinx-datetime = "0.7.1"
-kotlinx-serialization = "1.9.0"
+kotlinx-serialization = "1.10.0"
 ksp = "2.3.4"
 ktlint-cli = "1.8.0"
 ktor = "3.3.3"
@@ -48,7 +48,7 @@ okio = "3.16.4"
 ozone-atproto = "0.3.7"
 savedstate-multiplatform = "1.4.0"
 spotless = "8.2.0"
-tunjid-state-holder = "1.1.0"
+tunjid-state-holder = "1.2.0"
 tunjid-tiler = "1.2.1"
 tunjid-tree-nav = "0.0.50"
 tunjid-composables = "0.0.26"
@@ -170,6 +170,7 @@ tunjid-mutator-core-common = { group = "com.tunjid.mutator", name = "core", vers
 tunjid-mutator-core-jvm = { group = "com.tunjid.mutator", name = "core-jvm", version.ref = "tunjid-state-holder" }
 tunjid-mutator-coroutines-common = { group = "com.tunjid.mutator", name = "coroutines", version.ref = "tunjid-state-holder" }
 tunjid-mutator-coroutines-jvm = { group = "com.tunjid.mutator", name = "coroutines-jvm", version.ref = "tunjid-state-holder" }
+tunjid-mutator-compose = { group = "com.tunjid.mutator", name = "compose", version.ref = "tunjid-state-holder" }
 tunjid-tiler-compose = { group = "com.tunjid.tiler", name = "compose", version.ref = "tunjid-tiler" }
 tunjid-tiler-tiler = { group = "com.tunjid.tiler", name = "tiler", version.ref = "tunjid-tiler" }
 tunjid-treenav-compose = { group = "com.tunjid.treenav", name = "compose", version.ref = "tunjid-tree-nav" }
