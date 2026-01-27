@@ -20,6 +20,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.okio.OkioStorage
 import com.tunjid.heron.data.core.models.Constants
+import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.types.ProfileHandle
@@ -173,6 +174,7 @@ abstract class SavedState {
         val lastRead: Instant? = null,
         val lastRefreshed: Instant? = null,
         val hasPreviouslyRequestedPermissions: Boolean = false,
+        val preferences: NotificationPreferences? = null,
     )
 
     @Serializable
@@ -242,6 +244,9 @@ internal fun SavedState.signedProfilePreferencesOrDefault(): Preferences =
             is SavedState.AuthTokens.Pending.DPoP -> authTokens.endpoint
             null -> Server.BlueSky.endpoint
         }.let(::preferencesForUrl)
+
+internal fun SavedState.signedNotificationPreferencesOrDefault(): NotificationPreferences =
+    signedInProfileData?.notifications?.preferences ?: NotificationPreferences.Default
 
 private fun SavedState.AuthTokens?.ifSignedIn(): SavedState.AuthTokens.Authenticated? =
     when (this) {

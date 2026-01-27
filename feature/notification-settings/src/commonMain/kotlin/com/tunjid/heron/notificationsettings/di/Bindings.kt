@@ -14,59 +14,52 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.notifications.di
+package com.tunjid.heron.notificationsettings.di
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Save
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.di.DataBindings
-import com.tunjid.heron.notifications.Action
-import com.tunjid.heron.notifications.ActualNotificationsViewModel
-import com.tunjid.heron.notifications.NotificationsScreen
-import com.tunjid.heron.notifications.RouteViewModelInitializer
-import com.tunjid.heron.notifications.ui.RequestNotificationsButton
+import com.tunjid.heron.notificationsettings.Action
+import com.tunjid.heron.notificationsettings.ActualNotificationSettingsViewModel
+import com.tunjid.heron.notificationsettings.NotificationSettingsScreen
+import com.tunjid.heron.notificationsettings.RouteViewModelInitializer
+import com.tunjid.heron.notificationsettings.updates
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
-import com.tunjid.heron.scaffold.navigation.NavigationAction
-import com.tunjid.heron.scaffold.navigation.composePostDestination
-import com.tunjid.heron.scaffold.navigation.notificationSettingsDestination
-import com.tunjid.heron.scaffold.navigation.profileDestination
-import com.tunjid.heron.scaffold.notifications.hasNotificationPermissions
+import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
+import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
+import com.tunjid.heron.scaffold.scaffold.AppBarTitle
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
+import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
+import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.fabOffset
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
-import com.tunjid.heron.tiling.TilingState
-import com.tunjid.heron.ui.AppBarButton
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
-import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
+import com.tunjid.treenav.strings.RouteParser
 import com.tunjid.treenav.strings.routeOf
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
@@ -75,19 +68,22 @@ import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.ui.core.generated.resources.notification_settings
-import heron.ui.core.generated.resources.notifications_create_post
+import heron.ui.core.generated.resources.save
 import org.jetbrains.compose.resources.stringResource
 
-private const val RoutePattern = "/notifications"
+private const val RoutePattern = "/settings/notifications"
 
 private fun createRoute(
     routeParams: RouteParams,
 ) = routeOf(
     params = routeParams,
+    children = listOfNotNull(
+        routeParams.decodeReferringRoute(),
+    ),
 )
 
 @BindingContainer
-object NotificationsNavigationBindings {
+object NotificationSettingsNavigationBindings {
 
     @Provides
     @IntoMap
@@ -100,7 +96,7 @@ object NotificationsNavigationBindings {
 }
 
 @BindingContainer
-class NotificationsBindings(
+class NotificationSettingsBindings(
     @Includes dataBindings: DataBindings,
     @Includes scaffoldBindings: ScaffoldBindings,
 ) {
@@ -109,20 +105,29 @@ class NotificationsBindings(
     @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
+        routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
     ): PaneEntry<ThreePane, Route> = routePaneEntry(
+        routeParser = routeParser,
         viewModelInitializer = viewModelInitializer,
     )
 
     private fun routePaneEntry(
+        routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = threePaneEntry(
+    ) = threePaneEntry<Route>(
         contentTransform = predictiveBackContentTransform,
+        paneMapping = { route ->
+            mapOf(
+                ThreePane.Primary to route,
+                ThreePane.Secondary to route.children.firstOrNull() as? Route,
+            )
+        },
         render = { route ->
-            val viewModel = viewModel<ActualNotificationsViewModel> {
+            val viewModel = viewModel<ActualNotificationSettingsViewModel> {
                 viewModelInitializer.invoke(
                     scope = viewModelCoroutineScope(),
-                    route = route,
+                    route = routeParser.hydrate(route),
                 )
             }
             val state by viewModel.state.collectAsStateWithLifecycle()
@@ -150,45 +155,9 @@ class NotificationsBindings(
                     viewModel.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
-                    RootDestinationTopAppBar(
-                        modifier = Modifier.offset {
-                            topAppBarNestedScrollConnection.offset.round()
-                        },
-                        signedInProfile = state.signedInProfile,
-                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        onSignedInProfileClicked = { profile, sharedElementKey ->
-                            viewModel.accept(
-                                Action.Navigate.To(
-                                    profileDestination(
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                        profile = profile,
-                                        avatarSharedElementKey = sharedElementKey,
-                                    ),
-                                ),
-                            )
-                        },
-                        actions = {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                androidx.compose.animation.AnimatedVisibility(
-                                    visible = !hasNotificationPermissions(),
-                                ) {
-                                    RequestNotificationsButton(
-                                        animateIcon = state.canAnimateRequestPermissionsButton,
-                                    )
-                                }
-                                AppBarButton(
-                                    icon = Icons.Rounded.Settings,
-                                    iconDescription = stringResource(CommonStrings.notification_settings),
-                                    onClick = {
-                                        viewModel.accept(
-                                            Action.Navigate.To(notificationSettingsDestination()),
-                                        )
-                                    },
-                                )
-                            }
-                        },
+                    PoppableDestinationTopAppBar(
+                        title = { AppBarTitle(stringResource(CommonStrings.notification_settings)) },
+                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                     )
                 },
                 floatingActionButton = {
@@ -197,50 +166,41 @@ class NotificationsBindings(
                             .offset {
                                 fabOffset(bottomNavigationNestedScrollConnection.offset)
                             },
-                        text = stringResource(CommonStrings.notifications_create_post),
-                        icon = Icons.Rounded.Edit,
+                        text = stringResource(CommonStrings.save),
+                        icon = Icons.Rounded.Save,
+                        enabled = state.pendingUpdates.isNotEmpty(),
                         expanded = isFabExpanded {
                             if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
                             else topAppBarNestedScrollConnection.offset * -1f
                         },
                         onClick = {
                             viewModel.accept(
-                                Action.Navigate.To(
-                                    composePostDestination(
-                                        type = Post.Create.Timeline,
-                                        sharedElementPrefix = null,
-                                    ),
-                                ),
+                                Action.UpdateNotificationPreferences(state.updates()),
                             )
                         },
                     )
                 },
                 navigationBar = {
                     PaneNavigationBar(
-                        modifier = Modifier
-                            .offset {
-                                bottomNavigationNestedScrollConnection.offset.round()
-                            },
-                        onNavItemReselected = {
-                            viewModel.accept(Action.Tile(TilingState.Action.Refresh))
-                            true
+                        modifier = Modifier.offset {
+                            bottomNavigationNestedScrollConnection.offset.round()
                         },
                     )
                 },
                 navigationRail = {
-                    PaneNavigationRail(
-                        onNavItemReselected = {
-                            viewModel.accept(Action.Tile(TilingState.Action.Refresh))
-                            true
-                        },
-                    )
+                    PaneNavigationRail()
                 },
-                content = {
-                    NotificationsScreen(
+                content = { paddingValues ->
+                    NotificationSettingsScreen(
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
+                        modifier = Modifier
+                            .padding(
+                                top = paddingValues.calculateTopPadding(),
+                            ),
                     )
+                    SecondaryPaneCloseBackHandler()
                 },
             )
         },
