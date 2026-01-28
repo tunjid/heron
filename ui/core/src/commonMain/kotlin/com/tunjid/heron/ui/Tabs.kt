@@ -213,10 +213,10 @@ private fun BoxScope.Indicator(
 
             val item = visibleItemsInfo[visibleIndex]
 
-            val isCompletelyVisible =
-                item.offset > 0 && item.offset + item.size > layoutInfo.viewportEndOffset
+            val isFullyVisible = item.offset >= 0 &&
+                (item.offset + item.size) <= layoutInfo.viewportEndOffset
 
-            if (isCompletelyVisible) null else roundedIndex
+            if (isFullyVisible) null else roundedIndex
         }
             .collect { index ->
                 if (index != null) lazyListState.animateScrollToItem(index)
@@ -274,7 +274,7 @@ private fun BoxScope.Indicator(
 }
 
 private fun LazyListItemInfo?.tabSizeAndPosition() =
-    if (this != null) TabSizeAndPosition(size = this.size, position = 0)
+    if (this != null) TabSizeAndPosition(size = size, position = offset)
     else TabSizeAndPosition(0, 0)
 
 @JvmInline
