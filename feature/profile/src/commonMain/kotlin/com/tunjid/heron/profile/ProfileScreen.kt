@@ -793,7 +793,7 @@ private fun ProfileAvatar(
                 trackColor = MaterialTheme.colorScheme.surface,
                 amplitude = { if (showWave) 1f else 0f },
                 modifier = Modifier
-                    .fillParentAxisIfFixedOrWrap(),
+                    .fillMaxSize(),
             )
         }
         paneScaffoldState.UpdatedMovableStickySharedElementOf(
@@ -803,7 +803,7 @@ private fun ProfileAvatar(
                 )
             },
             zIndexInOverlay = AvatarZIndex,
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(headerState.avatarPadding)
                 .clickable { onProfileAvatarClicked() },

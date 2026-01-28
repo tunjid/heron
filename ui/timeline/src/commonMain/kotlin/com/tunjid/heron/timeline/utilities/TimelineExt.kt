@@ -128,7 +128,10 @@ fun TimelineTitle(
 
         Spacer(Modifier.width(12.dp))
 
-        Box {
+        Box(
+            modifier = Modifier
+                .weight(1f),
+        ) {
             Column {
                 PaneStickySharedElement(
                     modifier = Modifier,
@@ -166,7 +169,6 @@ fun TimelineTitle(
                 modifier = Modifier.size(4.dp),
             )
         }
-        Spacer(Modifier.weight(1f))
         TimelinePresentationSelector(
             selected = timeline.presentation,
             available = timeline.supportedPresentations,
