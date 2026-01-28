@@ -27,6 +27,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.size
@@ -122,6 +123,7 @@ internal fun AppState.PaneNavigationBar(
     LookaheadScope {
         Surface(
             modifier = modifier
+                .fillMaxWidth()
                 .animateBounds(lookaheadScope = this@LookaheadScope),
             color = BottomAppBarDefaults.containerColor,
             contentColor = contentColorFor(BottomAppBarDefaults.containerColor),
