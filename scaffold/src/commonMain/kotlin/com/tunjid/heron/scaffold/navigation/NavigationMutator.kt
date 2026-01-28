@@ -36,7 +36,7 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.recordKey
-import com.tunjid.heron.data.di.AppCoroutineScope
+import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.EmptyNavigation
 import com.tunjid.heron.data.repository.InitialNavigation
@@ -430,13 +430,13 @@ interface NavigationAction {
 
 @Inject
 class PersistedNavigationStateHolder(
-    @AppCoroutineScope
-    appScope: CoroutineScope,
+    @AppMainScope
+    appMainScope: CoroutineScope,
     userDataRepository: UserDataRepository,
     authRepository: AuthRepository,
     routeParser: RouteParser,
 ) : NavigationStateHolder,
-    ActionStateMutator<NavigationMutation, StateFlow<MultiStackNav>> by appScope.actionStateFlowMutator(
+    ActionStateMutator<NavigationMutation, StateFlow<MultiStackNav>> by appMainScope.actionStateFlowMutator(
         initialState = InitialNavigationState,
         started = SharingStarted.Eagerly,
         inputs = listOf(
@@ -485,7 +485,7 @@ class PersistedNavigationStateHolder(
             navigationStateFlow.onEach { navigationState ->
                 // Fire and forget, do not slow down the collector,
                 // navigation needs to be immediate.
-                appScope.persistNavigationState(
+                appMainScope.persistNavigationState(
                     navigationState = navigationState,
                     userDataRepository = userDataRepository,
                 )

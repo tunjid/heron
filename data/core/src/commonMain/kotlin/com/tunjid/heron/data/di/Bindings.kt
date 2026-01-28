@@ -103,7 +103,7 @@ import okio.Path
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
-annotation class AppCoroutineScope
+annotation class AppMainScope
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
@@ -114,7 +114,7 @@ internal annotation class IODispatcher
 internal annotation class DefaultDispatcher
 
 class DataBindingArgs(
-    val appScope: CoroutineScope,
+    val appMainScope: CoroutineScope,
     val connectivity: Connectivity,
     val savedStatePath: Path,
     val savedStateFileSystem: FileSystem,
@@ -126,10 +126,10 @@ class DataBindings(
     private val args: DataBindingArgs,
 ) {
 
-    @AppCoroutineScope
+    @AppMainScope
     @SingleIn(AppScope::class)
     @Provides
-    fun provideAppScope(): CoroutineScope = args.appScope
+    fun provideAppScope(): CoroutineScope = args.appMainScope
 
     @IODispatcher
     @SingleIn(AppScope::class)

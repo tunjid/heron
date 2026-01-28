@@ -74,8 +74,9 @@ import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
-import com.tunjid.heron.data.di.AppCoroutineScope
+import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.di.DefaultDispatcher
+import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.logging.loggableText
@@ -108,6 +109,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
@@ -149,10 +151,12 @@ internal interface RecordResolver {
 }
 
 internal class OfflineRecordResolver @Inject constructor(
-    @AppCoroutineScope
-    appScope: CoroutineScope,
+    @AppMainScope
+    appMainScope: CoroutineScope,
     @param:DefaultDispatcher
     private val defaultDispatcher: CoroutineDispatcher,
+    @param:IODispatcher
+    private val ioDispatcher: CoroutineDispatcher,
     private val feedGeneratorDao: FeedGeneratorDao,
     private val labelDao: LabelDao,
     private val listDao: ListDao,
@@ -211,7 +215,7 @@ internal class OfflineRecordResolver @Inject constructor(
                 }
         }
             .stateIn(
-                scope = appScope,
+                scope = appMainScope + ioDispatcher,
                 started = SharingStarted.WhileSubscribed(1_000),
                 initialValue = emptyList(),
             )
