@@ -45,14 +45,14 @@ fun createAppState(): AppState =
         logger = {
             JvmLogger()
         },
-        videoPlayerController = { appScope ->
+        videoPlayerController = { appMainScope ->
             VlcPlayerController(
-                scope = appScope,
+                scope = appMainScope,
             )
         },
-        args = { appScope ->
+        args = { appMainScope ->
             DataBindingArgs(
-                appScope = appScope,
+                appMainScope = appMainScope,
                 connectivity = Connectivity(),
                 savedStatePath = savedStatePath(),
                 savedStateFileSystem = FileSystem.SYSTEM,

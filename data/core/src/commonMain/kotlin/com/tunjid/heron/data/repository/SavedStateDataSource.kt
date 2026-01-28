@@ -28,12 +28,14 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedState
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
-import com.tunjid.heron.data.di.AppCoroutineScope
+import com.tunjid.heron.data.di.AppMainScope
+import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.utilities.updateOrPutValue
 import com.tunjid.heron.data.utilities.writequeue.FailedWrite
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import dev.zacsweers.metro.Inject
 import kotlin.time.Instant
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelChildren
@@ -48,6 +50,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.plus
 import kotlinx.coroutines.selects.select
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoBuf
@@ -293,9 +296,13 @@ internal class DataStoreSavedStateDataSource(
     path: Path,
     fileSystem: FileSystem,
     protoBuf: ProtoBuf,
-    @AppCoroutineScope
-    appScope: CoroutineScope,
+    @AppMainScope
+    appMainScope: CoroutineScope,
+    @IODispatcher
+    ioDispatcher: CoroutineDispatcher,
 ) : SavedStateDataSource() {
+
+    private val scope = appMainScope + ioDispatcher
 
     private val dataStore: DataStore<VersionedSavedState> = DataStoreFactory.create(
         storage = OkioStorage(
@@ -303,11 +310,11 @@ internal class DataStoreSavedStateDataSource(
             serializer = VersionedSavedStateOkioSerializer(protoBuf),
             producePath = { path },
         ),
-        scope = appScope,
+        scope = scope,
     )
 
     override val savedState = dataStore.data.stateIn(
-        scope = appScope,
+        scope = scope,
         started = SharingStarted.Eagerly,
         initialValue = InitialSavedState,
     )

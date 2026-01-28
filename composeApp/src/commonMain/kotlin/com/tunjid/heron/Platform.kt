@@ -81,14 +81,14 @@ expect fun getPlatform(): Platform
 
 fun createAppState(
     imageLoader: () -> ImageLoader,
-    notifier: (appScope: CoroutineScope) -> Notifier,
+    notifier: (appMainScope: CoroutineScope) -> Notifier,
     logger: () -> Logger,
-    videoPlayerController: (appScope: CoroutineScope) -> VideoPlayerController,
-    args: (appScope: CoroutineScope) -> DataBindingArgs,
+    videoPlayerController: (appMainScope: CoroutineScope) -> VideoPlayerController,
+    args: (appMainScope: CoroutineScope) -> DataBindingArgs,
 ): AppState {
     logger().install()
 
-    val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    val appMainScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     val navigationComponent = createGraphFactory<AppNavigationGraph.Factory>().create(
         signInNavigationBindings = SignInNavigationBindings,
@@ -114,14 +114,14 @@ fun createAppState(
     )
 
     val dataBindings = DataBindings(
-        args = args(appScope),
+        args = args(appMainScope),
     )
 
     val scaffoldBindings = ScaffoldBindings(
         args = ScaffoldBindingArgs(
             imageLoader = imageLoader(),
-            notifier = notifier(appScope),
-            videoPlayerController = videoPlayerController(appScope),
+            notifier = notifier(appMainScope),
+            videoPlayerController = videoPlayerController(appMainScope),
             routeMatchers = navigationComponent.allRouteMatchers,
         ),
         dataBindings = dataBindings,

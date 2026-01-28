@@ -48,16 +48,16 @@ fun createAppState(context: Context): AppState =
         logger = {
             AndroidLogger(context)
         },
-        videoPlayerController = { appScope ->
+        videoPlayerController = { appMainScope ->
             ExoplayerController(
                 context = context,
-                scope = appScope,
+                scope = appMainScope,
                 diffingDispatcher = Dispatchers.Default,
             )
         },
-        args = { appScope ->
+        args = { appMainScope ->
             DataBindingArgs(
-                appScope = appScope,
+                appMainScope = appMainScope,
                 connectivity = Connectivity(),
                 savedStatePath = context.savedStatePath(),
                 savedStateFileSystem = FileSystem.SYSTEM,

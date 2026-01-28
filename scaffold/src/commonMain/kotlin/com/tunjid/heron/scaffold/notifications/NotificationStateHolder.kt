@@ -22,7 +22,7 @@ import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.core.utilities.Outcome
-import com.tunjid.heron.data.di.AppCoroutineScope
+import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.repository.NotificationsQuery
@@ -102,12 +102,12 @@ sealed class NotificationAction(
 
 @Inject
 class AppNotificationStateHolder(
-    @AppCoroutineScope
-    appScope: CoroutineScope,
+    @AppMainScope
+    appMainScope: CoroutineScope,
     notifier: Notifier,
     notificationsRepository: NotificationsRepository,
 ) : NotificationStateHolder,
-    ActionStateMutator<NotificationAction, StateFlow<NotificationState>> by appScope.actionStateFlowMutator(
+    ActionStateMutator<NotificationAction, StateFlow<NotificationState>> by appMainScope.actionStateFlowMutator(
         initialState = NotificationState(),
         started = SharingStarted.Eagerly,
         actionTransform = { actions ->
