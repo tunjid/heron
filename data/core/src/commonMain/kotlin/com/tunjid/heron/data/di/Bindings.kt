@@ -50,19 +50,19 @@ import com.tunjid.heron.data.network.oauth.crypto.platformCryptographyProvider
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.DataStoreSavedStateDataSource
-import com.tunjid.heron.data.repository.EmbeddableRecordRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.NotificationsRepository
-import com.tunjid.heron.data.repository.OfflineEmbeddableRecordRepository
 import com.tunjid.heron.data.repository.OfflineMessageRepository
 import com.tunjid.heron.data.repository.OfflineNotificationsRepository
 import com.tunjid.heron.data.repository.OfflinePostRepository
 import com.tunjid.heron.data.repository.OfflineProfileRepository
+import com.tunjid.heron.data.repository.OfflineRecordRepository
 import com.tunjid.heron.data.repository.OfflineSearchRepository
 import com.tunjid.heron.data.repository.OfflineTimelineRepository
 import com.tunjid.heron.data.repository.OfflineUserDataRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
+import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
@@ -103,7 +103,7 @@ import okio.Path
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
-annotation class AppCoroutineScope
+annotation class AppMainScope
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
@@ -114,7 +114,7 @@ internal annotation class IODispatcher
 internal annotation class DefaultDispatcher
 
 class DataBindingArgs(
-    val appScope: CoroutineScope,
+    val appMainScope: CoroutineScope,
     val connectivity: Connectivity,
     val savedStatePath: Path,
     val savedStateFileSystem: FileSystem,
@@ -126,10 +126,10 @@ class DataBindings(
     private val args: DataBindingArgs,
 ) {
 
-    @AppCoroutineScope
+    @AppMainScope
     @SingleIn(AppScope::class)
     @Provides
-    fun provideAppScope(): CoroutineScope = args.appScope
+    fun provideAppScope(): CoroutineScope = args.appMainScope
 
     @IODispatcher
     @SingleIn(AppScope::class)
@@ -394,6 +394,6 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideRecordRepository(
-        offlineRecordRepository: OfflineEmbeddableRecordRepository,
-    ): EmbeddableRecordRepository = offlineRecordRepository
+        offlineRecordRepository: OfflineRecordRepository,
+    ): RecordRepository = offlineRecordRepository
 }

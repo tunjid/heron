@@ -26,9 +26,9 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.EmbeddableRecordRepository
 import com.tunjid.heron.data.repository.MessageQuery
 import com.tunjid.heron.data.repository.MessageRepository
+import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -85,7 +85,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 @AssistedInject
 class ActualConversationViewModel(
     authRepository: AuthRepository,
-    embeddableRecordRepository: EmbeddableRecordRepository,
+    recordRepository: RecordRepository,
     messagesRepository: MessageRepository,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
@@ -117,7 +117,7 @@ class ActualConversationViewModel(
                         )
 
                         is Action.SharedRecord -> action.flow.recordSharingMutations(
-                            embeddableRecordRepository = embeddableRecordRepository,
+                            recordRepository = recordRepository,
                             navActions = navActions,
                             state = state,
                         )
@@ -142,7 +142,7 @@ class ActualConversationViewModel(
                 sharedRecordMutations(
                     sharedUri = route.sharedUri,
                     overrideExisting = false,
-                    embeddableRecordRepository = embeddableRecordRepository,
+                    recordRepository = recordRepository,
                     state = state,
                 ),
             )
@@ -173,7 +173,7 @@ private fun pendingMessageFlushMutations(
 private fun sharedRecordMutations(
     sharedUri: Uri?,
     overrideExisting: Boolean,
-    embeddableRecordRepository: EmbeddableRecordRepository,
+    recordRepository: RecordRepository,
     state: suspend () -> State,
 ): Flow<Mutation<State>> =
     if (sharedUri == null) emptyFlow()
@@ -197,7 +197,7 @@ private fun sharedRecordMutations(
             )
         }
         else emitAll(
-            embeddableRecordRepository.embeddableRecord(recordUri)
+            recordRepository.embeddableRecord(recordUri)
                 // Take only one emission so user changes do not override it
                 .take(1)
                 .mapToMutation {
@@ -239,7 +239,7 @@ private fun Flow<Action.TextChanged>.inputTextChangeMutations(): Flow<Mutation<S
     }
 
 private fun Flow<Action.SharedRecord>.recordSharingMutations(
-    embeddableRecordRepository: EmbeddableRecordRepository,
+    recordRepository: RecordRepository,
     navActions: (NavigationMutation) -> Unit,
     state: suspend () -> State,
 ): Flow<Mutation<State>> =
@@ -249,7 +249,7 @@ private fun Flow<Action.SharedRecord>.recordSharingMutations(
                 sharedRecordMutations(
                     sharedUri = action.uri,
                     overrideExisting = true,
-                    embeddableRecordRepository = embeddableRecordRepository,
+                    recordRepository = recordRepository,
                     state = state,
                 ),
             )

@@ -18,7 +18,7 @@ package com.tunjid.heron.di
 
 import com.tunjid.heron.compose.di.ComposeBindings
 import com.tunjid.heron.conversation.di.ConversationBindings
-import com.tunjid.heron.data.di.AppCoroutineScope
+import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.UserDataRepository
@@ -95,8 +95,8 @@ interface AppGraph {
     @SingleIn(AppScope::class)
     @Provides
     fun appState(
-        @AppCoroutineScope
-        appScope: CoroutineScope,
+        @AppMainScope
+        appMainScope: CoroutineScope,
         authRepository: AuthRepository,
         userDataRepository: UserDataRepository,
         navigationStateHolder: NavigationStateHolder,

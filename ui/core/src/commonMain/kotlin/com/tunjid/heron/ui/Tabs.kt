@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -38,6 +39,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,8 +50,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.util.lerp
+import androidx.compose.ui.util.packInts
+import androidx.compose.ui.util.unpackInt1
+import androidx.compose.ui.util.unpackInt2
 import com.tunjid.heron.ui.TabsState.Companion.TabBackgroundColor
+import kotlin.jvm.JvmInline
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -183,58 +190,71 @@ private fun BoxScope.Indicator(
     lazyListState: LazyListState,
     selectedTabIndex: () -> Float,
 ) {
-    var interpolatedOffset by remember { mutableStateOf(IntOffset.Zero) }
+    var packedSizeAndPosition by remember {
+        mutableLongStateOf(
+            TabSizeAndPosition(
+                size = 0,
+                position = 0,
+            ).packed,
+        )
+    }
+    val sizeAndPosition = TabSizeAndPosition(packedSizeAndPosition)
 
     // Keep selected tab on screen
     LaunchedEffect(lazyListState) {
         snapshotFlow {
+            val roundedIndex = selectedTabIndex().fastRoundToInt()
+
             val layoutInfo = lazyListState.layoutInfo
-            val roundedIndex = selectedTabIndex().roundToInt()
+            val visibleItemsInfo = layoutInfo.visibleItemsInfo
 
-            if (roundedIndex == layoutInfo.totalItemsCount - 1)
-                return@snapshotFlow layoutInfo.totalItemsCount - 1
+            val visibleIndex = visibleItemsInfo.binarySearch { it.index - roundedIndex }
+            if (visibleIndex < 0) return@snapshotFlow roundedIndex
 
-            val index = layoutInfo.visibleItemsInfo.binarySearch {
-                it.index - roundedIndex
-            }
-            if (index < 0) return@snapshotFlow roundedIndex
-            val item = layoutInfo.visibleItemsInfo[index]
+            val item = visibleItemsInfo[visibleIndex]
 
-            if (item.offset + item.size > layoutInfo.viewportEndOffset)
-                lazyListState.firstVisibleItemIndex + 1
-            else lazyListState.firstVisibleItemIndex
+            val isFullyVisible = item.offset >= 0 &&
+                (item.offset + item.size) <= layoutInfo.viewportEndOffset
+
+            if (isFullyVisible) null else roundedIndex
         }
-            .collect { lazyListState.animateScrollToItem(it) }
+            .collect { index ->
+                if (index != null) lazyListState.animateScrollToItem(index)
+            }
     }
 
     // Interpolated highlighted tab position
     LaunchedEffect(lazyListState) {
         snapshotFlow {
             val currentIndex = selectedTabIndex()
-            val flooredIndex = floor(currentIndex).roundToInt()
-            val roundedIndex = ceil(currentIndex).roundToInt()
+            val flooredIndex = floor(currentIndex).fastRoundToInt()
+            val roundedIndex = ceil(currentIndex).fastRoundToInt()
             val fraction = currentIndex - flooredIndex
 
-            val flooredPosition = lazyListState.layoutInfo.visibleItemsInfo.binarySearch {
+            val visibleItemsInfo = lazyListState.layoutInfo.visibleItemsInfo
+
+            val flooredPosition = visibleItemsInfo.binarySearch {
                 it.index - flooredIndex
             }
-            if (flooredPosition < 0) return@snapshotFlow IntOffset.Zero
+            if (flooredPosition < 0) return@snapshotFlow visibleItemsInfo.firstOrNull()
+                .tabSizeAndPosition()
 
             val roundedPosition = lazyListState.layoutInfo.visibleItemsInfo.binarySearch {
                 it.index - roundedIndex
             }
-            if (roundedPosition < 0) return@snapshotFlow IntOffset.Zero
+            if (roundedPosition < 0) return@snapshotFlow visibleItemsInfo.firstOrNull()
+                .tabSizeAndPosition()
 
             val floored = lazyListState.layoutInfo.visibleItemsInfo[flooredPosition]
             val rounded = lazyListState.layoutInfo.visibleItemsInfo[roundedPosition]
 
-            IntOffset(
-                lerp(floored.size, rounded.size, fraction),
-                lerp(floored.offset, rounded.offset, fraction),
+            TabSizeAndPosition(
+                size = lerp(floored.size, rounded.size, fraction),
+                position = lerp(floored.offset, rounded.offset, fraction),
             )
         }
             .collect {
-                interpolatedOffset = it
+                packedSizeAndPosition = it.packed
             }
     }
 
@@ -242,15 +262,34 @@ private fun BoxScope.Indicator(
     Box(
         Modifier
             .align(Alignment.CenterStart)
-            .offset { IntOffset(x = interpolatedOffset.y, y = 0) }
+            .offset { IntOffset(x = sizeAndPosition.position, y = 0) }
             .height(32.dp)
             .matchParentSize()
-            .width(with(density) { interpolatedOffset.x.toDp() })
+            .width(with(density) { sizeAndPosition.size.toDp() })
             .background(
                 color = TabBackgroundColor,
                 shape = TabShape,
             ),
     )
+}
+
+private fun LazyListItemInfo?.tabSizeAndPosition() =
+    if (this != null) TabSizeAndPosition(size = size, position = offset)
+    else TabSizeAndPosition(0, 0)
+
+@JvmInline
+value class TabSizeAndPosition(
+    val packed: Long,
+) {
+    constructor(
+        size: Int,
+        position: Int,
+    ) : this(
+        packInts(size, position),
+    )
+
+    val size: Int get() = unpackInt1(packed)
+    val position: Int get() = unpackInt2(packed)
 }
 
 private val TabShape = RoundedCornerShape(16.dp)

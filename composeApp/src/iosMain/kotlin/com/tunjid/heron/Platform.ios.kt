@@ -53,9 +53,9 @@ fun createAppState(): AppState =
         videoPlayerController = {
             StubVideoPlayerController
         },
-        args = { appScope ->
+        args = { appMainScope ->
             DataBindingArgs(
-                appScope = appScope,
+                appMainScope = appMainScope,
                 connectivity = Connectivity(),
                 savedStatePath = savedStatePath(),
                 savedStateFileSystem = FileSystem.SYSTEM,

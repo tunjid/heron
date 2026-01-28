@@ -36,7 +36,7 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.recordKey
-import com.tunjid.heron.data.di.AppCoroutineScope
+import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.EmptyNavigation
 import com.tunjid.heron.data.repository.InitialNavigation
@@ -72,9 +72,12 @@ import heron.scaffold.generated.resources.messages
 import heron.scaffold.generated.resources.notifications
 import heron.scaffold.generated.resources.search
 import heron.scaffold.generated.resources.splash
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -85,6 +88,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
@@ -430,23 +434,19 @@ interface NavigationAction {
 
 @Inject
 class PersistedNavigationStateHolder(
-    @AppCoroutineScope
-    appScope: CoroutineScope,
+    @AppMainScope
+    appMainScope: CoroutineScope,
     userDataRepository: UserDataRepository,
     authRepository: AuthRepository,
     routeParser: RouteParser,
 ) : NavigationStateHolder,
-    ActionStateMutator<NavigationMutation, StateFlow<MultiStackNav>> by appScope.actionStateFlowMutator(
+    ActionStateMutator<NavigationMutation, StateFlow<MultiStackNav>> by appMainScope.actionStateFlowMutator(
         initialState = InitialNavigationState,
         started = SharingStarted.Eagerly,
-        inputs = listOf(
-            forceSignOutMutations(
-                authRepository = authRepository,
-                userDataRepository = userDataRepository,
-            ),
-        ),
         actionTransform = { navActions ->
             flow {
+                val startTime = TimeSource.Monotonic.markNow()
+
                 // Restore saved nav from disk first
                 val savedNavigation = userDataRepository.navigation
                     // Wait for a non empty saved state to be read
@@ -466,17 +466,26 @@ class PersistedNavigationStateHolder(
                     }
                 }
 
+                val elapsed = startTime.elapsedNow()
+                if (elapsed < SplashDelay) delay(SplashDelay - elapsed)
+
                 emit { multiStackNav }
 
                 emitAll(
-                    navActions.mapToMutation { navMutation ->
-                        navMutation(
-                            ImmutableNavigationContext(
-                                state = this,
-                                routeParser = routeParser,
-                            ),
-                        )
-                    },
+                    merge(
+                        navActions.mapToMutation { navMutation ->
+                            navMutation(
+                                ImmutableNavigationContext(
+                                    state = this,
+                                    routeParser = routeParser,
+                                ),
+                            )
+                        },
+                        forceSignOutMutations(
+                            authRepository = authRepository,
+                            userDataRepository = userDataRepository,
+                        ),
+                    ),
                 )
             }
         },
@@ -485,7 +494,7 @@ class PersistedNavigationStateHolder(
             navigationStateFlow.onEach { navigationState ->
                 // Fire and forget, do not slow down the collector,
                 // navigation needs to be immediate.
-                appScope.persistNavigationState(
+                appMainScope.persistNavigationState(
                     navigationState = navigationState,
                     userDataRepository = userDataRepository,
                 )
@@ -660,6 +669,8 @@ private fun AppStack.toStackNav() = StackNav(
     name = stackName,
     children = listOf(rootRoute),
 )
+
+private val SplashDelay = 1.seconds
 
 private const val ReferringRouteQueryParam = "referringRoute"
 private const val OAuthUrlPathSegment = "oauth"

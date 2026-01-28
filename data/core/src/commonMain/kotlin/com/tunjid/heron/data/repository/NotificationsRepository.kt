@@ -64,7 +64,8 @@ import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.PopulatedNotificationEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
-import com.tunjid.heron.data.di.AppCoroutineScope
+import com.tunjid.heron.data.di.AppMainScope
+import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.network.NetworkMonitor
 import com.tunjid.heron.data.network.NetworkService
@@ -94,6 +95,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -108,6 +110,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.plus
 import kotlinx.serialization.Serializable
 import sh.christian.ozone.api.response.AtpResponse
 
@@ -156,8 +159,10 @@ interface NotificationsRepository {
 }
 
 internal class OfflineNotificationsRepository @Inject constructor(
-    @AppCoroutineScope
-    appScope: CoroutineScope,
+    @AppMainScope
+    appMainScope: CoroutineScope,
+    @param:IODispatcher
+    private val ioDispatcher: CoroutineDispatcher,
     private val postDao: PostDao,
     private val profileDao: ProfileDao,
     private val notificationsDao: NotificationsDao,
@@ -195,7 +200,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
             }
         }
             .stateIn(
-                scope = appScope,
+                scope = appMainScope + ioDispatcher,
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = 0,
             )

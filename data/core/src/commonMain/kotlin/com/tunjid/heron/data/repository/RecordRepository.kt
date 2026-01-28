@@ -37,7 +37,7 @@ import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 
-interface EmbeddableRecordRepository {
+interface RecordRepository {
 
     val subscribedLabelers: Flow<List<Labeler>>
 
@@ -46,7 +46,7 @@ interface EmbeddableRecordRepository {
     ): Flow<Record.Embeddable>
 }
 
-internal class OfflineEmbeddableRecordRepository @Inject constructor(
+internal class OfflineRecordRepository @Inject constructor(
     private val postDao: PostDao,
     private val listDao: ListDao,
     private val labelDao: LabelDao,
@@ -54,7 +54,7 @@ internal class OfflineEmbeddableRecordRepository @Inject constructor(
     private val feedGeneratorDao: FeedGeneratorDao,
     private val savedStateDataSource: SavedStateDataSource,
     private val recordResolver: RecordResolver,
-) : EmbeddableRecordRepository {
+) : RecordRepository {
 
     override val subscribedLabelers: Flow<List<Labeler>> =
         recordResolver.subscribedLabelers
