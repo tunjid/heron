@@ -131,11 +131,14 @@ internal fun AppState.PaneNavigationBar(
             Row(
                 modifier = Modifier
                     .navigationBarsPadding()
+                    .fillMaxWidth()
                     .height(UiTokens.bottomNavHeight(isCompact = prefersCompactBottomNav)),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 navItems.forEach { item ->
                     NavigationBarItem(
+                        modifier = Modifier
+                            .weight(1f),
                         icon = {
                             BadgedBox(
                                 badge = {
