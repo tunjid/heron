@@ -302,17 +302,19 @@ internal class DataStoreSavedStateDataSource(
     ioDispatcher: CoroutineDispatcher,
 ) : SavedStateDataSource() {
 
+    private val scope = appMainScope + ioDispatcher
+
     private val dataStore: DataStore<VersionedSavedState> = DataStoreFactory.create(
         storage = OkioStorage(
             fileSystem = fileSystem,
             serializer = VersionedSavedStateOkioSerializer(protoBuf),
             producePath = { path },
         ),
-        scope = appMainScope + ioDispatcher,
+        scope = scope,
     )
 
     override val savedState = dataStore.data.stateIn(
-        scope = appMainScope,
+        scope = scope,
         started = SharingStarted.Eagerly,
         initialValue = InitialSavedState,
     )
