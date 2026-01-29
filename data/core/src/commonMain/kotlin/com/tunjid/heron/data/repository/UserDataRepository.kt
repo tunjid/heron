@@ -105,7 +105,7 @@ internal class OfflineUserDataRepository @Inject constructor(
     }
 
     override suspend fun setAutoPlayTimelineVideos(
-        autoPlayTimelineVideos: Boolean
+        autoPlayTimelineVideos: Boolean,
     ): Outcome = updatePreferences {
         copy(local = local.copy(autoPlayTimelineVideos = autoPlayTimelineVideos))
     }
