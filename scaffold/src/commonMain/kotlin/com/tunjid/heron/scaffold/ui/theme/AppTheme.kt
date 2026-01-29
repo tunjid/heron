@@ -30,17 +30,15 @@ data class ColorFamily(
     val onColorContainer: Color,
 )
 
-
 @Composable
 fun AppTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = false,
+    useDarkTheme: Boolean = isSystemInDarkTheme(),
+    theme: Theme = Theme.Default,
     content: @Composable () -> Unit,
 ) {
     val colorScheme = colorScheme(
-        darkTheme = darkTheme,
-        dynamicColor = dynamicColor,
+        isDark = useDarkTheme,
+        theme = theme,
     )
 
     MaterialTheme(
