@@ -41,6 +41,10 @@ interface UserDataRepository {
     suspend fun setAutoHideBottomNavigation(
         autoHideBottomNavigation: Boolean,
     ): Outcome
+
+    suspend fun setAutoPlayTimelineVideos(
+        autoPlayTimelineVideos: Boolean,
+    ): Outcome
 }
 
 internal class OfflineUserDataRepository @Inject constructor(
@@ -100,6 +104,11 @@ internal class OfflineUserDataRepository @Inject constructor(
         copy(local = local.copy(autoHideBottomNavigation = autoHideBottomNavigation))
     }
 
+    override suspend fun setAutoPlayTimelineVideos(
+        autoPlayTimelineVideos: Boolean,
+    ): Outcome = updatePreferences {
+        copy(local = local.copy(autoPlayTimelineVideos = autoPlayTimelineVideos))
+    }
     private suspend inline fun updatePreferences(
         crossinline updater: suspend Preferences.() -> Preferences,
     ): Outcome =
