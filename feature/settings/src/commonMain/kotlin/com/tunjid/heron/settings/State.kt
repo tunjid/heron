@@ -38,7 +38,7 @@ sealed class Action(val key: String) {
     ) : Action(key = "SetRefreshHomeTimelinesOnLaunch")
 
     data class SetAutoPlayTimelineVideos(
-        val refreshHomeTimelinesOnLaunch: Boolean,
+        val autoPlayTimelineVideos: Boolean,
     ) : Action(key = "SetAutoPlayTimelineVideos")
 
     data class SetDynamicThemingPreference(

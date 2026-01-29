@@ -139,8 +139,8 @@ private fun Flow<Action.SetRefreshHomeTimelinesOnLaunch>.homeTimelineRefreshOnLa
 private fun Flow<Action.SetAutoPlayTimelineVideos>.timelineVideoAutoPlayMutations(
     userDataRepository: UserDataRepository,
 ): Flow<Mutation<State>> =
-    mapToManyMutations { (autoplayTimelineVideos) ->
-        userDataRepository.setAutoPlayTimelineVideos(autoplayTimelineVideos)
+    mapToManyMutations { (autoPlayTimelineVideos) ->
+        userDataRepository.setAutoPlayTimelineVideos(autoPlayTimelineVideos)
     }
 
 private fun Flow<Action.SetDynamicThemingPreference>.toggleDynamicTheming(
