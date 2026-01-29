@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.signin
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateBounds
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -23,6 +24,7 @@ import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,21 +35,28 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.SessionSummary
+import com.tunjid.heron.images.AsyncImage
+import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.signin.oauth.rememberOauthFlowState
 import com.tunjid.heron.signin.ui.NoAccountButton
 import com.tunjid.heron.signin.ui.ServerSelection
 import com.tunjid.heron.signin.ui.ServerSelectionSheetState.Companion.rememberUpdatedServerSelectionState
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.FormField
+import com.tunjid.heron.ui.text.LeadingIcon
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
@@ -86,7 +95,7 @@ internal fun SignInScreen(
 
         state.fields.forEach { field ->
             key(field.id) {
-                androidx.compose.animation.AnimatedVisibility(
+                AnimatedVisibility(
                     visible = state.isVisible(field),
                     enter = EnterTransition,
                     exit = ExitTransition,
@@ -95,6 +104,12 @@ internal fun SignInScreen(
                         modifier = Modifier
                             .fillMaxWidth(),
                         field = field,
+                        leadingIcon = {
+                            LoadingIcon(
+                                field = field,
+                                mostRecentSession = state.mostRecentSession,
+                            )
+                        },
                         onValueChange = { field, newValue ->
                             actions(
                                 Action.FieldChanged(
@@ -150,6 +165,39 @@ internal fun SignInScreen(
                     .collectLatest(oauthFlowState::launch)
             }
         }
+    }
+}
+
+@Composable
+private fun LoadingIcon(
+    modifier: Modifier = Modifier,
+    field: FormField,
+    mostRecentSession: SessionSummary?,
+) {
+    Box(
+        modifier = modifier,
+    ) {
+        // Always show the default leading icon
+        // in case the avatar does not load
+        field.LeadingIcon()
+
+        val sessionAvatar = mostRecentSession?.profileAvatar
+
+        val isAvatarForField = field.id == Username &&
+            sessionAvatar != null &&
+            mostRecentSession.profileHandle.id == field.value
+
+        if (isAvatarForField) AsyncImage(
+            modifier = FormField.LeadingIconSizeModifier,
+            args = remember(sessionAvatar) {
+                ImageArgs(
+                    url = sessionAvatar.uri,
+                    contentDescription = "",
+                    contentScale = ContentScale.Crop,
+                    shape = RoundedPolygonShape.Circle,
+                )
+            },
+        )
     }
 }
 
