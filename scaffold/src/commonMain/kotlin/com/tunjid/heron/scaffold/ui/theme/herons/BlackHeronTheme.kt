@@ -60,6 +60,8 @@ val BlackHeronLightScheme = lightColorScheme(
     onTertiary = BlackHeronOnTertiaryLight,
     tertiaryContainer = BlackHeronTertiaryContainerLight,
     onTertiaryContainer = BlackHeronOnTertiaryContainerLight,
+    surface = Color(0xFFF5F5F5),
+    onSurface = Color(0xFF191C20),
 )
 
 val BlackHeronDarkScheme = darkColorScheme(
@@ -75,4 +77,6 @@ val BlackHeronDarkScheme = darkColorScheme(
     onTertiary = BlackHeronOnTertiaryDark,
     tertiaryContainer = BlackHeronTertiaryContainerDark,
     onTertiaryContainer = BlackHeronOnTertiaryContainerDark,
+    surface = Color(0xFF1C1C1C),
+    onSurface = Color(0xFFE1E2E8),
 )

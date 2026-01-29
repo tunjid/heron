@@ -60,6 +60,8 @@ val TricoloredHeronLightScheme = lightColorScheme(
     onTertiary = TricoloredHeronOnTertiaryLight,
     tertiaryContainer = TricoloredHeronTertiaryContainerLight,
     onTertiaryContainer = TricoloredHeronOnTertiaryContainerLight,
+    surface = Color(0xFFF0F7FF),
+    onSurface = Color(0xFF191C20),
 )
 
 val TricoloredHeronDarkScheme = darkColorScheme(
@@ -75,4 +77,6 @@ val TricoloredHeronDarkScheme = darkColorScheme(
     onTertiary = TricoloredHeronOnTertiaryDark,
     tertiaryContainer = TricoloredHeronTertiaryContainerDark,
     onTertiaryContainer = TricoloredHeronOnTertiaryContainerDark,
+    surface = Color(0xFF001D32),
+    onSurface = Color(0xFFE1E2E8),
 )

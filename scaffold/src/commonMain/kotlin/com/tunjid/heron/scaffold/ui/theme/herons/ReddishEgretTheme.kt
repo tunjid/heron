@@ -60,6 +60,8 @@ val ReddishEgretLightScheme = lightColorScheme(
     onTertiary = ReddishEgretOnTertiaryLight,
     tertiaryContainer = ReddishEgretTertiaryContainerLight,
     onTertiaryContainer = ReddishEgretOnTertiaryContainerLight,
+    surface = Color(0xFFF4F7FF),
+    onSurface = Color(0xFF191C20),
 )
 
 val ReddishEgretDarkScheme = darkColorScheme(
@@ -75,4 +77,6 @@ val ReddishEgretDarkScheme = darkColorScheme(
     onTertiary = ReddishEgretOnTertiaryDark,
     tertiaryContainer = ReddishEgretTertiaryContainerDark,
     onTertiaryContainer = ReddishEgretOnTertiaryContainerDark,
+    surface = Color(0xFF001A40),
+    onSurface = Color(0xFFE1E2E8),
 )
