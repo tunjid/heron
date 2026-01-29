@@ -68,7 +68,7 @@ data class Preferences(
         @ProtoNumber(5)
         val autoHideBottomNavigation: Boolean = true,
         @ProtoNumber(6)
-        val autoPlayVideos: Boolean = true,
+        val autoPlayTimelineVideos: Boolean = true,
     )
 
     companion object {
