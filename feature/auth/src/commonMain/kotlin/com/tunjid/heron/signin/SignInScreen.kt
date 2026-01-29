@@ -55,11 +55,14 @@ import com.tunjid.heron.signin.ui.NoAccountButton
 import com.tunjid.heron.signin.ui.ServerSelection
 import com.tunjid.heron.signin.ui.ServerSelectionSheetState.Companion.rememberUpdatedServerSelectionState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.FormField
 import com.tunjid.heron.ui.text.LeadingIcon
+import heron.ui.core.generated.resources.profile_avatar
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun SignInScreen(
@@ -187,17 +190,20 @@ private fun LoadingIcon(
             sessionAvatar != null &&
             mostRecentSession.profileHandle.id == field.value
 
-        if (isAvatarForField) AsyncImage(
-            modifier = FormField.LeadingIconSizeModifier,
-            args = remember(sessionAvatar) {
-                ImageArgs(
-                    url = sessionAvatar.uri,
-                    contentDescription = "",
-                    contentScale = ContentScale.Crop,
-                    shape = RoundedPolygonShape.Circle,
-                )
-            },
-        )
+        if (isAvatarForField) {
+            val avatarDescription = stringResource(CommonStrings.profile_avatar)
+            AsyncImage(
+                modifier = FormField.LeadingIconSizeModifier,
+                args = remember(sessionAvatar) {
+                    ImageArgs(
+                        url = sessionAvatar.uri,
+                        contentDescription = avatarDescription,
+                        contentScale = ContentScale.Crop,
+                        shape = RoundedPolygonShape.Circle,
+                    )
+                },
+            )
+        }
     }
 }
 

@@ -135,11 +135,11 @@ private fun pastSessionMutations(
             copy(
                 pastSessions = pastSessions,
                 fields =
-                    if (fields != InitialFields || mostRecentSession == null) fields
-                    else fields.map { field ->
-                        if (field.id != Username) field
-                        else field.copy(value = mostRecentSession.profileHandle.id)
-                    },
+                if (fields != InitialFields || mostRecentSession == null) fields
+                else fields.map { field ->
+                    if (field.id != Username) field
+                    else field.copy(value = mostRecentSession.profileHandle.id)
+                },
             )
         }
 
