@@ -39,7 +39,6 @@ import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
-import com.tunjid.mutator.mutationOf
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -54,7 +53,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 
 internal typealias SignInStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -79,7 +77,12 @@ class ActualSignInViewModel(
         initialState = State(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         inputs = listOf(
-            authRepository.isSignedIn.map { mutationOf { copy(isSignedIn = it) } },
+            pastSessionMutations(
+                authRepository = authRepository,
+            ),
+            isSignedInMutations(
+                authRepository = authRepository,
+            ),
             authDeeplinkMutations(
                 route = route,
                 authRepository = authRepository,
@@ -114,6 +117,31 @@ class ActualSignInViewModel(
             }
         },
     )
+
+private fun isSignedInMutations(
+    authRepository: AuthRepository,
+): Flow<Mutation<State>> =
+    authRepository.isSignedIn
+        .mapToMutation {
+            copy(isSignedIn = it)
+        }
+
+private fun pastSessionMutations(
+    authRepository: AuthRepository,
+): Flow<Mutation<State>> =
+    authRepository.pastSessions
+        .mapToMutation { pastSessions ->
+            val mostRecentSession = pastSessions.firstOrNull()
+            copy(
+                pastSessions = pastSessions,
+                fields =
+                if (fields != InitialFields || mostRecentSession == null) fields
+                else fields.map { field ->
+                    if (field.id != Username) field
+                    else field.copy(value = mostRecentSession.profileHandle.id)
+                },
+            )
+        }
 
 private fun authDeeplinkMutations(
     route: Route,

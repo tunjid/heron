@@ -28,6 +28,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.models.SessionRequest
+import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.scaffold.navigation.NavigationAction
@@ -76,56 +77,62 @@ data class State(
     val selectedServer: Server = Server.BlueSky,
     val availableServers: List<Server> = StartingServers,
     val showCustomServerPopup: Boolean = false,
+    val pastSessions: List<SessionSummary> = emptyList(),
     @Transient
-    val fields: List<FormField> = listOf(
-        FormField(
-            id = Username,
-            value = "",
-            maxLines = 1,
-            leadingIcon = Icons.Rounded.AccountCircle,
-            transformation = VisualTransformation.None,
-            contentType = ContentType.Username,
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.None,
-                autoCorrectEnabled = false,
-                keyboardType = KeyboardType.Uri,
-                imeAction = ImeAction.Next,
-            ),
-            contentDescription = Memo.Resource(Res.string.username),
-            validator = Validator(
-                String::isNotBlank to Memo.Resource(
-                    Res.string.empty_form,
-                    listOf(Res.string.username),
-                ),
-                DomainRegex::matches to Memo.Resource(
-                    Res.string.invalid_handle,
-                ),
-            ),
+    val fields: List<FormField> = InitialFields,
+    @Transient
+    val messages: List<Memo> = emptyList(),
+)
+
+val State.mostRecentSession
+    get() = pastSessions.firstOrNull()
+
+internal val InitialFields: List<FormField> = listOf(
+    FormField(
+        id = Username,
+        value = "",
+        maxLines = 1,
+        leadingIcon = Icons.Rounded.AccountCircle,
+        transformation = VisualTransformation.None,
+        contentType = ContentType.Username,
+        keyboardOptions = KeyboardOptions(
+            capitalization = KeyboardCapitalization.None,
+            autoCorrectEnabled = false,
+            keyboardType = KeyboardType.Uri,
+            imeAction = ImeAction.Next,
         ),
-        FormField(
-            id = Password,
-            value = "",
-            maxLines = 1,
-            leadingIcon = Icons.Rounded.Lock,
-            transformation = PasswordVisualTransformation(),
-            contentType = ContentType.Password,
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.None,
-                autoCorrectEnabled = false,
-                keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Done,
+        contentDescription = Memo.Resource(Res.string.username),
+        validator = Validator(
+            String::isNotBlank to Memo.Resource(
+                Res.string.empty_form,
+                listOf(Res.string.username),
             ),
-            contentDescription = Memo.Resource(Res.string.password),
-            validator = Validator(
-                String::isNotBlank to Memo.Resource(
-                    Res.string.empty_form,
-                    listOf(Res.string.password),
-                ),
+            DomainRegex::matches to Memo.Resource(
+                Res.string.invalid_handle,
             ),
         ),
     ),
-    @Transient
-    val messages: List<Memo> = emptyList(),
+    FormField(
+        id = Password,
+        value = "",
+        maxLines = 1,
+        leadingIcon = Icons.Rounded.Lock,
+        transformation = PasswordVisualTransformation(),
+        contentType = ContentType.Password,
+        keyboardOptions = KeyboardOptions(
+            capitalization = KeyboardCapitalization.None,
+            autoCorrectEnabled = false,
+            keyboardType = KeyboardType.Password,
+            imeAction = ImeAction.Done,
+        ),
+        contentDescription = Memo.Resource(Res.string.password),
+        validator = Validator(
+            String::isNotBlank to Memo.Resource(
+                Res.string.empty_form,
+                listOf(Res.string.password),
+            ),
+        ),
+    ),
 )
 
 val State.submitButtonEnabled: Boolean get() = !isSignedIn && !isSubmitting
