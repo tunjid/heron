@@ -169,64 +169,62 @@ internal class AuthTokenRepository(
     }
 
     override suspend fun updateSignedInUser(): Outcome =
-        networkService.runCatchingWithMonitoredNetworkRetry {
-            getSession()
-        }.fold(
-            onSuccess = { updateSignedInUser(it.did) },
-            onFailure = Outcome::Failure,
-        )
+        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+            if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
 
-    private suspend fun updateSignedInUser(did: Did): Outcome = supervisorScope {
-        val profileDeferred = async {
             networkService.runCatchingWithMonitoredNetworkRetry {
-                getProfile(GetProfileQueryParams(actor = did))
-            }
-                .getOrNull()
-                ?.profileEntity()
-        }
-        val succeeded = listOf(
-            async {
-                profileDeferred.await()
-                    ?.let { profileDao.upsertProfiles(listOf(it)) } != null
-            },
-            async {
-                networkService.runCatchingWithMonitoredNetworkRetry {
-                    getProfile(GetProfileQueryParams(actor = did))
-                }
-                    .getOrNull()
-                    ?.profileEntity()
-                    ?.let { profileDao.upsertProfiles(listOf(it)) } != null
-            },
-            async {
-                networkService.runCatchingWithMonitoredNetworkRetry {
-                    getPreferencesForActor()
-                }
-                    .getOrNull()
-                    ?.let { savePreferences(it) } != null
-            },
-            async {
-                networkService.runCatchingWithMonitoredNetworkRetry {
-                    getPreferencesForNotification()
-                }
-                    .getOrNull()
-                    ?.let { saveNotificationPreferences(it) } != null
-            },
-        ).awaitAll().all(true::equals)
+                getSession()
+            }.fold(
+                onSuccess = { updateSignedInUser(it.did) },
+                onFailure = Outcome::Failure,
+            )
+        } ?: expiredSessionOutcome()
 
-        profileDeferred.await()?.let { profileEntity ->
-            savedStateDataSource.updateSignedInProfileData {
-                copy(
-                    sessionSummary = SessionSummary(
-                        lastSeen = Clock.System.now(),
-                        profileId = profileEntity.did,
-                        profileHandle = profileEntity.handle,
-                        profileAvatar = profileEntity.avatar,
-                    ),
-                )
+    private suspend fun updateSignedInUser(did: Did): Outcome =
+        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+            if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+
+            supervisorScope {
+                val succeeded = listOf(
+                    async {
+                        networkService.runCatchingWithMonitoredNetworkRetry {
+                            getProfile(GetProfileQueryParams(actor = did))
+                        }
+                            .getOrNull()
+                            ?.profileEntity()
+                            ?.let { profileEntity ->
+                                profileDao.upsertProfiles(listOf(profileEntity))
+                                savedStateDataSource.updateSignedInProfileData {
+                                    copy(
+                                        sessionSummary = SessionSummary(
+                                            lastSeen = Clock.System.now(),
+                                            profileId = profileEntity.did,
+                                            profileHandle = profileEntity.handle,
+                                            profileAvatar = profileEntity.avatar,
+                                        ),
+                                    )
+                                }
+                            } != null
+                    },
+                    async {
+                        networkService.runCatchingWithMonitoredNetworkRetry {
+                            getPreferencesForActor()
+                        }
+                            .getOrNull()
+                            ?.let { savePreferences(it) } != null
+                    },
+                    async {
+                        networkService.runCatchingWithMonitoredNetworkRetry {
+                            getPreferencesForNotification()
+                        }
+                            .getOrNull()
+                            ?.let { saveNotificationPreferences(it) } != null
+                    },
+                ).awaitAll().all(true::equals)
+
+                if (succeeded) Outcome.Success else Outcome.Failure(Exception("Unable to refresh user"))
             }
-        }
-        if (succeeded) Outcome.Success else Outcome.Failure(Exception("Unable to refresh user"))
-    }
+        } ?: expiredSessionOutcome()
 
     private suspend fun savePreferences(
         preferencesResponse: app.bsky.actor.GetPreferencesResponse,
