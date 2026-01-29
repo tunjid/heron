@@ -178,6 +178,7 @@ internal fun HomeScreen(
                     paneScaffoldState = paneScaffoldState,
                     signedInProfileId = state.signedInProfile?.did,
                     mutedWordsPreferences = state.preferences.mutedWordPreferences,
+                    autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
                     recentConversations = state.recentConversations,
                     timelineStateHolder = timelineStateHolder,
                     tabsOffset = tabsOffsetNestedScrollConnection::offset,
@@ -295,6 +296,7 @@ private fun HomeTimeline(
     paneScaffoldState: PaneScaffoldState,
     signedInProfileId: ProfileId?,
     mutedWordsPreferences: List<MutedWordPreference>,
+    autoPlayTimelineVideos: Boolean,
     recentConversations: List<Conversation>,
     timelineStateHolder: TimelineStateHolder,
     tabsOffset: () -> Offset,
@@ -582,7 +584,7 @@ private fun HomeTimeline(
         }
     }
 
-    if (paneScaffoldState.paneState.pane == ThreePane.Primary) {
+    if (paneScaffoldState.paneState.pane == ThreePane.Primary && autoPlayTimelineVideos) {
         val videoPlayerController = LocalVideoPlayerController.current
         gridState.interpolatedVisibleIndexEffect(
             denominator = 10,
