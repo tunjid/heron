@@ -23,6 +23,7 @@ import app.bsky.graph.GetListQueryParams
 import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SessionRequest
+import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
@@ -60,6 +61,8 @@ interface AuthRepository {
     val isGuest: Flow<Boolean>
 
     val signedInUser: Flow<Profile?>
+
+    val pastSessions: Flow<List<SessionSummary>>
 
     fun isSignedInProfile(id: ProfileId): Flow<Boolean>
 
@@ -111,6 +114,11 @@ internal class AuthTokenRepository(
                 .map { it.first().asExternalModel() }
                 .withRefresh(::updateSignedInUser)
         }
+
+    override val pastSessions: Flow<List<SessionSummary>> =
+        savedStateDataSource.savedState
+            .map { it.pastSessions ?: emptyList() }
+            .distinctUntilChanged()
 
     override fun isSignedInProfile(id: ProfileId): Flow<Boolean> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
@@ -169,7 +177,18 @@ internal class AuthTokenRepository(
         )
 
     private suspend fun updateSignedInUser(did: Did): Outcome = supervisorScope {
+        val profileDeferred = async {
+            networkService.runCatchingWithMonitoredNetworkRetry {
+                getProfile(GetProfileQueryParams(actor = did))
+            }
+                .getOrNull()
+                ?.profileEntity()
+        }
         val succeeded = listOf(
+            async {
+                profileDeferred.await()
+                    ?.let { profileDao.upsertProfiles(listOf(it)) } != null
+            },
             async {
                 networkService.runCatchingWithMonitoredNetworkRetry {
                     getProfile(GetProfileQueryParams(actor = did))
@@ -194,6 +213,18 @@ internal class AuthTokenRepository(
             },
         ).awaitAll().all(true::equals)
 
+        profileDeferred.await()?.let { profileEntity ->
+            savedStateDataSource.updateSignedInProfileData {
+                copy(
+                    sessionSummary = SessionSummary(
+                        lastSeen = Clock.System.now(),
+                        profileId = profileEntity.did,
+                        profileHandle = profileEntity.handle,
+                        profileAvatar = profileEntity.avatar,
+                    ),
+                )
+            }
+        }
         if (succeeded) Outcome.Success else Outcome.Failure(Exception("Unable to refresh user"))
     }
 
