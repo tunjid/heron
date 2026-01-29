@@ -72,7 +72,7 @@ interface AuthRepository {
 
     suspend fun createSession(
         request: SessionRequest,
-    ): Result<Unit>
+    ): Outcome
 
     suspend fun signOut()
 
@@ -139,21 +139,37 @@ internal class AuthTokenRepository(
 
     override suspend fun createSession(
         request: SessionRequest,
-    ): Result<Unit> = runCatchingUnlessCancelled {
+    ): Outcome = runCatchingUnlessCancelled {
         sessionManager.createSession(request)
     }
         .mapCatchingUnlessCancelled { authToken ->
             savedStateDataSource.setAuth(authToken)
             // Suspend till auth token has been saved and is readable
             savedStateDataSource.savedState.first { it.auth != null }
-            if (authToken is SavedState.AuthTokens.Authenticated) {
-                updateSignedInUser(authToken.authProfileId.id.let(::Did))
+
+            // Check if it is an authenticated session. Guest sessions are valid.
+            when (authToken) {
+                is SavedState.AuthTokens.Authenticated ->
+                    savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+                        if (authToken.authProfileId == signedInProfileId) updateSignedInUser(
+                            did = signedInProfileId.id.let(::Did),
+                        )
+                        else expiredSessionOutcome()
+                    }
+                        ?: expiredSessionOutcome()
+                else ->
+                    Outcome.Success
             }
-            Unit
         }
-        .onFailure {
-            savedStateDataSource.setAuth(null)
-        }
+        .fold(
+            onSuccess = { it },
+            // Note: Expired outcomes above do not reset auth. The user may
+            // have switched to another profile. Only thrown exceptions should.
+            onFailure = {
+                savedStateDataSource.setAuth(null)
+                Outcome.Failure(it)
+            },
+        )
 
     override suspend fun signOut() {
         runCatchingUnlessCancelled {
@@ -180,51 +196,48 @@ internal class AuthTokenRepository(
             )
         } ?: expiredSessionOutcome()
 
-    private suspend fun updateSignedInUser(did: Did): Outcome =
-        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-            if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+    private suspend fun updateSignedInUser(
+        did: Did,
+    ): Outcome = supervisorScope {
+        val succeeded = listOf(
+            async {
+                networkService.runCatchingWithMonitoredNetworkRetry {
+                    getProfile(GetProfileQueryParams(actor = did))
+                }
+                    .getOrNull()
+                    ?.profileEntity()
+                    ?.let { profileEntity ->
+                        profileDao.upsertProfiles(listOf(profileEntity))
+                        savedStateDataSource.updateSignedInProfileData {
+                            copy(
+                                sessionSummary = SessionSummary(
+                                    lastSeen = Clock.System.now(),
+                                    profileId = profileEntity.did,
+                                    profileHandle = profileEntity.handle,
+                                    profileAvatar = profileEntity.avatar,
+                                ),
+                            )
+                        }
+                    } != null
+            },
+            async {
+                networkService.runCatchingWithMonitoredNetworkRetry {
+                    getPreferencesForActor()
+                }
+                    .getOrNull()
+                    ?.let { savePreferences(it) } != null
+            },
+            async {
+                networkService.runCatchingWithMonitoredNetworkRetry {
+                    getPreferencesForNotification()
+                }
+                    .getOrNull()
+                    ?.let { saveNotificationPreferences(it) } != null
+            },
+        ).awaitAll().all(true::equals)
 
-            supervisorScope {
-                val succeeded = listOf(
-                    async {
-                        networkService.runCatchingWithMonitoredNetworkRetry {
-                            getProfile(GetProfileQueryParams(actor = did))
-                        }
-                            .getOrNull()
-                            ?.profileEntity()
-                            ?.let { profileEntity ->
-                                profileDao.upsertProfiles(listOf(profileEntity))
-                                savedStateDataSource.updateSignedInProfileData {
-                                    copy(
-                                        sessionSummary = SessionSummary(
-                                            lastSeen = Clock.System.now(),
-                                            profileId = profileEntity.did,
-                                            profileHandle = profileEntity.handle,
-                                            profileAvatar = profileEntity.avatar,
-                                        ),
-                                    )
-                                }
-                            } != null
-                    },
-                    async {
-                        networkService.runCatchingWithMonitoredNetworkRetry {
-                            getPreferencesForActor()
-                        }
-                            .getOrNull()
-                            ?.let { savePreferences(it) } != null
-                    },
-                    async {
-                        networkService.runCatchingWithMonitoredNetworkRetry {
-                            getPreferencesForNotification()
-                        }
-                            .getOrNull()
-                            ?.let { saveNotificationPreferences(it) } != null
-                    },
-                ).awaitAll().all(true::equals)
-
-                if (succeeded) Outcome.Success else Outcome.Failure(Exception("Unable to refresh user"))
-            }
-        } ?: expiredSessionOutcome()
+        if (succeeded) Outcome.Success else Outcome.Failure(Exception("Unable to refresh user"))
+    }
 
     private suspend fun savePreferences(
         preferencesResponse: app.bsky.actor.GetPreferencesResponse,
