@@ -84,6 +84,10 @@ class ActualSettingsViewModel(
                         userDataRepository = userDataRepository,
                     )
 
+                    is Action.SetAutoPlayTimelineVideos -> action.flow.timelineVideoAutoPlayMutations(
+                        userDataRepository = userDataRepository,
+                    )
+
                     is Action.SetDynamicThemingPreference -> action.flow.toggleDynamicTheming(
                         userDataRepository = userDataRepository,
                     )
@@ -130,6 +134,13 @@ private fun Flow<Action.SetRefreshHomeTimelinesOnLaunch>.homeTimelineRefreshOnLa
 ): Flow<Mutation<State>> =
     mapToManyMutations { (refreshOnLaunch) ->
         userDataRepository.setRefreshedHomeTimelineOnLaunch(refreshOnLaunch)
+    }
+
+private fun Flow<Action.SetAutoPlayTimelineVideos>.timelineVideoAutoPlayMutations(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    mapToManyMutations { (autoplayTimelineVideos) ->
+        userDataRepository.setAutoPlayTimelineVideos(autoplayTimelineVideos)
     }
 
 private fun Flow<Action.SetDynamicThemingPreference>.toggleDynamicTheming(
