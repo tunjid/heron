@@ -87,6 +87,7 @@
     <string name="more_options">More Options</string>
     <string name="unmute_video">Unmute video</string>
     <string name="play_video">Play video</string>
+    <string name="pause_video">Pause video</string>
     <string name="copy_link_to_clipboard">Copy link to clipboard</string>
     <string name="send_via_direct_message">Send via Direct Message</string>
     <string name="share_in_post">Share in a post</string>
