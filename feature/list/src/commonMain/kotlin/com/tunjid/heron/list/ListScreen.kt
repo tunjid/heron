@@ -250,6 +250,7 @@ internal fun ListScreen(
                                 actions = actions,
                                 recentConversations = state.recentConversations,
                                 mutedWordsPreferences = state.preferences.mutedWordPreferences,
+                                autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
                             )
                         }
                     },
@@ -369,6 +370,7 @@ private fun ListTimeline(
     actions: (Action) -> Unit,
     recentConversations: List<Conversation>,
     mutedWordsPreferences: List<MutedWordPreference>,
+    autoPlayTimelineVideos: Boolean,
 ) {
     var pendingScrollOffset by rememberSaveable { mutableIntStateOf(0) }
     val gridState = rememberLazyScrollableState(
@@ -643,7 +645,7 @@ private fun ListTimeline(
         }
     }
 
-    if (paneScaffoldState.paneState.pane == ThreePane.Primary) {
+    if (paneScaffoldState.paneState.pane == ThreePane.Primary && autoPlayTimelineVideos) {
         val videoPlayerController = LocalVideoPlayerController.current
         gridState.interpolatedVisibleIndexEffect(
             denominator = 10,

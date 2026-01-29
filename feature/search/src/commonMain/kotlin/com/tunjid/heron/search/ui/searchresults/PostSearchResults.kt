@@ -86,6 +86,7 @@ internal fun PostSearchResults(
     signedInProfileId: ProfileId?,
     recentConversations: List<Conversation>,
     mutedWordPreferences: List<MutedWordPreference>,
+    autoPlayTimelineVideos: Boolean,
     videoStates: ThreadedVideoPositionStates<SearchResult.OfPost>,
     paneScaffoldState: PaneScaffoldState,
     onLinkTargetClicked: (LinkTarget) -> Unit,
@@ -255,7 +256,7 @@ internal fun PostSearchResults(
             },
         )
     }
-    if (paneScaffoldState.paneState.pane == ThreePane.Primary) {
+    if (paneScaffoldState.paneState.pane == ThreePane.Primary && autoPlayTimelineVideos) {
         val videoPlayerController = LocalVideoPlayerController.current
         gridState.interpolatedVisibleIndexEffect(
             denominator = 10,

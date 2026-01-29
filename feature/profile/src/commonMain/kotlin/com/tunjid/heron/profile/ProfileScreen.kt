@@ -475,6 +475,7 @@ internal fun ProfileScreen(
                                 actions = actions,
                                 recentConversations = state.recentConversations,
                                 mutedWordsPreferences = state.preferences.mutedWordPreferences,
+                                autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
                             )
                             is ProfileScreenStateHolders.LabelerSettings -> LabelerSettings(
                                 prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
@@ -1142,6 +1143,7 @@ private fun ProfileTimeline(
     actions: (Action) -> Unit,
     recentConversations: List<Conversation>,
     mutedWordsPreferences: List<MutedWordPreference>,
+    autoPlayTimelineVideos: Boolean,
 ) {
     var pendingScrollOffset by rememberSaveable { mutableIntStateOf(0) }
     val gridState = rememberLazyScrollableState(
@@ -1406,7 +1408,7 @@ private fun ProfileTimeline(
         }
     }
 
-    if (paneScaffoldState.paneState.pane == ThreePane.Primary) {
+    if (paneScaffoldState.paneState.pane == ThreePane.Primary && autoPlayTimelineVideos) {
         val videoPlayerController = LocalVideoPlayerController.current
         gridState.interpolatedVisibleIndexEffect(
             denominator = 10,

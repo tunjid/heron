@@ -122,6 +122,7 @@ internal fun FeedScreen(
                 signedInProfileId = state.signedInProfileId,
                 recentConversations = state.recentConversations,
                 mutedWordsPreferences = state.preferences.mutedWordPreferences,
+                autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
             )
         }
     }
@@ -136,6 +137,7 @@ private fun FeedTimeline(
     actions: (Action) -> Unit,
     mutedWordsPreferences: List<MutedWordPreference>,
     recentConversations: List<Conversation>,
+    autoPlayTimelineVideos: Boolean,
 ) {
     var pendingScrollOffset by rememberSaveable { mutableIntStateOf(0) }
     val gridState = rememberLazyScrollableState(
@@ -429,7 +431,7 @@ private fun FeedTimeline(
         }
     }
 
-    if (paneScaffoldState.paneState.pane == ThreePane.Primary) {
+    if (paneScaffoldState.paneState.pane == ThreePane.Primary && autoPlayTimelineVideos) {
         val videoPlayerController = LocalVideoPlayerController.current
         gridState.interpolatedVisibleIndexEffect(
             denominator = 10,
