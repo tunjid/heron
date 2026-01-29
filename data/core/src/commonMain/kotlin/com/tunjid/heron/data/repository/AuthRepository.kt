@@ -163,12 +163,7 @@ internal class AuthTokenRepository(
         }
         .fold(
             onSuccess = { it },
-            // Note: Expired outcomes above do not reset auth. The user may
-            // have switched to another profile. Only thrown exceptions should.
-            onFailure = {
-                savedStateDataSource.setAuth(null)
-                Outcome.Failure(it)
-            },
+            onFailure = Outcome::Failure,
         )
 
     override suspend fun signOut() {
