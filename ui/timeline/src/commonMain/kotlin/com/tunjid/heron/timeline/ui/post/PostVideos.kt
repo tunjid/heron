@@ -36,6 +36,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Movie
+import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -67,6 +68,7 @@ import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.mute_video
+import heron.ui.timeline.generated.resources.pause_video
 import heron.ui.timeline.generated.resources.play_video
 import heron.ui.timeline.generated.resources.unmute_video
 import org.jetbrains.compose.resources.stringResource
@@ -184,6 +186,19 @@ private fun PlayerInfo(
         visible = videoPlayerState.status is PlayerStatus.Play.Confirmed,
     ) {
         Row {
+            PlayerControlBackground(
+                onClicked = {
+                    videoPlayerController.pauseActiveVideo()
+                },
+                content = {
+                    Icon(
+                        modifier = Modifier
+                            .padding(4.dp),
+                        contentDescription = stringResource(Res.string.pause_video),
+                        imageVector = Icons.Rounded.Pause,
+                    )
+                },
+            )
             PlayerControlBackground {
                 BasicText(
                     modifier = Modifier

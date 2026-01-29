@@ -198,6 +198,7 @@ internal fun GeneralSearchResults(
                             modifier = modifier,
                             signedInProfileId = state.signedInProfile?.did,
                             mutedWordPreferences = state.preferences.mutedWordPreferences,
+                            autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
                             recentConversations = state.recentConversations,
                             videoStates = videoStates,
                             paneScaffoldState = paneScaffoldState,

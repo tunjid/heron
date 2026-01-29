@@ -67,6 +67,8 @@ data class Preferences(
         val useCompactNavigation: Boolean = false,
         @ProtoNumber(5)
         val autoHideBottomNavigation: Boolean = true,
+        @ProtoNumber(6)
+        val autoPlayTimelineVideos: Boolean = true,
     )
 
     companion object {

@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.ui.text
 
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActionScope
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -35,6 +36,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.text.FormField.Companion.LeadingIconSizeModifier
 import kotlin.jvm.JvmInline
 import kotlinx.serialization.Transient
 
@@ -62,6 +65,11 @@ data class FormField(
         private val id: String,
     ) {
         override fun toString(): String = id
+    }
+
+    companion object {
+        val LeadingIconSizeModifier = Modifier
+            .size(24.dp)
     }
 }
 
@@ -118,6 +126,9 @@ fun Validator(vararg pairs: Pair<(String) -> Boolean, Memo>) =
 inline fun FormField(
     modifier: Modifier = Modifier,
     field: FormField,
+    crossinline leadingIcon: @Composable () -> Unit = {
+        field.LeadingIcon()
+    },
     crossinline onValueChange: (field: FormField, newValue: String) -> Unit,
     crossinline keyboardActions: KeyboardActionScope.(FormField) -> Unit,
 ) {
@@ -147,15 +158,10 @@ inline fun FormField(
                 Text(it.message)
             }
         },
-        leadingIcon = field.leadingIcon?.let {
-            {
-                Icon(
-                    imageVector = it,
-                    contentDescription = field.contentDescription?.message,
-                )
-            }
+        leadingIcon = {
+            leadingIcon()
         },
-        supportingText = if (showError) field.errorMessage?.let {
+        supportingText = if (showError) field.errorMessage.let {
             {
                 Text(
                     text = it.message,
@@ -165,4 +171,15 @@ inline fun FormField(
         }
         else null,
     )
+}
+
+@Composable
+fun FormField.LeadingIcon() {
+    leadingIcon?.let {
+        Icon(
+            modifier = LeadingIconSizeModifier,
+            imageVector = it,
+            contentDescription = contentDescription?.message,
+        )
+    }
 }

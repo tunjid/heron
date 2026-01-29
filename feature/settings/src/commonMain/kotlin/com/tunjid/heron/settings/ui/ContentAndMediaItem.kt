@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.core.models.Preferences
 import heron.feature.settings.generated.resources.Res
+import heron.feature.settings.generated.resources.auto_play_timeline_videos
 import heron.feature.settings.generated.resources.content_and_media
 import heron.feature.settings.generated.resources.refresh_timelines_on_launch
 import org.jetbrains.compose.resources.stringResource
@@ -32,6 +33,7 @@ fun ContentAndMediaItem(
     modifier: Modifier = Modifier,
     signedInProfilePreferences: Preferences,
     setRefreshHomeTimelineOnLaunch: (Boolean) -> Unit,
+    setAutoplayTimelineVideos: (Boolean) -> Unit,
 ) {
     ExpandableSettingsItemRow(
         modifier = modifier
@@ -46,6 +48,14 @@ fun ContentAndMediaItem(
             enabled = true,
             checked = signedInProfilePreferences.local.refreshHomeTimelineOnLaunch,
             onCheckedChange = setRefreshHomeTimelineOnLaunch,
+        )
+        SettingsToggleItem(
+            modifier = Modifier
+                .fillMaxWidth(),
+            text = stringResource(Res.string.auto_play_timeline_videos),
+            enabled = true,
+            checked = signedInProfilePreferences.local.autoPlayTimelineVideos,
+            onCheckedChange = setAutoplayTimelineVideos,
         )
     }
 }

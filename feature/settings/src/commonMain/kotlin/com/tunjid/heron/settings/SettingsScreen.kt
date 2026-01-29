@@ -57,6 +57,9 @@ internal fun SettingsScreen(
                 setRefreshHomeTimelineOnLaunch = {
                     actions(Action.SetRefreshHomeTimelinesOnLaunch(it))
                 },
+                setAutoplayTimelineVideos = {
+                    actions(Action.SetAutoPlayTimelineVideos(it))
+                },
             )
             ModerationItem(
                 modifier = Modifier

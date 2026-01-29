@@ -23,6 +23,7 @@ import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Server
+import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.utilities.Outcome
@@ -64,6 +65,8 @@ abstract class SavedState {
     abstract val auth: AuthTokens?
     abstract val navigation: Navigation
     abstract val signedInProfileData: ProfileData?
+
+    abstract val pastSessions: List<SessionSummary>?
 
     @Serializable
     sealed class AuthTokens {
@@ -193,6 +196,7 @@ abstract class SavedState {
         // Need default for migration
         val writes: Writes = Writes(),
         val auth: AuthTokens? = null,
+        val sessionSummary: SessionSummary? = null,
     ) {
         companion object {
             val defaultGuestData = ProfileData(
