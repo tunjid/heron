@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.models.SessionRequest
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
@@ -250,12 +251,12 @@ private suspend fun FlowCollector<Mutation<State>>.createSessionMutations(
     navActions: (NavigationMutation) -> Unit,
 ) {
     emit { copy(isSubmitting = true) }
-    when (val exception = authRepository.createSession(request).exceptionOrNull()) {
-        null -> navActions(NavigationContext::resetAuthNavigation)
-        else -> emit {
+    when (val outcome = authRepository.createSession(request)) {
+        is Outcome.Success -> navActions(NavigationContext::resetAuthNavigation)
+        is Outcome.Failure -> emit {
             copy(
                 messages = messages.plus(
-                    exception.message
+                    outcome.exception.message
                         ?.let(Memo::Text)
                         ?: Memo.Resource(Res.string.oauth_flow_failed),
                 )

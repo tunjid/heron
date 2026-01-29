@@ -18,6 +18,7 @@ package com.tunjid.heron.data.datastore.migrations
 
 import androidx.datastore.core.okio.OkioSerializer
 import com.tunjid.heron.data.core.models.Constants
+import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.repository.SavedState
 import kotlinx.serialization.Serializable
@@ -73,6 +74,10 @@ internal data class VersionedSavedState(
             -> null
             else -> profileData[profileId]
         }
+    override val pastSessions: List<SessionSummary>
+        get() = profileData.values
+            .mapNotNull { it.sessionSummary }
+            .sortedByDescending { it.lastSeen }
 
     override val auth: AuthTokens?
         get() = activeProfileId
