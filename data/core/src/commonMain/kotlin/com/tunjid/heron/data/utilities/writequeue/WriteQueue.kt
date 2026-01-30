@@ -19,6 +19,7 @@ package com.tunjid.heron.data.utilities.writequeue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshotFlow
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.utilities.File
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.network.NetworkConnectionException
 import com.tunjid.heron.data.repository.MessageRepository
@@ -220,8 +221,10 @@ internal class PersistedWriteQueue @Inject constructor(
     ) = flow {
         emit(
             Pair(
-                writable,
-                with(writable) { withTimeout(WriteTimeout) { write() } },
+                first = writable,
+                second = with(writable) {
+                    withTimeout(writable.writeTimeout()) { write() }
+                },
             ),
         )
     }
@@ -319,7 +322,35 @@ private suspend inline fun SavedStateDataSource.updateWrites(
     }
 }
 
-private val WriteTimeout = 10.seconds
-private const val MaxConcurrentWrites = 6
+private fun Writable.writeTimeout() =
+    when (this) {
+        is Writable.Create ->
+            request.metadata
+                .embeddedMedia
+                .fold(BasicWriteTimeout) { timeout, media ->
+                    timeout + when (media) {
+                        is File.Media.Photo -> ImageWriteTimeout
+                        is File.Media.Video -> VideoWriteTimeout
+                    }
+                }
+        is Writable.ProfileUpdate ->
+            BasicWriteTimeout
+                .plus(if (update.avatarFile != null) ImageWriteTimeout else 0.seconds)
+                .plus(if (update.bannerFile != null) ImageWriteTimeout else 0.seconds)
+        is Writable.Connection,
+        is Writable.Interaction,
+        is Writable.NotificationUpdate,
+        is Writable.Reaction,
+        is Writable.Restriction,
+        is Writable.Send,
+        is Writable.TimelineUpdate,
+        -> BasicWriteTimeout
+    }
+
+private val VideoWriteTimeout = 60.seconds
+
+private val ImageWriteTimeout = 20.seconds
+private val BasicWriteTimeout = 10.seconds
+private const val MaxConcurrentWrites = 9
 private const val MaximumPendingWrites = 15
 private const val MaximumFailedWrites = 10
