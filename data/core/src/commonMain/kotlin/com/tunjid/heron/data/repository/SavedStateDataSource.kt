@@ -290,6 +290,10 @@ internal sealed class SavedStateDataSource {
         auth: SavedState.AuthTokens?,
     )
 
+    internal abstract suspend fun switchSession(
+        profileId: ProfileId,
+    )
+
     internal abstract suspend fun updateSignedInProfileData(
         block: suspend SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData,
     )
@@ -361,6 +365,16 @@ internal class DataStoreSavedStateDataSource(
                 )
             },
         )
+    }
+
+    override suspend fun switchSession(
+        profileId: ProfileId,
+    ) = updateState {
+        val profileData = profileData[profileId]
+        val authenticated = profileData?.auth as? SavedState.AuthTokens.Authenticated
+
+        if (profileData == null || authenticated == null) this
+        else copy(activeProfileId = profileId)
     }
 
     override suspend fun updateSignedInProfileData(
