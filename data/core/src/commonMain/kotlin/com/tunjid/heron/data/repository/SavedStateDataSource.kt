@@ -263,7 +263,7 @@ internal fun SavedState.getAuthForProfile(
         else -> null
     }
 
-private fun SavedState.AuthTokens?.ifSignedIn(): SavedState.AuthTokens.Authenticated? =
+internal fun SavedState.AuthTokens?.ifSignedIn(): SavedState.AuthTokens.Authenticated? =
     when (this) {
         is SavedState.AuthTokens.Authenticated -> this
         is SavedState.AuthTokens.Guest,
@@ -294,12 +294,12 @@ internal sealed class SavedStateDataSource {
         navigation: SavedState.Navigation,
     )
 
-    internal abstract suspend fun setActiveProfile(
-        profileId: ProfileId,
-    )
-
     internal abstract suspend fun setAuth(
         auth: SavedState.AuthTokens?,
+    )
+
+    internal abstract suspend fun switchSession(
+        profileId: ProfileId,
     )
 
     internal abstract suspend fun updateSignedInProfileData(
@@ -341,12 +341,6 @@ internal class DataStoreSavedStateDataSource(
         copy(navigation = navigation)
     }
 
-    override suspend fun setActiveProfile(
-        profileId: ProfileId,
-    ) = updateState {
-        copy(activeProfileId = profileId)
-    }
-
     override suspend fun setAuth(
         auth: SavedState.AuthTokens?,
     ) = updateState {
@@ -379,6 +373,16 @@ internal class DataStoreSavedStateDataSource(
                 )
             },
         )
+    }
+
+    override suspend fun switchSession(
+        profileId: ProfileId,
+    ) = updateState {
+        val profileData = profileData[profileId]
+        val authenticated = profileData?.auth as? SavedState.AuthTokens.Authenticated
+
+        if (profileData == null || authenticated == null) this
+        else copy(activeProfileId = profileId)
     }
 
     override suspend fun updateSignedInProfileData(

@@ -40,6 +40,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.preferenceupdater.NotificationPreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
@@ -74,7 +75,7 @@ interface AuthRepository {
         request: SessionRequest,
     ): Outcome
 
-    suspend fun switchAccount(
+    suspend fun switchSession(
         sessionSummary: SessionSummary,
     ): Outcome
 
@@ -170,33 +171,35 @@ internal class AuthTokenRepository(
             onFailure = Outcome::Failure,
         )
 
-    override suspend fun switchAccount(
+    override suspend fun switchSession(
         sessionSummary: SessionSummary,
-    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-        if (sessionSummary.profileId == signedInProfileId) return@inCurrentProfileSession Outcome.Success
-
-        val authTokens = savedStateDataSource.savedState
-            .first()
-            .getAuthForProfile(sessionSummary.profileId)
-            ?: return@inCurrentProfileSession expiredSessionOutcome()
-
-        savedStateDataSource.setAuth(authTokens)
-
-        savedStateDataSource.updateSignedInProfileData {
-            copy(
-                auth = authTokens,
-                sessionSummary = sessionSummary.copy(
-                    lastSeen = Clock.System.now(),
-                ),
-            )
+    ): Outcome = runCatchingUnlessCancelled {
+        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+            if (signedInProfileId != sessionSummary.profileId) {
+                savedStateDataSource.switchSession(
+                    profileId = sessionSummary.profileId,
+                )
+            }
+            Outcome.Success
         }
 
-        savedStateDataSource.setActiveProfile(
-            profileId = authTokens.authProfileId,
-        )
+        val currentProfileId =
+            savedStateDataSource.savedState.value.auth
+                .ifSignedIn()
+                ?.authProfileId
 
-        updateSignedInUser()
-    } ?: expiredSessionOutcome()
+        if (currentProfileId != sessionSummary.profileId) {
+            return@runCatchingUnlessCancelled expiredSessionOutcome()
+        }
+
+        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+            if (signedInProfileId == sessionSummary.profileId) {
+                updateSignedInUser()
+            } else {
+                expiredSessionOutcome()
+            }
+        } ?: expiredSessionOutcome()
+    }.toOutcome()
 
     override suspend fun signOut() {
         runCatchingUnlessCancelled {
