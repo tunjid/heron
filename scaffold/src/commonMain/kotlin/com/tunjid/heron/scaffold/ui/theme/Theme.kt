@@ -22,6 +22,7 @@ import com.tunjid.heron.scaffold.ui.theme.herons.AgamiHeronDarkScheme
 import com.tunjid.heron.scaffold.ui.theme.herons.AgamiHeronLightScheme
 import com.tunjid.heron.scaffold.ui.theme.herons.BlackHeronDarkScheme
 import com.tunjid.heron.scaffold.ui.theme.herons.BlackHeronLightScheme
+import com.tunjid.heron.scaffold.ui.theme.herons.BlueHeronDarkScheme
 import com.tunjid.heron.scaffold.ui.theme.herons.BlueHeronLightScheme
 import com.tunjid.heron.scaffold.ui.theme.herons.CappedHeronDarkScheme
 import com.tunjid.heron.scaffold.ui.theme.herons.CappedHeronLightScheme
@@ -69,7 +70,7 @@ sealed interface Theme {
             override val light: ColorScheme
                 get() = BlueHeronLightScheme
             override val dark: ColorScheme
-                get() = BlackHeronDarkScheme
+                get() = BlueHeronDarkScheme
         }
 
         data object Capped : Herons {
