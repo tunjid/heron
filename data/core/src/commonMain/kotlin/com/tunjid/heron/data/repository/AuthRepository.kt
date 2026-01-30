@@ -180,16 +180,7 @@ internal class AuthTokenRepository(
                     profileId = sessionSummary.profileId,
                 )
             }
-            Outcome.Success
-        }
-
-        val currentProfileId =
-            savedStateDataSource.savedState.value.auth
-                .ifSignedIn()
-                ?.authProfileId
-
-        if (currentProfileId != sessionSummary.profileId) {
-            return@runCatchingUnlessCancelled expiredSessionOutcome()
+            expiredSessionOutcome()
         }
 
         savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
