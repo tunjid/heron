@@ -180,7 +180,6 @@ internal class AuthTokenRepository(
                     profileId = sessionSummary.profileId,
                 )
             }
-            expiredSessionOutcome()
         }
 
         savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
