@@ -29,6 +29,8 @@ import com.tunjid.heron.scaffold.ui.theme.herons.GreenHeronDarkScheme
 import com.tunjid.heron.scaffold.ui.theme.herons.GreenHeronLightScheme
 import com.tunjid.heron.scaffold.ui.theme.herons.ReddishEgretDarkScheme
 import com.tunjid.heron.scaffold.ui.theme.herons.ReddishEgretLightScheme
+import com.tunjid.heron.scaffold.ui.theme.herons.TricoloredHeronDarkScheme
+import com.tunjid.heron.scaffold.ui.theme.herons.TricoloredHeronLightScheme
 
 sealed interface Theme {
 
@@ -89,6 +91,13 @@ sealed interface Theme {
                 get() = ReddishEgretLightScheme
             override val dark: ColorScheme
                 get() = ReddishEgretDarkScheme
+        }
+
+        data object Tricolored : Herons {
+            override val light: ColorScheme
+                get() = TricoloredHeronLightScheme
+            override val dark: ColorScheme
+                get() = TricoloredHeronDarkScheme
         }
     }
 }
