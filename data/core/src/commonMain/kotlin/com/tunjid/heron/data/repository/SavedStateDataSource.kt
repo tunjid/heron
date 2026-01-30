@@ -255,14 +255,6 @@ internal fun SavedState.signedProfilePreferencesOrDefault(): Preferences =
 internal fun SavedState.signedNotificationPreferencesOrDefault(): NotificationPreferences =
     signedInProfileData?.notifications?.preferences ?: NotificationPreferences.Default
 
-internal fun SavedState.getAuthForProfile(
-    profileId: ProfileId,
-): SavedState.AuthTokens.Authenticated? =
-    when (this) {
-        is VersionedSavedState -> profileData[profileId]?.auth?.ifSignedIn()
-        else -> null
-    }
-
 internal fun SavedState.AuthTokens?.ifSignedIn(): SavedState.AuthTokens.Authenticated? =
     when (this) {
         is SavedState.AuthTokens.Authenticated -> this
