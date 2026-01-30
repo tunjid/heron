@@ -255,6 +255,14 @@ internal fun SavedState.signedProfilePreferencesOrDefault(): Preferences =
 internal fun SavedState.signedNotificationPreferencesOrDefault(): NotificationPreferences =
     signedInProfileData?.notifications?.preferences ?: NotificationPreferences.Default
 
+internal fun SavedState.getAuthForProfile(
+    profileId: ProfileId,
+): SavedState.AuthTokens.Authenticated? =
+    when (this) {
+        is VersionedSavedState -> profileData[profileId]?.auth?.ifSignedIn()
+        else -> null
+    }
+
 private fun SavedState.AuthTokens?.ifSignedIn(): SavedState.AuthTokens.Authenticated? =
     when (this) {
         is SavedState.AuthTokens.Authenticated -> this
@@ -286,12 +294,12 @@ internal sealed class SavedStateDataSource {
         navigation: SavedState.Navigation,
     )
 
-    internal abstract suspend fun setAuth(
-        auth: SavedState.AuthTokens?,
-    )
-
     internal abstract suspend fun setActiveProfile(
         profileId: ProfileId,
+    )
+
+    internal abstract suspend fun setAuth(
+        auth: SavedState.AuthTokens?,
     )
 
     internal abstract suspend fun updateSignedInProfileData(
@@ -327,16 +335,16 @@ internal class DataStoreSavedStateDataSource(
         initialValue = InitialSavedState,
     )
 
-    override suspend fun setActiveProfile(
-        profileId: ProfileId,
-    ) = updateState {
-        copy(activeProfileId = profileId)
-    }
-
     override suspend fun setNavigationState(
         navigation: SavedState.Navigation,
     ) = updateState {
         copy(navigation = navigation)
+    }
+
+    override suspend fun setActiveProfile(
+        profileId: ProfileId,
+    ) = updateState {
+        copy(activeProfileId = profileId)
     }
 
     override suspend fun setAuth(

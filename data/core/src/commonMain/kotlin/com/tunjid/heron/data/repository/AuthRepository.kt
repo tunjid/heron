@@ -40,7 +40,6 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.preferenceupdater.NotificationPreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
-import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
@@ -76,7 +75,7 @@ interface AuthRepository {
     ): Outcome
 
     suspend fun switchAccount(
-        profileId: ProfileId,
+        sessionSummary: SessionSummary,
     ): Outcome
 
     suspend fun signOut()
@@ -172,24 +171,32 @@ internal class AuthTokenRepository(
         )
 
     override suspend fun switchAccount(
-        profileId: ProfileId,
-    ): Outcome = runCatchingUnlessCancelled {
-        if (!hasSession(profileId)) {
-            return@runCatchingUnlessCancelled expiredSessionOutcome()
-        }
+        sessionSummary: SessionSummary,
+    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        if (sessionSummary.profileId == signedInProfileId) return@inCurrentProfileSession Outcome.Success
 
-        savedStateDataSource.setActiveProfile(profileId)
+        val authTokens = savedStateDataSource.savedState
+            .first()
+            .getAuthForProfile(sessionSummary.profileId)
+            ?: return@inCurrentProfileSession expiredSessionOutcome()
 
-        savedStateDataSource.updateSignedInProfileData { signedInProfileId ->
+        savedStateDataSource.setAuth(authTokens)
+
+        savedStateDataSource.updateSignedInProfileData {
             copy(
-                sessionSummary = sessionSummary?.copy(
+                auth = authTokens,
+                sessionSummary = sessionSummary.copy(
                     lastSeen = Clock.System.now(),
                 ),
             )
         }
 
+        savedStateDataSource.setActiveProfile(
+            profileId = authTokens.authProfileId,
+        )
+
         updateSignedInUser()
-    }.toOutcome()
+    } ?: expiredSessionOutcome()
 
     override suspend fun signOut() {
         runCatchingUnlessCancelled {
@@ -329,13 +336,4 @@ internal class AuthTokenRepository(
             )
         }
     }
-
-    private suspend fun hasSession(
-        profileId: ProfileId,
-    ): Boolean =
-        savedStateDataSource.savedState
-            .map { state ->
-                state.pastSessions?.any { it.profileId == profileId } == true
-            }
-            .first()
 }
