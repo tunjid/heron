@@ -13,16 +13,95 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
 package com.tunjid.heron.scaffold.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
-import androidx.compose.ui.graphics.Color
+import com.tunjid.heron.scaffold.ui.theme.herons.AgamiHeronDarkScheme
+import com.tunjid.heron.scaffold.ui.theme.herons.AgamiHeronLightScheme
+import com.tunjid.heron.scaffold.ui.theme.herons.BlackHeronDarkScheme
+import com.tunjid.heron.scaffold.ui.theme.herons.BlackHeronLightScheme
+import com.tunjid.heron.scaffold.ui.theme.herons.BlueHeronDarkScheme
+import com.tunjid.heron.scaffold.ui.theme.herons.BlueHeronLightScheme
+import com.tunjid.heron.scaffold.ui.theme.herons.CappedHeronDarkScheme
+import com.tunjid.heron.scaffold.ui.theme.herons.CappedHeronLightScheme
+import com.tunjid.heron.scaffold.ui.theme.herons.GreenHeronDarkScheme
+import com.tunjid.heron.scaffold.ui.theme.herons.GreenHeronLightScheme
+import com.tunjid.heron.scaffold.ui.theme.herons.ReddishEgretDarkScheme
+import com.tunjid.heron.scaffold.ui.theme.herons.ReddishEgretLightScheme
+import com.tunjid.heron.scaffold.ui.theme.herons.TricoloredHeronDarkScheme
+import com.tunjid.heron.scaffold.ui.theme.herons.TricoloredHeronLightScheme
+
+sealed interface Theme {
+
+    sealed interface LightOrDark : Theme {
+        val light: ColorScheme
+        val dark: ColorScheme
+    }
+
+    data object Dynamic : Theme
+
+    data object Default : LightOrDark {
+        override val light: ColorScheme
+            get() = lightScheme
+
+        override val dark: ColorScheme
+            get() = darkScheme
+    }
+
+    sealed interface Herons : LightOrDark {
+
+        data object Agami : Herons {
+            override val light: ColorScheme
+                get() = AgamiHeronLightScheme
+            override val dark: ColorScheme
+                get() = AgamiHeronDarkScheme
+        }
+
+        data object Black : Herons {
+            override val light: ColorScheme
+                get() = BlackHeronLightScheme
+            override val dark: ColorScheme
+                get() = BlackHeronDarkScheme
+        }
+
+        data object Blue : Herons {
+            override val light: ColorScheme
+                get() = BlueHeronLightScheme
+            override val dark: ColorScheme
+                get() = BlueHeronDarkScheme
+        }
+
+        data object Capped : Herons {
+            override val light: ColorScheme
+                get() = CappedHeronLightScheme
+            override val dark: ColorScheme
+                get() = CappedHeronDarkScheme
+        }
+
+        data object Green : Herons {
+            override val light: ColorScheme
+                get() = GreenHeronLightScheme
+            override val dark: ColorScheme
+                get() = GreenHeronDarkScheme
+        }
+
+        data object Reddish : Herons {
+            override val light: ColorScheme
+                get() = ReddishEgretLightScheme
+            override val dark: ColorScheme
+                get() = ReddishEgretDarkScheme
+        }
+
+        data object Tricolored : Herons {
+            override val light: ColorScheme
+                get() = TricoloredHeronLightScheme
+            override val dark: ColorScheme
+                get() = TricoloredHeronDarkScheme
+        }
+    }
+}
 
 internal val lightScheme = lightColorScheme(
     primary = primaryLight,
@@ -251,37 +330,3 @@ private val highContrastDarkColorScheme = darkColorScheme(
     surfaceContainerHigh = surfaceContainerHighDarkHighContrast,
     surfaceContainerHighest = surfaceContainerHighestDarkHighContrast,
 )
-
-@Immutable
-data class ColorFamily(
-    val color: Color,
-    val onColor: Color,
-    val colorContainer: Color,
-    val onColorContainer: Color,
-)
-
-val unspecified_scheme = ColorFamily(
-    Color.Unspecified,
-    Color.Unspecified,
-    Color.Unspecified,
-    Color.Unspecified,
-)
-
-@Composable
-fun AppTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = false,
-    content: @Composable () -> Unit,
-) {
-    val colorScheme = colorScheme(
-        darkTheme = darkTheme,
-        dynamicColor = dynamicColor,
-    )
-
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = appTypography(appFont()),
-        content = content,
-    )
-}

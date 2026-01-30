@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.scaffold.ui.theme
 
-import android.os.Build
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -25,14 +24,16 @@ import androidx.compose.ui.platform.LocalContext
 
 @Composable
 actual fun colorScheme(
-    darkTheme: Boolean,
-    dynamicColor: Boolean,
-): ColorScheme = when {
-    dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+    isDark: Boolean,
+    theme: Theme,
+): ColorScheme = when (theme) {
+    is Theme.Dynamic -> {
         val context = LocalContext.current
-        if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        if (isDark) dynamicDarkColorScheme(context)
+        else dynamicLightColorScheme(context)
     }
 
-    darkTheme -> darkScheme
-    else -> lightScheme
+    is Theme.LightOrDark ->
+        if (isDark) theme.dark
+        else theme.light
 }
