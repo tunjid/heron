@@ -40,6 +40,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.preferenceupdater.NotificationPreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
@@ -72,6 +73,10 @@ interface AuthRepository {
 
     suspend fun createSession(
         request: SessionRequest,
+    ): Outcome
+
+    suspend fun switchAccount(
+        profileId: ProfileId,
     ): Outcome
 
     suspend fun signOut()
@@ -165,6 +170,26 @@ internal class AuthTokenRepository(
             onSuccess = { it },
             onFailure = Outcome::Failure,
         )
+
+    override suspend fun switchAccount(
+        profileId: ProfileId,
+    ): Outcome = runCatchingUnlessCancelled {
+        if (!hasSession(profileId)) {
+            return@runCatchingUnlessCancelled expiredSessionOutcome()
+        }
+
+        savedStateDataSource.setActiveProfile(profileId)
+
+        savedStateDataSource.updateSignedInProfileData { signedInProfileId ->
+            copy(
+                sessionSummary = sessionSummary?.copy(
+                    lastSeen = Clock.System.now(),
+                ),
+            )
+        }
+
+        updateSignedInUser()
+    }.toOutcome()
 
     override suspend fun signOut() {
         runCatchingUnlessCancelled {
@@ -304,4 +329,13 @@ internal class AuthTokenRepository(
             )
         }
     }
+
+    private suspend fun hasSession(
+        profileId: ProfileId,
+    ): Boolean =
+        savedStateDataSource.savedState
+            .map { state ->
+                state.pastSessions?.any { it.profileId == profileId } == true
+            }
+            .first()
 }

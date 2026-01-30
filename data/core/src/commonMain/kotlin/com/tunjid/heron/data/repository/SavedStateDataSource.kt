@@ -290,6 +290,10 @@ internal sealed class SavedStateDataSource {
         auth: SavedState.AuthTokens?,
     )
 
+    internal abstract suspend fun setActiveProfile(
+        profileId: ProfileId,
+    )
+
     internal abstract suspend fun updateSignedInProfileData(
         block: suspend SavedState.ProfileData.(signedInProfileId: ProfileId?) -> SavedState.ProfileData,
     )
@@ -322,6 +326,12 @@ internal class DataStoreSavedStateDataSource(
         started = SharingStarted.Eagerly,
         initialValue = InitialSavedState,
     )
+
+    override suspend fun setActiveProfile(
+        profileId: ProfileId,
+    ) = updateState {
+        copy(activeProfileId = profileId)
+    }
 
     override suspend fun setNavigationState(
         navigation: SavedState.Navigation,
