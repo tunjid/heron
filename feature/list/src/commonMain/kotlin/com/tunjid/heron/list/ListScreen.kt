@@ -607,6 +607,7 @@ private fun ListTimeline(
                                                     sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                         quotingPostUri = quotingPostUri,
                                                     ),
+                                                    source = timelineState.timeline.source,
                                                 ),
                                             ),
                                         )

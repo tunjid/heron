@@ -546,6 +546,7 @@ private fun HomeTimeline(
                                                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                             quotingPostUri = action.quotingPostUri,
                                                         ),
+                                                        source = timelineState.timeline.source,
                                                     ),
                                                 ),
                                             )

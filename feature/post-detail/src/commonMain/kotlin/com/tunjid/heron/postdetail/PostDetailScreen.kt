@@ -280,6 +280,7 @@ internal fun PostDetailScreen(
                                             sharedElementPrefix = state.sharedElementPrefix.withQuotingPostUriPrefix(
                                                 quotingPostUri = action.quotingPostUri,
                                             ),
+                                            source = null,
                                         ),
                                     )
                                 }

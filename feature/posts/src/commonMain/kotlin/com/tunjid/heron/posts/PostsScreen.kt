@@ -339,6 +339,7 @@ internal fun PostsScreen(
                                                         startIndex = action.index,
                                                         sharedElementPrefix = SharedElementPrefix
                                                             .withQuotingPostUriPrefix(action.quotingPostUri),
+                                                        source = null,
                                                     ),
                                                 ),
                                             )
