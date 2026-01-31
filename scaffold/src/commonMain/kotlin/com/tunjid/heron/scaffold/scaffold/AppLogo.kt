@@ -19,6 +19,7 @@ package com.tunjid.heron.scaffold.scaffold
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -30,6 +31,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.lerp
 import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.tunjid.heron.ui.UiTokens
@@ -47,8 +49,8 @@ fun MovableElementSharedTransitionScope.AppLogo(
         state = isRootDestination,
         modifier = modifier,
         sharedElement = { isRootDestination, innerModifier ->
-            val logoColor = MaterialTheme.colorScheme.onSurface
-            val bodyColor = Color(color = 0xFF607B8B)
+            val bodyColor = MaterialTheme.colorScheme.onSurface
+            val backgroundColor = ButtonDefaults.filledTonalButtonColors().containerColor
 
             val heronPaths = remember(::HeronPaths)
             val progressState = animateFloatAsState(
@@ -84,6 +86,24 @@ fun MovableElementSharedTransitionScope.AppLogo(
                 // Bottom beak caret: Rotates 0 -> 75
                 val bottomCaretRot = 75f * progress
 
+                // Head center approx (15, 3) -> Canvas Center (17.5, 24)
+                val startX = 15f
+                val startY = 3f
+                val endX = 17.5f
+                val endY = 24f
+
+                val circleCenter = Offset(
+                    x = startX + (endX - startX) * progress,
+                    y = startY + (endY - startY) * progress,
+                )
+                val circleRadius = 24f * progress
+                val headScale = 1f - (0.8f * progress)
+                val headColor = lerp(
+                    start = HeadColor,
+                    stop = backgroundColor,
+                    fraction = progress,
+                )
+
                 // Fade: 1.0 -> 0.0
                 val fadeAlpha = 1f - progress
 
@@ -92,21 +112,48 @@ fun MovableElementSharedTransitionScope.AppLogo(
                     scaleY = size.height / LogoViewportHeight,
                     pivot = Offset.Zero,
                 ) {
-                    // 1. Body & Head: Fade out
+                    // 1. Head: Simulate head morph to circle
+                    if (progress > 0) {
+                        drawCircle(
+                            color = headColor,
+                            radius = circleRadius,
+                            center = circleCenter,
+                        )
+                    }
+                    // 2. Body & Head: Fade out and move
                     if (fadeAlpha > 0) {
                         drawPath(
                             path = heronPaths.body,
-                            color = logoColor,
-                            alpha = fadeAlpha,
-                        )
-                        drawPath(
-                            path = heronPaths.head,
                             color = bodyColor,
                             alpha = fadeAlpha,
                         )
+                        withTransform(
+                            transformBlock = {
+                                // Move with the circle
+                                translate(
+                                    left = (endX - startX) * progress,
+                                    top = (endY - startY) * progress,
+                                )
+                                scale(
+                                    scaleX = headScale,
+                                    scaleY = headScale,
+                                    pivot = Offset(
+                                        x = 15f,
+                                        y = 3f,
+                                    ),
+                                )
+                            },
+                            drawBlock = {
+                                drawPath(
+                                    path = heronPaths.head,
+                                    color = headColor,
+                                    alpha = fadeAlpha,
+                                )
+                            },
+                        )
                     }
 
-                    // 2. Legs: Becomes the horizontal shaft
+                    // 3. Legs: Becomes the horizontal shaft
                     withTransform(
                         transformBlock = {
                             translate(
@@ -124,12 +171,12 @@ fun MovableElementSharedTransitionScope.AppLogo(
                         drawBlock = {
                             drawPath(
                                 path = heronPaths.legs,
-                                color = logoColor,
+                                color = bodyColor,
                             )
                         },
                     )
 
-                    // 3. Beak: SPLIT into two instances for the Caret
+                    // 4. Beak: Split into two instances for the Caret
                     val beakTipPivot = Offset(
                         x = 0f,
                         y = 12.1f,
@@ -150,7 +197,7 @@ fun MovableElementSharedTransitionScope.AppLogo(
                         drawBlock = {
                             drawPath(
                                 path = heronPaths.beak,
-                                color = logoColor,
+                                color = bodyColor,
                             )
                         },
                     )
@@ -170,7 +217,7 @@ fun MovableElementSharedTransitionScope.AppLogo(
                         drawBlock = {
                             drawPath(
                                 path = heronPaths.beak,
-                                color = logoColor,
+                                color = bodyColor,
                             )
                         },
                     )
@@ -264,5 +311,6 @@ class HeronPaths {
     }
 }
 
+private val HeadColor = Color(color = 0xFF607B8B)
 private const val LogoViewportWidth = 35f
 private const val LogoViewportHeight = 48f
