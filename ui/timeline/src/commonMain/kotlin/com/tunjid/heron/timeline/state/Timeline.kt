@@ -76,7 +76,7 @@ fun CoroutineScope.timelineStateHolder(
     timelineRepository: TimelineRepository,
 ): TimelineStateHolder {
     val initialQuery = TimelineQuery(
-        timeline = timeline,
+        source = timeline.source,
         data = CursorQuery.Data(
             page = 0,
             cursorAnchor = when (timeline) {
@@ -199,12 +199,12 @@ private fun Flow<TimelineState.Action.DismissRefresh>.dismissRefreshMutations():
 private fun TimelineQuery.updateData(
     data: CursorQuery.Data,
 ): TimelineQuery = TimelineQuery(
-    timeline = timeline,
+    source = source,
     data = data,
 )
 
 private fun TimelineQuery.refresh(): TimelineQuery = TimelineQuery(
-    timeline = timeline,
+    source = source,
     data = data.reset(),
 )
 
