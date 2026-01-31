@@ -547,7 +547,10 @@ private fun ListTimeline(
                                                 recordDestination(
                                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                     sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                                                    otherModels = listOfNotNull(action.warnedAppliedLabels),
+                                                    otherModels = buildList {
+                                                        action.warnedAppliedLabels?.let(::add)
+                                                        add(timelineState.timeline.source)
+                                                    },
                                                     record = post,
                                                 ),
                                             ),
@@ -587,6 +590,9 @@ private fun ListTimeline(
                                                         quotingPostUri = owningPostUri,
                                                     ),
                                                     record = record,
+                                                    otherModels = listOf(
+                                                        timelineState.timeline.source,
+                                                    ),
                                                 ),
                                             ),
                                         )
