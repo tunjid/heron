@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.appliedLabels
 import com.tunjid.heron.data.core.types.ProfileId
@@ -36,6 +37,8 @@ import kotlinx.serialization.Transient
 data class State(
     val anchorPost: Post?,
     val sharedElementPrefix: String,
+    @Transient
+    val source: Timeline.Source? = null,
     @Transient
     val preferences: Preferences = Preferences.EmptyPreferences,
     @Transient
@@ -53,6 +56,7 @@ fun State(route: Route): State {
     return State(
         anchorPost = anchorPost,
         sharedElementPrefix = route.sharedElementPrefix,
+        source = route.model(),
         items = when (anchorPost) {
             null -> TimelineItem.LoadingItems
             else -> listOf(

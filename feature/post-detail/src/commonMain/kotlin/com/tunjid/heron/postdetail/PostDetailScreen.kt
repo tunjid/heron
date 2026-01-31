@@ -236,7 +236,10 @@ internal fun PostDetailScreen(
                                         recordDestination(
                                             referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
                                             sharedElementPrefix = state.sharedElementPrefix,
-                                            otherModels = listOfNotNull(action.warnedAppliedLabels),
+                                            otherModels = buildList {
+                                                action.warnedAppliedLabels?.let(::add)
+                                                state.source?.let(::add)
+                                            },
                                             record = action.post,
                                         ),
                                     )
@@ -265,6 +268,9 @@ internal fun PostDetailScreen(
                                             sharedElementPrefix = state.sharedElementPrefix.withQuotingPostUriPrefix(
                                                 quotingPostUri = owningPostUri,
                                             ),
+                                            otherModels = buildList {
+                                                state.source?.let(::add)
+                                            },
                                             record = record,
                                         ),
                                     )
@@ -280,7 +286,7 @@ internal fun PostDetailScreen(
                                             sharedElementPrefix = state.sharedElementPrefix.withQuotingPostUriPrefix(
                                                 quotingPostUri = action.quotingPostUri,
                                             ),
-                                            source = null,
+                                            source = state.source,
                                         ),
                                     )
                                 }
