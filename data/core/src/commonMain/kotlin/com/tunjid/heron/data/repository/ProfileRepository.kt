@@ -98,7 +98,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.serialization.Serializable
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
@@ -647,38 +646,22 @@ internal class OfflineProfileRepository @Inject constructor(
         if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
 
         coroutineScope {
-            val (avatarBlob, bannerBlob) = @Suppress("DEPRECATION")
-            when {
-                update.avatarFile != null || update.bannerFile != null -> listOf(
-                    update.avatarFile,
-                    update.bannerFile,
-                ).map { file ->
-                    async {
-                        if (file == null) return@async null
-                        networkService.runCatchingWithMonitoredNetworkRetry {
-                            fileManager.source(file).use { source ->
-                                uploadBlob(ByteReadChannel(source))
-                            }
+            val (avatarBlob, bannerBlob) = listOf(
+                update.avatarFile,
+                update.bannerFile,
+            ).map { file ->
+                async {
+                    if (file == null) return@async null
+                    networkService.runCatchingWithMonitoredNetworkRetry {
+                        fileManager.source(file).use { source ->
+                            uploadBlob(ByteReadChannel(source))
                         }
-                            .onSuccess { fileManager.delete(file) }
-                            .getOrNull()
-                            ?.blob
                     }
-                }.awaitAll()
-                else -> listOf(
-                    update.avatar,
-                    update.banner,
-                ).map { file ->
-                    async {
-                        if (file == null) null
-                        else networkService.runCatchingWithMonitoredNetworkRetry {
-                            uploadBlob(ByteReadChannel(file.data))
-                        }
-                            .getOrNull()
-                            ?.blob
-                    }
-                }.awaitAll()
-            }
+                        .onSuccess { fileManager.delete(file) }
+                        .getOrNull()
+                        ?.blob
+                }
+            }.awaitAll()
 
             networkService.runCatchingWithMonitoredNetworkRetry {
                 getRecord(

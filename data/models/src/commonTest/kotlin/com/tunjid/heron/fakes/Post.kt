@@ -17,7 +17,6 @@ fun samplePost(): Post {
         bookmarkCount = 0,
         indexedAt = Instant.parse("2024-01-01T00:00:00Z"),
         embed = null,
-        quote = null,
         record = Post.Record(
             text = "Hello World!",
             createdAt = Instant.parse("2024-01-01T00:00:00Z"),

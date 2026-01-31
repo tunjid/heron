@@ -42,6 +42,7 @@ import com.tunjid.heron.images.LocalImageLoader
 import com.tunjid.heron.media.video.LocalVideoPlayerController
 import com.tunjid.heron.scaffold.scaffold.PaneAnchorState.Companion.DraggableThumb
 import com.tunjid.heron.scaffold.ui.theme.AppTheme
+import com.tunjid.heron.scaffold.ui.theme.Theme
 import com.tunjid.treenav.compose.MovableSharedElementHostState
 import com.tunjid.treenav.compose.MultiPaneDisplay
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -58,7 +59,10 @@ fun App(
     appState: AppState,
 ) {
     AppTheme(
-        dynamicColor = appState.preferences?.local?.useDynamicTheming ?: false,
+        theme = when (appState.preferences?.local?.useDynamicTheming) {
+            true -> Theme.Dynamic
+            else -> Theme.Default
+        },
     ) {
         CompositionLocalProvider(
             LocalAppState provides appState,

@@ -21,6 +21,6 @@ import androidx.compose.runtime.Composable
 
 @Composable
 expect fun colorScheme(
-    darkTheme: Boolean,
-    dynamicColor: Boolean,
+    isDark: Boolean,
+    theme: Theme,
 ): ColorScheme

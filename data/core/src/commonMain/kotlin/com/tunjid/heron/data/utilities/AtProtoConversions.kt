@@ -35,7 +35,6 @@ import app.bsky.richtext.FacetTag
 import com.atproto.repo.StrongRef
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkTarget
-import com.tunjid.heron.data.core.models.MediaFile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.utilities.File
 import sh.christian.ozone.api.AtUri
@@ -46,12 +45,6 @@ import sh.christian.ozone.api.model.Blob
 
 internal sealed class MediaBlob {
     sealed class Image : MediaBlob() {
-        data class Deprecated(
-            @Suppress("DEPRECATION")
-            val file: MediaFile.Photo,
-            val blob: Blob,
-        ) : Image()
-
         data class Local(
             val file: File.Media.Photo,
             val blob: Blob,
@@ -59,30 +52,11 @@ internal sealed class MediaBlob {
     }
 
     sealed class Video : MediaBlob() {
-        data class Deprecated(
-            @Suppress("DEPRECATION")
-            val file: MediaFile.Video,
-            val blob: Blob,
-        ) : Video()
-
         data class Local(
             val file: File.Media.Video,
             val blob: Blob,
         ) : Video()
     }
-}
-
-@Suppress("DEPRECATION")
-internal fun MediaFile.with(blob: Blob) = when (this) {
-    is MediaFile.Photo -> MediaBlob.Image.Deprecated(
-        file = this,
-        blob = blob,
-    )
-
-    is MediaFile.Video -> MediaBlob.Video.Deprecated(
-        file = this,
-        blob = blob,
-    )
 }
 
 internal fun File.Media.with(blob: Blob) = when (this) {
@@ -163,14 +137,6 @@ private fun List<MediaBlob>.video(): BskyVideo? =
         .firstOrNull()
         ?.let { videoFile ->
             when (videoFile) {
-                is MediaBlob.Video.Deprecated -> BskyVideo(
-                    video = videoFile.blob,
-                    alt = videoFile.file.altText,
-                    aspectRatio = AspectRatio(
-                        videoFile.file.width,
-                        videoFile.file.height,
-                    ),
-                )
                 is MediaBlob.Video.Local -> BskyVideo(
                     video = videoFile.blob,
                     alt = videoFile.file.altText,
@@ -186,14 +152,6 @@ private fun List<MediaBlob>.images(): BskyImages? =
     filterIsInstance<MediaBlob.Image>()
         .map { photoFile ->
             when (photoFile) {
-                is MediaBlob.Image.Deprecated -> ImagesImage(
-                    image = photoFile.blob,
-                    alt = photoFile.file.altText,
-                    aspectRatio = AspectRatio(
-                        photoFile.file.width,
-                        photoFile.file.height,
-                    ),
-                )
                 is MediaBlob.Image.Local -> ImagesImage(
                     image = photoFile.blob,
                     alt = photoFile.file.altText ?: "",

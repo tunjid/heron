@@ -16,19 +16,34 @@
 
 package com.tunjid.heron.scaffold.ui.theme
 
-import androidx.compose.material3.ColorScheme
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.ui.graphics.Color
+
+@Immutable
+data class ColorFamily(
+    val color: Color,
+    val onColor: Color,
+    val colorContainer: Color,
+    val onColorContainer: Color,
+)
 
 @Composable
-actual fun colorScheme(
-    isDark: Boolean,
-    theme: Theme,
-): ColorScheme = when (theme) {
-    is Theme.Dynamic ->
-        if (isDark) Theme.Default.dark
-        else Theme.Default.light
+fun AppTheme(
+    useDarkTheme: Boolean = isSystemInDarkTheme(),
+    theme: Theme = Theme.Default,
+    content: @Composable () -> Unit,
+) {
+    val colorScheme = colorScheme(
+        isDark = useDarkTheme,
+        theme = theme,
+    )
 
-    is Theme.LightOrDark ->
-        if (isDark) theme.dark
-        else theme.light
+    MaterialTheme(
+        colorScheme = colorScheme,
+        typography = appTypography(appFont()),
+        content = content,
+    )
 }

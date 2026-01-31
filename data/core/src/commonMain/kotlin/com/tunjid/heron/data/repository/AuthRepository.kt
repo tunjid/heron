@@ -27,6 +27,7 @@ import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.SessionSwitchException
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
@@ -40,6 +41,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.preferenceupdater.NotificationPreferenceUpdater
 import com.tunjid.heron.data.utilities.preferenceupdater.PreferenceUpdater
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
@@ -72,6 +74,10 @@ interface AuthRepository {
 
     suspend fun createSession(
         request: SessionRequest,
+    ): Outcome
+
+    suspend fun switchSession(
+        sessionSummary: SessionSummary,
     ): Outcome
 
     suspend fun signOut()
@@ -165,6 +171,33 @@ internal class AuthTokenRepository(
             onSuccess = { it },
             onFailure = Outcome::Failure,
         )
+
+    override suspend fun switchSession(
+        sessionSummary: SessionSummary,
+    ): Outcome = runCatchingUnlessCancelled {
+        // Switching should cause the current session to expire
+        val switched = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+            if (signedInProfileId == sessionSummary.profileId) return@inCurrentProfileSession true
+
+            savedStateDataSource.switchSession(
+                profileId = sessionSummary.profileId,
+            )
+
+            false
+        } ?: true
+
+        if (!switched) return@runCatchingUnlessCancelled Outcome.Failure(
+            SessionSwitchException(sessionSummary.profileId),
+        )
+
+        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+            if (signedInProfileId == sessionSummary.profileId) {
+                updateSignedInUser()
+            } else {
+                expiredSessionOutcome()
+            }
+        } ?: expiredSessionOutcome()
+    }.toOutcome()
 
     override suspend fun signOut() {
         runCatchingUnlessCancelled {
