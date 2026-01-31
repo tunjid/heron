@@ -16,19 +16,13 @@
 
 package com.tunjid.heron.scaffold.scaffold
 
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -36,153 +30,171 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.navigationevent.NavigationEventTransitionState
+import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import kotlinx.coroutines.delay
+import com.tunjid.treenav.compose.UpdatedMovableSharedElementOf
 
 @Composable
 fun MovableElementSharedTransitionScope.AppLogo(
     modifier: Modifier,
+    canGoBack: Boolean,
 ) {
-    var isArrow by remember { mutableStateOf(false) }
+    UpdatedMovableSharedElementOf(
+        sharedContentState = rememberSharedContentState("AppLogo"),
+        zIndexInOverlay = 40f,
+        state = canGoBack,
+        modifier = modifier,
+        sharedElement = { isArrow, innerModifier ->
+            val logoColor = MaterialTheme.colorScheme.onSurface
+            val bodyColor = Color(color = 0xFF607B8B)
 
-    val logoColor = MaterialTheme.colorScheme.onSurface
-    val bodyColor = Color(color = 0xFF607B8B)
+            val heronPaths = remember(::HeronPaths)
+            val progressState = animateFloatAsState(
+                targetValue = logoMorphProgress(isArrow),
+                label = "LogoAnimation",
+            )
 
-    val heronPaths = remember(::HeronPaths)
-    val progressState = animateFloatAsState(
-        animationSpec = tween(5000),
-        targetValue = if (isArrow) 1f else 0f,
-        label = "MasterAnimation",
-    )
+            Canvas(
+                modifier = innerModifier
+                    .aspectRatio(
+                        ratio = LogoViewportWidth / LogoViewportHeight,
+                        matchHeightConstraintsFirst = true,
+                    ),
+            ) {
+                val progress = progressState.value
 
-    Canvas(
-        modifier = modifier
-            .aspectRatio(LogoViewportWidth / LogoViewportHeight)
-            .sharedBounds(
-                sharedContentState = rememberSharedContentState("AppLogo"),
-                animatedVisibilityScope = this,
-                boundsTransform = { _, _ ->
-                    spring(stiffness = Spring.StiffnessLow)
-                },
-            ),
-    ) {
-        val progress = progressState.value
+                // Leg: Rotates 0 -> 90
+                val legRotation = 90f * progress
 
-        // Leg: Rotates 0 -> 90
-        val legRotation = 90f * progress
+                // Leg: Translates (0,0) -> (4, -9)
+                val legTx = 4f * progress
+                val legTy = -9f * progress
 
-        // Leg: Translates (0,0) -> (4, -9)
-        val legTx = 4f * progress
-        val legTy = -9f * progress
+                // Beak: Translates (0,0) -> (5, 12)
+                val beakTx = 5f * progress
+                val beakTy = 11f * progress
 
-        // Beak: Translates (0,0) -> (5, 12)
-        val beakTx = 5f * progress
-        val beakTy = 11f * progress
+                // Top beak caret: Does not rotate
+                val topCaretRot = 0f
 
-        // Top beak caret: Does not rotate
-        val topCaretRot = 0f
+                // Bottom beak caret: Rotates 0 -> 75
+                val bottomCaretRot = 75f * progress
 
-        // Bottom beak caret: Rotates 0 -> 75
-        val bottomCaretRot = 75f * progress
+                // Fade: 1.0 -> 0.0
+                val fadeAlpha = 1f - progress
 
-        // Fade: 1.0 -> 0.0
-        val fadeAlpha = 1f - progress
+                scale(
+                    scaleX = size.width / LogoViewportWidth,
+                    scaleY = size.height / LogoViewportHeight,
+                    pivot = Offset.Zero,
+                ) {
+                    // 1. Body & Head: Fade out
+                    if (fadeAlpha > 0) {
+                        drawPath(
+                            path = heronPaths.body,
+                            color = logoColor,
+                            alpha = fadeAlpha,
+                        )
+                        drawPath(
+                            path = heronPaths.head,
+                            color = bodyColor,
+                            alpha = fadeAlpha,
+                        )
+                    }
 
-        scale(
-            scaleX = size.width / LogoViewportWidth,
-            scaleY = size.height / LogoViewportHeight,
-            pivot = Offset.Zero,
-        ) {
-            // 1. Body & Head: Fade out
-            if (fadeAlpha > 0) {
-                drawPath(
-                    path = heronPaths.body,
-                    color = logoColor,
-                    alpha = fadeAlpha,
-                )
-                drawPath(
-                    path = heronPaths.head,
-                    color = bodyColor,
-                    alpha = fadeAlpha,
-                )
+                    // 2. Legs: Becomes the horizontal shaft
+                    withTransform(
+                        transformBlock = {
+                            translate(
+                                left = legTx,
+                                top = legTy,
+                            )
+                            rotate(
+                                degrees = legRotation,
+                                pivot = Offset(
+                                    x = 16.5f,
+                                    y = 33.5f,
+                                ),
+                            )
+                        },
+                        drawBlock = {
+                            drawPath(
+                                path = heronPaths.legs,
+                                color = logoColor,
+                            )
+                        },
+                    )
+
+                    // 3. Beak: SPLIT into two instances for the Caret
+                    val beakTipPivot = Offset(
+                        x = 0f,
+                        y = 12.1f,
+                    )
+
+                    // Instance A: Top Caret
+                    withTransform(
+                        transformBlock = {
+                            translate(
+                                left = beakTx,
+                                top = beakTy,
+                            )
+                            rotate(
+                                degrees = topCaretRot,
+                                pivot = beakTipPivot,
+                            )
+                        },
+                        drawBlock = {
+                            drawPath(
+                                path = heronPaths.beak,
+                                color = logoColor,
+                            )
+                        },
+                    )
+
+                    // Instance B: Bottom Caret
+                    withTransform(
+                        transformBlock = {
+                            translate(
+                                left = beakTx,
+                                top = beakTy,
+                            )
+                            rotate(
+                                degrees = bottomCaretRot,
+                                pivot = beakTipPivot,
+                            )
+                        },
+                        drawBlock = {
+                            drawPath(
+                                path = heronPaths.beak,
+                                color = logoColor,
+                            )
+                        },
+                    )
+                }
             }
+        },
+    )
+}
 
-            // 2. Legs: Becomes the horizontal shaft
-            withTransform(
-                transformBlock = {
-                    translate(
-                        left = legTx,
-                        top = legTy,
-                    )
-                    rotate(
-                        degrees = legRotation,
-                        pivot = Offset(
-                            x = 16.5f,
-                            y = 33.5f,
-                        ),
-                    )
-                },
-                drawBlock = {
-                    drawPath(
-                        path = heronPaths.legs,
-                        color = logoColor,
-                    )
-                },
-            )
+@Composable
+private fun logoMorphProgress(
+    isArrow: Boolean,
+): Float {
+    val navigationEventDispatcher = LocalNavigationEventDispatcherOwner.current!!
+        .navigationEventDispatcher
 
-            // 3. Beak: SPLIT into two instances for the Caret
-            val beakTipPivot = Offset(
-                x = 0f,
-                y = 12.1f,
-            )
+    val transitionState = navigationEventDispatcher
+        .transitionState
+        .collectAsState()
 
-            // Instance A: Top Caret
-            withTransform(
-                transformBlock = {
-                    translate(
-                        left = beakTx,
-                        top = beakTy,
-                    )
-                    rotate(
-                        degrees = topCaretRot,
-                        pivot = beakTipPivot,
-                    )
-                },
-                drawBlock = {
-                    drawPath(
-                        path = heronPaths.beak,
-                        color = logoColor,
-                    )
-                },
-            )
-
-            // Instance B: Bottom Caret
-            withTransform(
-                transformBlock = {
-                    translate(
-                        left = beakTx,
-                        top = beakTy,
-                    )
-                    rotate(
-                        degrees = bottomCaretRot,
-                        pivot = beakTipPivot,
-                    )
-                },
-                drawBlock = {
-                    drawPath(
-                        path = heronPaths.beak,
-                        color = logoColor,
-                    )
-                },
-            )
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            isArrow = !isArrow
-            delay(6000)
-        }
+    return when (val value = transitionState.value) {
+        NavigationEventTransitionState.Idle ->
+            if (isArrow) 1f
+            else 0f
+        is NavigationEventTransitionState.InProgress ->
+            if (isArrow) 1f
+            else 1f - value.latestEvent.progress
     }
 }
 
