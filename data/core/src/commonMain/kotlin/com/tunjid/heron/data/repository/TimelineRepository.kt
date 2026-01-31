@@ -42,7 +42,9 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.id
 import com.tunjid.heron.data.core.models.offset
+import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.Id
@@ -161,14 +163,14 @@ class TimelineQuery(
         other as TimelineQuery
 
         if (data != other.data) return false
-        if (timeline.sourceId != other.timeline.sourceId) return false
+        if (timeline.source.id != other.timeline.source.id) return false
 
         return true
     }
 
     override fun hashCode(): Int {
         var result = data.hashCode()
-        result = 31 * result + timeline.sourceId.hashCode()
+        result = 31 * result + timeline.source.id.hashCode()
         return result
     }
 }
@@ -259,7 +261,7 @@ internal class OfflineTimelineRepository(
                 currentRequestWithNextCursor = {
                     getFeed(
                         GetFeedQueryParams(
-                            feed = AtUri(timeline.source.uri),
+                            feed = AtUri(timeline.uri.uri),
                             limit = query.data.limit,
                             cursor = cursor.value,
                         ),
@@ -278,7 +280,7 @@ internal class OfflineTimelineRepository(
                 currentRequestWithNextCursor = {
                     getListFeed(
                         GetListFeedQueryParams(
-                            list = AtUri(timeline.source.uri),
+                            list = AtUri(timeline.uri.uri),
                             limit = query.data.limit,
                             cursor = cursor.value,
                         ),
@@ -409,7 +411,7 @@ internal class OfflineTimelineRepository(
             networkRequestBlock = { query ->
                 getFeed(
                     GetFeedQueryParams(
-                        feed = AtUri(timeline.source.uri),
+                        feed = AtUri(timeline.uri.uri),
                         limit = query.data.limit,
                         cursor = null,
                     ),
@@ -438,7 +440,7 @@ internal class OfflineTimelineRepository(
             networkRequestBlock = { query ->
                 getListFeed(
                     GetListFeedQueryParams(
-                        list = AtUri(timeline.source.uri),
+                        list = AtUri(timeline.uri.uri),
                         limit = query.data.limit,
                         cursor = null,
                     ),
@@ -621,7 +623,7 @@ internal class OfflineTimelineRepository(
                         .merge()
                         .scan(emptyList<Timeline.Home>()) { timelines, timeline ->
                             // Add newest item first
-                            (listOf(timeline) + timelines).distinctBy(Timeline.Home::sourceId)
+                            (listOf(timeline) + timelines).distinctBy { it.source.id }
                         }
                         .map { homeTimelines ->
                             homeTimelines.sortedBy(Timeline.Home::position)
@@ -764,7 +766,7 @@ internal class OfflineTimelineRepository(
             timelineDao.updatePreferredTimelinePresentation(
                 partial = preferredPresentationPartial(
                     signedInProfileId = signedInProfileId,
-                    sourceId = timeline.sourceId,
+                    sourceId = timeline.source.id,
                     presentation = presentation,
                 ),
             )
@@ -810,12 +812,12 @@ internal class OfflineTimelineRepository(
                 onResponse = {
                     multipleEntitySaverProvider.saveInTransaction {
                         if (timelineDao.isFirstPageForDifferentAnchor(signedInProfileId, query)) {
-                            timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
+                            timelineDao.deleteAllFeedsFor(query.timeline.source.id)
                             timelineDao.insertOrPartiallyUpdateTimelineFetchedAt(
                                 listOf(
                                     TimelinePreferencesEntity(
                                         viewingProfileId = signedInProfileId,
-                                        sourceId = query.timeline.sourceId,
+                                        sourceId = query.timeline.source.id,
                                         lastFetchedAt = query.data.cursorAnchor,
                                         preferredPresentation = null,
                                     ),
@@ -875,14 +877,14 @@ internal class OfflineTimelineRepository(
             combine(
                 timelineDao.lastFetchKey(
                     viewingProfileId = signedInProfileId?.id,
-                    sourceId = timeline.sourceId,
+                    sourceId = timeline.source.id,
                 )
                     .map { it?.lastFetchedAt ?: pollInstant }
                     .distinctUntilChangedBy(Instant::toEpochMilliseconds)
                     .flatMapLatest {
                         timelineDao.feedItems(
                             viewingProfileId = signedInProfileId?.id,
-                            sourceId = timeline.sourceId,
+                            sourceId = timeline.source.id,
                             before = it,
                             limit = 1,
                             offset = 0,
@@ -890,7 +892,7 @@ internal class OfflineTimelineRepository(
                     },
                 timelineDao.feedItems(
                     viewingProfileId = signedInProfileId?.id,
-                    sourceId = timeline.sourceId,
+                    sourceId = timeline.source.id,
                     before = pollInstant,
                     limit = 1,
                     offset = 0,
@@ -919,7 +921,7 @@ internal class OfflineTimelineRepository(
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
             timelineDao.feedItems(
                 viewingProfileId = signedInProfileId?.id,
-                sourceId = query.timeline.sourceId,
+                sourceId = query.timeline.source.id,
                 before = query.data.cursorAnchor,
                 offset = query.data.offset,
                 limit = query.data.limit,
@@ -1247,7 +1249,7 @@ private suspend fun TimelineDao.isFirstPageForDifferentAnchor(
     if (query.data.page != 0) return false
     val lastFetchedAt = lastFetchKey(
         viewingProfileId = signedInProfileId?.id,
-        sourceId = query.timeline.sourceId,
+        sourceId = query.timeline.source.id,
     ).first()?.lastFetchedAt
     return lastFetchedAt?.toEpochMilliseconds() != query.data.cursorAnchor.toEpochMilliseconds()
 }

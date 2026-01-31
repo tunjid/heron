@@ -44,6 +44,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.id
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.images.AsyncImage
@@ -230,11 +231,11 @@ private fun Timeline.creator(): String = when (this) {
     -> null
 } ?: ""
 
-val Timeline.sharedElementPrefix get() = sourceId
+val Timeline.sharedElementPrefix get() = source.id
 
 fun Timeline.sharedElementPrefix(
     quotingPostUri: PostUri?,
-) = sourceId.withQuotingPostUriPrefix(
+) = source.id.withQuotingPostUriPrefix(
     quotingPostUri = quotingPostUri,
 )
 
