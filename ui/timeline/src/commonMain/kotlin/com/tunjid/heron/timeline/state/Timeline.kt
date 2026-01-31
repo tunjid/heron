@@ -198,8 +198,7 @@ private fun Flow<TimelineState.Action.DismissRefresh>.dismissRefreshMutations():
 
 private fun TimelineQuery.updateData(
     data: CursorQuery.Data,
-): TimelineQuery = TimelineQuery(
-    source = source,
+): TimelineQuery = copy(
     data = data,
 )
 
