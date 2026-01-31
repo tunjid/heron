@@ -42,7 +42,7 @@ sealed interface Timeline {
     val supportedPresentations: List<Presentation>
 
     @Serializable
-    sealed interface Source {
+    sealed interface Source: UrlEncodableModel {
         @Serializable
         sealed interface Reference : Source
 
