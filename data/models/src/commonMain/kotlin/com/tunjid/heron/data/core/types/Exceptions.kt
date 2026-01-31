@@ -48,3 +48,7 @@ class RecordCreationException(
     profileId: ProfileId,
     collection: String,
 ) : IllegalArgumentException("Record creation for $profileId in collection $collection failed")
+
+class SessionSwitchException(
+    profileId: ProfileId,
+) : Exception("Unable to switch to a session for profile with id $profileId")
