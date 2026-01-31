@@ -75,7 +75,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                 modifier = Modifier
                     .padding(start = 8.dp)
                     .size(36.dp),
-                canGoBack = false,
+                isRootDestination = true,
             )
         },
         title = title,
@@ -157,7 +157,7 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
                     .padding(start = 8.dp)
                     .clickable(onClick = onBackPressed)
                     .size(36.dp),
-                canGoBack = true,
+                isRootDestination = false,
             )
         },
         title = {

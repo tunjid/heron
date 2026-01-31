@@ -234,7 +234,7 @@ private fun PaneScaffoldState.TopBar(
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .size(36.dp),
-                canGoBack = false,
+                isRootDestination = true,
             )
         },
         title = {

@@ -32,26 +32,29 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.UpdatedMovableSharedElementOf
 
 @Composable
 fun MovableElementSharedTransitionScope.AppLogo(
     modifier: Modifier,
-    canGoBack: Boolean,
+    isRootDestination: Boolean,
 ) {
     UpdatedMovableSharedElementOf(
         sharedContentState = rememberSharedContentState("AppLogo"),
-        zIndexInOverlay = 40f,
-        state = canGoBack,
+        zIndexInOverlay = UiTokens.navigationIconZIndex,
+        state = isRootDestination,
         modifier = modifier,
-        sharedElement = { isArrow, innerModifier ->
+        sharedElement = { isRootDestination, innerModifier ->
             val logoColor = MaterialTheme.colorScheme.onSurface
             val bodyColor = Color(color = 0xFF607B8B)
 
             val heronPaths = remember(::HeronPaths)
             val progressState = animateFloatAsState(
-                targetValue = logoMorphProgress(isArrow),
+                targetValue = logoMorphProgress(
+                    isArrow = !isRootDestination,
+                ),
                 label = "LogoAnimation",
             )
 
