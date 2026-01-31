@@ -41,22 +41,28 @@ sealed interface Timeline {
 
     val supportedPresentations: List<Presentation>
 
-    sealed interface Source {
-
+    @Serializable
+    sealed interface Source : UrlEncodableModel {
+        @Serializable
         sealed interface Reference : Source
 
+        @Serializable
         data object Following : Reference
 
+        @Serializable
         sealed interface Record : Reference {
+            @Serializable
             data class List(
                 val uri: ListUri,
             ) : Record
 
+            @Serializable
             data class Feed(
                 val uri: FeedGeneratorUri,
             ) : Record
         }
 
+        @Serializable
         data class Profile(
             val profileId: ProfileId,
             val type: Timeline.Profile.Type,
