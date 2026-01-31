@@ -151,29 +151,10 @@ sealed interface TimelineRequest {
     }
 }
 
-class TimelineQuery(
+data class TimelineQuery(
     override val data: CursorQuery.Data,
     val source: Timeline.Source,
-) : CursorQuery {
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || this::class != other::class) return false
-
-        other as TimelineQuery
-
-        if (data != other.data) return false
-        if (source.id != other.source.id) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = data.hashCode()
-        result = 31 * result + source.id.hashCode()
-        return result
-    }
-}
+) : CursorQuery
 
 interface TimelineRepository {
 

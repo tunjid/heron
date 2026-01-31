@@ -203,8 +203,7 @@ private fun TimelineQuery.updateData(
     data = data,
 )
 
-private fun TimelineQuery.refresh(): TimelineQuery = TimelineQuery(
-    source = source,
+private fun TimelineQuery.refresh(): TimelineQuery = copy(
     data = data.reset(),
 )
 
