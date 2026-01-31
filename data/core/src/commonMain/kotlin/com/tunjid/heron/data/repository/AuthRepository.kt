@@ -179,11 +179,10 @@ internal class AuthTokenRepository(
         val switched = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
             if (signedInProfileId == sessionSummary.profileId) return@inCurrentProfileSession true
 
-            if (signedInProfileId != sessionSummary.profileId) {
-                savedStateDataSource.switchSession(
-                    profileId = sessionSummary.profileId,
-                )
-            }
+            savedStateDataSource.switchSession(
+                profileId = sessionSummary.profileId,
+            )
+
             false
         } ?: true
 
