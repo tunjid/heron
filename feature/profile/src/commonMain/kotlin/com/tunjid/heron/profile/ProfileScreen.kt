@@ -1320,7 +1320,10 @@ private fun ProfileTimeline(
                                                 recordDestination(
                                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                     sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                                                    otherModels = listOfNotNull(action.warnedAppliedLabels),
+                                                    otherModels = buildList {
+                                                        action.warnedAppliedLabels?.let(::add)
+                                                        add(timelineState.timeline.source)
+                                                    },
                                                     record = action.post,
                                                 ),
                                             ),
@@ -1355,6 +1358,9 @@ private fun ProfileTimeline(
                                                         quotingPostUri = action.owningPostUri,
                                                     ),
                                                     record = action.record,
+                                                    otherModels = listOf(
+                                                        timelineState.timeline.source,
+                                                    ),
                                                 ),
                                             ),
                                         )
@@ -1371,6 +1377,7 @@ private fun ProfileTimeline(
                                                     sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                         quotingPostUri = action.quotingPostUri,
                                                     ),
+                                                    source = timelineState.timeline.source,
                                                 ),
                                             ),
                                         )

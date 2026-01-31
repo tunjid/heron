@@ -342,7 +342,10 @@ private fun FeedTimeline(
                                                     recordDestination(
                                                         referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                                                        otherModels = listOfNotNull(action.warnedAppliedLabels),
+                                                        otherModels = buildList {
+                                                            action.warnedAppliedLabels?.let(::add)
+                                                            add(timelineState.timeline.source)
+                                                        },
                                                         record = action.post,
                                                     ),
                                                 ),
@@ -376,6 +379,9 @@ private fun FeedTimeline(
                                                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                             quotingPostUri = action.owningPostUri,
                                                         ),
+                                                        otherModels = listOf(
+                                                            timelineState.timeline.source,
+                                                        ),
                                                         record = action.record,
                                                     ),
                                                 ),
@@ -393,6 +399,7 @@ private fun FeedTimeline(
                                                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                             quotingPostUri = action.quotingPostUri,
                                                         ),
+                                                        source = timelineState.timeline.source,
                                                     ),
                                                 ),
                                             )
