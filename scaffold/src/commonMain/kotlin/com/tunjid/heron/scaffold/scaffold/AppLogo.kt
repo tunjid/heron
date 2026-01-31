@@ -321,4 +321,4 @@ private const val LogoViewportWidth = 35f
 private const val LogoViewportHeight = 48f
 
 private const val BackArrowProgress = 1f
-private const val HeronLogoProgress = 1f
+private const val HeronLogoProgress = 0f
