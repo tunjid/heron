@@ -51,7 +51,6 @@ import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
-import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
@@ -750,11 +749,7 @@ internal class OfflinePostRepository @Inject constructor(
             text = text,
             reply = reply,
             embed = postEmbedUnion(
-                embeddedRecordReference = metadata.embeddedRecordReference
-                    ?: metadata
-                        .quote
-                        ?.interaction
-                        ?.let { Record.Reference(it.postId, it.postUri) },
+                embeddedRecordReference = metadata.embeddedRecordReference,
                 mediaBlobs = blobs,
             ),
             facets = resolvedLinks.facet(),
@@ -765,33 +760,26 @@ internal class OfflinePostRepository @Inject constructor(
 
     private suspend fun Post.Create.Request.mediaBlobs(): Result<List<MediaBlob>> =
         runCatchingUnlessCancelled {
-            val blobs = when {
-                metadata.embeddedMedia.isNotEmpty() -> coroutineScope {
-                    metadata.embeddedMedia.map { file ->
-                        async {
-                            when (file) {
-                                is File.Media.Photo -> fileManager.source(file).use {
-                                    networkService.uploadImageBlob(data = it)
-                                }
-                                is File.Media.Video -> videoUploadService.uploadVideo(
-                                    file = file,
-                                )
+            val blobs = coroutineScope {
+                metadata.embeddedMedia.map { file ->
+                    async {
+                        when (file) {
+                            is File.Media.Photo -> fileManager.source(file).use {
+                                networkService.uploadImageBlob(data = it)
                             }
-                                .map(file::with)
-                                .onSuccess { fileManager.delete(file) }
+                            is File.Media.Video -> videoUploadService.uploadVideo(
+                                file = file,
+                            )
                         }
+                            .map(file::with)
+                            .onSuccess { fileManager.delete(file) }
                     }
-                        .awaitAll()
-                        .mapNotNull(Result<MediaBlob?>::getOrNull)
                 }
-                @Suppress("DEPRECATION")
-                // Deprecated media upload path is no longer supported
-                metadata.mediaFiles.isNotEmpty() -> emptyList()
-                else -> emptyList()
+                    .awaitAll()
+                    .mapNotNull(Result<MediaBlob?>::getOrNull)
             }
 
-            val mediaToUploadCount = metadata.embeddedMedia.size.takeIf { it > 0 }
-                ?: @Suppress("DEPRECATION") metadata.mediaFiles.size
+            val mediaToUploadCount = metadata.embeddedMedia.size
 
             if (mediaToUploadCount > 0 && blobs.size != mediaToUploadCount) {
                 throw Exception("Media upload failed")

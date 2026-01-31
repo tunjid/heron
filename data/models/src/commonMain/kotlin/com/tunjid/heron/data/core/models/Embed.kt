@@ -26,56 +26,6 @@ sealed interface Embed {
         UrlEncodableModel
 }
 
-@Deprecated(
-    "Use the File API",
-    replaceWith = ReplaceWith(
-        "File.Media",
-        "com.tunjid.heron.data.core.utilities.File",
-    ),
-)
-@Serializable
-sealed class MediaFile : UrlEncodableModel {
-    abstract val data: ByteArray
-    abstract val width: Long
-    abstract val height: Long
-
-    @Deprecated(
-        "Use the File API",
-        replaceWith = ReplaceWith(
-            "File.Media.Photo",
-            "com.tunjid.heron.data.core.utilities.File",
-        ),
-    )
-    @Serializable
-    class Photo(
-        override val data: ByteArray,
-        override val width: Long,
-        override val height: Long,
-        val altText: String = "",
-    ) : MediaFile() {
-        override fun toString(): String =
-            "Photo(data.size=${data.size}, width=$width, height=$height, altText='$altText')"
-    }
-
-    @Deprecated(
-        "Use the File API",
-        replaceWith = ReplaceWith(
-            "File.Media.Video",
-            "com.tunjid.heron.data.core.utilities.File",
-        ),
-    )
-    @Serializable
-    class Video(
-        override val data: ByteArray,
-        override val width: Long,
-        override val height: Long,
-        val altText: String? = null,
-    ) : MediaFile() {
-        override fun toString(): String =
-            "Video(data.size=${data.size}, width=$width, height=$height, altText=$altText)"
-    }
-}
-
 /**
  * Provides the width and height of an item if available.
  *
