@@ -426,7 +426,6 @@ sealed class TimelineItem {
             bookmarkCount = 0,
             indexedAt = Instant.DISTANT_PAST,
             embed = null,
-            quote = null,
             record = null,
             viewerStats = null,
             labels = emptyList(),

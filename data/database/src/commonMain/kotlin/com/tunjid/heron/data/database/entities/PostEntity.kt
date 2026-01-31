@@ -230,7 +230,6 @@ fun PopulatedPostEntity.asExternalModel(
 
         else -> null
     },
-    quote = null,
     record = entity.record?.asExternalModel(),
     viewerStats = postStatisticsEntity?.asExternalModel(),
     viewerState = viewerStateEntity?.asExternalModel(),

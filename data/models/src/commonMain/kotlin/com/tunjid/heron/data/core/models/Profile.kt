@@ -122,38 +122,12 @@ data class Profile(
         val displayName: String,
         @ProtoNumber(3)
         val description: String,
-        @Deprecated(
-            message = "Image data should be read separately.",
-            replaceWith = ReplaceWith(
-                "avatarFile",
-                "com.tunjid.heron.data.core.utilities.File",
-            ),
-        )
-        @ProtoNumber(4)
-        val avatar: MediaFile.Photo? = null,
-        @Deprecated(
-            message = "Image data should be read separately.",
-            replaceWith = ReplaceWith(
-                "bannerFile",
-                "com.tunjid.heron.data.core.utilities.File",
-            ),
-        )
-        @ProtoNumber(5)
-        val banner: MediaFile.Photo? = null,
+        // Field's 4 & 5 were deprecated
         @ProtoNumber(6)
         val avatarFile: File.Media.Photo?,
         @ProtoNumber(7)
         val bannerFile: File.Media.Photo?,
-    ) {
-        init {
-            @Suppress("DEPRECATION")
-            val usedDeprecatedFields = avatar != null || banner != null
-            val usedPreferredFields = avatarFile != null || bannerFile != null
-            require(!(usedDeprecatedFields && usedPreferredFields)) {
-                "Using both deprecated and new file fields is not allowed"
-            }
-        }
-    }
+    )
 
     @Serializable
     data class ChatInfo(

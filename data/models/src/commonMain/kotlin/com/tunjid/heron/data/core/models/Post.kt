@@ -42,14 +42,6 @@ data class Post(
     val bookmarkCount: Long = 0,
     val indexedAt: Instant,
     val embed: Embed?,
-    @Deprecated(
-        message = "Use the quotedPost extension instead",
-        replaceWith = ReplaceWith(
-            expression = "quotedPost",
-            "com.tunjid.heron.data.core.models.quotedPost",
-        ),
-    )
-    val quote: Post?,
     val record: Record?,
     val viewerStats: ViewerStats?,
     val labels: List<Label>,
@@ -101,36 +93,17 @@ data class Post(
 
         @Serializable
         data class Metadata(
-            @Deprecated(
-                message = "Use the embeddedRecordReference field instead",
-            )
-            @ProtoNumber(1)
-            val quote: Quote? = null,
+            // @ProtoNumber(1) is for a deprecated field
             @ProtoNumber(2)
             val reply: Reply? = null,
-            @ProtoNumber(3)
-            @Deprecated(
-                message = "Media data should be read separately",
-                replaceWith = ReplaceWith(
-                    "embeddedMedia",
-                    "com.tunjid.heron.data.core.utilities.File",
-                ),
-            )
-            val mediaFiles: List<MediaFile> = emptyList(),
+            // @ProtoNumber(3) is for a deprecated field
             @ProtoNumber(4)
             val embeddedMedia: List<File.Media> = emptyList(),
             @ProtoNumber(5)
             val embeddedRecordReference: com.tunjid.heron.data.core.models.Record.Reference? = null,
             @ProtoNumber(6)
             val allowed: ThreadGate.Allowed? = null,
-        ) {
-            init {
-                @Suppress("DEPRECATION")
-                require(!(mediaFiles.isNotEmpty() && embeddedMedia.isNotEmpty())) {
-                    "Using both the deprecated mediaFiles and embeddedMedia fields is not allowed"
-                }
-            }
-        }
+        )
 
         @Serializable
         data class Reply(

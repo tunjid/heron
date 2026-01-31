@@ -173,7 +173,6 @@ private fun post(
         is VideoEntity -> embedEntity.asExternalModel()
         null -> null
     },
-    quote = quote,
     viewerStats = viewerStatisticsEntity?.asExternalModel(),
     viewerState = viewerStateEntity?.asExternalModel(),
     labels = labels,
