@@ -30,10 +30,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -42,6 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -53,10 +51,7 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.threepane.ThreePane
-import heron.ui.core.generated.resources.go_back
-import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun PaneScaffoldState.RootDestinationTopAppBar(
@@ -82,6 +77,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                 modifier = Modifier
                     .padding(start = 8.dp)
                     .size(36.dp),
+                isRootDestination = true,
             )
         },
         title = title,
@@ -158,23 +154,13 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
             containerColor = Color.Transparent,
         ),
         navigationIcon = {
-            AnimatedVisibility(
+            AppLogo(
                 modifier = Modifier
-                    .padding(horizontal = 8.dp),
-                visible = paneState.pane == ThreePane.Primary,
-                enter = BackArrowEnter,
-                exit = BackArrowExit,
-                content = {
-                    FilledTonalIconButton(
-                        modifier = Modifier,
-                        onClick = onBackPressed,
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = stringResource(CommonStrings.go_back),
-                        )
-                    }
-                },
+                    .padding(start = 8.dp)
+                    .clip(CircleShape)
+                    .clickable(onClick = onBackPressed)
+                    .size(36.dp),
+                isRootDestination = false,
             )
         },
         title = {

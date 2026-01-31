@@ -39,6 +39,7 @@ internal fun SplashScreen(
             modifier = Modifier
                 .size(128.dp)
                 .align(Alignment.Center),
+            isRootDestination = true,
         )
     }
 }
