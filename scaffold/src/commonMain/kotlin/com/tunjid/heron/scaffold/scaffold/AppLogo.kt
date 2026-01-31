@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -44,20 +45,19 @@ fun MovableElementSharedTransitionScope.AppLogo(
     isRootDestination: Boolean,
 ) {
     UpdatedMovableSharedElementOf(
-        sharedContentState = rememberSharedContentState("AppLogo"),
+        sharedContentState = rememberSharedContentState(AppLogo),
         zIndexInOverlay = UiTokens.navigationIconZIndex,
         state = isRootDestination,
         modifier = modifier,
         sharedElement = { isRootDestination, innerModifier ->
+            // This is written so only theme changes cause recompositions
+            // All snapshot state is read in the DrawScope lambda
             val bodyColor = MaterialTheme.colorScheme.onSurface
             val backgroundColor = ButtonDefaults.filledTonalButtonColors().containerColor
 
             val heronPaths = remember(::HeronPaths)
-            val progressState = animateFloatAsState(
-                targetValue = logoMorphProgress(
-                    isArrow = !isRootDestination,
-                ),
-                label = "LogoAnimation",
+            val progressState = logoMorphProgressState(
+                isArrow = !isRootDestination,
             )
 
             Canvas(
@@ -228,9 +228,9 @@ fun MovableElementSharedTransitionScope.AppLogo(
 }
 
 @Composable
-private fun logoMorphProgress(
+private fun logoMorphProgressState(
     isArrow: Boolean,
-): Float {
+): State<Float> {
     val navigationEventDispatcher = LocalNavigationEventDispatcherOwner.current!!
         .navigationEventDispatcher
 
@@ -238,14 +238,17 @@ private fun logoMorphProgress(
         .transitionState
         .collectAsState()
 
-    return when (val value = transitionState.value) {
-        NavigationEventTransitionState.Idle ->
-            if (isArrow) 1f
-            else 0f
-        is NavigationEventTransitionState.InProgress ->
-            if (isArrow) 1f
-            else 1f - value.latestEvent.progress
-    }
+    return animateFloatAsState(
+        targetValue = when (val value = transitionState.value) {
+            NavigationEventTransitionState.Idle ->
+                if (isArrow) BackArrowProgress
+                else HeronLogoProgress
+            is NavigationEventTransitionState.InProgress ->
+                if (isArrow) BackArrowProgress
+                else BackArrowProgress - value.latestEvent.progress
+        },
+        label = "LogoAnimation",
+    )
 }
 
 /**
@@ -311,6 +314,11 @@ class HeronPaths {
     }
 }
 
+private object AppLogo
+
 private val HeadColor = Color(color = 0xFF607B8B)
 private const val LogoViewportWidth = 35f
 private const val LogoViewportHeight = 48f
+
+private const val BackArrowProgress = 1f
+private const val HeronLogoProgress = 1f
