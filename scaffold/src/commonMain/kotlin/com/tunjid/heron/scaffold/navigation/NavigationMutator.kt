@@ -550,36 +550,42 @@ private fun CoroutineScope.persistNavigationState(
 private fun RouteParser.parseMultiStackNav(
     navigation: SavedState.Navigation,
     isSignedIn: Boolean,
-) = navigation.backStacks
-    .foldIndexed(
-        initial = MultiStackNav(
-            name = if (isSignedIn) SignedInNavigationState.name
-            else SignedOutNavigationState.name,
-        ),
-        operation = { index, multiStackNav, routesForStack ->
-            multiStackNav.copy(
-                stacks = multiStackNav.stacks +
-                    routesForStack.fold(
-                        initial = StackNav(
-                            name = when {
-                                isSignedIn -> SignedInNavigationState
-                                else -> SignedOutNavigationState
-                            }.stacks.getOrNull(index)?.name ?: "Unknown",
+): MultiStackNav {
+    val restored = navigation.backStacks
+        .foldIndexed(
+            initial = MultiStackNav(
+                name = if (isSignedIn) SignedInNavigationState.name
+                else SignedOutNavigationState.name,
+            ),
+            operation = { index, multiStackNav, routesForStack ->
+                multiStackNav.copy(
+                    stacks = multiStackNav.stacks +
+                        routesForStack.fold(
+                            initial = StackNav(
+                                name = when {
+                                    isSignedIn -> SignedInNavigationState
+                                    else -> SignedOutNavigationState
+                                }.stacks.getOrNull(index)?.name ?: "Unknown",
+                            ),
+                            operation = innerFold@{ stackNav, route ->
+                                val resolvedRoute =
+                                    parse(pathAndQueries = route) ?: unknownRoute()
+                                stackNav.copy(
+                                    children = stackNav.children + resolvedRoute,
+                                )
+                            },
                         ),
-                        operation = innerFold@{ stackNav, route ->
-                            val resolvedRoute =
-                                parse(pathAndQueries = route) ?: unknownRoute()
-                            stackNav.copy(
-                                children = stackNav.children + resolvedRoute,
-                            )
-                        },
-                    ),
-            )
-        },
-    )
-    .copy(
-        currentIndex = navigation.activeNav,
-    )
+                )
+            },
+        )
+        .copy(
+            currentIndex = navigation.activeNav,
+        )
+
+    // Don't put a signed in user on the sign in screen
+    return if (restored.current?.id == AppStack.Auth.rootRoute.id) SignedInNavigationState
+    else restored
+}
 
 private fun MultiStackNav.toSavedState() = SavedState.Navigation(
     activeNav = currentIndex,
