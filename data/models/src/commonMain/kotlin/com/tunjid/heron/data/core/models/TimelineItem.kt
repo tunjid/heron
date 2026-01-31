@@ -18,6 +18,7 @@ package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.models.Timeline.Presentation.Media
 import com.tunjid.heron.data.core.models.Timeline.Presentation.Text
+import com.tunjid.heron.data.core.models.Timeline.Source
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
@@ -60,14 +61,6 @@ sealed interface Timeline {
         ) : Source
 
     }
-
-    val Source.id
-        get() = when (this) {
-            Source.Following -> Constants.timelineFeed.uri
-            is Source.Profile -> type.sourceId(profileId)
-            is Source.Record.Feed -> uri.uri
-            is Source.Record.List -> uri.uri
-        }
 
     @Serializable
     sealed class Home(
@@ -352,6 +345,14 @@ sealed interface Timeline {
         }
     }
 }
+
+val Source.id
+    get() = when (this) {
+        Source.Following -> Constants.timelineFeed.uri
+        is Source.Profile -> type.sourceId(profileId)
+        is Source.Record.Feed -> uri.uri
+        is Source.Record.List -> uri.uri
+    }
 
 val Timeline.uri: Uri?
     get() = when (this) {
