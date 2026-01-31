@@ -176,7 +176,6 @@ sealed interface Timeline {
                 Type.Videos -> AllPresentations
             }
 
-        @Serializable
         enum class Type(
             val suffix: String,
         ) {
