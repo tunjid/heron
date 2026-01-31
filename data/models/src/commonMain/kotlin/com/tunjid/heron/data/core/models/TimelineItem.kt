@@ -40,6 +40,35 @@ sealed interface Timeline {
 
     val supportedPresentations: List<Presentation>
 
+    sealed interface Source {
+
+        data object Following : Source
+
+        sealed interface Record : Source {
+            data class List(
+                val uri: ListUri,
+            ) : Record
+
+            data class Feed(
+                val uri: FeedGeneratorUri,
+            ) : Record
+        }
+
+        data class Profile(
+            val profileId: ProfileId,
+            val type: Timeline.Profile.Type,
+        ) : Source
+
+    }
+
+    val Source.id
+        get() = when (this) {
+            Source.Following -> Constants.timelineFeed.uri
+            is Source.Profile -> type.sourceId(profileId)
+            is Source.Record.Feed -> uri.uri
+            is Source.Record.List -> uri.uri
+        }
+
     @Serializable
     sealed class Home(
         val source: Uri,
@@ -346,7 +375,7 @@ sealed class TimelineItem {
             is Thread,
             is Single,
             is Loading,
-            -> post.indexedAt
+                -> post.indexedAt
 
             is Repost -> at
         }
