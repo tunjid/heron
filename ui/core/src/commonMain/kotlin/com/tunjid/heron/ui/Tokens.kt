@@ -53,7 +53,6 @@ object UiTokens {
 
     const val navigationIconZIndex = 16f
 
-
     @Stable
     fun higherThanAppBarSharedElementZIndex(
         index: Int = 0,
