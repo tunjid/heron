@@ -18,6 +18,7 @@ package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.models.Timeline.Presentation.Media
 import com.tunjid.heron.data.core.models.Timeline.Presentation.Text
+import com.tunjid.heron.data.core.models.Timeline.Source
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
@@ -32,7 +33,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed interface Timeline {
 
-    val sourceId: String
+    val source: Source
 
     val lastRefreshed: Instant?
 
@@ -40,17 +41,36 @@ sealed interface Timeline {
 
     val supportedPresentations: List<Presentation>
 
+    sealed interface Source {
+
+        sealed interface Reference : Source
+
+        data object Following : Reference
+
+        sealed interface Record : Reference {
+            data class List(
+                val uri: ListUri,
+            ) : Record
+
+            data class Feed(
+                val uri: FeedGeneratorUri,
+            ) : Record
+        }
+
+        data class Profile(
+            val profileId: ProfileId,
+            val type: Timeline.Profile.Type,
+        ) : Source
+    }
+
     @Serializable
     sealed class Home(
-        val source: Uri,
+        override val source: Source.Reference,
     ) : Timeline {
 
         abstract val position: Int
 
         abstract val name: String
-
-        override val sourceId: String
-            get() = source.uri
 
         abstract val isPinned: Boolean
 
@@ -62,7 +82,7 @@ sealed interface Timeline {
             override val presentation: Presentation,
             override val isPinned: Boolean,
         ) : Home(
-            source = Constants.timelineFeed,
+            source = Source.Following,
         ) {
             override val supportedPresentations get() = TextOnlyPresentations
         }
@@ -75,7 +95,7 @@ sealed interface Timeline {
             override val isPinned: Boolean,
             val feedList: FeedList,
         ) : Home(
-            source = feedList.uri,
+            source = Source.Record.List(feedList.uri),
         ) {
             override val name: String
                 get() = feedList.name
@@ -104,7 +124,7 @@ sealed interface Timeline {
             override val isPinned: Boolean,
             val feedGenerator: FeedGenerator,
         ) : Home(
-            source = feedGenerator.uri,
+            source = Source.Record.Feed(feedGenerator.uri),
         ) {
             override val name: String
                 get() = feedGenerator.displayName
@@ -138,8 +158,8 @@ sealed interface Timeline {
         override val presentation: Presentation,
     ) : Timeline {
 
-        override val sourceId: String
-            get() = type.sourceId(profileId)
+        override val source: Source
+            get() = Source.Profile(profileId, type)
 
         override val supportedPresentations: List<Presentation>
             get() = when (type) {
@@ -324,11 +344,29 @@ sealed interface Timeline {
     }
 }
 
+val Source.id
+    get() = when (this) {
+        Source.Following -> Constants.timelineFeed.uri
+        is Source.Profile -> type.sourceId(profileId)
+        is Source.Record.Feed -> uri.uri
+        is Source.Record.List -> uri.uri
+    }
+
+val Timeline.sourceId: String
+    get() = source.id
+
+val Timeline.Home.uri: Uri
+    get() = when (val source = source) {
+        Source.Following -> Constants.timelineFeed
+        is Source.Record.Feed -> source.uri
+        is Source.Record.List -> source.uri
+    }
+
 val Timeline.uri: Uri?
     get() = when (this) {
-        is Timeline.Home -> source
+        is Timeline.Home -> uri
         is Timeline.Profile -> null
-        is Timeline.StarterPack -> listTimeline.source
+        is Timeline.StarterPack -> listTimeline.uri
     }
 
 sealed class TimelineItem {

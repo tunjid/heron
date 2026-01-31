@@ -100,6 +100,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.id
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.ProfileId
@@ -502,7 +503,7 @@ private fun timelineTabs(
 
         is ProfileScreenStateHolders.Timeline -> Tab(
             title = holder.state.value.timeline.displayName(),
-            hasUpdate = sourceIdsToHasUpdates[holder.state.value.timeline.sourceId] == true,
+            hasUpdate = sourceIdsToHasUpdates[holder.state.value.timeline.source.id] == true,
         )
         is ProfileScreenStateHolders.LabelerSettings -> Tab(
             title = stringResource(Res.string.labels),
@@ -1297,7 +1298,7 @@ private fun ProfileTimeline(
                         item = item,
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                         presentation = presentation,
-                        postActions = remember(timelineState.timeline.sourceId) {
+                        postActions = remember(timelineState.timeline.source.id) {
                             PostActions { action ->
                                 when (action) {
                                     is PostAction.OfLinkTarget -> {
@@ -1335,7 +1336,7 @@ private fun ProfileTimeline(
                                                     profile = action.profile,
                                                     avatarSharedElementKey = action.post
                                                         .avatarSharedElementKey(
-                                                            prefix = timelineState.timeline.sourceId,
+                                                            prefix = timelineState.timeline.source.id,
                                                             quotingPostUri = action.quotingPostUri,
                                                         )
                                                         .takeIf { action.post.author.did == action.profile.did },

@@ -20,6 +20,7 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.sourceId
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
