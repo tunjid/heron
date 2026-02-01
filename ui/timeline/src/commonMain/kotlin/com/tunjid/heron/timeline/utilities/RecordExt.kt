@@ -85,6 +85,7 @@ fun EmbeddedRecord(
                     postActions.onPostAction(
                         PostAction.OfPost(
                             post = record,
+                            isMainPost = false,
                             warnedAppliedLabels = null,
                         ),
                     )
@@ -109,6 +110,7 @@ fun EmbeddedRecord(
                 onPostMediaClicked = { mediaEmbed, index, post ->
                     postActions.onPostAction(
                         PostAction.OfMedia(
+                            isMainPost = false,
                             media = mediaEmbed,
                             index = index,
                             post = post,
