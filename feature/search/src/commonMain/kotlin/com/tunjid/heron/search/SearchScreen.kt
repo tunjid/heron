@@ -201,7 +201,6 @@ internal fun SearchScreen(
                     media = media,
                     startIndex = index,
                     sharedElementPrefix = sharedElementPrefix,
-                    source = null,
                 ),
             )
         }

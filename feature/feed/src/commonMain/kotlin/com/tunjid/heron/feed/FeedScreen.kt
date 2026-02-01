@@ -399,7 +399,9 @@ private fun FeedTimeline(
                                                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                             quotingPostUri = action.quotingPostUri,
                                                         ),
-                                                        source = timelineState.timeline.source,
+                                                        otherModels = buildList {
+                                                            add(timelineState.timeline.source)
+                                                        },
                                                     ),
                                                 ),
                                             )
