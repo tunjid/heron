@@ -301,6 +301,7 @@ private fun PostSearchResult(
             postActions.onPostAction(
                 PostAction.OfPost(
                     post = result.timelineItem.post,
+                    isMainPost = true,
                     warnedAppliedLabels = result.timelineItem.appliedLabels.warned(),
                 ),
             )
