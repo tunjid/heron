@@ -141,40 +141,50 @@ private fun MultipleEntitySaver.add(
     messageId: MessageId,
     record: RecordViewRecordUnion.ViewRecord,
 ) {
-    record.value.embeds?.forEach { embed ->
-        val postView = PostView(
-            uri = record.value.uri,
-            cid = record.value.cid,
-            author = record.value.author,
-            record = record.value.value,
-            embed = when (embed) {
-                is MessagePost.ExternalView -> TimelinePost.ExternalView(embed.value)
-                is MessagePost.ImagesView -> TimelinePost.ImagesView(embed.value)
-                is MessagePost.RecordView -> TimelinePost.RecordView(embed.value)
-                is MessagePost.RecordWithMediaView -> TimelinePost.RecordWithMediaView(embed.value)
-                is MessagePost.Unknown -> TimelinePost.Unknown(embed.value)
-                is MessagePost.VideoView -> TimelinePost.VideoView(embed.value)
-            },
-            replyCount = record.value.replyCount,
-            repostCount = record.value.repostCount,
-            likeCount = record.value.likeCount,
-            quoteCount = record.value.quoteCount,
-            indexedAt = record.value.indexedAt,
-            viewer = null,
-            labels = record.value.labels,
-            threadgate = null,
-        )
-        add(
-            viewingProfileId = viewingProfileId,
-            postView = postView,
-        )
-        add(
-            entity = MessagePostEntity(
-                messageId = messageId,
-                postUri = postView.uri.atUri.let(::PostUri),
+    val postView = record.value
+        .embeds
+        .orEmpty()
+        .fold(
+            PostView(
+                uri = record.value.uri,
+                cid = record.value.cid,
+                author = record.value.author,
+                record = record.value.value,
+                embed = null,
+                replyCount = record.value.replyCount,
+                repostCount = record.value.repostCount,
+                likeCount = record.value.likeCount,
+                quoteCount = record.value.quoteCount,
+                indexedAt = record.value.indexedAt,
+                viewer = null,
+                labels = record.value.labels,
+                threadgate = null,
             ),
-        )
-    }
+        ) { postView, embed ->
+            // This is an error in the upstream lexicon. Only one embed should in a record
+            // Here, the last (and only) embed present is actually written.
+            postView.copy(
+                embed = when (embed) {
+                    is MessagePost.ExternalView -> TimelinePost.ExternalView(embed.value)
+                    is MessagePost.ImagesView -> TimelinePost.ImagesView(embed.value)
+                    is MessagePost.RecordView -> TimelinePost.RecordView(embed.value)
+                    is MessagePost.RecordWithMediaView -> TimelinePost.RecordWithMediaView(embed.value)
+                    is MessagePost.Unknown -> TimelinePost.Unknown(embed.value)
+                    is MessagePost.VideoView -> TimelinePost.VideoView(embed.value)
+                },
+            )
+        }
+
+    add(
+        viewingProfileId = viewingProfileId,
+        postView = postView,
+    )
+    add(
+        entity = MessagePostEntity(
+            messageId = messageId,
+            postUri = postView.uri.atUri.let(::PostUri),
+        ),
+    )
 }
 
 internal fun MultipleEntitySaver.add(
