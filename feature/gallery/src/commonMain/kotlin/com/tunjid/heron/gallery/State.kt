@@ -61,7 +61,7 @@ data class State(
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
     @Transient
-    val items: TiledList<CursorQuery, GalleryThing> = emptyTiledList(),
+    val items: TiledList<CursorQuery, GalleryItem> = emptyTiledList(),
     @Transient
     val messages: List<Memo> = emptyList(),
 )
@@ -74,14 +74,14 @@ fun State(
     items = tiledListOf(
         DataQuery(
             data = CursorQuery.defaultStartData(),
-        ) to GalleryThing(
+        ) to GalleryItem(
             sharedElementPrefix = route.sharedElementPrefix,
             startIndex = route.startIndex,
             threadGate = null,
             viewerState = null,
             media = when (val media = route.model<Embed.Media>()) {
-                is ImageList -> media.images.map(GalleryItem::Photo)
-                is Video -> listOf(GalleryItem.Video(media))
+                is ImageList -> media.images.map(GalleryItem.Media::Photo)
+                is Video -> listOf(GalleryItem.Media.Video(media))
                 null -> emptyList()
             },
             post = Post(
@@ -109,33 +109,32 @@ fun State(
     ),
 )
 
-val GalleryThing.posterSharedElementPrefix
+val GalleryItem.posterSharedElementPrefix
     get() = "poster-$sharedElementPrefix"
 
-data class GalleryThing(
+data class GalleryItem(
     val post: Post,
     val viewerState: ProfileViewerState?,
     val startIndex: Int,
-    val media: List<GalleryItem>,
+    val media: List<Media>,
     val threadGate: ThreadGate?,
     val sharedElementPrefix: String,
-)
+) {
+    sealed class Media {
+        data class Photo(
+            val image: EmbeddedImage,
+        ) : Media()
 
-
-sealed class GalleryItem {
-    data class Photo(
-        val image: EmbeddedImage,
-    ) : GalleryItem()
-
-    data class Video(
-        val video: EmbeddedVideo,
-    ) : GalleryItem()
+        data class Video(
+            val video: EmbeddedVideo,
+        ) : Media()
+    }
 }
 
-val GalleryItem.key
+val GalleryItem.Media.key
     get() = when (this) {
-        is GalleryItem.Photo -> image.thumb.uri
-        is GalleryItem.Video -> video.playlist.uri
+        is GalleryItem.Media.Photo -> image.thumb.uri
+        is GalleryItem.Media.Video -> video.playlist.uri
     }
 
 sealed class Action(val key: String) {

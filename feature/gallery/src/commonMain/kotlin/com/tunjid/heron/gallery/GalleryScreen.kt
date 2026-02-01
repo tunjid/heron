@@ -243,7 +243,7 @@ internal fun GalleryScreen(
 @Composable
 private fun HorizontalItems(
     modifier: Modifier,
-    item: GalleryThing,
+    item: GalleryItem,
     signedInProfileId: ProfileId?,
     paneScaffoldState: PaneScaffoldState,
     actions: (Action) -> Unit,
@@ -263,7 +263,6 @@ private fun HorizontalItems(
                 onClick = playerControlsUiState::toggleVisibility,
             ),
     ) {
-
         val pagerState = rememberPagerState(
             initialPage = item.startIndex,
         ) {
@@ -286,7 +285,7 @@ private fun HorizontalItems(
                         },
                 ) {
                     when (val media = item.media[page]) {
-                        is GalleryItem.Photo -> {
+                        is GalleryItem.Media.Photo -> {
                             val zoomState = rememberGestureZoomState(
                                 options = remember {
                                     Options(
@@ -319,7 +318,7 @@ private fun HorizontalItems(
                             )
                         }
 
-                        is GalleryItem.Video -> GalleryVideo(
+                        is GalleryItem.Media.Video -> GalleryVideo(
                             modifier = Modifier
                                 .align(Alignment.Center)
                                 .aspectRatioFor(
@@ -339,7 +338,7 @@ private fun HorizontalItems(
         MediaOverlay(
             modifier = Modifier
                 .fillMaxSize(),
-            galleryItem = item.media.getOrNull(pagerState.currentPage),
+            media = item.media.getOrNull(pagerState.currentPage),
             isVisible = playerControlsUiState.playerControlsVisible,
         ) { media ->
             val viewedProfileId = item.post.author.did
@@ -433,8 +432,8 @@ private fun HorizontalItems(
             onIndex = { index ->
                 when (val media = item.media.getOrNull(index.roundToInt())) {
                     null -> Unit
-                    is GalleryItem.Photo -> Unit
-                    is GalleryItem.Video -> videoPlayerController.play(
+                    is GalleryItem.Media.Photo -> Unit
+                    is GalleryItem.Media.Video -> videoPlayerController.play(
                         media.video.playlist.uri,
                     )
                 }
@@ -449,7 +448,7 @@ private fun HorizontalItems(
 private fun GalleryImage(
     modifier: Modifier = Modifier,
     scaffoldState: PaneScaffoldState,
-    item: GalleryItem.Photo,
+    item: GalleryItem.Media.Photo,
     postUri: PostUri,
     sharedElementPrefix: String,
 ) {
@@ -485,7 +484,7 @@ private fun GalleryImage(
 private fun GalleryVideo(
     modifier: Modifier = Modifier,
     paneMovableElementSharedTransitionScope: PaneScaffoldState,
-    item: GalleryItem.Video,
+    item: GalleryItem.Media.Video,
     postUri: PostUri,
     sharedElementPrefix: String,
 ) {
@@ -527,7 +526,7 @@ private fun GalleryVideo(
 @Composable
 private fun GalleryFooter(
     modifier: Modifier,
-    item: GalleryItem,
+    item: GalleryItem.Media,
     videoPlayerController: VideoPlayerController,
     imageDownloadState: ImageDownloadState,
     post: Post?,
@@ -545,8 +544,8 @@ private fun GalleryFooter(
                 .padding(horizontal = 16.dp),
         ) {
             when (item) {
-                is GalleryItem.Photo -> imageDownloadState.DownloadButton(item)
-                is GalleryItem.Video -> videoPlayerController.MuteButton()
+                is GalleryItem.Media.Photo -> imageDownloadState.DownloadButton(item)
+                is GalleryItem.Media.Video -> videoPlayerController.MuteButton()
             }
         }
         GalleryText(
@@ -567,7 +566,7 @@ private fun GalleryFooter(
             },
         )
 
-        (item as? GalleryItem.Video)
+        (item as? GalleryItem.Media.Video)
             ?.let { videoPlayerController.getVideoStateById(it.video.playlist.uri) }
             ?.let {
                 VideoPlayerControls(
@@ -595,11 +594,11 @@ private fun Modifier.aspectRatioFor(
 @Composable
 private fun MediaOverlay(
     modifier: Modifier = Modifier,
-    galleryItem: GalleryItem?,
+    media: GalleryItem.Media?,
     isVisible: Boolean,
-    content: @Composable (item: GalleryItem) -> Unit,
+    content: @Composable (item: GalleryItem.Media) -> Unit,
 ) {
-    val visible by rememberUpdatedState(galleryItem != null && isVisible)
+    val visible by rememberUpdatedState(media != null && isVisible)
     val alphaState = animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
@@ -628,7 +627,7 @@ private fun MediaOverlay(
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.End,
         content = {
-            if (galleryItem != null) content(galleryItem)
+            if (media != null) content(media)
         },
     )
 }
@@ -731,8 +730,8 @@ private fun VideoPlayerController.MuteButton(
     ) {
         Icon(
             imageVector =
-                if (isMuted) Icons.AutoMirrored.Rounded.VolumeOff
-                else Icons.AutoMirrored.Rounded.VolumeUp,
+            if (isMuted) Icons.AutoMirrored.Rounded.VolumeOff
+            else Icons.AutoMirrored.Rounded.VolumeUp,
             contentDescription = stringResource(
                 if (isMuted) Res.string.mute_video
                 else Res.string.unmute_video,
@@ -745,7 +744,7 @@ private fun VideoPlayerController.MuteButton(
 
 @Composable
 private fun ImageDownloadState.DownloadButton(
-    item: GalleryItem.Photo,
+    item: GalleryItem.Media.Photo,
     modifier: Modifier = Modifier,
 ) {
     val imageLoader = LocalImageLoader.current
@@ -826,14 +825,14 @@ private class ImageDownloadState {
     private val states = mutableStateMapOf<String, DownloadStatus?>()
 
     fun stateFor(
-        item: GalleryItem.Photo,
-    ): DownloadStatus? = states[item.image.fullsize.uri]
+        photo: GalleryItem.Media.Photo,
+    ): DownloadStatus? = states[photo.image.fullsize.uri]
 
     fun updateStateFor(
-        item: GalleryItem.Photo,
+        photo: GalleryItem.Media.Photo,
         status: DownloadStatus?,
     ) {
-        states[item.image.fullsize.uri] = status
+        states[photo.image.fullsize.uri] = status
     }
 }
 
