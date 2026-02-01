@@ -36,6 +36,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
@@ -103,8 +104,10 @@ import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.post.MediaPostInteractions
+import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostOption
+import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
@@ -133,11 +136,6 @@ internal fun GalleryScreen(
     state: State,
     actions: (Action) -> Unit,
 ) {
-    val videoPlayerController = LocalVideoPlayerController.current
-    val playerControlsUiState = remember(videoPlayerController) {
-        PlayerControlsUiState(videoPlayerController)
-    }
-    val imageDownloadState = remember(::ImageDownloadState)
     val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
         isSignedIn = paneScaffoldState.isSignedIn,
         onSignInClicked = {
@@ -216,6 +214,46 @@ internal fun GalleryScreen(
             }
         },
     )
+    val updatedItems by rememberUpdatedState(state.items)
+    val pagerState = rememberPagerState(pageCount = updatedItems::size)
+
+    VerticalPager(
+        state = pagerState,
+        modifier = modifier
+            .fillMaxSize(),
+        key = { page ->
+            updatedItems[page].post.uri.uri
+        },
+        pageContent = { page ->
+            val item = updatedItems[page]
+
+            HorizontalItems(
+                item = item,
+                paneScaffoldState = paneScaffoldState,
+                signedInProfileId = state.signedInProfileId,
+                actions = actions,
+                postInteractionSheetState = postInteractionSheetState,
+                postOptionsSheetState = postOptionsSheetState,
+            )
+        },
+    )
+}
+
+@Composable
+private fun HorizontalItems(
+    modifier: Modifier = Modifier,
+    item: GalleryItem,
+    signedInProfileId: ProfileId?,
+    paneScaffoldState: PaneScaffoldState,
+    actions: (Action) -> Unit,
+    postInteractionSheetState: PostInteractionsSheetState,
+    postOptionsSheetState: PostOptionsSheetState,
+) {
+    val videoPlayerController = LocalVideoPlayerController.current
+    val imageDownloadState = remember(::ImageDownloadState)
+    val playerControlsUiState = remember(videoPlayerController) {
+        PlayerControlsUiState(videoPlayerController)
+    }
 
     Box(
         modifier = modifier
@@ -224,11 +262,10 @@ internal fun GalleryScreen(
                 onClick = playerControlsUiState::toggleVisibility,
             ),
     ) {
-        val updatedItems by rememberUpdatedState(state.items)
         val pagerState = rememberPagerState(
-            initialPage = state.startIndex,
+            initialPage = item.startIndex,
         ) {
-            updatedItems.size
+            item.media.size
         }
 
         HorizontalPager(
@@ -236,7 +273,7 @@ internal fun GalleryScreen(
                 .zIndex(MediaZIndex)
                 .fillMaxSize(),
             state = pagerState,
-            key = { page -> updatedItems[page].key },
+            key = { page -> item.media[page].key },
             pageContent = { page ->
                 var windowSize by remember { mutableStateOf(IntSize.Zero) }
                 Box(
@@ -246,8 +283,8 @@ internal fun GalleryScreen(
                             windowSize = it
                         },
                 ) {
-                    when (val item = updatedItems[page]) {
-                        is GalleryItem.Photo -> {
+                    when (val media = item.media[page]) {
+                        is GalleryItem.Media.Photo -> {
                             val zoomState = rememberGestureZoomState(
                                 options = remember {
                                     Options(
@@ -262,7 +299,7 @@ internal fun GalleryScreen(
                                     .align(Alignment.Center)
                                     .aspectRatioFor(
                                         windowSize = windowSize,
-                                        aspectRatio = item.image,
+                                        aspectRatio = media.image,
                                     )
                                     .gestureZoomable(zoomState)
                                     .combinedClickable(
@@ -274,23 +311,23 @@ internal fun GalleryScreen(
                                         },
                                     ),
                                 scaffoldState = paneScaffoldState,
-                                item = item,
-                                sharedElementPrefix = state.sharedElementPrefix,
-                                postUri = state.postUri,
+                                item = media,
+                                sharedElementPrefix = item.sharedElementPrefix,
+                                postUri = item.post.uri,
                             )
                         }
 
-                        is GalleryItem.Video -> GalleryVideo(
+                        is GalleryItem.Media.Video -> GalleryVideo(
                             modifier = Modifier
                                 .align(Alignment.Center)
                                 .aspectRatioFor(
                                     windowSize = windowSize,
-                                    aspectRatio = item.video,
+                                    aspectRatio = media.video,
                                 ),
                             paneMovableElementSharedTransitionScope = paneScaffoldState,
-                            item = item,
-                            sharedElementPrefix = state.sharedElementPrefix,
-                            postUri = state.postUri,
+                            item = media,
+                            sharedElementPrefix = item.sharedElementPrefix,
+                            postUri = item.post.uri,
                         )
                     }
                 }
@@ -300,11 +337,10 @@ internal fun GalleryScreen(
         MediaOverlay(
             modifier = Modifier
                 .fillMaxSize(),
-            galleryItem = updatedItems.getOrNull(pagerState.currentPage),
+            media = item.media.getOrNull(pagerState.currentPage),
             isVisible = playerControlsUiState.playerControlsVisible,
-        ) { item ->
-            val viewedProfileId = state.viewedProfileId
-            val signedInProfileId = state.signedInProfileId
+        ) { media ->
+            val viewedProfileId = item.post.author.did
             MediaPoster(
                 modifier = Modifier
                     .statusBarsPadding()
@@ -312,10 +348,10 @@ internal fun GalleryScreen(
                         horizontal = 16.dp,
                         vertical = 20.dp,
                     ),
-                post = state.post,
-                signedInProfileId = state.signedInProfileId,
-                viewerState = state.viewerState,
-                sharedElementPrefix = state.posterSharedElementPrefix,
+                post = item.post,
+                signedInProfileId = signedInProfileId,
+                viewerState = item.viewerState,
+                sharedElementPrefix = item.posterSharedElementPrefix,
                 paneScaffoldState = paneScaffoldState,
                 onProfileClicked = { post ->
                     actions(
@@ -323,7 +359,7 @@ internal fun GalleryScreen(
                             profileDestination(
                                 profile = post.author,
                                 avatarSharedElementKey = post.avatarSharedElementKey(
-                                    prefix = state.posterSharedElementPrefix,
+                                    prefix = item.posterSharedElementPrefix,
                                 ),
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                             ),
@@ -347,7 +383,7 @@ internal fun GalleryScreen(
             )
 
             MediaInteractions(
-                post = state.post,
+                post = item.post,
                 paneScaffoldState = paneScaffoldState,
                 modifier = Modifier
                     .padding(horizontal = 16.dp),
@@ -367,7 +403,7 @@ internal fun GalleryScreen(
                                     type = Post.Create.Reply(
                                         parent = interaction.post,
                                     ),
-                                    sharedElementPrefix = state.sharedElementPrefix,
+                                    sharedElementPrefix = item.sharedElementPrefix,
                                 ),
                             ),
                         )
@@ -379,10 +415,10 @@ internal fun GalleryScreen(
                     .fillMaxWidth()
                     .padding(vertical = 24.dp)
                     .windowInsetsPadding(insets = WindowInsets.navigationBars),
-                item = item,
+                item = media,
                 videoPlayerController = videoPlayerController,
                 imageDownloadState = imageDownloadState,
-                post = state.post,
+                post = item.post,
                 paneScaffoldState = paneScaffoldState,
                 actions = actions,
                 playerControlsUiState = playerControlsUiState,
@@ -391,12 +427,12 @@ internal fun GalleryScreen(
 
         pagerState.interpolatedVisibleIndexEffect(
             denominator = 10,
-            itemsAvailable = updatedItems.size,
+            itemsAvailable = item.media.size,
             onIndex = { index ->
-                when (val media = updatedItems.getOrNull(index.roundToInt())) {
+                when (val media = item.media.getOrNull(index.roundToInt())) {
                     null -> Unit
-                    is GalleryItem.Photo -> Unit
-                    is GalleryItem.Video -> videoPlayerController.play(
+                    is GalleryItem.Media.Photo -> Unit
+                    is GalleryItem.Media.Video -> videoPlayerController.play(
                         media.video.playlist.uri,
                     )
                 }
@@ -411,7 +447,7 @@ internal fun GalleryScreen(
 private fun GalleryImage(
     modifier: Modifier = Modifier,
     scaffoldState: PaneScaffoldState,
-    item: GalleryItem.Photo,
+    item: GalleryItem.Media.Photo,
     postUri: PostUri,
     sharedElementPrefix: String,
 ) {
@@ -447,7 +483,7 @@ private fun GalleryImage(
 private fun GalleryVideo(
     modifier: Modifier = Modifier,
     paneMovableElementSharedTransitionScope: PaneScaffoldState,
-    item: GalleryItem.Video,
+    item: GalleryItem.Media.Video,
     postUri: PostUri,
     sharedElementPrefix: String,
 ) {
@@ -489,7 +525,7 @@ private fun GalleryVideo(
 @Composable
 private fun GalleryFooter(
     modifier: Modifier,
-    item: GalleryItem,
+    item: GalleryItem.Media,
     videoPlayerController: VideoPlayerController,
     imageDownloadState: ImageDownloadState,
     post: Post?,
@@ -507,8 +543,8 @@ private fun GalleryFooter(
                 .padding(horizontal = 16.dp),
         ) {
             when (item) {
-                is GalleryItem.Photo -> imageDownloadState.DownloadButton(item)
-                is GalleryItem.Video -> videoPlayerController.MuteButton()
+                is GalleryItem.Media.Photo -> imageDownloadState.DownloadButton(item)
+                is GalleryItem.Media.Video -> videoPlayerController.MuteButton()
             }
         }
         GalleryText(
@@ -529,7 +565,7 @@ private fun GalleryFooter(
             },
         )
 
-        (item as? GalleryItem.Video)
+        (item as? GalleryItem.Media.Video)
             ?.let { videoPlayerController.getVideoStateById(it.video.playlist.uri) }
             ?.let {
                 VideoPlayerControls(
@@ -557,11 +593,11 @@ private fun Modifier.aspectRatioFor(
 @Composable
 private fun MediaOverlay(
     modifier: Modifier = Modifier,
-    galleryItem: GalleryItem?,
+    media: GalleryItem.Media?,
     isVisible: Boolean,
-    content: @Composable (item: GalleryItem) -> Unit,
+    content: @Composable (item: GalleryItem.Media) -> Unit,
 ) {
-    val visible by rememberUpdatedState(galleryItem != null && isVisible)
+    val visible by rememberUpdatedState(media != null && isVisible)
     val alphaState = animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
@@ -590,7 +626,7 @@ private fun MediaOverlay(
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.End,
         content = {
-            if (galleryItem != null) content(galleryItem)
+            if (media != null) content(media)
         },
     )
 }
@@ -707,7 +743,7 @@ private fun VideoPlayerController.MuteButton(
 
 @Composable
 private fun ImageDownloadState.DownloadButton(
-    item: GalleryItem.Photo,
+    item: GalleryItem.Media.Photo,
     modifier: Modifier = Modifier,
 ) {
     val imageLoader = LocalImageLoader.current
@@ -788,14 +824,14 @@ private class ImageDownloadState {
     private val states = mutableStateMapOf<String, DownloadStatus?>()
 
     fun stateFor(
-        item: GalleryItem.Photo,
-    ): DownloadStatus? = states[item.image.fullsize.uri]
+        photo: GalleryItem.Media.Photo,
+    ): DownloadStatus? = states[photo.image.fullsize.uri]
 
     fun updateStateFor(
-        item: GalleryItem.Photo,
+        photo: GalleryItem.Media.Photo,
         status: DownloadStatus?,
     ) {
-        states[item.image.fullsize.uri] = status
+        states[photo.image.fullsize.uri] = status
     }
 }
 
