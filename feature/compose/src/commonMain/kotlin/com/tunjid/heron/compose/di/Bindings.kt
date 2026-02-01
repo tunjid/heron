@@ -192,12 +192,11 @@ class ComposeBindings(
                     ComposeScreen(
                         paneScaffoldState = this,
                         modifier = Modifier
+                            .padding(paddingValues)
                             .padding(
-                                top = paddingValues.calculateTopPadding(),
                                 // This padding is solely for the post interaction button
                                 bottom = UiTokens.toolbarHeight,
-                            )
-                            .imePadding(),
+                            ),
                         state = state,
                         actions = viewModel.accept,
                     )
