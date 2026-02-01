@@ -59,6 +59,7 @@ data class State(
     val viewedProfileId: ProfileId,
     val signedInProfileId: ProfileId? = null,
     val canScrollVertically: Boolean = false,
+    val cursorData: CursorQuery.Data?,
     @Transient
     val preferences: Preferences = Preferences.EmptyPreferences,
     @Transient
@@ -76,9 +77,10 @@ fun State(
 ) = State(
     viewedProfileId = route.profileId,
     sharedElementPrefix = route.sharedElementPrefix,
+    cursorData = route.model<CursorQuery.Data>(),
     items = tiledListOf(
         DataQuery(
-            data = CursorQuery.defaultStartData(),
+            data = route.model<CursorQuery.Data>() ?: CursorQuery.defaultStartData(),
         ) to GalleryItem(
             sharedElementPrefix = route.sharedElementPrefix,
             startIndex = route.startIndex,

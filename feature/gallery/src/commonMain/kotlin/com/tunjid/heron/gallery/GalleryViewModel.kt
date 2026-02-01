@@ -319,8 +319,15 @@ private fun verticalTimelineMutations(
     coroutineScope: CoroutineScope,
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> = flow {
+    val state = currentState()
+
+    // If there's no cursor data, most likely fetching
+    // items for vertical scroll will fetch items other than
+    // that being viewed and cause a disruptive experience
+    state.cursorData ?: return@flow
+
     val timelineStateHolder = when (
-        val existing = currentState().timelineStateHolder
+        val existing = state.timelineStateHolder
     ) {
         null -> when (val source = route.model<Timeline.Source>()) {
             is Timeline.Source.Profile -> profileGalleryTimeline(

@@ -226,6 +226,7 @@ internal fun GalleryScreen(
         state = pagerState,
         modifier = modifier
             .fillMaxSize(),
+        beyondViewportPageCount = PagerPrefetchCount,
         key = { page ->
             updatedItems[page].post.uri.uri
         },
@@ -294,6 +295,7 @@ private fun HorizontalItems(
             modifier = Modifier
                 .zIndex(MediaZIndex)
                 .fillMaxSize(),
+            beyondViewportPageCount = PagerPrefetchCount,
             state = pagerState,
             key = { page -> item.media[page].key },
             pageContent = { page ->
@@ -861,3 +863,4 @@ private const val UnmatchedPrefix = "UnmatchedPrefix"
 private const val VisibleOverlayZIndex = 1f
 private const val InVisibleOverlayZIndex = -1f
 private const val MediaZIndex = 0f
+private const val PagerPrefetchCount = 1
