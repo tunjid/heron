@@ -41,6 +41,7 @@ sealed interface PostAction {
     data class OfPost(
         val post: Post,
         val warnedAppliedLabels: AppliedLabels.Filtered?,
+        val isMainPost: Boolean,
     ) : PostAction
 
     data class OfRecord(
@@ -52,6 +53,7 @@ sealed interface PostAction {
         val media: Embed.Media,
         val index: Int,
         val post: Post,
+        val isMainPost: Boolean,
         val quotingPostUri: PostUri?,
     ) : PostAction
 

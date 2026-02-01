@@ -103,6 +103,7 @@ internal fun Post(
     hasMutedWords: Boolean,
     threadGate: ThreadGate?,
     isAnchoredInTimeline: Boolean,
+    isMainPost: Boolean,
     avatarShape: RoundedPolygonShape,
     sharedElementPrefix: String,
     createdAt: Instant,
@@ -130,6 +131,7 @@ internal fun Post(
             presentation = presentation,
             appliedLabels = appliedLabels,
             hasMutedWords = hasMutedWords,
+            isMainPost = isMainPost,
             sharedElementPrefix = sharedElementPrefix,
             avatarShape = avatarShape,
             now = now,
@@ -232,6 +234,7 @@ private fun AttributionContent(
                         data.postActions.onPostAction(
                             PostAction.OfPost(
                                 post = data.post,
+                                isMainPost = data.isMainPost,
                                 warnedAppliedLabels = data.appliedLabels.warned(),
                             ),
                         )
@@ -375,6 +378,7 @@ private fun TextContent(
                 data.postActions.onPostAction(
                     PostAction.OfPost(
                         post = data.post,
+                        isMainPost = data.isMainPost,
                         warnedAppliedLabels = data.appliedLabels.warned(),
                     ),
                 )
@@ -439,6 +443,7 @@ private fun EmbedContent(
                     media = media,
                     index = index,
                     post = quote ?: data.post,
+                    isMainPost = quote == null && data.isMainPost,
                     quotingPostUri = data.post.uri.takeIf { quote != null },
                 ),
             )
@@ -658,6 +663,7 @@ private fun rememberUpdatedPostData(
     now: Instant,
     createdAt: Instant,
     languageTag: String,
+    isMainPost: Boolean,
 ): PostData = rememberSaveable(
     saver = listSaver(
         save = { data ->
@@ -676,6 +682,7 @@ private fun rememberUpdatedPostData(
                 presentation = presentation,
                 appliedLabels = appliedLabels,
                 hasMutedWords = hasMutedWords,
+                isMainPost = isMainPost,
                 sharedElementPrefix = sharedElementPrefix,
                 avatarShape = avatarShape,
                 now = now,
@@ -696,6 +703,7 @@ private fun rememberUpdatedPostData(
         presentation = presentation,
         appliedLabels = appliedLabels,
         hasMutedWords = hasMutedWords,
+        isMainPost = isMainPost,
         sharedElementPrefix = sharedElementPrefix,
         avatarShape = avatarShape,
         now = now,
@@ -712,6 +720,7 @@ private fun rememberUpdatedPostData(
     it.presentation = presentation
     it.appliedLabels = appliedLabels
     it.hasMutedWords = hasMutedWords
+    it.isMainPost = isMainPost
     it.sharedElementPrefix = sharedElementPrefix
     it.avatarShape = avatarShape
     it.now = now
@@ -729,6 +738,7 @@ private class PostData(
     presentation: Timeline.Presentation,
     appliedLabels: AppliedLabels,
     hasMutedWords: Boolean,
+    isMainPost: Boolean,
     sharedElementPrefix: String,
     avatarShape: RoundedPolygonShape,
     now: Instant,
@@ -747,6 +757,7 @@ private class PostData(
     var presentation by mutableStateOf(presentation)
     var appliedLabels by mutableStateOf(appliedLabels)
     var hasMutedWords by mutableStateOf(hasMutedWords)
+    var isMainPost by mutableStateOf(isMainPost)
     var sharedElementPrefix by mutableStateOf(sharedElementPrefix)
     var avatarShape by mutableStateOf(avatarShape)
     var now by mutableStateOf(now)
