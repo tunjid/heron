@@ -532,7 +532,6 @@ private fun MessageRecord(
                                 sharedElementPrefix = item.id.withQuotingPostUriPrefix(
                                     quotingPostUri = action.quotingPostUri,
                                 ),
-                                source = null,
                             ),
                         ),
                     )

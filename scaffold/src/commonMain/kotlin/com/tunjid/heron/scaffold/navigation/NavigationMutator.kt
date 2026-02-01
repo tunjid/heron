@@ -184,12 +184,12 @@ fun galleryDestination(
     media: Embed.Media,
     startIndex: Int,
     sharedElementPrefix: String,
-    source: Timeline.Source?,
+    otherModels: List<UrlEncodableModel> = emptyList(),
 ): NavigationAction.Destination = pathDestination(
     path = "/profile/${post.author.did.id}/post/${post.uri.recordKey.value}/gallery",
     models = buildList {
         add(media)
-        if (source != null) add(source)
+        addAll(otherModels)
     },
     sharedElementPrefix = sharedElementPrefix,
     miscQueryParams = mapOf(

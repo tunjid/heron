@@ -286,7 +286,9 @@ internal fun PostDetailScreen(
                                             sharedElementPrefix = state.sharedElementPrefix.withQuotingPostUriPrefix(
                                                 quotingPostUri = action.quotingPostUri,
                                             ),
-                                            source = state.source,
+                                            otherModels = buildList {
+                                                if (state.source != null) add(state.source)
+                                            },
                                         ),
                                     )
                                 }

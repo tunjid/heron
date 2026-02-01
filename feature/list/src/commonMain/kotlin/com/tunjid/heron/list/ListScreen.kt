@@ -613,7 +613,9 @@ private fun ListTimeline(
                                                     sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                         quotingPostUri = quotingPostUri,
                                                     ),
-                                                    source = timelineState.timeline.source,
+                                                    otherModels = buildList {
+                                                        add(timelineState.timeline.source)
+                                                    },
                                                 ),
                                             ),
                                         )
