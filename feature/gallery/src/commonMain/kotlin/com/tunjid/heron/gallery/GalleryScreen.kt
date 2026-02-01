@@ -228,7 +228,6 @@ internal fun GalleryScreen(
             val item = updatedItems[page]
 
             HorizontalItems(
-                modifier = modifier,
                 item = item,
                 paneScaffoldState = paneScaffoldState,
                 signedInProfileId = state.signedInProfileId,
@@ -242,7 +241,7 @@ internal fun GalleryScreen(
 
 @Composable
 private fun HorizontalItems(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     item: GalleryItem,
     signedInProfileId: ProfileId?,
     paneScaffoldState: PaneScaffoldState,
