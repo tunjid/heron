@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.gallery
 
+import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.DataQuery
@@ -30,8 +31,9 @@ import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.Video as EmbeddedVideo
+import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.FollowUri
-import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.gallery.di.postRecordKey
 import com.tunjid.heron.gallery.di.profileId
@@ -44,18 +46,16 @@ import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.emptyTiledList
 import com.tunjid.tiler.tiledListOf
 import com.tunjid.treenav.strings.Route
+import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
-    val startIndex: Int,
-    val postUri: PostUri,
     val sharedElementPrefix: String,
-    val post: Post?,
     val viewedProfileId: ProfileId,
     val signedInProfileId: ProfileId? = null,
-    val viewerState: ProfileViewerState?,
+    val canScrollVertically: Boolean = false,
     @Transient
     val preferences: Preferences = Preferences.EmptyPreferences,
     @Transient
@@ -69,38 +69,58 @@ data class State(
 fun State(
     route: Route,
 ) = State(
-    startIndex = route.startIndex,
-    postUri = PostUri(
-        route.profileId,
-        route.postRecordKey,
-    ),
-    post = null,
-    viewerState = null,
     viewedProfileId = route.profileId,
     sharedElementPrefix = route.sharedElementPrefix,
     items = tiledListOf(
         DataQuery(
-            data = CursorQuery.defaultStartData()
+            data = CursorQuery.defaultStartData(),
         ) to GalleryThing(
-            post = null,
+            sharedElementPrefix = route.sharedElementPrefix,
+            startIndex = route.startIndex,
             threadGate = null,
+            viewerState = null,
             media = when (val media = route.model<Embed.Media>()) {
                 is ImageList -> media.images.map(GalleryItem::Photo)
                 is Video -> listOf(GalleryItem.Video(media))
                 null -> emptyList()
-            }
-        )
+            },
+            post = Post(
+                cid = Constants.unknownPostId,
+                uri = PostUri(
+                    route.profileId,
+                    route.postRecordKey,
+                ),
+                author = stubProfile(
+                    did = route.profileId,
+                    handle = ProfileHandle(route.profileId.id),
+                ),
+                replyCount = 0,
+                repostCount = 0,
+                likeCount = 0,
+                quoteCount = 0,
+                indexedAt = Instant.DISTANT_PAST,
+                embed = null,
+                record = null,
+                viewerStats = null,
+                labels = emptyList(),
+                embeddedRecord = null,
+            ),
+        ),
     ),
 )
 
-val State.posterSharedElementPrefix
+val GalleryThing.posterSharedElementPrefix
     get() = "poster-$sharedElementPrefix"
 
 data class GalleryThing(
-    val post: Post?,
+    val post: Post,
+    val viewerState: ProfileViewerState?,
+    val startIndex: Int,
     val media: List<GalleryItem>,
     val threadGate: ThreadGate?,
+    val sharedElementPrefix: String,
 )
+
 
 sealed class GalleryItem {
     data class Photo(

@@ -43,17 +43,21 @@ import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
+import com.tunjid.tiler.map
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.merge
 
 internal typealias GalleryStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -83,17 +87,8 @@ class ActualGalleryViewModel(
         initialState = State(route),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         inputs = listOf(
-            loadPostMutations(
-                route = route,
-                postRepository = postRepository,
-                profileRepository = profileRepository,
-            ),
             loadSignedInProfileIdMutations(
                 authRepository = authRepository,
-            ),
-            profileRelationshipMutations(
-                profileId = route.profileId,
-                profileRepository = profileRepository,
             ),
             recentConversationMutations(
                 messageRepository = messageRepository,
@@ -103,32 +98,45 @@ class ActualGalleryViewModel(
             ),
         ),
         actionTransform = transform@{ actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+            merge(
+                actions.toMutationStream(
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.SendPostInteraction -> action.flow.postInteractionMutations(
+                            writeQueue = writeQueue,
+                        )
+                        is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
+                            writeQueue = writeQueue,
+                        )
+                        is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
-                    is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.BlockAccount -> action.flow.blockAccountMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.MuteAccount -> action.flow.muteAccountMutations(
-                        writeQueue = writeQueue,
-                    )
-                }
-            }
+                        is Action.Navigate -> action.flow.consumeNavigationActions(
+                            navigationMutationConsumer = navActions,
+                        )
+                        is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
+                            writeQueue = writeQueue,
+                        )
+                        is Action.BlockAccount -> action.flow.blockAccountMutations(
+                            writeQueue = writeQueue,
+                        )
+                        is Action.MuteAccount -> action.flow.muteAccountMutations(
+                            writeQueue = writeQueue,
+                        )
+                    }
+                },
+                profileRelationshipMutations(
+                    currentState = state,
+                    profileId = route.profileId,
+                    profileRepository = profileRepository,
+                ),
+                loadPostMutations(
+                    route = route,
+                    currentState = state,
+                    postRepository = postRepository,
+                    profileRepository = profileRepository,
+                ),
+            )
         },
     )
 
@@ -136,6 +144,7 @@ private fun loadPostMutations(
     route: Route,
     postRepository: PostRepository,
     profileRepository: ProfileRepository,
+    currentState: suspend () -> State,
 ): Flow<Mutation<State>> = flow {
     val postUri = profileRepository.profile(route.profileId)
         .first()
@@ -148,7 +157,17 @@ private fun loadPostMutations(
 
     emitAll(
         postRepository.post(postUri)
-            .mapToMutation { copy(post = it) },
+            .mapLatestToManyMutations { post ->
+                val state = currentState()
+                if (state.canScrollVertically) currentCoroutineContext().cancel()
+                else emit {
+                    copy(
+                        items = items.map {
+                            it.copy(post = post)
+                        },
+                    )
+                }
+            },
     )
 }
 
@@ -167,6 +186,7 @@ fun recentConversationMutations(
         .mapToMutation { conversations ->
             copy(recentConversations = conversations)
         }
+
 private fun loadSignedInProfileIdMutations(
     authRepository: AuthRepository,
 ): Flow<Mutation<State>> =
@@ -177,10 +197,21 @@ private fun loadSignedInProfileIdMutations(
 private fun profileRelationshipMutations(
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
+    currentState: suspend () -> State,
 ): Flow<Mutation<State>> =
-    profileRepository.profileRelationships(setOf(profileId)).mapToMutation {
-        copy(viewerState = it.firstOrNull())
-    }
+    profileRepository.profileRelationships(setOf(profileId))
+        .mapLatestToManyMutations { relationships ->
+            val state = currentState()
+            if (state.canScrollVertically) currentCoroutineContext().cancel()
+            else emit {
+                copy(
+                    items = items.map {
+                        it.copy(viewerState = relationships.firstOrNull())
+                    },
+                )
+            }
+        }
+
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =

@@ -215,38 +215,37 @@ internal fun GalleryScreen(
         },
     )
     val updatedItems by rememberUpdatedState(state.items)
-    val pagerState = rememberPagerState(
-        initialPage = state.startIndex,
-    ) {
-        updatedItems.size
-    }
+    val pagerState = rememberPagerState(pageCount = updatedItems::size)
 
     VerticalPager(
         state = pagerState,
         modifier = modifier
             .fillMaxSize(),
-    ) { verticalPage ->
+        key = { page ->
+            updatedItems[page].post.uri.uri
+        },
+        pageContent = { page ->
+            val item = updatedItems[page]
 
-        val item = updatedItems[verticalPage]
-
-        HorizontalItems(
-            modifier = modifier,
-            item = item,
-            paneScaffoldState = paneScaffoldState,
-            state = state,
-            actions = actions,
-            postInteractionSheetState = postInteractionSheetState,
-            postOptionsSheetState = postOptionsSheetState,
-        )
-    }
+            HorizontalItems(
+                modifier = modifier,
+                item = item,
+                paneScaffoldState = paneScaffoldState,
+                signedInProfileId = state.signedInProfileId,
+                actions = actions,
+                postInteractionSheetState = postInteractionSheetState,
+                postOptionsSheetState = postOptionsSheetState,
+            )
+        },
+    )
 }
 
 @Composable
 private fun HorizontalItems(
     modifier: Modifier,
     item: GalleryThing,
+    signedInProfileId: ProfileId?,
     paneScaffoldState: PaneScaffoldState,
-    state: State,
     actions: (Action) -> Unit,
     postInteractionSheetState: PostInteractionsSheetState,
     postOptionsSheetState: PostOptionsSheetState,
@@ -266,7 +265,7 @@ private fun HorizontalItems(
     ) {
 
         val pagerState = rememberPagerState(
-            initialPage = state.startIndex,
+            initialPage = item.startIndex,
         ) {
             item.media.size
         }
@@ -286,7 +285,7 @@ private fun HorizontalItems(
                             windowSize = it
                         },
                 ) {
-                    when (val item = item.media[page]) {
+                    when (val media = item.media[page]) {
                         is GalleryItem.Photo -> {
                             val zoomState = rememberGestureZoomState(
                                 options = remember {
@@ -302,7 +301,7 @@ private fun HorizontalItems(
                                     .align(Alignment.Center)
                                     .aspectRatioFor(
                                         windowSize = windowSize,
-                                        aspectRatio = item.image,
+                                        aspectRatio = media.image,
                                     )
                                     .gestureZoomable(zoomState)
                                     .combinedClickable(
@@ -314,9 +313,9 @@ private fun HorizontalItems(
                                         },
                                     ),
                                 scaffoldState = paneScaffoldState,
-                                item = item,
-                                sharedElementPrefix = state.sharedElementPrefix,
-                                postUri = state.postUri,
+                                item = media,
+                                sharedElementPrefix = item.sharedElementPrefix,
+                                postUri = item.post.uri,
                             )
                         }
 
@@ -325,12 +324,12 @@ private fun HorizontalItems(
                                 .align(Alignment.Center)
                                 .aspectRatioFor(
                                     windowSize = windowSize,
-                                    aspectRatio = item.video,
+                                    aspectRatio = media.video,
                                 ),
                             paneMovableElementSharedTransitionScope = paneScaffoldState,
-                            item = item,
-                            sharedElementPrefix = state.sharedElementPrefix,
-                            postUri = state.postUri,
+                            item = media,
+                            sharedElementPrefix = item.sharedElementPrefix,
+                            postUri = item.post.uri,
                         )
                     }
                 }
@@ -342,9 +341,8 @@ private fun HorizontalItems(
                 .fillMaxSize(),
             galleryItem = item.media.getOrNull(pagerState.currentPage),
             isVisible = playerControlsUiState.playerControlsVisible,
-        ) { item ->
-            val viewedProfileId = state.viewedProfileId
-            val signedInProfileId = state.signedInProfileId
+        ) { media ->
+            val viewedProfileId = item.post.author.did
             MediaPoster(
                 modifier = Modifier
                     .statusBarsPadding()
@@ -352,10 +350,10 @@ private fun HorizontalItems(
                         horizontal = 16.dp,
                         vertical = 20.dp,
                     ),
-                post = state.post,
-                signedInProfileId = state.signedInProfileId,
-                viewerState = state.viewerState,
-                sharedElementPrefix = state.posterSharedElementPrefix,
+                post = item.post,
+                signedInProfileId = signedInProfileId,
+                viewerState = item.viewerState,
+                sharedElementPrefix = item.posterSharedElementPrefix,
                 paneScaffoldState = paneScaffoldState,
                 onProfileClicked = { post ->
                     actions(
@@ -363,7 +361,7 @@ private fun HorizontalItems(
                             profileDestination(
                                 profile = post.author,
                                 avatarSharedElementKey = post.avatarSharedElementKey(
-                                    prefix = state.posterSharedElementPrefix,
+                                    prefix = item.posterSharedElementPrefix,
                                 ),
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                             ),
@@ -387,7 +385,7 @@ private fun HorizontalItems(
             )
 
             MediaInteractions(
-                post = state.post,
+                post = item.post,
                 paneScaffoldState = paneScaffoldState,
                 modifier = Modifier
                     .padding(horizontal = 16.dp),
@@ -407,7 +405,7 @@ private fun HorizontalItems(
                                     type = Post.Create.Reply(
                                         parent = interaction.post,
                                     ),
-                                    sharedElementPrefix = state.sharedElementPrefix,
+                                    sharedElementPrefix = item.sharedElementPrefix,
                                 ),
                             ),
                         )
@@ -419,10 +417,10 @@ private fun HorizontalItems(
                     .fillMaxWidth()
                     .padding(vertical = 24.dp)
                     .windowInsetsPadding(insets = WindowInsets.navigationBars),
-                item = item,
+                item = media,
                 videoPlayerController = videoPlayerController,
                 imageDownloadState = imageDownloadState,
-                post = state.post,
+                post = item.post,
                 paneScaffoldState = paneScaffoldState,
                 actions = actions,
                 playerControlsUiState = playerControlsUiState,
@@ -733,8 +731,8 @@ private fun VideoPlayerController.MuteButton(
     ) {
         Icon(
             imageVector =
-            if (isMuted) Icons.AutoMirrored.Rounded.VolumeOff
-            else Icons.AutoMirrored.Rounded.VolumeUp,
+                if (isMuted) Icons.AutoMirrored.Rounded.VolumeOff
+                else Icons.AutoMirrored.Rounded.VolumeUp,
             contentDescription = stringResource(
                 if (isMuted) Res.string.mute_video
                 else Res.string.unmute_video,
