@@ -21,10 +21,13 @@ import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
+import com.tunjid.heron.data.repository.TimelineRepository
+import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
@@ -33,8 +36,13 @@ import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.gallery.di.postRecordKey
 import com.tunjid.heron.gallery.di.profileId
+import com.tunjid.heron.gallery.di.startIndex
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
+import com.tunjid.heron.scaffold.navigation.model
+import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
+import com.tunjid.heron.timeline.state.TimelineStateHolder
+import com.tunjid.heron.timeline.state.timelineStateHolder
 import com.tunjid.heron.timeline.utilities.writeStatusMessage
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -54,9 +62,11 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 
 internal typealias GalleryStateHolder = ActionStateMutator<Action, StateFlow<State>>
@@ -77,6 +87,7 @@ class ActualGalleryViewModel(
     postRepository: PostRepository,
     profileRepository: ProfileRepository,
     userDataRepository: UserDataRepository,
+    timelineRepository: TimelineRepository,
     writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
@@ -135,6 +146,12 @@ class ActualGalleryViewModel(
                     currentState = state,
                     postRepository = postRepository,
                     profileRepository = profileRepository,
+                ),
+                verticalTimelineMutations(
+                    route = route,
+                    currentState = state,
+                    coroutineScope = scope,
+                    timelineRepository = timelineRepository,
                 ),
             )
         },
@@ -297,3 +314,113 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
     mapToMutation { action ->
         copy(messages = messages - action.message)
     }
+
+private fun verticalTimelineMutations(
+    route: Route,
+    currentState: suspend () -> State,
+    coroutineScope: CoroutineScope,
+    timelineRepository: TimelineRepository,
+): Flow<Mutation<State>> = flow {
+    val timelineStateHolder = when (
+        val timelineStateHolder = currentState().timelineStateHolder
+    ) {
+        null -> when (val source = route.model<Timeline.Source>()) {
+            is Timeline.Source.Profile -> profileGalleryTimeline(
+                source = source,
+            )?.let {
+                coroutineScope.galleryTimelineStateHolder(
+                    timeline = it,
+                    timelineRepository = timelineRepository,
+                )
+            }
+
+            is Timeline.Source.Record.Feed -> feedGalleryTimeline(
+                timelineRepository = timelineRepository,
+                source = source,
+            )?.let {
+                coroutineScope.galleryTimelineStateHolder(
+                    timeline = it,
+                    timelineRepository = timelineRepository,
+                )
+            }
+            is Timeline.Source.Following,
+            is Timeline.Source.Record.List,
+            null,
+            -> null
+        }
+        else -> timelineStateHolder
+    }
+
+    if (timelineStateHolder == null) return@flow
+
+    emit {
+        copy(timelineStateHolder = timelineStateHolder)
+    }
+    emitAll(
+        timelineStateHolder.state
+            .map { it.tilingData.items }
+            .distinctUntilChanged()
+            .mapToMutation { fetched ->
+                copy(
+                    canScrollVertically = fetched.isNotEmpty(),
+                    items = when {
+                        fetched.isEmpty() -> items
+                        else -> fetched.map { timelineItem ->
+                            GalleryItem(
+                                post = timelineItem.post,
+                                viewerState = timelineItem.post.viewerState,
+                                // This can always be zero, UI PagerState is already
+                                // created, user horizontal scroll won't reset
+                                startIndex = 0,
+                                media = timelineItem.post.embed.toGalleryMedia(),
+                                threadGate = timelineItem.threadGate,
+                                sharedElementPrefix = route.sharedElementPrefix,
+                            )
+                        }
+                    },
+                )
+            },
+    )
+}
+
+private fun profileGalleryTimeline(
+    source: Timeline.Source.Profile,
+): Timeline? =
+    when (source.type) {
+        Timeline.Profile.Type.Posts,
+        Timeline.Profile.Type.Replies,
+        Timeline.Profile.Type.Likes,
+        -> null
+        Timeline.Profile.Type.Media,
+        Timeline.Profile.Type.Videos,
+        -> Timeline.Profile(
+            profileId = source.profileId,
+            type = source.type,
+            lastRefreshed = null,
+            presentation = Timeline.Presentation.Media.Expanded,
+        )
+    }
+
+private suspend fun feedGalleryTimeline(
+    timelineRepository: TimelineRepository,
+    source: Timeline.Source.Record.Feed,
+): Timeline? =
+    timelineRepository.timeline(
+        TimelineRequest.OfFeed.WithUri(source.uri),
+    )
+        .first()
+        .takeIf { timeline ->
+            timeline.supportedPresentations.any { presentation ->
+                presentation is Timeline.Presentation.Media
+            }
+        }
+
+private fun CoroutineScope.galleryTimelineStateHolder(
+    timeline: Timeline,
+    timelineRepository: TimelineRepository,
+): TimelineStateHolder = timelineStateHolder(
+    refreshOnStart = true,
+    timeline = timeline,
+    startNumColumns = 1,
+    timelineRepository = timelineRepository,
+)
