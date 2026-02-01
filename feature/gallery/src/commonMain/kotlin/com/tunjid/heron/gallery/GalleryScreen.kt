@@ -36,6 +36,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
@@ -103,8 +104,10 @@ import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.post.MediaPostInteractions
+import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostOption
+import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
@@ -133,11 +136,6 @@ internal fun GalleryScreen(
     state: State,
     actions: (Action) -> Unit,
 ) {
-    val videoPlayerController = LocalVideoPlayerController.current
-    val playerControlsUiState = remember(videoPlayerController) {
-        PlayerControlsUiState(videoPlayerController)
-    }
-    val imageDownloadState = remember(::ImageDownloadState)
     val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
         isSignedIn = paneScaffoldState.isSignedIn,
         onSignInClicked = {
@@ -216,6 +214,48 @@ internal fun GalleryScreen(
             }
         },
     )
+    val updatedItems by rememberUpdatedState(state.items)
+    val pagerState = rememberPagerState(
+        initialPage = state.startIndex,
+    ) {
+        updatedItems.size
+    }
+
+    VerticalPager(
+        state = pagerState,
+        modifier = modifier
+            .fillMaxSize(),
+    ) { verticalPage ->
+
+        val item = updatedItems[verticalPage]
+
+        HorizontalItems(
+            modifier = modifier,
+            item = item,
+            paneScaffoldState = paneScaffoldState,
+            state = state,
+            actions = actions,
+            postInteractionSheetState = postInteractionSheetState,
+            postOptionsSheetState = postOptionsSheetState,
+        )
+    }
+}
+
+@Composable
+private fun HorizontalItems(
+    modifier: Modifier,
+    item: GalleryThing,
+    paneScaffoldState: PaneScaffoldState,
+    state: State,
+    actions: (Action) -> Unit,
+    postInteractionSheetState: PostInteractionsSheetState,
+    postOptionsSheetState: PostOptionsSheetState,
+) {
+    val videoPlayerController = LocalVideoPlayerController.current
+    val imageDownloadState = remember(::ImageDownloadState)
+    val playerControlsUiState = remember(videoPlayerController) {
+        PlayerControlsUiState(videoPlayerController)
+    }
 
     Box(
         modifier = modifier
@@ -224,11 +264,11 @@ internal fun GalleryScreen(
                 onClick = playerControlsUiState::toggleVisibility,
             ),
     ) {
-        val updatedItems by rememberUpdatedState(state.items)
+
         val pagerState = rememberPagerState(
             initialPage = state.startIndex,
         ) {
-            updatedItems.size
+            item.media.size
         }
 
         HorizontalPager(
@@ -236,7 +276,7 @@ internal fun GalleryScreen(
                 .zIndex(MediaZIndex)
                 .fillMaxSize(),
             state = pagerState,
-            key = { page -> updatedItems[page].key },
+            key = { page -> item.media[page].key },
             pageContent = { page ->
                 var windowSize by remember { mutableStateOf(IntSize.Zero) }
                 Box(
@@ -246,7 +286,7 @@ internal fun GalleryScreen(
                             windowSize = it
                         },
                 ) {
-                    when (val item = updatedItems[page]) {
+                    when (val item = item.media[page]) {
                         is GalleryItem.Photo -> {
                             val zoomState = rememberGestureZoomState(
                                 options = remember {
@@ -300,7 +340,7 @@ internal fun GalleryScreen(
         MediaOverlay(
             modifier = Modifier
                 .fillMaxSize(),
-            galleryItem = updatedItems.getOrNull(pagerState.currentPage),
+            galleryItem = item.media.getOrNull(pagerState.currentPage),
             isVisible = playerControlsUiState.playerControlsVisible,
         ) { item ->
             val viewedProfileId = state.viewedProfileId
@@ -391,9 +431,9 @@ internal fun GalleryScreen(
 
         pagerState.interpolatedVisibleIndexEffect(
             denominator = 10,
-            itemsAvailable = updatedItems.size,
+            itemsAvailable = item.media.size,
             onIndex = { index ->
-                when (val media = updatedItems.getOrNull(index.roundToInt())) {
+                when (val media = item.media.getOrNull(index.roundToInt())) {
                     null -> Unit
                     is GalleryItem.Photo -> Unit
                     is GalleryItem.Video -> videoPlayerController.play(

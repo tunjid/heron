@@ -17,6 +17,8 @@
 package com.tunjid.heron.gallery
 
 import com.tunjid.heron.data.core.models.Conversation
+import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Image as EmbeddedImage
 import com.tunjid.heron.data.core.models.ImageList
@@ -25,6 +27,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.ProfileViewerState
+import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.Video as EmbeddedVideo
 import com.tunjid.heron.data.core.types.FollowUri
@@ -37,6 +40,9 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.ui.text.Memo
+import com.tunjid.tiler.TiledList
+import com.tunjid.tiler.emptyTiledList
+import com.tunjid.tiler.tiledListOf
 import com.tunjid.treenav.strings.Route
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -55,7 +61,7 @@ data class State(
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
     @Transient
-    val items: List<GalleryItem> = emptyList(),
+    val items: TiledList<CursorQuery, GalleryThing> = emptyTiledList(),
     @Transient
     val messages: List<Memo> = emptyList(),
 )
@@ -72,15 +78,29 @@ fun State(
     viewerState = null,
     viewedProfileId = route.profileId,
     sharedElementPrefix = route.sharedElementPrefix,
-    items = when (val media = route.model<Embed.Media>()) {
-        is ImageList -> media.images.map(GalleryItem::Photo)
-        is Video -> listOf(GalleryItem.Video(media))
-        null -> emptyList()
-    },
+    items = tiledListOf(
+        DataQuery(
+            data = CursorQuery.defaultStartData()
+        ) to GalleryThing(
+            post = null,
+            threadGate = null,
+            media = when (val media = route.model<Embed.Media>()) {
+                is ImageList -> media.images.map(GalleryItem::Photo)
+                is Video -> listOf(GalleryItem.Video(media))
+                null -> emptyList()
+            }
+        )
+    ),
 )
 
 val State.posterSharedElementPrefix
     get() = "poster-$sharedElementPrefix"
+
+data class GalleryThing(
+    val post: Post?,
+    val media: List<GalleryItem>,
+    val threadGate: ThreadGate?,
+)
 
 sealed class GalleryItem {
     data class Photo(
