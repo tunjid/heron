@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.Image as EmbeddedImage
 import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.MutedWordPreference
@@ -29,6 +30,7 @@ import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.ThreadGate
+import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.Video as EmbeddedVideo
 import com.tunjid.heron.data.core.models.stubProfile
@@ -41,6 +43,7 @@ import com.tunjid.heron.gallery.di.startIndex
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
+import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.emptyTiledList
@@ -63,6 +66,8 @@ data class State(
     @Transient
     val items: TiledList<CursorQuery, GalleryItem> = emptyTiledList(),
     @Transient
+    val timelineStateHolder: TimelineStateHolder? = null,
+    @Transient
     val messages: List<Memo> = emptyList(),
 )
 
@@ -79,11 +84,7 @@ fun State(
             startIndex = route.startIndex,
             threadGate = null,
             viewerState = null,
-            media = when (val media = route.model<Embed.Media>()) {
-                is ImageList -> media.images.map(GalleryItem.Media::Photo)
-                is Video -> listOf(GalleryItem.Media.Video(media))
-                null -> emptyList()
-            },
+            media = route.model<Embed.Media>().toGalleryMedia(),
             post = Post(
                 cid = Constants.unknownPostId,
                 uri = PostUri(
@@ -135,6 +136,16 @@ val GalleryItem.Media.key
     get() = when (this) {
         is GalleryItem.Media.Photo -> image.thumb.uri
         is GalleryItem.Media.Video -> video.playlist.uri
+    }
+
+internal fun Embed?.toGalleryMedia(): List<GalleryItem.Media> =
+    when (this) {
+        is ImageList -> this.images.map(GalleryItem.Media::Photo)
+        is Video -> listOf(GalleryItem.Media.Video(this))
+        is ExternalEmbed,
+        UnknownEmbed,
+        null,
+        -> emptyList()
     }
 
 sealed class Action(val key: String) {

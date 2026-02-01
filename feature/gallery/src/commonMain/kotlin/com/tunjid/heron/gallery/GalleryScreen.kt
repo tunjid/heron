@@ -68,6 +68,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.gesturezoom.GestureZoomState.Companion.gestureZoomable
 import com.tunjid.composables.gesturezoom.GestureZoomState.Options
 import com.tunjid.composables.gesturezoom.rememberGestureZoomState
@@ -102,6 +103,9 @@ import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.tiling.TilingState
+import com.tunjid.heron.tiling.tiledItems
+import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.post.MediaPostInteractions
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState
@@ -117,6 +121,7 @@ import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememb
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.feature.gallery.generated.resources.Res
 import heron.feature.gallery.generated.resources.download
@@ -237,6 +242,23 @@ internal fun GalleryScreen(
             )
         },
     )
+
+    state.timelineStateHolder?.let { timelineStateHolder ->
+        val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
+        val updatedTiledItems by rememberUpdatedState(timelineState.tiledItems)
+        pagerState.PivotedTilingEffect(
+            items = updatedTiledItems,
+            onQueryChanged = { query ->
+                timelineStateHolder.accept(
+                    TimelineState.Action.Tile(
+                        tilingAction = TilingState.Action.LoadAround(
+                            query = query ?: timelineState.tilingData.currentQuery,
+                        ),
+                    ),
+                )
+            },
+        )
+    }
 }
 
 @Composable
