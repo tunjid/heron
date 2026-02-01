@@ -549,7 +549,10 @@ private fun ListTimeline(
                                                     sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                                                     otherModels = buildList {
                                                         action.warnedAppliedLabels?.let(::add)
-                                                        add(timelineState.timeline.source)
+                                                        if (action.isMainPost) {
+                                                            add(timelineState.timeline.source)
+                                                            add(timelineState.tilingData.currentQuery.data)
+                                                        }
                                                     },
                                                     record = post,
                                                 ),
@@ -590,9 +593,6 @@ private fun ListTimeline(
                                                         quotingPostUri = owningPostUri,
                                                     ),
                                                     record = record,
-                                                    otherModels = listOf(
-                                                        timelineState.timeline.source,
-                                                    ),
                                                 ),
                                             ),
                                         )
@@ -613,8 +613,12 @@ private fun ListTimeline(
                                                     sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                         quotingPostUri = quotingPostUri,
                                                     ),
-                                                    otherModels = buildList {
-                                                        add(timelineState.timeline.source)
+                                                    otherModels = when {
+                                                        action.isMainPost -> listOf(
+                                                            timelineState.timeline.source,
+                                                            timelineState.tilingData.currentQuery.data,
+                                                        )
+                                                        else -> emptyList()
                                                     },
                                                 ),
                                             ),

@@ -16,8 +16,8 @@
 
 package com.tunjid.heron.postdetail
 
-import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Conversation
+import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
@@ -40,6 +40,8 @@ data class State(
     @Transient
     val source: Timeline.Source? = null,
     @Transient
+    val timelinePosition: CursorQuery.Data? = null,
+    @Transient
     val preferences: Preferences = Preferences.EmptyPreferences,
     @Transient
     val signedInProfileId: ProfileId? = null,
@@ -57,6 +59,7 @@ fun State(route: Route): State {
         anchorPost = anchorPost,
         sharedElementPrefix = route.sharedElementPrefix,
         source = route.model(),
+        timelinePosition = route.model(),
         items = when (anchorPost) {
             null -> TimelineItem.LoadingItems
             else -> listOf(
@@ -69,7 +72,7 @@ fun State(route: Route): State {
                     hasBreak = false,
                     signedInProfileId = null,
                     postUrisToThreadGates = emptyMap(),
-                    appliedLabels = route.model<AppliedLabels.Filtered>()
+                    appliedLabels = route.model()
                         ?: anchorPost.appliedLabels(
                             adultContentEnabled = false,
                             labelers = emptyList(),
