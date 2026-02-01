@@ -21,7 +21,6 @@ import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.PostRepository
@@ -36,7 +35,6 @@ import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.gallery.di.postRecordKey
 import com.tunjid.heron.gallery.di.profileId
-import com.tunjid.heron.gallery.di.startIndex
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.navigation.model
@@ -322,33 +320,27 @@ private fun verticalTimelineMutations(
     timelineRepository: TimelineRepository,
 ): Flow<Mutation<State>> = flow {
     val timelineStateHolder = when (
-        val timelineStateHolder = currentState().timelineStateHolder
+        val existing = currentState().timelineStateHolder
     ) {
         null -> when (val source = route.model<Timeline.Source>()) {
             is Timeline.Source.Profile -> profileGalleryTimeline(
                 source = source,
-            )?.let {
-                coroutineScope.galleryTimelineStateHolder(
-                    timeline = it,
-                    timelineRepository = timelineRepository,
-                )
-            }
-
+            )
             is Timeline.Source.Record.Feed -> feedGalleryTimeline(
                 timelineRepository = timelineRepository,
                 source = source,
-            )?.let {
-                coroutineScope.galleryTimelineStateHolder(
-                    timeline = it,
-                    timelineRepository = timelineRepository,
-                )
-            }
+            )
             is Timeline.Source.Following,
             is Timeline.Source.Record.List,
             null,
             -> null
+        }?.let {
+            coroutineScope.galleryTimelineStateHolder(
+                timeline = it,
+                timelineRepository = timelineRepository,
+            )
         }
-        else -> timelineStateHolder
+        else -> existing
     }
 
     if (timelineStateHolder == null) return@flow
