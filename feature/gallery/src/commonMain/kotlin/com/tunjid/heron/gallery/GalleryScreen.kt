@@ -227,6 +227,7 @@ internal fun GalleryScreen(
         modifier = modifier
             .fillMaxSize(),
         beyondViewportPageCount = PagerPrefetchCount,
+        userScrollEnabled = state.canScrollVertically,
         key = { page ->
             updatedItems[page].post.uri.uri
         },
