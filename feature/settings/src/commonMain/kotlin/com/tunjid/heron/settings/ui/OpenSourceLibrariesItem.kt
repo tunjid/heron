@@ -57,6 +57,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun OpenSourceLibrariesItem(
     modifier: Modifier = Modifier,
+    enabled: Boolean,
     libraries: Libs?,
 ) {
     ExpandableSettingsItemRow(
@@ -64,6 +65,7 @@ fun OpenSourceLibrariesItem(
             .fillMaxWidth(),
         title = stringResource(Res.string.open_source_licenses),
         icon = Icons.Rounded.Copyright,
+        enabled = enabled,
     ) {
         LibrariesHorizontalGrid(
             libraries = libraries,

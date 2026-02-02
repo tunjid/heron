@@ -45,6 +45,7 @@ internal fun SettingsScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val enableItem = !state.isSwitchingAccount
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
@@ -53,6 +54,7 @@ internal fun SettingsScreen(
     ) {
         state.signedInProfilePreferences?.let { signedInProfilePreferences ->
             AccountSwitchingItem(
+                isSwitchingAccount = state.isSwitchingAccount,
                 sessionSummaries = state.pastSessions,
                 onAddAccountClick = {
                     actions(Action.Navigate.To(signInDestination()))
@@ -71,16 +73,19 @@ internal fun SettingsScreen(
                 setAutoplayTimelineVideos = {
                     actions(Action.SetAutoPlayTimelineVideos(it))
                 },
+                enabled = enableItem,
             )
             ModerationItem(
                 modifier = Modifier
                     .animateBounds(paneScaffoldState),
+                enabled = enableItem,
             ) {
                 actions(Action.Navigate.To(moderationDestination()))
             }
             NotificationSettingsItem(
                 modifier = Modifier
                     .animateBounds(paneScaffoldState),
+                enabled = enableItem,
             ) {
                 actions(Action.Navigate.To(notificationSettingsDestination()))
             }
@@ -97,20 +102,24 @@ internal fun SettingsScreen(
                 setAutoHideBottomNavigation = {
                     actions(Action.SetAutoHideBottomNavigation(it))
                 },
+                enabled = enableItem,
             )
         }
         FeedbackItem(
             modifier = Modifier
                 .animateBounds(paneScaffoldState),
+            enabled = !state.isSwitchingAccount,
         )
         OpenSourceLibrariesItem(
             modifier = Modifier
                 .animateBounds(paneScaffoldState),
             libraries = state.openSourceLibraries,
+            enabled = enableItem,
         )
         SignOutItem(
             modifier = Modifier
                 .animateBounds(paneScaffoldState),
+            enabled = enableItem,
         ) {
             actions(Action.SignOut)
         }
