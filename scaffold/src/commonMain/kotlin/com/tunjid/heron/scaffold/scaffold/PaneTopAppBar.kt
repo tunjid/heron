@@ -179,9 +179,12 @@ fun PaneScaffoldState.fullAppbarTransparency() = Float.NaN
 
 @Composable
 fun AppBarTitle(
+    modifier: Modifier = Modifier,
     title: String,
 ) {
     Text(
+        modifier = modifier
+            .padding(horizontal = 16.dp),
         text = title,
         style = MaterialTheme.typography.titleMedium,
     )

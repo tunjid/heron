@@ -20,4 +20,5 @@
     <string name="write_new_dm">Write a new DM</string>
     <string name="error_conversation_not_found">Could not find conversation with %1$s. Please try again later.</string>
     <string name="error_cannot_be_messaged">Can't be messaged</string>
+    <string name="title">Messages</string>
 </resources>
