@@ -83,7 +83,7 @@ class ActualSettingsViewModel(
             ),
             loadOpenSourceLibraryMutations(),
             loadSessionSummaryMutations(
-                userDataRepository = userDataRepository,
+                authRepository = authRepository,
             ),
         ),
         actionTransform = transform@{ actions ->
@@ -146,9 +146,9 @@ fun loadOpenSourceLibraryMutations(): Flow<Mutation<State>> = flow {
 }
 
 private fun loadSessionSummaryMutations(
-    userDataRepository: UserDataRepository,
+    authRepository: AuthRepository,
 ): Flow<Mutation<State>> =
-    userDataRepository.sessionSummaries
+    authRepository.pastSessions
         .mapToMutation { sessionSummaries ->
             copy(pastSessions = sessionSummaries)
         }

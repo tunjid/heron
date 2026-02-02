@@ -64,7 +64,7 @@ import com.tunjid.heron.signin.RouteViewModelInitializer
 import com.tunjid.heron.signin.SignInScreen
 import com.tunjid.heron.signin.authMode
 import com.tunjid.heron.signin.canSignInLater
-import com.tunjid.heron.signin.canSwitchingAccount
+import com.tunjid.heron.signin.canSwitchAccount
 import com.tunjid.heron.signin.createSessionAction
 import com.tunjid.heron.signin.submitButtonEnabled
 import com.tunjid.heron.signin.ui.stringResource
@@ -200,7 +200,7 @@ class SignInBindings(
                         ),
                         icon = when {
                             state.canSignInLater -> Icons.Rounded.Timer
-                            state.canSwitchingAccount -> Icons.Rounded.SwapHoriz
+                            state.canSwitchAccount -> Icons.Rounded.SwapHoriz
                             else -> Icons.Rounded.Check
                         },
                         enabled = state.submitButtonEnabled,
