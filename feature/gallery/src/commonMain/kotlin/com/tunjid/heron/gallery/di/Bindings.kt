@@ -128,10 +128,6 @@ class GalleryBindings(
                 content = {
                     GalleryScreen(
                         paneScaffoldState = this,
-                        modifier = Modifier
-                            .ifTrue(!state.canScrollVertically) {
-                                dragToPop(rememberDragToPopState())
-                            },
                         state = state,
                         actions = viewModel.accept,
                     )

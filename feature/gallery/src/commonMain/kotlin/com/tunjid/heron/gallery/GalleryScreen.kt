@@ -61,6 +61,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -103,6 +104,10 @@ import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
+import com.tunjid.heron.scaffold.scaffold.DragToPop2State.Companion.dragToPop2
+import com.tunjid.heron.scaffold.scaffold.DragToPop2State.Companion.rememberDragToPop2State
+import com.tunjid.heron.scaffold.scaffold.DragToPopState.Companion.dragToPop
+import com.tunjid.heron.scaffold.scaffold.DragToPopState.Companion.rememberDragToPopState
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
@@ -121,6 +126,7 @@ import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.isPrimaryOrActive
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
@@ -226,6 +232,20 @@ internal fun GalleryScreen(
     VerticalPager(
         state = pagerState,
         modifier = modifier
+            .ifTrue(!state.canScrollVertically) {
+                dragToPop(rememberDragToPopState())
+            }
+            .ifTrue(state.canScrollVertically) {
+                dragToPop2(
+                    rememberDragToPop2State { delta ->
+                        val draggingToPop = !pagerState.canScrollBackward && delta.y > 0
+
+                        println("b: ${pagerState.canScrollBackward}; f: ${pagerState.canScrollForward}; d:$delta; dr: $draggingToPop")
+
+                        draggingToPop
+                    },
+                )
+            }
             .fillMaxSize(),
         beyondViewportPageCount = PagerPrefetchCount,
         userScrollEnabled = state.canScrollVertically,
