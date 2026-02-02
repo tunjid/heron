@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.SwitchAccount
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +43,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AccountSwitchingItem(
+    isSwitchingAccount: Boolean,
     sessionSummaries: List<SessionSummary>,
     onAddAccountClick: () -> Unit,
     onAccountSelected: (SessionSummary) -> Unit,
@@ -51,6 +53,7 @@ fun AccountSwitchingItem(
             SettingsItemRow(
                 title = stringResource(Res.string.add_another_account),
                 icon = Icons.Default.PersonAdd,
+                enabled = isSwitchingAccount,
                 modifier = Modifier.clickable(onClick = onAddAccountClick),
             )
         }
@@ -59,13 +62,24 @@ fun AccountSwitchingItem(
             ExpandableSettingsItemRow(
                 title = stringResource(Res.string.switch_account),
                 icon = Icons.Default.SwitchAccount,
+                enabled = true,
                 trailingContent = { isExpanded ->
-                    if (isExpanded) {
-                        ExpandCollapseIcon(isExpanded)
-                    } else {
-                        AccountAvatarStack(sessionSummaries)
+                    when {
+                        isSwitchingAccount && sessionSummaries.isNotEmpty() -> {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                            )
+                        }
+                        isExpanded -> {
+                            ExpandCollapseIcon(isExpanded)
+                        }
+                        else -> {
+                            AccountAvatarStack(sessionSummaries)
+                        }
                     }
                 },
+
             ) {
                 Column {
                     sessionSummaries.forEach { session ->
@@ -80,6 +94,7 @@ fun AccountSwitchingItem(
                     SettingsItemRow(
                         title = stringResource(Res.string.add_another_account),
                         icon = Icons.Default.PersonAdd,
+                        enabled = true,
                         modifier = Modifier.clickable(onClick = onAddAccountClick),
                     )
                 }
@@ -136,14 +151,14 @@ private fun ExpandCollapseIcon(isExpanded: Boolean) {
 
 @Composable
 private fun AccountAvatarStack(
-    pastSessions: List<SessionSummary>,
+    sessions: List<SessionSummary>,
 ) {
     OverlappingAvatarRow(
         modifier = Modifier.width(56.dp),
         overlap = 12.dp,
-        maxItems = minOf(pastSessions.size, 3),
+        maxItems = minOf(sessions.size, 3),
     ) {
-        pastSessions.take(3).forEachIndexed { index, session ->
+        sessions.take(3).forEachIndexed { index, session ->
             AsyncImage(
                 modifier = Modifier
                     .size(28.dp)

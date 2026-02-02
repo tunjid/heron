@@ -26,6 +26,7 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
+    val isSwitchingAccount: Boolean = false,
     val signedInProfilePreferences: Preferences? = null,
     val openSourceLibraries: Libs? = null,
     val pastSessions: List<SessionSummary> = emptyList(),
