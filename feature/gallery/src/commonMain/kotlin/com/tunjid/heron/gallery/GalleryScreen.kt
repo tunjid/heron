@@ -776,8 +776,8 @@ private fun VideoPlayerController.MuteButton(
     ) {
         Icon(
             imageVector =
-                if (isMuted) Icons.AutoMirrored.Rounded.VolumeOff
-                else Icons.AutoMirrored.Rounded.VolumeUp,
+            if (isMuted) Icons.AutoMirrored.Rounded.VolumeOff
+            else Icons.AutoMirrored.Rounded.VolumeUp,
             contentDescription = stringResource(
                 if (isMuted) Res.string.mute_video
                 else Res.string.unmute_video,
@@ -881,7 +881,6 @@ private fun ScrollableState.isConstrainedBy(
 
     return constrainedAtStart || constrainedAtEnd
 }
-
 
 private val DownloadStatus?.contentKey
     get() = when (this) {

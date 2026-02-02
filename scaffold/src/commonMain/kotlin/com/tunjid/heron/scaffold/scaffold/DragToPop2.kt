@@ -42,6 +42,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
+import androidx.compose.ui.util.fastFirstOrNull
 import androidx.navigationevent.DirectNavigationEventInput
 import androidx.navigationevent.NavigationEvent
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
@@ -52,6 +53,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.transformWhile
 import kotlinx.coroutines.launch
 
 @Stable
@@ -65,35 +67,33 @@ class DragToPop2State private constructor(
     private var dismissOffset by mutableStateOf(Offset.Zero)
     private var isSeeking = false
 
-    private var resetJob: Job? = null
+    private var resetAnimationJob: Job? = null
 
     private val channel = Channel<NavigationEventStatus>(Channel.UNLIMITED)
 
     private val scrollable2DState = Scrollable2DState(::dispatchDelta)
 
-    internal fun dispatchDelta(delta: Offset): Offset {
+    private fun dispatchDelta(delta: Offset): Offset {
         if (!enabled(delta)) return Offset.Zero
 
         if (!isSeeking) {
             isSeeking = true
-            resetJob?.cancel()
+            resetAnimationJob?.cancel()
             channel.trySend(NavigationEventStatus.Seeking)
         }
         return delta
     }
 
-    internal fun onDragStopped() {
+    private fun onDragStopped() {
         if (!isSeeking) return
         isSeeking = false
 
         if (dismissOffset.getDistanceSquared() > dismissThresholdSquared) {
-            println("Dismissing")
             channel.trySend(NavigationEventStatus.Completed.Commited)
         } else {
-            println("Restoring")
             channel.trySend(NavigationEventStatus.Completed.Cancelled)
 
-            resetJob = scope.launch {
+            resetAnimationJob = scope.launch {
                 Animatable(
                     initialValue = dismissOffset,
                     typeConverter = Offset.VectorConverter,
@@ -104,19 +104,19 @@ class DragToPop2State private constructor(
         }
     }
 
-    suspend fun awaitEvents() {
+    private suspend fun awaitEvents() {
         channel.consumeAsFlow()
+            .transformWhile { status ->
+                emit(status)
+                status != NavigationEventStatus.Completed.Commited
+            }
             .collectLatest { status ->
                 when (status) {
                     NavigationEventStatus.Completed.Cancelled -> {
-                        println("Restore event")
-
                         input.backCancelled()
                     }
 
                     NavigationEventStatus.Completed.Commited -> {
-                        println("Dismiss event")
-
                         input.backCompleted()
                     }
 
@@ -166,7 +166,7 @@ class DragToPop2State private constructor(
 
                     while (true) {
                         val event = awaitPointerEvent(pass = PointerEventPass.Initial)
-                        val change = event.changes.firstOrNull { it.id == pointerId }
+                        val change = event.changes.fastFirstOrNull { it.id == pointerId }
 
                         if (change == null || !change.pressed) break
 
