@@ -21,7 +21,8 @@ import androidx.compose.animation.core.VectorConverter
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollScope
 import androidx.compose.foundation.gestures.Scrollable2DState
-import androidx.compose.foundation.gestures.rememberScrollable2DState
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.scrollable2D
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
@@ -31,16 +32,16 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.navigationevent.DirectNavigationEventInput
@@ -51,7 +52,6 @@ import kotlin.math.min
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.launch
 
 @Stable
 class DragToPop2State private constructor(
@@ -60,10 +60,7 @@ class DragToPop2State private constructor(
     private val input: DirectNavigationEventInput,
 ) {
 
-    var offset by mutableStateOf(Offset.Zero)
-        private set
-
-    private var dismissOffset by mutableStateOf<IntOffset?>(null)
+    private var dismissOffset by mutableStateOf(Offset.Zero)
     private var isSeeking = false
 
     private val channel = Channel<NavigationEventStatus>(Channel.UNLIMITED)
@@ -86,7 +83,6 @@ class DragToPop2State private constructor(
             isSeeking = true
             channel.trySend(NavigationEventStatus.Seeking)
         }
-        offset += delta
         return delta
     }
 
@@ -94,13 +90,15 @@ class DragToPop2State private constructor(
         if (!isSeeking) return
         isSeeking = false
 
-        if (offset.getDistanceSquared() > dismissThresholdSquared) {
-            dismissOffset = offset.round()
+        if (dismissOffset.getDistanceSquared() > dismissThresholdSquared) {
             channel.trySend(NavigationEventStatus.Completed.Commited)
         } else {
             channel.trySend(NavigationEventStatus.Completed.Cancelled)
-            Animatable(offset, Offset.VectorConverter).animateTo(Offset.Zero) {
-                offset = value
+            Animatable(
+                initialValue = dismissOffset,
+                typeConverter = Offset.VectorConverter,
+            ).animateTo(Offset.Zero) {
+                dismissOffset = value
             }
         }
     }
@@ -120,7 +118,7 @@ class DragToPop2State private constructor(
                     NavigationEventStatus.Seeking -> {
                         input.backStarted(navigationEvent(progress = 0f))
 
-                        snapshotFlow { offset }.collectLatest { currentOffset ->
+                        snapshotFlow { dismissOffset }.collectLatest { currentOffset ->
                             input.backProgressed(
                                 navigationEvent(
                                     min(
@@ -138,8 +136,8 @@ class DragToPop2State private constructor(
     private fun navigationEvent(
         progress: Float,
     ) = NavigationEvent(
-        touchX = offset.x,
-        touchY = offset.y,
+        touchX = dismissOffset.x,
+        touchY = dismissOffset.y,
         progress = progress,
         swipeEdge = NavigationEvent.EDGE_NONE,
     )
@@ -151,8 +149,36 @@ class DragToPop2State private constructor(
             state = state.scrollable2DState,
             flingBehavior = state.flingBehavior,
         )
+            // Observe the pointer independently of the
+            // scroll gesture without consuming it
+            // bc the nested scroll child may scroll in 1D.
+
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(
+                        requireUnconsumed = false,
+                        pass = PointerEventPass.Initial,
+                    )
+                    val pointerId = down.id
+
+                    while (true) {
+                        val event = awaitPointerEvent(pass = PointerEventPass.Initial)
+                        val change = event.changes.firstOrNull { it.id == pointerId }
+
+                        if (change == null || !change.pressed) break
+
+                        val delta = change.position - change.previousPosition
+
+                        if (delta != Offset.Zero && state.isSeeking) {
+                           state.dismissOffset += delta
+                        }
+                    }
+
+                    state.dismissOffset = Offset.Zero
+                }
+            }
             .offset {
-                state.dismissOffset ?: state.offset.round()
+                state.dismissOffset.round()
             }
 
         @Composable
