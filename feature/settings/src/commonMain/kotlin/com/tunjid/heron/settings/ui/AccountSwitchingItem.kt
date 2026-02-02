@@ -36,9 +36,12 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.ui.OverlappingAvatarRow
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.add_another_account
 import heron.feature.settings.generated.resources.switch_account
+import heron.ui.core.generated.resources.collapse_icon
+import heron.ui.core.generated.resources.expand_icon
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -148,7 +151,10 @@ private fun ExpandCollapseIcon(isExpanded: Boolean) {
     Icon(
         modifier = Modifier.graphicsLayer { rotationX = rotation },
         imageVector = Icons.Default.ExpandLess,
-        contentDescription = null,
+        contentDescription = stringResource(
+            if (isExpanded) CommonStrings.collapse_icon
+            else CommonStrings.expand_icon,
+        ),
     )
 }
 
