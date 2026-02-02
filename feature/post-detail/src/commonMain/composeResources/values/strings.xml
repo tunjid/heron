@@ -17,4 +17,5 @@
 <resources>
     <string name="back">Go back</string>
     <string name="reply">Reply</string>
+    <string name="title">Post</string>
 </resources>

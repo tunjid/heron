@@ -43,6 +43,7 @@ import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.notificationSettingsDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.notifications.hasNotificationPermissions
+import com.tunjid.heron.scaffold.scaffold.AppBarTitle
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -74,6 +75,8 @@ import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
+import heron.feature.notifications.generated.resources.Res
+import heron.feature.notifications.generated.resources.title
 import heron.ui.core.generated.resources.notification_settings
 import heron.ui.core.generated.resources.notifications_create_post
 import org.jetbrains.compose.resources.stringResource
@@ -153,6 +156,11 @@ class NotificationsBindings(
                     RootDestinationTopAppBar(
                         modifier = Modifier.offset {
                             topAppBarNestedScrollConnection.offset.round()
+                        },
+                        title = {
+                            AppBarTitle(
+                                title = stringResource(Res.string.title),
+                            )
                         },
                         signedInProfile = state.signedInProfile,
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,

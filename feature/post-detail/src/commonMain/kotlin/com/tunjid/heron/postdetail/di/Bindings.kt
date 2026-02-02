@@ -41,6 +41,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOptio
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
+import com.tunjid.heron.scaffold.scaffold.AppBarTitle
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -76,6 +77,7 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.feature.post_detail.generated.resources.Res
 import heron.feature.post_detail.generated.resources.reply
+import heron.feature.post_detail.generated.resources.title
 import heron.ui.core.generated.resources.sign_in
 import org.jetbrains.compose.resources.stringResource
 
@@ -194,6 +196,11 @@ class PostDetailBindings(
                 topBar = {
                     PoppableDestinationTopAppBar(
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
+                        title = {
+                            AppBarTitle(
+                                title = stringResource(Res.string.title),
+                            )
+                        },
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                     )
                 },

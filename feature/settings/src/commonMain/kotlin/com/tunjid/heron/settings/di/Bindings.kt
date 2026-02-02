@@ -144,7 +144,11 @@ class SettingsBindings(
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
-                        title = { AppBarTitle(stringResource(Res.string.settings)) },
+                        title = {
+                            AppBarTitle(
+                                title = stringResource(Res.string.settings),
+                            )
+                        },
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                     )
                 },

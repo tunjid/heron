@@ -156,7 +156,9 @@ class NotificationSettingsBindings(
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
-                        title = { AppBarTitle(stringResource(CommonStrings.notification_settings)) },
+                        title = {
+                            AppBarTitle(title = stringResource(CommonStrings.notification_settings))
+                        },
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                     )
                 },

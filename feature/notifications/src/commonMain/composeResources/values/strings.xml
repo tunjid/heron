@@ -16,4 +16,5 @@
 
 <resources>
   <string name="notification_permissions_request">Enable push notifications</string>
+  <string name="title">Notifications</string>
 </resources>

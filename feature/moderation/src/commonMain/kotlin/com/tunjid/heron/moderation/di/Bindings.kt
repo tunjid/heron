@@ -144,7 +144,11 @@ class ModerationBindings(
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
-                        title = { AppBarTitle(stringResource(Res.string.moderation_settings)) },
+                        title = {
+                            AppBarTitle(
+                                title = stringResource(Res.string.moderation_settings),
+                            )
+                        },
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                     )
                 },

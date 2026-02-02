@@ -16,11 +16,13 @@
 
 package com.tunjid.heron.messages.di
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -51,6 +53,7 @@ import com.tunjid.heron.messages.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.profileDestination
+import com.tunjid.heron.scaffold.scaffold.AppBarTitle
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
@@ -82,6 +85,7 @@ import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.feature.messages.generated.resources.Res
+import heron.feature.messages.generated.resources.title
 import heron.feature.messages.generated.resources.write_new_dm
 import org.jetbrains.compose.resources.stringResource
 
@@ -165,24 +169,32 @@ class MessagesBindings(
                         },
                         title = {
                             val keyboardController = LocalSoftwareKeyboardController.current
-                            AnimatedVisibility(
-                                visible = state.isSearching,
-                                enter = SearchbarEnterAnimation,
-                                exit = SearchbarExitAnimation,
-                            ) {
-                                SearchBar(
-                                    searchQuery = state.searchQuery,
-                                    focusRequester = searchFocusRequester,
-                                    onQueryChanged = { query ->
-                                        viewModel.accept(Action.SearchQueryChanged(query))
-                                    },
-                                    onQueryConfirmed = {
-                                        viewModel.accept(Action.SearchQueryChanged(query = ""))
-                                        keyboardController?.hide()
-                                    },
-                                )
-                                LaunchedEffect(Unit) {
-                                    searchFocusRequester.requestFocus()
+                            AnimatedContent(
+                                targetState = state.isSearching,
+                                transitionSpec = {
+                                    SearchbarEnterAnimation togetherWith
+                                        SearchbarExitAnimation
+                                },
+                            ) { isSearching ->
+                                if (isSearching) {
+                                    SearchBar(
+                                        searchQuery = state.searchQuery,
+                                        focusRequester = searchFocusRequester,
+                                        onQueryChanged = { query ->
+                                            viewModel.accept(Action.SearchQueryChanged(query))
+                                        },
+                                        onQueryConfirmed = {
+                                            viewModel.accept(Action.SearchQueryChanged(query = ""))
+                                            keyboardController?.hide()
+                                        },
+                                    )
+                                    LaunchedEffect(Unit) {
+                                        searchFocusRequester.requestFocus()
+                                    }
+                                } else {
+                                    AppBarTitle(
+                                        title = stringResource(Res.string.title),
+                                    )
                                 }
                             }
                         },
