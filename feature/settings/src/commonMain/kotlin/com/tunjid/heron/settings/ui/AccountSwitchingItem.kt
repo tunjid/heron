@@ -46,41 +46,44 @@ fun AccountSwitchingItem(
     onAddAccountClick: () -> Unit,
     onAccountSelected: (SessionSummary) -> Unit,
 ) {
-    if (sessionSummaries.size <= 1) {
-        SettingsItemRow(
-            title = stringResource(Res.string.add_another_account),
-            icon = Icons.Default.PersonAdd,
-            modifier = Modifier.clickable(onClick = onAddAccountClick),
-        )
-    }
-
-    ExpandableSettingsItemRow(
-        title = stringResource(Res.string.switch_account),
-        icon = Icons.Default.SwitchAccount,
-        trailingContent = { isExpanded ->
-            if (isExpanded) {
-                ExpandCollapseIcon(isExpanded)
-            } else {
-                AccountAvatarStack(sessionSummaries)
-            }
-        },
-    ) {
-        Column {
-            sessionSummaries.forEach { session ->
-                AccountRow(
-                    session = session,
-                    onClick = { onAccountSelected(session) },
-                )
-            }
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
+    when {
+        sessionSummaries.size <= 1 -> {
             SettingsItemRow(
                 title = stringResource(Res.string.add_another_account),
                 icon = Icons.Default.PersonAdd,
-                modifier = Modifier
-                    .clickable(onClick = onAddAccountClick),
+                modifier = Modifier.clickable(onClick = onAddAccountClick),
             )
+        }
+
+        else -> {
+            ExpandableSettingsItemRow(
+                title = stringResource(Res.string.switch_account),
+                icon = Icons.Default.SwitchAccount,
+                trailingContent = { isExpanded ->
+                    if (isExpanded) {
+                        ExpandCollapseIcon(isExpanded)
+                    } else {
+                        AccountAvatarStack(sessionSummaries)
+                    }
+                },
+            ) {
+                Column {
+                    sessionSummaries.forEach { session ->
+                        AccountRow(
+                            session = session,
+                            onClick = { onAccountSelected(session) },
+                        )
+                    }
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                    SettingsItemRow(
+                        title = stringResource(Res.string.add_another_account),
+                        icon = Icons.Default.PersonAdd,
+                        modifier = Modifier.clickable(onClick = onAddAccountClick),
+                    )
+                }
+            }
         }
     }
 }
@@ -133,14 +136,14 @@ private fun ExpandCollapseIcon(isExpanded: Boolean) {
 
 @Composable
 private fun AccountAvatarStack(
-    sessions: List<SessionSummary>,
+    pastSessions: List<SessionSummary>,
 ) {
     OverlappingAvatarRow(
         modifier = Modifier.width(56.dp),
         overlap = 12.dp,
-        maxItems = minOf(sessions.size, 3),
+        maxItems = minOf(pastSessions.size, 3),
     ) {
-        sessions.take(3).forEachIndexed { index, session ->
+        pastSessions.take(3).forEachIndexed { index, session ->
             AsyncImage(
                 modifier = Modifier
                     .size(28.dp)
