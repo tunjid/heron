@@ -33,6 +33,8 @@ import com.tunjid.composables.gesturezoom.GestureZoomState.Options
 import com.tunjid.composables.gesturezoom.rememberGestureZoomState
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.scaffold.scaffold.DragToPop2State.Companion.dragToPop2
+import com.tunjid.heron.scaffold.scaffold.DragToPop2State.Companion.rememberDragToPop2State
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
@@ -50,19 +52,25 @@ internal fun AvatarScreen(
     val profile = state.profile
     val avatar = profile?.avatar
 
+    val coroutineScope = rememberCoroutineScope()
+    val zoomState = rememberGestureZoomState(
+        zoomScale = DefaultZoomScale,
+        options = remember {
+            Options(
+                scale = Options.Scale.Layout,
+                offset = Options.Offset.Layout,
+            )
+        },
+    )
     Box(
         modifier = modifier
+            .dragToPop2(
+                rememberDragToPop2State {
+                    !zoomState.enabled || zoomState.zoomScale == DefaultZoomScale
+                },
+            )
             .fillMaxSize(),
     ) {
-        val coroutineScope = rememberCoroutineScope()
-        val zoomState = rememberGestureZoomState(
-            options = remember {
-                Options(
-                    scale = Options.Scale.Layout,
-                    offset = Options.Offset.Layout,
-                )
-            },
-        )
         paneScaffoldState.UpdatedMovableStickySharedElementOf(
             sharedContentState = with(paneScaffoldState) {
                 rememberSharedContentState(
@@ -94,3 +102,5 @@ internal fun AvatarScreen(
         )
     }
 }
+
+private const val DefaultZoomScale = 1f
