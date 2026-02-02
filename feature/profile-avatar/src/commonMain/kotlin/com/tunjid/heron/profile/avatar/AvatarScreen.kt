@@ -33,8 +33,8 @@ import com.tunjid.composables.gesturezoom.GestureZoomState.Options
 import com.tunjid.composables.gesturezoom.rememberGestureZoomState
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.scaffold.scaffold.DragToPop2State.Companion.dragToPop2
-import com.tunjid.heron.scaffold.scaffold.DragToPop2State.Companion.rememberDragToPop2State
+import com.tunjid.heron.scaffold.scaffold.DragToPopState.Companion.dragToPop
+import com.tunjid.heron.scaffold.scaffold.DragToPopState.Companion.rememberDragToPopState
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
@@ -64,8 +64,8 @@ internal fun AvatarScreen(
     )
     Box(
         modifier = modifier
-            .dragToPop2(
-                rememberDragToPop2State {
+            .dragToPop(
+                rememberDragToPopState {
                     !zoomState.enabled || zoomState.zoomScale == DefaultZoomScale
                 },
             )

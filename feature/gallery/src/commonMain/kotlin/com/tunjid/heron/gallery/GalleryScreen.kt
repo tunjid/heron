@@ -104,8 +104,8 @@ import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
-import com.tunjid.heron.scaffold.scaffold.DragToPop2State.Companion.dragToPop2
-import com.tunjid.heron.scaffold.scaffold.DragToPop2State.Companion.rememberDragToPop2State
+import com.tunjid.heron.scaffold.scaffold.DragToPopState.Companion.dragToPop
+import com.tunjid.heron.scaffold.scaffold.DragToPopState.Companion.rememberDragToPopState
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
@@ -230,8 +230,8 @@ internal fun GalleryScreen(
     VerticalPager(
         state = pagerState,
         modifier = modifier
-            .dragToPop2(
-                rememberDragToPop2State { delta ->
+            .dragToPop(
+                rememberDragToPopState { delta ->
                     val isVertical = delta.y.absoluteValue > delta.x.absoluteValue
                     isVertical && pagerState.isConstrainedBy(delta.y)
                 },
