@@ -27,7 +27,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.scaffold.navigation.moderationDestination
 import com.tunjid.heron.scaffold.navigation.notificationSettingsDestination
+import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.settings.ui.AccountSwitchingItem
 import com.tunjid.heron.settings.ui.AppearanceItem
 import com.tunjid.heron.settings.ui.ContentAndMediaItem
 import com.tunjid.heron.settings.ui.FeedbackItem
@@ -50,6 +52,15 @@ internal fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         state.signedInProfilePreferences?.let { signedInProfilePreferences ->
+            AccountSwitchingItem(
+                sessionSummaries = state.pastSessions,
+                onAddAccountClick = {
+                    actions(Action.Navigate.To(signInDestination()))
+                },
+                onAccountSelected = { sessionSummary ->
+                    actions(Action.SwitchSession(sessionSummary))
+                },
+            )
             ContentAndMediaItem(
                 modifier = Modifier
                     .animateBounds(paneScaffoldState),
