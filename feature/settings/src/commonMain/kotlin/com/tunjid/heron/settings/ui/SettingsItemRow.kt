@@ -110,6 +110,7 @@ fun ExpandableSettingsItemRow(
     icon: ImageVector,
     modifier: Modifier = Modifier,
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
+    trailingContent: (@Composable (Boolean) -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit = {},
 ) {
     var isExpanded by rememberSaveable { mutableStateOf(false) }
@@ -127,29 +128,31 @@ fun ExpandableSettingsItemRow(
             ),
     ) {
         SettingsItemRow(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             title = title,
             icon = icon,
             titleColor = titleColor,
         ) {
-            val iconRotation = animateFloatAsState(
-                targetValue = if (isExpanded) 0f
-                else 180f,
-                animationSpec = spring(
-                    stiffness = Spring.StiffnessMediumLow,
-                ),
-            )
-            Icon(
-                modifier = Modifier.graphicsLayer {
-                    rotationX = iconRotation.value
-                },
-                imageVector = Icons.Default.ExpandLess,
-                contentDescription = stringResource(
-                    if (isExpanded) CommonStrings.collapse_icon
-                    else CommonStrings.expand_icon,
-                ),
-            )
+            if (trailingContent != null) {
+                trailingContent(isExpanded)
+            } else {
+                val iconRotation = animateFloatAsState(
+                    targetValue = if (isExpanded) 0f else 180f,
+                    animationSpec = spring(
+                        stiffness = Spring.StiffnessMediumLow,
+                    ),
+                )
+                Icon(
+                    modifier = Modifier.graphicsLayer {
+                        rotationX = iconRotation.value
+                    },
+                    imageVector = Icons.Default.ExpandLess,
+                    contentDescription = stringResource(
+                        if (isExpanded) CommonStrings.collapse_icon
+                        else CommonStrings.expand_icon,
+                    ),
+                )
+            }
         }
         androidx.compose.animation.AnimatedVisibility(
             modifier = Modifier
