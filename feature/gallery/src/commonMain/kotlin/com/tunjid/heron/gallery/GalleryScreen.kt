@@ -67,6 +67,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.gesturezoom.GestureZoomState.Companion.gestureZoomable
@@ -238,6 +239,10 @@ internal fun GalleryScreen(
                 item = item,
                 paneScaffoldState = paneScaffoldState,
                 signedInProfileId = state.signedInProfileId,
+                focusedItem = {
+                    val page = pagerState.currentPage + pagerState.currentPageOffsetFraction
+                    updatedItems.getOrNull(page.fastRoundToInt())
+                },
                 actions = actions,
                 postInteractionSheetState = postInteractionSheetState,
                 postOptionsSheetState = postOptionsSheetState,
@@ -269,6 +274,7 @@ private fun HorizontalItems(
     item: GalleryItem,
     signedInProfileId: ProfileId?,
     paneScaffoldState: PaneScaffoldState,
+    focusedItem: () -> GalleryItem?,
     actions: (Action) -> Unit,
     postInteractionSheetState: PostInteractionsSheetState,
     postOptionsSheetState: PostOptionsSheetState,
@@ -454,15 +460,21 @@ private fun HorizontalItems(
             denominator = 10,
             itemsAvailable = item.media.size,
             onIndex = { index ->
-                when (val media = item.media.getOrNull(index.roundToInt())) {
-                    null -> Unit
-                    is GalleryItem.Media.Photo -> Unit
-                    is GalleryItem.Media.Video -> videoPlayerController.play(
-                        media.video.playlist.uri,
-                    )
-                }
+                videoPlayerController.playIfVideo(
+                    media = item.media.getOrNull(index.roundToInt()),
+                )
             },
         )
+
+        LaunchedEffect(Unit) {
+            snapshotFlow { focusedItem()?.post?.uri == item.post.uri }
+                .collect { inFocus ->
+                    if (!inFocus) return@collect
+                    videoPlayerController.playIfVideo(
+                        media = item.media.getOrNull(pagerState.currentPage),
+                    )
+                }
+        }
 
         playerControlsUiState.ControlsVisibilityEffect()
     }
@@ -836,6 +848,18 @@ private fun ImageDownloadState.DownloadButton(
                 }
             }
         }
+    }
+}
+
+private fun VideoPlayerController.playIfVideo(
+    media: GalleryItem.Media?,
+) {
+    when (media) {
+        null -> Unit
+        is GalleryItem.Media.Photo -> Unit
+        is GalleryItem.Media.Video -> play(
+            media.video.playlist.uri,
+        )
     }
 }
 
