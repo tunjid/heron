@@ -23,6 +23,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -232,14 +233,7 @@ internal fun GalleryScreen(
             .dragToPop2(
                 rememberDragToPop2State { delta ->
                     val isVertical = delta.y.absoluteValue > delta.x.absoluteValue
-                    val isAtTop = !pagerState.canScrollBackward && delta.y > 0
-                    val isAtBottom = !pagerState.canScrollForward && delta.y < 0
-
-                    val draggingToPop = isVertical && (isAtTop || isAtBottom)
-
-//                    println("b: ${pagerState.canScrollBackward}; f: ${pagerState.canScrollForward}; d:$delta; dr: $draggingToPop")
-
-                    draggingToPop
+                    isVertical && pagerState.isConstrainedBy(delta.y)
                 },
             )
             .fillMaxSize(),
@@ -878,6 +872,16 @@ private fun VideoPlayerController.playIfVideo(
         )
     }
 }
+
+private fun ScrollableState.isConstrainedBy(
+    delta: Float,
+): Boolean {
+    val constrainedAtStart = !canScrollBackward && delta > 0
+    val constrainedAtEnd = !canScrollForward && delta < 0
+
+    return constrainedAtStart || constrainedAtEnd
+}
+
 
 private val DownloadStatus?.contentKey
     get() = when (this) {
