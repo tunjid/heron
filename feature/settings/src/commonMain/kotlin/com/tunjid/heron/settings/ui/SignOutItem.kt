@@ -41,6 +41,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun SignOutItem(
     modifier: Modifier = Modifier,
+    enabled: Boolean,
     onSignOutClicked: () -> Unit,
 ) {
     var showSignOutDialog by rememberSaveable { mutableStateOf(false) }
@@ -54,6 +55,7 @@ fun SignOutItem(
         title = stringResource(Res.string.sign_out),
         titleColor = MaterialTheme.colorScheme.error,
         icon = Icons.AutoMirrored.Rounded.DirectionsWalk,
+        enabled = enabled,
     )
 
     SignOutDialog(

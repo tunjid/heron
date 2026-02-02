@@ -13,6 +13,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun NotificationSettingsItem(
     modifier: Modifier = Modifier,
+    enabled: Boolean,
     onNotificationSettingsClicked: () -> Unit,
 ) {
     SettingsItemRow(
@@ -23,5 +24,6 @@ fun NotificationSettingsItem(
             },
         title = stringResource(CommonStrings.notification_settings),
         icon = Icons.Rounded.Notifications,
+        enabled = enabled,
     )
 }

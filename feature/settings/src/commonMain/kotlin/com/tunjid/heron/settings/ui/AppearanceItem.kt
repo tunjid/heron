@@ -39,6 +39,7 @@ expect fun isCompactNavigationSupported(): Boolean
 @Composable
 fun AppearanceItem(
     modifier: Modifier = Modifier,
+    enabled: Boolean,
     signedInProfilePreferences: Preferences,
     setDynamicThemingPreference: (Boolean) -> Unit,
     setCompactNavigation: (Boolean) -> Unit,
@@ -52,6 +53,7 @@ fun AppearanceItem(
             .fillMaxWidth(),
         title = stringResource(Res.string.appearance),
         icon = Icons.Rounded.Palette,
+        enabled = enabled,
     ) {
         SettingsToggleItem(
             modifier = Modifier
