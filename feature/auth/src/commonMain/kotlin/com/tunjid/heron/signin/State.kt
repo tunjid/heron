@@ -135,8 +135,6 @@ internal val InitialFields: List<FormField> = listOf(
     ),
 )
 
-// val State.submitButtonEnabled: Boolean get() = !isSignedIn && !isSubmitting
-
 val State.submitButtonEnabled: Boolean
     get() = !isSubmitting && (!isSignedIn || canSwitchAccount)
 

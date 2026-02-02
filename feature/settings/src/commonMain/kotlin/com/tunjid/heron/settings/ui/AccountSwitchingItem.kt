@@ -5,16 +5,13 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.SwitchAccount
@@ -41,7 +38,6 @@ import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.add_another_account
 import heron.feature.settings.generated.resources.switch_account
 import heron.ui.core.generated.resources.collapse_icon
-import heron.ui.core.generated.resources.expand_icon
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -55,13 +51,7 @@ fun AccountSwitchingItem(
             title = stringResource(Res.string.add_another_account),
             icon = Icons.Default.PersonAdd,
             modifier = Modifier.clickable(onClick = onAddAccountClick),
-        ) {
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = null,
-            )
-        }
-        return
+        )
     }
 
     ExpandableSettingsItemRow(
@@ -75,36 +65,22 @@ fun AccountSwitchingItem(
             }
         },
     ) {
-        LazyColumn(
-            modifier = Modifier.height(150.dp),
-        ) {
-            items(
-                items = sessionSummaries,
-                key = { session -> session.profileId },
-            ) { session ->
+        Column {
+            sessionSummaries.forEach { session ->
                 AccountRow(
                     session = session,
                     onClick = { onAccountSelected(session) },
                 )
             }
 
-            item {
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            }
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-            item {
-                SettingsItemRow(
-                    title = stringResource(Res.string.add_another_account),
-                    icon = Icons.Default.PersonAdd,
-                    modifier = Modifier
-                        .clickable(onClick = onAddAccountClick),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ChevronRight,
-                        contentDescription = null,
-                    )
-                }
-            }
+            SettingsItemRow(
+                title = stringResource(Res.string.add_another_account),
+                icon = Icons.Default.PersonAdd,
+                modifier = Modifier
+                    .clickable(onClick = onAddAccountClick),
+            )
         }
     }
 }
@@ -151,10 +127,7 @@ private fun ExpandCollapseIcon(isExpanded: Boolean) {
     Icon(
         modifier = Modifier.graphicsLayer { rotationX = rotation },
         imageVector = Icons.Default.ExpandLess,
-        contentDescription = stringResource(
-            if (isExpanded) CommonStrings.collapse_icon
-            else CommonStrings.expand_icon,
-        ),
+        contentDescription = stringResource(CommonStrings.collapse_icon),
     )
 }
 
