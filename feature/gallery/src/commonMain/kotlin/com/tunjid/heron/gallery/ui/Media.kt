@@ -292,7 +292,7 @@ internal fun MediaPoster(
 }
 
 @Composable
-fun GalleryText(
+private fun GalleryText(
     post: Post?,
     paneScaffoldState: PaneScaffoldState,
     modifier: Modifier = Modifier,

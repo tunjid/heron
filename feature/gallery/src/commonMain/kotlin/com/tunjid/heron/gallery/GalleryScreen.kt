@@ -271,14 +271,14 @@ private fun HorizontalItems(
             key = { page -> item.media[page].key },
             pageContent = { page ->
                 var windowSize by remember { mutableStateOf(IntSize.Zero) }
-                val isInViewport = inViewport@{
-                    val inVerticalViewport = item == focusedItem()
-
-                    if (!inVerticalViewport) return@inViewport false
-
-                    pagerState.layoutInfo.visiblePagesInfo.binarySearch {
-                        it.index - page
-                    } >= 0
+                val isInViewport = remember(item, page) {
+                    inViewport@{
+                        val inVerticalViewport = item == focusedItem()
+                        if (!inVerticalViewport) return@inViewport false
+                        pagerState.layoutInfo.visiblePagesInfo.binarySearch {
+                            it.index - page
+                        } >= 0
+                    }
                 }
                 Box(
                     modifier = Modifier
