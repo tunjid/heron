@@ -60,6 +60,7 @@ import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
+import com.tunjid.heron.data.core.models.sourceId
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.utilities.asGenericUri
@@ -494,7 +495,13 @@ private fun HomeTimeline(
                                                     recordDestination(
                                                         referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
                                                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                                                        otherModels = listOfNotNull(action.warnedAppliedLabels),
+                                                        otherModels = buildList {
+                                                            action.warnedAppliedLabels?.let(::add)
+                                                            if (action.isMainPost) {
+                                                                add(timelineState.timeline.source)
+                                                                add(timelineState.tilingData.currentQuery.data)
+                                                            }
+                                                        },
                                                         record = action.post,
                                                     ),
                                                 ),
@@ -545,6 +552,13 @@ private fun HomeTimeline(
                                                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                             quotingPostUri = action.quotingPostUri,
                                                         ),
+                                                        otherModels = when {
+                                                            action.isMainPost -> listOf(
+                                                                timelineState.timeline.source,
+                                                                timelineState.tilingData.currentQuery.data,
+                                                            )
+                                                            else -> emptyList()
+                                                        },
                                                     ),
                                                 ),
                                             )

@@ -236,7 +236,13 @@ internal fun PostDetailScreen(
                                         recordDestination(
                                             referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
                                             sharedElementPrefix = state.sharedElementPrefix,
-                                            otherModels = listOfNotNull(action.warnedAppliedLabels),
+                                            otherModels = buildList {
+                                                action.warnedAppliedLabels?.let(::add)
+                                                if (action.isMainPost && action.post.uri == state.anchorPost?.uri) {
+                                                    state.source?.let(::add)
+                                                    state.timelinePosition?.let(::add)
+                                                }
+                                            },
                                             record = action.post,
                                         ),
                                     )
@@ -251,7 +257,8 @@ internal fun PostDetailScreen(
                                             avatarSharedElementKey = action.post.avatarSharedElementKey(
                                                 prefix = state.sharedElementPrefix,
                                                 quotingPostUri = action.quotingPostUri,
-                                            ).takeIf { action.post.author.did == action.profile.did },
+                                            )
+                                                .takeIf { action.post.author.did == action.profile.did },
                                         ),
                                     )
                                 }
@@ -280,6 +287,13 @@ internal fun PostDetailScreen(
                                             sharedElementPrefix = state.sharedElementPrefix.withQuotingPostUriPrefix(
                                                 quotingPostUri = action.quotingPostUri,
                                             ),
+                                            otherModels = when {
+                                                action.isMainPost && action.post.uri == state.anchorPost?.uri -> buildList {
+                                                    state.source?.let(::add)
+                                                    state.timelinePosition?.let(::add)
+                                                }
+                                                else -> emptyList()
+                                            },
                                         ),
                                     )
                                 }
@@ -294,7 +308,6 @@ internal fun PostDetailScreen(
                                             ),
                                             sharedElementPrefix = state.sharedElementPrefix,
                                         ),
-
                                     )
                                 }
 

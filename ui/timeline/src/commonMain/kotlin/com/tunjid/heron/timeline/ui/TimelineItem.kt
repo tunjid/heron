@@ -115,14 +115,13 @@ fun TimelineItem(
                         },
                     )
                 }
-                when {
-                    item is TimelineItem.Loading -> LoadingPost(
+                when (item) {
+                    is TimelineItem.Loading -> LoadingPost(
                         modifier = Modifier
                             .fillMaxWidth(),
                         presentation = presentation,
                     )
-
-                    item is TimelineItem.Thread && presentation == Timeline.Presentation.Text.WithEmbed -> ThreadedPost(
+                    is TimelineItem.Thread if presentation == Timeline.Presentation.Text.WithEmbed -> ThreadedPost(
                         modifier = Modifier
                             .fillMaxWidth(),
                         paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
@@ -133,7 +132,6 @@ fun TimelineItem(
                         presentation = presentation,
                         postActions = postActions,
                     )
-
                     else -> Post(
                         modifier = Modifier
                             .fillMaxWidth(),
@@ -144,6 +142,7 @@ fun TimelineItem(
                         post = item.post,
                         threadGate = item.threadGate,
                         isAnchoredInTimeline = false,
+                        isMainPost = true,
                         avatarShape = RoundedPolygonShape.Circle,
                         sharedElementPrefix = sharedElementPrefix,
                         createdAt = item.post.createdAt,
@@ -189,6 +188,7 @@ private fun ThreadedPost(
                         post = post,
                         threadGate = item.postUrisToThreadGates[post.uri],
                         isAnchoredInTimeline = item.generation == 0L,
+                        isMainPost = post == item.post,
                         avatarShape = when {
                             item.isThreadedAnchor -> RoundedPolygonShape.Circle
                             item.isThreadedAncestor ->
@@ -226,6 +226,7 @@ private fun ThreadedPost(
                                 postActions.onPostAction(
                                     PostAction.OfPost(
                                         post = post,
+                                        isMainPost = post == item.post,
                                         warnedAppliedLabels = item.appliedLabels.warned(),
                                     ),
                                 )

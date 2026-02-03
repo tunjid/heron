@@ -65,6 +65,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
+import com.tunjid.heron.data.core.models.sourceId
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.interpolatedVisibleIndexEffect
@@ -546,7 +547,13 @@ private fun ListTimeline(
                                                 recordDestination(
                                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                     sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                                                    otherModels = listOfNotNull(action.warnedAppliedLabels),
+                                                    otherModels = buildList {
+                                                        action.warnedAppliedLabels?.let(::add)
+                                                        if (action.isMainPost) {
+                                                            add(timelineState.timeline.source)
+                                                            add(timelineState.tilingData.currentQuery.data)
+                                                        }
+                                                    },
                                                     record = post,
                                                 ),
                                             ),
@@ -606,6 +613,13 @@ private fun ListTimeline(
                                                     sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                         quotingPostUri = quotingPostUri,
                                                     ),
+                                                    otherModels = when {
+                                                        action.isMainPost -> listOf(
+                                                            timelineState.timeline.source,
+                                                            timelineState.tilingData.currentQuery.data,
+                                                        )
+                                                        else -> emptyList()
+                                                    },
                                                 ),
                                             ),
                                         )

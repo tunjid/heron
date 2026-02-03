@@ -19,6 +19,7 @@ package com.tunjid.heron.data.utilities.multipleEntitysaver
 import app.bsky.feed.FeedViewPost
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.id
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
@@ -32,7 +33,7 @@ import com.tunjid.heron.data.network.models.profileEntity
 internal fun MultipleEntitySaver.add(
     viewingProfileId: ProfileId?,
     query: CursorQuery,
-    timeline: Timeline,
+    source: Timeline.Source,
     feedViewPosts: List<FeedViewPost>,
 ) {
     for (index in feedViewPosts.indices) {
@@ -40,7 +41,7 @@ internal fun MultipleEntitySaver.add(
         // Extract data from feed
         add(
             feedView.feedItemEntity(
-                sourceId = timeline.sourceId,
+                sourceId = source.id,
                 itemSort = query.itemSortKey(index),
                 viewingProfileId = viewingProfileId,
             ),

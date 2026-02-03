@@ -238,7 +238,9 @@ private fun PaneScaffoldState.TopBar(
             )
         },
         title = {
-            AppBarTitle(stringResource(Res.string.sign_in))
+            AppBarTitle(
+                title = stringResource(Res.string.sign_in),
+            )
         },
         actions = {
             if (oauthAvailable) Box(

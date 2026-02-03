@@ -205,7 +205,7 @@ class PostsBindings(
                     PoppableDestinationTopAppBar(
                         title = {
                             AppBarTitle(
-                                stringResource(
+                                title = stringResource(
                                     when (route.postsRequest) {
                                         is PostsRequest.Quotes -> Res.string.quotes
                                         PostsRequest.Saved -> Res.string.bookmarks

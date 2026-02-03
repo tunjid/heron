@@ -79,7 +79,7 @@ fun State(
                         page = 0,
                         cursorAnchor = Clock.System.now(),
                     ),
-                    timeline = timeline,
+                    source = timeline.source,
                 ),
             ),
         )
@@ -99,7 +99,7 @@ fun State(
                             page = 0,
                             cursorAnchor = Clock.System.now(),
                         ),
-                        timeline = timeline,
+                        source = timeline.source,
                     ),
                 ),
             )

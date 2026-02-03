@@ -28,6 +28,7 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UrlEncodableModel
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
@@ -183,9 +184,13 @@ fun galleryDestination(
     media: Embed.Media,
     startIndex: Int,
     sharedElementPrefix: String,
+    otherModels: List<UrlEncodableModel> = emptyList(),
 ): NavigationAction.Destination = pathDestination(
     path = "/profile/${post.author.did.id}/post/${post.uri.recordKey.value}/gallery",
-    models = listOf(media),
+    models = buildList {
+        add(media)
+        addAll(otherModels)
+    },
     sharedElementPrefix = sharedElementPrefix,
     miscQueryParams = mapOf(
         "startIndex" to listOf(startIndex.toString()),

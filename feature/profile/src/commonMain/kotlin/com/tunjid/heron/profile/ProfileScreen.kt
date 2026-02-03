@@ -100,6 +100,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.id
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.ProfileId
@@ -502,7 +503,7 @@ private fun timelineTabs(
 
         is ProfileScreenStateHolders.Timeline -> Tab(
             title = holder.state.value.timeline.displayName(),
-            hasUpdate = sourceIdsToHasUpdates[holder.state.value.timeline.sourceId] == true,
+            hasUpdate = sourceIdsToHasUpdates[holder.state.value.timeline.source.id] == true,
         )
         is ProfileScreenStateHolders.LabelerSettings -> Tab(
             title = stringResource(Res.string.labels),
@@ -1297,7 +1298,7 @@ private fun ProfileTimeline(
                         item = item,
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                         presentation = presentation,
-                        postActions = remember(timelineState.timeline.sourceId) {
+                        postActions = remember(timelineState.timeline.source.id) {
                             PostActions { action ->
                                 when (action) {
                                     is PostAction.OfLinkTarget -> {
@@ -1319,7 +1320,13 @@ private fun ProfileTimeline(
                                                 recordDestination(
                                                     referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                     sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
-                                                    otherModels = listOfNotNull(action.warnedAppliedLabels),
+                                                    otherModels = buildList {
+                                                        action.warnedAppliedLabels?.let(::add)
+                                                        if (action.isMainPost) {
+                                                            add(timelineState.timeline.source)
+                                                            add(timelineState.tilingData.currentQuery.data)
+                                                        }
+                                                    },
                                                     record = action.post,
                                                 ),
                                             ),
@@ -1335,7 +1342,7 @@ private fun ProfileTimeline(
                                                     profile = action.profile,
                                                     avatarSharedElementKey = action.post
                                                         .avatarSharedElementKey(
-                                                            prefix = timelineState.timeline.sourceId,
+                                                            prefix = timelineState.timeline.source.id,
                                                             quotingPostUri = action.quotingPostUri,
                                                         )
                                                         .takeIf { action.post.author.did == action.profile.did },
@@ -1370,6 +1377,13 @@ private fun ProfileTimeline(
                                                     sharedElementPrefix = timelineState.timeline.sharedElementPrefix(
                                                         quotingPostUri = action.quotingPostUri,
                                                     ),
+                                                    otherModels = when {
+                                                        action.isMainPost -> listOf(
+                                                            timelineState.timeline.source,
+                                                            timelineState.tilingData.currentQuery.data,
+                                                        )
+                                                        else -> emptyList()
+                                                    },
                                                 ),
                                             ),
                                         )

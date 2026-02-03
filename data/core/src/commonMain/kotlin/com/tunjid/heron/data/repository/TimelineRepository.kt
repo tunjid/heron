@@ -42,7 +42,9 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.id
 import com.tunjid.heron.data.core.models.offset
+import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.Id
@@ -149,29 +151,10 @@ sealed interface TimelineRequest {
     }
 }
 
-class TimelineQuery(
+data class TimelineQuery(
     override val data: CursorQuery.Data,
-    val timeline: Timeline,
-) : CursorQuery {
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || this::class != other::class) return false
-
-        other as TimelineQuery
-
-        if (data != other.data) return false
-        if (timeline.sourceId != other.timeline.sourceId) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = data.hashCode()
-        result = 31 * result + timeline.sourceId.hashCode()
-        return result
-    }
-}
+    val source: Timeline.Source,
+) : CursorQuery
 
 interface TimelineRepository {
 
@@ -232,8 +215,8 @@ internal class OfflineTimelineRepository(
     override fun timelineItems(
         query: TimelineQuery,
         cursor: Cursor,
-    ): Flow<CursorList<TimelineItem>> = when (val timeline = query.timeline) {
-        is Timeline.Home.Following -> observeAndRefreshTimeline(
+    ): Flow<CursorList<TimelineItem>> = when (val source = query.source) {
+        is Timeline.Source.Following -> observeAndRefreshTimeline(
             query = query,
             nextCursorFlow = networkService.nextTimelineCursorFlow(
                 query = query,
@@ -251,7 +234,7 @@ internal class OfflineTimelineRepository(
             ),
         )
 
-        is Timeline.Home.Feed -> observeAndRefreshTimeline(
+        is Timeline.Source.Record.Feed -> observeAndRefreshTimeline(
             query = query,
             nextCursorFlow = networkService.nextTimelineCursorFlow(
                 query = query,
@@ -259,7 +242,7 @@ internal class OfflineTimelineRepository(
                 currentRequestWithNextCursor = {
                     getFeed(
                         GetFeedQueryParams(
-                            feed = AtUri(timeline.source.uri),
+                            feed = AtUri(source.uri.uri),
                             limit = query.data.limit,
                             cursor = cursor.value,
                         ),
@@ -270,7 +253,7 @@ internal class OfflineTimelineRepository(
             ),
         )
 
-        is Timeline.Home.List -> observeAndRefreshTimeline(
+        is Timeline.Source.Record.List -> observeAndRefreshTimeline(
             query = query,
             nextCursorFlow = networkService.nextTimelineCursorFlow(
                 query = query,
@@ -278,7 +261,7 @@ internal class OfflineTimelineRepository(
                 currentRequestWithNextCursor = {
                     getListFeed(
                         GetListFeedQueryParams(
-                            list = AtUri(timeline.source.uri),
+                            list = AtUri(source.uri.uri),
                             limit = query.data.limit,
                             cursor = cursor.value,
                         ),
@@ -289,7 +272,7 @@ internal class OfflineTimelineRepository(
             ),
         )
 
-        is Timeline.Profile -> when (timeline.type) {
+        is Timeline.Source.Profile -> when (source.type) {
             Timeline.Profile.Type.Likes -> observeAndRefreshTimeline(
                 query = query,
                 nextCursorFlow = networkService.nextTimelineCursorFlow(
@@ -298,7 +281,7 @@ internal class OfflineTimelineRepository(
                     currentRequestWithNextCursor = {
                         getActorLikes(
                             GetActorLikesQueryParams(
-                                actor = Did(timeline.profileId.id),
+                                actor = Did(source.profileId.id),
                                 limit = query.data.limit,
                                 cursor = cursor.value,
                             ),
@@ -317,7 +300,7 @@ internal class OfflineTimelineRepository(
                     currentRequestWithNextCursor = {
                         getAuthorFeed(
                             GetAuthorFeedQueryParams(
-                                actor = Did(timeline.profileId.id),
+                                actor = Did(source.profileId.id),
                                 limit = query.data.limit,
                                 cursor = cursor.value,
                                 filter = GetAuthorFeedFilter.PostsWithMedia,
@@ -337,7 +320,7 @@ internal class OfflineTimelineRepository(
                     currentRequestWithNextCursor = {
                         getAuthorFeed(
                             GetAuthorFeedQueryParams(
-                                actor = Did(timeline.profileId.id),
+                                actor = Did(source.profileId.id),
                                 limit = query.data.limit,
                                 cursor = cursor.value,
                                 filter = GetAuthorFeedFilter.PostsNoReplies,
@@ -357,7 +340,7 @@ internal class OfflineTimelineRepository(
                     currentRequestWithNextCursor = {
                         getAuthorFeed(
                             GetAuthorFeedQueryParams(
-                                actor = Did(timeline.profileId.id),
+                                actor = Did(source.profileId.id),
                                 limit = query.data.limit,
                                 cursor = cursor.value,
                                 filter = GetAuthorFeedFilter.PostsWithReplies,
@@ -377,7 +360,7 @@ internal class OfflineTimelineRepository(
                     currentRequestWithNextCursor = {
                         getAuthorFeed(
                             GetAuthorFeedQueryParams(
-                                actor = Did(timeline.profileId.id),
+                                actor = Did(source.profileId.id),
                                 limit = query.data.limit,
                                 cursor = cursor.value,
                                 filter = GetAuthorFeedFilter.PostsWithVideo,
@@ -389,14 +372,6 @@ internal class OfflineTimelineRepository(
                 ),
             )
         }
-
-        is Timeline.StarterPack -> timelineItems(
-            query = TimelineQuery(
-                data = query.data,
-                timeline = timeline.listTimeline,
-            ),
-            cursor = cursor,
-        )
     }
         .distinctUntilChanged()
 
@@ -409,7 +384,7 @@ internal class OfflineTimelineRepository(
             networkRequestBlock = { query ->
                 getFeed(
                     GetFeedQueryParams(
-                        feed = AtUri(timeline.source.uri),
+                        feed = AtUri(timeline.uri.uri),
                         limit = query.data.limit,
                         cursor = null,
                     ),
@@ -438,7 +413,7 @@ internal class OfflineTimelineRepository(
             networkRequestBlock = { query ->
                 getListFeed(
                     GetListFeedQueryParams(
-                        list = AtUri(timeline.source.uri),
+                        list = AtUri(timeline.uri.uri),
                         limit = query.data.limit,
                         cursor = null,
                     ),
@@ -621,7 +596,7 @@ internal class OfflineTimelineRepository(
                         .merge()
                         .scan(emptyList<Timeline.Home>()) { timelines, timeline ->
                             // Add newest item first
-                            (listOf(timeline) + timelines).distinctBy(Timeline.Home::sourceId)
+                            (listOf(timeline) + timelines).distinctBy { it.source.id }
                         }
                         .map { homeTimelines ->
                             homeTimelines.sortedBy(Timeline.Home::position)
@@ -764,7 +739,7 @@ internal class OfflineTimelineRepository(
             timelineDao.updatePreferredTimelinePresentation(
                 partial = preferredPresentationPartial(
                     signedInProfileId = signedInProfileId,
-                    sourceId = timeline.sourceId,
+                    sourceId = timeline.source.id,
                     presentation = presentation,
                 ),
             )
@@ -810,12 +785,12 @@ internal class OfflineTimelineRepository(
                 onResponse = {
                     multipleEntitySaverProvider.saveInTransaction {
                         if (timelineDao.isFirstPageForDifferentAnchor(signedInProfileId, query)) {
-                            timelineDao.deleteAllFeedsFor(query.timeline.sourceId)
+                            timelineDao.deleteAllFeedsFor(query.source.id)
                             timelineDao.insertOrPartiallyUpdateTimelineFetchedAt(
                                 listOf(
                                     TimelinePreferencesEntity(
                                         viewingProfileId = signedInProfileId,
-                                        sourceId = query.timeline.sourceId,
+                                        sourceId = query.source.id,
                                         lastFetchedAt = query.data.cursorAnchor,
                                         preferredPresentation = null,
                                     ),
@@ -825,7 +800,7 @@ internal class OfflineTimelineRepository(
                         add(
                             viewingProfileId = signedInProfileId,
                             query = query,
-                            timeline = query.timeline,
+                            source = query.source,
                             feedViewPosts = networkFeed(),
                         )
                     }
@@ -860,7 +835,7 @@ internal class OfflineTimelineRepository(
                             add(
                                 viewingProfileId = signedInProfileId,
                                 query = query,
-                                timeline = timeline,
+                                source = timeline.source,
                                 feedViewPosts = fetchedFeedViewPosts,
                             )
                         }
@@ -875,14 +850,14 @@ internal class OfflineTimelineRepository(
             combine(
                 timelineDao.lastFetchKey(
                     viewingProfileId = signedInProfileId?.id,
-                    sourceId = timeline.sourceId,
+                    sourceId = timeline.source.id,
                 )
                     .map { it?.lastFetchedAt ?: pollInstant }
                     .distinctUntilChangedBy(Instant::toEpochMilliseconds)
                     .flatMapLatest {
                         timelineDao.feedItems(
                             viewingProfileId = signedInProfileId?.id,
-                            sourceId = timeline.sourceId,
+                            sourceId = timeline.source.id,
                             before = it,
                             limit = 1,
                             offset = 0,
@@ -890,7 +865,7 @@ internal class OfflineTimelineRepository(
                     },
                 timelineDao.feedItems(
                     viewingProfileId = signedInProfileId?.id,
-                    sourceId = timeline.sourceId,
+                    sourceId = timeline.source.id,
                     before = pollInstant,
                     limit = 1,
                     offset = 0,
@@ -919,7 +894,7 @@ internal class OfflineTimelineRepository(
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
             timelineDao.feedItems(
                 viewingProfileId = signedInProfileId?.id,
-                sourceId = query.timeline.sourceId,
+                sourceId = query.source.id,
                 before = query.data.cursorAnchor,
                 offset = query.data.offset,
                 limit = query.data.limit,
@@ -948,7 +923,7 @@ internal class OfflineTimelineRepository(
                         },
                         block = block@{ entity ->
                             // Muted posts should only show up on profile timelines
-                            val hideMuted = query.timeline !is Timeline.Profile
+                            val hideMuted = query.source !is Timeline.Source.Profile
                             var isMuted = isMuted(post)
                             if (hideMuted && isMuted) return@block
 
@@ -1247,7 +1222,7 @@ private suspend fun TimelineDao.isFirstPageForDifferentAnchor(
     if (query.data.page != 0) return false
     val lastFetchedAt = lastFetchKey(
         viewingProfileId = signedInProfileId?.id,
-        sourceId = query.timeline.sourceId,
+        sourceId = query.source.id,
     ).first()?.lastFetchedAt
     return lastFetchedAt?.toEpochMilliseconds() != query.data.cursorAnchor.toEpochMilliseconds()
 }

@@ -69,8 +69,8 @@ fun MovableElementSharedTransitionScope.AppLogo(
             ) {
                 val progress = progressState.value
 
-                // Leg: Rotates 0 -> 90
-                val legRotation = 90f * progress
+                // Leg: Rotates 0 -> -90
+                val legRotation = -90f * progress
 
                 // Leg: Translates (0,0) -> (4, -9)
                 val legTx = 4f * progress
