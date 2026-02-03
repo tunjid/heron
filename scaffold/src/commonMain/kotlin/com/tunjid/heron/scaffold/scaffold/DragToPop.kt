@@ -37,6 +37,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
@@ -56,17 +57,34 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.transformWhile
 import kotlinx.coroutines.launch
 
+/**
+ * State class for handling drag-to-pop gestures.
+ *
+ * This class manages the state of a drag gesture intended to pop the backstack. It coordinates
+ * gesture inputs, animations, and navigation events.
+ */
 @Stable
 class DragToPopState private constructor(
     private val scope: CoroutineScope,
     private val input: DirectNavigationEventInput,
     private val dismissThresholdSquared: () -> Float,
-    private val shouldDragToPop: (Offset) -> Boolean,
+    private val shouldDragToPop: DragToPopState.(Offset) -> Boolean,
 ) {
+
+    /**
+     * The ID of the pointer currently driving the drag gesture.
+     */
+    var pointerId by mutableStateOf<PointerId?>(null)
+        private set
+
+    /**
+     * Whether a drag-to-pop gesture is currently in progress.
+     */
+    var isDraggingToPop by mutableStateOf(false)
+        private set
 
     private val channel = Channel<NavigationEventStatus>(Channel.UNLIMITED)
     private var dismissOffset by mutableStateOf(Offset.Zero)
-    private var isSeeking = false
 
     private var resetAnimationJob: Job? = null
 
@@ -75,8 +93,8 @@ class DragToPopState private constructor(
     private fun dispatchDelta(delta: Offset): Offset {
         if (!shouldDragToPop(delta)) return Offset.Zero
 
-        if (!isSeeking) {
-            isSeeking = true
+        if (!isDraggingToPop) {
+            isDraggingToPop = true
             resetAnimationJob?.cancel()
             channel.trySend(NavigationEventStatus.Seeking)
         }
@@ -84,8 +102,9 @@ class DragToPopState private constructor(
     }
 
     private fun onDragStopped() {
-        if (!isSeeking) return
-        isSeeking = false
+        if (!isDraggingToPop) return
+        isDraggingToPop = false
+        pointerId = null
 
         if (dismissOffset.getDistanceSquared() > dismissThresholdSquared()) {
             channel.trySend(NavigationEventStatus.Completed.Commited)
@@ -147,6 +166,15 @@ class DragToPopState private constructor(
     )
 
     companion object {
+        /**
+         * Modifier that adds drag-to-pop behavior to a component.
+         *
+         * This modifier uses the provided [DragToPopState] to listen for drag gestures and
+         * translate the content accordingly. It works by monitoring pointer input and updating
+         * the state's offset.
+         *
+         * @param state The [DragToPopState] that manages the drag gesture and navigation events.
+         */
         fun Modifier.dragToPop(
             state: DragToPopState,
         ): Modifier = scrollable2D(
@@ -161,7 +189,7 @@ class DragToPopState private constructor(
                         requireUnconsumed = false,
                         pass = PointerEventPass.Initial,
                     )
-                    val pointerId = down.id
+                    val pointerId = down.id.also { state.pointerId = it }
 
                     while (true) {
                         val event = awaitPointerEvent(pass = PointerEventPass.Initial)
@@ -171,7 +199,7 @@ class DragToPopState private constructor(
 
                         val delta = change.position - change.previousPosition
 
-                        if (delta != Offset.Zero && state.isSeeking) {
+                        if (delta != Offset.Zero && state.isDraggingToPop) {
                             state.dismissOffset += delta
                         }
                     }
@@ -184,10 +212,22 @@ class DragToPopState private constructor(
                 state.dismissOffset.round()
             }
 
+        /**
+         * Creates and remembers a [DragToPopState].
+         *
+         * This function initializes the state required for drag-to-pop functionality. It hooks into
+         * the [LocalNavigationEventDispatcherOwner] to report navigation events.
+         *
+         * @param dismissThreshold The distance (in Dp) the user must drag to trigger the pop action.
+         * @param shouldDragToPop A lambda that determines if a drag gesture should initiate the pop action.
+         * It receives the drag delta as an [Offset] and returns a Boolean.
+         * This lambda is a receiver of [DragToPopState], allowing access to state properties
+         * like `pointerId` to filter events from other pointers.
+         */
         @Composable
         fun rememberDragToPopState(
             dismissThreshold: Dp = 200.dp,
-            shouldDragToPop: (Offset) -> Boolean,
+            shouldDragToPop: DragToPopState.(Offset) -> Boolean,
         ): DragToPopState {
             val updatedDragToPop = rememberUpdatedState(shouldDragToPop)
             val floatDismissThreshold = rememberUpdatedState(
@@ -221,7 +261,7 @@ class DragToPopState private constructor(
                     input = input,
                     dismissThresholdSquared = floatDismissThreshold::value,
                     shouldDragToPop = { delta ->
-                        updatedDragToPop.value(delta)
+                        updatedDragToPop.value(this, delta)
                     },
                 )
             }
