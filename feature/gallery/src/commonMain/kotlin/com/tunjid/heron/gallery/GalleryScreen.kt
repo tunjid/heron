@@ -195,8 +195,6 @@ internal fun GalleryScreen(
                         pagerState,
                         horizontalPagerStates,
                     ) {
-                        println("RECREATING")
-                        var lastHorizontalItemKey: PostUri? = null
                         var lastHorizontalGestureId: Int = -1
                         var overscrollCount = 0
 
@@ -222,16 +220,14 @@ internal fun GalleryScreen(
                             val hasDifferentPointerId = lastHorizontalGestureId != gestureId
 
                             // Reset tracking on item change
-                            if (item.post.uri != lastHorizontalItemKey) {
-                                lastHorizontalItemKey = item.post.uri
+                            if (hasDifferentPointerId) {
                                 lastHorizontalGestureId = gestureId
-                                overscrollCount = 0
                             }
 
                             val isConstrained = horizontalPagerState.isConstrainedBy(delta.x)
 
                             if (isConstrained && hasDifferentPointerId) overscrollCount++
-                            else if (!isConstrained) overscrollCount = 0
+                            else if (!isConstrained && delta.x != 0f) overscrollCount = 0
 
                             isConstrained && overscrollCount > 1
                         }
