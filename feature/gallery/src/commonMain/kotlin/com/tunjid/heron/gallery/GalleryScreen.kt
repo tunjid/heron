@@ -192,10 +192,17 @@ internal fun GalleryScreen(
             .dragToPop(
                 rememberDragToPopState(
                     shouldDragToPop = remember(
-                        pagerState,
-                        horizontalSlop,
-                        updatedItems,
+                        // Avoid allocating an array each composition
+                        remember(pagerState, updatedItems) {
+                            pagerState.hashCode() + updatedItems.hashCode()
+                        },
+                        remember(horizontalSlop, horizontalPagerStates) {
+                            horizontalSlop + horizontalPagerStates.hashCode()
+                        },
                     ) {
+                        var lastHorizontallyScrolledItemKey: PostUri? = null
+                        var overscrollCount = 0
+
                         canPop@{ delta ->
                             val isVertical = delta.y.absoluteValue > delta.x.absoluteValue
                             if (isVertical) return@canPop pagerState.isConstrainedBy(delta.y)
@@ -212,10 +219,21 @@ internal fun GalleryScreen(
                             // No items to scroll horizontally
                             if (item.media.size <= 1) return@canPop true
 
-                            // TODO in follow up: Check overscroll on horizontal pager. Requires
-                            //  changes to Modifier.dragToPop.
+                            val horizontalPagerState = horizontalPagerStates[item.post.uri]
+                                ?: return@canPop true
 
-                            false
+                            // Reset tracking on item change
+                            if (item.post.uri != lastHorizontallyScrolledItemKey) {
+                                lastHorizontallyScrolledItemKey = item.post.uri
+                                overscrollCount = 0
+                            }
+
+                            val isConstrained = horizontalPagerState.isConstrainedBy(delta.x)
+
+                            if (isConstrained) overscrollCount++
+                            else overscrollCount = 0
+
+                            isConstrained && overscrollCount > 1
                         }
                     },
                 ),
