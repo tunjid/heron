@@ -204,6 +204,9 @@ internal fun GalleryScreen(
                         var overscrollCount = 0
 
                         canPop@{ delta ->
+                            // Already dragging, continue
+                            if (isDraggingToPop) return@canPop true
+
                             val isVertical = delta.y.absoluteValue > delta.x.absoluteValue
                             if (isVertical) return@canPop pagerState.isConstrainedBy(delta.y)
 
