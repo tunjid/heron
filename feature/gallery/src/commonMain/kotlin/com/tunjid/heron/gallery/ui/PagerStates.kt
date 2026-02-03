@@ -32,8 +32,8 @@ class PagerStates<Key> {
         key: Key,
         initializer: @Composable () -> PagerState,
     ): PagerState {
-        val pagerState = keysToPagerStates.getOrPut(key) {
-            initializer()
+        val pagerState = initializer().also {
+            keysToPagerStates[key] = it
         }
         DisposableEffect(key) {
             onDispose { keysToPagerStates.remove(key) }
