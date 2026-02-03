@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.gallery.ui
 
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -90,6 +91,7 @@ internal fun GalleryImage(
     item: GalleryItem.Media.Photo,
     postUri: PostUri,
     sharedElementPrefix: String,
+    isInViewport: () -> Boolean,
 ) {
     scaffoldState.UpdatedMovableStickySharedElementOf(
         modifier = modifier,
@@ -99,6 +101,7 @@ internal fun GalleryImage(
                     prefix = sharedElementPrefix,
                     postUri = postUri,
                 ),
+                config = viewportSharedContentConfig(isInViewport),
             )
         },
         state = remember(item.image) {
@@ -126,6 +129,7 @@ internal fun GalleryVideo(
     item: GalleryItem.Media.Video,
     postUri: PostUri,
     sharedElementPrefix: String,
+    isInViewport: () -> Boolean,
 ) {
     val videoPlayerState = LocalVideoPlayerController.current.rememberUpdatedVideoPlayerState(
         videoUrl = item.video.playlist.uri,
@@ -144,6 +148,7 @@ internal fun GalleryVideo(
                     prefix = sharedElementPrefix,
                     postUri = postUri,
                 ),
+                config = viewportSharedContentConfig(isInViewport),
             )
         },
         state = videoPlayerState,
@@ -323,6 +328,19 @@ internal fun MediaInteractions(
         modifier = modifier,
         onInteraction = onPostInteraction,
     )
+}
+
+@Composable
+private fun viewportSharedContentConfig(
+    isInViewport: () -> Boolean,
+): SharedTransitionScope.SharedContentConfig {
+    val updatedIsInViewport = rememberUpdatedState(isInViewport)
+    return remember {
+        object : SharedTransitionScope.SharedContentConfig {
+            override val SharedTransitionScope.SharedContentState.isEnabled: Boolean
+                get() = updatedIsInViewport.value()
+        }
+    }
 }
 
 @Composable
