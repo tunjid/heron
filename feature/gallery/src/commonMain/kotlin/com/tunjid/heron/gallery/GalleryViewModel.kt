@@ -418,7 +418,7 @@ private fun CoroutineScope.galleryTimelineStateHolder(
     timeline: Timeline,
     timelineRepository: TimelineRepository,
 ): TimelineStateHolder = timelineStateHolder(
-    refreshOnStart = true,
+    refreshOnStart = false,
     timeline = timeline,
     startNumColumns = 1,
     timelineRepository = timelineRepository,
