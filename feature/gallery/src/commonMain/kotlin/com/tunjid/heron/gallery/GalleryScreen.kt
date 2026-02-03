@@ -54,6 +54,7 @@ import com.tunjid.composables.gesturezoom.rememberGestureZoomState
 import com.tunjid.heron.data.core.models.AspectRatio
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.gallery.ui.GalleryFooter
@@ -63,6 +64,7 @@ import com.tunjid.heron.gallery.ui.ImageDownloadState
 import com.tunjid.heron.gallery.ui.MediaInteractions
 import com.tunjid.heron.gallery.ui.MediaOverlay
 import com.tunjid.heron.gallery.ui.MediaPoster
+import com.tunjid.heron.gallery.ui.PagerStates
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.ControlsVisibilityEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
@@ -180,14 +182,29 @@ internal fun GalleryScreen(
     )
     val updatedItems by rememberUpdatedState(state.items)
     val pagerState = rememberPagerState(pageCount = updatedItems::size)
+    val horizontalPagerStates = remember { PagerStates<PostUri>() }
 
     VerticalPager(
         state = pagerState,
         modifier = modifier
             .dragToPop(
-                rememberDragToPopState { delta ->
+                rememberDragToPopState canPop@{ delta ->
                     val isVertical = delta.y.absoluteValue > delta.x.absoluteValue
-                    isVertical && pagerState.isConstrainedBy(delta.y)
+                    if (isVertical) return@canPop pagerState.isConstrainedBy(delta.y)
+
+                    // Only consider for popping for large x deltas
+                    if (delta.x.absoluteValue < 4f) return@canPop false
+
+                    // Vertical scroll already begun
+                    if (pagerState.currentPageOffsetFraction != 0f) return@canPop false
+
+                    val item = updatedItems.getOrNull(pagerState.currentPage)
+                        ?: return@canPop true
+
+                    // No items to scroll horizontally
+                    if (item.media.size <= 1) return@canPop true
+
+                    false
                 },
             )
             .fillMaxSize(),
@@ -203,6 +220,7 @@ internal fun GalleryScreen(
                 item = item,
                 paneScaffoldState = paneScaffoldState,
                 signedInProfileId = state.signedInProfileId,
+                pagerStates = horizontalPagerStates,
                 focusedItem = {
                     val page = pagerState.currentPage + pagerState.currentPageOffsetFraction
                     updatedItems.getOrNull(page.fastRoundToInt())
@@ -237,6 +255,7 @@ private fun HorizontalItems(
     modifier: Modifier = Modifier,
     item: GalleryItem,
     signedInProfileId: ProfileId?,
+    pagerStates: PagerStates<PostUri>,
     paneScaffoldState: PaneScaffoldState,
     focusedItem: () -> GalleryItem?,
     actions: (Action) -> Unit,
@@ -256,10 +275,12 @@ private fun HorizontalItems(
                 onClick = playerControlsUiState::toggleVisibility,
             ),
     ) {
-        val pagerState = rememberPagerState(
-            initialPage = item.startIndex,
-        ) {
-            item.media.size
+        val pagerState = pagerStates.getOrCreate(item.post.uri) {
+            rememberPagerState(
+                initialPage = item.startIndex,
+            ) {
+                item.media.size
+            }
         }
 
         HorizontalPager(
