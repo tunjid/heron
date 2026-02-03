@@ -23,6 +23,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -103,6 +104,8 @@ import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
+import com.tunjid.heron.scaffold.scaffold.DragToPopState.Companion.dragToPop
+import com.tunjid.heron.scaffold.scaffold.DragToPopState.Companion.rememberDragToPopState
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
@@ -130,6 +133,7 @@ import heron.feature.gallery.generated.resources.download_complete
 import heron.feature.gallery.generated.resources.download_failed
 import heron.feature.gallery.generated.resources.mute_video
 import heron.feature.gallery.generated.resources.unmute_video
+import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -226,6 +230,12 @@ internal fun GalleryScreen(
     VerticalPager(
         state = pagerState,
         modifier = modifier
+            .dragToPop(
+                rememberDragToPopState { delta ->
+                    val isVertical = delta.y.absoluteValue > delta.x.absoluteValue
+                    isVertical && pagerState.isConstrainedBy(delta.y)
+                },
+            )
             .fillMaxSize(),
         beyondViewportPageCount = PagerPrefetchCount,
         userScrollEnabled = state.canScrollVertically,
@@ -861,6 +871,15 @@ private fun VideoPlayerController.playIfVideo(
             media.video.playlist.uri,
         )
     }
+}
+
+private fun ScrollableState.isConstrainedBy(
+    delta: Float,
+): Boolean {
+    val constrainedAtStart = !canScrollBackward && delta > 0
+    val constrainedAtEnd = !canScrollForward && delta < 0
+
+    return constrainedAtStart || constrainedAtEnd
 }
 
 private val DownloadStatus?.contentKey

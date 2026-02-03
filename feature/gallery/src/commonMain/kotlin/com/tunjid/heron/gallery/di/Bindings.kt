@@ -30,13 +30,10 @@ import com.tunjid.heron.gallery.ActualGalleryViewModel
 import com.tunjid.heron.gallery.GalleryScreen
 import com.tunjid.heron.gallery.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
-import com.tunjid.heron.scaffold.scaffold.DragToPopState.Companion.dragToPop
-import com.tunjid.heron.scaffold.scaffold.DragToPopState.Companion.rememberDragToPopState
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
-import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -128,10 +125,6 @@ class GalleryBindings(
                 content = {
                     GalleryScreen(
                         paneScaffoldState = this,
-                        modifier = Modifier
-                            .ifTrue(!state.canScrollVertically) {
-                                dragToPop(rememberDragToPopState())
-                            },
                         state = state,
                         actions = viewModel.accept,
                     )
