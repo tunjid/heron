@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -62,6 +63,7 @@ import com.tunjid.heron.gallery.ui.GalleryFooter
 import com.tunjid.heron.gallery.ui.GalleryImage
 import com.tunjid.heron.gallery.ui.GalleryVideo
 import com.tunjid.heron.gallery.ui.ImageDownloadState
+import com.tunjid.heron.gallery.ui.Indicator
 import com.tunjid.heron.gallery.ui.MediaInteractions
 import com.tunjid.heron.gallery.ui.MediaOverlay
 import com.tunjid.heron.gallery.ui.MediaPoster
@@ -395,6 +397,14 @@ private fun HorizontalItems(
             },
         )
 
+        Indicator(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 36.dp)
+                .navigationBarsPadding(),
+            pagerState = pagerState,
+        )
+
         MediaOverlay(
             modifier = Modifier
                 .fillMaxSize(),
@@ -545,6 +555,6 @@ private fun ScrollableState.isConstrainedBy(
     return constrainedAtStart || constrainedAtEnd
 }
 
-private val HorizontalDragToPopSlop = 20.dp
+private val HorizontalDragToPopSlop = 16.dp
 private const val MediaZIndex = 0f
 private const val PagerPrefetchCount = 1
