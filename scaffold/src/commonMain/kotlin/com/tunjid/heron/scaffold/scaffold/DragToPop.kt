@@ -72,9 +72,9 @@ class DragToPopState private constructor(
 ) {
 
     /**
-     * The ID of the pointer currently driving the drag gesture.
+     * The ID of the first down pointer that started a gesture.
      */
-    var pointerId by mutableStateOf<PointerId?>(null)
+    var firstDownPointerId by mutableStateOf<PointerId?>(null)
         private set
 
     /**
@@ -104,7 +104,7 @@ class DragToPopState private constructor(
     private fun onDragStopped() {
         if (!isDraggingToPop) return
         isDraggingToPop = false
-        pointerId = null
+        firstDownPointerId = null
 
         if (dismissOffset.getDistanceSquared() > dismissThresholdSquared()) {
             channel.trySend(NavigationEventStatus.Completed.Commited)
@@ -189,7 +189,7 @@ class DragToPopState private constructor(
                         requireUnconsumed = false,
                         pass = PointerEventPass.Initial,
                     )
-                    val pointerId = down.id.also { state.pointerId = it }
+                    val pointerId = down.id.also { state.firstDownPointerId = it }
 
                     while (true) {
                         val event = awaitPointerEvent(pass = PointerEventPass.Initial)
