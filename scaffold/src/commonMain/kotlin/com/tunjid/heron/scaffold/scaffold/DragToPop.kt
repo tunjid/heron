@@ -222,7 +222,7 @@ class DragToPopState private constructor(
          * @param shouldDragToPop A lambda that determines if a drag gesture should initiate the pop action.
          * It receives the drag delta as an [Offset] and returns a Boolean.
          * This lambda is a receiver of [DragToPopState], allowing access to state properties
-         * like `pointerId` to filter events from other pointers.
+         * like [DragToPopState.isDraggingToPop] for more sophisticated gesture processing.
          */
         @Composable
         fun rememberDragToPopState(
