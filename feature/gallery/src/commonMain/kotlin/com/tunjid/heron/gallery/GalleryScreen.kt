@@ -288,7 +288,7 @@ private fun HorizontalItems(
                 onClick = playerControlsUiState::toggleVisibility,
             ),
     ) {
-        val pagerState = pagerStates.getOrCreate(item.post.uri) {
+        val pagerState = pagerStates.manage(item.post.uri) {
             rememberPagerState(
                 initialPage = item.startIndex,
             ) {

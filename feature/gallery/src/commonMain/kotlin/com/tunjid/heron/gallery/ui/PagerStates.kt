@@ -28,7 +28,7 @@ class PagerStates<Key> {
     private val keysToPagerStates = mutableStateMapOf<Key, PagerState>()
 
     @Composable
-    fun getOrCreate(
+    fun manage(
         key: Key,
         initializer: @Composable () -> PagerState,
     ): PagerState {
