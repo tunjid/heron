@@ -95,9 +95,12 @@ class DragToPopState private constructor(
 
         if (!isDraggingToPop) {
             isDraggingToPop = true
+            // Add delta as isDraggingToPop is only just being set
+            dismissOffset += delta
             resetAnimationJob?.cancel()
             channel.trySend(NavigationEventStatus.Seeking)
         }
+        // Consume the delta
         return delta
     }
 
