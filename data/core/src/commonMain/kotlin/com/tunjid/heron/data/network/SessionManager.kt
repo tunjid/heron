@@ -65,8 +65,12 @@ import io.ktor.http.takeFrom
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
 import sh.christian.ozone.api.Handle
 import sh.christian.ozone.api.response.AtpErrorDescription
@@ -170,8 +174,14 @@ internal class PersistedSessionManager @Inject constructor(
                 }
                 .requireResponse()
             is SessionRequest.Oauth -> {
-                val existingAuth = savedStateDataSource.savedState.value.auth
-                val pendingRequest = existingAuth as? SavedState.AuthTokens.Pending.DPoP
+                val existingAuth = withTimeoutOrNull(PendingTokenTimeout) {
+                    savedStateDataSource.savedState
+                        .map { it.auth }
+                        .filterIsInstance<SavedState.AuthTokens.Pending.DPoP>()
+                        .first()
+                }
+
+                val pendingRequest = existingAuth
                     ?: throw IllegalStateException("No pending oauth session to finalize. Current auth state: $existingAuth")
 
                 require(request.server.endpoint == pendingRequest.endpoint) {
@@ -564,6 +574,8 @@ private val SignedOutPaths = listOf(
     "app.bsky.unspecced.getPopularFeedGenerators",
     "app.bsky.unspecced.getTrends",
 )
+
+private val PendingTokenTimeout = 2.seconds
 
 private const val AtProtoProxyHeader = "Atproto-Proxy"
 private const val AtProtoLabelerHeader = "atproto-accept-labelers"
