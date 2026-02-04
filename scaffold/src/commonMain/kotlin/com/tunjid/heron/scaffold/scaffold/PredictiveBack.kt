@@ -17,6 +17,7 @@
 package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.ui.Modifier
@@ -44,10 +45,22 @@ fun Modifier.predictiveBackPlacement(
         )
 }
 
-val predictiveBackContentTransform: PaneScope<ThreePane, *>.() -> ContentTransform =
-    {
+val PredictiveBackContentTransform: PaneScope<ThreePane, *>.() -> ContentTransform =
+    PredictiveBackContentTransformFactory()::contentTransform
+
+private class PredictiveBackContentTransformFactory {
+    var wasPreviewedInPredictiveBack = false
+
+    fun contentTransform(
+        scope: PaneScope<ThreePane, *>,
+    ): ContentTransform = with(scope) {
         ContentTransform(
-            fadeIn(),
+            if (wasPreviewedInPredictiveBack) EnterTransition.None else fadeIn(),
             fadeOut(targetAlpha = if (inPredictiveBack) 0.9f else 0f),
         ).adaptTo(paneScope = this)
+            .also {
+                if (wasPreviewedInPredictiveBack) wasPreviewedInPredictiveBack = false
+                else if (!isActive && inPredictiveBack) wasPreviewedInPredictiveBack = true
+            }
     }
+}
