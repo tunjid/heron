@@ -31,7 +31,7 @@ import com.tunjid.heron.gallery.GalleryScreen
 import com.tunjid.heron.gallery.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
-import com.tunjid.heron.scaffold.scaffold.PredictiveBackContentTransform
+import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransformProvider
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
@@ -103,7 +103,7 @@ class GalleryBindings(
     private fun routePaneEntry(
         viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry(
-        contentTransform = PredictiveBackContentTransform,
+        contentTransform = predictiveBackContentTransformProvider(),
         render = { route ->
             val viewModel = viewModel<ActualGalleryViewModel> {
                 viewModelInitializer.invoke(
