@@ -44,7 +44,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastRoundToInt
@@ -186,7 +185,6 @@ internal fun GalleryScreen(
     val updatedItems by rememberUpdatedState(state.items)
     val pagerState = rememberPagerState(pageCount = updatedItems::size)
     val horizontalPagerStates = remember { PagerStates<PostUri>() }
-    val horizontalSlop = with(LocalDensity.current) { HorizontalDragToPopSlop.toPx() }
 
     VerticalPager(
         state = pagerState,
@@ -194,15 +192,10 @@ internal fun GalleryScreen(
             .dragToPop(
                 rememberDragToPopState(
                     shouldDragToPop = remember(
-                        // Avoid allocating an array each composition
-                        remember(pagerState, updatedItems) {
-                            pagerState.hashCode() + updatedItems.hashCode()
-                        },
-                        remember(horizontalSlop, horizontalPagerStates) {
-                            horizontalSlop + horizontalPagerStates.hashCode()
-                        },
+                        pagerState,
+                        horizontalPagerStates,
                     ) {
-                        var lastHorizontallyScrolledItemKey: PostUri? = null
+                        var lastHorizontalGestureId: Int = -1
                         var overscrollCount = 0
 
                         canPop@{ delta ->
@@ -211,9 +204,6 @@ internal fun GalleryScreen(
 
                             val isVertical = delta.y.absoluteValue > delta.x.absoluteValue
                             if (isVertical) return@canPop pagerState.isConstrainedBy(delta.y)
-
-                            // Only consider for popping for large x deltas
-                            if (delta.x.absoluteValue < horizontalSlop) return@canPop false
 
                             // Vertical scroll already begun
                             if (pagerState.currentPageOffsetFraction != 0f) return@canPop false
@@ -227,16 +217,17 @@ internal fun GalleryScreen(
                             val horizontalPagerState = horizontalPagerStates[item.post.uri]
                                 ?: return@canPop true
 
+                            val hasDifferentPointerId = lastHorizontalGestureId != gestureId
+
                             // Reset tracking on item change
-                            if (item.post.uri != lastHorizontallyScrolledItemKey) {
-                                lastHorizontallyScrolledItemKey = item.post.uri
-                                overscrollCount = 0
+                            if (hasDifferentPointerId) {
+                                lastHorizontalGestureId = gestureId
                             }
 
                             val isConstrained = horizontalPagerState.isConstrainedBy(delta.x)
 
-                            if (isConstrained) overscrollCount++
-                            else overscrollCount = 0
+                            if (isConstrained && hasDifferentPointerId) overscrollCount++
+                            else if (!isConstrained && delta.x != 0f) overscrollCount = 0
 
                             isConstrained && overscrollCount > 1
                         }
@@ -329,12 +320,10 @@ private fun HorizontalItems(
             pageContent = { page ->
                 var windowSize by remember { mutableStateOf(IntSize.Zero) }
                 val isInViewport = remember(item, page) {
-                    inViewport@{
+                    inViewport@{ media: GalleryItem.Media ->
                         val inVerticalViewport = item == focusedItem()
                         if (!inVerticalViewport) return@inViewport false
-                        pagerState.layoutInfo.visiblePagesInfo.binarySearch {
-                            it.index - page
-                        } >= 0
+                        media == item.media.getOrNull(pagerState.currentPage)
                     }
                 }
                 Box(
@@ -555,6 +544,5 @@ private fun ScrollableState.isConstrainedBy(
     return constrainedAtStart || constrainedAtEnd
 }
 
-private val HorizontalDragToPopSlop = 16.dp
 private const val MediaZIndex = 0f
 private const val PagerPrefetchCount = 1

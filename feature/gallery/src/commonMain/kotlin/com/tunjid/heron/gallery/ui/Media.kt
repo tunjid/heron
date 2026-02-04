@@ -91,7 +91,7 @@ internal fun GalleryImage(
     item: GalleryItem.Media.Photo,
     postUri: PostUri,
     sharedElementPrefix: String,
-    isInViewport: () -> Boolean,
+    isInViewport: (GalleryItem.Media) -> Boolean,
 ) {
     scaffoldState.UpdatedMovableStickySharedElementOf(
         modifier = modifier,
@@ -101,7 +101,10 @@ internal fun GalleryImage(
                     prefix = sharedElementPrefix,
                     postUri = postUri,
                 ),
-                config = viewportSharedContentConfig(isInViewport),
+                config = viewportSharedContentConfig(
+                    item,
+                    isInViewport,
+                ),
             )
         },
         state = remember(item.image) {
@@ -129,7 +132,7 @@ internal fun GalleryVideo(
     item: GalleryItem.Media.Video,
     postUri: PostUri,
     sharedElementPrefix: String,
-    isInViewport: () -> Boolean,
+    isInViewport: (GalleryItem.Media) -> Boolean,
 ) {
     val videoPlayerState = LocalVideoPlayerController.current.rememberUpdatedVideoPlayerState(
         videoUrl = item.video.playlist.uri,
@@ -148,7 +151,10 @@ internal fun GalleryVideo(
                     prefix = sharedElementPrefix,
                     postUri = postUri,
                 ),
-                config = viewportSharedContentConfig(isInViewport),
+                config = viewportSharedContentConfig(
+                    item,
+                    isInViewport,
+                ),
             )
         },
         state = videoPlayerState,
@@ -332,13 +338,14 @@ internal fun MediaInteractions(
 
 @Composable
 private fun viewportSharedContentConfig(
-    isInViewport: () -> Boolean,
+    media: GalleryItem.Media,
+    isInViewport: (GalleryItem.Media) -> Boolean,
 ): SharedTransitionScope.SharedContentConfig {
     val updatedIsInViewport = rememberUpdatedState(isInViewport)
-    return remember {
+    return remember(media) {
         object : SharedTransitionScope.SharedContentConfig {
             override val SharedTransitionScope.SharedContentState.isEnabled: Boolean
-                get() = updatedIsInViewport.value()
+                get() = updatedIsInViewport.value(media)
         }
     }
 }

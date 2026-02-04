@@ -18,6 +18,8 @@ package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.VectorConverter
+import androidx.compose.foundation.gestures.FlingBehavior
+import androidx.compose.foundation.gestures.ScrollScope
 import androidx.compose.foundation.gestures.Scrollable2DState
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -28,6 +30,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -37,7 +40,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
@@ -72,9 +74,10 @@ class DragToPopState private constructor(
 ) {
 
     /**
-     * The ID of the first down pointer that started a gesture.
+     * An identifier for a given drag gesture. It stays the same from the first pointer down
+     * till all pointers are up.
      */
-    var firstDownPointerId by mutableStateOf<PointerId?>(null)
+    var gestureId by mutableIntStateOf(0)
         private set
 
     /**
@@ -89,6 +92,15 @@ class DragToPopState private constructor(
     private var resetAnimationJob: Job? = null
 
     private val scrollable2DState = Scrollable2DState(::dispatchDelta)
+
+    private val flingBehavior = object : FlingBehavior {
+        override suspend fun ScrollScope.performFling(
+            initialVelocity: Float,
+        ): Float {
+            onDragStopped()
+            return 0f
+        }
+    }
 
     private fun dispatchDelta(delta: Offset): Offset {
         if (!shouldDragToPop(delta)) return Offset.Zero
@@ -107,7 +119,7 @@ class DragToPopState private constructor(
     private fun onDragStopped() {
         if (!isDraggingToPop) return
         isDraggingToPop = false
-        firstDownPointerId = null
+        gestureId = 0
 
         if (dismissOffset.getDistanceSquared() > dismissThresholdSquared()) {
             channel.trySend(NavigationEventStatus.Completed.Commited)
@@ -182,6 +194,7 @@ class DragToPopState private constructor(
             state: DragToPopState,
         ): Modifier = scrollable2D(
             state = state.scrollable2DState,
+            flingBehavior = state.flingBehavior,
         )
             // Observe the pointer independently of the
             // scroll gesture without consuming it
@@ -192,7 +205,8 @@ class DragToPopState private constructor(
                         requireUnconsumed = false,
                         pass = PointerEventPass.Initial,
                     )
-                    val pointerId = down.id.also { state.firstDownPointerId = it }
+                    val pointerId = down.id
+                    state.gestureId++
 
                     while (true) {
                         val event = awaitPointerEvent(pass = PointerEventPass.Initial)

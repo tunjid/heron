@@ -17,6 +17,9 @@
 package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.ui.Modifier
@@ -44,10 +47,44 @@ fun Modifier.predictiveBackPlacement(
         )
 }
 
-val predictiveBackContentTransform: PaneScope<ThreePane, *>.() -> ContentTransform =
-    {
+fun predictiveBackContentTransformProvider(): PaneScope<ThreePane, *>.() -> ContentTransform =
+    PredictiveBackContentTransformProvider()::contentTransform
+
+private class PredictiveBackContentTransformProvider {
+    private val previewedRouteIds = mutableSetOf<String>()
+
+    fun contentTransform(
+        scope: PaneScope<ThreePane, *>,
+    ): ContentTransform = with(scope) {
+        val routeId = paneState.currentDestination?.id
+        val wasPreviewed = routeId in previewedRouteIds
+
+        val isStillVisible = wasPreviewed && isActive
+
         ContentTransform(
-            fadeIn(),
-            fadeOut(targetAlpha = if (inPredictiveBack) 0.9f else 0f),
+            targetContentEnter =
+            if (isStillVisible) EnterTransition.None
+            else fadeIn(
+                animationSpec = NavigationAnimationSpec,
+            ),
+            initialContentExit =
+            if (isStillVisible) ExitTransition.None
+            else fadeOut(
+                animationSpec = NavigationAnimationSpec,
+                targetAlpha = if (inPredictiveBack) PredictiveBackTargetAlpha else FullAlpha,
+            ),
         ).adaptTo(paneScope = this)
+            .also {
+                if (wasPreviewed) previewedRouteIds.remove(routeId)
+                else if (!isActive && inPredictiveBack && routeId != null) {
+                    previewedRouteIds.clear()
+                    previewedRouteIds.add(routeId)
+                }
+            }
     }
+}
+
+private val NavigationAnimationSpec = tween<Float>(700)
+
+private const val PredictiveBackTargetAlpha = 0.9f
+private const val FullAlpha = 0f

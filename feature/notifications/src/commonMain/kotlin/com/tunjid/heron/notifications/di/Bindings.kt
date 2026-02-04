@@ -51,7 +51,7 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.RootDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.fabOffset
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
-import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransform
+import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransformProvider
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
@@ -120,7 +120,7 @@ class NotificationsBindings(
     private fun routePaneEntry(
         viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry(
-        contentTransform = predictiveBackContentTransform,
+        contentTransform = predictiveBackContentTransformProvider(),
         render = { route ->
             val viewModel = viewModel<ActualNotificationsViewModel> {
                 viewModelInitializer.invoke(
