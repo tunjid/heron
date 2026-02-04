@@ -49,18 +49,24 @@ val PredictiveBackContentTransform: PaneScope<ThreePane, *>.() -> ContentTransfo
     PredictiveBackContentTransformFactory()::contentTransform
 
 private class PredictiveBackContentTransformFactory {
-    var wasPreviewedInPredictiveBack = false
+    private val previewedRouteIds = mutableSetOf<String>()
 
     fun contentTransform(
         scope: PaneScope<ThreePane, *>,
     ): ContentTransform = with(scope) {
+        val routeId = paneState.currentDestination?.id
+        val wasPreviewed = routeId in previewedRouteIds
+
         ContentTransform(
-            if (wasPreviewedInPredictiveBack) EnterTransition.None else fadeIn(),
+            if (wasPreviewed) EnterTransition.None else fadeIn(),
             fadeOut(targetAlpha = if (inPredictiveBack) 0.9f else 0f),
         ).adaptTo(paneScope = this)
             .also {
-                if (wasPreviewedInPredictiveBack) wasPreviewedInPredictiveBack = false
-                else if (!isActive && inPredictiveBack) wasPreviewedInPredictiveBack = true
+                if (wasPreviewed) previewedRouteIds.remove(routeId)
+                else if (!isActive && inPredictiveBack && routeId != null) {
+                    previewedRouteIds.clear()
+                    previewedRouteIds.add(routeId)
+                }
             }
     }
 }
