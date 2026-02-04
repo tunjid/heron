@@ -206,7 +206,7 @@ class DragToPopState private constructor(
                         pass = PointerEventPass.Initial,
                     )
                     val pointerId = down.id
-                    state.gestureId = down.hashCode()
+                    state.gestureId++
 
                     while (true) {
                         val event = awaitPointerEvent(pass = PointerEventPass.Initial)
