@@ -58,7 +58,7 @@ private class PredictiveBackContentTransformFactory {
         val wasPreviewed = routeId in previewedRouteIds
 
         ContentTransform(
-            if (wasPreviewed) EnterTransition.None else fadeIn(),
+            if (wasPreviewed && isActive) EnterTransition.None else fadeIn(),
             fadeOut(targetAlpha = if (inPredictiveBack) 0.9f else 0f),
         ).adaptTo(paneScope = this)
             .also {
