@@ -177,8 +177,11 @@ private fun loadPostMutations(
                 if (state.canScrollVertically) currentCoroutineContext().cancel()
                 else emit {
                     copy(
-                        items = items.map {
-                            it.copy(post = post)
+                        items = items.map { item ->
+                            if (item is GalleryItem.Initial) item.copy(
+                                post = post,
+                            )
+                            else item
                         },
                     )
                 }
@@ -220,8 +223,11 @@ private fun profileRelationshipMutations(
             if (state.canScrollVertically) currentCoroutineContext().cancel()
             else emit {
                 copy(
-                    items = items.map {
-                        it.copy(viewerState = relationships.firstOrNull())
+                    items = items.map { item ->
+                        if (item is GalleryItem.Initial) item.copy(
+                            viewerState = relationships.firstOrNull(),
+                        )
+                        else item
                     },
                 )
             }
@@ -360,12 +366,21 @@ private fun verticalTimelineMutations(
             .map { it.tilingData.items }
             .distinctUntilChanged()
             .mapToMutation { fetched ->
-                copy(
+                val initialItem = items.firstOrNull()
+                    ?.takeIf { it is GalleryItem.Initial }
+
+                val missingInitialItem = initialItem != null &&
+                    fetched.none { it.post.uri == initialItem.post.uri }
+
+                // If the the tile containing the initial item
+                // is missing, wait for the tiling pipeline to catch up
+                if (missingInitialItem) this
+                else copy(
                     canScrollVertically = fetched.isNotEmpty(),
                     items = when {
                         fetched.isEmpty() -> items
                         else -> fetched.map { timelineItem ->
-                            GalleryItem(
+                            GalleryItem.Tiled(
                                 post = timelineItem.post,
                                 viewerState = timelineItem.post.viewerState,
                                 // This can always be zero, UI PagerState is already

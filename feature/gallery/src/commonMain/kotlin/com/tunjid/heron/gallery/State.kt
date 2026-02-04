@@ -81,7 +81,7 @@ fun State(
     items = tiledListOf(
         DataQuery(
             data = route.model<CursorQuery.Data>() ?: CursorQuery.defaultStartData(),
-        ) to GalleryItem(
+        ) to GalleryItem.Initial(
             sharedElementPrefix = route.sharedElementPrefix,
             startIndex = route.startIndex,
             threadGate = null,
@@ -115,14 +115,33 @@ fun State(
 val GalleryItem.posterSharedElementPrefix
     get() = "poster-$sharedElementPrefix"
 
-data class GalleryItem(
-    val post: Post,
-    val viewerState: ProfileViewerState?,
-    val startIndex: Int,
-    val media: List<Media>,
-    val threadGate: ThreadGate?,
-    val sharedElementPrefix: String,
-) {
+sealed class GalleryItem {
+
+    abstract val post: Post
+    abstract val viewerState: ProfileViewerState?
+    abstract val startIndex: Int
+    abstract val media: List<Media>
+    abstract val threadGate: ThreadGate?
+    abstract val sharedElementPrefix: String
+
+    data class Initial(
+        override val post: Post,
+        override val viewerState: ProfileViewerState?,
+        override val startIndex: Int,
+        override val media: List<Media>,
+        override val threadGate: ThreadGate?,
+        override val sharedElementPrefix: String,
+    ) : GalleryItem()
+
+    data class Tiled(
+        override val post: Post,
+        override val viewerState: ProfileViewerState?,
+        override val startIndex: Int,
+        override val media: List<Media>,
+        override val threadGate: ThreadGate?,
+        override val sharedElementPrefix: String,
+    ) : GalleryItem()
+
     sealed class Media {
         data class Photo(
             val image: EmbeddedImage,
