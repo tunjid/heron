@@ -137,6 +137,8 @@ internal class AuthTokenRepository(
         when (val pendingToken = sessionManager.initiateOauthSession(request)) {
             is SavedState.AuthTokens.Pending.DPoP -> {
                 savedStateDataSource.setAuth(pendingToken)
+                // Suspend till auth token has been saved and is readable
+                savedStateDataSource.savedState.first { it.auth == pendingToken }
                 pendingToken.authorizeRequestUrl
                     .let(::GenericUri)
             }

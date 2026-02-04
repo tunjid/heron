@@ -261,8 +261,11 @@ class OAuthApi(
                 // If the response indicates we need to use a new DPoP nonce, we can retry with the new nonce.
                 requestOrRefreshToken(requestParameters, newNonce, dpopKeyPair)
             },
-            onFailure = { _ ->
-                throw AtpException(StatusCode.fromCode(status.value))
+            onFailure = { description ->
+                throw AtpException(
+                    statusCode = StatusCode.fromCode(status.value),
+                    error = description,
+                )
             },
         )
     }
