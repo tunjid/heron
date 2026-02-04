@@ -52,7 +52,7 @@ import com.tunjid.heron.scaffold.scaffold.AppLogo
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
-import com.tunjid.heron.scaffold.scaffold.PredictiveBackContentTransform
+import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransformProvider
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
@@ -150,7 +150,7 @@ class SignInBindings(
     private fun routePaneEntry(
         viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry(
-        contentTransform = PredictiveBackContentTransform,
+        contentTransform = predictiveBackContentTransformProvider(),
         render = { route ->
             val viewModel = viewModel<ActualSignInViewModel> {
                 viewModelInitializer.invoke(

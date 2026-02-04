@@ -53,9 +53,9 @@ import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
-import com.tunjid.heron.scaffold.scaffold.PredictiveBackContentTransform
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
 import com.tunjid.heron.scaffold.scaffold.isFabExpanded
+import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransformProvider
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
@@ -180,7 +180,7 @@ class FeedBindings(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
     ) = threePaneEntry<Route>(
-        contentTransform = PredictiveBackContentTransform,
+        contentTransform = predictiveBackContentTransformProvider(),
         paneMapping = { route ->
             mapOf(
                 ThreePane.Primary to route,
