@@ -3,10 +3,12 @@ package com.tunjid.heron.settings.ui
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -19,17 +21,20 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.tunjid.heron.data.core.models.SessionSummary
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.ui.OverlappingAvatarRow
@@ -37,13 +42,14 @@ import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.add_another_account
+import heron.feature.settings.generated.resources.please_wait
 import heron.feature.settings.generated.resources.switch_account
+import heron.feature.settings.generated.resources.switching_account
 import heron.ui.core.generated.resources.collapse_icon
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AccountSwitchingItem(
-    isSwitchingAccount: Boolean,
     sessionSummaries: List<SessionSummary>,
     onAddAccountClick: () -> Unit,
     onAccountSelected: (SessionSummary) -> Unit,
@@ -53,33 +59,20 @@ fun AccountSwitchingItem(
             SettingsItemRow(
                 title = stringResource(Res.string.add_another_account),
                 icon = Icons.Default.PersonAdd,
-                enabled = isSwitchingAccount,
                 modifier = Modifier.clickable(onClick = onAddAccountClick),
             )
         }
-
         else -> {
             ExpandableSettingsItemRow(
                 title = stringResource(Res.string.switch_account),
                 icon = Icons.Default.SwitchAccount,
-                enabled = true,
                 trailingContent = { isExpanded ->
-                    when {
-                        isSwitchingAccount && sessionSummaries.isNotEmpty() -> {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp,
-                            )
-                        }
-                        isExpanded -> {
-                            ExpandCollapseIcon(isExpanded)
-                        }
-                        else -> {
-                            AccountAvatarStack(sessionSummaries)
-                        }
+                    if (isExpanded) {
+                        ExpandCollapseIcon(isExpanded)
+                    } else {
+                        AccountAvatarStack(sessionSummaries)
                     }
                 },
-
             ) {
                 Column {
                     sessionSummaries.forEach { session ->
@@ -94,7 +87,6 @@ fun AccountSwitchingItem(
                     SettingsItemRow(
                         title = stringResource(Res.string.add_another_account),
                         icon = Icons.Default.PersonAdd,
-                        enabled = true,
                         modifier = Modifier.clickable(onClick = onAddAccountClick),
                     )
                 }
@@ -172,6 +164,71 @@ private fun AccountAvatarStack(
                     )
                 },
             )
+        }
+    }
+}
+
+@Composable
+fun SwitchingAccountOverlay(
+    profileId: ProfileId?,
+    pastSessions: List<SessionSummary>,
+) {
+    val targetProfile = pastSessions.find { it.profileId == profileId }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.5f))
+            .clickable { } // Block all clicks
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp),
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 8.dp,
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                targetProfile?.profileAvatar?.let { avatar ->
+                    AsyncImage(
+                        args = remember(avatar) {
+                            ImageArgs(
+                                url = avatar.uri,
+                                contentDescription = targetProfile.profileHandle.id,
+                                shape = RoundedPolygonShape.Circle,
+                                contentScale = ContentScale.Crop,
+                            )
+                        },
+                        modifier = Modifier.size(64.dp),
+                    )
+                }
+
+                Text(
+                    text = stringResource(Res.string.switching_account),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+
+                CircularProgressIndicator(
+                    modifier = Modifier.size(48.dp),
+                    strokeWidth = 4.dp,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+
+                Text(
+                    text = stringResource(Res.string.please_wait),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }

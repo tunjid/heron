@@ -31,7 +31,6 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun ContentAndMediaItem(
     modifier: Modifier = Modifier,
-    enabled: Boolean,
     signedInProfilePreferences: Preferences,
     setRefreshHomeTimelineOnLaunch: (Boolean) -> Unit,
     setAutoplayTimelineVideos: (Boolean) -> Unit,
@@ -41,7 +40,6 @@ fun ContentAndMediaItem(
             .fillMaxWidth(),
         title = stringResource(Res.string.content_and_media),
         icon = Icons.Rounded.Newspaper,
-        enabled = enabled,
     ) {
         SettingsToggleItem(
             modifier = Modifier
