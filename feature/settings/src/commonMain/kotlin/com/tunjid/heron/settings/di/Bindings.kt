@@ -16,9 +16,11 @@
 
 package com.tunjid.heron.settings.di
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -149,15 +151,21 @@ class SettingsBindings(
                                 title = stringResource(Res.string.settings),
                             )
                         },
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        onBackPressed = {
+                            if (!state.isSwitchingAccount) {
+                                viewModel.accept(Action.Navigate.Pop)
+                            }
+                        },
                     )
                 },
                 navigationBar = {
-                    PaneNavigationBar(
-                        modifier = Modifier.offset {
-                            bottomNavigationNestedScrollConnection.offset.round()
-                        },
-                    )
+                    if (!state.isSwitchingAccount) {
+                        PaneNavigationBar(
+                            modifier = Modifier.offset {
+                                bottomNavigationNestedScrollConnection.offset.round()
+                            },
+                        )
+                    }
                 },
                 navigationRail = {
                     PaneNavigationRail()

@@ -171,15 +171,26 @@ private suspend fun FlowCollector<Mutation<State>>.switchSessionMutation(
     sessionSummary: SessionSummary,
     navActions: (NavigationMutation) -> Unit,
 ) {
-    emit { copy(isSwitchingAccount = true) }
+    emit {
+        copy(
+            isSwitchingAccount = true,
+            switchingToProfile = sessionSummary.profileId,
+        )
+    }
     when (val outcome = authRepository.switchSession(sessionSummary)) {
         is Outcome.Success -> {
-            emit { copy(isSwitchingAccount = false) }
+            emit {
+                copy(
+                    isSwitchingAccount = false,
+                    switchingToProfile = null,
+                )
+            }
             navActions(NavigationContext::resetAuthNavigation)
         }
         is Outcome.Failure -> emit {
             copy(
                 isSwitchingAccount = false,
+                switchingToProfile = null,
                 messages = messages.plus(
                     outcome.exception.message
                         ?.let(Memo::Text)
