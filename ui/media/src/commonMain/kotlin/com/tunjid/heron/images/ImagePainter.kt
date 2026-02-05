@@ -41,6 +41,9 @@ import androidx.compose.ui.unit.toSize
  * async. If the image is updated before the first frame deadline, the image will be drawn
  * in the first frame.
  *
+ * The [com.tunjid.heron.images.ImagePainter] should used with the [Image] composable.
+ * as the scaling and alignment logic used in the Painter depends on the [Image] composable.
+ *
  * @param currentImage a means of reading an image that is updated async.
  * @param contentScale the content scale used to render the image.
  * @param alignment the alignment of the image.
