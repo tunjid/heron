@@ -26,6 +26,9 @@
     <string name="give_feedback">Give feedback</string>
     <string name="view_website">View website</string>
     <string name="switch_account">Switch account</string>
+    <string name="switching_account">Switching Account</string>
+    <string name="switching_to_account">Switching to @%s…</string>
+    <string name="please_wait">Please wait…</string>
     <string name="switch_account_failed">Switch account failed</string>
     <string name="add_another_account">Add another account</string>
     <string name="content_and_media">Content and media</string>
