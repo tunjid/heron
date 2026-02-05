@@ -17,12 +17,17 @@
 package com.tunjid.heron.images
 
 import androidx.compose.runtime.Composable
-import coil3.Image
+import androidx.compose.ui.graphics.Canvas
+import androidx.compose.ui.graphics.nativeCanvas
 import coil3.PlatformContext
+
+internal actual fun coil3.Image.renderInto(
+    canvas: Canvas,
+) = draw(canvas.nativeCanvas)
 
 fun imageLoader(): ImageLoader = CoilImageLoader.create(
     context = PlatformContext.INSTANCE,
 )
 
 @Composable
-internal actual fun Image.AnimationEffect() = Unit
+internal actual fun coil3.Image.AnimationEffect() = Unit
