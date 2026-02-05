@@ -16,10 +16,6 @@
 
 package com.tunjid.heron.images
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -265,28 +261,23 @@ fun AsyncImage(
 
     Box(
         modifier = modifier
+            .layout(state::layoutImage)
             .clip(shape),
     ) {
-        AnimatedContent(
-            modifier = Modifier
-                .layout(state::layoutImage),
-            targetState = state.image,
-            transitionSpec = {
-                EnterTransition.None togetherWith ExitTransition.None
-            },
-        ) { image ->
-            if (image != null) {
-                Image(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    painter = image.painter,
-                    contentDescription = contentDescription,
-                    alignment = alignment,
-                    contentScale = contentScale,
-                )
-                image.AnimationEffect()
-            }
+        val painter = remember {
+            ImagePainter(state::image) { contentScale }
         }
+
+        Image(
+            modifier = Modifier
+                .fillMaxSize(),
+            painter = painter,
+            contentDescription = contentDescription,
+            alignment = alignment,
+            contentScale = contentScale,
+        )
+
+        state.image?.AnimationEffect()
     }
 
     val scope = rememberCoroutineScope(

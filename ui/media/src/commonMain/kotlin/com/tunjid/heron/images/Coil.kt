@@ -19,6 +19,7 @@ package com.tunjid.heron.images
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.IntSize
 import coil3.PlatformContext
@@ -179,6 +180,8 @@ internal class CoilImageLoader private constructor(
         }
     }
 }
+
+internal expect fun coil3.Image.renderInto(canvas: Canvas)
 
 @Composable
 internal expect fun coil3.Image.AnimationEffect()
