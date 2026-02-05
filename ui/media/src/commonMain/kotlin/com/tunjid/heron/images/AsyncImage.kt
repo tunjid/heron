@@ -265,7 +265,11 @@ fun AsyncImage(
             .clip(shape),
     ) {
         val painter = remember {
-            ImagePainter(state::image) { contentScale }
+            ImagePainter(
+                currentImage = state::image,
+                contentScale = { contentScale },
+                alignment = { alignment },
+            )
         }
 
         Image(

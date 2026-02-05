@@ -43,10 +43,12 @@ import androidx.compose.ui.unit.toSize
  *
  * @param currentImage a means of reading an image that is updated async.
  * @param contentScale the content scale used to render the image.
+ * @param alignment the alignment of the image.
  */
 internal class ImagePainter(
     val currentImage: () -> Image?,
     val contentScale: () -> ContentScale,
+    val alignment: () -> Alignment,
 ) : Painter() {
 
     override fun DrawScope.onDraw() {
@@ -57,7 +59,7 @@ internal class ImagePainter(
                     srcSize = image.size,
                     destSize = size.roundToIntSize(),
                     contentScale = contentScale(),
-                    alignment = Alignment.Center,
+                    alignment = alignment(),
                     block = {
                         drawIntoCanvas(image.image::renderInto)
                     },
