@@ -16,6 +16,9 @@
 
 package com.tunjid.heron.gallery
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.ScrollableState
@@ -186,54 +189,54 @@ internal fun GalleryScreen(
     val pagerState = rememberPagerState(pageCount = updatedItems::size)
     val horizontalPagerStates = remember { PagerStates<PostUri>() }
 
+    val dragToPopState = rememberDragToPopState(
+        shouldDragToPop = remember(
+            pagerState,
+            horizontalPagerStates,
+        ) {
+            var lastHorizontalGestureId: Int = -1
+            var overscrollCount = 0
+
+            canPop@{ delta ->
+                // Already dragging, continue
+                if (isDraggingToPop) return@canPop true
+
+                val isVertical = delta.y.absoluteValue > delta.x.absoluteValue
+                if (isVertical) return@canPop pagerState.isConstrainedBy(delta.y)
+
+                // Vertical scroll already begun
+                if (pagerState.currentPageOffsetFraction != 0f) return@canPop false
+
+                val item = updatedItems.getOrNull(pagerState.currentPage)
+                    ?: return@canPop true
+
+                // No items to scroll horizontally
+                if (item.media.size <= 1) return@canPop true
+
+                val horizontalPagerState = horizontalPagerStates[item.post.uri]
+                    ?: return@canPop true
+
+                val hasDifferentPointerId = lastHorizontalGestureId != gestureId
+
+                // Reset tracking on item change
+                if (hasDifferentPointerId) {
+                    lastHorizontalGestureId = gestureId
+                }
+
+                val isConstrained = horizontalPagerState.isConstrainedBy(delta.x)
+
+                if (isConstrained && hasDifferentPointerId) overscrollCount++
+                else if (!isConstrained && delta.x != 0f) overscrollCount = 0
+
+                isConstrained && overscrollCount > 1
+            }
+        },
+    )
+
     VerticalPager(
         state = pagerState,
         modifier = modifier
-            .dragToPop(
-                rememberDragToPopState(
-                    shouldDragToPop = remember(
-                        pagerState,
-                        horizontalPagerStates,
-                    ) {
-                        var lastHorizontalGestureId: Int = -1
-                        var overscrollCount = 0
-
-                        canPop@{ delta ->
-                            // Already dragging, continue
-                            if (isDraggingToPop) return@canPop true
-
-                            val isVertical = delta.y.absoluteValue > delta.x.absoluteValue
-                            if (isVertical) return@canPop pagerState.isConstrainedBy(delta.y)
-
-                            // Vertical scroll already begun
-                            if (pagerState.currentPageOffsetFraction != 0f) return@canPop false
-
-                            val item = updatedItems.getOrNull(pagerState.currentPage)
-                                ?: return@canPop true
-
-                            // No items to scroll horizontally
-                            if (item.media.size <= 1) return@canPop true
-
-                            val horizontalPagerState = horizontalPagerStates[item.post.uri]
-                                ?: return@canPop true
-
-                            val hasDifferentPointerId = lastHorizontalGestureId != gestureId
-
-                            // Reset tracking on item change
-                            if (hasDifferentPointerId) {
-                                lastHorizontalGestureId = gestureId
-                            }
-
-                            val isConstrained = horizontalPagerState.isConstrainedBy(delta.x)
-
-                            if (isConstrained && hasDifferentPointerId) overscrollCount++
-                            else if (!isConstrained && delta.x != 0f) overscrollCount = 0
-
-                            isConstrained && overscrollCount > 1
-                        }
-                    },
-                ),
-            )
+            .dragToPop(dragToPopState)
             .fillMaxSize(),
         beyondViewportPageCount = PagerPrefetchCount,
         userScrollEnabled = state.canScrollVertically,
@@ -252,6 +255,7 @@ internal fun GalleryScreen(
                     val page = pagerState.currentPage + pagerState.currentPageOffsetFraction
                     updatedItems.getOrNull(page.fastRoundToInt())
                 },
+                isDraggingToPop = dragToPopState::isDraggingToPop,
                 actions = actions,
                 postInteractionSheetState = postInteractionSheetState,
                 postOptionsSheetState = postOptionsSheetState,
@@ -285,6 +289,7 @@ private fun HorizontalItems(
     pagerStates: PagerStates<PostUri>,
     paneScaffoldState: PaneScaffoldState,
     focusedItem: () -> GalleryItem?,
+    isDraggingToPop: () -> Boolean,
     actions: (Action) -> Unit,
     postInteractionSheetState: PostInteractionsSheetState,
     postOptionsSheetState: PostOptionsSheetState,
@@ -386,13 +391,19 @@ private fun HorizontalItems(
             },
         )
 
-        Indicator(
+        AnimatedVisibility(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 36.dp)
                 .navigationBarsPadding(),
-            pagerState = pagerState,
-        )
+            enter = IndicatorEnterAnimation,
+            exit = IndicatorExitAnimation,
+            visible = !isDraggingToPop(),
+        ) {
+            Indicator(
+                pagerState = pagerState,
+            )
+        }
 
         MediaOverlay(
             modifier = Modifier
@@ -543,6 +554,9 @@ private fun ScrollableState.isConstrainedBy(
 
     return constrainedAtStart || constrainedAtEnd
 }
+
+private val IndicatorEnterAnimation = fadeIn()
+private val IndicatorExitAnimation = fadeOut()
 
 private const val MediaZIndex = 0f
 private const val PagerPrefetchCount = 1
