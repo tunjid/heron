@@ -48,14 +48,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -69,7 +67,6 @@ fun SettingsItemRow(
     title: String,
     icon: ImageVector,
     modifier: Modifier = Modifier,
-    enabled: Boolean,
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
     content: @Composable RowScope.() -> Unit = {},
 ) {
@@ -80,9 +77,7 @@ fun SettingsItemRow(
                 modifier
                     .semantics {
                         contentDescription = title
-                        if (!enabled) disabled()
                     }
-                    .alpha(if (enabled) 1f else 0.5f)
                     .fillMaxWidth()
                     .padding(
                         horizontal = 24.dp,
@@ -114,7 +109,6 @@ fun ExpandableSettingsItemRow(
     title: String,
     icon: ImageVector,
     modifier: Modifier = Modifier,
-    enabled: Boolean,
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
     trailingContent: (@Composable (Boolean) -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit = {},
@@ -127,7 +121,6 @@ fun ExpandableSettingsItemRow(
                 modifier
                     .fillMaxWidth()
                     .toggleable(
-                        enabled = enabled,
                         value = isExpanded,
                         onValueChange = { isExpanded = it },
                         role = Role.Button,
@@ -138,7 +131,6 @@ fun ExpandableSettingsItemRow(
             modifier = Modifier.fillMaxWidth(),
             title = title,
             icon = icon,
-            enabled = enabled,
             titleColor = titleColor,
         ) {
             if (trailingContent != null) {
