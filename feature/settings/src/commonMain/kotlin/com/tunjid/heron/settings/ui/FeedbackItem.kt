@@ -30,7 +30,6 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun FeedbackItem(
     modifier: Modifier = Modifier,
-    enabled: Boolean,
 ) {
     val uriHandler = LocalUriHandler.current
 
@@ -42,7 +41,6 @@ fun FeedbackItem(
             },
         title = stringResource(Res.string.give_feedback),
         icon = Icons.Rounded.Feedback,
-        enabled = enabled,
     )
 }
 

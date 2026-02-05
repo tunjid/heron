@@ -42,7 +42,6 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ModerationItem(
-    enabled: Boolean,
     modifier: Modifier = Modifier,
     onModerationSettingsClicked: () -> Unit,
 ) {
@@ -54,6 +53,5 @@ fun ModerationItem(
             },
         title = stringResource(Res.string.moderation),
         icon = Icons.Rounded.Shield,
-        enabled = enabled,
     )
 }
