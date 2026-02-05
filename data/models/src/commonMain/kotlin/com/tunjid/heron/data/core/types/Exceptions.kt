@@ -52,3 +52,8 @@ class RecordCreationException(
 class SessionSwitchException(
     profileId: ProfileId,
 ) : Exception("Unable to switch to a session for profile with id $profileId")
+
+class TokenRefreshException(
+    val profileId: ProfileId,
+    cause: Throwable? = null,
+) : Exception("Failed to refresh token for profile: ${profileId.id}", cause)
