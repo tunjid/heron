@@ -40,6 +40,7 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
@@ -47,7 +48,6 @@ import io.ktor.http.takeFrom
 import io.ktor.utils.io.ByteReadChannel
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -83,7 +83,7 @@ internal class SuspendingVideoUploadService @Inject constructor(
             }
         }
         install(HttpTimeout) {
-            requestTimeoutMillis = 40.seconds.inWholeMilliseconds
+            requestTimeoutMillis = 6.minutes.inWholeMilliseconds
         }
     }
 
@@ -127,9 +127,12 @@ internal class SuspendingVideoUploadService @Inject constructor(
                     headers[ContentLengthHeaderKey] = fileManager.size(file).toString()
                 }
             }
-                .let {
-                    if (it.status.isSuccess()) it.body<VideoUploadResponse>()
-                    else throw IOException("Video upload failed with status: ${it.status}")
+                .let { response ->
+                    when {
+                        response.status.isSuccess() -> response.body<VideoUploadResponse>()
+                        response.status == HttpStatusCode.Conflict -> response.body<VideoUploadResponse>()
+                        else -> throw IOException("Video upload failed with status: ${response.status}")
+                    }
                 }
         }.mapCatchingUnlessCancelled { uploadResponse ->
             repeat(MaxVideoUploadStatusCheckCount) {
