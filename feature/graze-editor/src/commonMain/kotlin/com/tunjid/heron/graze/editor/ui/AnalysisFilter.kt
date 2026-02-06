@@ -30,6 +30,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
+import heron.feature.graze_editor.generated.resources.Res
+import heron.feature.graze_editor.generated.resources.emotion_analysis
+import heron.feature.graze_editor.generated.resources.emotion_category
+import heron.feature.graze_editor.generated.resources.financial_category
+import heron.feature.graze_editor.generated.resources.financial_sentiment
+import heron.feature.graze_editor.generated.resources.image_arbitrary
+import heron.feature.graze_editor.generated.resources.image_nsfw
+import heron.feature.graze_editor.generated.resources.language_analysis
+import heron.feature.graze_editor.generated.resources.language_name
+import heron.feature.graze_editor.generated.resources.sentiment_analysis
+import heron.feature.graze_editor.generated.resources.sentiment_category
+import heron.feature.graze_editor.generated.resources.tag
+import heron.feature.graze_editor.generated.resources.text_arbitrary
+import heron.feature.graze_editor.generated.resources.threshold
+import heron.feature.graze_editor.generated.resources.topic_analysis
+import heron.feature.graze_editor.generated.resources.topic_label
+import heron.feature.graze_editor.generated.resources.toxic_category
+import heron.feature.graze_editor.generated.resources.toxicity_analysis
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AnalysisFilter(
@@ -38,27 +57,27 @@ fun AnalysisFilter(
     onRemove: () -> Unit,
 ) {
     val title = when (filter) {
-        is Filter.Analysis.Language -> "Language Analysis"
-        is Filter.Analysis.Sentiment -> "Sentiment Analysis"
-        is Filter.Analysis.FinancialSentiment -> "Financial Sentiment"
-        is Filter.Analysis.Emotion -> "Emotion Analysis"
-        is Filter.Analysis.Toxicity -> "Toxicity Analysis"
-        is Filter.Analysis.Topic -> "Topic Analysis"
-        is Filter.Analysis.TextArbitrary -> "Text Arbitrary"
-        is Filter.Analysis.ImageNsfw -> "Image NSFW"
-        is Filter.Analysis.ImageArbitrary -> "Image Arbitrary"
+        is Filter.Analysis.Language -> stringResource(Res.string.language_analysis)
+        is Filter.Analysis.Sentiment -> stringResource(Res.string.sentiment_analysis)
+        is Filter.Analysis.FinancialSentiment -> stringResource(Res.string.financial_sentiment)
+        is Filter.Analysis.Emotion -> stringResource(Res.string.emotion_analysis)
+        is Filter.Analysis.Toxicity -> stringResource(Res.string.toxicity_analysis)
+        is Filter.Analysis.Topic -> stringResource(Res.string.topic_analysis)
+        is Filter.Analysis.TextArbitrary -> stringResource(Res.string.text_arbitrary)
+        is Filter.Analysis.ImageNsfw -> stringResource(Res.string.image_nsfw)
+        is Filter.Analysis.ImageArbitrary -> stringResource(Res.string.image_arbitrary)
     }
 
     val categoryLabel = when (filter) {
-        is Filter.Analysis.Language -> "Language Name"
-        is Filter.Analysis.Sentiment -> "Sentiment Category"
-        is Filter.Analysis.FinancialSentiment -> "Financial Category"
-        is Filter.Analysis.Emotion -> "Emotion Category"
-        is Filter.Analysis.Toxicity -> "Toxic Category"
-        is Filter.Analysis.Topic -> "Topic Label"
-        is Filter.Analysis.TextArbitrary -> "Tag"
-        is Filter.Analysis.ImageNsfw -> "Tag"
-        is Filter.Analysis.ImageArbitrary -> "Tag"
+        is Filter.Analysis.Language -> stringResource(Res.string.language_name)
+        is Filter.Analysis.Sentiment -> stringResource(Res.string.sentiment_category)
+        is Filter.Analysis.FinancialSentiment -> stringResource(Res.string.financial_category)
+        is Filter.Analysis.Emotion -> stringResource(Res.string.emotion_category)
+        is Filter.Analysis.Toxicity -> stringResource(Res.string.toxic_category)
+        is Filter.Analysis.Topic -> stringResource(Res.string.topic_label)
+        is Filter.Analysis.TextArbitrary -> stringResource(Res.string.tag)
+        is Filter.Analysis.ImageNsfw -> stringResource(Res.string.tag)
+        is Filter.Analysis.ImageArbitrary -> stringResource(Res.string.tag)
     }
 
     FilterCard(onRemove = onRemove) {
@@ -67,7 +86,7 @@ fun AnalysisFilter(
         OutlinedTextField(
             value = filter.category,
             onValueChange = { newCategory ->
-                 val updated = when (filter) {
+                val updated = when (filter) {
                     is Filter.Analysis.Language -> filter.copy(category = newCategory)
                     is Filter.Analysis.Sentiment -> filter.copy(category = newCategory)
                     is Filter.Analysis.FinancialSentiment -> filter.copy(category = newCategory)
@@ -89,7 +108,7 @@ fun AnalysisFilter(
                 selected = filter.operator,
                 options = Filter.Comparator.Range.entries,
                 onSelect = { newOperator ->
-                     val updated = when (filter) {
+                    val updated = when (filter) {
                         is Filter.Analysis.Language -> filter.copy(operator = newOperator)
                         is Filter.Analysis.Sentiment -> filter.copy(operator = newOperator)
                         is Filter.Analysis.FinancialSentiment -> filter.copy(operator = newOperator)
@@ -109,7 +128,7 @@ fun AnalysisFilter(
                 value = filter.threshold.toString(),
                 onValueChange = {
                     it.toDoubleOrNull()?.let { d ->
-                         val updated = when (filter) {
+                        val updated = when (filter) {
                             is Filter.Analysis.Language -> filter.copy(threshold = d)
                             is Filter.Analysis.Sentiment -> filter.copy(threshold = d)
                             is Filter.Analysis.FinancialSentiment -> filter.copy(threshold = d)
@@ -123,7 +142,7 @@ fun AnalysisFilter(
                         onUpdate(updated)
                     }
                 },
-                label = { Text("Threshold") },
+                label = { Text(stringResource(Res.string.threshold)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.weight(1f),
             )

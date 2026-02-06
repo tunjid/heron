@@ -33,7 +33,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-
+import heron.feature.graze_editor.generated.resources.Res
+import heron.feature.graze_editor.generated.resources.remove_filter
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun FilterCard(
@@ -62,7 +64,7 @@ fun FilterCard(
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Close,
-                        contentDescription = "Remove Filter",
+                        contentDescription = stringResource(Res.string.remove_filter),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }

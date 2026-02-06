@@ -30,6 +30,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
+import heron.feature.graze_editor.generated.resources.Res
+import heron.feature.graze_editor.generated.resources.anchor_text
+import heron.feature.graze_editor.generated.resources.category
+import heron.feature.graze_editor.generated.resources.content_moderation
+import heron.feature.graze_editor.generated.resources.model_name
+import heron.feature.graze_editor.generated.resources.model_probability
+import heron.feature.graze_editor.generated.resources.path
+import heron.feature.graze_editor.generated.resources.text_similarity
+import heron.feature.graze_editor.generated.resources.threshold
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun MLSimilarityFilter(
@@ -38,26 +48,26 @@ fun MLSimilarityFilter(
     onRemove: () -> Unit,
 ) {
     FilterCard(onRemove = onRemove) {
-        Text("Text Similarity", style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(Res.string.text_similarity), style = MaterialTheme.typography.titleSmall)
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
             value = filter.path,
             onValueChange = { onUpdate(filter.copy(path = it)) },
-            label = { Text("Path") },
+            label = { Text(stringResource(Res.string.path)) },
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
             value = filter.config.modelName,
             onValueChange = { onUpdate(filter.copy(config = filter.config.copy(modelName = it))) },
-            label = { Text("Model Name") },
+            label = { Text(stringResource(Res.string.model_name)) },
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
             value = filter.config.anchorText,
             onValueChange = { onUpdate(filter.copy(config = filter.config.copy(anchorText = it))) },
-            label = { Text("Anchor Text") },
+            label = { Text(stringResource(Res.string.anchor_text)) },
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(8.dp))
@@ -74,7 +84,7 @@ fun MLSimilarityFilter(
                 onValueChange = {
                     it.toDoubleOrNull()?.let { d -> onUpdate(filter.copy(threshold = d)) }
                 },
-                label = { Text("Threshold") },
+                label = { Text(stringResource(Res.string.threshold)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.weight(1f),
             )
@@ -89,12 +99,12 @@ fun MLProbabilityFilter(
     onRemove: () -> Unit,
 ) {
     FilterCard(onRemove = onRemove) {
-        Text("Model Probability", style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(Res.string.model_probability), style = MaterialTheme.typography.titleSmall)
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
             value = filter.config.modelName,
             onValueChange = { onUpdate(filter.copy(config = filter.config.copy(modelName = it))) },
-            label = { Text("Model Name") },
+            label = { Text(stringResource(Res.string.model_name)) },
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(8.dp))
@@ -111,7 +121,7 @@ fun MLProbabilityFilter(
                 onValueChange = {
                     it.toDoubleOrNull()?.let { d -> onUpdate(filter.copy(threshold = d)) }
                 },
-                label = { Text("Threshold") },
+                label = { Text(stringResource(Res.string.threshold)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.weight(1f),
             )
@@ -126,12 +136,12 @@ fun MLModerationFilter(
     onRemove: () -> Unit,
 ) {
     FilterCard(onRemove = onRemove) {
-        Text("Content Moderation", style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(Res.string.content_moderation), style = MaterialTheme.typography.titleSmall)
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
             value = filter.category,
             onValueChange = { onUpdate(filter.copy(category = it)) },
-            label = { Text("Category") },
+            label = { Text(stringResource(Res.string.category)) },
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(8.dp))
@@ -139,8 +149,8 @@ fun MLModerationFilter(
             ComparatorDropdown(
                 selected = filter.operator,
                 options = Filter.Comparator.Equality.entries +
-                        Filter.Comparator.Range.entries +
-                        Filter.Comparator.Set.entries,
+                    Filter.Comparator.Range.entries +
+                    Filter.Comparator.Set.entries,
                 onSelect = { onUpdate(filter.copy(operator = it)) },
                 modifier = Modifier.weight(1f),
             )
@@ -150,7 +160,7 @@ fun MLModerationFilter(
                 onValueChange = {
                     it.toDoubleOrNull()?.let { d -> onUpdate(filter.copy(threshold = d)) }
                 },
-                label = { Text("Threshold") },
+                label = { Text(stringResource(Res.string.threshold)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.weight(1f),
             )

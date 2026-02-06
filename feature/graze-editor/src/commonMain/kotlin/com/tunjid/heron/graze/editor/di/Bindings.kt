@@ -22,11 +22,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.graze.editor.Action
 import com.tunjid.heron.graze.editor.ActualGrazeEditorViewModel
+import com.tunjid.heron.graze.editor.FilterNavigationEventInfo
 import com.tunjid.heron.graze.editor.GrazeEditorScreen
 import com.tunjid.heron.graze.editor.RouteViewModelInitializer
+import com.tunjid.heron.graze.editor.currentFilter
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -50,8 +54,11 @@ import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
+import heron.feature.graze_editor.generated.resources.Res
+import heron.feature.graze_editor.generated.resources.graze_editor
+import org.jetbrains.compose.resources.stringResource
 
-private const val RoutePattern = "/graze/editor"
+private const val RoutePattern = "/graze_editor"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -109,7 +116,7 @@ class GrazeEditorBindings(
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
-                        title = { Text("Graze Editor") },
+                        title = { Text(stringResource(Res.string.graze_editor)) },
                         onBackPressed = {
                             if (state.currentPath.isNotEmpty()) viewModel.accept(Action.ExitFilter)
                             else viewModel.accept(Action.Navigate.Pop)
@@ -124,6 +131,15 @@ class GrazeEditorBindings(
                     )
                 },
             )
+
+            NavigationBackHandler(
+                state = rememberNavigationEventState(
+                    currentInfo = FilterNavigationEventInfo(state.currentFilter),
+                ),
+                isBackEnabled = state.currentPath.isNotEmpty(),
+            ) {
+                viewModel.accept(Action.ExitFilter)
+            }
         },
     )
 }

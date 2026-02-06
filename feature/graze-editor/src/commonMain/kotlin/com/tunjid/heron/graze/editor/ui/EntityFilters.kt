@@ -26,6 +26,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
+import heron.feature.graze_editor.generated.resources.Res
+import heron.feature.graze_editor.generated.resources.entity_excludes
+import heron.feature.graze_editor.generated.resources.entity_matches
+import heron.feature.graze_editor.generated.resources.entity_type
+import heron.feature.graze_editor.generated.resources.values_comma_separated
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun EntityMatchesFilter(
@@ -34,19 +40,19 @@ fun EntityMatchesFilter(
     onRemove: () -> Unit,
 ) {
     FilterCard(onRemove = onRemove) {
-        Text("Entity Matches", style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(Res.string.entity_matches), style = MaterialTheme.typography.titleSmall)
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
             value = filter.entityType,
             onValueChange = { onUpdate(filter.copy(entityType = it)) },
-            label = { Text("Entity Type") },
+            label = { Text(stringResource(Res.string.entity_type)) },
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
             value = filter.values.joinToString(", "),
             onValueChange = { onUpdate(filter.copy(values = it.split(",").map { s -> s.trim() })) },
-            label = { Text("Values (comma separated)") },
+            label = { Text(stringResource(Res.string.values_comma_separated)) },
             modifier = Modifier.fillMaxWidth(),
         )
     }
@@ -59,19 +65,19 @@ fun EntityExcludesFilter(
     onRemove: () -> Unit,
 ) {
     FilterCard(onRemove = onRemove) {
-        Text("Entity Excludes", style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(Res.string.entity_excludes), style = MaterialTheme.typography.titleSmall)
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
             value = filter.entityType,
             onValueChange = { onUpdate(filter.copy(entityType = it)) },
-            label = { Text("Entity Type") },
+            label = { Text(stringResource(Res.string.entity_type)) },
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
             value = filter.values.joinToString(", "),
             onValueChange = { onUpdate(filter.copy(values = it.split(",").map { s -> s.trim() })) },
-            label = { Text("Values (comma separated)") },
+            label = { Text(stringResource(Res.string.values_comma_separated)) },
             modifier = Modifier.fillMaxWidth(),
         )
     }

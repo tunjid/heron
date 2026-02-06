@@ -30,6 +30,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
+import heron.feature.graze_editor.generated.resources.Res
+import heron.feature.graze_editor.generated.resources.case_insensitive
+import heron.feature.graze_editor.generated.resources.pattern
+import heron.feature.graze_editor.generated.resources.regex_any
+import heron.feature.graze_editor.generated.resources.regex_matches
+import heron.feature.graze_editor.generated.resources.regex_negation
+import heron.feature.graze_editor.generated.resources.regex_none
+import heron.feature.graze_editor.generated.resources.terms_comma_separated
+import heron.feature.graze_editor.generated.resources.variable
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun RegexMatchesFilter(
@@ -38,7 +48,7 @@ fun RegexMatchesFilter(
     onRemove: () -> Unit,
 ) {
     RegexBaseFilter(
-        title = "Regex Matches",
+        title = stringResource(Res.string.regex_matches),
         variable = filter.variable,
         pattern = filter.pattern,
         isCaseInsensitive = filter.isCaseInsensitive,
@@ -56,7 +66,7 @@ fun RegexNegationFilter(
     onRemove: () -> Unit,
 ) {
     RegexBaseFilter(
-        title = "Regex Negation",
+        title = stringResource(Res.string.regex_negation),
         variable = filter.variable,
         pattern = filter.pattern,
         isCaseInsensitive = filter.isCaseInsensitive,
@@ -84,14 +94,14 @@ private fun RegexBaseFilter(
         OutlinedTextField(
             value = variable,
             onValueChange = onUpdateVariable,
-            label = { Text("Variable") },
+            label = { Text(stringResource(Res.string.variable)) },
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
             value = pattern,
             onValueChange = onUpdatePattern,
-            label = { Text("Pattern") },
+            label = { Text(stringResource(Res.string.pattern)) },
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(8.dp))
@@ -101,7 +111,7 @@ private fun RegexBaseFilter(
                 onCheckedChange = onUpdateCaseInsensitive,
             )
             Spacer(Modifier.width(8.dp))
-            Text("Case Insensitive")
+            Text(stringResource(Res.string.case_insensitive))
         }
     }
 }
@@ -113,7 +123,7 @@ fun RegexAnyFilter(
     onRemove: () -> Unit,
 ) {
     RegexListBaseFilter(
-        title = "Regex Any",
+        title = stringResource(Res.string.regex_any),
         variable = filter.variable,
         terms = filter.terms,
         isCaseInsensitive = filter.isCaseInsensitive,
@@ -131,7 +141,7 @@ fun RegexNoneFilter(
     onRemove: () -> Unit,
 ) {
     RegexListBaseFilter(
-        title = "Regex None",
+        title = stringResource(Res.string.regex_none),
         variable = filter.variable,
         terms = filter.terms,
         isCaseInsensitive = filter.isCaseInsensitive,
@@ -159,14 +169,14 @@ private fun RegexListBaseFilter(
         OutlinedTextField(
             value = variable,
             onValueChange = onUpdateVariable,
-            label = { Text("Variable") },
+            label = { Text(stringResource(Res.string.variable)) },
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
             value = terms.joinToString(", "),
             onValueChange = { onUpdateTerms(it.split(",").map { s -> s.trim() }) },
-            label = { Text("Terms (comma separated)") },
+            label = { Text(stringResource(Res.string.terms_comma_separated)) },
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(8.dp))
@@ -176,7 +186,7 @@ private fun RegexListBaseFilter(
                 onCheckedChange = onUpdateCaseInsensitive,
             )
             Spacer(Modifier.width(8.dp))
-            Text("Case Insensitive")
+            Text(stringResource(Res.string.case_insensitive))
         }
     }
 }

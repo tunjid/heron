@@ -36,6 +36,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
+import heron.feature.graze_editor.generated.resources.Res
+import heron.feature.graze_editor.generated.resources.attribute_compare
+import heron.feature.graze_editor.generated.resources.embed_type
+import heron.feature.graze_editor.generated.resources.selector
+import heron.feature.graze_editor.generated.resources.value
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AttributeCompareFilter(
@@ -44,12 +50,12 @@ fun AttributeCompareFilter(
     onRemove: () -> Unit,
 ) {
     FilterCard(onRemove = onRemove) {
-        Text("Attribute Compare", style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(Res.string.attribute_compare), style = MaterialTheme.typography.titleSmall)
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
             value = filter.selector,
             onValueChange = { onUpdate(filter.copy(selector = it)) },
-            label = { Text("Selector") },
+            label = { Text(stringResource(Res.string.selector)) },
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(8.dp))
@@ -57,8 +63,8 @@ fun AttributeCompareFilter(
             ComparatorDropdown(
                 selected = filter.operator,
                 options = Filter.Comparator.Equality.entries +
-                        Filter.Comparator.Range.entries +
-                        Filter.Comparator.Set.entries,
+                    Filter.Comparator.Range.entries +
+                    Filter.Comparator.Set.entries,
                 onSelect = { onUpdate(filter.copy(operator = it)) },
                 modifier = Modifier.weight(1f),
             )
@@ -66,7 +72,7 @@ fun AttributeCompareFilter(
             OutlinedTextField(
                 value = filter.targetValue,
                 onValueChange = { onUpdate(filter.copy(targetValue = it)) },
-                label = { Text("Value") },
+                label = { Text(stringResource(Res.string.value)) },
                 modifier = Modifier.weight(1f),
             )
         }
@@ -80,7 +86,7 @@ fun AttributeEmbedFilter(
     onRemove: () -> Unit,
 ) {
     FilterCard(onRemove = onRemove) {
-        Text("Embed Type", style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(Res.string.embed_type), style = MaterialTheme.typography.titleSmall)
         Spacer(Modifier.height(8.dp))
         Row(Modifier.fillMaxWidth()) {
             ComparatorDropdown(

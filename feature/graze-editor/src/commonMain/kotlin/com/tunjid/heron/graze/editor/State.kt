@@ -16,6 +16,8 @@
 
 package com.tunjid.heron.graze.editor
 
+import androidx.compose.runtime.Stable
+import androidx.navigationevent.NavigationEventInfo
 import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
@@ -39,6 +41,11 @@ val State.currentFilter
     get() = currentPath.fold(filter) { current, index ->
         current.filters[index] as Filter.Root
     }
+
+@Stable
+data class FilterNavigationEventInfo(
+    val filter: Filter.Root,
+) : NavigationEventInfo()
 
 sealed class Action(val key: String) {
 

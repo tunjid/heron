@@ -28,6 +28,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
+import heron.feature.graze_editor.generated.resources.Res
+import heron.feature.graze_editor.generated.resources.audience_id
+import heron.feature.graze_editor.generated.resources.dids_comma_separated
+import heron.feature.graze_editor.generated.resources.direction
+import heron.feature.graze_editor.generated.resources.social_graph
+import heron.feature.graze_editor.generated.resources.social_list_member
+import heron.feature.graze_editor.generated.resources.social_magic_audience
+import heron.feature.graze_editor.generated.resources.social_starter_pack
+import heron.feature.graze_editor.generated.resources.social_user_list
+import heron.feature.graze_editor.generated.resources.url
+import heron.feature.graze_editor.generated.resources.username
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SocialGraphFilter(
@@ -36,12 +48,12 @@ fun SocialGraphFilter(
     onRemove: () -> Unit,
 ) {
     FilterCard(onRemove = onRemove) {
-        Text("Social Graph", style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(Res.string.social_graph), style = MaterialTheme.typography.titleSmall)
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
             value = filter.username,
             onValueChange = { onUpdate(filter.copy(username = it)) },
-            label = { Text("Username") },
+            label = { Text(stringResource(Res.string.username)) },
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(8.dp))
@@ -56,7 +68,7 @@ fun SocialGraphFilter(
             OutlinedTextField(
                 value = filter.direction,
                 onValueChange = { onUpdate(filter.copy(direction = it)) },
-                label = { Text("Direction") },
+                label = { Text(stringResource(Res.string.direction)) },
                 modifier = Modifier.weight(1f),
             )
         }
@@ -70,7 +82,7 @@ fun SocialUserListFilter(
     onRemove: () -> Unit,
 ) {
     FilterCard(onRemove = onRemove) {
-        Text("Social User List", style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(Res.string.social_user_list), style = MaterialTheme.typography.titleSmall)
         Spacer(Modifier.height(8.dp))
         ComparatorDropdown(
             selected = filter.operator,
@@ -82,7 +94,7 @@ fun SocialUserListFilter(
         OutlinedTextField(
             value = filter.dids.joinToString(", "),
             onValueChange = { onUpdate(filter.copy(dids = it.split(",").map { s -> s.trim() })) },
-            label = { Text("DIDs (comma separated)") },
+            label = { Text(stringResource(Res.string.dids_comma_separated)) },
             modifier = Modifier.fillMaxWidth(),
         )
     }
@@ -95,7 +107,7 @@ fun SocialStarterPackFilter(
     onRemove: () -> Unit,
 ) {
     FilterCard(onRemove = onRemove) {
-        Text("Social Starter Pack", style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(Res.string.social_starter_pack), style = MaterialTheme.typography.titleSmall)
         Spacer(Modifier.height(8.dp))
         ComparatorDropdown(
             selected = filter.operator,
@@ -107,7 +119,7 @@ fun SocialStarterPackFilter(
         OutlinedTextField(
             value = filter.url,
             onValueChange = { onUpdate(filter.copy(url = it)) },
-            label = { Text("URL") },
+            label = { Text(stringResource(Res.string.url)) },
             modifier = Modifier.fillMaxWidth(),
         )
     }
@@ -120,7 +132,7 @@ fun SocialListMemberFilter(
     onRemove: () -> Unit,
 ) {
     FilterCard(onRemove = onRemove) {
-        Text("Social List Member", style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(Res.string.social_list_member), style = MaterialTheme.typography.titleSmall)
         Spacer(Modifier.height(8.dp))
         ComparatorDropdown(
             selected = filter.operator,
@@ -132,7 +144,7 @@ fun SocialListMemberFilter(
         OutlinedTextField(
             value = filter.url,
             onValueChange = { onUpdate(filter.copy(url = it)) },
-            label = { Text("URL") },
+            label = { Text(stringResource(Res.string.url)) },
             modifier = Modifier.fillMaxWidth(),
         )
     }
@@ -145,7 +157,7 @@ fun SocialMagicAudienceFilter(
     onRemove: () -> Unit,
 ) {
     FilterCard(onRemove = onRemove) {
-        Text("Social Magic Audience", style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(Res.string.social_magic_audience), style = MaterialTheme.typography.titleSmall)
         Spacer(Modifier.height(8.dp))
         ComparatorDropdown(
             selected = filter.operator,
@@ -157,7 +169,7 @@ fun SocialMagicAudienceFilter(
         OutlinedTextField(
             value = filter.audienceId,
             onValueChange = { onUpdate(filter.copy(audienceId = it)) },
-            label = { Text("Audience ID") },
+            label = { Text(stringResource(Res.string.audience_id)) },
             modifier = Modifier.fillMaxWidth(),
         )
     }
