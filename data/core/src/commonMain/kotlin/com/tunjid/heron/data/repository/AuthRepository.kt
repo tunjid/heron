@@ -176,16 +176,16 @@ internal class AuthTokenRepository(
 
     override suspend fun switchSession(
         sessionSummary: SessionSummary,
-    ): Outcome = savedStateDataSource.inCurrentProfileSession {
+    ): Outcome = runCatchingUnlessCancelled {
         val targetProfileData = savedStateDataSource.savedState.value
             .profileData[sessionSummary.profileId]
-            ?: return@inCurrentProfileSession Outcome.Failure(
-                SessionSwitchException(sessionSummary.profileId)
+            ?: return@runCatchingUnlessCancelled Outcome.Failure(
+                SessionSwitchException(sessionSummary.profileId),
             )
 
         val targetAuthTokens = targetProfileData.auth as? SavedState.AuthTokens.Authenticated
-            ?: return@inCurrentProfileSession Outcome.Failure(
-                SessionSwitchException(sessionSummary.profileId)
+            ?: return@runCatchingUnlessCancelled Outcome.Failure(
+                SessionSwitchException(sessionSummary.profileId),
             )
 
         // Token refresh happens before the session switch, so that the atomic block is fully synchronous
@@ -203,7 +203,7 @@ internal class AuthTokenRepository(
             false
         } ?: true
 
-        if (!switched) return@inCurrentProfileSession Outcome.Failure(
+        if (!switched) return@runCatchingUnlessCancelled Outcome.Failure(
             SessionSwitchException(sessionSummary.profileId),
         )
 
@@ -215,7 +215,7 @@ internal class AuthTokenRepository(
                 expiredSessionOutcome()
             }
         } ?: expiredSessionOutcome()
-    } ?: expiredSessionOutcome()
+    }.toOutcome()
 
     override suspend fun signOut() {
         runCatchingUnlessCancelled {
