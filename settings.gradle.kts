@@ -63,6 +63,7 @@ include(
     ":feature:edit-profile",
     ":feature:feed",
     ":feature:gallery",
+    ":feature:graze-editor",
     ":feature:home",
     ":feature:list",
     ":feature:messages",

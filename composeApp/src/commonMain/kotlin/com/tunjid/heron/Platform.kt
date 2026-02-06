@@ -32,6 +32,8 @@ import com.tunjid.heron.feed.di.FeedBindings
 import com.tunjid.heron.feed.di.FeedNavigationBindings
 import com.tunjid.heron.gallery.di.GalleryBindings
 import com.tunjid.heron.gallery.di.GalleryNavigationBindings
+import com.tunjid.heron.graze.editor.di.GrazeEditorBindings
+import com.tunjid.heron.graze.editor.di.GrazeEditorNavigationBindings
 import com.tunjid.heron.home.di.HomeBindings
 import com.tunjid.heron.home.di.HomeNavigationBindings
 import com.tunjid.heron.images.ImageLoader
@@ -97,6 +99,7 @@ fun createAppState(
         feedNavigationBindings = FeedNavigationBindings,
         editProfileNavigationBindings = EditProfileNavigationBindings,
         galleryNavigationBindings = GalleryNavigationBindings,
+        grazeEditorNavigationBindings = GrazeEditorNavigationBindings,
         homeNavigationBindings = HomeNavigationBindings,
         listNavigationBindings = ListNavigationBindings,
         messagesNavigationBindings = MessagesNavigationBindings,
@@ -152,6 +155,10 @@ fun createAppState(
             dataBindings = dataBindings,
         ),
         galleryBindings = GalleryBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
+        ),
+        grazeEditorBindings = GrazeEditorBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),
