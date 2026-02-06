@@ -16,18 +16,20 @@
 
 package com.tunjid.heron.graze.editor.ui
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
 import heron.feature.graze_editor.generated.resources.Res
@@ -40,6 +42,7 @@ import heron.feature.graze_editor.generated.resources.path
 import heron.feature.graze_editor.generated.resources.text_similarity
 import heron.feature.graze_editor.generated.resources.threshold
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.roundToInt
 
 @Composable
 fun MLSimilarityFilter(
@@ -71,7 +74,10 @@ fun MLSimilarityFilter(
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(8.dp))
-        Row(Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             ComparatorDropdown(
                 selected = filter.operator,
                 options = Filter.Comparator.Range.entries,
@@ -79,15 +85,19 @@ fun MLSimilarityFilter(
                 modifier = Modifier.weight(1f),
             )
             Spacer(Modifier.width(8.dp))
-            OutlinedTextField(
-                value = filter.threshold.toString(),
-                onValueChange = {
-                    it.toDoubleOrNull()?.let { d -> onUpdate(filter.copy(threshold = d)) }
-                },
-                label = { Text(stringResource(Res.string.threshold)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            Column(
                 modifier = Modifier.weight(1f),
-            )
+            ) {
+                Text(
+                    text = "${stringResource(Res.string.threshold)}: ${(filter.threshold * 100).roundToInt()}%",
+                    style = MaterialTheme.typography.labelMedium,
+                )
+                Slider(
+                    value = filter.threshold.toFloat(),
+                    onValueChange = { onUpdate(filter.copy(threshold = it.toDouble())) },
+                    valueRange = 0.1f..1f,
+                )
+            }
         }
     }
 }
@@ -108,7 +118,10 @@ fun MLProbabilityFilter(
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(8.dp))
-        Row(Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             ComparatorDropdown(
                 selected = filter.operator,
                 options = Filter.Comparator.Range.entries,
@@ -116,15 +129,19 @@ fun MLProbabilityFilter(
                 modifier = Modifier.weight(1f),
             )
             Spacer(Modifier.width(8.dp))
-            OutlinedTextField(
-                value = filter.threshold.toString(),
-                onValueChange = {
-                    it.toDoubleOrNull()?.let { d -> onUpdate(filter.copy(threshold = d)) }
-                },
-                label = { Text(stringResource(Res.string.threshold)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            Column(
                 modifier = Modifier.weight(1f),
-            )
+            ) {
+                Text(
+                    text = "${stringResource(Res.string.threshold)}: ${(filter.threshold * 100).roundToInt()}%",
+                    style = MaterialTheme.typography.labelMedium,
+                )
+                Slider(
+                    value = filter.threshold.toFloat(),
+                    onValueChange = { onUpdate(filter.copy(threshold = it.toDouble())) },
+                    valueRange = 0.1f..1f,
+                )
+            }
         }
     }
 }
@@ -145,25 +162,32 @@ fun MLModerationFilter(
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(8.dp))
-        Row(Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             ComparatorDropdown(
                 selected = filter.operator,
                 options = Filter.Comparator.Equality.entries +
-                    Filter.Comparator.Range.entries +
-                    Filter.Comparator.Set.entries,
+                        Filter.Comparator.Range.entries +
+                        Filter.Comparator.Set.entries,
                 onSelect = { onUpdate(filter.copy(operator = it)) },
                 modifier = Modifier.weight(1f),
             )
             Spacer(Modifier.width(8.dp))
-            OutlinedTextField(
-                value = filter.threshold.toString(),
-                onValueChange = {
-                    it.toDoubleOrNull()?.let { d -> onUpdate(filter.copy(threshold = d)) }
-                },
-                label = { Text(stringResource(Res.string.threshold)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            Column(
                 modifier = Modifier.weight(1f),
-            )
+            ) {
+                Text(
+                    text = "${stringResource(Res.string.threshold)}: ${(filter.threshold * 100).roundToInt()}%",
+                    style = MaterialTheme.typography.labelMedium,
+                )
+                Slider(
+                    value = filter.threshold.toFloat(),
+                    onValueChange = { onUpdate(filter.copy(threshold = it.toDouble())) },
+                    valueRange = 0.1f..1f,
+                )
+            }
         }
     }
 }

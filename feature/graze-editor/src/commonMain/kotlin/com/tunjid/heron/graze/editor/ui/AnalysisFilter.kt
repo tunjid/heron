@@ -16,18 +16,19 @@
 
 package com.tunjid.heron.graze.editor.ui
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
 import heron.feature.graze_editor.generated.resources.Res
@@ -49,6 +50,7 @@ import heron.feature.graze_editor.generated.resources.topic_label
 import heron.feature.graze_editor.generated.resources.toxic_category
 import heron.feature.graze_editor.generated.resources.toxicity_analysis
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.roundToInt
 
 @Composable
 fun AnalysisFilter(
@@ -103,7 +105,10 @@ fun AnalysisFilter(
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(8.dp))
-        Row(Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             ComparatorDropdown(
                 selected = filter.operator,
                 options = Filter.Comparator.Range.entries,
@@ -124,28 +129,32 @@ fun AnalysisFilter(
                 modifier = Modifier.weight(1f),
             )
             Spacer(Modifier.width(8.dp))
-            OutlinedTextField(
-                value = filter.threshold.toString(),
-                onValueChange = {
-                    it.toDoubleOrNull()?.let { threshold ->
+            Column(
+                modifier = Modifier.weight(1f),
+            ) {
+                Text(
+                    text = "${stringResource(Res.string.threshold)}: ${(filter.threshold * 100).roundToInt()}%",
+                    style = MaterialTheme.typography.labelMedium,
+                )
+                Slider(
+                    value = filter.threshold.toFloat(),
+                    onValueChange = { threshold ->
                         val updated = when (filter) {
-                            is Filter.Analysis.Language -> filter.copy(threshold = threshold)
-                            is Filter.Analysis.Sentiment -> filter.copy(threshold = threshold)
-                            is Filter.Analysis.FinancialSentiment -> filter.copy(threshold = threshold)
-                            is Filter.Analysis.Emotion -> filter.copy(threshold = threshold)
-                            is Filter.Analysis.Toxicity -> filter.copy(threshold = threshold)
-                            is Filter.Analysis.Topic -> filter.copy(threshold = threshold)
-                            is Filter.Analysis.TextArbitrary -> filter.copy(threshold = threshold)
-                            is Filter.Analysis.ImageNsfw -> filter.copy(threshold = threshold)
-                            is Filter.Analysis.ImageArbitrary -> filter.copy(threshold = threshold)
+                            is Filter.Analysis.Language -> filter.copy(threshold = threshold.toDouble())
+                            is Filter.Analysis.Sentiment -> filter.copy(threshold = threshold.toDouble())
+                            is Filter.Analysis.FinancialSentiment -> filter.copy(threshold = threshold.toDouble())
+                            is Filter.Analysis.Emotion -> filter.copy(threshold = threshold.toDouble())
+                            is Filter.Analysis.Toxicity -> filter.copy(threshold = threshold.toDouble())
+                            is Filter.Analysis.Topic -> filter.copy(threshold = threshold.toDouble())
+                            is Filter.Analysis.TextArbitrary -> filter.copy(threshold = threshold.toDouble())
+                            is Filter.Analysis.ImageNsfw -> filter.copy(threshold = threshold.toDouble())
+                            is Filter.Analysis.ImageArbitrary -> filter.copy(threshold = threshold.toDouble())
                         }
                         onUpdate(updated)
-                    }
-                },
-                label = { Text(stringResource(Res.string.threshold)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-            )
+                    },
+                    valueRange = 0.1f..1f,
+                )
+            }
         }
     }
 }
