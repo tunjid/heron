@@ -26,6 +26,7 @@ import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.editprofile.di.EditProfileBindings
 import com.tunjid.heron.feed.di.FeedBindings
 import com.tunjid.heron.gallery.di.GalleryBindings
+import com.tunjid.heron.graze.editor.di.GrazeEditorBindings
 import com.tunjid.heron.home.di.HomeBindings
 import com.tunjid.heron.images.ImageLoader
 import com.tunjid.heron.list.di.ListBindings
@@ -73,6 +74,7 @@ interface AppGraph {
             @Includes editProfileBindings: EditProfileBindings,
             @Includes feedBindings: FeedBindings,
             @Includes galleryBindings: GalleryBindings,
+            @Includes grazeEditorBindings: GrazeEditorBindings,
             @Includes homeBindings: HomeBindings,
             @Includes listBindings: ListBindings,
             @Includes messagesBindings: MessagesBindings,
