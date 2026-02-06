@@ -47,28 +47,41 @@ fun SocialGraphFilter(
     onUpdate: (Filter.Social.Graph) -> Unit,
     onRemove: () -> Unit,
 ) {
-    FilterCard(onRemove = onRemove) {
-        Text(stringResource(Res.string.social_graph), style = MaterialTheme.typography.titleSmall)
-        Spacer(Modifier.height(8.dp))
+    FilterCard(
+        onRemove = onRemove,
+    ) {
+        Text(
+            text = stringResource(Res.string.social_graph),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         OutlinedTextField(
             value = filter.username,
             onValueChange = { onUpdate(filter.copy(username = it)) },
-            label = { Text(stringResource(Res.string.username)) },
+            label = { Text(text = stringResource(Res.string.username)) },
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(8.dp))
-        Row(Modifier.fillMaxWidth()) {
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+        ) {
             ComparatorDropdown(
                 selected = filter.operator,
                 options = Filter.Comparator.Set.entries,
                 onSelect = { onUpdate(filter.copy(operator = it)) },
                 modifier = Modifier.weight(1f),
             )
-            Spacer(Modifier.width(8.dp))
+            Spacer(
+                modifier = Modifier.width(8.dp),
+            )
             OutlinedTextField(
                 value = filter.direction,
                 onValueChange = { onUpdate(filter.copy(direction = it)) },
-                label = { Text(stringResource(Res.string.direction)) },
+                label = { Text(text = stringResource(Res.string.direction)) },
                 modifier = Modifier.weight(1f),
             )
         }
@@ -81,20 +94,29 @@ fun SocialUserListFilter(
     onUpdate: (Filter.Social.UserList) -> Unit,
     onRemove: () -> Unit,
 ) {
-    FilterCard(onRemove = onRemove) {
-        Text(stringResource(Res.string.social_user_list), style = MaterialTheme.typography.titleSmall)
-        Spacer(Modifier.height(8.dp))
+    FilterCard(
+        onRemove = onRemove,
+    ) {
+        Text(
+            text = stringResource(Res.string.social_user_list),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         ComparatorDropdown(
             selected = filter.operator,
             options = Filter.Comparator.Set.entries,
             onSelect = { onUpdate(filter.copy(operator = it)) },
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         OutlinedTextField(
             value = filter.dids.joinToString(", "),
             onValueChange = { onUpdate(filter.copy(dids = it.split(",").map { s -> s.trim() })) },
-            label = { Text(stringResource(Res.string.dids_comma_separated)) },
+            label = { Text(text = stringResource(Res.string.dids_comma_separated)) },
             modifier = Modifier.fillMaxWidth(),
         )
     }
@@ -106,20 +128,29 @@ fun SocialStarterPackFilter(
     onUpdate: (Filter.Social.StarterPack) -> Unit,
     onRemove: () -> Unit,
 ) {
-    FilterCard(onRemove = onRemove) {
-        Text(stringResource(Res.string.social_starter_pack), style = MaterialTheme.typography.titleSmall)
-        Spacer(Modifier.height(8.dp))
+    FilterCard(
+        onRemove = onRemove,
+    ) {
+        Text(
+            text = stringResource(Res.string.social_starter_pack),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         ComparatorDropdown(
             selected = filter.operator,
             options = Filter.Comparator.Set.entries,
             onSelect = { onUpdate(filter.copy(operator = it)) },
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         OutlinedTextField(
             value = filter.url,
             onValueChange = { onUpdate(filter.copy(url = it)) },
-            label = { Text(stringResource(Res.string.url)) },
+            label = { Text(text = stringResource(Res.string.url)) },
             modifier = Modifier.fillMaxWidth(),
         )
     }
@@ -131,20 +162,29 @@ fun SocialListMemberFilter(
     onUpdate: (Filter.Social.ListMember) -> Unit,
     onRemove: () -> Unit,
 ) {
-    FilterCard(onRemove = onRemove) {
-        Text(stringResource(Res.string.social_list_member), style = MaterialTheme.typography.titleSmall)
-        Spacer(Modifier.height(8.dp))
+    FilterCard(
+        onRemove = onRemove,
+    ) {
+        Text(
+            text = stringResource(Res.string.social_list_member),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         ComparatorDropdown(
             selected = filter.operator,
             options = Filter.Comparator.Set.entries,
             onSelect = { onUpdate(filter.copy(operator = it)) },
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         OutlinedTextField(
             value = filter.url,
             onValueChange = { onUpdate(filter.copy(url = it)) },
-            label = { Text(stringResource(Res.string.url)) },
+            label = { Text(text = stringResource(Res.string.url)) },
             modifier = Modifier.fillMaxWidth(),
         )
     }
@@ -156,20 +196,29 @@ fun SocialMagicAudienceFilter(
     onUpdate: (Filter.Social.MagicAudience) -> Unit,
     onRemove: () -> Unit,
 ) {
-    FilterCard(onRemove = onRemove) {
-        Text(stringResource(Res.string.social_magic_audience), style = MaterialTheme.typography.titleSmall)
-        Spacer(Modifier.height(8.dp))
+    FilterCard(
+        onRemove = onRemove,
+    ) {
+        Text(
+            text = stringResource(Res.string.social_magic_audience),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         ComparatorDropdown(
             selected = filter.operator,
             options = Filter.Comparator.Set.entries,
             onSelect = { onUpdate(filter.copy(operator = it)) },
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         OutlinedTextField(
             value = filter.audienceId,
             onValueChange = { onUpdate(filter.copy(audienceId = it)) },
-            label = { Text(stringResource(Res.string.audience_id)) },
+            label = { Text(text = stringResource(Res.string.audience_id)) },
             modifier = Modifier.fillMaxWidth(),
         )
     }

@@ -39,20 +39,29 @@ fun EntityMatchesFilter(
     onUpdate: (Filter.Entity.Matches) -> Unit,
     onRemove: () -> Unit,
 ) {
-    FilterCard(onRemove = onRemove) {
-        Text(stringResource(Res.string.entity_matches), style = MaterialTheme.typography.titleSmall)
-        Spacer(Modifier.height(8.dp))
+    FilterCard(
+        onRemove = onRemove,
+    ) {
+        Text(
+            text = stringResource(Res.string.entity_matches),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         OutlinedTextField(
             value = filter.entityType,
             onValueChange = { onUpdate(filter.copy(entityType = it)) },
-            label = { Text(stringResource(Res.string.entity_type)) },
+            label = { Text(text = stringResource(Res.string.entity_type)) },
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         OutlinedTextField(
             value = filter.values.joinToString(", "),
             onValueChange = { onUpdate(filter.copy(values = it.split(",").map { s -> s.trim() })) },
-            label = { Text(stringResource(Res.string.values_comma_separated)) },
+            label = { Text(text = stringResource(Res.string.values_comma_separated)) },
             modifier = Modifier.fillMaxWidth(),
         )
     }
@@ -64,20 +73,29 @@ fun EntityExcludesFilter(
     onUpdate: (Filter.Entity.Excludes) -> Unit,
     onRemove: () -> Unit,
 ) {
-    FilterCard(onRemove = onRemove) {
-        Text(stringResource(Res.string.entity_excludes), style = MaterialTheme.typography.titleSmall)
-        Spacer(Modifier.height(8.dp))
+    FilterCard(
+        onRemove = onRemove,
+    ) {
+        Text(
+            text = stringResource(Res.string.entity_excludes),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         OutlinedTextField(
             value = filter.entityType,
             onValueChange = { onUpdate(filter.copy(entityType = it)) },
-            label = { Text(stringResource(Res.string.entity_type)) },
+            label = { Text(text = stringResource(Res.string.entity_type)) },
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         OutlinedTextField(
             value = filter.values.joinToString(", "),
             onValueChange = { onUpdate(filter.copy(values = it.split(",").map { s -> s.trim() })) },
-            label = { Text(stringResource(Res.string.values_comma_separated)) },
+            label = { Text(text = stringResource(Res.string.values_comma_separated)) },
             modifier = Modifier.fillMaxWidth(),
         )
     }

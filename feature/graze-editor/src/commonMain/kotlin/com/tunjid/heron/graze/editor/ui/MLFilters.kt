@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -40,9 +39,9 @@ import heron.feature.graze_editor.generated.resources.model_name
 import heron.feature.graze_editor.generated.resources.model_probability
 import heron.feature.graze_editor.generated.resources.path
 import heron.feature.graze_editor.generated.resources.text_similarity
-import heron.feature.graze_editor.generated.resources.threshold
-import org.jetbrains.compose.resources.stringResource
+import heron.feature.graze_editor.generated.resources.threshold_percent
 import kotlin.math.roundToInt
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun MLSimilarityFilter(
@@ -50,30 +49,43 @@ fun MLSimilarityFilter(
     onUpdate: (Filter.ML.Similarity) -> Unit,
     onRemove: () -> Unit,
 ) {
-    FilterCard(onRemove = onRemove) {
-        Text(stringResource(Res.string.text_similarity), style = MaterialTheme.typography.titleSmall)
-        Spacer(Modifier.height(8.dp))
+    FilterCard(
+        onRemove = onRemove,
+    ) {
+        Text(
+            text = stringResource(Res.string.text_similarity),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         OutlinedTextField(
             value = filter.path,
             onValueChange = { onUpdate(filter.copy(path = it)) },
-            label = { Text(stringResource(Res.string.path)) },
+            label = { Text(text = stringResource(Res.string.path)) },
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         OutlinedTextField(
             value = filter.config.modelName,
             onValueChange = { onUpdate(filter.copy(config = filter.config.copy(modelName = it))) },
-            label = { Text(stringResource(Res.string.model_name)) },
+            label = { Text(text = stringResource(Res.string.model_name)) },
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         OutlinedTextField(
             value = filter.config.anchorText,
             onValueChange = { onUpdate(filter.copy(config = filter.config.copy(anchorText = it))) },
-            label = { Text(stringResource(Res.string.anchor_text)) },
+            label = { Text(text = stringResource(Res.string.anchor_text)) },
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -84,12 +96,14 @@ fun MLSimilarityFilter(
                 onSelect = { onUpdate(filter.copy(operator = it)) },
                 modifier = Modifier.weight(1f),
             )
-            Spacer(Modifier.width(8.dp))
+            Spacer(
+                modifier = Modifier.width(8.dp),
+            )
             Column(
                 modifier = Modifier.weight(1f),
             ) {
                 Text(
-                    text = "${stringResource(Res.string.threshold)}: ${(filter.threshold * 100).roundToInt()}%",
+                    text = stringResource(Res.string.threshold_percent, filter.thresholdPercent),
                     style = MaterialTheme.typography.labelMedium,
                 )
                 Slider(
@@ -108,16 +122,25 @@ fun MLProbabilityFilter(
     onUpdate: (Filter.ML.Probability) -> Unit,
     onRemove: () -> Unit,
 ) {
-    FilterCard(onRemove = onRemove) {
-        Text(stringResource(Res.string.model_probability), style = MaterialTheme.typography.titleSmall)
-        Spacer(Modifier.height(8.dp))
+    FilterCard(
+        onRemove = onRemove,
+    ) {
+        Text(
+            text = stringResource(Res.string.model_probability),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         OutlinedTextField(
             value = filter.config.modelName,
             onValueChange = { onUpdate(filter.copy(config = filter.config.copy(modelName = it))) },
-            label = { Text(stringResource(Res.string.model_name)) },
+            label = { Text(text = stringResource(Res.string.model_name)) },
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -128,12 +151,14 @@ fun MLProbabilityFilter(
                 onSelect = { onUpdate(filter.copy(operator = it)) },
                 modifier = Modifier.weight(1f),
             )
-            Spacer(Modifier.width(8.dp))
+            Spacer(
+                modifier = Modifier.width(8.dp),
+            )
             Column(
                 modifier = Modifier.weight(1f),
             ) {
                 Text(
-                    text = "${stringResource(Res.string.threshold)}: ${(filter.threshold * 100).roundToInt()}%",
+                    text = stringResource(Res.string.threshold_percent, filter.thresholdPercent),
                     style = MaterialTheme.typography.labelMedium,
                 )
                 Slider(
@@ -152,16 +177,25 @@ fun MLModerationFilter(
     onUpdate: (Filter.ML.Moderation) -> Unit,
     onRemove: () -> Unit,
 ) {
-    FilterCard(onRemove = onRemove) {
-        Text(stringResource(Res.string.content_moderation), style = MaterialTheme.typography.titleSmall)
-        Spacer(Modifier.height(8.dp))
+    FilterCard(
+        onRemove = onRemove,
+    ) {
+        Text(
+            text = stringResource(Res.string.content_moderation),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         OutlinedTextField(
             value = filter.category,
             onValueChange = { onUpdate(filter.copy(category = it)) },
-            label = { Text(stringResource(Res.string.category)) },
+            label = { Text(text = stringResource(Res.string.category)) },
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -169,17 +203,19 @@ fun MLModerationFilter(
             ComparatorDropdown(
                 selected = filter.operator,
                 options = Filter.Comparator.Equality.entries +
-                        Filter.Comparator.Range.entries +
-                        Filter.Comparator.Set.entries,
+                    Filter.Comparator.Range.entries +
+                    Filter.Comparator.Set.entries,
                 onSelect = { onUpdate(filter.copy(operator = it)) },
                 modifier = Modifier.weight(1f),
             )
-            Spacer(Modifier.width(8.dp))
+            Spacer(
+                modifier = Modifier.width(8.dp),
+            )
             Column(
                 modifier = Modifier.weight(1f),
             ) {
                 Text(
-                    text = "${stringResource(Res.string.threshold)}: ${(filter.threshold * 100).roundToInt()}%",
+                    text = stringResource(Res.string.threshold_percent, filter.thresholdPercent),
                     style = MaterialTheme.typography.labelMedium,
                 )
                 Slider(

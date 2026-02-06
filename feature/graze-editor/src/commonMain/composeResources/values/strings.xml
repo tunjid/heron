@@ -47,6 +47,7 @@
     <string name="model_name">Model Name</string>
     <string name="anchor_text">Anchor Text</string>
     <string name="threshold">Threshold</string>
+    <string name="threshold_percent">Threshold: %1$d%%</string>
     <string name="model_probability">Model Probability</string>
     <string name="content_moderation">Content Moderation</string>
     <string name="category">Category</string>

@@ -44,13 +44,13 @@ import heron.feature.graze_editor.generated.resources.sentiment_analysis
 import heron.feature.graze_editor.generated.resources.sentiment_category
 import heron.feature.graze_editor.generated.resources.tag
 import heron.feature.graze_editor.generated.resources.text_arbitrary
-import heron.feature.graze_editor.generated.resources.threshold
+import heron.feature.graze_editor.generated.resources.threshold_percent
 import heron.feature.graze_editor.generated.resources.topic_analysis
 import heron.feature.graze_editor.generated.resources.topic_label
 import heron.feature.graze_editor.generated.resources.toxic_category
 import heron.feature.graze_editor.generated.resources.toxicity_analysis
-import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AnalysisFilter(
@@ -82,9 +82,17 @@ fun AnalysisFilter(
         is Filter.Analysis.ImageArbitrary -> stringResource(Res.string.tag)
     }
 
-    FilterCard(onRemove = onRemove) {
-        Text(title, style = MaterialTheme.typography.titleSmall)
-        Spacer(Modifier.height(8.dp))
+    FilterCard(
+        onRemove = onRemove,
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Spacer(
+            modifier = Modifier
+                .height(8.dp),
+        )
         OutlinedTextField(
             value = filter.category,
             onValueChange = { newCategory ->
@@ -101,10 +109,12 @@ fun AnalysisFilter(
                 }
                 onUpdate(updated)
             },
-            label = { Text(categoryLabel) },
+            label = { Text(text = categoryLabel) },
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -126,14 +136,19 @@ fun AnalysisFilter(
                     }
                     onUpdate(updated)
                 },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f),
             )
-            Spacer(Modifier.width(8.dp))
+            Spacer(
+                modifier = Modifier
+                    .width(8.dp),
+            )
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f),
             ) {
                 Text(
-                    text = "${stringResource(Res.string.threshold)}: ${(filter.threshold * 100).roundToInt()}%",
+                    text = stringResource(Res.string.threshold_percent, filter.thresholdPercent),
                     style = MaterialTheme.typography.labelMedium,
                 )
                 Slider(

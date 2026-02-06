@@ -88,30 +88,45 @@ private fun RegexBaseFilter(
     onUpdateCaseInsensitive: (Boolean) -> Unit,
     onRemove: () -> Unit,
 ) {
-    FilterCard(onRemove = onRemove) {
-        Text(title, style = MaterialTheme.typography.titleSmall)
-        Spacer(Modifier.height(8.dp))
+    FilterCard(
+        onRemove = onRemove,
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         OutlinedTextField(
             value = variable,
             onValueChange = onUpdateVariable,
-            label = { Text(stringResource(Res.string.variable)) },
+            label = { Text(text = stringResource(Res.string.variable)) },
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         OutlinedTextField(
             value = pattern,
             onValueChange = onUpdatePattern,
-            label = { Text(stringResource(Res.string.pattern)) },
+            label = { Text(text = stringResource(Res.string.pattern)) },
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(8.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Checkbox(
                 checked = isCaseInsensitive,
                 onCheckedChange = onUpdateCaseInsensitive,
             )
-            Spacer(Modifier.width(8.dp))
-            Text(stringResource(Res.string.case_insensitive))
+            Spacer(
+                modifier = Modifier.width(8.dp),
+            )
+            Text(text = stringResource(Res.string.case_insensitive))
         }
     }
 }
@@ -163,30 +178,45 @@ private fun RegexListBaseFilter(
     onUpdateCaseInsensitive: (Boolean) -> Unit,
     onRemove: () -> Unit,
 ) {
-    FilterCard(onRemove = onRemove) {
-        Text(title, style = MaterialTheme.typography.titleSmall)
-        Spacer(Modifier.height(8.dp))
+    FilterCard(
+        onRemove = onRemove,
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         OutlinedTextField(
             value = variable,
             onValueChange = onUpdateVariable,
-            label = { Text(stringResource(Res.string.variable)) },
+            label = { Text(text = stringResource(Res.string.variable)) },
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
         OutlinedTextField(
             value = terms.joinToString(", "),
             onValueChange = { onUpdateTerms(it.split(",").map { s -> s.trim() }) },
-            label = { Text(stringResource(Res.string.terms_comma_separated)) },
+            label = { Text(text = stringResource(Res.string.terms_comma_separated)) },
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(8.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Checkbox(
                 checked = isCaseInsensitive,
                 onCheckedChange = onUpdateCaseInsensitive,
             )
-            Spacer(Modifier.width(8.dp))
-            Text(stringResource(Res.string.case_insensitive))
+            Spacer(
+                modifier = Modifier.width(8.dp),
+            )
+            Text(text = stringResource(Res.string.case_insensitive))
         }
     }
 }

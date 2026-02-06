@@ -49,17 +49,29 @@ fun AttributeCompareFilter(
     onUpdate: (Filter.Attribute.Compare) -> Unit,
     onRemove: () -> Unit,
 ) {
-    FilterCard(onRemove = onRemove) {
-        Text(stringResource(Res.string.attribute_compare), style = MaterialTheme.typography.titleSmall)
-        Spacer(Modifier.height(8.dp))
+    FilterCard(
+        onRemove = onRemove,
+    ) {
+        Text(
+            text = stringResource(Res.string.attribute_compare),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Spacer(
+            modifier = Modifier
+                .height(8.dp),
+        )
         OutlinedTextField(
             value = filter.selector,
             onValueChange = { onUpdate(filter.copy(selector = it)) },
-            label = { Text(stringResource(Res.string.selector)) },
+            label = { Text(text = stringResource(Res.string.selector)) },
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(8.dp))
-        Row(Modifier.fillMaxWidth()) {
+        Spacer(
+            modifier = Modifier.height(8.dp),
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+        ) {
             ComparatorDropdown(
                 selected = filter.operator,
                 options = Filter.Comparator.Equality.entries +
@@ -68,11 +80,13 @@ fun AttributeCompareFilter(
                 onSelect = { onUpdate(filter.copy(operator = it)) },
                 modifier = Modifier.weight(1f),
             )
-            Spacer(Modifier.width(8.dp))
+            Spacer(
+                modifier = Modifier.width(8.dp),
+            )
             OutlinedTextField(
                 value = filter.targetValue,
                 onValueChange = { onUpdate(filter.copy(targetValue = it)) },
-                label = { Text(stringResource(Res.string.value)) },
+                label = { Text(text = stringResource(Res.string.value)) },
                 modifier = Modifier.weight(1f),
             )
         }
@@ -85,22 +99,38 @@ fun AttributeEmbedFilter(
     onUpdate: (Filter.Attribute.Embed) -> Unit,
     onRemove: () -> Unit,
 ) {
-    FilterCard(onRemove = onRemove) {
-        Text(stringResource(Res.string.embed_type), style = MaterialTheme.typography.titleSmall)
-        Spacer(Modifier.height(8.dp))
-        Row(Modifier.fillMaxWidth()) {
+    FilterCard(
+        onRemove = onRemove,
+    ) {
+        Text(
+            text = stringResource(Res.string.embed_type),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Spacer(
+            modifier = Modifier
+                .height(8.dp),
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+        ) {
             ComparatorDropdown(
                 selected = filter.operator,
                 options = Filter.Comparator.Equality.entries,
                 onSelect = { onUpdate(filter.copy(operator = it)) },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f),
             )
-            Spacer(Modifier.width(8.dp))
+            Spacer(
+                modifier = Modifier
+                    .width(8.dp),
+            )
             // Enum dropdown for Embed Kind
             EmbedKindDropdown(
                 selected = filter.embedType,
                 onSelect = { onUpdate(filter.copy(embedType = it)) },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f),
             )
         }
     }
@@ -126,10 +156,13 @@ private fun EmbedKindDropdown(
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier.menuAnchor(),
         )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
             Filter.Attribute.Embed.Kind.entries.forEach { option ->
                 DropdownMenuItem(
-                    text = { Text(option.name) },
+                    text = { Text(text = option.name) },
                     onClick = {
                         onSelect(option)
                         expanded = false
