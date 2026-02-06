@@ -127,17 +127,17 @@ fun AnalysisFilter(
             OutlinedTextField(
                 value = filter.threshold.toString(),
                 onValueChange = {
-                    it.toDoubleOrNull()?.let { d ->
+                    it.toDoubleOrNull()?.let { threshold ->
                         val updated = when (filter) {
-                            is Filter.Analysis.Language -> filter.copy(threshold = d)
-                            is Filter.Analysis.Sentiment -> filter.copy(threshold = d)
-                            is Filter.Analysis.FinancialSentiment -> filter.copy(threshold = d)
-                            is Filter.Analysis.Emotion -> filter.copy(threshold = d)
-                            is Filter.Analysis.Toxicity -> filter.copy(threshold = d)
-                            is Filter.Analysis.Topic -> filter.copy(threshold = d)
-                            is Filter.Analysis.TextArbitrary -> filter.copy(threshold = d)
-                            is Filter.Analysis.ImageNsfw -> filter.copy(threshold = d)
-                            is Filter.Analysis.ImageArbitrary -> filter.copy(threshold = d)
+                            is Filter.Analysis.Language -> filter.copy(threshold = threshold)
+                            is Filter.Analysis.Sentiment -> filter.copy(threshold = threshold)
+                            is Filter.Analysis.FinancialSentiment -> filter.copy(threshold = threshold)
+                            is Filter.Analysis.Emotion -> filter.copy(threshold = threshold)
+                            is Filter.Analysis.Toxicity -> filter.copy(threshold = threshold)
+                            is Filter.Analysis.Topic -> filter.copy(threshold = threshold)
+                            is Filter.Analysis.TextArbitrary -> filter.copy(threshold = threshold)
+                            is Filter.Analysis.ImageNsfw -> filter.copy(threshold = threshold)
+                            is Filter.Analysis.ImageArbitrary -> filter.copy(threshold = threshold)
                         }
                         onUpdate(updated)
                     }
