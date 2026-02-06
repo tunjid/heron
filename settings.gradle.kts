@@ -50,6 +50,7 @@ include(
     ":composeApp",
     ":data:core",
     ":data:files",
+    ":data:graze",
     ":data:logging",
     ":data:models",
     ":data:database",
