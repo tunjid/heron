@@ -110,7 +110,10 @@ class GrazeEditorBindings(
                 topBar = {
                     PoppableDestinationTopAppBar(
                         title = { Text("Graze Editor") },
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        onBackPressed = {
+                            if (state.currentPath.isNotEmpty()) viewModel.accept(Action.ExitFilter)
+                            else viewModel.accept(Action.Navigate.Pop)
+                        },
                     )
                 },
                 content = {

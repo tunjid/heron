@@ -22,13 +22,16 @@ import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
+import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.merge
@@ -63,8 +66,21 @@ class ActualGrazeEditorViewModel(
                         is Action.Navigate -> action.flow.consumeNavigationActions(
                             navigationMutationConsumer = navActions,
                         )
+                        is Action.EnterFilter -> action.flow.enterFilterMutations()
+                        is Action.ExitFilter -> action.flow.exitFilterMutations()
                     }
                 },
             )
         },
     )
+
+private fun Flow<Action.EnterFilter>.enterFilterMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(currentPath = currentPath + action.index)
+    }
+
+private fun Flow<Action.ExitFilter>.exitFilterMutations(): Flow<Mutation<State>> =
+    mapToMutation {
+        if (currentPath.isEmpty()) this
+        else copy(currentPath = currentPath.dropLast(1))
+    }

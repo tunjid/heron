@@ -100,12 +100,21 @@ sealed interface Filter {
 // ==============================================================================
 
     @Serializable
+    sealed interface Root : Filter {
+        val filters: List<Filter>
+    }
+
+    @Serializable
     @SerialName("and")
-    data class And(val filters: List<Filter>) : Filter
+    data class And(
+        override val filters: List<Filter>,
+    ) : Root
 
     @Serializable
     @SerialName("or")
-    data class Or(val filters: List<Filter>) : Filter
+    data class Or(
+        override val filters: List<Filter>,
+    ) : Root
 
 // ==============================================================================
 // 3. Attributes

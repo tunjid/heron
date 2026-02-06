@@ -16,12 +16,23 @@
 
 package com.tunjid.heron.graze.editor
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 
 @Composable
@@ -31,10 +42,94 @@ fun GrazeEditorScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
+    val currentFilter = state.currentFilter
+    val scrollState = rememberScrollState()
+
+    Column(
+        modifier = modifier
+            .verticalScroll(scrollState)
+            .fillMaxSize(),
     ) {
-        Text("Graze Editor")
+        currentFilter.filters.forEachIndexed { index, child ->
+            if (child is Filter.Root) {
+                FilterRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    filter = child,
+                    onClick = { actions(Action.EnterFilter(index)) },
+                )
+            } else {
+                FilterLeaf(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    filter = child,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun FilterRow(
+    filter: Filter.Root,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier
+            .clickable(onClick = onClick),
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp),
+        ) {
+            Text(
+                text = when (filter) {
+                    is Filter.And -> "All of these (AND)"
+                    is Filter.Or -> "Any of these (OR)"
+                },
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Text(
+                text = "${filter.filters.size} items",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+    }
+}
+
+@Composable
+fun FilterLeaf(
+    filter: Filter,
+    modifier: Modifier = Modifier,
+) {
+    Card(modifier = modifier) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = when (filter) {
+                    is Filter.Attribute.Compare -> "Attribute: ${filter.selector} ${filter.operator.value} ${filter.targetValue}"
+                    is Filter.Attribute.Embed -> "Embed: ${filter.operator.value} ${filter.embedType}"
+                    is Filter.Entity.Matches -> "Entity Matches: ${filter.entityType}"
+                    is Filter.Entity.Excludes -> "Entity Excludes: ${filter.entityType}"
+                    is Filter.Regex.Matches -> "Regex Matches: ${filter.variable}"
+                    is Filter.Regex.Negation -> "Regex Negation: ${filter.variable}"
+                    is Filter.Regex.Any -> "Regex Any: ${filter.variable}"
+                    is Filter.Regex.None -> "Regex None: ${filter.variable}"
+                    is Filter.Social.Graph -> "Social Graph: ${filter.username}"
+                    is Filter.Social.UserList -> "User List: ${filter.dids.size} users"
+                    is Filter.Social.StarterPack -> "Starter Pack: ${filter.url}"
+                    is Filter.Social.ListMember -> "List Member: ${filter.url}"
+                    is Filter.Social.MagicAudience -> "Magic Audience: ${filter.audienceId}"
+                    is Filter.ML.Similarity -> "ML Similarity: ${filter.config.modelName}"
+                    is Filter.ML.Probability -> "ML Probability: ${filter.config.modelName}"
+                    is Filter.ML.Moderation -> "Content Moderation: ${filter.category}"
+                    is Filter.Analysis -> "Analysis: ${filter.category}"
+                    else -> filter::class.simpleName ?: "Unknown Filter"
+                },
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
     }
 }

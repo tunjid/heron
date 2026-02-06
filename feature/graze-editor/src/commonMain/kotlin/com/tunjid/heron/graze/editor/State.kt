@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.graze.editor
 
+import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.treenav.strings.Route
@@ -24,6 +25,8 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
+    val filter: Filter.Root = Filter.And(emptyList()),
+    val currentPath: List<Int> = emptyList(),
     @Transient
     val messages: List<Memo> = emptyList(),
 )
@@ -32,7 +35,17 @@ fun State(
     route: Route,
 ) = State()
 
+val State.currentFilter
+    get() = currentPath.fold(filter) { current, index ->
+        current.filters[index] as Filter.Root
+    }
+
 sealed class Action(val key: String) {
+
+    data class EnterFilter(val index: Int) : Action("EnterFilter")
+
+    data object ExitFilter : Action("ExitFilter")
+
     sealed class Navigate :
         Action(key = "Navigate"),
         NavigationAction {
