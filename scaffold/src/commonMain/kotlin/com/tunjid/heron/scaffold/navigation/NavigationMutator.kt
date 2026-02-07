@@ -268,6 +268,11 @@ fun mutesDestination(): NavigationAction.Destination = pathDestination(
     referringRouteOption = ReferringRouteOption.Current,
 )
 
+fun grazeEditorDestination(): NavigationAction.Destination = pathDestination(
+    path = "/graze-editor",
+    referringRouteOption = ReferringRouteOption.Current,
+)
+
 fun pathDestination(
     path: String,
     models: List<UrlEncodableModel> = emptyList(),

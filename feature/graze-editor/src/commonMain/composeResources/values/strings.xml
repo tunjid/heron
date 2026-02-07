@@ -1,0 +1,104 @@
+<!--
+  ~    Copyright 2024 Adetunji Dahunsi
+  ~
+  ~    Licensed under the Apache License, Version 2.0 (the "License");
+  ~    you may not use this file except in compliance with the License.
+  ~    You may obtain a copy of the License at
+  ~
+  ~        http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~    Unless required by applicable law or agreed to in writing, software
+  ~    distributed under the License is distributed on an "AS IS" BASIS,
+  ~    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~    See the License for the specific language governing permissions and
+  ~    limitations under the License.
+  -->
+
+<resources>
+    <string name="remove_filter">Remove Filter</string>
+    <string name="attribute_compare">Attribute Compare</string>
+    <string name="selector">Selector</string>
+    <string name="value">Value</string>
+    <string name="embed_type">Embed Type</string>
+    <string name="entity_matches">Entity Matches</string>
+    <string name="entity_type">Entity Type</string>
+    <string name="values_comma_separated">Values (comma separated)</string>
+    <string name="entity_excludes">Entity Excludes</string>
+    <string name="regex_matches">Regex Matches</string>
+    <string name="regex_negation">Regex Negation</string>
+    <string name="variable">Variable</string>
+    <string name="pattern">Pattern</string>
+    <string name="case_insensitive">Case Insensitive</string>
+    <string name="regex_any">Regex Any</string>
+    <string name="terms_comma_separated">Terms (comma separated)</string>
+    <string name="regex_none">Regex None</string>
+    <string name="social_graph">Social Graph</string>
+    <string name="username">Username</string>
+    <string name="direction">Direction</string>
+    <string name="social_user_list">Social User List</string>
+    <string name="dids_comma_separated">DIDs (comma separated)</string>
+    <string name="social_starter_pack">Social Starter Pack</string>
+    <string name="url">URL</string>
+    <string name="social_list_member">Social List Member</string>
+    <string name="social_magic_audience">Social Magic Audience</string>
+    <string name="audience_id">Audience ID</string>
+    <string name="text_similarity">Text Similarity</string>
+    <string name="path">Path</string>
+    <string name="model_name">Model Name</string>
+    <string name="anchor_text">Anchor Text</string>
+    <string name="threshold">Threshold</string>
+    <string name="threshold_percent">Threshold: %1$d%%</string>
+    <string name="model_probability">Model Probability</string>
+    <string name="content_moderation">Content Moderation</string>
+    <string name="category">Category</string>
+    <string name="language_analysis">Language Analysis</string>
+    <string name="sentiment_analysis">Sentiment Analysis</string>
+    <string name="financial_sentiment">Financial Sentiment</string>
+    <string name="emotion_analysis">Emotion Analysis</string>
+    <string name="toxicity_analysis">Toxicity Analysis</string>
+    <string name="topic_analysis">Topic Analysis</string>
+    <string name="text_arbitrary">Text Arbitrary</string>
+    <string name="image_nsfw">Image NSFW</string>
+    <string name="image_arbitrary">Image Arbitrary</string>
+    <string name="language_name">Language Name</string>
+    <string name="sentiment_category">Sentiment Category</string>
+    <string name="financial_category">Financial Category</string>
+    <string name="emotion_category">Emotion Category</string>
+    <string name="toxic_category">Toxic Category</string>
+    <string name="topic_label">Topic Label</string>
+    <string name="tag">Tag</string>
+    <string name="graze_editor">Graze Editor</string>
+    <string name="all_of_these_and">All of these (AND)</string>
+    <string name="any_of_these_or">Any of these (OR)</string>
+    <string name="items_count">%1$d items</string>
+    <string name="unknown_filter">Unknown Filter</string>
+
+    <!-- Filter Leaf Descriptions -->
+    <string name="desc_attribute_compare">Attribute: %1$s %2$s %3$s</string>
+    <string name="desc_embed_type">Embed: %1$s %2$s</string>
+    <string name="desc_entity_matches">Entity Matches: %1$s</string>
+    <string name="desc_entity_excludes">Entity Excludes: %1$s</string>
+    <string name="desc_regex_matches">Regex Matches: %1$s</string>
+    <string name="desc_regex_negation">Regex Negation: %1$s</string>
+    <string name="desc_regex_any">Regex Any: %1$s</string>
+    <string name="desc_regex_none">Regex None: %1$s</string>
+    <string name="desc_social_graph">Social Graph: %1$s</string>
+    <string name="desc_social_user_list">User List: %1$d users</string>
+    <string name="desc_social_starter_pack">Starter Pack: %1$s</string>
+    <string name="desc_social_list_member">List Member: %1$s</string>
+    <string name="desc_social_magic_audience">Magic Audience: %1$s</string>
+    <string name="desc_ml_similarity">ML Similarity: %1$s</string>
+    <string name="desc_ml_probability">ML Probability: %1$s</string>
+    <string name="desc_ml_moderation">Content Moderation: %1$s</string>
+    <string name="desc_analysis">Analysis: %1$s</string>
+
+    <!-- Comparators -->
+    <string name="comparator_equal">Equal</string>
+    <string name="comparator_not_equal">Not Equal</string>
+    <string name="comparator_greater_than">Greater Than</string>
+    <string name="comparator_less_than">Less Than</string>
+    <string name="comparator_greater_than_or_equal">Greater Than or Equal</string>
+    <string name="comparator_less_than_or_equal">Less Than or Equal</string>
+    <string name="comparator_in">In</string>
+    <string name="comparator_not_in">Not In</string>
+</resources>
