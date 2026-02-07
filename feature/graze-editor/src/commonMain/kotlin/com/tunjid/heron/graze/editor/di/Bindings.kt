@@ -17,19 +17,32 @@
 package com.tunjid.heron.graze.editor.di
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.graze.editor.Action
 import com.tunjid.heron.graze.editor.ActualGrazeEditorViewModel
+import com.tunjid.heron.graze.editor.FilterNavigationEventInfo
 import com.tunjid.heron.graze.editor.GrazeEditorScreen
 import com.tunjid.heron.graze.editor.RouteViewModelInitializer
+import com.tunjid.heron.graze.editor.currentFilter
+import com.tunjid.heron.graze.editor.ui.AddFilterDialog
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
+import com.tunjid.heron.scaffold.scaffold.AppBarTitle
+import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransformProvider
@@ -50,8 +63,11 @@ import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
+import heron.feature.graze_editor.generated.resources.Res
+import heron.feature.graze_editor.generated.resources.graze_editor
+import org.jetbrains.compose.resources.stringResource
 
-private const val RoutePattern = "/graze/editor"
+private const val RoutePattern = "/graze-editor"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -99,6 +115,10 @@ class GrazeEditorBindings(
             val state by viewModel.state.collectAsStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
+            var isAdding by rememberSaveable {
+                mutableStateOf(false)
+            }
+
             paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
@@ -109,18 +129,66 @@ class GrazeEditorBindings(
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
-                        title = { Text("Graze Editor") },
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        title = {
+                            AppBarTitle(
+                                modifier = Modifier,
+                                title = stringResource(Res.string.graze_editor),
+                            )
+                        },
+                        onBackPressed = {
+                            viewModel.accept(
+                                if (state.currentPath.isNotEmpty()) Action.EditorNavigation.ExitFilter
+                                else Action.Navigate.Pop,
+                            )
+                        },
                     )
                 },
-                content = {
+                floatingActionButton = {
+                    PaneFab(
+                        text = "Add filter",
+                        icon = Icons.Rounded.Add,
+                        expanded = true,
+                        onClick = {
+                            isAdding = true
+                        },
+                    )
+                },
+                content = { contentPadding ->
                     GrazeEditorScreen(
+                        modifier = Modifier
+                            .padding(contentPadding),
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
                     )
                 },
             )
+
+            if (isAdding) AddFilterDialog(
+                onDismissRequest = {
+                    isAdding = false
+                },
+                onFilterSelected = { addedFilter ->
+                    isAdding = false
+                    viewModel.accept(
+                        Action.EditFilter.AddFilter(
+                            path = state.currentPath,
+                            filter = addedFilter,
+                        ),
+                    )
+                },
+            )
+
+            NavigationBackHandler(
+                state = rememberNavigationEventState(
+                    currentInfo = remember(state.currentFilter) {
+                        FilterNavigationEventInfo(state.currentFilter)
+                    },
+                ),
+                isBackEnabled = state.currentPath.isNotEmpty(),
+            ) {
+                viewModel.accept(Action.EditorNavigation.ExitFilter)
+            }
         },
     )
 }
