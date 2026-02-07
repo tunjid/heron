@@ -17,6 +17,7 @@
 package com.tunjid.heron.graze.editor
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,27 +31,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
+import com.tunjid.heron.graze.editor.ui.AnalysisFilter
+import com.tunjid.heron.graze.editor.ui.AttributeCompareFilter
+import com.tunjid.heron.graze.editor.ui.AttributeEmbedFilter
+import com.tunjid.heron.graze.editor.ui.EntityExcludesFilter
+import com.tunjid.heron.graze.editor.ui.EntityMatchesFilter
+import com.tunjid.heron.graze.editor.ui.MLModerationFilter
+import com.tunjid.heron.graze.editor.ui.MLProbabilityFilter
+import com.tunjid.heron.graze.editor.ui.MLSimilarityFilter
+import com.tunjid.heron.graze.editor.ui.RegexAnyFilter
+import com.tunjid.heron.graze.editor.ui.RegexMatchesFilter
+import com.tunjid.heron.graze.editor.ui.RegexNegationFilter
+import com.tunjid.heron.graze.editor.ui.RegexNoneFilter
+import com.tunjid.heron.graze.editor.ui.SocialGraphFilter
+import com.tunjid.heron.graze.editor.ui.SocialListMemberFilter
+import com.tunjid.heron.graze.editor.ui.SocialMagicAudienceFilter
+import com.tunjid.heron.graze.editor.ui.SocialStarterPackFilter
+import com.tunjid.heron.graze.editor.ui.SocialUserListFilter
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.all_of_these_and
 import heron.feature.graze_editor.generated.resources.any_of_these_or
-import heron.feature.graze_editor.generated.resources.desc_analysis
-import heron.feature.graze_editor.generated.resources.desc_attribute_compare
-import heron.feature.graze_editor.generated.resources.desc_embed_type
-import heron.feature.graze_editor.generated.resources.desc_entity_excludes
-import heron.feature.graze_editor.generated.resources.desc_entity_matches
-import heron.feature.graze_editor.generated.resources.desc_ml_moderation
-import heron.feature.graze_editor.generated.resources.desc_ml_probability
-import heron.feature.graze_editor.generated.resources.desc_ml_similarity
-import heron.feature.graze_editor.generated.resources.desc_regex_any
-import heron.feature.graze_editor.generated.resources.desc_regex_matches
-import heron.feature.graze_editor.generated.resources.desc_regex_negation
-import heron.feature.graze_editor.generated.resources.desc_regex_none
-import heron.feature.graze_editor.generated.resources.desc_social_graph
-import heron.feature.graze_editor.generated.resources.desc_social_list_member
-import heron.feature.graze_editor.generated.resources.desc_social_magic_audience
-import heron.feature.graze_editor.generated.resources.desc_social_starter_pack
-import heron.feature.graze_editor.generated.resources.desc_social_user_list
 import heron.feature.graze_editor.generated.resources.items_count
 import heron.feature.graze_editor.generated.resources.unknown_filter
 import org.jetbrains.compose.resources.stringResource
@@ -68,6 +69,7 @@ fun GrazeEditorScreen(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         currentFilter.filters.forEachIndexed { index, child ->
             if (child is Filter.Root) {
@@ -84,6 +86,12 @@ fun GrazeEditorScreen(
                         .fillMaxWidth()
                         .padding(8.dp),
                     filter = child,
+                    onUpdate = { updatedFilter ->
+                        // actions(Action.UpdateFilter(index, updatedFilter))
+                    },
+                    onRemove = {
+                        // actions(Action.RemoveFilter(index))
+                    },
                 )
             }
         }
@@ -122,87 +130,108 @@ fun FilterRow(
 @Composable
 fun FilterLeaf(
     filter: Filter,
+    onUpdate: (Filter) -> Unit,
+    onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(modifier = modifier) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp),
-        ) {
-            Text(
-                text = when (filter) {
-                    is Filter.Attribute.Compare -> stringResource(
-                        Res.string.desc_attribute_compare,
-                        filter.selector,
-                        filter.operator.value,
-                        filter.targetValue,
+    when (filter) {
+        is Filter.Attribute.Compare -> AttributeCompareFilter(
+            filter = filter,
+            onUpdate = onUpdate,
+            onRemove = onRemove,
+        )
+        is Filter.Attribute.Embed -> AttributeEmbedFilter(
+            filter = filter,
+            onUpdate = onUpdate,
+            onRemove = onRemove,
+        )
+        is Filter.Entity.Matches -> EntityMatchesFilter(
+            filter = filter,
+            onUpdate = onUpdate,
+            onRemove = onRemove,
+        )
+        is Filter.Entity.Excludes -> EntityExcludesFilter(
+            filter = filter,
+            onUpdate = onUpdate,
+            onRemove = onRemove,
+        )
+        is Filter.Regex.Matches -> RegexMatchesFilter(
+            filter = filter,
+            onUpdate = onUpdate,
+            onRemove = onRemove,
+        )
+        is Filter.Regex.Negation -> RegexNegationFilter(
+            filter = filter,
+            onUpdate = onUpdate,
+            onRemove = onRemove,
+        )
+        is Filter.Regex.Any -> RegexAnyFilter(
+            filter = filter,
+            onUpdate = onUpdate,
+            onRemove = onRemove,
+        )
+        is Filter.Regex.None -> RegexNoneFilter(
+            filter = filter,
+            onUpdate = onUpdate,
+            onRemove = onRemove,
+        )
+        is Filter.Social.Graph -> SocialGraphFilter(
+            filter = filter,
+            onUpdate = onUpdate,
+            onRemove = onRemove,
+        )
+        is Filter.Social.UserList -> SocialUserListFilter(
+            filter = filter,
+            onUpdate = onUpdate,
+            onRemove = onRemove,
+        )
+        is Filter.Social.StarterPack -> SocialStarterPackFilter(
+            filter = filter,
+            onUpdate = onUpdate,
+            onRemove = onRemove,
+        )
+        is Filter.Social.ListMember -> SocialListMemberFilter(
+            filter = filter,
+            onUpdate = onUpdate,
+            onRemove = onRemove,
+        )
+        is Filter.Social.MagicAudience -> SocialMagicAudienceFilter(
+            filter = filter,
+            onUpdate = onUpdate,
+            onRemove = onRemove,
+        )
+        is Filter.ML.Similarity -> MLSimilarityFilter(
+            filter = filter,
+            onUpdate = onUpdate,
+            onRemove = onRemove,
+        )
+        is Filter.ML.Probability -> MLProbabilityFilter(
+            filter = filter,
+            onUpdate = onUpdate,
+            onRemove = onRemove,
+        )
+        is Filter.ML.Moderation -> MLModerationFilter(
+            filter = filter,
+            onUpdate = onUpdate,
+            onRemove = onRemove,
+        )
+        is Filter.Analysis -> AnalysisFilter(
+            filter = filter,
+            onUpdate = onUpdate,
+            onRemove = onRemove,
+        )
+        else -> {
+            Card(modifier = modifier) {
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp),
+                ) {
+                    Text(
+                        text = stringResource(Res.string.unknown_filter),
+                        style = MaterialTheme.typography.bodyMedium,
                     )
-                    is Filter.Attribute.Embed -> stringResource(
-                        Res.string.desc_embed_type,
-                        filter.operator.value,
-                        filter.embedType,
-                    )
-                    is Filter.Entity.Matches -> stringResource(
-                        Res.string.desc_entity_matches,
-                        filter.entityType,
-                    )
-                    is Filter.Entity.Excludes -> stringResource(
-                        Res.string.desc_entity_excludes,
-                        filter.entityType,
-                    )
-                    is Filter.Regex.Matches -> stringResource(
-                        Res.string.desc_regex_matches,
-                        filter.variable,
-                    )
-                    is Filter.Regex.Negation -> stringResource(
-                        Res.string.desc_regex_negation,
-                        filter.variable,
-                    )
-                    is Filter.Regex.Any -> stringResource(
-                        Res.string.desc_regex_any,
-                        filter.variable,
-                    )
-                    is Filter.Regex.None -> stringResource(
-                        Res.string.desc_regex_none,
-                        filter.variable,
-                    )
-                    is Filter.Social.Graph -> stringResource(
-                        Res.string.desc_social_graph,
-                        filter.username,
-                    )
-                    is Filter.Social.UserList -> stringResource(
-                        Res.string.desc_social_user_list,
-                        filter.dids.size,
-                    )
-                    is Filter.Social.StarterPack -> stringResource(
-                        Res.string.desc_social_starter_pack,
-                        filter.url,
-                    )
-                    is Filter.Social.ListMember -> stringResource(
-                        Res.string.desc_social_list_member,
-                        filter.url,
-                    )
-                    is Filter.Social.MagicAudience -> stringResource(
-                        Res.string.desc_social_magic_audience,
-                        filter.audienceId,
-                    )
-                    is Filter.ML.Similarity -> stringResource(
-                        Res.string.desc_ml_similarity,
-                        filter.config.modelName,
-                    )
-                    is Filter.ML.Probability -> stringResource(
-                        Res.string.desc_ml_probability,
-                        filter.config.modelName,
-                    )
-                    is Filter.ML.Moderation -> stringResource(
-                        Res.string.desc_ml_moderation,
-                        filter.category,
-                    )
-                    is Filter.Analysis -> stringResource(Res.string.desc_analysis, filter.category)
-                    else -> stringResource(Res.string.unknown_filter)
-                },
-                style = MaterialTheme.typography.bodyMedium,
-            )
+                }
+            }
         }
     }
 }

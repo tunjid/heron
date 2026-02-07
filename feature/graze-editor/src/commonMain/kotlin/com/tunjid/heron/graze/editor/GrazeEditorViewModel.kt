@@ -95,6 +95,6 @@ private fun Flow<Action.AddFilter>.addFilterMutations(): Flow<Mutation<State>> =
                     is Filter.And -> target.copy(filters = target.filters + action.filter)
                     is Filter.Or -> target.copy(filters = target.filters + action.filter)
                 }
-            }
+            },
         )
     }

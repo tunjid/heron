@@ -17,9 +17,9 @@
 package com.tunjid.heron.graze.editor.di
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -40,6 +40,7 @@ import com.tunjid.heron.graze.editor.ui.AddFilterDialog
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
+import com.tunjid.heron.scaffold.scaffold.AppBarTitle
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
@@ -47,7 +48,6 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransformProvider
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
-import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -66,7 +66,7 @@ import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.graze_editor
 import org.jetbrains.compose.resources.stringResource
 
-private const val RoutePattern = "/graze_editor"
+private const val RoutePattern = "/graze-editor"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -128,7 +128,12 @@ class GrazeEditorBindings(
                 },
                 topBar = {
                     PoppableDestinationTopAppBar(
-                        title = { Text(stringResource(Res.string.graze_editor)) },
+                        title = {
+                            AppBarTitle(
+                                modifier = Modifier,
+                                title = stringResource(Res.string.graze_editor),
+                            )
+                        },
                         onBackPressed = {
                             if (state.currentPath.isNotEmpty()) viewModel.accept(Action.ExitFilter)
                             else viewModel.accept(Action.Navigate.Pop)
@@ -145,8 +150,10 @@ class GrazeEditorBindings(
                         },
                     )
                 },
-                content = {
+                content = { contentPadding ->
                     GrazeEditorScreen(
+                        modifier = Modifier
+                            .padding(contentPadding),
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
