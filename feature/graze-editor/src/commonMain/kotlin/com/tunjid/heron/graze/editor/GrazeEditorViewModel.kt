@@ -17,6 +17,7 @@
 package com.tunjid.heron.graze.editor
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -68,6 +69,7 @@ class ActualGrazeEditorViewModel(
                         )
                         is Action.EnterFilter -> action.flow.enterFilterMutations()
                         is Action.ExitFilter -> action.flow.exitFilterMutations()
+                        is Action.AddFilter -> action.flow.addFilterMutations()
                     }
                 },
             )
@@ -83,4 +85,16 @@ private fun Flow<Action.ExitFilter>.exitFilterMutations(): Flow<Mutation<State>>
     mapToMutation {
         if (currentPath.isEmpty()) this
         else copy(currentPath = currentPath.dropLast(1))
+    }
+
+private fun Flow<Action.AddFilter>.addFilterMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(
+            filter = filter.updateAt(currentPath) { target ->
+                when (target) {
+                    is Filter.And -> target.copy(filters = target.filters + action.filter)
+                    is Filter.Or -> target.copy(filters = target.filters + action.filter)
+                }
+            }
+        )
     }
