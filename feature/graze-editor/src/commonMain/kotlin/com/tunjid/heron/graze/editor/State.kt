@@ -54,6 +54,10 @@ sealed class Action(val key: String) {
     sealed class EditFilter : Action("EditFilter") {
         abstract val path: List<Int>
 
+        data class FlipRootFilter(
+            override val path: List<Int>,
+        ) : EditFilter()
+
         data class AddFilter(
             override val path: List<Int>,
             val filter: Filter,

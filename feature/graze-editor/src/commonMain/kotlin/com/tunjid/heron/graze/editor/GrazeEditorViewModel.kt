@@ -90,7 +90,11 @@ private fun Flow<Action.EditFilter>.editFilterFilterMutations(): Flow<Mutation<S
     mapToMutation { action ->
         copy(
             filter = filter.updateAt(action.path) { target ->
-                target.updateFilters { filters ->
+                if (action is Action.EditFilter.FlipRootFilter) when (target) {
+                    is Filter.And -> Filter.Or(target.filters)
+                    is Filter.Or -> Filter.And(target.filters)
+                }
+                else target.updateFilters { filters ->
                     when (action) {
                         is Action.EditFilter.AddFilter -> filters + action.filter
                         is Action.EditFilter.RemoveFilter -> filters.filterIndexed { index, _ ->
@@ -100,6 +104,9 @@ private fun Flow<Action.EditFilter>.editFilterFilterMutations(): Flow<Mutation<S
                             if (index == action.index) action.filter
                             else filter
                         }
+                        is Action.EditFilter.FlipRootFilter -> throw IllegalArgumentException(
+                            "Flip action should not operate on non root filters",
+                        )
                     }
                 }
             },

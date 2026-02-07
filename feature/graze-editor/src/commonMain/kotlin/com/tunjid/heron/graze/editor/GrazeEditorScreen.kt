@@ -26,7 +26,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -70,18 +74,37 @@ fun GrazeEditorScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .padding(8.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        RootFilterDescription(
+            modifier = Modifier,
+            isAnd = state.filter is Filter.And,
+            size = state.filter.filters.size,
+            onFlipClicked = {
+                actions(
+                    Action.EditFilter.FlipRootFilter(
+                        path = state.currentPath,
+                    ),
+                )
+            },
+        )
         currentFilter.filters.forEachIndexed { index, child ->
             Filter(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
+                    .fillMaxWidth(),
                 filter = child,
                 atTopLevel = true,
                 enterFilter = { enteredIndex ->
                     actions(Action.EditorNavigation.EnterFilter(enteredIndex))
+                },
+                onFlipClicked = { flippedPath ->
+                    actions(
+                        Action.EditFilter.FlipRootFilter(
+                            path = flippedPath,
+                        ),
+                    )
                 },
                 onUpdateFilter = { updatedFilter: Filter, path: List<Int>, updatedIndex: Int ->
                     actions(
@@ -114,6 +137,7 @@ private fun Filter(
     atTopLevel: Boolean,
     path: List<Int>,
     enterFilter: (Int) -> Unit,
+    onFlipClicked: (path: List<Int>) -> Unit,
     onUpdateFilter: (filter: Filter, path: List<Int>, index: Int) -> Unit,
     onRemoveFilter: (path: List<Int>, index: Int) -> Unit,
     index: Int,
@@ -125,6 +149,7 @@ private fun Filter(
         index = index,
         path = path,
         enterFilter = enterFilter,
+        onFlipClicked = onFlipClicked,
         onUpdateFilter = onUpdateFilter,
         onRemoveFilter = onRemoveFilter,
     )
@@ -154,6 +179,7 @@ fun FilterRow(
     filter: Filter.Root,
     path: List<Int>,
     enterFilter: (Int) -> Unit,
+    onFlipClicked: (path: List<Int>) -> Unit,
     onUpdateFilter: (filter: Filter, path: List<Int>, index: Int) -> Unit,
     onRemoveFilter: (path: List<Int>, index: Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -169,16 +195,13 @@ fun FilterRow(
                 .fillMaxWidth()
                 .padding(16.dp),
         ) {
-            Text(
-                text = when (filter) {
-                    is Filter.And -> stringResource(Res.string.all_of_these_and)
-                    is Filter.Or -> stringResource(Res.string.any_of_these_or)
+            RootFilterDescription(
+                modifier = Modifier,
+                isAnd = filter is Filter.And,
+                size = filter.filters.size,
+                onFlipClicked = {
+                    onFlipClicked(path)
                 },
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Text(
-                text = stringResource(Res.string.items_count, filter.filters.size),
-                style = MaterialTheme.typography.bodyMedium,
             )
 
             if (atTopLevel) Row(
@@ -197,12 +220,57 @@ fun FilterRow(
                         index = childIndex,
                         path = path + index,
                         enterFilter = enterFilter,
+                        onFlipClicked = onFlipClicked,
                         onUpdateFilter = onUpdateFilter,
                         onRemoveFilter = onRemoveFilter,
                     )
                 }
             }
         }
+    }
+}
+
+@Composable
+fun RootFilterDescription(
+    modifier: Modifier,
+    isAnd: Boolean,
+    size: Int,
+    onFlipClicked: () -> Unit,
+) {
+    Column(
+        modifier = modifier,
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Text(
+                modifier = Modifier
+                    .weight(1f),
+                text = stringResource(
+                    if (isAnd) Res.string.all_of_these_and
+                    else Res.string.any_of_these_or,
+                ),
+                style = MaterialTheme.typography.titleMedium,
+            )
+            IconButton(
+                onClick = {
+                    onFlipClicked()
+                },
+                content = {
+                    Icon(
+                        imageVector = Icons.Rounded.SwapHoriz,
+                        contentDescription = "Flip",
+                    )
+                },
+            )
+        }
+        Text(
+            text = stringResource(
+                Res.string.items_count,
+                size,
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+        )
     }
 }
 
