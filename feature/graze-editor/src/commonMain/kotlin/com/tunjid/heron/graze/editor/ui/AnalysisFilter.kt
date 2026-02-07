@@ -96,18 +96,19 @@ fun AnalysisFilter(
         OutlinedTextField(
             value = filter.category,
             onValueChange = { newCategory ->
-                val updated = when (filter) {
-                    is Filter.Analysis.Language -> filter.copy(category = newCategory)
-                    is Filter.Analysis.Sentiment -> filter.copy(category = newCategory)
-                    is Filter.Analysis.FinancialSentiment -> filter.copy(category = newCategory)
-                    is Filter.Analysis.Emotion -> filter.copy(category = newCategory)
-                    is Filter.Analysis.Toxicity -> filter.copy(category = newCategory)
-                    is Filter.Analysis.Topic -> filter.copy(category = newCategory)
-                    is Filter.Analysis.TextArbitrary -> filter.copy(category = newCategory)
-                    is Filter.Analysis.ImageNsfw -> filter.copy(category = newCategory)
-                    is Filter.Analysis.ImageArbitrary -> filter.copy(category = newCategory)
-                }
-                onUpdate(updated)
+                onUpdate(
+                    when (filter) {
+                        is Filter.Analysis.Language -> filter.copy(category = newCategory)
+                        is Filter.Analysis.Sentiment -> filter.copy(category = newCategory)
+                        is Filter.Analysis.FinancialSentiment -> filter.copy(category = newCategory)
+                        is Filter.Analysis.Emotion -> filter.copy(category = newCategory)
+                        is Filter.Analysis.Toxicity -> filter.copy(category = newCategory)
+                        is Filter.Analysis.Topic -> filter.copy(category = newCategory)
+                        is Filter.Analysis.TextArbitrary -> filter.copy(category = newCategory)
+                        is Filter.Analysis.ImageNsfw -> filter.copy(category = newCategory)
+                        is Filter.Analysis.ImageArbitrary -> filter.copy(category = newCategory)
+                    },
+                )
             },
             label = { Text(text = categoryLabel) },
             modifier = Modifier.fillMaxWidth(),
@@ -123,18 +124,19 @@ fun AnalysisFilter(
                 selected = filter.operator,
                 options = Filter.Comparator.Range.entries,
                 onSelect = { newOperator ->
-                    val updated = when (filter) {
-                        is Filter.Analysis.Language -> filter.copy(operator = newOperator)
-                        is Filter.Analysis.Sentiment -> filter.copy(operator = newOperator)
-                        is Filter.Analysis.FinancialSentiment -> filter.copy(operator = newOperator)
-                        is Filter.Analysis.Emotion -> filter.copy(operator = newOperator)
-                        is Filter.Analysis.Toxicity -> filter.copy(operator = newOperator)
-                        is Filter.Analysis.Topic -> filter.copy(operator = newOperator)
-                        is Filter.Analysis.TextArbitrary -> filter.copy(operator = newOperator)
-                        is Filter.Analysis.ImageNsfw -> filter.copy(operator = newOperator)
-                        is Filter.Analysis.ImageArbitrary -> filter.copy(operator = newOperator)
-                    }
-                    onUpdate(updated)
+                    onUpdate(
+                        when (filter) {
+                            is Filter.Analysis.Language -> filter.copy(operator = newOperator)
+                            is Filter.Analysis.Sentiment -> filter.copy(operator = newOperator)
+                            is Filter.Analysis.FinancialSentiment -> filter.copy(operator = newOperator)
+                            is Filter.Analysis.Emotion -> filter.copy(operator = newOperator)
+                            is Filter.Analysis.Toxicity -> filter.copy(operator = newOperator)
+                            is Filter.Analysis.Topic -> filter.copy(operator = newOperator)
+                            is Filter.Analysis.TextArbitrary -> filter.copy(operator = newOperator)
+                            is Filter.Analysis.ImageNsfw -> filter.copy(operator = newOperator)
+                            is Filter.Analysis.ImageArbitrary -> filter.copy(operator = newOperator)
+                        },
+                    )
                 },
                 modifier = Modifier
                     .weight(1f),
@@ -154,18 +156,19 @@ fun AnalysisFilter(
                 Slider(
                     value = filter.threshold.toFloat(),
                     onValueChange = { threshold ->
-                        val updated = when (filter) {
-                            is Filter.Analysis.Language -> filter.copy(threshold = threshold.toDouble())
-                            is Filter.Analysis.Sentiment -> filter.copy(threshold = threshold.toDouble())
-                            is Filter.Analysis.FinancialSentiment -> filter.copy(threshold = threshold.toDouble())
-                            is Filter.Analysis.Emotion -> filter.copy(threshold = threshold.toDouble())
-                            is Filter.Analysis.Toxicity -> filter.copy(threshold = threshold.toDouble())
-                            is Filter.Analysis.Topic -> filter.copy(threshold = threshold.toDouble())
-                            is Filter.Analysis.TextArbitrary -> filter.copy(threshold = threshold.toDouble())
-                            is Filter.Analysis.ImageNsfw -> filter.copy(threshold = threshold.toDouble())
-                            is Filter.Analysis.ImageArbitrary -> filter.copy(threshold = threshold.toDouble())
-                        }
-                        onUpdate(updated)
+                        onUpdate(
+                            when (filter) {
+                                is Filter.Analysis.Language -> filter.copy(threshold = threshold.toDouble())
+                                is Filter.Analysis.Sentiment -> filter.copy(threshold = threshold.toDouble())
+                                is Filter.Analysis.FinancialSentiment -> filter.copy(threshold = threshold.toDouble())
+                                is Filter.Analysis.Emotion -> filter.copy(threshold = threshold.toDouble())
+                                is Filter.Analysis.Toxicity -> filter.copy(threshold = threshold.toDouble())
+                                is Filter.Analysis.Topic -> filter.copy(threshold = threshold.toDouble())
+                                is Filter.Analysis.TextArbitrary -> filter.copy(threshold = threshold.toDouble())
+                                is Filter.Analysis.ImageNsfw -> filter.copy(threshold = threshold.toDouble())
+                                is Filter.Analysis.ImageArbitrary -> filter.copy(threshold = threshold.toDouble())
+                            },
+                        )
                     },
                     valueRange = 0.1f..1f,
                 )

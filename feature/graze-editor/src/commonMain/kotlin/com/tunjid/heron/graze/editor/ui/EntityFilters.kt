@@ -16,9 +16,11 @@
 
 package com.tunjid.heron.graze.editor.ui
 
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.material.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -26,6 +28,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
+import com.tunjid.heron.timeline.utilities.Label
+import com.tunjid.heron.timeline.utilities.LabelFlowRow
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.entity_excludes
 import heron.feature.graze_editor.generated.resources.entity_matches
@@ -39,32 +43,18 @@ fun EntityMatchesFilter(
     onUpdate: (Filter.Entity.Matches) -> Unit,
     onRemove: () -> Unit,
 ) {
-    FilterCard(
+    EntityFilter(
+        title = stringResource(Res.string.entity_matches),
+        entityType = filter.entityType,
+        values = filter.values,
+        onEntityTypeChange = {
+            filter.copy(entityType = it)
+        },
+        onValuesChange = {
+            onUpdate(filter.copy(values = it))
+        },
         onRemove = onRemove,
-    ) {
-        Text(
-            text = stringResource(Res.string.entity_matches),
-            style = MaterialTheme.typography.titleSmall,
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        OutlinedTextField(
-            value = filter.entityType,
-            onValueChange = { onUpdate(filter.copy(entityType = it)) },
-            label = { Text(text = stringResource(Res.string.entity_type)) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        OutlinedTextField(
-            value = filter.values.joinToString(", "),
-            onValueChange = { onUpdate(filter.copy(values = it.split(",").map { s -> s.trim() })) },
-            label = { Text(text = stringResource(Res.string.values_comma_separated)) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
+    )
 }
 
 @Composable
@@ -73,30 +63,67 @@ fun EntityExcludesFilter(
     onUpdate: (Filter.Entity.Excludes) -> Unit,
     onRemove: () -> Unit,
 ) {
+    EntityFilter(
+        title = stringResource(Res.string.entity_excludes),
+        entityType = filter.entityType,
+        values = filter.values,
+        onEntityTypeChange = {
+            filter.copy(entityType = it)
+        },
+        onValuesChange = {
+            onUpdate(filter.copy(values = it))
+        },
+        onRemove = onRemove,
+    )
+}
+
+@Composable
+private fun EntityFilter(
+    title: String,
+    entityType: String,
+    values: List<String>,
+    onEntityTypeChange: (String) -> Unit,
+    onValuesChange: (List<String>) -> Unit,
+    onRemove: () -> Unit,
+) {
     FilterCard(
         onRemove = onRemove,
     ) {
         Text(
-            text = stringResource(Res.string.entity_excludes),
+            text = title,
             style = MaterialTheme.typography.titleSmall,
         )
         Spacer(
             modifier = Modifier.height(8.dp),
         )
         OutlinedTextField(
-            value = filter.entityType,
-            onValueChange = { onUpdate(filter.copy(entityType = it)) },
-            label = { Text(text = stringResource(Res.string.entity_type)) },
-            modifier = Modifier.fillMaxWidth(),
+            value = entityType,
+            onValueChange = onEntityTypeChange,
+            label = {
+                Text(text = stringResource(Res.string.entity_type))
+            },
+            modifier = Modifier
+                .fillMaxWidth(),
         )
         Spacer(
             modifier = Modifier.height(8.dp),
         )
-        OutlinedTextField(
-            value = filter.values.joinToString(", "),
-            onValueChange = { onUpdate(filter.copy(values = it.split(",").map { s -> s.trim() })) },
-            label = { Text(text = stringResource(Res.string.values_comma_separated)) },
-            modifier = Modifier.fillMaxWidth(),
-        )
+        LabelFlowRow(
+            modifier = Modifier,
+        ) {
+            values.forEach { value ->
+                Label(
+                    contentDescription = value,
+                    isElevated = true,
+                    icon = {},
+                    onClick = {
+                        onValuesChange(values.filter { it != value })
+                    },
+                    description = {
+                        Text(text = value)
+                    },
+                )
+            }
+        }
     }
 }
