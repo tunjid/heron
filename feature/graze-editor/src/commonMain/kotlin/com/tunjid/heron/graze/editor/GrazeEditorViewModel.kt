@@ -70,6 +70,8 @@ class ActualGrazeEditorViewModel(
                         is Action.EnterFilter -> action.flow.enterFilterMutations()
                         is Action.ExitFilter -> action.flow.exitFilterMutations()
                         is Action.AddFilter -> action.flow.addFilterMutations()
+                        is Action.UpdateFilter -> action.flow.updatedFilterMutations()
+                        is Action.RemoveFilter -> action.flow.removeFilterMutations()
                     }
                 },
             )
@@ -91,10 +93,65 @@ private fun Flow<Action.AddFilter>.addFilterMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(
             filter = filter.updateAt(currentPath) { target ->
-                when (target) {
-                    is Filter.And -> target.copy(filters = target.filters + action.filter)
-                    is Filter.Or -> target.copy(filters = target.filters + action.filter)
+                target.updateFilters { filters ->
+                    filters + action.filter
                 }
             },
         )
     }
+
+private fun Flow<Action.UpdateFilter>.updatedFilterMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(
+            filter = filter.updateAt(action.path) { target ->
+                target.updateFilters { filters ->
+                    filters.mapIndexed { index, filter ->
+                        if (index == action.index) action.filter
+                        else filter
+                    }
+                }
+            },
+        )
+    }
+
+private fun Flow<Action.RemoveFilter>.removeFilterMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(
+            filter = filter.updateAt(action.path) { target ->
+                target.updateFilters { filters ->
+                    filters.filterIndexed { index, _ ->
+                        index != action.index
+                    }
+                }
+            },
+        )
+    }
+
+private fun Filter.Root.updateAt(
+    path: List<Int>,
+    update: (Filter.Root) -> Filter.Root,
+): Filter.Root {
+    if (path.isEmpty()) return update(this)
+    val index = path.first()
+    // This cast should be safe if path logic is correct
+    val child = filters[index] as Filter.Root
+    val updatedChild = child.updateAt(path.drop(1), update)
+
+    val newFilters = filters.toMutableList()
+    newFilters[index] = updatedChild
+
+    return when (this) {
+        is Filter.And -> copy(filters = newFilters)
+        is Filter.Or -> copy(filters = newFilters)
+    }
+}
+
+private inline fun Filter.Root.updateFilters(
+    update: (List<Filter>) -> List<Filter>,
+): Filter.Root {
+    val updatedFilters = update(filters)
+    return when (this) {
+        is Filter.And -> copy(filters = updatedFilters)
+        is Filter.Or -> copy(filters = updatedFilters)
+    }
+}

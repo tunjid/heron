@@ -41,25 +41,6 @@ val State.currentFilter
         current.filters[index] as Filter.Root
     }
 
-fun Filter.Root.updateAt(
-    path: List<Int>,
-    update: (Filter.Root) -> Filter.Root,
-): Filter.Root {
-    if (path.isEmpty()) return update(this)
-    val index = path.first()
-    // This cast should be safe if path logic is correct
-    val child = filters[index] as Filter.Root
-    val updatedChild = child.updateAt(path.drop(1), update)
-
-    val newFilters = filters.toMutableList()
-    newFilters[index] = updatedChild
-
-    return when (this) {
-        is Filter.And -> copy(filters = newFilters)
-        is Filter.Or -> copy(filters = newFilters)
-    }
-}
-
 data class FilterNavigationEventInfo(
     val filter: Filter.Root,
 ) : NavigationEventInfo()
@@ -70,7 +51,20 @@ sealed class Action(val key: String) {
 
     data object ExitFilter : Action("ExitFilter")
 
-    data class AddFilter(val filter: Filter) : Action("AddFilter")
+    data class AddFilter(
+        val filter: Filter,
+    ) : Action("AddFilter")
+
+    data class UpdateFilter(
+        val filter: Filter,
+        val path: List<Int>,
+        val index: Int,
+    ) : Action("UpdateFilter")
+
+    data class RemoveFilter(
+        val path: List<Int>,
+        val index: Int,
+    ) : Action("RemoveFilter")
 
     sealed class Navigate :
         Action(key = "Navigate"),

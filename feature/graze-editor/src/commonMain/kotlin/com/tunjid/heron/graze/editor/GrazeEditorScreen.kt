@@ -73,6 +73,7 @@ fun GrazeEditorScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+
         currentFilter.filters.forEachIndexed { index, child ->
             Filter(
                 modifier = Modifier
@@ -80,8 +81,28 @@ fun GrazeEditorScreen(
                     .padding(8.dp),
                 filter = child,
                 atTopLevel = true,
-                actions = actions,
+                enterFilter = { enteredIndex ->
+                    actions(Action.EnterFilter(enteredIndex))
+                },
+                onUpdateFilter = { updatedFilter: Filter, path: List<Int>, updatedIndex: Int ->
+                    actions(
+                        Action.UpdateFilter(
+                            filter = updatedFilter,
+                            path = path,
+                            index = updatedIndex,
+                        ),
+                    )
+                },
+                onRemoveFilter = { path: List<Int>, removedIndex: Int ->
+                    actions(
+                        Action.RemoveFilter(
+                            path = path,
+                            index = removedIndex,
+                        ),
+                    )
+                },
                 index = index,
+                path = state.currentPath,
             )
         }
     }
@@ -92,24 +113,38 @@ private fun Filter(
     modifier: Modifier = Modifier,
     filter: Filter,
     atTopLevel: Boolean,
-    actions: (Action) -> Unit,
+    path: List<Int>,
+    enterFilter: (Int) -> Unit,
+    onUpdateFilter: (filter: Filter, path: List<Int>, index: Int) -> Unit,
+    onRemoveFilter: (path: List<Int>, index: Int) -> Unit,
     index: Int,
 ) {
+
     if (filter is Filter.Root) FilterRow(
         atTopLevel = atTopLevel,
         modifier = modifier,
         filter = filter,
         index = index,
-        actions = actions,
+        path = path,
+        enterFilter = enterFilter,
+        onUpdateFilter = onUpdateFilter,
+        onRemoveFilter = onRemoveFilter,
     )
     else FilterLeaf(
         modifier = modifier,
         filter = filter,
         onUpdate = { updatedFilter ->
-            // actions(Action.UpdateFilter(index, updatedFilter))
+            onUpdateFilter(
+                updatedFilter,
+                path,
+                index,
+            )
         },
         onRemove = {
-            // actions(Action.RemoveFilter(index))
+            onRemoveFilter(
+                path,
+                index,
+            )
         },
     )
 }
@@ -119,13 +154,16 @@ fun FilterRow(
     atTopLevel: Boolean,
     index: Int,
     filter: Filter.Root,
-    actions: (Action) -> Unit,
+    path: List<Int>,
+    enterFilter: (Int) -> Unit,
+    onUpdateFilter: (filter: Filter, path: List<Int>, index: Int) -> Unit,
+    onRemoveFilter: (path: List<Int>, index: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(
         modifier = modifier
             .clickable {
-                actions(Action.EnterFilter(index))
+                enterFilter(index)
             },
     ) {
         Column(
@@ -151,15 +189,18 @@ fun FilterRow(
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                filter.filters.forEachIndexed { index, child ->
+                filter.filters.forEachIndexed { childIndex, child ->
                     Filter(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(8.dp),
                         filter = child,
                         atTopLevel = false,
-                        actions = actions,
-                        index = index,
+                        index = childIndex,
+                        path = path + index,
+                        enterFilter = enterFilter,
+                        onUpdateFilter = onUpdateFilter,
+                        onRemoveFilter = onRemoveFilter,
                     )
                 }
             }
