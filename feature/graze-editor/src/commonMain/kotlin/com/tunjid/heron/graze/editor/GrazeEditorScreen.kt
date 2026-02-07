@@ -17,8 +17,10 @@
 package com.tunjid.heron.graze.editor
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -72,44 +74,63 @@ fun GrazeEditorScreen(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         currentFilter.filters.forEachIndexed { index, child ->
-            if (child is Filter.Root) {
-                FilterRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    filter = child,
-                    onClick = { actions(Action.EnterFilter(index)) },
-                )
-            } else {
-                FilterLeaf(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    filter = child,
-                    onUpdate = { updatedFilter ->
-                        // actions(Action.UpdateFilter(index, updatedFilter))
-                    },
-                    onRemove = {
-                        // actions(Action.RemoveFilter(index))
-                    },
-                )
-            }
+            Filter(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                filter = child,
+                atTopLevel = true,
+                actions = actions,
+                index = index,
+            )
         }
     }
 }
 
 @Composable
+private fun Filter(
+    modifier: Modifier = Modifier,
+    filter: Filter,
+    atTopLevel: Boolean,
+    actions: (Action) -> Unit,
+    index: Int,
+) {
+    if (filter is Filter.Root) FilterRow(
+        atTopLevel = atTopLevel,
+        modifier = modifier,
+        filter = filter,
+        index = index,
+        actions = actions,
+    )
+    else FilterLeaf(
+        modifier = modifier,
+        filter = filter,
+        onUpdate = { updatedFilter ->
+            // actions(Action.UpdateFilter(index, updatedFilter))
+        },
+        onRemove = {
+            // actions(Action.RemoveFilter(index))
+        },
+    )
+}
+
+@Composable
 fun FilterRow(
+    atTopLevel: Boolean,
+    index: Int,
     filter: Filter.Root,
-    onClick: () -> Unit,
+    actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(
         modifier = modifier
-            .clickable(onClick = onClick),
+            .clickable {
+                actions(Action.EnterFilter(index))
+            },
     ) {
         Column(
             modifier = Modifier
+                .fillMaxWidth()
                 .padding(16.dp),
         ) {
             Text(
@@ -123,6 +144,25 @@ fun FilterRow(
                 text = stringResource(Res.string.items_count, filter.filters.size),
                 style = MaterialTheme.typography.bodyMedium,
             )
+
+            if (atTopLevel) Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                filter.filters.forEachIndexed { index, child ->
+                    Filter(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        filter = child,
+                        atTopLevel = false,
+                        actions = actions,
+                        index = index,
+                    )
+                }
+            }
         }
     }
 }
