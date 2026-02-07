@@ -21,8 +21,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -64,23 +64,27 @@ fun GrazeEditorScreen(
 ) {
     val currentFilter = state.currentFilter
 
-    Column(modifier = modifier.fillMaxSize()) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            itemsIndexed(currentFilter.filters) { index, child ->
-                if (child is Filter.Root) {
-                    FilterRow(
-                        modifier = Modifier.fillMaxWidth().padding(8.dp),
-                        filter = child,
-                        onClick = { actions(Action.EnterFilter(index)) },
-                    )
-                } else {
-                    FilterLeaf(
-                        modifier = Modifier.fillMaxWidth().padding(8.dp),
-                        filter = child,
-                    )
-                }
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+    ) {
+        currentFilter.filters.forEachIndexed { index, child ->
+            if (child is Filter.Root) {
+                FilterRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    filter = child,
+                    onClick = { actions(Action.EnterFilter(index)) },
+                )
+            } else {
+                FilterLeaf(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    filter = child,
+                )
             }
         }
     }
@@ -93,9 +97,13 @@ fun FilterRow(
     modifier: Modifier = Modifier,
 ) {
     Card(
-        modifier = modifier.clickable(onClick = onClick),
+        modifier = modifier
+            .clickable(onClick = onClick),
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp),
+        ) {
             Text(
                 text = when (filter) {
                     is Filter.And -> stringResource(Res.string.all_of_these_and)
@@ -117,7 +125,10 @@ fun FilterLeaf(
     modifier: Modifier = Modifier,
 ) {
     Card(modifier = modifier) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp),
+        ) {
             Text(
                 text = when (filter) {
                     is Filter.Attribute.Compare -> stringResource(
