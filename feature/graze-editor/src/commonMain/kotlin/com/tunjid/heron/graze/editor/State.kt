@@ -46,25 +46,30 @@ data class FilterNavigationEventInfo(
 ) : NavigationEventInfo()
 
 sealed class Action(val key: String) {
+    sealed class EditorNavigation : Action("EditorNavigation") {
+        data class EnterFilter(val index: Int) : EditorNavigation()
+        data object ExitFilter : EditorNavigation()
+    }
 
-    data class EnterFilter(val index: Int) : Action("EnterFilter")
+    sealed class EditFilter : Action("EditFilter") {
+        abstract val path: List<Int>
 
-    data object ExitFilter : Action("ExitFilter")
+        data class AddFilter(
+            override val path: List<Int>,
+            val filter: Filter,
+        ) : EditFilter()
 
-    data class AddFilter(
-        val filter: Filter,
-    ) : Action("AddFilter")
+        data class UpdateFilter(
+            override val path: List<Int>,
+            val filter: Filter,
+            val index: Int,
+        ) : EditFilter()
 
-    data class UpdateFilter(
-        val filter: Filter,
-        val path: List<Int>,
-        val index: Int,
-    ) : Action("UpdateFilter")
-
-    data class RemoveFilter(
-        val path: List<Int>,
-        val index: Int,
-    ) : Action("RemoveFilter")
+        data class RemoveFilter(
+            override val path: List<Int>,
+            val index: Int,
+        ) : EditFilter()
+    }
 
     sealed class Navigate :
         Action(key = "Navigate"),

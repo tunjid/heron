@@ -67,60 +67,39 @@ class ActualGrazeEditorViewModel(
                         is Action.Navigate -> action.flow.consumeNavigationActions(
                             navigationMutationConsumer = navActions,
                         )
-                        is Action.EnterFilter -> action.flow.enterFilterMutations()
-                        is Action.ExitFilter -> action.flow.exitFilterMutations()
-                        is Action.AddFilter -> action.flow.addFilterMutations()
-                        is Action.UpdateFilter -> action.flow.updatedFilterMutations()
-                        is Action.RemoveFilter -> action.flow.removeFilterMutations()
+                        is Action.EditorNavigation -> action.flow.editorNavigationMutations()
+                        is Action.EditFilter -> action.flow.editFilterFilterMutations()
                     }
                 },
             )
         },
     )
 
-private fun Flow<Action.EnterFilter>.enterFilterMutations(): Flow<Mutation<State>> =
+private fun Flow<Action.EditorNavigation>.editorNavigationMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
-        copy(currentPath = currentPath + action.index)
+        when (action) {
+            is Action.EditorNavigation.EnterFilter ->
+                copy(currentPath = currentPath + action.index)
+            Action.EditorNavigation.ExitFilter ->
+                if (currentPath.isEmpty()) this
+                else copy(currentPath = currentPath.dropLast(1))
+        }
     }
 
-private fun Flow<Action.ExitFilter>.exitFilterMutations(): Flow<Mutation<State>> =
-    mapToMutation {
-        if (currentPath.isEmpty()) this
-        else copy(currentPath = currentPath.dropLast(1))
-    }
-
-private fun Flow<Action.AddFilter>.addFilterMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(
-            filter = filter.updateAt(currentPath) { target ->
-                target.updateFilters { filters ->
-                    filters + action.filter
-                }
-            },
-        )
-    }
-
-private fun Flow<Action.UpdateFilter>.updatedFilterMutations(): Flow<Mutation<State>> =
+private fun Flow<Action.EditFilter>.editFilterFilterMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(
             filter = filter.updateAt(action.path) { target ->
                 target.updateFilters { filters ->
-                    filters.mapIndexed { index, filter ->
-                        if (index == action.index) action.filter
-                        else filter
-                    }
-                }
-            },
-        )
-    }
-
-private fun Flow<Action.RemoveFilter>.removeFilterMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(
-            filter = filter.updateAt(action.path) { target ->
-                target.updateFilters { filters ->
-                    filters.filterIndexed { index, _ ->
-                        index != action.index
+                    when (action) {
+                        is Action.EditFilter.AddFilter -> filters + action.filter
+                        is Action.EditFilter.RemoveFilter -> filters.filterIndexed { index, _ ->
+                            index != action.index
+                        }
+                        is Action.EditFilter.UpdateFilter -> filters.mapIndexed { index, filter ->
+                            if (index == action.index) action.filter
+                            else filter
+                        }
                     }
                 }
             },

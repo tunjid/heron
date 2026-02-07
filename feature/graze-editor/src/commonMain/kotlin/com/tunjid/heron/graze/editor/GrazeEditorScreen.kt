@@ -73,7 +73,6 @@ fun GrazeEditorScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-
         currentFilter.filters.forEachIndexed { index, child ->
             Filter(
                 modifier = Modifier
@@ -82,11 +81,11 @@ fun GrazeEditorScreen(
                 filter = child,
                 atTopLevel = true,
                 enterFilter = { enteredIndex ->
-                    actions(Action.EnterFilter(enteredIndex))
+                    actions(Action.EditorNavigation.EnterFilter(enteredIndex))
                 },
                 onUpdateFilter = { updatedFilter: Filter, path: List<Int>, updatedIndex: Int ->
                     actions(
-                        Action.UpdateFilter(
+                        Action.EditFilter.UpdateFilter(
                             filter = updatedFilter,
                             path = path,
                             index = updatedIndex,
@@ -95,7 +94,7 @@ fun GrazeEditorScreen(
                 },
                 onRemoveFilter = { path: List<Int>, removedIndex: Int ->
                     actions(
-                        Action.RemoveFilter(
+                        Action.EditFilter.RemoveFilter(
                             path = path,
                             index = removedIndex,
                         ),
@@ -119,7 +118,6 @@ private fun Filter(
     onRemoveFilter: (path: List<Int>, index: Int) -> Unit,
     index: Int,
 ) {
-
     if (filter is Filter.Root) FilterRow(
         atTopLevel = atTopLevel,
         modifier = modifier,

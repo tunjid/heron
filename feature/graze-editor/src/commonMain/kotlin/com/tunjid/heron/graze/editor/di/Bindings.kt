@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -135,8 +136,10 @@ class GrazeEditorBindings(
                             )
                         },
                         onBackPressed = {
-                            if (state.currentPath.isNotEmpty()) viewModel.accept(Action.ExitFilter)
-                            else viewModel.accept(Action.Navigate.Pop)
+                            viewModel.accept(
+                                if (state.currentPath.isNotEmpty()) Action.EditorNavigation.ExitFilter
+                                else Action.Navigate.Pop,
+                            )
                         },
                     )
                 },
@@ -165,19 +168,26 @@ class GrazeEditorBindings(
                 onDismissRequest = {
                     isAdding = false
                 },
-                onFilterSelected = {
+                onFilterSelected = { addedFilter ->
                     isAdding = false
-                    viewModel.accept(Action.AddFilter(it))
+                    viewModel.accept(
+                        Action.EditFilter.AddFilter(
+                            path = state.currentPath,
+                            filter = addedFilter,
+                        ),
+                    )
                 },
             )
 
             NavigationBackHandler(
                 state = rememberNavigationEventState(
-                    currentInfo = FilterNavigationEventInfo(state.currentFilter),
+                    currentInfo = remember(state.currentFilter) {
+                        FilterNavigationEventInfo(state.currentFilter)
+                    },
                 ),
                 isBackEnabled = state.currentPath.isNotEmpty(),
             ) {
-                viewModel.accept(Action.ExitFilter)
+                viewModel.accept(Action.EditorNavigation.ExitFilter)
             }
         },
     )
