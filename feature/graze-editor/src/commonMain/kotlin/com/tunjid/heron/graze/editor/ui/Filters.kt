@@ -34,6 +34,14 @@ import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.all_of_these_and
 import heron.feature.graze_editor.generated.resources.any_of_these_or
 import heron.feature.graze_editor.generated.resources.attribute_compare
+import heron.feature.graze_editor.generated.resources.comparator_equal
+import heron.feature.graze_editor.generated.resources.comparator_greater_than
+import heron.feature.graze_editor.generated.resources.comparator_greater_than_or_equal
+import heron.feature.graze_editor.generated.resources.comparator_in
+import heron.feature.graze_editor.generated.resources.comparator_less_than
+import heron.feature.graze_editor.generated.resources.comparator_less_than_or_equal
+import heron.feature.graze_editor.generated.resources.comparator_not_equal
+import heron.feature.graze_editor.generated.resources.comparator_not_in
 import heron.feature.graze_editor.generated.resources.content_moderation
 import heron.feature.graze_editor.generated.resources.embed_type
 import heron.feature.graze_editor.generated.resources.emotion_analysis
@@ -73,6 +81,18 @@ val Filter.ML.Moderation.thresholdPercent: Int
 
 val Filter.Analysis.thresholdPercent: Int
     get() = (threshold * 100).roundToInt()
+
+val Filter.Comparator.stringRes: StringResource
+    get() = when (this) {
+        Filter.Comparator.Equality.Equal -> Res.string.comparator_equal
+        Filter.Comparator.Equality.NotEqual -> Res.string.comparator_not_equal
+        Filter.Comparator.Range.GreaterThan -> Res.string.comparator_greater_than
+        Filter.Comparator.Range.LessThan -> Res.string.comparator_less_than
+        Filter.Comparator.Range.GreaterThanOrEqual -> Res.string.comparator_greater_than_or_equal
+        Filter.Comparator.Range.LessThanOrEqual -> Res.string.comparator_less_than_or_equal
+        Filter.Comparator.Set.In -> Res.string.comparator_in
+        Filter.Comparator.Set.NotIn -> Res.string.comparator_not_in
+    }
 
 @Composable
 fun AddFilterDialog(

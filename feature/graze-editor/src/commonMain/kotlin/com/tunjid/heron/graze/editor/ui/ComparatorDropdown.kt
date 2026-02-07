@@ -31,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.graze.Filter
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,7 +49,7 @@ fun <T : Filter.Comparator> ComparatorDropdown(
         modifier = modifier,
     ) {
         OutlinedTextField(
-            value = selected.value,
+            value = stringResource(selected.stringRes),
             onValueChange = {},
             readOnly = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
@@ -58,10 +59,13 @@ fun <T : Filter.Comparator> ComparatorDropdown(
                 unfocusedContainerColor = MaterialTheme.colorScheme.surface,
             ),
         )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
             options.forEach { option ->
                 DropdownMenuItem(
-                    text = { Text(option.value) },
+                    text = { Text(text = stringResource(option.stringRes)) },
                     onClick = {
                         onSelect(option)
                         expanded = false

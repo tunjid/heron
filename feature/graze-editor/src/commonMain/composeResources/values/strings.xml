@@ -91,4 +91,14 @@
     <string name="desc_ml_probability">ML Probability: %1$s</string>
     <string name="desc_ml_moderation">Content Moderation: %1$s</string>
     <string name="desc_analysis">Analysis: %1$s</string>
+
+    <!-- Comparators -->
+    <string name="comparator_equal">Equal</string>
+    <string name="comparator_not_equal">Not Equal</string>
+    <string name="comparator_greater_than">Greater Than</string>
+    <string name="comparator_less_than">Less Than</string>
+    <string name="comparator_greater_than_or_equal">Greater Than or Equal</string>
+    <string name="comparator_less_than_or_equal">Less Than or Equal</string>
+    <string name="comparator_in">In</string>
+    <string name="comparator_not_in">Not In</string>
 </resources>
