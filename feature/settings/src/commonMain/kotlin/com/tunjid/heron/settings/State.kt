@@ -18,6 +18,8 @@ package com.tunjid.heron.settings
 
 import com.mikepenz.aboutlibraries.Libs
 import com.tunjid.heron.data.core.models.Preferences
+import com.tunjid.heron.data.core.models.SessionSummary
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
 import kotlinx.serialization.Serializable
@@ -25,13 +27,20 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
+    val isSwitchingAccount: Boolean = false,
+    val switchingToProfile: ProfileId? = null,
     val signedInProfilePreferences: Preferences? = null,
     val openSourceLibraries: Libs? = null,
+    val pastSessions: List<SessionSummary> = emptyList(),
     @Transient
     val messages: List<Memo> = emptyList(),
 )
 
 sealed class Action(val key: String) {
+
+    data class SwitchSession(
+        val sessionSummary: SessionSummary,
+    ) : Action(key = "SwitchSession")
 
     data class SetRefreshHomeTimelinesOnLaunch(
         val refreshHomeTimelinesOnLaunch: Boolean,

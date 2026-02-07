@@ -87,6 +87,10 @@ internal interface SessionManager {
         request: SessionRequest,
     ): SavedState.AuthTokens
 
+    suspend fun refreshSessionToken(
+        tokens: SavedState.AuthTokens.Authenticated,
+    ): SavedState.AuthTokens.Authenticated
+
     suspend fun endSession()
 
     fun manage(config: HttpClientConfig<*>)
@@ -226,6 +230,10 @@ internal class PersistedSessionManager @Inject constructor(
     } finally {
         sessionRequestUrl.update { null }
     }
+
+    override suspend fun refreshSessionToken(
+        tokens: SavedState.AuthTokens.Authenticated,
+    ): SavedState.AuthTokens.Authenticated = refresh(tokens)
 
     override suspend fun endSession() {
         when (val authTokens = savedStateDataSource.savedState.value.auth) {

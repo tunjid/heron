@@ -15,7 +15,7 @@
  */
 
 package com.tunjid.heron.data.repository
-
+import app.bsky.actor.GetPreferencesResponse
 import app.bsky.actor.GetProfileQueryParams
 import app.bsky.actor.SavedFeedType
 import app.bsky.feed.GetFeedGeneratorQueryParams
@@ -177,12 +177,26 @@ internal class AuthTokenRepository(
     override suspend fun switchSession(
         sessionSummary: SessionSummary,
     ): Outcome = runCatchingUnlessCancelled {
+        // Token refresh happens before the session switch, so that the atomic block is fully synchronous
+        val freshAuth = savedStateDataSource.inCurrentProfileSession { _ ->
+            val targetProfileData = savedStateDataSource.savedState.value
+                .profileData[sessionSummary.profileId]
+                ?: return@inCurrentProfileSession null
+
+            val targetAuthTokens =
+                targetProfileData.auth as? SavedState.AuthTokens.Authenticated
+                    ?: return@inCurrentProfileSession null
+
+            sessionManager.refreshSessionToken(targetAuthTokens)
+        } ?: return@runCatchingUnlessCancelled expiredSessionOutcome()
+
         // Switching should cause the current session to expire
         val switched = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
             if (signedInProfileId == sessionSummary.profileId) return@inCurrentProfileSession true
 
             savedStateDataSource.switchSession(
                 profileId = sessionSummary.profileId,
+                freshAuth = freshAuth,
             )
 
             false
@@ -192,6 +206,7 @@ internal class AuthTokenRepository(
             SessionSwitchException(sessionSummary.profileId),
         )
 
+        // Update user data for the new session
         savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
             if (signedInProfileId == sessionSummary.profileId) {
                 updateSignedInUser()
@@ -270,7 +285,7 @@ internal class AuthTokenRepository(
     }
 
     private suspend fun savePreferences(
-        preferencesResponse: app.bsky.actor.GetPreferencesResponse,
+        preferencesResponse: GetPreferencesResponse,
     ) = supervisorScope {
         val preferences = preferenceUpdater.update(
             networkPreferences = preferencesResponse.preferences,
