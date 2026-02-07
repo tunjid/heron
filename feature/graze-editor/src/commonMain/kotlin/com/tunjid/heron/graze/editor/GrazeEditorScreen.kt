@@ -200,7 +200,7 @@ fun FilterRow(
                 isAnd = filter is Filter.And,
                 size = filter.filters.size,
                 onFlipClicked = {
-                    onFlipClicked(path)
+                    onFlipClicked(path + index)
                 },
             )
 
