@@ -72,3 +72,23 @@ jobs:
           track: internal
           mappingFile: composeApp/build/outputs/mapping/release/mapping.txt
           debugSymbols: composeApp/build/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib
+
+
+      - name: Extract signed APKs
+        run: |
+          curl -L -o bundletool.jar https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar
+          java -jar bundletool.jar build-apks \
+            --bundle=${{ steps.sign_app.outputs.signedReleaseFile }} \
+            --output=composeApp/build/outputs/apk/release/heron.apks \
+            --mode=universal
+
+          unzip -o composeApp/build/outputs/apk/release/heron.apks -d composeApp/build/outputs/apk/release/
+
+      - name: Upload to GitHub releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Heron v${{ github.run_number }}
+          files: composeApp/build/outputs/apk/release/universal.apk
+          draft: true
+          allow_updates: true
