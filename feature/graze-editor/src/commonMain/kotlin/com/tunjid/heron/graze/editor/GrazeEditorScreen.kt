@@ -76,7 +76,10 @@ fun GrazeEditorScreen(
         modifier = modifier
             .animateBounds(paneScaffoldState)
             .fillMaxSize()
-            .padding(8.dp)
+            .padding(
+                horizontal = 16.dp,
+                vertical = 8.dp,
+            )
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
