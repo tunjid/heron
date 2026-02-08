@@ -19,12 +19,11 @@ package com.tunjid.heron.graze.editor.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
@@ -44,9 +43,9 @@ import org.jetbrains.compose.resources.StringResource
 fun StandardFilter(
     title: String,
     onRemove: () -> Unit,
-    comparison: @Composable () -> Unit,
-    selection: @Composable () -> Unit,
-    content: @Composable () -> Unit = {},
+    startContent: @Composable () -> Unit,
+    endContent: @Composable () -> Unit,
+    additionalContent: @Composable () -> Unit = {},
 ) {
     FilterCard(
         title = {
@@ -61,21 +60,22 @@ fun StandardFilter(
             modifier = Modifier
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
                 modifier = Modifier
                     .weight(1f),
             ) {
-                comparison()
+                startContent()
             }
             Box(
                 modifier = Modifier
                     .weight(1f),
             ) {
-                selection()
+                endContent()
             }
         }
-        content()
+        additionalContent()
     }
 }
 

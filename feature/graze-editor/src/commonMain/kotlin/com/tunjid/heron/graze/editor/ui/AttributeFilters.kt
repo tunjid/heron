@@ -16,17 +16,11 @@
 
 package com.tunjid.heron.graze.editor.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.attribute_compare
@@ -47,46 +41,37 @@ fun AttributeCompareFilter(
     onUpdate: (Filter.Attribute.Compare) -> Unit,
     onRemove: () -> Unit,
 ) {
-    FilterCard(
+    StandardFilter(
+        title = stringResource(Res.string.attribute_compare),
         onRemove = onRemove,
-    ) {
-        Text(
-            text = stringResource(Res.string.attribute_compare),
-            style = MaterialTheme.typography.titleSmall,
-        )
-        Spacer(
-            modifier = Modifier
-                .height(8.dp),
-        )
-        OutlinedTextField(
-            value = filter.selector,
-            onValueChange = { onUpdate(filter.copy(selector = it)) },
-            label = { Text(text = stringResource(Res.string.selector)) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
+        startContent = {
             ComparatorDropdown(
                 selected = filter.operator,
-                options = Filter.Comparator.Set.entries,
+                options = Filter.Comparator.Equality.entries,
                 onSelect = { onUpdate(filter.copy(operator = it)) },
-                modifier = Modifier.weight(1f),
             )
-
+        },
+        endContent = {
             OutlinedTextField(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                value = filter.selector,
+                onValueChange = { onUpdate(filter.copy(selector = it)) },
+                label = { Text(text = stringResource(Res.string.selector)) },
+            )
+        },
+        additionalContent = {
+            OutlinedTextField(
+                modifier = Modifier
+                    .fillMaxWidth(),
                 value = filter.targetValue,
                 onValueChange = { onUpdate(filter.copy(targetValue = it)) },
-                label = { Text(text = stringResource(Res.string.value)) },
-                modifier = Modifier.weight(1f),
+                label = {
+                    Text(text = stringResource(Res.string.value))
+                },
             )
-        }
-    }
+        },
+    )
 }
 
 @Composable
@@ -98,14 +83,14 @@ fun AttributeEmbedFilter(
     StandardFilter(
         title = stringResource(Res.string.embed_type),
         onRemove = onRemove,
-        comparison = {
+        startContent = {
             ComparatorDropdown(
                 selected = filter.operator,
                 options = Filter.Comparator.Equality.entries,
                 onSelect = { onUpdate(filter.copy(operator = it)) },
             )
         },
-        selection = {
+        endContent = {
             Dropdown(
                 selected = filter.embedType,
                 options = Filter.Attribute.Embed.Kind.entries,
