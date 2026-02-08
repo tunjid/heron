@@ -187,7 +187,7 @@ private fun FilterGroupItem(
                         headlineContent = {
                             Text(
                                 text = stringResource(option.titleRes),
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.titleSmall,
                             )
                         },
                         modifier = Modifier
