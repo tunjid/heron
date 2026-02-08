@@ -21,10 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -37,7 +34,7 @@ import com.tunjid.heron.graze.editor.FilterNavigationEventInfo
 import com.tunjid.heron.graze.editor.GrazeEditorScreen
 import com.tunjid.heron.graze.editor.RouteViewModelInitializer
 import com.tunjid.heron.graze.editor.currentFilter
-import com.tunjid.heron.graze.editor.ui.AddFilterDialog
+import com.tunjid.heron.graze.editor.ui.rememberAddFilterSheetState
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -64,6 +61,7 @@ import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.feature.graze_editor.generated.resources.Res
+import heron.feature.graze_editor.generated.resources.add_filter
 import heron.feature.graze_editor.generated.resources.graze_editor
 import org.jetbrains.compose.resources.stringResource
 
@@ -115,8 +113,13 @@ class GrazeEditorBindings(
             val state by viewModel.state.collectAsStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
-            var isAdding by rememberSaveable {
-                mutableStateOf(false)
+            val addFilterSheetState = rememberAddFilterSheetState { addedFilter ->
+                viewModel.accept(
+                    Action.EditFilter.AddFilter(
+                        path = state.currentPath,
+                        filter = addedFilter,
+                    ),
+                )
             }
 
             paneScaffoldState.PaneScaffold(
@@ -145,12 +148,10 @@ class GrazeEditorBindings(
                 },
                 floatingActionButton = {
                     PaneFab(
-                        text = "Add filter",
+                        text = stringResource(Res.string.add_filter),
                         icon = Icons.Rounded.Add,
                         expanded = true,
-                        onClick = {
-                            isAdding = true
-                        },
+                        onClick = addFilterSheetState::show,
                     )
                 },
                 content = { contentPadding ->
@@ -160,21 +161,6 @@ class GrazeEditorBindings(
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
-                    )
-                },
-            )
-
-            if (isAdding) AddFilterDialog(
-                onDismissRequest = {
-                    isAdding = false
-                },
-                onFilterSelected = { addedFilter ->
-                    isAdding = false
-                    viewModel.accept(
-                        Action.EditFilter.AddFilter(
-                            path = state.currentPath,
-                            filter = addedFilter,
-                        ),
                     )
                 },
             )
