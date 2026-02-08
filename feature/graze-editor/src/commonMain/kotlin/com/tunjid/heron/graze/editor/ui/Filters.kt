@@ -16,10 +16,19 @@
 
 package com.tunjid.heron.graze.editor.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Cancel
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,7 +36,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
+import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.graze_editor.generated.resources.Res
+import heron.feature.graze_editor.generated.resources.add_item
 import heron.feature.graze_editor.generated.resources.comparator_equal
 import heron.feature.graze_editor.generated.resources.comparator_greater_than
 import heron.feature.graze_editor.generated.resources.comparator_greater_than_or_equal
@@ -36,8 +47,10 @@ import heron.feature.graze_editor.generated.resources.comparator_less_than
 import heron.feature.graze_editor.generated.resources.comparator_less_than_or_equal
 import heron.feature.graze_editor.generated.resources.comparator_not_equal
 import heron.feature.graze_editor.generated.resources.comparator_not_in
+import heron.ui.core.generated.resources.cancel
 import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun StandardFilter(
@@ -79,13 +92,70 @@ fun StandardFilter(
     }
 }
 
-val Filter.ML.Similarity.thresholdPercent: Int
-    get() = (threshold * 100).roundToInt()
+@Composable
+fun ChipFilter(
+    title: String,
+    items: List<String>,
+    onItemsUpdated: (List<String>) -> Unit,
+    onRemove: () -> Unit,
+    startContent: @Composable () -> Unit,
+    endContent: @Composable () -> Unit,
+) {
+    StandardFilter(
+        title = title,
+        onRemove = onRemove,
+        startContent = startContent,
+        endContent = endContent,
+        additionalContent = {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                itemVerticalAlignment = Alignment.CenterVertically,
+                content = {
+                    val addTextSheetState = rememberAddTextSheetState(
+                        title = title,
+                        onTextConfirmed = {
+                            onItemsUpdated(items.plus(it).distinct())
+                        },
+                    )
+                    items.forEach {
+                        InputChip(
+                            selected = false,
+                            onClick = {
+                            },
+                            trailingIcon = {
+                                Icon(
+                                    modifier = Modifier
+                                        .clickable {
+                                            onItemsUpdated(items.minus(it))
+                                        },
+                                    imageVector = Icons.Rounded.Cancel,
+                                    contentDescription = stringResource(CommonStrings.cancel),
+                                )
+                            },
+                            label = {
+                                Text(text = it)
+                            },
+                        )
+                    }
+                    Spacer(Modifier.height(16.dp))
+                    Button(
+                        onClick = {
+                            addTextSheetState.show()
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                    ) {
+                        Text(text = stringResource(Res.string.add_item))
+                    }
+                },
+            )
+        },
+    )
+}
 
-val Filter.ML.Probability.thresholdPercent: Int
-    get() = (threshold * 100).roundToInt()
-
-val Filter.ML.Moderation.thresholdPercent: Int
+val Filter.ML.thresholdPercent: Int
     get() = (threshold * 100).roundToInt()
 
 val Filter.Analysis.thresholdPercent: Int

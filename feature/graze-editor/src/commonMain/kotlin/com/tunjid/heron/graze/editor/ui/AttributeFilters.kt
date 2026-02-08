@@ -29,7 +29,7 @@ import heron.feature.graze_editor.generated.resources.embed_kind_image
 import heron.feature.graze_editor.generated.resources.embed_kind_image_group
 import heron.feature.graze_editor.generated.resources.embed_kind_label
 import heron.feature.graze_editor.generated.resources.embed_kind_link
-import heron.feature.graze_editor.generated.resources.embed_kind_quote
+import heron.feature.graze_editor.generated.resources.embed_kind_post
 import heron.feature.graze_editor.generated.resources.embed_kind_video
 import heron.feature.graze_editor.generated.resources.embed_type
 import heron.feature.graze_editor.generated.resources.selector
@@ -104,7 +104,7 @@ fun AttributeEmbedFilter(
 private fun Filter.Attribute.Embed.Kind.stringRes() = when (this) {
     Filter.Attribute.Embed.Kind.Image -> Res.string.embed_kind_image
     Filter.Attribute.Embed.Kind.Link -> Res.string.embed_kind_link
-    Filter.Attribute.Embed.Kind.Post -> Res.string.embed_kind_quote
+    Filter.Attribute.Embed.Kind.Post -> Res.string.embed_kind_post
     Filter.Attribute.Embed.Kind.ImageGroup -> Res.string.embed_kind_image_group
     Filter.Attribute.Embed.Kind.Video -> Res.string.embed_kind_video
     Filter.Attribute.Embed.Kind.Gif -> Res.string.embed_kind_gif

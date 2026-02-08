@@ -187,7 +187,7 @@ private fun FilterGroupItem(
                         headlineContent = {
                             Text(
                                 text = stringResource(option.titleRes),
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.titleSmall,
                             )
                         },
                         modifier = Modifier
@@ -255,14 +255,14 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
             FilterOption(
                 titleRes = Res.string.entity_matches,
                 defaultInstance = Filter.Entity.Matches(
-                    entityType = "",
+                    entityType = Filter.Entity.Type.Hashtags,
                     values = emptyList(),
                 ),
             ),
             FilterOption(
                 titleRes = Res.string.entity_excludes,
                 defaultInstance = Filter.Entity.Excludes(
-                    entityType = "",
+                    entityType = Filter.Entity.Type.Hashtags,
                     values = emptyList(),
                 ),
             ),
@@ -375,7 +375,7 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
                 titleRes = Res.string.content_moderation,
                 defaultInstance = Filter.ML.Moderation(
                     category = "",
-                    operator = Filter.Comparator.Equality.Equal,
+                    operator = Filter.Comparator.Range.GreaterThan,
                     threshold = 0.8,
                 ),
             ),

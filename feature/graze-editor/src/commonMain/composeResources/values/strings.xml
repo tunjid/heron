@@ -17,6 +17,8 @@
 <resources>
     <string name="add_filter">Add Filter</string>
     <string name="remove_filter">Remove Filter</string>
+    <string name="add_item">Add Item</string>
+    <string name="remove_item">Remove Item</string>
     <string name="attribute_compare">Attribute Compare</string>
     <string name="selector">Selector</string>
     <string name="value">Value</string>
@@ -73,6 +75,7 @@
     <string name="any_of_these_or">Any of these (OR)</string>
     <string name="items_count">%1$d items</string>
     <string name="unknown_filter">Unknown Filter</string>
+    <string name="done">Done</string>
 
     <!-- Filter Leaf Descriptions -->
     <string name="desc_attribute_compare">Attribute: %1$s %2$s %3$s</string>
@@ -110,8 +113,16 @@
     <string name="embed_kind_image_group">Image Group</string>
     <string name="embed_kind_gif">Gif</string>
     <string name="embed_kind_link">Link</string>
-    <string name="embed_kind_quote">Quote</string>
+    <string name="embed_kind_post">Quote</string>
     <string name="embed_kind_video">Video</string>
+
+    <!-- Entity types -->
+    <string name="entity_type_label">Entity type</string>
+    <string name="entity_type_hashtag">Hashtags</string>
+    <string name="entity_type_language">Languages</string>
+    <string name="entity_type_url">Urls</string>
+    <string name="entity_type_mention">Mentions</string>
+    <string name="entity_type_domain">Domains</string>
 
     <!-- Filter Groups -->
     <string name="filter_group_logic">Logic</string>

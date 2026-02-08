@@ -42,8 +42,7 @@ import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.graze.editor.ui.AnalysisFilter
 import com.tunjid.heron.graze.editor.ui.AttributeCompareFilter
 import com.tunjid.heron.graze.editor.ui.AttributeEmbedFilter
-import com.tunjid.heron.graze.editor.ui.EntityExcludesFilter
-import com.tunjid.heron.graze.editor.ui.EntityMatchesFilter
+import com.tunjid.heron.graze.editor.ui.EntityFilter
 import com.tunjid.heron.graze.editor.ui.MLModerationFilter
 import com.tunjid.heron.graze.editor.ui.MLProbabilityFilter
 import com.tunjid.heron.graze.editor.ui.MLSimilarityFilter
@@ -77,7 +76,10 @@ fun GrazeEditorScreen(
         modifier = modifier
             .animateBounds(paneScaffoldState)
             .fillMaxSize()
-            .padding(8.dp)
+            .padding(
+                horizontal = 16.dp,
+                vertical = 8.dp,
+            )
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -298,12 +300,9 @@ fun FilterLeaf(
             onUpdate = onUpdate,
             onRemove = onRemove,
         )
-        is Filter.Entity.Matches -> EntityMatchesFilter(
-            filter = filter,
-            onUpdate = onUpdate,
-            onRemove = onRemove,
-        )
-        is Filter.Entity.Excludes -> EntityExcludesFilter(
+        is Filter.Entity.Matches,
+        is Filter.Entity.Excludes,
+        -> EntityFilter(
             filter = filter,
             onUpdate = onUpdate,
             onRemove = onRemove,
