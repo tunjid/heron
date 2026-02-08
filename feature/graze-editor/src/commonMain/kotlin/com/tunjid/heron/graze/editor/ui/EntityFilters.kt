@@ -45,10 +45,12 @@ fun EntityFilter(
         onRemove = onRemove,
         items = filter.values,
         onItemsUpdated = {
-            when (filter) {
-                is Filter.Entity.Excludes -> filter.copy(values = it)
-                is Filter.Entity.Matches -> filter.copy(values = it)
-            }
+            onUpdate(
+                when (filter) {
+                    is Filter.Entity.Excludes -> filter.copy(values = it)
+                    is Filter.Entity.Matches -> filter.copy(values = it)
+                },
+            )
         },
         startContent = {
             ComparatorDropdown(
