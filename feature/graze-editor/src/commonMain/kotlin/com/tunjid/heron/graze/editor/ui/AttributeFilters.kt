@@ -136,7 +136,6 @@ fun AttributeEmbedFilter(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EmbedKindDropdown(
     selected: Filter.Attribute.Embed.Kind,

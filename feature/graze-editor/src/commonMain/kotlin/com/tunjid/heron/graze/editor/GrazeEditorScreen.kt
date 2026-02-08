@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.graze.editor
 
+import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +35,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
@@ -73,6 +75,7 @@ fun GrazeEditorScreen(
 
     Column(
         modifier = modifier
+            .animateBounds(paneScaffoldState)
             .fillMaxSize()
             .padding(8.dp)
             .verticalScroll(rememberScrollState()),
@@ -91,41 +94,44 @@ fun GrazeEditorScreen(
             },
         )
         currentFilter.filters.forEachIndexed { index, child ->
-            Filter(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                filter = child,
-                atTopLevel = true,
-                enterFilter = { enteredIndex ->
-                    actions(Action.EditorNavigation.EnterFilter(enteredIndex))
-                },
-                onFlipClicked = { flippedPath ->
-                    actions(
-                        Action.EditFilter.FlipRootFilter(
-                            path = flippedPath,
-                        ),
-                    )
-                },
-                onUpdateFilter = { updatedFilter: Filter, path: List<Int>, updatedIndex: Int ->
-                    actions(
-                        Action.EditFilter.UpdateFilter(
-                            filter = updatedFilter,
-                            path = path,
-                            index = updatedIndex,
-                        ),
-                    )
-                },
-                onRemoveFilter = { path: List<Int>, removedIndex: Int ->
-                    actions(
-                        Action.EditFilter.RemoveFilter(
-                            path = path,
-                            index = removedIndex,
-                        ),
-                    )
-                },
-                index = index,
-                path = state.currentPath,
-            )
+            key(child.hashCode()) {
+                Filter(
+                    modifier = Modifier
+                        .animateBounds(paneScaffoldState)
+                        .fillMaxWidth(),
+                    filter = child,
+                    atTopLevel = true,
+                    enterFilter = { enteredIndex ->
+                        actions(Action.EditorNavigation.EnterFilter(enteredIndex))
+                    },
+                    onFlipClicked = { flippedPath ->
+                        actions(
+                            Action.EditFilter.FlipRootFilter(
+                                path = flippedPath,
+                            ),
+                        )
+                    },
+                    onUpdateFilter = { updatedFilter: Filter, path: List<Int>, updatedIndex: Int ->
+                        actions(
+                            Action.EditFilter.UpdateFilter(
+                                filter = updatedFilter,
+                                path = path,
+                                index = updatedIndex,
+                            ),
+                        )
+                    },
+                    onRemoveFilter = { path: List<Int>, removedIndex: Int ->
+                        actions(
+                            Action.EditFilter.RemoveFilter(
+                                path = path,
+                                index = removedIndex,
+                            ),
+                        )
+                    },
+                    index = index,
+                    path = state.currentPath,
+                )
+            }
         }
     }
 }
