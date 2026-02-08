@@ -74,9 +74,7 @@ fun AttributeCompareFilter(
         ) {
             ComparatorDropdown(
                 selected = filter.operator,
-                options = Filter.Comparator.Equality.entries +
-                    Filter.Comparator.Range.entries +
-                    Filter.Comparator.Set.entries,
+                options = Filter.Comparator.Set.entries,
                 onSelect = { onUpdate(filter.copy(operator = it)) },
                 modifier = Modifier.weight(1f),
             )
