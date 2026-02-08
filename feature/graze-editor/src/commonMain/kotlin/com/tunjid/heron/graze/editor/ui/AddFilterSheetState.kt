@@ -375,7 +375,7 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
                 titleRes = Res.string.content_moderation,
                 defaultInstance = Filter.ML.Moderation(
                     category = "",
-                    operator = Filter.Comparator.Equality.Equal,
+                    operator = Filter.Comparator.Range.GreaterThan,
                     threshold = 0.8,
                 ),
             ),

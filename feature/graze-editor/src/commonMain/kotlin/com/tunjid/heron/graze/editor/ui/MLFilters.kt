@@ -40,7 +40,6 @@ import heron.feature.graze_editor.generated.resources.model_probability
 import heron.feature.graze_editor.generated.resources.path
 import heron.feature.graze_editor.generated.resources.text_similarity
 import heron.feature.graze_editor.generated.resources.threshold_percent
-import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -202,9 +201,7 @@ fun MLModerationFilter(
         ) {
             ComparatorDropdown(
                 selected = filter.operator,
-                options = Filter.Comparator.Equality.entries +
-                    Filter.Comparator.Range.entries +
-                    Filter.Comparator.Set.entries,
+                options = Filter.Comparator.Range.entries,
                 onSelect = { onUpdate(filter.copy(operator = it)) },
                 modifier = Modifier.weight(1f),
             )
