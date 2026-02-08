@@ -24,6 +24,7 @@ import heron.feature.graze_editor.generated.resources.entity_excludes
 import heron.feature.graze_editor.generated.resources.entity_matches
 import heron.feature.graze_editor.generated.resources.entity_type_domain
 import heron.feature.graze_editor.generated.resources.entity_type_hashtag
+import heron.feature.graze_editor.generated.resources.entity_type_label
 import heron.feature.graze_editor.generated.resources.entity_type_language
 import heron.feature.graze_editor.generated.resources.entity_type_mention
 import heron.feature.graze_editor.generated.resources.entity_type_url
@@ -59,9 +60,9 @@ fun EntityFilter(
                     is Filter.Entity.Matches -> Filter.Comparator.Set.In
                 },
                 options = Filter.Comparator.Set.entries,
-                onSelect = {
+                onSelect = { comparator ->
                     onUpdate(
-                        when (it) {
+                        when (comparator) {
                             Filter.Comparator.Set.In -> Filter.Entity.Matches(
                                 entityType = filter.entityType,
                                 values = filter.values,
@@ -77,7 +78,7 @@ fun EntityFilter(
         },
         endContent = {
             Dropdown(
-                label = stringResource(Res.string.embed_kind_label),
+                label = stringResource(Res.string.entity_type_label),
                 selected = filter.entityType,
                 options = Filter.Entity.Type.entries,
                 stringRes = Filter.Entity.Type::stringRes,

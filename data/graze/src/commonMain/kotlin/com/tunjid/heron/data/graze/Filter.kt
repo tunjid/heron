@@ -328,7 +328,7 @@ sealed interface Filter {
         @SerialName("content_moderation")
         data class Moderation(
             val category: String,
-            val operator: Comparator,
+            val operator: Comparator.Range,
             override val threshold: Double,
         ) : ML
     }

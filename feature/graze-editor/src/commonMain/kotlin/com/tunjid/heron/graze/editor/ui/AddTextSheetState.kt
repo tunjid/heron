@@ -95,7 +95,9 @@ private fun AddTextBottomSheet(
             )
             Button(
                 onClick = {
-                    onTextConfirmed(state.text)
+                    if (state.text.isNotBlank()) {
+                        onTextConfirmed(state.text)
+                    }
                     state.text = ""
                     state.hide()
                 },
