@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.graze.editor.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -70,7 +71,9 @@ fun AttributeCompareFilter(
             modifier = Modifier.height(8.dp),
         )
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             ComparatorDropdown(
                 selected = filter.operator,
@@ -78,9 +81,7 @@ fun AttributeCompareFilter(
                 onSelect = { onUpdate(filter.copy(operator = it)) },
                 modifier = Modifier.weight(1f),
             )
-            Spacer(
-                modifier = Modifier.width(8.dp),
-            )
+
             OutlinedTextField(
                 value = filter.targetValue,
                 onValueChange = { onUpdate(filter.copy(targetValue = it)) },

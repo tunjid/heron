@@ -42,6 +42,7 @@ import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.navigation.composePostDestination
+import com.tunjid.heron.scaffold.navigation.grazeEditorDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
@@ -228,6 +229,7 @@ class ProfileBindings(
                             viewModel.accept(
                                 Action.Navigate.To(
                                     when {
+                                        true -> grazeEditorDestination()
                                         isSignedOut -> signInDestination()
                                         else -> composePostDestination(
                                             type =
