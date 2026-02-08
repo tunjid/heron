@@ -33,12 +33,12 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun <T: Any> Dropdown(
+inline fun <T: Any> Dropdown(
     selected: T,
     options: List<T>,
     modifier: Modifier = Modifier,
-    stringRes: (T) -> StringResource,
-    onSelect: (T) -> Unit,
+    crossinline stringRes: (T) -> StringResource,
+    crossinline onSelect: (T) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
 

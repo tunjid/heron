@@ -16,6 +16,17 @@
 
 package com.tunjid.heron.graze.editor.ui
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.comparator_equal
@@ -28,6 +39,51 @@ import heron.feature.graze_editor.generated.resources.comparator_not_equal
 import heron.feature.graze_editor.generated.resources.comparator_not_in
 import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.StringResource
+
+@Composable
+fun StandardFilter(
+    title: String,
+    onRemove: () -> Unit,
+    comparison: @Composable () -> Unit,
+    selection: @Composable () -> Unit,
+    content: @Composable () -> Unit = {},
+) {
+    FilterCard(
+        onRemove = onRemove,
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Spacer(
+            modifier = Modifier
+                .height(8.dp),
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f),
+            ) {
+                comparison()
+            }
+            Box(
+                modifier = Modifier
+                    .weight(1f),
+            ) {
+                selection()
+            }
+        }
+        Spacer(
+            modifier = Modifier
+                .height(8.dp),
+        )
+        content()
+    }
+}
 
 val Filter.ML.Similarity.thresholdPercent: Int
     get() = (threshold * 100).roundToInt()

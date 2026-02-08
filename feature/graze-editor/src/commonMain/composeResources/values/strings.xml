@@ -103,6 +103,14 @@
     <string name="comparator_in">In</string>
     <string name="comparator_not_in">Not In</string>
 
+    <!-- Embed kinds -->
+    <string name="embed_kind_image">Image</string>
+    <string name="embed_kind_image_group">Image Group</string>
+    <string name="embed_kind_gif">Gif</string>
+    <string name="embed_kind_link">Link</string>
+    <string name="embed_kind_quote">Quote</string>
+    <string name="embed_kind_video">Video</string>
+
     <!-- Filter Groups -->
     <string name="filter_group_logic">Logic</string>
     <string name="filter_group_attribute">Attributes</string>
