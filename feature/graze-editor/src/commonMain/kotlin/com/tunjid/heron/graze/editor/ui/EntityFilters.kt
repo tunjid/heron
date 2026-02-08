@@ -16,111 +16,87 @@
 
 package com.tunjid.heron.graze.editor.ui
 
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
-import com.tunjid.heron.timeline.utilities.Label
-import com.tunjid.heron.timeline.utilities.LabelFlowRow
 import heron.feature.graze_editor.generated.resources.Res
+import heron.feature.graze_editor.generated.resources.embed_kind_label
 import heron.feature.graze_editor.generated.resources.entity_excludes
 import heron.feature.graze_editor.generated.resources.entity_matches
-import heron.feature.graze_editor.generated.resources.entity_type
+import heron.feature.graze_editor.generated.resources.entity_type_domain
+import heron.feature.graze_editor.generated.resources.entity_type_hashtag
+import heron.feature.graze_editor.generated.resources.entity_type_language
+import heron.feature.graze_editor.generated.resources.entity_type_mention
+import heron.feature.graze_editor.generated.resources.entity_type_url
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun EntityMatchesFilter(
-    filter: Filter.Entity.Matches,
-    onUpdate: (Filter.Entity.Matches) -> Unit,
+fun EntityFilter(
+    filter: Filter.Entity,
+    onUpdate: (Filter.Entity) -> Unit,
     onRemove: () -> Unit,
 ) {
-    EntityFilter(
-        title = stringResource(Res.string.entity_matches),
-        entityType = filter.entityType,
-        values = filter.values,
-        onEntityTypeChange = {
-            filter.copy(entityType = it)
-        },
-        onValuesChange = {
-            onUpdate(filter.copy(values = it))
-        },
-        onRemove = onRemove,
-    )
-}
-
-@Composable
-fun EntityExcludesFilter(
-    filter: Filter.Entity.Excludes,
-    onUpdate: (Filter.Entity.Excludes) -> Unit,
-    onRemove: () -> Unit,
-) {
-    EntityFilter(
-        title = stringResource(Res.string.entity_excludes),
-        entityType = filter.entityType,
-        values = filter.values,
-        onEntityTypeChange = {
-            filter.copy(entityType = it)
-        },
-        onValuesChange = {
-            onUpdate(filter.copy(values = it))
-        },
-        onRemove = onRemove,
-    )
-}
-
-@Composable
-private fun EntityFilter(
-    title: String,
-    entityType: String,
-    values: List<String>,
-    onEntityTypeChange: (String) -> Unit,
-    onValuesChange: (List<String>) -> Unit,
-    onRemove: () -> Unit,
-) {
-    FilterCard(
-        onRemove = onRemove,
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleSmall,
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        OutlinedTextField(
-            value = entityType,
-            onValueChange = onEntityTypeChange,
-            label = {
-                Text(text = stringResource(Res.string.entity_type))
+    ChipFilter(
+        title = stringResource(
+            when (filter) {
+                is Filter.Entity.Excludes -> Res.string.entity_excludes
+                is Filter.Entity.Matches -> Res.string.entity_matches
             },
-            modifier = Modifier
-                .fillMaxWidth(),
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        LabelFlowRow(
-            modifier = Modifier,
-        ) {
-            values.forEach { value ->
-                Label(
-                    contentDescription = value,
-                    isElevated = true,
-                    icon = {},
-                    onClick = {
-                        onValuesChange(values.filter { it != value })
-                    },
-                    description = {
-                        Text(text = value)
-                    },
-                )
+        ),
+        onRemove = onRemove,
+        items = filter.values,
+        onItemsUpdated = {
+            when (filter) {
+                is Filter.Entity.Excludes -> filter.copy(values = it)
+                is Filter.Entity.Matches -> filter.copy(values = it)
             }
-        }
-    }
+        },
+        startContent = {
+            ComparatorDropdown(
+                selected = when (filter) {
+                    is Filter.Entity.Excludes -> Filter.Comparator.Set.NotIn
+                    is Filter.Entity.Matches -> Filter.Comparator.Set.In
+                },
+                options = Filter.Comparator.Set.entries,
+                onSelect = {
+                    onUpdate(
+                        when (it) {
+                            Filter.Comparator.Set.In -> Filter.Entity.Matches(
+                                entityType = filter.entityType,
+                                values = filter.values,
+                            )
+                            Filter.Comparator.Set.NotIn -> Filter.Entity.Excludes(
+                                entityType = filter.entityType,
+                                values = filter.values,
+                            )
+                        },
+                    )
+                },
+            )
+        },
+        endContent = {
+            Dropdown(
+                label = stringResource(Res.string.embed_kind_label),
+                selected = filter.entityType,
+                options = Filter.Entity.Type.entries,
+                stringRes = Filter.Entity.Type::stringRes,
+                onSelect = {
+                    onUpdate(
+                        when (filter) {
+                            is Filter.Entity.Excludes -> filter.copy(entityType = it)
+                            is Filter.Entity.Matches -> filter.copy(entityType = it)
+                        },
+                    )
+                },
+            )
+        },
+    )
 }
+
+private val Filter.Entity.Type.stringRes
+    get() = when (this) {
+        Filter.Entity.Type.Hashtags -> Res.string.entity_type_hashtag
+        Filter.Entity.Type.Languages -> Res.string.entity_type_language
+        Filter.Entity.Type.Urls -> Res.string.entity_type_url
+        Filter.Entity.Type.Mentions -> Res.string.entity_type_mention
+        Filter.Entity.Type.Domains -> Res.string.entity_type_domain
+    }

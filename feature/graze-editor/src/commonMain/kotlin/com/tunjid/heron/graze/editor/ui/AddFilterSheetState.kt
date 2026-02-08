@@ -255,14 +255,14 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
             FilterOption(
                 titleRes = Res.string.entity_matches,
                 defaultInstance = Filter.Entity.Matches(
-                    entityType = "",
+                    entityType = Filter.Entity.Type.Hashtags,
                     values = emptyList(),
                 ),
             ),
             FilterOption(
                 titleRes = Res.string.entity_excludes,
                 defaultInstance = Filter.Entity.Excludes(
-                    entityType = "",
+                    entityType = Filter.Entity.Type.Hashtags,
                     values = emptyList(),
                 ),
             ),

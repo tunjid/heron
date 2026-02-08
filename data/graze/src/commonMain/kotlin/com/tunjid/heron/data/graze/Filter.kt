@@ -30,7 +30,7 @@ import kotlinx.serialization.encoding.Encoder
  */
 @Serializable
 sealed interface Filter {
-    // ==============================================================================
+// ==============================================================================
 // 1. Comparator Hierarchy
 // ==============================================================================
 
@@ -166,20 +166,39 @@ sealed interface Filter {
 
     @Serializable
     sealed interface Entity : Filter {
+        val entityType: Type
+        val values: List<String>
 
         @Serializable
         @SerialName("entity_matches")
         data class Matches(
-            val entityType: String,
-            val values: List<String>,
+            override val entityType: Type,
+            override val values: List<String>,
         ) : Entity
 
         @Serializable
         @SerialName("entity_excludes")
         data class Excludes(
-            val entityType: String,
-            val values: List<String>,
+            override val entityType: Type,
+            override val values: List<String>,
         ) : Entity
+
+        enum class Type {
+            @SerialName("hashtags")
+            Hashtags,
+
+            @SerialName("langs")
+            Languages,
+
+            @SerialName("urls")
+            Urls,
+
+            @SerialName("mentions")
+            Mentions,
+
+            @SerialName("domains")
+            Domains,
+        }
     }
 
 // ==============================================================================
@@ -272,6 +291,7 @@ sealed interface Filter {
 
     @Serializable
     sealed interface ML : Filter {
+        val threshold: Double
 
         @Serializable
         @SerialName("text_similarity")
@@ -279,7 +299,7 @@ sealed interface Filter {
             val path: String,
             val config: Config,
             val operator: Comparator.Range,
-            val threshold: Double,
+            override val threshold: Double,
         ) : ML {
             @Serializable
             data class Config(
@@ -295,7 +315,7 @@ sealed interface Filter {
         data class Probability(
             val config: Config,
             val operator: Comparator.Range,
-            val threshold: Double,
+            override val threshold: Double,
         ) : ML {
             @Serializable
             data class Config(
@@ -309,7 +329,7 @@ sealed interface Filter {
         data class Moderation(
             val category: String,
             val operator: Comparator,
-            val threshold: Double,
+            override val threshold: Double,
         ) : ML
     }
 
