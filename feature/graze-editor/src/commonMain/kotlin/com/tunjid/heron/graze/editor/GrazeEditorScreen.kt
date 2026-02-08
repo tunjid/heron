@@ -94,6 +94,9 @@ fun GrazeEditorScreen(
             },
         )
         LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             itemsIndexed(
