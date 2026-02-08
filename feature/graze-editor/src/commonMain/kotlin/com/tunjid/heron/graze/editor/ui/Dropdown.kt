@@ -19,9 +19,7 @@ package com.tunjid.heron.graze.editor.ui
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,7 +31,8 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-inline fun <T: Any> Dropdown(
+inline fun <T : Any> Dropdown(
+    label: String,
     selected: T,
     options: List<T>,
     modifier: Modifier = Modifier,
@@ -52,11 +51,8 @@ inline fun <T: Any> Dropdown(
             onValueChange = {},
             readOnly = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            label = { Text(text = label) },
             modifier = Modifier.menuAnchor(),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-            ),
         )
         ExposedDropdownMenu(
             expanded = expanded,

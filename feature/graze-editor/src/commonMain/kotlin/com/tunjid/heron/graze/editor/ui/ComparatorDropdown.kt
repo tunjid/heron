@@ -19,6 +19,9 @@ package com.tunjid.heron.graze.editor.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.graze.Filter
+import heron.feature.graze_editor.generated.resources.Res
+import heron.feature.graze_editor.generated.resources.comparator_label
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun <T : Filter.Comparator> ComparatorDropdown(
@@ -28,6 +31,7 @@ fun <T : Filter.Comparator> ComparatorDropdown(
     onSelect: (T) -> Unit,
 ) {
     Dropdown(
+        label = stringResource(Res.string.comparator_label),
         selected = selected,
         options = options,
         modifier = modifier,

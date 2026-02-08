@@ -27,6 +27,7 @@ import heron.feature.graze_editor.generated.resources.attribute_compare
 import heron.feature.graze_editor.generated.resources.embed_kind_gif
 import heron.feature.graze_editor.generated.resources.embed_kind_image
 import heron.feature.graze_editor.generated.resources.embed_kind_image_group
+import heron.feature.graze_editor.generated.resources.embed_kind_label
 import heron.feature.graze_editor.generated.resources.embed_kind_link
 import heron.feature.graze_editor.generated.resources.embed_kind_quote
 import heron.feature.graze_editor.generated.resources.embed_kind_video
@@ -53,8 +54,6 @@ fun AttributeCompareFilter(
         },
         endContent = {
             OutlinedTextField(
-                modifier = Modifier
-                    .fillMaxWidth(),
                 value = filter.selector,
                 onValueChange = { onUpdate(filter.copy(selector = it)) },
                 label = { Text(text = stringResource(Res.string.selector)) },
@@ -92,6 +91,7 @@ fun AttributeEmbedFilter(
         },
         endContent = {
             Dropdown(
+                label = stringResource(Res.string.embed_kind_label),
                 selected = filter.embedType,
                 options = Filter.Attribute.Embed.Kind.entries,
                 stringRes = Filter.Attribute.Embed.Kind::stringRes,
