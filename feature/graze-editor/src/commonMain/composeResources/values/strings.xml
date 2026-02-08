@@ -15,6 +15,7 @@
   -->
 
 <resources>
+    <string name="add_filter">Add Filter</string>
     <string name="remove_filter">Remove Filter</string>
     <string name="attribute_compare">Attribute Compare</string>
     <string name="selector">Selector</string>
@@ -101,4 +102,13 @@
     <string name="comparator_less_than_or_equal">Less Than or Equal</string>
     <string name="comparator_in">In</string>
     <string name="comparator_not_in">Not In</string>
+
+    <!-- Filter Groups -->
+    <string name="filter_group_logic">Logic</string>
+    <string name="filter_group_attribute">Attributes</string>
+    <string name="filter_group_entity">Entities</string>
+    <string name="filter_group_regex">Regex</string>
+    <string name="filter_group_social">Social</string>
+    <string name="filter_group_ml">Machine Learning</string>
+    <string name="filter_group_analysis">Analysis</string>
 </resources>
