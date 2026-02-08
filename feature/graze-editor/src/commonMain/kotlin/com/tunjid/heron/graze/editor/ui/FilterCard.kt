@@ -17,6 +17,7 @@
 package com.tunjid.heron.graze.editor.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -39,6 +40,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun FilterCard(
+    title: @Composable () -> Unit = {},
     onRemove: () -> Unit,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -52,11 +54,18 @@ fun FilterCard(
         Column(
             modifier = Modifier
                 .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Row(
                 Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f),
+                ) {
+                    title()
+                }
                 IconButton(
                     onClick = onRemove,
                     modifier = Modifier

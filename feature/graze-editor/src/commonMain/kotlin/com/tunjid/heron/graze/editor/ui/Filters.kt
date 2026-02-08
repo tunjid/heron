@@ -16,6 +16,16 @@
 
 package com.tunjid.heron.graze.editor.ui
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.comparator_equal
@@ -28,6 +38,46 @@ import heron.feature.graze_editor.generated.resources.comparator_not_equal
 import heron.feature.graze_editor.generated.resources.comparator_not_in
 import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.StringResource
+
+@Composable
+fun StandardFilter(
+    title: String,
+    onRemove: () -> Unit,
+    startContent: @Composable () -> Unit,
+    endContent: @Composable () -> Unit,
+    additionalContent: @Composable () -> Unit = {},
+) {
+    FilterCard(
+        title = {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+            )
+        },
+        onRemove = onRemove,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f),
+            ) {
+                startContent()
+            }
+            Box(
+                modifier = Modifier
+                    .weight(1f),
+            ) {
+                endContent()
+            }
+        }
+        additionalContent()
+    }
+}
 
 val Filter.ML.Similarity.thresholdPercent: Int
     get() = (threshold * 100).roundToInt()
