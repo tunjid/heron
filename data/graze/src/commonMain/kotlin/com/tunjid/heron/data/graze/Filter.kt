@@ -16,6 +16,9 @@
 
 package com.tunjid.heron.data.graze
 
+import kotlin.jvm.JvmInline
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -30,6 +33,16 @@ import kotlinx.serialization.encoding.Encoder
  */
 @Serializable
 sealed interface Filter {
+    val id: Id
+
+    @JvmInline
+    @Serializable
+    value class Id
+    @OptIn(ExperimentalUuidApi::class)
+    internal constructor(
+        val value: String = Uuid.random().toString(),
+    )
+
 // ==============================================================================
 // 1. Comparator Hierarchy
 // ==============================================================================
@@ -107,12 +120,14 @@ sealed interface Filter {
     @Serializable
     @SerialName("and")
     data class And(
+        override val id: Id = Id(),
         override val filters: List<Filter>,
     ) : Root
 
     @Serializable
     @SerialName("or")
     data class Or(
+        override val id: Id = Id(),
         override val filters: List<Filter>,
     ) : Root
 
@@ -126,6 +141,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("attribute_compare")
         data class Compare(
+            override val id: Id = Id(),
             val selector: String,
             val operator: Comparator,
             val targetValue: String,
@@ -134,6 +150,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("embed_type")
         data class Embed(
+            override val id: Id = Id(),
             val operator: Comparator.Equality,
             val embedType: Kind,
         ) : Attribute {
@@ -172,6 +189,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("entity_matches")
         data class Matches(
+            override val id: Id = Id(),
             override val entityType: Type,
             override val values: List<String>,
         ) : Entity
@@ -179,6 +197,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("entity_excludes")
         data class Excludes(
+            override val id: Id = Id(),
             override val entityType: Type,
             override val values: List<String>,
         ) : Entity
@@ -211,6 +230,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("regex_matches")
         data class Matches(
+            override val id: Id = Id(),
             val variable: String,
             val pattern: String,
             val isCaseInsensitive: Boolean,
@@ -219,6 +239,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("regex_negation_matches")
         data class Negation(
+            override val id: Id = Id(),
             val variable: String,
             val pattern: String,
             val isCaseInsensitive: Boolean,
@@ -227,6 +248,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("regex_any")
         data class Any(
+            override val id: Id = Id(),
             val variable: String,
             val terms: List<String>,
             val isCaseInsensitive: Boolean,
@@ -235,6 +257,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("regex_none")
         data class None(
+            override val id: Id = Id(),
             val variable: String,
             val terms: List<String>,
             val isCaseInsensitive: Boolean,
@@ -251,6 +274,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("social_graph")
         data class Graph(
+            override val id: Id = Id(),
             val username: String,
             val operator: Comparator.Set,
             val direction: String,
@@ -259,6 +283,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("social_list")
         data class UserList(
+            override val id: Id = Id(),
             val dids: List<String>,
             val operator: Comparator.Set,
         ) : Social
@@ -266,6 +291,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("starter_pack_member")
         data class StarterPack(
+            override val id: Id = Id(),
             val url: String,
             val operator: Comparator.Set,
         ) : Social
@@ -273,6 +299,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("list_member")
         data class ListMember(
+            override val id: Id = Id(),
             val url: String,
             val operator: Comparator.Set,
         ) : Social
@@ -280,6 +307,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("magic_audience")
         data class MagicAudience(
+            override val id: Id = Id(),
             val audienceId: String,
             val operator: Comparator.Set,
         ) : Social
@@ -296,6 +324,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("text_similarity")
         data class Similarity(
+            override val id: Id = Id(),
             val path: String,
             val config: Config,
             val operator: Comparator.Range,
@@ -313,6 +342,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("model_probability")
         data class Probability(
+            override val id: Id = Id(),
             val config: Config,
             val operator: Comparator.Range,
             override val threshold: Double,
@@ -327,6 +357,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("content_moderation")
         data class Moderation(
+            override val id: Id = Id(),
             val category: String,
             val operator: Comparator.Range,
             override val threshold: Double,
@@ -346,6 +377,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("language_analysis")
         data class Language(
+            override val id: Id = Id(),
             @SerialName("language_name")
             override val category: String,
             override val operator: Comparator.Range,
@@ -355,6 +387,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("sentiment_analysis")
         data class Sentiment(
+            override val id: Id = Id(),
             @SerialName("sentiment_category")
             override val category: String,
             override val operator: Comparator.Range,
@@ -364,6 +397,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("financial_sentiment_analysis")
         data class FinancialSentiment(
+            override val id: Id = Id(),
             @SerialName("financial_category")
             override val category: String,
             override val operator: Comparator.Range,
@@ -373,6 +407,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("emotion_sentiment_analysis")
         data class Emotion(
+            override val id: Id = Id(),
             @SerialName("emotion_category")
             override val category: String,
             override val operator: Comparator.Range,
@@ -382,6 +417,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("toxicity_analysis")
         data class Toxicity(
+            override val id: Id = Id(),
             @SerialName("toxic_category")
             override val category: String,
             override val operator: Comparator.Range,
@@ -391,6 +427,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("topic_analysis")
         data class Topic(
+            override val id: Id = Id(),
             @SerialName("topic_label")
             override val category: String,
             override val operator: Comparator.Range,
@@ -400,6 +437,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("text_arbitrary")
         data class TextArbitrary(
+            override val id: Id = Id(),
             @SerialName("tag")
             override val category: String,
             override val operator: Comparator.Range,
@@ -409,6 +447,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("image_nsfw")
         data class ImageNsfw(
+            override val id: Id = Id(),
             @SerialName("tag")
             override val category: String,
             override val operator: Comparator.Range,
@@ -418,6 +457,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("image_arbitrary")
         data class ImageArbitrary(
+            override val id: Id = Id(),
             @SerialName("tag")
             override val category: String,
             override val operator: Comparator.Range,

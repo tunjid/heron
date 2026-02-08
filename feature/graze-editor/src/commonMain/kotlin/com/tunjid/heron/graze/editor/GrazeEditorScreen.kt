@@ -18,15 +18,15 @@ package com.tunjid.heron.graze.editor
 
 import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material3.Card
@@ -35,7 +35,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
@@ -79,8 +78,7 @@ fun GrazeEditorScreen(
             .padding(
                 horizontal = 16.dp,
                 vertical = 8.dp,
-            )
-            .verticalScroll(rememberScrollState()),
+            ),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         RootFilterDescription(
@@ -95,45 +93,52 @@ fun GrazeEditorScreen(
                 )
             },
         )
-        currentFilter.filters.forEachIndexed { index, child ->
-            key(child.hashCode()) {
-                Filter(
-                    modifier = Modifier
-                        .animateBounds(paneScaffoldState)
-                        .fillMaxWidth(),
-                    filter = child,
-                    atTopLevel = true,
-                    enterFilter = { enteredIndex ->
-                        actions(Action.EditorNavigation.EnterFilter(enteredIndex))
-                    },
-                    onFlipClicked = { flippedPath ->
-                        actions(
-                            Action.EditFilter.FlipRootFilter(
-                                path = flippedPath,
-                            ),
-                        )
-                    },
-                    onUpdateFilter = { updatedFilter: Filter, path: List<Int>, updatedIndex: Int ->
-                        actions(
-                            Action.EditFilter.UpdateFilter(
-                                filter = updatedFilter,
-                                path = path,
-                                index = updatedIndex,
-                            ),
-                        )
-                    },
-                    onRemoveFilter = { path: List<Int>, removedIndex: Int ->
-                        actions(
-                            Action.EditFilter.RemoveFilter(
-                                path = path,
-                                index = removedIndex,
-                            ),
-                        )
-                    },
-                    index = index,
-                    path = state.currentPath,
-                )
-            }
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            itemsIndexed(
+                currentFilter.filters,
+                key = { _, child -> child.id.value },
+                itemContent = { index, child ->
+                    Filter(
+                        modifier = Modifier
+                            .animateItem()
+                            .animateBounds(paneScaffoldState)
+                            .fillMaxWidth(),
+                        filter = child,
+                        atTopLevel = true,
+                        enterFilter = { enteredIndex ->
+                            actions(Action.EditorNavigation.EnterFilter(enteredIndex))
+                        },
+                        onFlipClicked = { flippedPath ->
+                            actions(
+                                Action.EditFilter.FlipRootFilter(
+                                    path = flippedPath,
+                                ),
+                            )
+                        },
+                        onUpdateFilter = { updatedFilter: Filter, path: List<Int>, updatedIndex: Int ->
+                            actions(
+                                Action.EditFilter.UpdateFilter(
+                                    filter = updatedFilter,
+                                    path = path,
+                                    index = updatedIndex,
+                                ),
+                            )
+                        },
+                        onRemoveFilter = { path: List<Int>, removedIndex: Int ->
+                            actions(
+                                Action.EditFilter.RemoveFilter(
+                                    path = path,
+                                    index = removedIndex,
+                                ),
+                            )
+                        },
+                        index = index,
+                        path = state.currentPath,
+                    )
+                },
+            )
         }
     }
 }
@@ -212,27 +217,31 @@ fun FilterRow(
                 },
             )
 
-            if (atTopLevel) Row(
+            if (atTopLevel) LazyRow(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                filter.filters.forEachIndexed { childIndex, child ->
-                    Filter(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        filter = child,
-                        atTopLevel = false,
-                        index = childIndex,
-                        path = path + index,
-                        enterFilter = enterFilter,
-                        onFlipClicked = onFlipClicked,
-                        onUpdateFilter = onUpdateFilter,
-                        onRemoveFilter = onRemoveFilter,
-                    )
-                }
+                itemsIndexed(
+                    items = filter.filters,
+                    key = { _, child -> child.id },
+                    itemContent = { childIndex, child ->
+                        Filter(
+                            modifier = Modifier
+                                .animateItem()
+                                .fillParentMaxWidth()
+                                .padding(8.dp),
+                            filter = child,
+                            atTopLevel = false,
+                            index = childIndex,
+                            path = path + index,
+                            enterFilter = enterFilter,
+                            onFlipClicked = onFlipClicked,
+                            onUpdateFilter = onUpdateFilter,
+                            onRemoveFilter = onRemoveFilter,
+                        )
+                    },
+                )
             }
         }
     }
