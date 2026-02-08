@@ -49,16 +49,14 @@ fun StandardFilter(
     content: @Composable () -> Unit = {},
 ) {
     FilterCard(
+        title = {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+            )
+        },
         onRemove = onRemove,
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleSmall,
-        )
-        Spacer(
-            modifier = Modifier
-                .height(8.dp),
-        )
         Row(
             modifier = Modifier
                 .fillMaxWidth(),
@@ -77,10 +75,6 @@ fun StandardFilter(
                 selection()
             }
         }
-        Spacer(
-            modifier = Modifier
-                .height(8.dp),
-        )
         content()
     }
 }
