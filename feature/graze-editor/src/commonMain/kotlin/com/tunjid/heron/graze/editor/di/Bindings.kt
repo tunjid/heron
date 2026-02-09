@@ -16,6 +16,10 @@
 
 package com.tunjid.heron.graze.editor.di
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -63,6 +67,7 @@ import dev.zacsweers.metro.StringKey
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.add_filter
 import heron.feature.graze_editor.generated.resources.graze_editor
+import heron.feature.graze_editor.generated.resources.graze_editor_level
 import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/graze-editor"
@@ -133,10 +138,24 @@ class GrazeEditorBindings(
                 topBar = {
                     PoppableDestinationTopAppBar(
                         title = {
-                            AppBarTitle(
-                                modifier = Modifier,
-                                title = stringResource(Res.string.graze_editor),
-                            )
+                            AnimatedContent(
+                                targetState = state.currentPath,
+                                transitionSpec = {
+                                    TitleTransitionSpec
+                                },
+                            ) { currentPath ->
+                                AppBarTitle(
+                                    modifier = Modifier,
+                                    title =
+                                    if (currentPath.isEmpty()) stringResource(
+                                        Res.string.graze_editor,
+                                    )
+                                    else stringResource(
+                                        Res.string.graze_editor_level,
+                                        currentPath.size,
+                                    ),
+                                )
+                            }
                         },
                         onBackPressed = {
                             viewModel.accept(
@@ -178,3 +197,5 @@ class GrazeEditorBindings(
         },
     )
 }
+
+private val TitleTransitionSpec = fadeIn() togetherWith fadeOut()
