@@ -17,19 +17,13 @@
 package com.tunjid.heron.graze.editor.ui
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.emotion_analysis
@@ -82,45 +76,11 @@ fun AnalysisFilter(
         is Filter.Analysis.ImageArbitrary -> stringResource(Res.string.tag)
     }
 
-    FilterCard(
+    StandardFilter(
         modifier = modifier,
+        title = title,
         onRemove = onRemove,
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleSmall,
-        )
-        Spacer(
-            modifier = Modifier
-                .height(8.dp),
-        )
-        OutlinedTextField(
-            value = filter.category,
-            onValueChange = { newCategory ->
-                onUpdate(
-                    when (filter) {
-                        is Filter.Analysis.Language -> filter.copy(category = newCategory)
-                        is Filter.Analysis.Sentiment -> filter.copy(category = newCategory)
-                        is Filter.Analysis.FinancialSentiment -> filter.copy(category = newCategory)
-                        is Filter.Analysis.Emotion -> filter.copy(category = newCategory)
-                        is Filter.Analysis.Toxicity -> filter.copy(category = newCategory)
-                        is Filter.Analysis.Topic -> filter.copy(category = newCategory)
-                        is Filter.Analysis.TextArbitrary -> filter.copy(category = newCategory)
-                        is Filter.Analysis.ImageNsfw -> filter.copy(category = newCategory)
-                        is Filter.Analysis.ImageArbitrary -> filter.copy(category = newCategory)
-                    },
-                )
-            },
-            label = { Text(text = categoryLabel) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        startContent = {
             ComparatorDropdown(
                 selected = filter.operator,
                 options = Filter.Comparator.Range.entries,
@@ -139,19 +99,40 @@ fun AnalysisFilter(
                         },
                     )
                 },
-                modifier = Modifier
-                    .weight(1f),
+                modifier = Modifier.fillMaxWidth(),
             )
-            Spacer(
-                modifier = Modifier
-                    .width(8.dp),
+        },
+        endContent = {
+            OutlinedTextField(
+                value = filter.category,
+                onValueChange = { newCategory ->
+                    onUpdate(
+                        when (filter) {
+                            is Filter.Analysis.Language -> filter.copy(category = newCategory)
+                            is Filter.Analysis.Sentiment -> filter.copy(category = newCategory)
+                            is Filter.Analysis.FinancialSentiment -> filter.copy(category = newCategory)
+                            is Filter.Analysis.Emotion -> filter.copy(category = newCategory)
+                            is Filter.Analysis.Toxicity -> filter.copy(category = newCategory)
+                            is Filter.Analysis.Topic -> filter.copy(category = newCategory)
+                            is Filter.Analysis.TextArbitrary -> filter.copy(category = newCategory)
+                            is Filter.Analysis.ImageNsfw -> filter.copy(category = newCategory)
+                            is Filter.Analysis.ImageArbitrary -> filter.copy(category = newCategory)
+                        },
+                    )
+                },
+                label = { Text(text = categoryLabel) },
+                modifier = Modifier.fillMaxWidth(),
             )
+        },
+        additionalContent = {
             Column(
-                modifier = Modifier
-                    .weight(1f),
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
-                    text = stringResource(Res.string.threshold_percent, filter.thresholdPercent),
+                    text = stringResource(
+                        Res.string.threshold_percent,
+                        filter.thresholdPercent,
+                    ),
                     style = MaterialTheme.typography.labelMedium,
                 )
                 Slider(
@@ -171,9 +152,10 @@ fun AnalysisFilter(
                             },
                         )
                     },
+                    steps = 8,
                     valueRange = 0.1f..1f,
                 )
             }
-        }
-    }
+        },
+    )
 }
