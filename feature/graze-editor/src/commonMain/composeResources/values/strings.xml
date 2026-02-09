@@ -124,6 +124,17 @@
     <string name="entity_type_mention">Mentions</string>
     <string name="entity_type_domain">Domains</string>
 
+    <!-- Content Moderation Categories -->
+    <string name="moderation_category_sexual">Sexual</string>
+    <string name="moderation_category_hate">Hate</string>
+    <string name="moderation_category_violence">Violence</string>
+    <string name="moderation_category_harassment">Harassment</string>
+    <string name="moderation_category_self_harm">Self Harm</string>
+    <string name="moderation_category_sexual_minors">Sexual (Minors)</string>
+    <string name="moderation_category_hate_threatening">Hate (Threatening)</string>
+    <string name="moderation_category_violence_graphic">Violence (Graphic)</string>
+    <string name="moderation_category_ok">OK</string>
+
     <!-- Filter Groups -->
     <string name="filter_group_logic">Logic</string>
     <string name="filter_group_attribute">Attributes</string>

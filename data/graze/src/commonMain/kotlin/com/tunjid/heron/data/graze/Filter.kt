@@ -489,13 +489,43 @@ sealed interface Filter {
         @SerialName("content_moderation")
         data class Moderation(
             override val id: Id = Id(),
-            val category: String,
+            val category: Category,
             val operator: Comparator.Range,
             override val threshold: Double,
         ) : ML {
+            @Serializable
+            enum class Category {
+                @SerialName("sexual")
+                Sexual,
+
+                @SerialName("hate")
+                Hate,
+
+                @SerialName("violence")
+                Violence,
+
+                @SerialName("harassment")
+                Harassment,
+
+                @SerialName("self-harm")
+                SelfHarm,
+
+                @SerialName("sexual/minors")
+                SexualMinors,
+
+                @SerialName("hate/threatening")
+                HateThreatening,
+
+                @SerialName("violence/graphic")
+                ViolenceGraphic,
+
+                @SerialName("OK")
+                OK,
+            }
+
             companion object {
                 fun empty() = Moderation(
-                    category = "",
+                    category = Category.Sexual,
                     operator = Comparator.Range.GreaterThan,
                     threshold = 0.8,
                 )

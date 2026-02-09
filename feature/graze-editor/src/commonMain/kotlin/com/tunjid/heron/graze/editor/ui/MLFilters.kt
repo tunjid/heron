@@ -33,9 +33,19 @@ import heron.feature.graze_editor.generated.resources.category
 import heron.feature.graze_editor.generated.resources.content_moderation
 import heron.feature.graze_editor.generated.resources.model_name
 import heron.feature.graze_editor.generated.resources.model_probability
+import heron.feature.graze_editor.generated.resources.moderation_category_harassment
+import heron.feature.graze_editor.generated.resources.moderation_category_hate
+import heron.feature.graze_editor.generated.resources.moderation_category_hate_threatening
+import heron.feature.graze_editor.generated.resources.moderation_category_ok
+import heron.feature.graze_editor.generated.resources.moderation_category_self_harm
+import heron.feature.graze_editor.generated.resources.moderation_category_sexual
+import heron.feature.graze_editor.generated.resources.moderation_category_sexual_minors
+import heron.feature.graze_editor.generated.resources.moderation_category_violence
+import heron.feature.graze_editor.generated.resources.moderation_category_violence_graphic
 import heron.feature.graze_editor.generated.resources.path
 import heron.feature.graze_editor.generated.resources.text_similarity
 import heron.feature.graze_editor.generated.resources.threshold_percent
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -164,11 +174,13 @@ fun MLModerationFilter(
             )
         },
         endContent = {
-            OutlinedTextField(
-                value = filter.category,
-                onValueChange = { onUpdate(filter.copy(category = it)) },
-                label = { Text(text = stringResource(Res.string.category)) },
+            Dropdown(
+                label = stringResource(Res.string.category),
+                selected = filter.category,
+                options = Filter.ML.Moderation.Category.entries,
                 modifier = Modifier.fillMaxWidth(),
+                stringRes = Filter.ML.Moderation.Category::stringRes,
+                onSelect = { onUpdate(filter.copy(category = it)) },
             )
         },
         additionalContent = {
@@ -187,4 +199,16 @@ fun MLModerationFilter(
             }
         },
     )
+}
+
+fun Filter.ML.Moderation.Category.stringRes(): StringResource = when (this) {
+    Filter.ML.Moderation.Category.Sexual -> Res.string.moderation_category_sexual
+    Filter.ML.Moderation.Category.Hate -> Res.string.moderation_category_hate
+    Filter.ML.Moderation.Category.Violence -> Res.string.moderation_category_violence
+    Filter.ML.Moderation.Category.Harassment -> Res.string.moderation_category_harassment
+    Filter.ML.Moderation.Category.SelfHarm -> Res.string.moderation_category_self_harm
+    Filter.ML.Moderation.Category.SexualMinors -> Res.string.moderation_category_sexual_minors
+    Filter.ML.Moderation.Category.HateThreatening -> Res.string.moderation_category_hate_threatening
+    Filter.ML.Moderation.Category.ViolenceGraphic -> Res.string.moderation_category_violence_graphic
+    Filter.ML.Moderation.Category.OK -> Res.string.moderation_category_ok
 }
