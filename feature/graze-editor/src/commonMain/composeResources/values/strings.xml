@@ -134,6 +134,7 @@
     <string name="moderation_category_hate_threatening">Hate (Threatening)</string>
     <string name="moderation_category_violence_graphic">Violence (Graphic)</string>
     <string name="moderation_category_ok">OK</string>
+    <string name="moderation_category_unknown">Unknown</string>
 
     <!-- Analysis - Language -->
     <string name="analysis_language_japanese">Japanese</string>

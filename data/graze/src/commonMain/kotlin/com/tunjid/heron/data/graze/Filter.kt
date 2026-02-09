@@ -494,33 +494,31 @@ sealed interface Filter {
             override val threshold: Double,
         ) : ML {
             @Serializable
-            enum class Category {
-                @SerialName("sexual")
-                Sexual,
+            @JvmInline
+            value class Category(val value: String) {
+                companion object {
+                    val Sexual = Category("sexual")
+                    val Hate = Category("hate")
+                    val Violence = Category("violence")
+                    val Harassment = Category("harassment")
+                    val SelfHarm = Category("self-harm")
+                    val SexualMinors = Category("sexual/minors")
+                    val HateThreatening = Category("hate/threatening")
+                    val ViolenceGraphic = Category("violence/graphic")
+                    val OK = Category("OK")
 
-                @SerialName("hate")
-                Hate,
-
-                @SerialName("violence")
-                Violence,
-
-                @SerialName("harassment")
-                Harassment,
-
-                @SerialName("self-harm")
-                SelfHarm,
-
-                @SerialName("sexual/minors")
-                SexualMinors,
-
-                @SerialName("hate/threatening")
-                HateThreatening,
-
-                @SerialName("violence/graphic")
-                ViolenceGraphic,
-
-                @SerialName("OK")
-                OK,
+                    val entries = listOf(
+                        Sexual,
+                        Hate,
+                        Violence,
+                        Harassment,
+                        SelfHarm,
+                        SexualMinors,
+                        HateThreatening,
+                        ViolenceGraphic,
+                        OK,
+                    )
+                }
             }
 
             companion object {
@@ -552,27 +550,53 @@ sealed interface Filter {
             override val threshold: Double,
         ) : Analysis {
             @Serializable
-            enum class Category {
-                @SerialName("Japanese") Japanese,
-                @SerialName("Dutch") Dutch,
-                @SerialName("Arabic") Arabic,
-                @SerialName("Polish") Polish,
-                @SerialName("German") German,
-                @SerialName("Italian") Italian,
-                @SerialName("Portuguese") Portuguese,
-                @SerialName("Turkish") Turkish,
-                @SerialName("Spanish") Spanish,
-                @SerialName("Hindi") Hindi,
-                @SerialName("Greek") Greek,
-                @SerialName("Urdu") Urdu,
-                @SerialName("Bulgarian") Bulgarian,
-                @SerialName("English") English,
-                @SerialName("French") French,
-                @SerialName("Chinese") Chinese,
-                @SerialName("Russian") Russian,
-                @SerialName("Thai") Thai,
-                @SerialName("Swahili") Swahili,
-                @SerialName("Vietnamese") Vietnamese,
+            @JvmInline
+            value class Category(val value: String) {
+                companion object {
+                    val Japanese = Category("Japanese")
+                    val Dutch = Category("Dutch")
+                    val Arabic = Category("Arabic")
+                    val Polish = Category("Polish")
+                    val German = Category("German")
+                    val Italian = Category("Italian")
+                    val Portuguese = Category("Portuguese")
+                    val Turkish = Category("Turkish")
+                    val Spanish = Category("Spanish")
+                    val Hindi = Category("Hindi")
+                    val Greek = Category("Greek")
+                    val Urdu = Category("Urdu")
+                    val Bulgarian = Category("Bulgarian")
+                    val English = Category("English")
+                    val French = Category("French")
+                    val Chinese = Category("Chinese")
+                    val Russian = Category("Russian")
+                    val Thai = Category("Thai")
+                    val Swahili = Category("Swahili")
+                    val Vietnamese = Category("Vietnamese")
+
+                    val entries = listOf(
+                        Japanese,
+                        Dutch,
+                        Arabic,
+                        Polish,
+                        German,
+                        Italian,
+                        Portuguese,
+                        Turkish,
+                        Spanish,
+                        Hindi,
+                        Greek,
+                        Urdu,
+                        Bulgarian,
+                        English,
+                        French,
+                        Chinese,
+                        Russian,
+                        Thai,
+                        Swahili,
+                        Vietnamese,
+                    )
+                }
             }
 
             companion object {
@@ -594,10 +618,19 @@ sealed interface Filter {
             override val threshold: Double,
         ) : Analysis {
             @Serializable
-            enum class Category {
-                @SerialName("Positive") Positive,
-                @SerialName("Negative") Negative,
-                @SerialName("Neutral") Neutral,
+            @JvmInline
+            value class Category(val value: String) {
+                companion object {
+                    val Positive = Category("Positive")
+                    val Negative = Category("Negative")
+                    val Neutral = Category("Neutral")
+
+                    val entries = listOf(
+                        Positive,
+                        Negative,
+                        Neutral,
+                    )
+                }
             }
 
             companion object {
@@ -619,10 +652,19 @@ sealed interface Filter {
             override val threshold: Double,
         ) : Analysis {
             @Serializable
-            enum class Category {
-                @SerialName("Positive") Positive,
-                @SerialName("Negative") Negative,
-                @SerialName("Neutral") Neutral,
+            @JvmInline
+            value class Category(val value: String) {
+                companion object {
+                    val Positive = Category("Positive")
+                    val Negative = Category("Negative")
+                    val Neutral = Category("Neutral")
+
+                    val entries = listOf(
+                        Positive,
+                        Negative,
+                        Neutral,
+                    )
+                }
             }
 
             companion object {
@@ -644,35 +686,69 @@ sealed interface Filter {
             override val threshold: Double,
         ) : Analysis {
             @Serializable
-            enum class Category {
-                @SerialName("Admiration") Admiration,
-                @SerialName("Amusement") Amusement,
-                @SerialName("Anger") Anger,
-                @SerialName("Annoyance") Annoyance,
-                @SerialName("Approval") Approval,
-                @SerialName("Caring") Caring,
-                @SerialName("Confusion") Confusion,
-                @SerialName("Curiosity") Curiosity,
-                @SerialName("Desire") Desire,
-                @SerialName("Disappointment") Disappointment,
-                @SerialName("Disapproval") Disapproval,
-                @SerialName("Disgust") Disgust,
-                @SerialName("Embarrassment") Embarrassment,
-                @SerialName("Excitement") Excitement,
-                @SerialName("Fear") Fear,
-                @SerialName("Gratitude") Gratitude,
-                @SerialName("Grief") Grief,
-                @SerialName("Joy") Joy,
-                @SerialName("Love") Love,
-                @SerialName("Nervousness") Nervousness,
-                @SerialName("Optimism") Optimism,
-                @SerialName("Pride") Pride,
-                @SerialName("Realization") Realization,
-                @SerialName("Relief") Relief,
-                @SerialName("Remorse") Remorse,
-                @SerialName("Sadness") Sadness,
-                @SerialName("Surprise") Surprise,
-                @SerialName("Neutral") Neutral,
+            @JvmInline
+            value class Category(val value: String) {
+                companion object {
+                    val Admiration = Category("Admiration")
+                    val Amusement = Category("Amusement")
+                    val Anger = Category("Anger")
+                    val Annoyance = Category("Annoyance")
+                    val Approval = Category("Approval")
+                    val Caring = Category("Caring")
+                    val Confusion = Category("Confusion")
+                    val Curiosity = Category("Curiosity")
+                    val Desire = Category("Desire")
+                    val Disappointment = Category("Disappointment")
+                    val Disapproval = Category("Disapproval")
+                    val Disgust = Category("Disgust")
+                    val Embarrassment = Category("Embarrassment")
+                    val Excitement = Category("Excitement")
+                    val Fear = Category("Fear")
+                    val Gratitude = Category("Gratitude")
+                    val Grief = Category("Grief")
+                    val Joy = Category("Joy")
+                    val Love = Category("Love")
+                    val Nervousness = Category("Nervousness")
+                    val Optimism = Category("Optimism")
+                    val Pride = Category("Pride")
+                    val Realization = Category("Realization")
+                    val Relief = Category("Relief")
+                    val Remorse = Category("Remorse")
+                    val Sadness = Category("Sadness")
+                    val Surprise = Category("Surprise")
+                    val Neutral = Category("Neutral")
+
+                    val entries = listOf(
+                        Admiration,
+                        Amusement,
+                        Anger,
+                        Annoyance,
+                        Approval,
+                        Caring,
+                        Confusion,
+                        Curiosity,
+                        Desire,
+                        Disappointment,
+                        Disapproval,
+                        Disgust,
+                        Embarrassment,
+                        Excitement,
+                        Fear,
+                        Gratitude,
+                        Grief,
+                        Joy,
+                        Love,
+                        Nervousness,
+                        Optimism,
+                        Pride,
+                        Realization,
+                        Relief,
+                        Remorse,
+                        Sadness,
+                        Surprise,
+                        Neutral,
+                    )
+                }
             }
 
             companion object {
@@ -694,13 +770,25 @@ sealed interface Filter {
             override val threshold: Double,
         ) : Analysis {
             @Serializable
-            enum class Category {
-                @SerialName("Toxic") Toxic,
-                @SerialName("Severe Toxicity") SevereToxicity,
-                @SerialName("Obscene") Obscene,
-                @SerialName("Threat") Threat,
-                @SerialName("Insult") Insult,
-                @SerialName("Identity Hate") IdentityHate,
+            @JvmInline
+            value class Category(val value: String) {
+                companion object {
+                    val Toxic = Category("Toxic")
+                    val SevereToxicity = Category("Severe Toxicity")
+                    val Obscene = Category("Obscene")
+                    val Threat = Category("Threat")
+                    val Insult = Category("Insult")
+                    val IdentityHate = Category("Identity Hate")
+
+                    val entries = listOf(
+                        Toxic,
+                        SevereToxicity,
+                        Obscene,
+                        Threat,
+                        Insult,
+                        IdentityHate,
+                    )
+                }
             }
 
             companion object {
@@ -722,26 +810,51 @@ sealed interface Filter {
             override val threshold: Double,
         ) : Analysis {
             @Serializable
-            enum class Category {
-                @SerialName("Arts & Culture") ArtsAndCulture,
-                @SerialName("Business & Entrepreneurs") BusinessAndEntrepreneurs,
-                @SerialName("Celebrity & Pop Culture") CelebrityAndPopCulture,
-                @SerialName("Diaries & Daily Life") DiariesAndDailyLife,
-                @SerialName("Family") Family,
-                @SerialName("Fashion & Style") FashionAndStyle,
-                @SerialName("Film, TV & Video") FilmTVAndVideo,
-                @SerialName("Fitness & Health") FitnessAndHealth,
-                @SerialName("Food & Dining") FoodAndDining,
-                @SerialName("Gaming") Gaming,
-                @SerialName("Learning & Educational") LearningAndEducational,
-                @SerialName("Music") Music,
-                @SerialName("News & Social Concern") NewsAndSocialConcern,
-                @SerialName("Other Hobbies") OtherHobbies,
-                @SerialName("Relationships") Relationships,
-                @SerialName("Science & Technology") ScienceAndTechnology,
-                @SerialName("Sports") Sports,
-                @SerialName("Travel & Adventure") TravelAndAdventure,
-                @SerialName("Youth & Student Life") YouthAndStudentLife,
+            @JvmInline
+            value class Category(val value: String) {
+                companion object {
+                    val ArtsAndCulture = Category("Arts & Culture")
+                    val BusinessAndEntrepreneurs = Category("Business & Entrepreneurs")
+                    val CelebrityAndPopCulture = Category("Celebrity & Pop Culture")
+                    val DiariesAndDailyLife = Category("Diaries & Daily Life")
+                    val Family = Category("Family")
+                    val FashionAndStyle = Category("Fashion & Style")
+                    val FilmTVAndVideo = Category("Film, TV & Video")
+                    val FitnessAndHealth = Category("Fitness & Health")
+                    val FoodAndDining = Category("Food & Dining")
+                    val Gaming = Category("Gaming")
+                    val LearningAndEducational = Category("Learning & Educational")
+                    val Music = Category("Music")
+                    val NewsAndSocialConcern = Category("News & Social Concern")
+                    val OtherHobbies = Category("Other Hobbies")
+                    val Relationships = Category("Relationships")
+                    val ScienceAndTechnology = Category("Science & Technology")
+                    val Sports = Category("Sports")
+                    val TravelAndAdventure = Category("Travel & Adventure")
+                    val YouthAndStudentLife = Category("Youth & Student Life")
+
+                    val entries = listOf(
+                        ArtsAndCulture,
+                        BusinessAndEntrepreneurs,
+                        CelebrityAndPopCulture,
+                        DiariesAndDailyLife,
+                        Family,
+                        FashionAndStyle,
+                        FilmTVAndVideo,
+                        FitnessAndHealth,
+                        FoodAndDining,
+                        Gaming,
+                        LearningAndEducational,
+                        Music,
+                        NewsAndSocialConcern,
+                        OtherHobbies,
+                        Relationships,
+                        ScienceAndTechnology,
+                        Sports,
+                        TravelAndAdventure,
+                        YouthAndStudentLife,
+                    )
+                }
             }
 
             companion object {
@@ -763,8 +876,12 @@ sealed interface Filter {
             override val threshold: Double,
         ) : Analysis {
             @Serializable
-            enum class Category {
-                @SerialName("Default") Default,
+            @JvmInline
+            value class Category(val value: String) {
+                companion object {
+                    val Default = Category("Default")
+                    val entries = listOf(Default)
+                }
             }
 
             companion object {
@@ -786,9 +903,13 @@ sealed interface Filter {
             override val threshold: Double,
         ) : Analysis {
             @Serializable
-            enum class Category {
-                @SerialName("NSFW") NSFW,
-                @SerialName("SFW") SFW,
+            @JvmInline
+            value class Category(val value: String) {
+                companion object {
+                    val NSFW = Category("NSFW")
+                    val SFW = Category("SFW")
+                    val entries = listOf(NSFW, SFW)
+                }
             }
 
             companion object {
@@ -810,8 +931,12 @@ sealed interface Filter {
             override val threshold: Double,
         ) : Analysis {
             @Serializable
-            enum class Category {
-                @SerialName("Default") Default,
+            @JvmInline
+            value class Category(val value: String) {
+                companion object {
+                    val Default = Category("Default")
+                    val entries = listOf(Default)
+                }
             }
 
             companion object {

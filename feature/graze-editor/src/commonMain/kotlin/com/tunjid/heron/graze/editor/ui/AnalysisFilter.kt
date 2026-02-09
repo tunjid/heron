@@ -112,6 +112,7 @@ import heron.feature.graze_editor.generated.resources.image_arbitrary
 import heron.feature.graze_editor.generated.resources.image_nsfw
 import heron.feature.graze_editor.generated.resources.language_analysis
 import heron.feature.graze_editor.generated.resources.language_name
+import heron.feature.graze_editor.generated.resources.moderation_category_unknown
 import heron.feature.graze_editor.generated.resources.sentiment_analysis
 import heron.feature.graze_editor.generated.resources.sentiment_category
 import heron.feature.graze_editor.generated.resources.tag
@@ -321,18 +322,21 @@ fun Filter.Analysis.Language.Category.stringRes(): StringResource = when (this) 
     Filter.Analysis.Language.Category.Thai -> Res.string.analysis_language_thai
     Filter.Analysis.Language.Category.Swahili -> Res.string.analysis_language_swahili
     Filter.Analysis.Language.Category.Vietnamese -> Res.string.analysis_language_vietnamese
+    else -> Res.string.moderation_category_unknown
 }
 
 fun Filter.Analysis.Sentiment.Category.stringRes(): StringResource = when (this) {
     Filter.Analysis.Sentiment.Category.Positive -> Res.string.analysis_sentiment_positive
     Filter.Analysis.Sentiment.Category.Negative -> Res.string.analysis_sentiment_negative
     Filter.Analysis.Sentiment.Category.Neutral -> Res.string.analysis_sentiment_neutral
+    else -> Res.string.moderation_category_unknown
 }
 
 fun Filter.Analysis.FinancialSentiment.Category.stringRes(): StringResource = when (this) {
     Filter.Analysis.FinancialSentiment.Category.Positive -> Res.string.analysis_sentiment_positive
     Filter.Analysis.FinancialSentiment.Category.Negative -> Res.string.analysis_sentiment_negative
     Filter.Analysis.FinancialSentiment.Category.Neutral -> Res.string.analysis_sentiment_neutral
+    else -> Res.string.moderation_category_unknown
 }
 
 fun Filter.Analysis.Emotion.Category.stringRes(): StringResource = when (this) {
@@ -364,6 +368,7 @@ fun Filter.Analysis.Emotion.Category.stringRes(): StringResource = when (this) {
     Filter.Analysis.Emotion.Category.Sadness -> Res.string.analysis_emotion_sadness
     Filter.Analysis.Emotion.Category.Surprise -> Res.string.analysis_emotion_surprise
     Filter.Analysis.Emotion.Category.Neutral -> Res.string.analysis_emotion_neutral
+    else -> Res.string.moderation_category_unknown
 }
 
 fun Filter.Analysis.Toxicity.Category.stringRes(): StringResource = when (this) {
@@ -373,6 +378,7 @@ fun Filter.Analysis.Toxicity.Category.stringRes(): StringResource = when (this) 
     Filter.Analysis.Toxicity.Category.Threat -> Res.string.analysis_toxicity_threat
     Filter.Analysis.Toxicity.Category.Insult -> Res.string.analysis_toxicity_insult
     Filter.Analysis.Toxicity.Category.IdentityHate -> Res.string.analysis_toxicity_identity_hate
+    else -> Res.string.moderation_category_unknown
 }
 
 fun Filter.Analysis.Topic.Category.stringRes(): StringResource = when (this) {
@@ -395,17 +401,21 @@ fun Filter.Analysis.Topic.Category.stringRes(): StringResource = when (this) {
     Filter.Analysis.Topic.Category.Sports -> Res.string.analysis_topic_sports
     Filter.Analysis.Topic.Category.TravelAndAdventure -> Res.string.analysis_topic_travel_adventure
     Filter.Analysis.Topic.Category.YouthAndStudentLife -> Res.string.analysis_topic_youth_student_life
+    else -> Res.string.moderation_category_unknown
 }
 
 fun Filter.Analysis.TextArbitrary.Category.stringRes(): StringResource = when (this) {
     Filter.Analysis.TextArbitrary.Category.Default -> Res.string.analysis_arbitrary_default
+    else -> Res.string.moderation_category_unknown
 }
 
 fun Filter.Analysis.ImageNsfw.Category.stringRes(): StringResource = when (this) {
     Filter.Analysis.ImageNsfw.Category.NSFW -> Res.string.analysis_nsfw_nsfw
     Filter.Analysis.ImageNsfw.Category.SFW -> Res.string.analysis_nsfw_sfw
+    else -> Res.string.moderation_category_unknown
 }
 
 fun Filter.Analysis.ImageArbitrary.Category.stringRes(): StringResource = when (this) {
     Filter.Analysis.ImageArbitrary.Category.Default -> Res.string.analysis_arbitrary_default
+    else -> Res.string.moderation_category_unknown
 }

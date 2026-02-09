@@ -40,6 +40,7 @@ import heron.feature.graze_editor.generated.resources.moderation_category_ok
 import heron.feature.graze_editor.generated.resources.moderation_category_self_harm
 import heron.feature.graze_editor.generated.resources.moderation_category_sexual
 import heron.feature.graze_editor.generated.resources.moderation_category_sexual_minors
+import heron.feature.graze_editor.generated.resources.moderation_category_unknown
 import heron.feature.graze_editor.generated.resources.moderation_category_violence
 import heron.feature.graze_editor.generated.resources.moderation_category_violence_graphic
 import heron.feature.graze_editor.generated.resources.path
@@ -211,4 +212,5 @@ fun Filter.ML.Moderation.Category.stringRes(): StringResource = when (this) {
     Filter.ML.Moderation.Category.HateThreatening -> Res.string.moderation_category_hate_threatening
     Filter.ML.Moderation.Category.ViolenceGraphic -> Res.string.moderation_category_violence_graphic
     Filter.ML.Moderation.Category.OK -> Res.string.moderation_category_ok
+    else -> Res.string.moderation_category_unknown
 }
