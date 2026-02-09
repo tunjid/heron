@@ -50,8 +50,8 @@ class AddTextSheetState(
     var startingText by mutableStateOf("")
 
     override fun onHidden() {
-        title = ""
         text = ""
+        startingText = ""
     }
 
     fun show(currentText: String) {
