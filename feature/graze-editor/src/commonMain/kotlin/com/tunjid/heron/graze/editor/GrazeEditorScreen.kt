@@ -45,23 +45,22 @@ import com.tunjid.heron.graze.editor.ui.AttributeCompareFilter
 import com.tunjid.heron.graze.editor.ui.AttributeEmbedFilter
 import com.tunjid.heron.graze.editor.ui.EntityFilter
 import com.tunjid.heron.graze.editor.ui.MLModerationFilter
-import com.tunjid.heron.graze.editor.ui.MLProbabilityFilter
-import com.tunjid.heron.graze.editor.ui.MLSimilarityFilter
-import com.tunjid.heron.graze.editor.ui.RegexAnyFilter
-import com.tunjid.heron.graze.editor.ui.RegexMatchesFilter
-import com.tunjid.heron.graze.editor.ui.RegexNegationFilter
-import com.tunjid.heron.graze.editor.ui.RegexNoneFilter
+import com.tunjid.heron.graze.editor.ui.RegexFilter
 import com.tunjid.heron.graze.editor.ui.SocialGraphFilter
 import com.tunjid.heron.graze.editor.ui.SocialListMemberFilter
 import com.tunjid.heron.graze.editor.ui.SocialMagicAudienceFilter
 import com.tunjid.heron.graze.editor.ui.SocialStarterPackFilter
 import com.tunjid.heron.graze.editor.ui.SocialUserListFilter
+import com.tunjid.heron.graze.editor.ui.UnsupportedFilter
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.UiTokens
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.all_of_these_and
 import heron.feature.graze_editor.generated.resources.any_of_these_or
 import heron.feature.graze_editor.generated.resources.items_count
+import heron.feature.graze_editor.generated.resources.model_probability
 import heron.feature.graze_editor.generated.resources.remove_filter
+import heron.feature.graze_editor.generated.resources.text_similarity
 import heron.feature.graze_editor.generated.resources.unknown_filter
 import org.jetbrains.compose.resources.stringResource
 
@@ -82,7 +81,6 @@ fun GrazeEditorScreen(
                 .fillMaxSize()
                 .padding(
                     horizontal = 16.dp,
-                    vertical = 8.dp,
                 ),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -111,6 +109,9 @@ fun GrazeEditorScreen(
                     .fillMaxWidth()
                     .weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
+                    isCompact = paneScaffoldState.prefersCompactBottomNav,
+                ),
             ) {
                 itemsIndexed(
                     currentFilter.filters,
@@ -383,30 +384,17 @@ fun FilterLeaf(
             onUpdate = onUpdate,
             onRemove = onRemove,
         )
-        is Filter.Regex.Matches -> RegexMatchesFilter(
-            modifier = modifier,
-            filter = filter,
-            onUpdate = onUpdate,
-            onRemove = onRemove,
-        )
-        is Filter.Regex.Negation -> RegexNegationFilter(
-            modifier = modifier,
-            filter = filter,
-            onUpdate = onUpdate,
-            onRemove = onRemove,
-        )
-        is Filter.Regex.Any -> RegexAnyFilter(
-            modifier = modifier,
-            filter = filter,
-            onUpdate = onUpdate,
-            onRemove = onRemove,
-        )
-        is Filter.Regex.None -> RegexNoneFilter(
-            modifier = modifier,
-            filter = filter,
-            onUpdate = onUpdate,
-            onRemove = onRemove,
-        )
+        is Filter.Regex.Matches,
+        is Filter.Regex.Negation,
+        is Filter.Regex.Any,
+        is Filter.Regex.None,
+        ->
+            RegexFilter(
+                modifier = modifier,
+                filter = filter,
+                onRemove = onRemove,
+            )
+
         is Filter.Social.Graph -> SocialGraphFilter(
             modifier = modifier,
             filter = filter,
@@ -437,16 +425,14 @@ fun FilterLeaf(
             onUpdate = onUpdate,
             onRemove = onRemove,
         )
-        is Filter.ML.Similarity -> MLSimilarityFilter(
+        is Filter.ML.Similarity -> UnsupportedFilter(
             modifier = modifier,
-            filter = filter,
-            onUpdate = onUpdate,
+            title = stringResource(Res.string.text_similarity),
             onRemove = onRemove,
         )
-        is Filter.ML.Probability -> MLProbabilityFilter(
+        is Filter.ML.Probability -> UnsupportedFilter(
             modifier = modifier,
-            filter = filter,
-            onUpdate = onUpdate,
+            title = stringResource(Res.string.model_probability),
             onRemove = onRemove,
         )
         is Filter.ML.Moderation -> MLModerationFilter(

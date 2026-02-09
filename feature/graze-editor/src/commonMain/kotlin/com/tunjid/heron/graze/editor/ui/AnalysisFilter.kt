@@ -139,6 +139,14 @@ fun AnalysisFilter(
         is Filter.Analysis.ImageArbitrary -> stringResource(Res.string.image_arbitrary)
     }
 
+    if (filter is Filter.Analysis.TextArbitrary || filter is Filter.Analysis.ImageArbitrary) {
+        return UnsupportedFilter(
+            modifier = modifier,
+            title = title,
+            onRemove = onRemove,
+        )
+    }
+
     val categoryLabel = when (filter) {
         is Filter.Analysis.Language -> stringResource(Res.string.language_name)
         is Filter.Analysis.Sentiment -> stringResource(Res.string.sentiment_category)
@@ -155,30 +163,7 @@ fun AnalysisFilter(
         modifier = modifier,
         title = title,
         onRemove = onRemove,
-        // Layout: Operator | Category
         startContent = {
-            ComparatorDropdown(
-                selected = filter.operator,
-                options = Filter.Comparator.Range.entries,
-                onSelect = { newOperator ->
-                    onUpdate(
-                        when (filter) {
-                            is Filter.Analysis.Language -> filter.copy(operator = newOperator)
-                            is Filter.Analysis.Sentiment -> filter.copy(operator = newOperator)
-                            is Filter.Analysis.FinancialSentiment -> filter.copy(operator = newOperator)
-                            is Filter.Analysis.Emotion -> filter.copy(operator = newOperator)
-                            is Filter.Analysis.Toxicity -> filter.copy(operator = newOperator)
-                            is Filter.Analysis.Topic -> filter.copy(operator = newOperator)
-                            is Filter.Analysis.TextArbitrary -> filter.copy(operator = newOperator)
-                            is Filter.Analysis.ImageNsfw -> filter.copy(operator = newOperator)
-                            is Filter.Analysis.ImageArbitrary -> filter.copy(operator = newOperator)
-                        },
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-            )
-        },
-        endContent = {
             when (filter) {
                 is Filter.Analysis.Language -> Dropdown(
                     label = categoryLabel,
@@ -262,7 +247,28 @@ fun AnalysisFilter(
                 )
             }
         },
-        // Threshold slider
+        endContent = {
+            ComparatorDropdown(
+                selected = filter.operator,
+                options = Filter.Comparator.Range.entries,
+                onSelect = { newOperator ->
+                    onUpdate(
+                        when (filter) {
+                            is Filter.Analysis.Language -> filter.copy(operator = newOperator)
+                            is Filter.Analysis.Sentiment -> filter.copy(operator = newOperator)
+                            is Filter.Analysis.FinancialSentiment -> filter.copy(operator = newOperator)
+                            is Filter.Analysis.Emotion -> filter.copy(operator = newOperator)
+                            is Filter.Analysis.Toxicity -> filter.copy(operator = newOperator)
+                            is Filter.Analysis.Topic -> filter.copy(operator = newOperator)
+                            is Filter.Analysis.TextArbitrary -> filter.copy(operator = newOperator)
+                            is Filter.Analysis.ImageNsfw -> filter.copy(operator = newOperator)
+                            is Filter.Analysis.ImageArbitrary -> filter.copy(operator = newOperator)
+                        },
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
         additionalContent = {
             ThresholdSlider(
                 threshold = filter.threshold,

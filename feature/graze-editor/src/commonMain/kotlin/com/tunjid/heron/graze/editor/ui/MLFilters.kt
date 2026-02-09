@@ -16,21 +16,13 @@
 
 package com.tunjid.heron.graze.editor.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
 import heron.feature.graze_editor.generated.resources.Res
-import heron.feature.graze_editor.generated.resources.anchor_text
 import heron.feature.graze_editor.generated.resources.category
 import heron.feature.graze_editor.generated.resources.content_moderation
-import heron.feature.graze_editor.generated.resources.model_name
-import heron.feature.graze_editor.generated.resources.model_probability
 import heron.feature.graze_editor.generated.resources.moderation_category_harassment
 import heron.feature.graze_editor.generated.resources.moderation_category_hate
 import heron.feature.graze_editor.generated.resources.moderation_category_hate_threatening
@@ -41,100 +33,8 @@ import heron.feature.graze_editor.generated.resources.moderation_category_sexual
 import heron.feature.graze_editor.generated.resources.moderation_category_unknown
 import heron.feature.graze_editor.generated.resources.moderation_category_violence
 import heron.feature.graze_editor.generated.resources.moderation_category_violence_graphic
-import heron.feature.graze_editor.generated.resources.path
-import heron.feature.graze_editor.generated.resources.text_similarity
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
-
-@Composable
-fun MLSimilarityFilter(
-    filter: Filter.ML.Similarity,
-    onUpdate: (Filter.ML.Similarity) -> Unit,
-    onRemove: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    StandardFilter(
-        modifier = modifier,
-        title = stringResource(Res.string.text_similarity),
-        onRemove = onRemove,
-        startContent = {
-            ComparatorDropdown(
-                selected = filter.operator,
-                options = Filter.Comparator.Range.entries,
-                onSelect = { onUpdate(filter.copy(operator = it)) },
-                modifier = Modifier.fillMaxWidth(),
-            )
-        },
-        endContent = {
-            OutlinedTextField(
-                value = filter.path,
-                onValueChange = { onUpdate(filter.copy(path = it)) },
-                label = { Text(text = stringResource(Res.string.path)) },
-                modifier = Modifier.fillMaxWidth(),
-            )
-        },
-        additionalContent = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                OutlinedTextField(
-                    value = filter.config.modelName,
-                    onValueChange = { onUpdate(filter.copy(config = filter.config.copy(modelName = it))) },
-                    label = { Text(text = stringResource(Res.string.model_name)) },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                OutlinedTextField(
-                    value = filter.config.anchorText,
-                    onValueChange = { onUpdate(filter.copy(config = filter.config.copy(anchorText = it))) },
-                    label = { Text(text = stringResource(Res.string.anchor_text)) },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                ThresholdSlider(
-                    threshold = filter.threshold,
-                    onThresholdChanged = { onUpdate(filter.copy(threshold = it)) },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        },
-    )
-}
-
-@Composable
-fun MLProbabilityFilter(
-    filter: Filter.ML.Probability,
-    onUpdate: (Filter.ML.Probability) -> Unit,
-    onRemove: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    StandardFilter(
-        modifier = modifier,
-        title = stringResource(Res.string.model_probability),
-        onRemove = onRemove,
-        startContent = {
-            ComparatorDropdown(
-                selected = filter.operator,
-                options = Filter.Comparator.Range.entries,
-                onSelect = { onUpdate(filter.copy(operator = it)) },
-                modifier = Modifier.fillMaxWidth(),
-            )
-        },
-        endContent = {
-            OutlinedTextField(
-                value = filter.config.modelName,
-                onValueChange = { onUpdate(filter.copy(config = filter.config.copy(modelName = it))) },
-                label = { Text(text = stringResource(Res.string.model_name)) },
-                modifier = Modifier.fillMaxWidth(),
-            )
-        },
-        additionalContent = {
-            ThresholdSlider(
-                threshold = filter.threshold,
-                onThresholdChanged = { onUpdate(filter.copy(threshold = it)) },
-                modifier = Modifier.fillMaxWidth(),
-            )
-        },
-    )
-}
 
 @Composable
 fun MLModerationFilter(
@@ -148,14 +48,6 @@ fun MLModerationFilter(
         title = stringResource(Res.string.content_moderation),
         onRemove = onRemove,
         startContent = {
-            ComparatorDropdown(
-                selected = filter.operator,
-                options = Filter.Comparator.Range.entries,
-                onSelect = { onUpdate(filter.copy(operator = it)) },
-                modifier = Modifier.fillMaxWidth(),
-            )
-        },
-        endContent = {
             Dropdown(
                 label = stringResource(Res.string.category),
                 selected = filter.category,
@@ -163,6 +55,14 @@ fun MLModerationFilter(
                 modifier = Modifier.fillMaxWidth(),
                 stringRes = Filter.ML.Moderation.Category::stringRes,
                 onSelect = { onUpdate(filter.copy(category = it)) },
+            )
+        },
+        endContent = {
+            ComparatorDropdown(
+                selected = filter.operator,
+                options = Filter.Comparator.Range.entries,
+                onSelect = { onUpdate(filter.copy(operator = it)) },
+                modifier = Modifier.fillMaxWidth(),
             )
         },
         additionalContent = {
