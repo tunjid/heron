@@ -19,15 +19,23 @@ package com.tunjid.heron.graze.editor.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Cancel
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -47,13 +55,61 @@ import heron.feature.graze_editor.generated.resources.comparator_less_than
 import heron.feature.graze_editor.generated.resources.comparator_less_than_or_equal
 import heron.feature.graze_editor.generated.resources.comparator_not_equal
 import heron.feature.graze_editor.generated.resources.comparator_not_in
+import heron.feature.graze_editor.generated.resources.remove_filter
 import heron.ui.core.generated.resources.cancel
 import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
+fun FilterCard(
+    modifier: Modifier = Modifier,
+    title: @Composable () -> Unit = {},
+    onRemove: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        ),
+        modifier = modifier
+            .fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f),
+                ) {
+                    title()
+                }
+                IconButton(
+                    onClick = onRemove,
+                    modifier = Modifier
+                        .size(24.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = stringResource(Res.string.remove_filter),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            content()
+        }
+    }
+}
+
+@Composable
 fun StandardFilter(
+    modifier: Modifier = Modifier,
     title: String,
     onRemove: () -> Unit,
     startContent: @Composable () -> Unit,
@@ -61,6 +117,7 @@ fun StandardFilter(
     additionalContent: @Composable () -> Unit = {},
 ) {
     FilterCard(
+        modifier = modifier,
         title = {
             Text(
                 text = title,
@@ -94,6 +151,7 @@ fun StandardFilter(
 
 @Composable
 fun ChipFilter(
+    modifier: Modifier = Modifier,
     title: String,
     items: List<String>,
     onItemsUpdated: (List<String>) -> Unit,
@@ -102,6 +160,7 @@ fun ChipFilter(
     endContent: @Composable () -> Unit,
 ) {
     StandardFilter(
+        modifier = modifier,
         title = title,
         onRemove = onRemove,
         startContent = startContent,

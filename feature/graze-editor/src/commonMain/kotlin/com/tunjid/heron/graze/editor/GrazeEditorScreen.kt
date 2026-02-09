@@ -303,11 +303,13 @@ fun FilterLeaf(
 ) {
     when (filter) {
         is Filter.Attribute.Compare -> AttributeCompareFilter(
+            modifier = modifier,
             filter = filter,
             onUpdate = onUpdate,
             onRemove = onRemove,
         )
         is Filter.Attribute.Embed -> AttributeEmbedFilter(
+            modifier = modifier,
             filter = filter,
             onUpdate = onUpdate,
             onRemove = onRemove,
@@ -315,71 +317,85 @@ fun FilterLeaf(
         is Filter.Entity.Matches,
         is Filter.Entity.Excludes,
         -> EntityFilter(
+            modifier = modifier,
             filter = filter,
             onUpdate = onUpdate,
             onRemove = onRemove,
         )
         is Filter.Regex.Matches -> RegexMatchesFilter(
+            modifier = modifier,
             filter = filter,
             onUpdate = onUpdate,
             onRemove = onRemove,
         )
         is Filter.Regex.Negation -> RegexNegationFilter(
+            modifier = modifier,
             filter = filter,
             onUpdate = onUpdate,
             onRemove = onRemove,
         )
         is Filter.Regex.Any -> RegexAnyFilter(
+            modifier = modifier,
             filter = filter,
             onUpdate = onUpdate,
             onRemove = onRemove,
         )
         is Filter.Regex.None -> RegexNoneFilter(
+            modifier = modifier,
             filter = filter,
             onUpdate = onUpdate,
             onRemove = onRemove,
         )
         is Filter.Social.Graph -> SocialGraphFilter(
+            modifier = modifier,
             filter = filter,
             onUpdate = onUpdate,
             onRemove = onRemove,
         )
         is Filter.Social.UserList -> SocialUserListFilter(
+            modifier = modifier,
             filter = filter,
             onUpdate = onUpdate,
             onRemove = onRemove,
         )
         is Filter.Social.StarterPack -> SocialStarterPackFilter(
+            modifier = modifier,
             filter = filter,
             onUpdate = onUpdate,
             onRemove = onRemove,
         )
         is Filter.Social.ListMember -> SocialListMemberFilter(
+            modifier = modifier,
             filter = filter,
             onUpdate = onUpdate,
             onRemove = onRemove,
         )
         is Filter.Social.MagicAudience -> SocialMagicAudienceFilter(
+            modifier = modifier,
             filter = filter,
             onUpdate = onUpdate,
             onRemove = onRemove,
         )
         is Filter.ML.Similarity -> MLSimilarityFilter(
+            modifier = modifier,
             filter = filter,
             onUpdate = onUpdate,
             onRemove = onRemove,
         )
         is Filter.ML.Probability -> MLProbabilityFilter(
+            modifier = modifier,
             filter = filter,
             onUpdate = onUpdate,
             onRemove = onRemove,
         )
         is Filter.ML.Moderation -> MLModerationFilter(
+            modifier = modifier,
             filter = filter,
             onUpdate = onUpdate,
             onRemove = onRemove,
         )
         is Filter.Analysis -> AnalysisFilter(
+            modifier = modifier,
             filter = filter,
             onUpdate = onUpdate,
             onRemove = onRemove,

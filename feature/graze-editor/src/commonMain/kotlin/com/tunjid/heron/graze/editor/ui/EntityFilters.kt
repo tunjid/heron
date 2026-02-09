@@ -17,6 +17,7 @@
 package com.tunjid.heron.graze.editor.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.graze.Filter
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.entity_excludes
@@ -34,8 +35,10 @@ fun EntityFilter(
     filter: Filter.Entity,
     onUpdate: (Filter.Entity) -> Unit,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     ChipFilter(
+        modifier = modifier,
         title = stringResource(
             when (filter) {
                 is Filter.Entity.Excludes -> Res.string.entity_excludes

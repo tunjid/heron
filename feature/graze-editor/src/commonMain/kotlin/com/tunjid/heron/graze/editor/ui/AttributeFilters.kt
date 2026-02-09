@@ -41,8 +41,10 @@ fun AttributeCompareFilter(
     filter: Filter.Attribute.Compare,
     onUpdate: (Filter.Attribute.Compare) -> Unit,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     StandardFilter(
+        modifier = modifier,
         title = stringResource(Res.string.attribute_compare),
         onRemove = onRemove,
         startContent = {
@@ -78,8 +80,10 @@ fun AttributeEmbedFilter(
     filter: Filter.Attribute.Embed,
     onUpdate: (Filter.Attribute.Embed) -> Unit,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     StandardFilter(
+        modifier = modifier,
         title = stringResource(Res.string.embed_type),
         onRemove = onRemove,
         startContent = {
