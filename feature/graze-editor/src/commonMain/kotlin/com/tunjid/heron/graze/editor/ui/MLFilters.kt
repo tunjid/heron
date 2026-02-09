@@ -19,9 +19,7 @@ package com.tunjid.heron.graze.editor.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -45,7 +43,6 @@ import heron.feature.graze_editor.generated.resources.moderation_category_violen
 import heron.feature.graze_editor.generated.resources.moderation_category_violence_graphic
 import heron.feature.graze_editor.generated.resources.path
 import heron.feature.graze_editor.generated.resources.text_similarity
-import heron.feature.graze_editor.generated.resources.threshold_percent
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -92,19 +89,11 @@ fun MLSimilarityFilter(
                     label = { Text(text = stringResource(Res.string.anchor_text)) },
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Column(
+                ThresholdSlider(
+                    threshold = filter.threshold,
+                    onThresholdChanged = { onUpdate(filter.copy(threshold = it)) },
                     modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(
-                        text = stringResource(Res.string.threshold_percent, filter.thresholdPercent),
-                        style = MaterialTheme.typography.labelMedium,
-                    )
-                    Slider(
-                        value = filter.threshold.toFloat(),
-                        onValueChange = { onUpdate(filter.copy(threshold = it.toDouble())) },
-                        valueRange = 0.1f..1f,
-                    )
-                }
+                )
             }
         },
     )
@@ -138,19 +127,11 @@ fun MLProbabilityFilter(
             )
         },
         additionalContent = {
-            Column(
+            ThresholdSlider(
+                threshold = filter.threshold,
+                onThresholdChanged = { onUpdate(filter.copy(threshold = it)) },
                 modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(
-                    text = stringResource(Res.string.threshold_percent, filter.thresholdPercent),
-                    style = MaterialTheme.typography.labelMedium,
-                )
-                Slider(
-                    value = filter.threshold.toFloat(),
-                    onValueChange = { onUpdate(filter.copy(threshold = it.toDouble())) },
-                    valueRange = 0.1f..1f,
-                )
-            }
+            )
         },
     )
 }
@@ -185,19 +166,11 @@ fun MLModerationFilter(
             )
         },
         additionalContent = {
-            Column(
+            ThresholdSlider(
+                threshold = filter.threshold,
+                onThresholdChanged = { onUpdate(filter.copy(threshold = it)) },
                 modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(
-                    text = stringResource(Res.string.threshold_percent, filter.thresholdPercent),
-                    style = MaterialTheme.typography.labelMedium,
-                )
-                Slider(
-                    value = filter.threshold.toFloat(),
-                    onValueChange = { onUpdate(filter.copy(threshold = it.toDouble())) },
-                    valueRange = 0.1f..1f,
-                )
-            }
+            )
         },
     )
 }

@@ -16,11 +16,7 @@
 
 package com.tunjid.heron.graze.editor.ui
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.graze.Filter
@@ -117,7 +113,6 @@ import heron.feature.graze_editor.generated.resources.sentiment_analysis
 import heron.feature.graze_editor.generated.resources.sentiment_category
 import heron.feature.graze_editor.generated.resources.tag
 import heron.feature.graze_editor.generated.resources.text_arbitrary
-import heron.feature.graze_editor.generated.resources.threshold_percent
 import heron.feature.graze_editor.generated.resources.topic_analysis
 import heron.feature.graze_editor.generated.resources.topic_label
 import heron.feature.graze_editor.generated.resources.toxic_category
@@ -269,34 +264,25 @@ fun AnalysisFilter(
         },
         // Threshold slider
         additionalContent = {
-            Column(
+            ThresholdSlider(
+                threshold = filter.threshold,
+                onThresholdChanged = { threshold ->
+                    onUpdate(
+                        when (filter) {
+                            is Filter.Analysis.Language -> filter.copy(threshold = threshold)
+                            is Filter.Analysis.Sentiment -> filter.copy(threshold = threshold)
+                            is Filter.Analysis.FinancialSentiment -> filter.copy(threshold = threshold)
+                            is Filter.Analysis.Emotion -> filter.copy(threshold = threshold)
+                            is Filter.Analysis.Toxicity -> filter.copy(threshold = threshold)
+                            is Filter.Analysis.Topic -> filter.copy(threshold = threshold)
+                            is Filter.Analysis.TextArbitrary -> filter.copy(threshold = threshold)
+                            is Filter.Analysis.ImageNsfw -> filter.copy(threshold = threshold)
+                            is Filter.Analysis.ImageArbitrary -> filter.copy(threshold = threshold)
+                        },
+                    )
+                },
                 modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(
-                    text = stringResource(Res.string.threshold_percent, filter.thresholdPercent),
-                    style = MaterialTheme.typography.labelMedium,
-                )
-                Slider(
-                    value = filter.threshold.toFloat(),
-                    onValueChange = { threshold ->
-                        onUpdate(
-                            when (filter) {
-                                is Filter.Analysis.Language -> filter.copy(threshold = threshold.toDouble())
-                                is Filter.Analysis.Sentiment -> filter.copy(threshold = threshold.toDouble())
-                                is Filter.Analysis.FinancialSentiment -> filter.copy(threshold = threshold.toDouble())
-                                is Filter.Analysis.Emotion -> filter.copy(threshold = threshold.toDouble())
-                                is Filter.Analysis.Toxicity -> filter.copy(threshold = threshold.toDouble())
-                                is Filter.Analysis.Topic -> filter.copy(threshold = threshold.toDouble())
-                                is Filter.Analysis.TextArbitrary -> filter.copy(threshold = threshold.toDouble())
-                                is Filter.Analysis.ImageNsfw -> filter.copy(threshold = threshold.toDouble())
-                                is Filter.Analysis.ImageArbitrary -> filter.copy(threshold = threshold.toDouble())
-                            },
-                        )
-                    },
-                    steps = 8,
-                    valueRange = 0.1f..1f,
-                )
-            }
+            )
         },
     )
 }

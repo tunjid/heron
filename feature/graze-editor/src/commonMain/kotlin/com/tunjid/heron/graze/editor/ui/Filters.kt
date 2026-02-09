@@ -38,6 +38,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -56,6 +57,7 @@ import heron.feature.graze_editor.generated.resources.comparator_less_than_or_eq
 import heron.feature.graze_editor.generated.resources.comparator_not_equal
 import heron.feature.graze_editor.generated.resources.comparator_not_in
 import heron.feature.graze_editor.generated.resources.remove_filter
+import heron.feature.graze_editor.generated.resources.threshold_percent
 import heron.ui.core.generated.resources.cancel
 import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.StringResource
@@ -212,6 +214,29 @@ fun ChipFilter(
             )
         },
     )
+}
+
+@Composable
+fun ThresholdSlider(
+    threshold: Double,
+    onThresholdChanged: (Double) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val thresholdPercent = (threshold * 100).roundToInt()
+    Column(
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Text(
+            text = stringResource(Res.string.threshold_percent, thresholdPercent),
+            style = MaterialTheme.typography.labelMedium,
+        )
+        Slider(
+            value = threshold.toFloat(),
+            onValueChange = { onThresholdChanged(it.toDouble()) },
+            steps = 8,
+            valueRange = 0.1f..1f,
+        )
+    }
 }
 
 val Filter.ML.thresholdPercent: Int
