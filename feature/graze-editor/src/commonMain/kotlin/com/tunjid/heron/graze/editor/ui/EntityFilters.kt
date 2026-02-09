@@ -16,9 +16,12 @@
 
 package com.tunjid.heron.graze.editor.ui
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.graze.Filter
+import com.tunjid.heron.ui.UiTokens.withDim
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.entity_excludes
 import heron.feature.graze_editor.generated.resources.entity_matches
@@ -39,6 +42,12 @@ fun EntityFilter(
 ) {
     ChipFilter(
         modifier = modifier,
+        tint = animateColorAsState(
+            targetValue = when (filter) {
+                is Filter.Entity.Excludes -> MaterialTheme.colorScheme.errorContainer
+                is Filter.Entity.Matches -> MaterialTheme.colorScheme.secondaryContainer
+            }.withDim(true),
+        ).value,
         title = stringResource(
             when (filter) {
                 is Filter.Entity.Excludes -> Res.string.entity_excludes
