@@ -16,8 +16,8 @@
 
 package com.tunjid.heron.graze.editor
 
-import androidx.compose.animation.animateBounds
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,6 +28,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
@@ -35,6 +36,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
@@ -59,6 +61,7 @@ import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.all_of_these_and
 import heron.feature.graze_editor.generated.resources.any_of_these_or
 import heron.feature.graze_editor.generated.resources.items_count
+import heron.feature.graze_editor.generated.resources.remove_filter
 import heron.feature.graze_editor.generated.resources.unknown_filter
 import org.jetbrains.compose.resources.stringResource
 
@@ -68,80 +71,92 @@ fun GrazeEditorScreen(
     state: State,
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
-) {
-    val currentFilter = state.currentFilter
-
-    Column(
-        modifier = modifier
-            .animateBounds(paneScaffoldState)
-            .fillMaxSize()
-            .padding(
-                horizontal = 16.dp,
-                vertical = 8.dp,
-            ),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        RootFilterDescription(
-            modifier = Modifier,
-            isAnd = state.filter is Filter.And,
-            size = state.filter.filters.size,
-            onFlipClicked = {
-                actions(
-                    Action.EditFilter.FlipRootFilter(
-                        path = state.currentPath,
-                    ),
-                )
-            },
-        )
-        LazyColumn(
+) = with(paneScaffoldState) {
+    AnimatedContent(
+        modifier = modifier,
+        targetState = state.currentFilter to state.currentPath,
+        contentKey = { (currentFilter) -> currentFilter.id },
+    ) { (currentFilter, currentPath) ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
+                .fillMaxSize()
+                .padding(
+                    horizontal = 16.dp,
+                    vertical = 8.dp,
+                ),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            itemsIndexed(
-                currentFilter.filters,
-                key = { _, child -> child.id.value },
-                itemContent = { index, child ->
-                    Filter(
-                        modifier = Modifier
-                            .animateItem()
-                            .animateBounds(paneScaffoldState)
-                            .fillMaxWidth(),
-                        filter = child,
-                        atTopLevel = true,
-                        enterFilter = { enteredIndex ->
-                            actions(Action.EditorNavigation.EnterFilter(enteredIndex))
-                        },
-                        onFlipClicked = { flippedPath ->
-                            actions(
-                                Action.EditFilter.FlipRootFilter(
-                                    path = flippedPath,
-                                ),
-                            )
-                        },
-                        onUpdateFilter = { updatedFilter: Filter, path: List<Int>, updatedIndex: Int ->
-                            actions(
-                                Action.EditFilter.UpdateFilter(
-                                    filter = updatedFilter,
-                                    path = path,
-                                    index = updatedIndex,
-                                ),
-                            )
-                        },
-                        onRemoveFilter = { path: List<Int>, removedIndex: Int ->
-                            actions(
-                                Action.EditFilter.RemoveFilter(
-                                    path = path,
-                                    index = removedIndex,
-                                ),
-                            )
-                        },
-                        index = index,
-                        path = state.currentPath,
+            RootFilterDescription(
+                modifier = Modifier,
+                isAnd = currentFilter is Filter.And,
+                size = currentFilter.filters.size,
+                animatedVisibilityScope = this@AnimatedContent,
+                paneScaffoldState = paneScaffoldState,
+                id = currentFilter.id,
+                onRemove = null,
+                onFlipClicked = {
+                    actions(
+                        Action.EditFilter.FlipRootFilter(
+                            path = currentPath,
+                        ),
                     )
                 },
             )
+            LazyColumn(
+                modifier = Modifier
+                    .sharedBounds(
+                        sharedContentState = rememberSharedContentState(currentFilter.backgroundSharedElementKey()),
+                        animatedVisibilityScope = this@AnimatedContent,
+                    )
+                    .fillMaxWidth()
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                itemsIndexed(
+                    currentFilter.filters,
+                    key = { _, child -> child.id.value },
+                    itemContent = { index, child ->
+                        Filter(
+                            modifier = Modifier
+                                .animateItem()
+                                .fillMaxWidth(),
+                            animatedVisibilityScope = this@AnimatedContent,
+                            paneScaffoldState = paneScaffoldState,
+                            filter = child,
+                            atTopLevel = true,
+                            enterFilter = { enteredIndex ->
+                                actions(Action.EditorNavigation.EnterFilter(enteredIndex))
+                            },
+                            onFlipClicked = { flippedPath ->
+                                actions(
+                                    Action.EditFilter.FlipRootFilter(
+                                        path = flippedPath,
+                                    ),
+                                )
+                            },
+                            onUpdateFilter = { updatedFilter: Filter, path: List<Int>, updatedIndex: Int ->
+                                actions(
+                                    Action.EditFilter.UpdateFilter(
+                                        filter = updatedFilter,
+                                        path = path,
+                                        index = updatedIndex,
+                                    ),
+                                )
+                            },
+                            onRemoveFilter = { path: List<Int>, removedIndex: Int ->
+                                actions(
+                                    Action.EditFilter.RemoveFilter(
+                                        path = path,
+                                        index = removedIndex,
+                                    ),
+                                )
+                            },
+                            index = index,
+                            path = currentPath,
+                        )
+                    },
+                )
+            }
         }
     }
 }
@@ -149,6 +164,8 @@ fun GrazeEditorScreen(
 @Composable
 private fun Filter(
     modifier: Modifier = Modifier,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    paneScaffoldState: PaneScaffoldState,
     filter: Filter,
     atTopLevel: Boolean,
     path: List<Int>,
@@ -159,6 +176,8 @@ private fun Filter(
     index: Int,
 ) {
     if (filter is Filter.Root) FilterRow(
+        animatedVisibilityScope = animatedVisibilityScope,
+        paneScaffoldState = paneScaffoldState,
         atTopLevel = atTopLevel,
         modifier = modifier,
         filter = filter,
@@ -190,6 +209,8 @@ private fun Filter(
 
 @Composable
 fun FilterRow(
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    paneScaffoldState: PaneScaffoldState,
     atTopLevel: Boolean,
     index: Int,
     filter: Filter.Root,
@@ -199,12 +220,16 @@ fun FilterRow(
     onUpdateFilter: (filter: Filter, path: List<Int>, index: Int) -> Unit,
     onRemoveFilter: (path: List<Int>, index: Int) -> Unit,
     modifier: Modifier = Modifier,
-) {
+) = with(paneScaffoldState) {
     Card(
         modifier = modifier
-            .clickable {
-                enterFilter(index)
-            },
+            .sharedBounds(
+                sharedContentState = rememberSharedContentState(filter.backgroundSharedElementKey()),
+                animatedVisibilityScope = animatedVisibilityScope,
+            ),
+        onClick = {
+            enterFilter(index)
+        },
     ) {
         Column(
             modifier = Modifier
@@ -212,11 +237,17 @@ fun FilterRow(
                 .padding(16.dp),
         ) {
             RootFilterDescription(
+                animatedVisibilityScope = animatedVisibilityScope,
+                paneScaffoldState = paneScaffoldState,
+                id = filter.id,
                 modifier = Modifier,
                 isAnd = filter is Filter.And,
                 size = filter.filters.size,
                 onFlipClicked = {
                     onFlipClicked(path + index)
+                },
+                onRemove = {
+                    onRemoveFilter(path, index)
                 },
             )
 
@@ -234,6 +265,8 @@ fun FilterRow(
                                 .animateItem()
                                 .fillParentMaxWidth()
                                 .padding(8.dp),
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            paneScaffoldState = paneScaffoldState,
                             filter = child,
                             atTopLevel = false,
                             index = childIndex,
@@ -251,20 +284,29 @@ fun FilterRow(
 }
 
 @Composable
-fun RootFilterDescription(
+private fun RootFilterDescription(
     modifier: Modifier,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    paneScaffoldState: PaneScaffoldState,
+    id: Filter.Id,
     isAnd: Boolean,
     size: Int,
     onFlipClicked: () -> Unit,
-) {
+    onRemove: (() -> Unit)?,
+) = with(paneScaffoldState) {
     Column(
         modifier = modifier,
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 modifier = Modifier
+                    .sharedElement(
+                        sharedContentState = rememberSharedContentState("$id-title"),
+                        animatedVisibilityScope = animatedVisibilityScope,
+                    )
                     .weight(1f),
                 text = stringResource(
                     if (isAnd) Res.string.all_of_these_and
@@ -273,6 +315,11 @@ fun RootFilterDescription(
                 style = MaterialTheme.typography.titleMedium,
             )
             IconButton(
+                modifier = Modifier
+                    .sharedElement(
+                        sharedContentState = rememberSharedContentState("$id-icon"),
+                        animatedVisibilityScope = animatedVisibilityScope,
+                    ),
                 onClick = {
                     onFlipClicked()
                 },
@@ -283,8 +330,22 @@ fun RootFilterDescription(
                     )
                 },
             )
+            if (onRemove != null) IconButton(
+                onClick = onRemove,
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Close,
+                    contentDescription = stringResource(Res.string.remove_filter),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
         Text(
+            modifier = Modifier
+                .sharedElement(
+                    sharedContentState = rememberSharedContentState("$id-description"),
+                    animatedVisibilityScope = animatedVisibilityScope,
+                ),
             text = stringResource(
                 Res.string.items_count,
                 size,
@@ -415,3 +476,5 @@ fun FilterLeaf(
         }
     }
 }
+
+private fun Filter.Root.backgroundSharedElementKey(): String = "$id-background"
