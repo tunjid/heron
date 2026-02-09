@@ -16,18 +16,12 @@
 
 package com.tunjid.heron.graze.editor.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
@@ -37,9 +31,19 @@ import heron.feature.graze_editor.generated.resources.category
 import heron.feature.graze_editor.generated.resources.content_moderation
 import heron.feature.graze_editor.generated.resources.model_name
 import heron.feature.graze_editor.generated.resources.model_probability
+import heron.feature.graze_editor.generated.resources.moderation_category_harassment
+import heron.feature.graze_editor.generated.resources.moderation_category_hate
+import heron.feature.graze_editor.generated.resources.moderation_category_hate_threatening
+import heron.feature.graze_editor.generated.resources.moderation_category_ok
+import heron.feature.graze_editor.generated.resources.moderation_category_self_harm
+import heron.feature.graze_editor.generated.resources.moderation_category_sexual
+import heron.feature.graze_editor.generated.resources.moderation_category_sexual_minors
+import heron.feature.graze_editor.generated.resources.moderation_category_unknown
+import heron.feature.graze_editor.generated.resources.moderation_category_violence
+import heron.feature.graze_editor.generated.resources.moderation_category_violence_graphic
 import heron.feature.graze_editor.generated.resources.path
 import heron.feature.graze_editor.generated.resources.text_similarity
-import heron.feature.graze_editor.generated.resources.threshold_percent
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -49,72 +53,50 @@ fun MLSimilarityFilter(
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    FilterCard(
+    StandardFilter(
         modifier = modifier,
+        title = stringResource(Res.string.text_similarity),
         onRemove = onRemove,
-    ) {
-        Text(
-            text = stringResource(Res.string.text_similarity),
-            style = MaterialTheme.typography.titleSmall,
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        OutlinedTextField(
-            value = filter.path,
-            onValueChange = { onUpdate(filter.copy(path = it)) },
-            label = { Text(text = stringResource(Res.string.path)) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        OutlinedTextField(
-            value = filter.config.modelName,
-            onValueChange = { onUpdate(filter.copy(config = filter.config.copy(modelName = it))) },
-            label = { Text(text = stringResource(Res.string.model_name)) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        OutlinedTextField(
-            value = filter.config.anchorText,
-            onValueChange = { onUpdate(filter.copy(config = filter.config.copy(anchorText = it))) },
-            label = { Text(text = stringResource(Res.string.anchor_text)) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        startContent = {
             ComparatorDropdown(
                 selected = filter.operator,
                 options = Filter.Comparator.Range.entries,
                 onSelect = { onUpdate(filter.copy(operator = it)) },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth(),
             )
-            Spacer(
-                modifier = Modifier.width(8.dp),
+        },
+        endContent = {
+            OutlinedTextField(
+                value = filter.path,
+                onValueChange = { onUpdate(filter.copy(path = it)) },
+                label = { Text(text = stringResource(Res.string.path)) },
+                modifier = Modifier.fillMaxWidth(),
             )
+        },
+        additionalContent = {
             Column(
-                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text(
-                    text = stringResource(Res.string.threshold_percent, filter.thresholdPercent),
-                    style = MaterialTheme.typography.labelMedium,
+                OutlinedTextField(
+                    value = filter.config.modelName,
+                    onValueChange = { onUpdate(filter.copy(config = filter.config.copy(modelName = it))) },
+                    label = { Text(text = stringResource(Res.string.model_name)) },
+                    modifier = Modifier.fillMaxWidth(),
                 )
-                Slider(
-                    value = filter.threshold.toFloat(),
-                    onValueChange = { onUpdate(filter.copy(threshold = it.toDouble())) },
-                    valueRange = 0.1f..1f,
+                OutlinedTextField(
+                    value = filter.config.anchorText,
+                    onValueChange = { onUpdate(filter.copy(config = filter.config.copy(anchorText = it))) },
+                    label = { Text(text = stringResource(Res.string.anchor_text)) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                ThresholdSlider(
+                    threshold = filter.threshold,
+                    onThresholdChanged = { onUpdate(filter.copy(threshold = it)) },
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
-        }
-    }
+        },
+    )
 }
 
 @Composable
@@ -124,54 +106,34 @@ fun MLProbabilityFilter(
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    FilterCard(
+    StandardFilter(
         modifier = modifier,
+        title = stringResource(Res.string.model_probability),
         onRemove = onRemove,
-    ) {
-        Text(
-            text = stringResource(Res.string.model_probability),
-            style = MaterialTheme.typography.titleSmall,
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        OutlinedTextField(
-            value = filter.config.modelName,
-            onValueChange = { onUpdate(filter.copy(config = filter.config.copy(modelName = it))) },
-            label = { Text(text = stringResource(Res.string.model_name)) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        startContent = {
             ComparatorDropdown(
                 selected = filter.operator,
                 options = Filter.Comparator.Range.entries,
                 onSelect = { onUpdate(filter.copy(operator = it)) },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth(),
             )
-            Spacer(
-                modifier = Modifier.width(8.dp),
+        },
+        endContent = {
+            OutlinedTextField(
+                value = filter.config.modelName,
+                onValueChange = { onUpdate(filter.copy(config = filter.config.copy(modelName = it))) },
+                label = { Text(text = stringResource(Res.string.model_name)) },
+                modifier = Modifier.fillMaxWidth(),
             )
-            Column(
-                modifier = Modifier.weight(1f),
-            ) {
-                Text(
-                    text = stringResource(Res.string.threshold_percent, filter.thresholdPercent),
-                    style = MaterialTheme.typography.labelMedium,
-                )
-                Slider(
-                    value = filter.threshold.toFloat(),
-                    onValueChange = { onUpdate(filter.copy(threshold = it.toDouble())) },
-                    valueRange = 0.1f..1f,
-                )
-            }
-        }
-    }
+        },
+        additionalContent = {
+            ThresholdSlider(
+                threshold = filter.threshold,
+                onThresholdChanged = { onUpdate(filter.copy(threshold = it)) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+    )
 }
 
 @Composable
@@ -181,52 +143,47 @@ fun MLModerationFilter(
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    FilterCard(
+    StandardFilter(
         modifier = modifier,
+        title = stringResource(Res.string.content_moderation),
         onRemove = onRemove,
-    ) {
-        Text(
-            text = stringResource(Res.string.content_moderation),
-            style = MaterialTheme.typography.titleSmall,
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        OutlinedTextField(
-            value = filter.category,
-            onValueChange = { onUpdate(filter.copy(category = it)) },
-            label = { Text(text = stringResource(Res.string.category)) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        startContent = {
             ComparatorDropdown(
                 selected = filter.operator,
                 options = Filter.Comparator.Range.entries,
                 onSelect = { onUpdate(filter.copy(operator = it)) },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth(),
             )
-            Spacer(
-                modifier = Modifier.width(8.dp),
+        },
+        endContent = {
+            Dropdown(
+                label = stringResource(Res.string.category),
+                selected = filter.category,
+                options = Filter.ML.Moderation.Category.entries,
+                modifier = Modifier.fillMaxWidth(),
+                stringRes = Filter.ML.Moderation.Category::stringRes,
+                onSelect = { onUpdate(filter.copy(category = it)) },
             )
-            Column(
-                modifier = Modifier.weight(1f),
-            ) {
-                Text(
-                    text = stringResource(Res.string.threshold_percent, filter.thresholdPercent),
-                    style = MaterialTheme.typography.labelMedium,
-                )
-                Slider(
-                    value = filter.threshold.toFloat(),
-                    onValueChange = { onUpdate(filter.copy(threshold = it.toDouble())) },
-                    valueRange = 0.1f..1f,
-                )
-            }
-        }
-    }
+        },
+        additionalContent = {
+            ThresholdSlider(
+                threshold = filter.threshold,
+                onThresholdChanged = { onUpdate(filter.copy(threshold = it)) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+    )
+}
+
+fun Filter.ML.Moderation.Category.stringRes(): StringResource = when (this) {
+    Filter.ML.Moderation.Category.Sexual -> Res.string.moderation_category_sexual
+    Filter.ML.Moderation.Category.Hate -> Res.string.moderation_category_hate
+    Filter.ML.Moderation.Category.Violence -> Res.string.moderation_category_violence
+    Filter.ML.Moderation.Category.Harassment -> Res.string.moderation_category_harassment
+    Filter.ML.Moderation.Category.SelfHarm -> Res.string.moderation_category_self_harm
+    Filter.ML.Moderation.Category.SexualMinors -> Res.string.moderation_category_sexual_minors
+    Filter.ML.Moderation.Category.HateThreatening -> Res.string.moderation_category_hate_threatening
+    Filter.ML.Moderation.Category.ViolenceGraphic -> Res.string.moderation_category_violence_graphic
+    Filter.ML.Moderation.Category.OK -> Res.string.moderation_category_ok
+    else -> Res.string.moderation_category_unknown
 }

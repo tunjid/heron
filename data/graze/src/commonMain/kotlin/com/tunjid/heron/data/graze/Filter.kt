@@ -489,13 +489,41 @@ sealed interface Filter {
         @SerialName("content_moderation")
         data class Moderation(
             override val id: Id = Id(),
-            val category: String,
+            val category: Category,
             val operator: Comparator.Range,
             override val threshold: Double,
         ) : ML {
+            @Serializable
+            @JvmInline
+            value class Category(val value: String) {
+                companion object {
+                    val Sexual = Category("sexual")
+                    val Hate = Category("hate")
+                    val Violence = Category("violence")
+                    val Harassment = Category("harassment")
+                    val SelfHarm = Category("self-harm")
+                    val SexualMinors = Category("sexual/minors")
+                    val HateThreatening = Category("hate/threatening")
+                    val ViolenceGraphic = Category("violence/graphic")
+                    val OK = Category("OK")
+
+                    val entries = listOf(
+                        Sexual,
+                        Hate,
+                        Violence,
+                        Harassment,
+                        SelfHarm,
+                        SexualMinors,
+                        HateThreatening,
+                        ViolenceGraphic,
+                        OK,
+                    )
+                }
+            }
+
             companion object {
                 fun empty() = Moderation(
-                    category = "",
+                    category = Category.Sexual,
                     operator = Comparator.Range.GreaterThan,
                     threshold = 0.8,
                 )
@@ -509,7 +537,6 @@ sealed interface Filter {
 
     @Serializable
     sealed interface Analysis : Filter {
-        val category: String
         val operator: Comparator.Range
         val threshold: Double
 
@@ -518,13 +545,63 @@ sealed interface Filter {
         data class Language(
             override val id: Id = Id(),
             @SerialName("language_name")
-            override val category: String,
+            val category: Category,
             override val operator: Comparator.Range,
             override val threshold: Double,
         ) : Analysis {
+            @Serializable
+            @JvmInline
+            value class Category(val value: String) {
+                companion object {
+                    val Japanese = Category("Japanese")
+                    val Dutch = Category("Dutch")
+                    val Arabic = Category("Arabic")
+                    val Polish = Category("Polish")
+                    val German = Category("German")
+                    val Italian = Category("Italian")
+                    val Portuguese = Category("Portuguese")
+                    val Turkish = Category("Turkish")
+                    val Spanish = Category("Spanish")
+                    val Hindi = Category("Hindi")
+                    val Greek = Category("Greek")
+                    val Urdu = Category("Urdu")
+                    val Bulgarian = Category("Bulgarian")
+                    val English = Category("English")
+                    val French = Category("French")
+                    val Chinese = Category("Chinese")
+                    val Russian = Category("Russian")
+                    val Thai = Category("Thai")
+                    val Swahili = Category("Swahili")
+                    val Vietnamese = Category("Vietnamese")
+
+                    val entries = listOf(
+                        Japanese,
+                        Dutch,
+                        Arabic,
+                        Polish,
+                        German,
+                        Italian,
+                        Portuguese,
+                        Turkish,
+                        Spanish,
+                        Hindi,
+                        Greek,
+                        Urdu,
+                        Bulgarian,
+                        English,
+                        French,
+                        Chinese,
+                        Russian,
+                        Thai,
+                        Swahili,
+                        Vietnamese,
+                    )
+                }
+            }
+
             companion object {
                 fun empty() = Language(
-                    category = "",
+                    category = Category.English,
                     operator = Comparator.Range.GreaterThan,
                     threshold = 0.8,
                 )
@@ -536,13 +613,29 @@ sealed interface Filter {
         data class Sentiment(
             override val id: Id = Id(),
             @SerialName("sentiment_category")
-            override val category: String,
+            val category: Category,
             override val operator: Comparator.Range,
             override val threshold: Double,
         ) : Analysis {
+            @Serializable
+            @JvmInline
+            value class Category(val value: String) {
+                companion object {
+                    val Positive = Category("Positive")
+                    val Negative = Category("Negative")
+                    val Neutral = Category("Neutral")
+
+                    val entries = listOf(
+                        Positive,
+                        Negative,
+                        Neutral,
+                    )
+                }
+            }
+
             companion object {
                 fun empty() = Sentiment(
-                    category = "",
+                    category = Category.Neutral,
                     operator = Comparator.Range.GreaterThan,
                     threshold = 0.8,
                 )
@@ -554,13 +647,29 @@ sealed interface Filter {
         data class FinancialSentiment(
             override val id: Id = Id(),
             @SerialName("financial_category")
-            override val category: String,
+            val category: Category,
             override val operator: Comparator.Range,
             override val threshold: Double,
         ) : Analysis {
+            @Serializable
+            @JvmInline
+            value class Category(val value: String) {
+                companion object {
+                    val Positive = Category("Positive")
+                    val Negative = Category("Negative")
+                    val Neutral = Category("Neutral")
+
+                    val entries = listOf(
+                        Positive,
+                        Negative,
+                        Neutral,
+                    )
+                }
+            }
+
             companion object {
                 fun empty() = FinancialSentiment(
-                    category = "",
+                    category = Category.Neutral,
                     operator = Comparator.Range.GreaterThan,
                     threshold = 0.8,
                 )
@@ -572,13 +681,79 @@ sealed interface Filter {
         data class Emotion(
             override val id: Id = Id(),
             @SerialName("emotion_category")
-            override val category: String,
+            val category: Category,
             override val operator: Comparator.Range,
             override val threshold: Double,
         ) : Analysis {
+            @Serializable
+            @JvmInline
+            value class Category(val value: String) {
+                companion object {
+                    val Admiration = Category("Admiration")
+                    val Amusement = Category("Amusement")
+                    val Anger = Category("Anger")
+                    val Annoyance = Category("Annoyance")
+                    val Approval = Category("Approval")
+                    val Caring = Category("Caring")
+                    val Confusion = Category("Confusion")
+                    val Curiosity = Category("Curiosity")
+                    val Desire = Category("Desire")
+                    val Disappointment = Category("Disappointment")
+                    val Disapproval = Category("Disapproval")
+                    val Disgust = Category("Disgust")
+                    val Embarrassment = Category("Embarrassment")
+                    val Excitement = Category("Excitement")
+                    val Fear = Category("Fear")
+                    val Gratitude = Category("Gratitude")
+                    val Grief = Category("Grief")
+                    val Joy = Category("Joy")
+                    val Love = Category("Love")
+                    val Nervousness = Category("Nervousness")
+                    val Optimism = Category("Optimism")
+                    val Pride = Category("Pride")
+                    val Realization = Category("Realization")
+                    val Relief = Category("Relief")
+                    val Remorse = Category("Remorse")
+                    val Sadness = Category("Sadness")
+                    val Surprise = Category("Surprise")
+                    val Neutral = Category("Neutral")
+
+                    val entries = listOf(
+                        Admiration,
+                        Amusement,
+                        Anger,
+                        Annoyance,
+                        Approval,
+                        Caring,
+                        Confusion,
+                        Curiosity,
+                        Desire,
+                        Disappointment,
+                        Disapproval,
+                        Disgust,
+                        Embarrassment,
+                        Excitement,
+                        Fear,
+                        Gratitude,
+                        Grief,
+                        Joy,
+                        Love,
+                        Nervousness,
+                        Optimism,
+                        Pride,
+                        Realization,
+                        Relief,
+                        Remorse,
+                        Sadness,
+                        Surprise,
+                        Neutral,
+                    )
+                }
+            }
+
             companion object {
                 fun empty() = Emotion(
-                    category = "",
+                    category = Category.Neutral,
                     operator = Comparator.Range.GreaterThan,
                     threshold = 0.8,
                 )
@@ -590,13 +765,35 @@ sealed interface Filter {
         data class Toxicity(
             override val id: Id = Id(),
             @SerialName("toxic_category")
-            override val category: String,
+            val category: Category,
             override val operator: Comparator.Range,
             override val threshold: Double,
         ) : Analysis {
+            @Serializable
+            @JvmInline
+            value class Category(val value: String) {
+                companion object {
+                    val Toxic = Category("Toxic")
+                    val SevereToxicity = Category("Severe Toxicity")
+                    val Obscene = Category("Obscene")
+                    val Threat = Category("Threat")
+                    val Insult = Category("Insult")
+                    val IdentityHate = Category("Identity Hate")
+
+                    val entries = listOf(
+                        Toxic,
+                        SevereToxicity,
+                        Obscene,
+                        Threat,
+                        Insult,
+                        IdentityHate,
+                    )
+                }
+            }
+
             companion object {
                 fun empty() = Toxicity(
-                    category = "",
+                    category = Category.Toxic,
                     operator = Comparator.Range.GreaterThan,
                     threshold = 0.8,
                 )
@@ -608,13 +805,61 @@ sealed interface Filter {
         data class Topic(
             override val id: Id = Id(),
             @SerialName("topic_label")
-            override val category: String,
+            val category: Category,
             override val operator: Comparator.Range,
             override val threshold: Double,
         ) : Analysis {
+            @Serializable
+            @JvmInline
+            value class Category(val value: String) {
+                companion object {
+                    val ArtsAndCulture = Category("Arts & Culture")
+                    val BusinessAndEntrepreneurs = Category("Business & Entrepreneurs")
+                    val CelebrityAndPopCulture = Category("Celebrity & Pop Culture")
+                    val DiariesAndDailyLife = Category("Diaries & Daily Life")
+                    val Family = Category("Family")
+                    val FashionAndStyle = Category("Fashion & Style")
+                    val FilmTVAndVideo = Category("Film, TV & Video")
+                    val FitnessAndHealth = Category("Fitness & Health")
+                    val FoodAndDining = Category("Food & Dining")
+                    val Gaming = Category("Gaming")
+                    val LearningAndEducational = Category("Learning & Educational")
+                    val Music = Category("Music")
+                    val NewsAndSocialConcern = Category("News & Social Concern")
+                    val OtherHobbies = Category("Other Hobbies")
+                    val Relationships = Category("Relationships")
+                    val ScienceAndTechnology = Category("Science & Technology")
+                    val Sports = Category("Sports")
+                    val TravelAndAdventure = Category("Travel & Adventure")
+                    val YouthAndStudentLife = Category("Youth & Student Life")
+
+                    val entries = listOf(
+                        ArtsAndCulture,
+                        BusinessAndEntrepreneurs,
+                        CelebrityAndPopCulture,
+                        DiariesAndDailyLife,
+                        Family,
+                        FashionAndStyle,
+                        FilmTVAndVideo,
+                        FitnessAndHealth,
+                        FoodAndDining,
+                        Gaming,
+                        LearningAndEducational,
+                        Music,
+                        NewsAndSocialConcern,
+                        OtherHobbies,
+                        Relationships,
+                        ScienceAndTechnology,
+                        Sports,
+                        TravelAndAdventure,
+                        YouthAndStudentLife,
+                    )
+                }
+            }
+
             companion object {
                 fun empty() = Topic(
-                    category = "",
+                    category = Category.ArtsAndCulture,
                     operator = Comparator.Range.GreaterThan,
                     threshold = 0.8,
                 )
@@ -626,13 +871,22 @@ sealed interface Filter {
         data class TextArbitrary(
             override val id: Id = Id(),
             @SerialName("tag")
-            override val category: String,
+            val category: Category,
             override val operator: Comparator.Range,
             override val threshold: Double,
         ) : Analysis {
+            @Serializable
+            @JvmInline
+            value class Category(val value: String) {
+                companion object {
+                    val Default = Category("Default")
+                    val entries = listOf(Default)
+                }
+            }
+
             companion object {
                 fun empty() = TextArbitrary(
-                    category = "",
+                    category = Category.Default,
                     operator = Comparator.Range.GreaterThan,
                     threshold = 0.8,
                 )
@@ -644,13 +898,23 @@ sealed interface Filter {
         data class ImageNsfw(
             override val id: Id = Id(),
             @SerialName("tag")
-            override val category: String,
+            val category: Category,
             override val operator: Comparator.Range,
             override val threshold: Double,
         ) : Analysis {
+            @Serializable
+            @JvmInline
+            value class Category(val value: String) {
+                companion object {
+                    val NSFW = Category("NSFW")
+                    val SFW = Category("SFW")
+                    val entries = listOf(NSFW, SFW)
+                }
+            }
+
             companion object {
                 fun empty() = ImageNsfw(
-                    category = "",
+                    category = Category.NSFW,
                     operator = Comparator.Range.GreaterThan,
                     threshold = 0.8,
                 )
@@ -662,13 +926,22 @@ sealed interface Filter {
         data class ImageArbitrary(
             override val id: Id = Id(),
             @SerialName("tag")
-            override val category: String,
+            val category: Category,
             override val operator: Comparator.Range,
             override val threshold: Double,
         ) : Analysis {
+            @Serializable
+            @JvmInline
+            value class Category(val value: String) {
+                companion object {
+                    val Default = Category("Default")
+                    val entries = listOf(Default)
+                }
+            }
+
             companion object {
                 fun empty() = ImageArbitrary(
-                    category = "",
+                    category = Category.Default,
                     operator = Comparator.Range.GreaterThan,
                     threshold = 0.8,
                 )
