@@ -46,8 +46,10 @@ fun RegexMatchesFilter(
     filter: Filter.Regex.Matches,
     onUpdate: (Filter.Regex.Matches) -> Unit,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     RegexBaseFilter(
+        modifier = modifier,
         title = stringResource(Res.string.regex_matches),
         variable = filter.variable,
         pattern = filter.pattern,
@@ -64,8 +66,10 @@ fun RegexNegationFilter(
     filter: Filter.Regex.Negation,
     onUpdate: (Filter.Regex.Negation) -> Unit,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     RegexBaseFilter(
+        modifier = modifier,
         title = stringResource(Res.string.regex_negation),
         variable = filter.variable,
         pattern = filter.pattern,
@@ -87,8 +91,10 @@ private fun RegexBaseFilter(
     onUpdatePattern: (String) -> Unit,
     onUpdateCaseInsensitive: (Boolean) -> Unit,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     FilterCard(
+        modifier = modifier,
         onRemove = onRemove,
     ) {
         Text(
@@ -136,8 +142,10 @@ fun RegexAnyFilter(
     filter: Filter.Regex.Any,
     onUpdate: (Filter.Regex.Any) -> Unit,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     RegexListBaseFilter(
+        modifier = modifier,
         title = stringResource(Res.string.regex_any),
         variable = filter.variable,
         terms = filter.terms,
@@ -154,8 +162,10 @@ fun RegexNoneFilter(
     filter: Filter.Regex.None,
     onUpdate: (Filter.Regex.None) -> Unit,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     RegexListBaseFilter(
+        modifier = modifier,
         title = stringResource(Res.string.regex_none),
         variable = filter.variable,
         terms = filter.terms,
@@ -177,8 +187,10 @@ private fun RegexListBaseFilter(
     onUpdateTerms: (List<String>) -> Unit,
     onUpdateCaseInsensitive: (Boolean) -> Unit,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     FilterCard(
+        modifier = modifier,
         onRemove = onRemove,
     ) {
         Text(

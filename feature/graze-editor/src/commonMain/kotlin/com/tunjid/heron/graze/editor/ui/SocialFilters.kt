@@ -46,8 +46,10 @@ fun SocialGraphFilter(
     filter: Filter.Social.Graph,
     onUpdate: (Filter.Social.Graph) -> Unit,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     FilterCard(
+        modifier = modifier,
         onRemove = onRemove,
     ) {
         Text(
@@ -93,8 +95,10 @@ fun SocialUserListFilter(
     filter: Filter.Social.UserList,
     onUpdate: (Filter.Social.UserList) -> Unit,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     FilterCard(
+        modifier = modifier,
         onRemove = onRemove,
     ) {
         Text(
@@ -127,8 +131,10 @@ fun SocialStarterPackFilter(
     filter: Filter.Social.StarterPack,
     onUpdate: (Filter.Social.StarterPack) -> Unit,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     FilterCard(
+        modifier = modifier,
         onRemove = onRemove,
     ) {
         Text(
@@ -161,8 +167,10 @@ fun SocialListMemberFilter(
     filter: Filter.Social.ListMember,
     onUpdate: (Filter.Social.ListMember) -> Unit,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     FilterCard(
+        modifier = modifier,
         onRemove = onRemove,
     ) {
         Text(
@@ -195,8 +203,10 @@ fun SocialMagicAudienceFilter(
     filter: Filter.Social.MagicAudience,
     onUpdate: (Filter.Social.MagicAudience) -> Unit,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     FilterCard(
+        modifier = modifier,
         onRemove = onRemove,
     ) {
         Text(

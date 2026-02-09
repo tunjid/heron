@@ -91,8 +91,14 @@ private fun Flow<Action.EditFilter>.editFilterFilterMutations(): Flow<Mutation<S
         copy(
             filter = filter.updateAt(action.path) { target ->
                 if (action is Action.EditFilter.FlipRootFilter) when (target) {
-                    is Filter.And -> Filter.Or(target.filters)
-                    is Filter.Or -> Filter.And(target.filters)
+                    is Filter.And -> Filter.Or(
+                        id = target.id,
+                        filters = target.filters,
+                    )
+                    is Filter.Or -> Filter.And(
+                        id = target.id,
+                        filters = target.filters,
+                    )
                 }
                 else target.updateFilters { filters ->
                     when (action) {

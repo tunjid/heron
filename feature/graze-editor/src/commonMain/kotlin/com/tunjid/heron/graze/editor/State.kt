@@ -26,7 +26,9 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
-    val filter: Filter.Root = Filter.And(emptyList()),
+    val filter: Filter.Root = Filter.And(
+        filters = emptyList(),
+    ),
     val currentPath: List<Int> = emptyList(),
     @Transient
     val messages: List<Memo> = emptyList(),

@@ -49,7 +49,6 @@ import heron.feature.graze_editor.generated.resources.topic_analysis
 import heron.feature.graze_editor.generated.resources.topic_label
 import heron.feature.graze_editor.generated.resources.toxic_category
 import heron.feature.graze_editor.generated.resources.toxicity_analysis
-import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -57,6 +56,7 @@ fun AnalysisFilter(
     filter: Filter.Analysis,
     onUpdate: (Filter.Analysis) -> Unit,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val title = when (filter) {
         is Filter.Analysis.Language -> stringResource(Res.string.language_analysis)
@@ -83,6 +83,7 @@ fun AnalysisFilter(
     }
 
     FilterCard(
+        modifier = modifier,
         onRemove = onRemove,
     ) {
         Text(

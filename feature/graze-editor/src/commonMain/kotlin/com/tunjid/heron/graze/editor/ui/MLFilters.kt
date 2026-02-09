@@ -47,8 +47,10 @@ fun MLSimilarityFilter(
     filter: Filter.ML.Similarity,
     onUpdate: (Filter.ML.Similarity) -> Unit,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     FilterCard(
+        modifier = modifier,
         onRemove = onRemove,
     ) {
         Text(
@@ -120,8 +122,10 @@ fun MLProbabilityFilter(
     filter: Filter.ML.Probability,
     onUpdate: (Filter.ML.Probability) -> Unit,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     FilterCard(
+        modifier = modifier,
         onRemove = onRemove,
     ) {
         Text(
@@ -175,8 +179,10 @@ fun MLModerationFilter(
     filter: Filter.ML.Moderation,
     onUpdate: (Filter.ML.Moderation) -> Unit,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     FilterCard(
+        modifier = modifier,
         onRemove = onRemove,
     ) {
         Text(
