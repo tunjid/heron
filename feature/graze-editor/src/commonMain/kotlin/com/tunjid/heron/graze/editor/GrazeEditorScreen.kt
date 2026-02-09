@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -109,7 +108,8 @@ fun GrazeEditorScreen(
                         sharedContentState = rememberSharedContentState(currentFilter.backgroundSharedElementKey()),
                         animatedVisibilityScope = this@AnimatedContent,
                     )
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 itemsIndexed(
@@ -332,8 +332,6 @@ private fun RootFilterDescription(
             )
             if (onRemove != null) IconButton(
                 onClick = onRemove,
-                modifier = Modifier
-                    .size(24.dp),
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Close,
