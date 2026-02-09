@@ -25,6 +25,7 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Start
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
@@ -268,8 +269,13 @@ fun mutesDestination(): NavigationAction.Destination = pathDestination(
     referringRouteOption = ReferringRouteOption.Current,
 )
 
-fun grazeEditorDestination(): NavigationAction.Destination = pathDestination(
+fun grazeEditorDestination(
+    feedGenerator: FeedGenerator? = null,
+): NavigationAction.Destination = pathDestination(
     path = "/graze-editor",
+    models = listOfNotNull(
+        feedGenerator,
+    ),
     referringRouteOption = ReferringRouteOption.Current,
 )
 

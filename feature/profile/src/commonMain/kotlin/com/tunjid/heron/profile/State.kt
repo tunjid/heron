@@ -73,6 +73,7 @@ data class State(
     val isSignedInProfile: Boolean = false,
     val viewerState: ProfileViewerState? = null,
     val avatarSharedElementKey: String,
+    val currentPage: Int = 0,
     val commonFollowers: List<Profile> = emptyList(),
     val timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean> = emptyMap(),
     val subscribedLabelers: Labelers = emptyList(),
@@ -225,6 +226,10 @@ sealed class Action(val key: String) {
             val profileId: ProfileId,
         ) : Mute()
     }
+
+    data class PageChanged(
+        val page: Int,
+    ) : Action(key = "PageChanged")
 
     data class UpdateMutedWord(
         val mutedWordPreference: List<MutedWordPreference>,

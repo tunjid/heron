@@ -53,6 +53,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.Remove
@@ -98,6 +99,7 @@ import com.tunjid.heron.home.ui.ExpandableTabsState
 import com.tunjid.heron.home.ui.ExpandableTabsState.Companion.expandable
 import com.tunjid.heron.home.ui.ExpandableTabsState.Companion.rememberExpandableTabsState
 import com.tunjid.heron.home.ui.JiggleBox
+import com.tunjid.heron.home.ui.shouldRenderAppBarButtonsInOverlay
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
@@ -108,6 +110,7 @@ import com.tunjid.heron.ui.TabsState
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.home.generated.resources.Res
 import heron.feature.home.generated.resources.bookmark
 import heron.feature.home.generated.resources.collapse_timeline_settings
@@ -117,6 +120,7 @@ import heron.feature.home.generated.resources.saved
 import heron.feature.home.generated.resources.settings
 import heron.feature.home.generated.resources.timeline_drop_target_hint
 import heron.feature.home.generated.resources.timeline_preferences
+import heron.ui.core.generated.resources.feed_generator_create
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
@@ -148,6 +152,7 @@ internal fun HomeTabs(
     onTimelinePreferencesSaved: (List<Timeline.Home>) -> Unit,
     onSettingsIconClick: () -> Unit,
     onBookmarkIconClick: () -> Unit,
+    onCreateFeedClicked: () -> Unit,
 ) = with(sharedTransitionScope) {
     val expandableTabsState = rememberExpandableTabsState(
         tabLayout = tabLayout,
@@ -261,6 +266,7 @@ internal fun HomeTabs(
                     Modifier
                         .renderInSharedTransitionScopeOverlay(
                             zIndexInOverlay = HomeTimelineButtonSharedElementZIndex,
+                            renderInOverlay = expandableTabsState::shouldRenderAppBarButtonsInOverlay,
                         )
                         .then(alphaModifier)
                 }
@@ -276,11 +282,18 @@ internal fun HomeTabs(
                     icon = Icons.Rounded.Bookmark,
                     iconDescription = stringResource(Res.string.bookmark),
                 )
+                AppBarButton(
+                    modifier = expandedOptionsModifier,
+                    onClick = onCreateFeedClicked,
+                    icon = Icons.Rounded.Add,
+                    iconDescription = stringResource(CommonStrings.feed_generator_create),
+                )
             }
             AppBarButton(
                 modifier = Modifier
                     .renderInSharedTransitionScopeOverlay(
                         zIndexInOverlay = HomeTimelineButtonSharedElementZIndex,
+                        renderInOverlay = expandableTabsState::shouldRenderAppBarButtonsInOverlay,
                     )
                     .graphicsLayer {
                         rotationZ = expandableTabsState.expansionProgress * 180f
