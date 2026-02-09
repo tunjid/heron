@@ -208,15 +208,8 @@ class ProfileBindings(
                 },
                 floatingActionButton = {
                     val isSignedInProfile = state.isSignedInProfile
-                    val isFeedTab = when (state.stateHolders.getOrNull(state.currentPage)) {
-                        is ProfileScreenStateHolders.Records.Feeds -> true
-                        is ProfileScreenStateHolders.LabelerSettings,
-                        is ProfileScreenStateHolders.Records.Lists,
-                        is ProfileScreenStateHolders.Records.StarterPacks,
-                        is ProfileScreenStateHolders.Timeline,
-                        null,
-                        -> false
-                    }
+                    val isFeedTab = state.stateHolders.getOrNull(state.currentPage) is ProfileScreenStateHolders.Records.Feeds
+
                     PaneFab(
                         modifier = Modifier
                             .offset {
@@ -247,14 +240,15 @@ class ProfileBindings(
                                 Action.Navigate.To(
                                     when {
                                         isSignedOut -> signInDestination()
-                                        else ->
-                                            if (isSignedInProfile && isFeedTab) grazeEditorDestination()
-                                            else composePostDestination(
-                                                type =
-                                                if (isSignedInProfile) Post.Create.Timeline
-                                                else Post.Create.Mention(state.profile),
-                                                sharedElementPrefix = null,
-                                            )
+                                        isSignedInProfile && isFeedTab -> grazeEditorDestination()
+                                        isSignedInProfile -> composePostDestination(
+                                            type = Post.Create.Timeline,
+                                            sharedElementPrefix = null,
+                                        )
+                                        else -> composePostDestination(
+                                            type = Post.Create.Mention(state.profile),
+                                            sharedElementPrefix = null,
+                                        )
                                     },
                                 ),
                             )
