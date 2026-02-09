@@ -539,7 +539,6 @@ sealed interface Filter {
 
     @Serializable
     sealed interface Analysis : Filter {
-        val category: String
         val operator: Comparator.Range
         val threshold: Double
 
@@ -548,13 +547,37 @@ sealed interface Filter {
         data class Language(
             override val id: Id = Id(),
             @SerialName("language_name")
-            override val category: String,
+            val category: Category,
             override val operator: Comparator.Range,
             override val threshold: Double,
         ) : Analysis {
+            @Serializable
+            enum class Category {
+                @SerialName("Japanese") Japanese,
+                @SerialName("Dutch") Dutch,
+                @SerialName("Arabic") Arabic,
+                @SerialName("Polish") Polish,
+                @SerialName("German") German,
+                @SerialName("Italian") Italian,
+                @SerialName("Portuguese") Portuguese,
+                @SerialName("Turkish") Turkish,
+                @SerialName("Spanish") Spanish,
+                @SerialName("Hindi") Hindi,
+                @SerialName("Greek") Greek,
+                @SerialName("Urdu") Urdu,
+                @SerialName("Bulgarian") Bulgarian,
+                @SerialName("English") English,
+                @SerialName("French") French,
+                @SerialName("Chinese") Chinese,
+                @SerialName("Russian") Russian,
+                @SerialName("Thai") Thai,
+                @SerialName("Swahili") Swahili,
+                @SerialName("Vietnamese") Vietnamese,
+            }
+
             companion object {
                 fun empty() = Language(
-                    category = "",
+                    category = Category.English,
                     operator = Comparator.Range.GreaterThan,
                     threshold = 0.8,
                 )
@@ -566,13 +589,20 @@ sealed interface Filter {
         data class Sentiment(
             override val id: Id = Id(),
             @SerialName("sentiment_category")
-            override val category: String,
+            val category: Category,
             override val operator: Comparator.Range,
             override val threshold: Double,
         ) : Analysis {
+            @Serializable
+            enum class Category {
+                @SerialName("Positive") Positive,
+                @SerialName("Negative") Negative,
+                @SerialName("Neutral") Neutral,
+            }
+
             companion object {
                 fun empty() = Sentiment(
-                    category = "",
+                    category = Category.Neutral,
                     operator = Comparator.Range.GreaterThan,
                     threshold = 0.8,
                 )
@@ -584,13 +614,20 @@ sealed interface Filter {
         data class FinancialSentiment(
             override val id: Id = Id(),
             @SerialName("financial_category")
-            override val category: String,
+            val category: Category,
             override val operator: Comparator.Range,
             override val threshold: Double,
         ) : Analysis {
+            @Serializable
+            enum class Category {
+                @SerialName("Positive") Positive,
+                @SerialName("Negative") Negative,
+                @SerialName("Neutral") Neutral,
+            }
+
             companion object {
                 fun empty() = FinancialSentiment(
-                    category = "",
+                    category = Category.Neutral,
                     operator = Comparator.Range.GreaterThan,
                     threshold = 0.8,
                 )
@@ -602,13 +639,45 @@ sealed interface Filter {
         data class Emotion(
             override val id: Id = Id(),
             @SerialName("emotion_category")
-            override val category: String,
+            val category: Category,
             override val operator: Comparator.Range,
             override val threshold: Double,
         ) : Analysis {
+            @Serializable
+            enum class Category {
+                @SerialName("Admiration") Admiration,
+                @SerialName("Amusement") Amusement,
+                @SerialName("Anger") Anger,
+                @SerialName("Annoyance") Annoyance,
+                @SerialName("Approval") Approval,
+                @SerialName("Caring") Caring,
+                @SerialName("Confusion") Confusion,
+                @SerialName("Curiosity") Curiosity,
+                @SerialName("Desire") Desire,
+                @SerialName("Disappointment") Disappointment,
+                @SerialName("Disapproval") Disapproval,
+                @SerialName("Disgust") Disgust,
+                @SerialName("Embarrassment") Embarrassment,
+                @SerialName("Excitement") Excitement,
+                @SerialName("Fear") Fear,
+                @SerialName("Gratitude") Gratitude,
+                @SerialName("Grief") Grief,
+                @SerialName("Joy") Joy,
+                @SerialName("Love") Love,
+                @SerialName("Nervousness") Nervousness,
+                @SerialName("Optimism") Optimism,
+                @SerialName("Pride") Pride,
+                @SerialName("Realization") Realization,
+                @SerialName("Relief") Relief,
+                @SerialName("Remorse") Remorse,
+                @SerialName("Sadness") Sadness,
+                @SerialName("Surprise") Surprise,
+                @SerialName("Neutral") Neutral,
+            }
+
             companion object {
                 fun empty() = Emotion(
-                    category = "",
+                    category = Category.Neutral,
                     operator = Comparator.Range.GreaterThan,
                     threshold = 0.8,
                 )
@@ -620,13 +689,23 @@ sealed interface Filter {
         data class Toxicity(
             override val id: Id = Id(),
             @SerialName("toxic_category")
-            override val category: String,
+            val category: Category,
             override val operator: Comparator.Range,
             override val threshold: Double,
         ) : Analysis {
+            @Serializable
+            enum class Category {
+                @SerialName("Toxic") Toxic,
+                @SerialName("Severe Toxicity") SevereToxicity,
+                @SerialName("Obscene") Obscene,
+                @SerialName("Threat") Threat,
+                @SerialName("Insult") Insult,
+                @SerialName("Identity Hate") IdentityHate,
+            }
+
             companion object {
                 fun empty() = Toxicity(
-                    category = "",
+                    category = Category.Toxic,
                     operator = Comparator.Range.GreaterThan,
                     threshold = 0.8,
                 )
@@ -638,13 +717,36 @@ sealed interface Filter {
         data class Topic(
             override val id: Id = Id(),
             @SerialName("topic_label")
-            override val category: String,
+            val category: Category,
             override val operator: Comparator.Range,
             override val threshold: Double,
         ) : Analysis {
+            @Serializable
+            enum class Category {
+                @SerialName("Arts & Culture") ArtsAndCulture,
+                @SerialName("Business & Entrepreneurs") BusinessAndEntrepreneurs,
+                @SerialName("Celebrity & Pop Culture") CelebrityAndPopCulture,
+                @SerialName("Diaries & Daily Life") DiariesAndDailyLife,
+                @SerialName("Family") Family,
+                @SerialName("Fashion & Style") FashionAndStyle,
+                @SerialName("Film, TV & Video") FilmTVAndVideo,
+                @SerialName("Fitness & Health") FitnessAndHealth,
+                @SerialName("Food & Dining") FoodAndDining,
+                @SerialName("Gaming") Gaming,
+                @SerialName("Learning & Educational") LearningAndEducational,
+                @SerialName("Music") Music,
+                @SerialName("News & Social Concern") NewsAndSocialConcern,
+                @SerialName("Other Hobbies") OtherHobbies,
+                @SerialName("Relationships") Relationships,
+                @SerialName("Science & Technology") ScienceAndTechnology,
+                @SerialName("Sports") Sports,
+                @SerialName("Travel & Adventure") TravelAndAdventure,
+                @SerialName("Youth & Student Life") YouthAndStudentLife,
+            }
+
             companion object {
                 fun empty() = Topic(
-                    category = "",
+                    category = Category.ArtsAndCulture,
                     operator = Comparator.Range.GreaterThan,
                     threshold = 0.8,
                 )
@@ -656,13 +758,18 @@ sealed interface Filter {
         data class TextArbitrary(
             override val id: Id = Id(),
             @SerialName("tag")
-            override val category: String,
+            val category: Category,
             override val operator: Comparator.Range,
             override val threshold: Double,
         ) : Analysis {
+            @Serializable
+            enum class Category {
+                @SerialName("Default") Default,
+            }
+
             companion object {
                 fun empty() = TextArbitrary(
-                    category = "",
+                    category = Category.Default,
                     operator = Comparator.Range.GreaterThan,
                     threshold = 0.8,
                 )
@@ -674,13 +781,19 @@ sealed interface Filter {
         data class ImageNsfw(
             override val id: Id = Id(),
             @SerialName("tag")
-            override val category: String,
+            val category: Category,
             override val operator: Comparator.Range,
             override val threshold: Double,
         ) : Analysis {
+            @Serializable
+            enum class Category {
+                @SerialName("NSFW") NSFW,
+                @SerialName("SFW") SFW,
+            }
+
             companion object {
                 fun empty() = ImageNsfw(
-                    category = "",
+                    category = Category.NSFW,
                     operator = Comparator.Range.GreaterThan,
                     threshold = 0.8,
                 )
@@ -692,13 +805,18 @@ sealed interface Filter {
         data class ImageArbitrary(
             override val id: Id = Id(),
             @SerialName("tag")
-            override val category: String,
+            val category: Category,
             override val operator: Comparator.Range,
             override val threshold: Double,
         ) : Analysis {
+            @Serializable
+            enum class Category {
+                @SerialName("Default") Default,
+            }
+
             companion object {
                 fun empty() = ImageArbitrary(
-                    category = "",
+                    category = Category.Default,
                     operator = Comparator.Range.GreaterThan,
                     threshold = 0.8,
                 )
