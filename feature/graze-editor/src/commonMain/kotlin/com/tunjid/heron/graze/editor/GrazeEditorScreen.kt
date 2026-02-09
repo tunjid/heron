@@ -227,7 +227,7 @@ fun FilterRow(
             ) {
                 itemsIndexed(
                     items = filter.filters,
-                    key = { _, child -> child.id },
+                    key = { _, child -> child.id.value },
                     itemContent = { childIndex, child ->
                         Filter(
                             modifier = Modifier
