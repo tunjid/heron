@@ -19,6 +19,7 @@
     <string name="remove_filter">Remove Filter</string>
     <string name="add_item">Add Item</string>
     <string name="remove_item">Remove Item</string>
+    <string name="edit_item">Edit Item</string>
     <string name="attribute_compare">Attribute Compare</string>
     <string name="selector">Selector</string>
     <string name="value">Value</string>
@@ -106,6 +107,15 @@
     <string name="comparator_less_than_or_equal">Less Than or Equal</string>
     <string name="comparator_in">In</string>
     <string name="comparator_not_in">Not In</string>
+
+    <!-- Attribute Selectors -->
+    <string name="selector_text">Text</string>
+    <string name="selector_reply">Reply</string>
+    <string name="selector_embed">Embed</string>
+    <string name="selector_user_handle">User Handle</string>
+    <string name="selector_mention_handle">Mention Handle</string>
+    <string name="selector_quote_author_handle">Quote Author Handle</string>
+    <string name="selector_unknown">Unknown Selector</string>
 
     <!-- Embed kinds -->
     <string name="embed_kind_label">Embed kind</string>

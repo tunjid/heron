@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.graze.editor.ui
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,9 +32,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
@@ -43,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.ui.text.CommonStrings
@@ -67,18 +69,20 @@ import org.jetbrains.compose.resources.stringResource
 fun FilterCard(
     modifier: Modifier = Modifier,
     title: @Composable () -> Unit = {},
+    tint: Color = Color.Unspecified,
     onRemove: () -> Unit,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            containerColor = tint,
         ),
         modifier = modifier
             .fillMaxWidth(),
     ) {
         Column(
             modifier = Modifier
+                .animateContentSize()
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -113,6 +117,7 @@ fun FilterCard(
 fun StandardFilter(
     modifier: Modifier = Modifier,
     title: String,
+    tint: Color = Color.Unspecified,
     onRemove: () -> Unit,
     startContent: @Composable () -> Unit,
     endContent: @Composable () -> Unit,
@@ -120,6 +125,7 @@ fun StandardFilter(
 ) {
     FilterCard(
         modifier = modifier,
+        tint = tint,
         title = {
             Text(
                 text = title,
@@ -155,6 +161,7 @@ fun StandardFilter(
 fun ChipFilter(
     modifier: Modifier = Modifier,
     title: String,
+    tint: Color = Color.Unspecified,
     items: List<String>,
     onItemsUpdated: (List<String>) -> Unit,
     onRemove: () -> Unit,
@@ -163,6 +170,7 @@ fun ChipFilter(
 ) {
     StandardFilter(
         modifier = modifier,
+        tint = tint,
         title = title,
         onRemove = onRemove,
         startContent = startContent,
@@ -200,7 +208,7 @@ fun ChipFilter(
                         )
                     }
                     Spacer(Modifier.height(16.dp))
-                    Button(
+                    FilledTonalButton(
                         onClick = {
                             addTextSheetState.show()
                         },
@@ -233,17 +241,10 @@ fun ThresholdSlider(
         Slider(
             value = threshold.toFloat(),
             onValueChange = { onThresholdChanged(it.toDouble()) },
-            steps = 8,
             valueRange = 0.1f..1f,
         )
     }
 }
-
-val Filter.ML.thresholdPercent: Int
-    get() = (threshold * 100).roundToInt()
-
-val Filter.Analysis.thresholdPercent: Int
-    get() = (threshold * 100).roundToInt()
 
 val Filter.Comparator.stringRes: StringResource
     get() = when (this) {

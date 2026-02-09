@@ -17,13 +17,17 @@
 package com.tunjid.heron.graze.editor.ui
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.attribute_compare
+import heron.feature.graze_editor.generated.resources.edit_item
 import heron.feature.graze_editor.generated.resources.embed_kind_gif
 import heron.feature.graze_editor.generated.resources.embed_kind_image
 import heron.feature.graze_editor.generated.resources.embed_kind_image_group
@@ -33,7 +37,15 @@ import heron.feature.graze_editor.generated.resources.embed_kind_post
 import heron.feature.graze_editor.generated.resources.embed_kind_video
 import heron.feature.graze_editor.generated.resources.embed_type
 import heron.feature.graze_editor.generated.resources.selector
+import heron.feature.graze_editor.generated.resources.selector_embed
+import heron.feature.graze_editor.generated.resources.selector_mention_handle
+import heron.feature.graze_editor.generated.resources.selector_quote_author_handle
+import heron.feature.graze_editor.generated.resources.selector_reply
+import heron.feature.graze_editor.generated.resources.selector_text
+import heron.feature.graze_editor.generated.resources.selector_unknown
+import heron.feature.graze_editor.generated.resources.selector_user_handle
 import heron.feature.graze_editor.generated.resources.value
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -48,29 +60,46 @@ fun AttributeCompareFilter(
         title = stringResource(Res.string.attribute_compare),
         onRemove = onRemove,
         startContent = {
+            Dropdown(
+                label = stringResource(Res.string.selector),
+                selected = filter.selector,
+                options = Filter.Attribute.Compare.Selector.entries,
+                stringRes = Filter.Attribute.Compare.Selector::stringRes,
+                onSelect = { onUpdate(filter.copy(selector = it)) },
+            )
+        },
+        endContent = {
             ComparatorDropdown(
                 selected = filter.operator,
                 options = Filter.Comparator.Equality.entries,
                 onSelect = { onUpdate(filter.copy(operator = it)) },
             )
         },
-        endContent = {
-            OutlinedTextField(
-                value = filter.selector,
-                onValueChange = { onUpdate(filter.copy(selector = it)) },
-                label = { Text(text = stringResource(Res.string.selector)) },
-            )
-        },
         additionalContent = {
+            val addTextSheetState = rememberAddTextSheetState(
+                title = stringResource(Res.string.attribute_compare),
+                onTextConfirmed = {
+                    onUpdate(filter.copy(targetValue = it))
+                },
+            )
             OutlinedTextField(
                 modifier = Modifier
                     .fillMaxWidth(),
                 value = filter.targetValue,
-                onValueChange = { onUpdate(filter.copy(targetValue = it)) },
-                label = {
-                    Text(text = stringResource(Res.string.value))
-                },
+                readOnly = true,
+                onValueChange = { },
+                label = { Text(text = stringResource(Res.string.value)) },
             )
+            FilledTonalButton(
+                onClick = {
+                    addTextSheetState.show(currentText = filter.targetValue)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+            ) {
+                Text(text = stringResource(Res.string.edit_item))
+            }
         },
     )
 }
@@ -112,4 +141,14 @@ private fun Filter.Attribute.Embed.Kind.stringRes() = when (this) {
     Filter.Attribute.Embed.Kind.ImageGroup -> Res.string.embed_kind_image_group
     Filter.Attribute.Embed.Kind.Video -> Res.string.embed_kind_video
     Filter.Attribute.Embed.Kind.Gif -> Res.string.embed_kind_gif
+}
+
+private fun Filter.Attribute.Compare.Selector.stringRes(): StringResource = when (this) {
+    Filter.Attribute.Compare.Selector.Text -> Res.string.selector_text
+    Filter.Attribute.Compare.Selector.Reply -> Res.string.selector_reply
+    Filter.Attribute.Compare.Selector.Embed -> Res.string.selector_embed
+    Filter.Attribute.Compare.Selector.UserHandle -> Res.string.selector_user_handle
+    Filter.Attribute.Compare.Selector.MentionHandle -> Res.string.selector_mention_handle
+    Filter.Attribute.Compare.Selector.QuoteAuthorHandle -> Res.string.selector_quote_author_handle
+    else -> Res.string.selector_unknown
 }

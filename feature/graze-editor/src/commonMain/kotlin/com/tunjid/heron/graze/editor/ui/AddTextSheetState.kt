@@ -49,6 +49,11 @@ class AddTextSheetState(
     var text by mutableStateOf("")
 
     override fun onHidden() = Unit
+
+    fun show(currentText: String) {
+        text = currentText
+        show()
+    }
 }
 
 @Composable

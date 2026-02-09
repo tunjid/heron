@@ -154,13 +154,35 @@ sealed interface Filter {
         @SerialName("attribute_compare")
         data class Compare(
             override val id: Id = Id(),
-            val selector: String,
+            val selector: Selector,
             val operator: Comparator,
             val targetValue: String,
         ) : Attribute {
+            @Serializable
+            @JvmInline
+            value class Selector(val value: String) {
+                companion object {
+                    val Text = Selector("text")
+                    val Reply = Selector("reply")
+                    val Embed = Selector("embed")
+                    val UserHandle = Selector("hydrated_metadata.user.handle")
+                    val MentionHandle = Selector("hydrated_metadata.mentions[*].handle")
+                    val QuoteAuthorHandle = Selector("hydrated_metadata.quote_post.author.handle")
+
+                    val entries = listOf(
+                        Text,
+                        Reply,
+                        Embed,
+                        UserHandle,
+                        MentionHandle,
+                        QuoteAuthorHandle,
+                    )
+                }
+            }
+
             companion object {
                 fun empty() = Compare(
-                    selector = "",
+                    selector = Selector.Text,
                     operator = Comparator.Equality.Equal,
                     targetValue = "",
                 )
