@@ -80,6 +80,7 @@ fun AnalysisFilter(
         modifier = modifier,
         title = title,
         onRemove = onRemove,
+        // Layout: Operator | Category
         startContent = {
             ComparatorDropdown(
                 selected = filter.operator,
@@ -124,15 +125,13 @@ fun AnalysisFilter(
                 modifier = Modifier.fillMaxWidth(),
             )
         },
+        // Threshold slider
         additionalContent = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
-                    text = stringResource(
-                        Res.string.threshold_percent,
-                        filter.thresholdPercent,
-                    ),
+                    text = stringResource(Res.string.threshold_percent, filter.thresholdPercent),
                     style = MaterialTheme.typography.labelMedium,
                 )
                 Slider(
