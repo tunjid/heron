@@ -47,10 +47,15 @@ class AddTextSheetState(
 ) : BottomSheetState(scope) {
     var title by mutableStateOf(title)
     var text by mutableStateOf("")
+    var startingText by mutableStateOf("")
 
-    override fun onHidden() = Unit
+    override fun onHidden() {
+        title = ""
+        text = ""
+    }
 
     fun show(currentText: String) {
+        startingText = currentText
         text = currentText
         show()
     }
@@ -59,7 +64,7 @@ class AddTextSheetState(
 @Composable
 fun rememberAddTextSheetState(
     title: String,
-    onTextConfirmed: (String) -> Unit,
+    onTextConfirmed: AddTextSheetState.(String) -> Unit,
 ): AddTextSheetState {
     val state = rememberBottomSheetState { scope ->
         AddTextSheetState(
@@ -77,7 +82,7 @@ fun rememberAddTextSheetState(
 @Composable
 private fun AddTextBottomSheet(
     state: AddTextSheetState,
-    onTextConfirmed: (String) -> Unit,
+    onTextConfirmed: AddTextSheetState.(String) -> Unit,
 ) {
     state.ModalBottomSheet {
         Column(
@@ -101,9 +106,8 @@ private fun AddTextBottomSheet(
             Button(
                 onClick = {
                     if (state.text.isNotBlank()) {
-                        onTextConfirmed(state.text)
+                        state.onTextConfirmed(state.text)
                     }
-                    state.text = ""
                     state.hide()
                 },
                 modifier = Modifier

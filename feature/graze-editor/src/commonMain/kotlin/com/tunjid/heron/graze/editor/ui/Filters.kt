@@ -183,14 +183,20 @@ fun ChipFilter(
                 content = {
                     val addTextSheetState = rememberAddTextSheetState(
                         title = title,
-                        onTextConfirmed = {
-                            onItemsUpdated(items.plus(it).distinct())
+                        onTextConfirmed = { updatedText ->
+                            onItemsUpdated(
+                                items
+                                    .minus(startingText)
+                                    .plus(updatedText)
+                                    .distinct(),
+                            )
                         },
                     )
                     items.forEach {
                         InputChip(
                             selected = false,
                             onClick = {
+                                addTextSheetState.show(currentText = it)
                             },
                             trailingIcon = {
                                 Icon(
