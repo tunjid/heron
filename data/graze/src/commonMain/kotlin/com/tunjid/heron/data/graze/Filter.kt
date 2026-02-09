@@ -122,14 +122,26 @@ sealed interface Filter {
     data class And(
         override val id: Id = Id(),
         override val filters: List<Filter>,
-    ) : Root
+    ) : Root {
+        companion object {
+            fun empty() = And(
+                filters = emptyList(),
+            )
+        }
+    }
 
     @Serializable
     @SerialName("or")
     data class Or(
         override val id: Id = Id(),
         override val filters: List<Filter>,
-    ) : Root
+    ) : Root {
+        companion object {
+            fun empty() = Or(
+                filters = emptyList(),
+            )
+        }
+    }
 
 // ==============================================================================
 // 3. Attributes
@@ -145,7 +157,15 @@ sealed interface Filter {
             val selector: String,
             val operator: Comparator,
             val targetValue: String,
-        ) : Attribute
+        ) : Attribute {
+            companion object {
+                fun empty() = Compare(
+                    selector = "",
+                    operator = Comparator.Equality.Equal,
+                    targetValue = "",
+                )
+            }
+        }
 
         @Serializable
         @SerialName("embed_type")
@@ -174,6 +194,13 @@ sealed interface Filter {
                 @SerialName("gif")
                 Gif,
             }
+
+            companion object {
+                fun empty() = Embed(
+                    operator = Comparator.Equality.Equal,
+                    embedType = Kind.Image,
+                )
+            }
         }
     }
 
@@ -192,7 +219,14 @@ sealed interface Filter {
             override val id: Id = Id(),
             override val entityType: Type,
             override val values: List<String>,
-        ) : Entity
+        ) : Entity {
+            companion object {
+                fun empty() = Matches(
+                    entityType = Type.Hashtags,
+                    values = emptyList(),
+                )
+            }
+        }
 
         @Serializable
         @SerialName("entity_excludes")
@@ -200,7 +234,14 @@ sealed interface Filter {
             override val id: Id = Id(),
             override val entityType: Type,
             override val values: List<String>,
-        ) : Entity
+        ) : Entity {
+            companion object {
+                fun empty() = Excludes(
+                    entityType = Type.Hashtags,
+                    values = emptyList(),
+                )
+            }
+        }
 
         enum class Type {
             @SerialName("hashtags")
@@ -234,7 +275,15 @@ sealed interface Filter {
             val variable: String,
             val pattern: String,
             val isCaseInsensitive: Boolean,
-        ) : Regex
+        ) : Regex {
+            companion object {
+                fun empty() = Matches(
+                    variable = "",
+                    pattern = "",
+                    isCaseInsensitive = false,
+                )
+            }
+        }
 
         @Serializable
         @SerialName("regex_negation_matches")
@@ -243,7 +292,15 @@ sealed interface Filter {
             val variable: String,
             val pattern: String,
             val isCaseInsensitive: Boolean,
-        ) : Regex
+        ) : Regex {
+            companion object {
+                fun empty() = Negation(
+                    variable = "",
+                    pattern = "",
+                    isCaseInsensitive = false,
+                )
+            }
+        }
 
         @Serializable
         @SerialName("regex_any")
@@ -252,7 +309,15 @@ sealed interface Filter {
             val variable: String,
             val terms: List<String>,
             val isCaseInsensitive: Boolean,
-        ) : Regex
+        ) : Regex {
+            companion object {
+                fun empty() = Any(
+                    variable = "",
+                    terms = emptyList(),
+                    isCaseInsensitive = false,
+                )
+            }
+        }
 
         @Serializable
         @SerialName("regex_none")
@@ -261,7 +326,15 @@ sealed interface Filter {
             val variable: String,
             val terms: List<String>,
             val isCaseInsensitive: Boolean,
-        ) : Regex
+        ) : Regex {
+            companion object {
+                fun empty() = None(
+                    variable = "",
+                    terms = emptyList(),
+                    isCaseInsensitive = false,
+                )
+            }
+        }
     }
 
 // ==============================================================================
@@ -278,7 +351,15 @@ sealed interface Filter {
             val username: String,
             val operator: Comparator.Set,
             val direction: String,
-        ) : Social
+        ) : Social {
+            companion object {
+                fun empty() = Graph(
+                    username = "",
+                    operator = Comparator.Set.In,
+                    direction = "",
+                )
+            }
+        }
 
         @Serializable
         @SerialName("social_list")
@@ -286,7 +367,14 @@ sealed interface Filter {
             override val id: Id = Id(),
             val dids: List<String>,
             val operator: Comparator.Set,
-        ) : Social
+        ) : Social {
+            companion object {
+                fun empty() = UserList(
+                    dids = emptyList(),
+                    operator = Comparator.Set.In,
+                )
+            }
+        }
 
         @Serializable
         @SerialName("starter_pack_member")
@@ -294,7 +382,14 @@ sealed interface Filter {
             override val id: Id = Id(),
             val url: String,
             val operator: Comparator.Set,
-        ) : Social
+        ) : Social {
+            companion object {
+                fun empty() = StarterPack(
+                    url = "",
+                    operator = Comparator.Set.In,
+                )
+            }
+        }
 
         @Serializable
         @SerialName("list_member")
@@ -302,7 +397,14 @@ sealed interface Filter {
             override val id: Id = Id(),
             val url: String,
             val operator: Comparator.Set,
-        ) : Social
+        ) : Social {
+            companion object {
+                fun empty() = ListMember(
+                    url = "",
+                    operator = Comparator.Set.In,
+                )
+            }
+        }
 
         @Serializable
         @SerialName("magic_audience")
@@ -310,7 +412,14 @@ sealed interface Filter {
             override val id: Id = Id(),
             val audienceId: String,
             val operator: Comparator.Set,
-        ) : Social
+        ) : Social {
+            companion object {
+                fun empty() = MagicAudience(
+                    audienceId = "",
+                    operator = Comparator.Set.In,
+                )
+            }
+        }
     }
 
 // ==============================================================================
@@ -337,6 +446,18 @@ sealed interface Filter {
                 @SerialName("model_name")
                 val modelName: String,
             )
+
+            companion object {
+                fun empty() = Similarity(
+                    path = "",
+                    config = Config(
+                        anchorText = "",
+                        modelName = "",
+                    ),
+                    operator = Comparator.Range.GreaterThan,
+                    threshold = 0.8,
+                )
+            }
         }
 
         @Serializable
@@ -352,6 +473,16 @@ sealed interface Filter {
                 @SerialName("model_name")
                 val modelName: String,
             )
+
+            companion object {
+                fun empty() = Probability(
+                    config = Config(
+                        modelName = "",
+                    ),
+                    operator = Comparator.Range.GreaterThan,
+                    threshold = 0.8,
+                )
+            }
         }
 
         @Serializable
@@ -361,7 +492,15 @@ sealed interface Filter {
             val category: String,
             val operator: Comparator.Range,
             override val threshold: Double,
-        ) : ML
+        ) : ML {
+            companion object {
+                fun empty() = Moderation(
+                    category = "",
+                    operator = Comparator.Range.GreaterThan,
+                    threshold = 0.8,
+                )
+            }
+        }
     }
 
 // ==============================================================================
@@ -382,7 +521,15 @@ sealed interface Filter {
             override val category: String,
             override val operator: Comparator.Range,
             override val threshold: Double,
-        ) : Analysis
+        ) : Analysis {
+            companion object {
+                fun empty() = Language(
+                    category = "",
+                    operator = Comparator.Range.GreaterThan,
+                    threshold = 0.8,
+                )
+            }
+        }
 
         @Serializable
         @SerialName("sentiment_analysis")
@@ -392,7 +539,15 @@ sealed interface Filter {
             override val category: String,
             override val operator: Comparator.Range,
             override val threshold: Double,
-        ) : Analysis
+        ) : Analysis {
+            companion object {
+                fun empty() = Sentiment(
+                    category = "",
+                    operator = Comparator.Range.GreaterThan,
+                    threshold = 0.8,
+                )
+            }
+        }
 
         @Serializable
         @SerialName("financial_sentiment_analysis")
@@ -402,7 +557,15 @@ sealed interface Filter {
             override val category: String,
             override val operator: Comparator.Range,
             override val threshold: Double,
-        ) : Analysis
+        ) : Analysis {
+            companion object {
+                fun empty() = FinancialSentiment(
+                    category = "",
+                    operator = Comparator.Range.GreaterThan,
+                    threshold = 0.8,
+                )
+            }
+        }
 
         @Serializable
         @SerialName("emotion_sentiment_analysis")
@@ -412,7 +575,15 @@ sealed interface Filter {
             override val category: String,
             override val operator: Comparator.Range,
             override val threshold: Double,
-        ) : Analysis
+        ) : Analysis {
+            companion object {
+                fun empty() = Emotion(
+                    category = "",
+                    operator = Comparator.Range.GreaterThan,
+                    threshold = 0.8,
+                )
+            }
+        }
 
         @Serializable
         @SerialName("toxicity_analysis")
@@ -422,7 +593,15 @@ sealed interface Filter {
             override val category: String,
             override val operator: Comparator.Range,
             override val threshold: Double,
-        ) : Analysis
+        ) : Analysis {
+            companion object {
+                fun empty() = Toxicity(
+                    category = "",
+                    operator = Comparator.Range.GreaterThan,
+                    threshold = 0.8,
+                )
+            }
+        }
 
         @Serializable
         @SerialName("topic_analysis")
@@ -432,7 +611,15 @@ sealed interface Filter {
             override val category: String,
             override val operator: Comparator.Range,
             override val threshold: Double,
-        ) : Analysis
+        ) : Analysis {
+            companion object {
+                fun empty() = Topic(
+                    category = "",
+                    operator = Comparator.Range.GreaterThan,
+                    threshold = 0.8,
+                )
+            }
+        }
 
         @Serializable
         @SerialName("text_arbitrary")
@@ -442,7 +629,15 @@ sealed interface Filter {
             override val category: String,
             override val operator: Comparator.Range,
             override val threshold: Double,
-        ) : Analysis
+        ) : Analysis {
+            companion object {
+                fun empty() = TextArbitrary(
+                    category = "",
+                    operator = Comparator.Range.GreaterThan,
+                    threshold = 0.8,
+                )
+            }
+        }
 
         @Serializable
         @SerialName("image_nsfw")
@@ -452,7 +647,15 @@ sealed interface Filter {
             override val category: String,
             override val operator: Comparator.Range,
             override val threshold: Double,
-        ) : Analysis
+        ) : Analysis {
+            companion object {
+                fun empty() = ImageNsfw(
+                    category = "",
+                    operator = Comparator.Range.GreaterThan,
+                    threshold = 0.8,
+                )
+            }
+        }
 
         @Serializable
         @SerialName("image_arbitrary")
@@ -462,7 +665,15 @@ sealed interface Filter {
             override val category: String,
             override val operator: Comparator.Range,
             override val threshold: Double,
-        ) : Analysis
+        ) : Analysis {
+            companion object {
+                fun empty() = ImageArbitrary(
+                    category = "",
+                    operator = Comparator.Range.GreaterThan,
+                    threshold = 0.8,
+                )
+            }
+        }
     }
 }
 

@@ -193,7 +193,7 @@ private fun FilterGroupItem(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(start = 16.dp)
-                            .clickable { onFilterSelected(option.defaultInstance) },
+                            .clickable { onFilterSelected(option.factory()) },
                     )
                 }
             }
@@ -206,9 +206,10 @@ private data class FilterGroup(
     val options: List<FilterOption>,
 )
 
-private data class FilterOption(
+@Stable
+private class FilterOption(
     val titleRes: StringResource,
-    val defaultInstance: Filter,
+    val factory: () -> Filter,
 )
 
 private val AllFilterGroups: List<FilterGroup> = listOf(
@@ -217,15 +218,11 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
         options = listOf(
             FilterOption(
                 titleRes = Res.string.all_of_these_and,
-                defaultInstance = Filter.And(
-                    filters = emptyList(),
-                ),
+                factory = Filter.And::empty,
             ),
             FilterOption(
                 titleRes = Res.string.any_of_these_or,
-                defaultInstance = Filter.Or(
-                    filters = emptyList(),
-                ),
+                factory = Filter.Or::empty,
             ),
         ),
     ),
@@ -234,18 +231,11 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
         options = listOf(
             FilterOption(
                 titleRes = Res.string.attribute_compare,
-                defaultInstance = Filter.Attribute.Compare(
-                    selector = "",
-                    operator = Filter.Comparator.Equality.Equal,
-                    targetValue = "",
-                ),
+                factory = Filter.Attribute.Compare::empty,
             ),
             FilterOption(
                 titleRes = Res.string.embed_type,
-                defaultInstance = Filter.Attribute.Embed(
-                    operator = Filter.Comparator.Equality.Equal,
-                    embedType = Filter.Attribute.Embed.Kind.Image,
-                ),
+                factory = Filter.Attribute.Embed::empty,
             ),
         ),
     ),
@@ -254,17 +244,11 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
         options = listOf(
             FilterOption(
                 titleRes = Res.string.entity_matches,
-                defaultInstance = Filter.Entity.Matches(
-                    entityType = Filter.Entity.Type.Hashtags,
-                    values = emptyList(),
-                ),
+                factory = Filter.Entity.Matches::empty,
             ),
             FilterOption(
                 titleRes = Res.string.entity_excludes,
-                defaultInstance = Filter.Entity.Excludes(
-                    entityType = Filter.Entity.Type.Hashtags,
-                    values = emptyList(),
-                ),
+                factory = Filter.Entity.Excludes::empty,
             ),
         ),
     ),
@@ -273,35 +257,19 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
         options = listOf(
             FilterOption(
                 titleRes = Res.string.regex_matches,
-                defaultInstance = Filter.Regex.Matches(
-                    variable = "",
-                    pattern = "",
-                    isCaseInsensitive = false,
-                ),
+                factory = Filter.Regex.Matches::empty,
             ),
             FilterOption(
                 titleRes = Res.string.regex_negation,
-                defaultInstance = Filter.Regex.Negation(
-                    variable = "",
-                    pattern = "",
-                    isCaseInsensitive = false,
-                ),
+                factory = Filter.Regex.Negation::empty,
             ),
             FilterOption(
                 titleRes = Res.string.regex_any,
-                defaultInstance = Filter.Regex.Any(
-                    variable = "",
-                    terms = emptyList(),
-                    isCaseInsensitive = false,
-                ),
+                factory = Filter.Regex.Any::empty,
             ),
             FilterOption(
                 titleRes = Res.string.regex_none,
-                defaultInstance = Filter.Regex.None(
-                    variable = "",
-                    terms = emptyList(),
-                    isCaseInsensitive = false,
-                ),
+                factory = Filter.Regex.None::empty,
             ),
         ),
     ),
@@ -310,39 +278,23 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
         options = listOf(
             FilterOption(
                 titleRes = Res.string.social_graph,
-                defaultInstance = Filter.Social.Graph(
-                    username = "",
-                    operator = Filter.Comparator.Set.In,
-                    direction = "",
-                ),
+                factory = Filter.Social.Graph::empty,
             ),
             FilterOption(
                 titleRes = Res.string.social_user_list,
-                defaultInstance = Filter.Social.UserList(
-                    dids = emptyList(),
-                    operator = Filter.Comparator.Set.In,
-                ),
+                factory = Filter.Social.UserList::empty,
             ),
             FilterOption(
                 titleRes = Res.string.social_starter_pack,
-                defaultInstance = Filter.Social.StarterPack(
-                    url = "",
-                    operator = Filter.Comparator.Set.In,
-                ),
+                factory = Filter.Social.StarterPack::empty,
             ),
             FilterOption(
                 titleRes = Res.string.social_list_member,
-                defaultInstance = Filter.Social.ListMember(
-                    url = "",
-                    operator = Filter.Comparator.Set.In,
-                ),
+                factory = Filter.Social.ListMember::empty,
             ),
             FilterOption(
                 titleRes = Res.string.social_magic_audience,
-                defaultInstance = Filter.Social.MagicAudience(
-                    audienceId = "",
-                    operator = Filter.Comparator.Set.In,
-                ),
+                factory = Filter.Social.MagicAudience::empty,
             ),
         ),
     ),
@@ -351,33 +303,15 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
         options = listOf(
             FilterOption(
                 titleRes = Res.string.text_similarity,
-                defaultInstance = Filter.ML.Similarity(
-                    path = "",
-                    config = Filter.ML.Similarity.Config(
-                        anchorText = "",
-                        modelName = "",
-                    ),
-                    operator = Filter.Comparator.Range.GreaterThan,
-                    threshold = 0.8,
-                ),
+                factory = Filter.ML.Similarity::empty,
             ),
             FilterOption(
                 titleRes = Res.string.model_probability,
-                defaultInstance = Filter.ML.Probability(
-                    config = Filter.ML.Probability.Config(
-                        modelName = "",
-                    ),
-                    operator = Filter.Comparator.Range.GreaterThan,
-                    threshold = 0.8,
-                ),
+                factory = Filter.ML.Probability::empty,
             ),
             FilterOption(
                 titleRes = Res.string.content_moderation,
-                defaultInstance = Filter.ML.Moderation(
-                    category = "",
-                    operator = Filter.Comparator.Range.GreaterThan,
-                    threshold = 0.8,
-                ),
+                factory = Filter.ML.Moderation::empty,
             ),
         ),
     ),
@@ -386,75 +320,39 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
         options = listOf(
             FilterOption(
                 titleRes = Res.string.language_analysis,
-                defaultInstance = Filter.Analysis.Language(
-                    category = "",
-                    operator = Filter.Comparator.Range.GreaterThan,
-                    threshold = 0.8,
-                ),
+                factory = Filter.Analysis.Language::empty,
             ),
             FilterOption(
                 titleRes = Res.string.sentiment_analysis,
-                defaultInstance = Filter.Analysis.Sentiment(
-                    category = "",
-                    operator = Filter.Comparator.Range.GreaterThan,
-                    threshold = 0.8,
-                ),
+                factory = Filter.Analysis.Sentiment::empty,
             ),
             FilterOption(
                 titleRes = Res.string.financial_sentiment,
-                defaultInstance = Filter.Analysis.FinancialSentiment(
-                    category = "",
-                    operator = Filter.Comparator.Range.GreaterThan,
-                    threshold = 0.8,
-                ),
+                factory = Filter.Analysis.FinancialSentiment::empty,
             ),
             FilterOption(
                 titleRes = Res.string.emotion_analysis,
-                defaultInstance = Filter.Analysis.Emotion(
-                    category = "",
-                    operator = Filter.Comparator.Range.GreaterThan,
-                    threshold = 0.8,
-                ),
+                factory = Filter.Analysis.Emotion::empty,
             ),
             FilterOption(
                 titleRes = Res.string.toxicity_analysis,
-                defaultInstance = Filter.Analysis.Toxicity(
-                    category = "",
-                    operator = Filter.Comparator.Range.GreaterThan,
-                    threshold = 0.8,
-                ),
+                factory = Filter.Analysis.Toxicity::empty,
             ),
             FilterOption(
                 titleRes = Res.string.topic_analysis,
-                defaultInstance = Filter.Analysis.Topic(
-                    category = "",
-                    operator = Filter.Comparator.Range.GreaterThan,
-                    threshold = 0.8,
-                ),
+                factory = Filter.Analysis.Topic::empty,
             ),
             FilterOption(
                 titleRes = Res.string.text_arbitrary,
-                defaultInstance = Filter.Analysis.TextArbitrary(
-                    category = "",
-                    operator = Filter.Comparator.Range.GreaterThan,
-                    threshold = 0.8,
-                ),
+                factory = Filter.Analysis.TextArbitrary::empty,
             ),
             FilterOption(
                 titleRes = Res.string.image_nsfw,
-                defaultInstance = Filter.Analysis.ImageNsfw(
-                    category = "",
-                    operator = Filter.Comparator.Range.GreaterThan,
-                    threshold = 0.8,
-                ),
+                factory = Filter.Analysis.ImageNsfw::empty,
             ),
             FilterOption(
                 titleRes = Res.string.image_arbitrary,
-                defaultInstance = Filter.Analysis.ImageArbitrary(
-                    category = "",
-                    operator = Filter.Comparator.Range.GreaterThan,
-                    threshold = 0.8,
-                ),
+                factory = Filter.Analysis.ImageArbitrary::empty,
             ),
         ),
     ),
