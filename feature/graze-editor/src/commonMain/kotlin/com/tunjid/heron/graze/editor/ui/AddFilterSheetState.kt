@@ -252,27 +252,28 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
             ),
         ),
     ),
-    FilterGroup(
-        nameRes = Res.string.filter_group_regex,
-        options = listOf(
-            FilterOption(
-                titleRes = Res.string.regex_matches,
-                factory = Filter.Regex.Matches::empty,
-            ),
-            FilterOption(
-                titleRes = Res.string.regex_negation,
-                factory = Filter.Regex.Negation::empty,
-            ),
-            FilterOption(
-                titleRes = Res.string.regex_any,
-                factory = Filter.Regex.Any::empty,
-            ),
-            FilterOption(
-                titleRes = Res.string.regex_none,
-                factory = Filter.Regex.None::empty,
-            ),
-        ),
-    ),
+    // No regular expression support for now
+//    FilterGroup(
+//        nameRes = Res.string.filter_group_regex,
+//        options = listOf(
+//            FilterOption(
+//                titleRes = Res.string.regex_matches,
+//                factory = Filter.Regex.Matches::empty,
+//            ),
+//            FilterOption(
+//                titleRes = Res.string.regex_negation,
+//                factory = Filter.Regex.Negation::empty,
+//            ),
+//            FilterOption(
+//                titleRes = Res.string.regex_any,
+//                factory = Filter.Regex.Any::empty,
+//            ),
+//            FilterOption(
+//                titleRes = Res.string.regex_none,
+//                factory = Filter.Regex.None::empty,
+//            ),
+//        ),
+//    ),
     FilterGroup(
         nameRes = Res.string.filter_group_social,
         options = listOf(
@@ -301,14 +302,15 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
     FilterGroup(
         nameRes = Res.string.filter_group_ml,
         options = listOf(
-            FilterOption(
-                titleRes = Res.string.text_similarity,
-                factory = Filter.ML.Similarity::empty,
-            ),
-            FilterOption(
-                titleRes = Res.string.model_probability,
-                factory = Filter.ML.Probability::empty,
-            ),
+            // Unsupported for now
+//            FilterOption(
+//                titleRes = Res.string.text_similarity,
+//                factory = Filter.ML.Similarity::empty,
+//            ),
+//            FilterOption(
+//                titleRes = Res.string.model_probability,
+//                factory = Filter.ML.Probability::empty,
+//            ),
             FilterOption(
                 titleRes = Res.string.content_moderation,
                 factory = Filter.ML.Moderation::empty,
@@ -342,18 +344,20 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
                 titleRes = Res.string.topic_analysis,
                 factory = Filter.Analysis.Topic::empty,
             ),
-            FilterOption(
-                titleRes = Res.string.text_arbitrary,
-                factory = Filter.Analysis.TextArbitrary::empty,
-            ),
+            // Unsupported for now
+//            FilterOption(
+//                titleRes = Res.string.text_arbitrary,
+//                factory = Filter.Analysis.TextArbitrary::empty,
+//            ),
             FilterOption(
                 titleRes = Res.string.image_nsfw,
                 factory = Filter.Analysis.ImageNsfw::empty,
             ),
-            FilterOption(
-                titleRes = Res.string.image_arbitrary,
-                factory = Filter.Analysis.ImageArbitrary::empty,
-            ),
+            // Unsupported for now
+//            FilterOption(
+//                titleRes = Res.string.image_arbitrary,
+//                factory = Filter.Analysis.ImageArbitrary::empty,
+//            ),
         ),
     ),
 )

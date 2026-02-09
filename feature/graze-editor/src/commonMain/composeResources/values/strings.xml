@@ -26,6 +26,7 @@
     <string name="embed_type">Embed Type</string>
     <string name="entity_matches">Entity Matches</string>
     <string name="entity_type">Entity Type</string>
+    <string name="unsupported_filter">Unsupported Filter</string>
     <string name="values_comma_separated">Values (comma separated)</string>
     <string name="entity_excludes">Entity Excludes</string>
     <string name="regex_matches">Regex Matches</string>

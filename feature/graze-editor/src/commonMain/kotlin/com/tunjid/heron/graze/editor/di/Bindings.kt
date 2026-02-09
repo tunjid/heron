@@ -176,7 +176,7 @@ class GrazeEditorBindings(
                 content = { contentPadding ->
                     GrazeEditorScreen(
                         modifier = Modifier
-                            .padding(contentPadding),
+                            .padding(top = contentPadding.calculateTopPadding()),
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,

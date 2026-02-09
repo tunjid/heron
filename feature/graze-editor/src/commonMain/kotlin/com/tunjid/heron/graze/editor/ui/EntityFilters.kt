@@ -65,6 +65,22 @@ fun EntityFilter(
             )
         },
         startContent = {
+            Dropdown(
+                label = stringResource(Res.string.entity_type_label),
+                selected = filter.entityType,
+                options = Filter.Entity.Type.entries,
+                stringRes = Filter.Entity.Type::stringRes,
+                onSelect = {
+                    onUpdate(
+                        when (filter) {
+                            is Filter.Entity.Excludes -> filter.copy(entityType = it)
+                            is Filter.Entity.Matches -> filter.copy(entityType = it)
+                        },
+                    )
+                },
+            )
+        },
+        endContent = {
             ComparatorDropdown(
                 selected = when (filter) {
                     is Filter.Entity.Excludes -> Filter.Comparator.Set.NotIn
@@ -84,22 +100,6 @@ fun EntityFilter(
                                 entityType = filter.entityType,
                                 values = filter.values,
                             )
-                        },
-                    )
-                },
-            )
-        },
-        endContent = {
-            Dropdown(
-                label = stringResource(Res.string.entity_type_label),
-                selected = filter.entityType,
-                options = Filter.Entity.Type.entries,
-                stringRes = Filter.Entity.Type::stringRes,
-                onSelect = {
-                    onUpdate(
-                        when (filter) {
-                            is Filter.Entity.Excludes -> filter.copy(entityType = it)
-                            is Filter.Entity.Matches -> filter.copy(entityType = it)
                         },
                     )
                 },

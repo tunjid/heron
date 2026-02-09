@@ -60,6 +60,7 @@ import heron.feature.graze_editor.generated.resources.comparator_not_equal
 import heron.feature.graze_editor.generated.resources.comparator_not_in
 import heron.feature.graze_editor.generated.resources.remove_filter
 import heron.feature.graze_editor.generated.resources.threshold_percent
+import heron.feature.graze_editor.generated.resources.unsupported_filter
 import heron.ui.core.generated.resources.cancel
 import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.StringResource
@@ -228,6 +229,30 @@ fun ChipFilter(
             )
         },
     )
+}
+
+@Composable
+fun UnsupportedFilter(
+    modifier: Modifier = Modifier,
+    title: String,
+    tint: Color = Color.Unspecified,
+    onRemove: () -> Unit,
+) {
+    FilterCard(
+        modifier = modifier,
+        tint = tint,
+        title = {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+            )
+        },
+        onRemove = onRemove,
+    ) {
+        Text(
+            text = stringResource(Res.string.unsupported_filter),
+        )
+    }
 }
 
 @Composable
