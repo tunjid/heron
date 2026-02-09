@@ -191,6 +191,7 @@ class ActualProfileViewModel(
                         is Action.Mute -> action.flow.muteAccountMutations(
                             writeQueue = writeQueue,
                         )
+                        is Action.PageChanged -> action.flow.pageChangeMutations()
                     }
                 },
             )
@@ -472,6 +473,11 @@ private fun Flow<Action.UpdatePreferences>.feedGeneratorStatusMutations(
         writable.writeStatusMessage(status)?.let {
             emit { copy(messages = messages + it) }
         }
+    }
+
+private fun Flow<Action.PageChanged>.pageChangeMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(currentPage = action.page)
     }
 
 private fun CoroutineScope.recordStateHolders(

@@ -172,6 +172,9 @@ class ExpandableTabsState(
     }
 }
 
+val ExpandableTabsState.shouldRenderAppBarButtonsInOverlay
+    get() = transition.isSeeking
+
 private val TabLayout.isExpanded
     get() = this is TabLayout.Expanded
 

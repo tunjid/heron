@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Login
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.AlternateEmail
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.runtime.getValue
@@ -37,11 +38,13 @@ import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.profile.Action
 import com.tunjid.heron.profile.ActualProfileViewModel
 import com.tunjid.heron.profile.ProfileScreen
+import com.tunjid.heron.profile.ProfileScreenStateHolders
 import com.tunjid.heron.profile.RouteViewModelInitializer
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.navigation.composePostDestination
+import com.tunjid.heron.scaffold.navigation.grazeEditorDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
@@ -79,6 +82,7 @@ import dev.zacsweers.metro.StringKey
 import heron.feature.profile.generated.resources.Res
 import heron.feature.profile.generated.resources.mention
 import heron.feature.profile.generated.resources.post
+import heron.ui.core.generated.resources.feed_generator_create
 import heron.ui.core.generated.resources.sign_in
 import org.jetbrains.compose.resources.stringResource
 
@@ -203,6 +207,16 @@ class ProfileBindings(
                     )
                 },
                 floatingActionButton = {
+                    val isSignedInProfile = state.isSignedInProfile
+                    val isFeedTab = when (state.stateHolders.getOrNull(state.currentPage)) {
+                        is ProfileScreenStateHolders.Records.Feeds -> true
+                        is ProfileScreenStateHolders.LabelerSettings,
+                        is ProfileScreenStateHolders.Records.Lists,
+                        is ProfileScreenStateHolders.Records.StarterPacks,
+                        is ProfileScreenStateHolders.Timeline,
+                        null,
+                        -> false
+                    }
                     PaneFab(
                         modifier = Modifier
                             .offset {
@@ -211,13 +225,17 @@ class ProfileBindings(
                         text = stringResource(
                             when {
                                 isSignedOut -> CommonStrings.sign_in
-                                state.isSignedInProfile -> Res.string.post
+                                isSignedInProfile ->
+                                    if (isFeedTab) CommonStrings.feed_generator_create
+                                    else Res.string.post
                                 else -> Res.string.mention
                             },
                         ),
                         icon = when {
                             isSignedOut -> Icons.AutoMirrored.Rounded.Login
-                            state.isSignedInProfile -> Icons.Rounded.Edit
+                            isSignedInProfile ->
+                                if (isFeedTab) Icons.Rounded.Add
+                                else Icons.Rounded.Edit
                             else -> Icons.Rounded.AlternateEmail
                         },
                         expanded = isFabExpanded {
@@ -229,12 +247,14 @@ class ProfileBindings(
                                 Action.Navigate.To(
                                     when {
                                         isSignedOut -> signInDestination()
-                                        else -> composePostDestination(
-                                            type =
-                                            if (state.isSignedInProfile) Post.Create.Timeline
-                                            else Post.Create.Mention(state.profile),
-                                            sharedElementPrefix = null,
-                                        )
+                                        else ->
+                                            if (isSignedInProfile && isFeedTab) grazeEditorDestination()
+                                            else composePostDestination(
+                                                type =
+                                                if (isSignedInProfile) Post.Create.Timeline
+                                                else Post.Create.Mention(state.profile),
+                                                sharedElementPrefix = null,
+                                            )
                                     },
                                 ),
                             )

@@ -75,6 +75,7 @@ import com.tunjid.heron.scaffold.navigation.bookmarksDestination
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.conversationDestination
 import com.tunjid.heron.scaffold.navigation.galleryDestination
+import com.tunjid.heron.scaffold.navigation.grazeEditorDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.recordDestination
@@ -227,8 +228,8 @@ internal fun HomeScreen(
             },
             onExpandedTabSelected = { page ->
                 when (val holder = updatedTimelineStateHolders.getOrNull(page)) {
-                    is HomeScreenStateHolders.Pinned -> scope.launch {
-                        pagerState.animateScrollToPage(page)
+                    is HomeScreenStateHolders.Pinned -> holder.state.value.timeline.uri?.path?.let {
+                        actions(Action.Navigate.To(pathDestination(it)))
                     }
 
                     is HomeScreenStateHolders.Saved -> holder.state.value.timeline.uri?.path?.let {
@@ -263,6 +264,9 @@ internal fun HomeScreen(
             },
             onBookmarkIconClick = {
                 actions(Action.Navigate.To(bookmarksDestination()))
+            },
+            onCreateFeedClicked = {
+                actions(Action.Navigate.To(grazeEditorDestination()))
             },
         )
 
