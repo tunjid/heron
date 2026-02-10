@@ -372,13 +372,26 @@ sealed interface Filter {
             override val id: Id = Id(),
             val username: String,
             val operator: Comparator.Set,
-            val direction: String,
+            val direction: Direction,
         ) : Social {
+            @Serializable
+            @JvmInline
+            value class Direction(val value: String) {
+                companion object {
+                    val Following = Direction("follows")
+                    val Followers = Direction("followers")
+
+                    val entries = listOf(
+                        Following,
+                        Followers,
+                    )
+                }
+            }
             companion object {
                 fun empty() = Graph(
                     username = "",
                     operator = Comparator.Set.In,
-                    direction = "",
+                    direction = Direction.Following,
                 )
             }
         }

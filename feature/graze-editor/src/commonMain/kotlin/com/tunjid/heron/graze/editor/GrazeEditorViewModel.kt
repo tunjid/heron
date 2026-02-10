@@ -17,7 +17,12 @@
 package com.tunjid.heron.graze.editor
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Cursor
+import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.graze.Filter
+import com.tunjid.heron.data.repository.SearchQuery
+import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
@@ -31,10 +36,13 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
+import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.merge
 
 internal typealias GrazeEditorStateHolder = ActionStateMutator<Action, StateFlow<State>>
@@ -50,6 +58,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 @AssistedInject
 class ActualGrazeEditorViewModel(
     navActions: (NavigationMutation) -> Unit,
+    searchRepository: SearchRepository,
     @Assisted
     scope: CoroutineScope,
     @Assisted
@@ -67,6 +76,9 @@ class ActualGrazeEditorViewModel(
                         is Action.Navigate -> action.flow.consumeNavigationActions(
                             navigationMutationConsumer = navActions,
                         )
+                        is Action.SearchProfiles -> action.flow.searchMutations(
+                            searchRepository = searchRepository,
+                        )
                         is Action.EditorNavigation -> action.flow.editorNavigationMutations()
                         is Action.EditFilter -> action.flow.editFilterFilterMutations()
                     }
@@ -75,20 +87,52 @@ class ActualGrazeEditorViewModel(
         },
     )
 
+private fun Flow<Action.SearchProfiles>.searchMutations(
+    searchRepository: SearchRepository,
+): Flow<Mutation<State>> =
+    debounce(SEARCH_DEBOUNCE_MILLIS)
+        .flatMapLatest { action ->
+            searchRepository.autoCompleteProfileSearch(
+                query = SearchQuery.OfProfiles(
+                    query = action.query,
+                    isLocalOnly = false,
+                    data = CursorQuery.Data(
+                        page = 0,
+                        cursorAnchor = Clock.System.now(),
+                        limit = MAX_SUGGESTED_PROFILES.toLong(),
+                    ),
+                ),
+                cursor = Cursor.Initial,
+            ).mapToMutation { profiles ->
+                copy(
+                    suggestedProfiles = profiles.map(ProfileWithViewerState::profile),
+                )
+            }
+        }
+
 private fun Flow<Action.EditorNavigation>.editorNavigationMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         when (action) {
             is Action.EditorNavigation.EnterFilter ->
-                copy(currentPath = currentPath + action.index)
+                copy(
+                    suggestedProfiles = emptyList(),
+                    currentPath = currentPath + action.index,
+                )
             Action.EditorNavigation.ExitFilter ->
-                if (currentPath.isEmpty()) this
-                else copy(currentPath = currentPath.dropLast(1))
+                if (currentPath.isEmpty()) copy(
+                    suggestedProfiles = emptyList(),
+                )
+                else copy(
+                    suggestedProfiles = emptyList(),
+                    currentPath = currentPath.dropLast(1),
+                )
         }
     }
 
 private fun Flow<Action.EditFilter>.editFilterFilterMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(
+            suggestedProfiles = emptyList(),
             filter = filter.updateAt(action.path) { target ->
                 if (action is Action.EditFilter.FlipRootFilter) when (target) {
                     is Filter.And -> Filter.Or(
@@ -147,3 +191,6 @@ private inline fun Filter.Root.updateFilters(
         is Filter.Or -> copy(filters = updatedFilters)
     }
 }
+
+private const val SEARCH_DEBOUNCE_MILLIS = 300L
+const val MAX_SUGGESTED_PROFILES = 5

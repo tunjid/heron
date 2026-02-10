@@ -39,6 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.graze.editor.ui.AnalysisFilter
 import com.tunjid.heron.graze.editor.ui.AttributeCompareFilter
@@ -123,8 +124,12 @@ fun GrazeEditorScreen(
                                 .fillMaxWidth(),
                             animatedVisibilityScope = this@AnimatedContent,
                             paneScaffoldState = paneScaffoldState,
+                            profileSearchResults = state.suggestedProfiles,
                             filter = child,
                             atTopLevel = true,
+                            onProfileQueryChanged = { query ->
+                                actions(Action.SearchProfiles(query))
+                            },
                             enterFilter = { enteredIndex ->
                                 actions(Action.EditorNavigation.EnterFilter(enteredIndex))
                             },
@@ -168,10 +173,12 @@ private fun Filter(
     animatedVisibilityScope: AnimatedVisibilityScope,
     paneScaffoldState: PaneScaffoldState,
     filter: Filter,
+    profileSearchResults: List<Profile>,
     atTopLevel: Boolean,
     path: List<Int>,
     enterFilter: (Int) -> Unit,
     onFlipClicked: (path: List<Int>) -> Unit,
+    onProfileQueryChanged: (String) -> Unit,
     onUpdateFilter: (filter: Filter, path: List<Int>, index: Int) -> Unit,
     onRemoveFilter: (path: List<Int>, index: Int) -> Unit,
     index: Int,
@@ -182,8 +189,10 @@ private fun Filter(
         atTopLevel = atTopLevel,
         modifier = modifier,
         filter = filter,
+        profileSearchResults = profileSearchResults,
         index = index,
         path = path,
+        onProfileQueryChanged = onProfileQueryChanged,
         enterFilter = enterFilter,
         onFlipClicked = onFlipClicked,
         onUpdateFilter = onUpdateFilter,
@@ -192,6 +201,8 @@ private fun Filter(
     else FilterLeaf(
         modifier = modifier,
         filter = filter,
+        profileSearchResults = profileSearchResults,
+        onProfileQueryChanged = onProfileQueryChanged,
         onUpdate = { updatedFilter ->
             onUpdateFilter(
                 updatedFilter,
@@ -216,6 +227,8 @@ fun FilterRow(
     index: Int,
     filter: Filter.Root,
     path: List<Int>,
+    profileSearchResults: List<Profile>,
+    onProfileQueryChanged: (String) -> Unit,
     enterFilter: (Int) -> Unit,
     onFlipClicked: (path: List<Int>) -> Unit,
     onUpdateFilter: (filter: Filter, path: List<Int>, index: Int) -> Unit,
@@ -268,11 +281,13 @@ fun FilterRow(
                                 .padding(8.dp),
                             animatedVisibilityScope = animatedVisibilityScope,
                             paneScaffoldState = paneScaffoldState,
+                            profileSearchResults = profileSearchResults,
                             filter = child,
                             atTopLevel = false,
                             index = childIndex,
                             path = path + index,
                             enterFilter = enterFilter,
+                            onProfileQueryChanged = onProfileQueryChanged,
                             onFlipClicked = onFlipClicked,
                             onUpdateFilter = onUpdateFilter,
                             onRemoveFilter = onRemoveFilter,
@@ -359,6 +374,8 @@ private fun RootFilterDescription(
 @Composable
 fun FilterLeaf(
     filter: Filter,
+    profileSearchResults: List<Profile>,
+    onProfileQueryChanged: (String) -> Unit,
     onUpdate: (Filter) -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
@@ -398,6 +415,8 @@ fun FilterLeaf(
         is Filter.Social.Graph -> SocialGraphFilter(
             modifier = modifier,
             filter = filter,
+            results = profileSearchResults,
+            onProfileQueryChanged = onProfileQueryChanged,
             onUpdate = onUpdate,
             onRemove = onRemove,
         )

@@ -17,6 +17,7 @@
 package com.tunjid.heron.graze.editor
 
 import androidx.navigationevent.NavigationEventInfo
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
@@ -30,6 +31,8 @@ data class State(
         filters = emptyList(),
     ),
     val currentPath: List<Int> = emptyList(),
+    @Transient
+    val suggestedProfiles: List<Profile> = emptyList(),
     @Transient
     val messages: List<Memo> = emptyList(),
 )
@@ -76,6 +79,10 @@ sealed class Action(val key: String) {
             val index: Int,
         ) : EditFilter()
     }
+
+    data class SearchProfiles(
+        val query: String,
+    ) : Action("SearchProfiles")
 
     sealed class Navigate :
         Action(key = "Navigate"),
