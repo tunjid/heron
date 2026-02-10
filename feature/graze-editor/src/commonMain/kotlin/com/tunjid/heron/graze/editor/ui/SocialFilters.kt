@@ -16,23 +16,33 @@
 
 package com.tunjid.heron.graze.editor.ui
 
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.graze.Filter
+import com.tunjid.heron.timeline.ui.profile.ProfileSearchResults
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.audience_id
 import heron.feature.graze_editor.generated.resources.dids_comma_separated
 import heron.feature.graze_editor.generated.resources.direction
 import heron.feature.graze_editor.generated.resources.social_graph
+import heron.feature.graze_editor.generated.resources.social_graph_direction_followers
+import heron.feature.graze_editor.generated.resources.social_graph_direction_following
+import heron.feature.graze_editor.generated.resources.social_graph_direction_unknown
 import heron.feature.graze_editor.generated.resources.social_list_member
 import heron.feature.graze_editor.generated.resources.social_magic_audience
 import heron.feature.graze_editor.generated.resources.social_starter_pack
@@ -44,50 +54,87 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun SocialGraphFilter(
     filter: Filter.Social.Graph,
+    results: List<Profile>,
+    onProfileQueryChanged: (String) -> Unit,
     onUpdate: (Filter.Social.Graph) -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    FilterCard(
+    StandardFilter(
         modifier = modifier,
+        title = stringResource(Res.string.social_graph),
         onRemove = onRemove,
-    ) {
-        Text(
-            text = stringResource(Res.string.social_graph),
-            style = MaterialTheme.typography.titleSmall,
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        OutlinedTextField(
-            value = filter.username,
-            onValueChange = { onUpdate(filter.copy(username = it)) },
-            label = { Text(text = stringResource(Res.string.username)) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-        ) {
+        startContent = {
             ComparatorDropdown(
                 selected = filter.operator,
                 options = Filter.Comparator.Set.entries,
-                onSelect = { onUpdate(filter.copy(operator = it)) },
-                modifier = Modifier.weight(1f),
+                onSelect = { comparator ->
+                    onUpdate(
+                        filter.copy(operator = comparator),
+                    )
+                },
             )
-            Spacer(
-                modifier = Modifier.width(8.dp),
+        },
+        endContent = {
+            Dropdown(
+                label = stringResource(Res.string.direction),
+                selected = filter.direction,
+                options = Filter.Social.Graph.Direction.entries,
+                stringRes = Filter.Social.Graph.Direction::stringRes,
+                onSelect = { direction ->
+                    onUpdate(
+                        filter.copy(
+                            direction = direction,
+                        ),
+                    )
+                },
             )
-            OutlinedTextField(
-                value = filter.direction,
-                onValueChange = { onUpdate(filter.copy(direction = it)) },
-                label = { Text(text = stringResource(Res.string.direction)) },
-                modifier = Modifier.weight(1f),
-            )
-        }
-    }
+        },
+        additionalContent = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                val textFieldState = remember {
+                    TextFieldState(
+                        initialText = filter.username,
+                    )
+                }
+                OutlinedTextField(
+                    state = textFieldState,
+                    label = {
+                        Text(text = stringResource(Res.string.username))
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                )
+                ProfileSearchResults(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    results = results,
+                    onProfileClicked = { profile ->
+                        textFieldState.edit {
+                            replace(
+                                start = 0,
+                                end = length,
+                                text = profile.handle.id,
+                            )
+                            selection = TextRange(profile.handle.id.length)
+                        }
+                    },
+                )
+                LaunchedEffect(Unit) {
+                    snapshotFlow { textFieldState.text }
+                        .collect {
+                            val text = it.toString()
+                            onUpdate(filter.copy(username = text))
+                            onProfileQueryChanged(text)
+                        }
+                }
+            }
+        },
+    )
 }
 
 @Composable
@@ -233,3 +280,10 @@ fun SocialMagicAudienceFilter(
         )
     }
 }
+
+private val Filter.Social.Graph.Direction.stringRes
+    get() = when (this) {
+        Filter.Social.Graph.Direction.Following -> Res.string.social_graph_direction_following
+        Filter.Social.Graph.Direction.Followers -> Res.string.social_graph_direction_followers
+        else -> Res.string.social_graph_direction_unknown
+    }

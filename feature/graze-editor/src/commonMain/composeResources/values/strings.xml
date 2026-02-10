@@ -249,4 +249,10 @@
     <string name="filter_group_social">Social</string>
     <string name="filter_group_ml">Machine Learning</string>
     <string name="filter_group_analysis">Analysis</string>
+
+    <!-- Social Graph Directions -->
+  <string name="social_graph_direction_following">Following</string>
+  <string name="social_graph_direction_followers">Followers</string>
+  <string name="social_graph_direction_unknown">Unknown</string>
+  <string name="social_graph_direction_of">of</string>
 </resources>
