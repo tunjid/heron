@@ -65,7 +65,6 @@ import com.tunjid.heron.gallery.ui.GalleryFooter
 import com.tunjid.heron.gallery.ui.GalleryImage
 import com.tunjid.heron.gallery.ui.GalleryVideo
 import com.tunjid.heron.gallery.ui.ImageDownloadState
-import com.tunjid.heron.gallery.ui.Indicator
 import com.tunjid.heron.gallery.ui.MediaInteractions
 import com.tunjid.heron.gallery.ui.MediaOverlay
 import com.tunjid.heron.gallery.ui.MediaPoster
@@ -95,6 +94,7 @@ import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.remembe
 import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
+import com.tunjid.heron.ui.Indicator
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt

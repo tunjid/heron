@@ -18,11 +18,8 @@ package com.tunjid.heron.graze.editor.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,10 +31,9 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.graze.editor.ui.EditFilterTextSheetState.Companion.rememberEditFilterProfileTextState
 import heron.feature.graze_editor.generated.resources.Res
-import heron.feature.graze_editor.generated.resources.add_item
-import heron.feature.graze_editor.generated.resources.audience_id
+import heron.feature.graze_editor.generated.resources.add_profile
 import heron.feature.graze_editor.generated.resources.direction
-import heron.feature.graze_editor.generated.resources.edit_item
+import heron.feature.graze_editor.generated.resources.edit_profile
 import heron.feature.graze_editor.generated.resources.social_graph
 import heron.feature.graze_editor.generated.resources.social_graph_direction_followers
 import heron.feature.graze_editor.generated.resources.social_graph_direction_following
@@ -46,7 +42,6 @@ import heron.feature.graze_editor.generated.resources.social_list_member
 import heron.feature.graze_editor.generated.resources.social_magic_audience
 import heron.feature.graze_editor.generated.resources.social_starter_pack
 import heron.feature.graze_editor.generated.resources.social_user_list
-import heron.feature.graze_editor.generated.resources.url
 import heron.feature.graze_editor.generated.resources.username
 import org.jetbrains.compose.resources.stringResource
 
@@ -128,8 +123,8 @@ fun SocialGraphFilter(
                 ) {
                     Text(
                         text = stringResource(
-                            if (filter.username.isBlank()) Res.string.add_item
-                            else Res.string.edit_item,
+                            if (filter.username.isBlank()) Res.string.add_profile
+                            else Res.string.edit_profile,
                         ),
                     )
                 }
@@ -181,6 +176,7 @@ fun SocialUserListFilter(
             )
             FilterTextChips(
                 editFilterTextSheetState = editFilterTextSheetState,
+                buttonStringResource = Res.string.add_profile,
                 onItemsUpdated = onItemsUpdated,
                 items = filter.dids,
             )
@@ -193,111 +189,48 @@ fun SocialUserListFilter(
 }
 
 @Composable
+@Suppress("unused")
 fun SocialStarterPackFilter(
     filter: Filter.Social.StarterPack,
     onUpdate: (Filter.Social.StarterPack) -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    FilterCard(
+    UnsupportedFilter(
         modifier = modifier,
+        title = stringResource(Res.string.social_starter_pack),
         onRemove = onRemove,
-    ) {
-        Text(
-            text = stringResource(Res.string.social_starter_pack),
-            style = MaterialTheme.typography.titleSmall,
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        ComparatorDropdown(
-            selected = filter.operator,
-            options = Filter.Comparator.Set.entries,
-            onSelect = { onUpdate(filter.copy(operator = it)) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        OutlinedTextField(
-            value = filter.url,
-            onValueChange = { onUpdate(filter.copy(url = it)) },
-            label = { Text(text = stringResource(Res.string.url)) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
+    )
 }
 
 @Composable
+@Suppress("unused")
 fun SocialListMemberFilter(
     filter: Filter.Social.ListMember,
     onUpdate: (Filter.Social.ListMember) -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    FilterCard(
+    UnsupportedFilter(
         modifier = modifier,
+        title = stringResource(Res.string.social_list_member),
         onRemove = onRemove,
-    ) {
-        Text(
-            text = stringResource(Res.string.social_list_member),
-            style = MaterialTheme.typography.titleSmall,
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        ComparatorDropdown(
-            selected = filter.operator,
-            options = Filter.Comparator.Set.entries,
-            onSelect = { onUpdate(filter.copy(operator = it)) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        OutlinedTextField(
-            value = filter.url,
-            onValueChange = { onUpdate(filter.copy(url = it)) },
-            label = { Text(text = stringResource(Res.string.url)) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
+    )
 }
 
 @Composable
+@Suppress("unused")
 fun SocialMagicAudienceFilter(
     filter: Filter.Social.MagicAudience,
     onUpdate: (Filter.Social.MagicAudience) -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    FilterCard(
+    UnsupportedFilter(
         modifier = modifier,
+        title = stringResource(Res.string.social_magic_audience),
         onRemove = onRemove,
-    ) {
-        Text(
-            text = stringResource(Res.string.social_magic_audience),
-            style = MaterialTheme.typography.titleSmall,
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        ComparatorDropdown(
-            selected = filter.operator,
-            options = Filter.Comparator.Set.entries,
-            onSelect = { onUpdate(filter.copy(operator = it)) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        OutlinedTextField(
-            value = filter.audienceId,
-            onValueChange = { onUpdate(filter.copy(audienceId = it)) },
-            label = { Text(text = stringResource(Res.string.audience_id)) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
+    )
 }
 
 private val Filter.Social.Graph.Direction.stringRes

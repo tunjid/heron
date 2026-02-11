@@ -18,6 +18,8 @@ package com.tunjid.heron.graze.editor
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,6 +29,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.SwapHoriz
@@ -38,6 +42,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.graze.Filter
@@ -54,6 +59,7 @@ import com.tunjid.heron.graze.editor.ui.SocialStarterPackFilter
 import com.tunjid.heron.graze.editor.ui.SocialUserListFilter
 import com.tunjid.heron.graze.editor.ui.UnsupportedFilter
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.ui.Indicator
 import com.tunjid.heron.ui.UiTokens
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.all_of_these_and
@@ -249,12 +255,15 @@ fun FilterRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             RootFilterDescription(
                 animatedVisibilityScope = animatedVisibilityScope,
                 paneScaffoldState = paneScaffoldState,
                 id = filter.id,
-                modifier = Modifier,
+                modifier = Modifier
+                    .fillMaxWidth(),
                 isAnd = filter is Filter.And,
                 size = filter.filters.size,
                 onFlipClicked = {
@@ -265,34 +274,50 @@ fun FilterRow(
                 },
             )
 
-            if (atTopLevel) LazyRow(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                itemsIndexed(
-                    items = filter.filters,
-                    key = { _, child -> child.id.value },
-                    itemContent = { childIndex, child ->
-                        Filter(
-                            modifier = Modifier
-                                .animateItem()
-                                .fillParentMaxWidth()
-                                .padding(8.dp),
-                            animatedVisibilityScope = animatedVisibilityScope,
-                            paneScaffoldState = paneScaffoldState,
-                            profileSearchResults = profileSearchResults,
-                            filter = child,
-                            atTopLevel = false,
-                            index = childIndex,
-                            path = path + index,
-                            enterFilter = enterFilter,
-                            onProfileQueryChanged = onProfileQueryChanged,
-                            onFlipClicked = onFlipClicked,
-                            onUpdateFilter = onUpdateFilter,
-                            onRemoveFilter = onRemoveFilter,
+            if (atTopLevel) {
+                val lazyListState = rememberLazyListState()
+                LazyRow(
+                    modifier = Modifier
+                        .border(
+                            width = Dp.Hairline,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            shape = FilterRowShape,
                         )
-                    },
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    flingBehavior = rememberSnapFlingBehavior(
+                        lazyListState = lazyListState,
+                    ),
+                    state = lazyListState,
+                ) {
+                    itemsIndexed(
+                        items = filter.filters,
+                        key = { _, child -> child.id.value },
+                        itemContent = { childIndex, child ->
+                            Filter(
+                                modifier = Modifier
+                                    .animateItem()
+                                    .fillParentMaxWidth()
+                                    .padding(8.dp),
+                                animatedVisibilityScope = animatedVisibilityScope,
+                                paneScaffoldState = paneScaffoldState,
+                                profileSearchResults = profileSearchResults,
+                                filter = child,
+                                atTopLevel = false,
+                                index = childIndex,
+                                path = path + index,
+                                enterFilter = enterFilter,
+                                onProfileQueryChanged = onProfileQueryChanged,
+                                onFlipClicked = onFlipClicked,
+                                onUpdateFilter = onUpdateFilter,
+                                onRemoveFilter = onRemoveFilter,
+                            )
+                        },
+                    )
+                }
+                Indicator(
+                    lazyListState = lazyListState,
+                    indicatorSize = 4.dp,
                 )
             }
         }
@@ -485,3 +510,5 @@ fun FilterLeaf(
 }
 
 private fun Filter.Root.backgroundSharedElementKey(): String = "$id-background"
+
+private val FilterRowShape = RoundedCornerShape(8.dp)

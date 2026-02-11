@@ -20,8 +20,11 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -36,16 +39,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
+import com.tunjid.heron.ui.Tab
+import com.tunjid.heron.ui.Tabs
+import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
+import com.tunjid.heron.ui.tabIndex
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.add_filter
+import heron.feature.graze_editor.generated.resources.advanced_filters
 import heron.feature.graze_editor.generated.resources.all_of_these_and
 import heron.feature.graze_editor.generated.resources.any_of_these_or
 import heron.feature.graze_editor.generated.resources.attribute_compare
@@ -59,27 +69,21 @@ import heron.feature.graze_editor.generated.resources.filter_group_attribute
 import heron.feature.graze_editor.generated.resources.filter_group_entity
 import heron.feature.graze_editor.generated.resources.filter_group_logic
 import heron.feature.graze_editor.generated.resources.filter_group_ml
-import heron.feature.graze_editor.generated.resources.filter_group_regex
 import heron.feature.graze_editor.generated.resources.filter_group_social
 import heron.feature.graze_editor.generated.resources.financial_sentiment
-import heron.feature.graze_editor.generated.resources.image_arbitrary
 import heron.feature.graze_editor.generated.resources.image_nsfw
+import heron.feature.graze_editor.generated.resources.images_and_videos_only
+import heron.feature.graze_editor.generated.resources.images_only
 import heron.feature.graze_editor.generated.resources.language_analysis
-import heron.feature.graze_editor.generated.resources.model_probability
-import heron.feature.graze_editor.generated.resources.regex_any
-import heron.feature.graze_editor.generated.resources.regex_matches
-import heron.feature.graze_editor.generated.resources.regex_negation
-import heron.feature.graze_editor.generated.resources.regex_none
+import heron.feature.graze_editor.generated.resources.posts_from_profiles
+import heron.feature.graze_editor.generated.resources.posts_with_hashtags
 import heron.feature.graze_editor.generated.resources.sentiment_analysis
+import heron.feature.graze_editor.generated.resources.simple_filters
 import heron.feature.graze_editor.generated.resources.social_graph
-import heron.feature.graze_editor.generated.resources.social_list_member
-import heron.feature.graze_editor.generated.resources.social_magic_audience
-import heron.feature.graze_editor.generated.resources.social_starter_pack
 import heron.feature.graze_editor.generated.resources.social_user_list
-import heron.feature.graze_editor.generated.resources.text_arbitrary
-import heron.feature.graze_editor.generated.resources.text_similarity
 import heron.feature.graze_editor.generated.resources.topic_analysis
 import heron.feature.graze_editor.generated.resources.toxicity_analysis
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -110,14 +114,11 @@ private fun AddFilterBottomSheet(
     onFilterSelected: (Filter) -> Unit,
 ) {
     state.ModalBottomSheet {
-        val expandedGroupIndices = remember { mutableStateListOf<Int>() }
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
+                .fillMaxHeight(SheetHeightFraction)
                 .padding(bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(0.dp),
         ) {
             Text(
                 text = stringResource(Res.string.add_filter),
@@ -128,21 +129,118 @@ private fun AddFilterBottomSheet(
                         vertical = 12.dp,
                     ),
             )
-            AllFilterGroups.forEachIndexed { index, group ->
-                val isExpanded = expandedGroupIndices.contains(index)
-                FilterGroupItem(
-                    group = group,
-                    isExpanded = isExpanded,
-                    onHeaderClick = {
-                        if (isExpanded) expandedGroupIndices.remove(index)
-                        else expandedGroupIndices.add(index)
-                    },
-                    onFilterSelected = {
-                        onFilterSelected(it)
-                        state.hide()
-                    },
-                )
+            val pagerState = rememberPagerState { 2 }
+            val coroutineScope = rememberCoroutineScope()
+            val onTabSelected: (Int) -> Unit = { page: Int ->
+                coroutineScope.launch { pagerState.animateScrollToPage(page) }
             }
+            Tabs(
+                modifier = Modifier
+                    .padding(
+                        horizontal = 16.dp,
+                    )
+                    .fillMaxWidth(),
+                tabsState = rememberTabsState(
+                    tabs = filterTabs(),
+                    selectedTabIndex = pagerState::tabIndex,
+                    onTabSelected = onTabSelected,
+                    onTabReselected = onTabSelected,
+                ),
+            )
+            val selectFilter: (Filter) -> Unit = {
+                onFilterSelected(it)
+                state.hide()
+            }
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.Top,
+            ) { page ->
+                when (page) {
+                    0 -> SimpleFilterList(
+                        onFilterSelected = selectFilter,
+                    )
+
+                    1 -> AdvancedFilterList(
+                        onFilterSelected = selectFilter,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun filterTabs(): List<Tab> {
+    val simpleFilters = stringResource(Res.string.simple_filters)
+    val advancedFilters = stringResource(Res.string.advanced_filters)
+    return remember(simpleFilters, advancedFilters) {
+        listOf(
+            Tab(
+                title = simpleFilters,
+                hasUpdate = false,
+            ),
+            Tab(
+                title = advancedFilters,
+                hasUpdate = false,
+            ),
+        )
+    }
+}
+
+@Composable
+private fun SimpleFilterList(
+    onFilterSelected: (Filter) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(0.dp),
+    ) {
+        SimpleFilterOptions.forEach { option ->
+            ListItem(
+                colors = ListItemDefaults.colors(
+                    containerColor = Color.Transparent,
+                ),
+                headlineContent = {
+                    Text(
+                        text = stringResource(option.titleRes),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onFilterSelected(option.factory()) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun AdvancedFilterList(
+    onFilterSelected: (Filter) -> Unit,
+) {
+    val expandedGroupIndices = remember { mutableStateListOf<Int>() }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(0.dp),
+    ) {
+        AllFilterGroups.forEachIndexed { index, group ->
+            val isExpanded = expandedGroupIndices.contains(index)
+            FilterGroupItem(
+                group = group,
+                isExpanded = isExpanded,
+                onHeaderClick = {
+                    if (isExpanded) expandedGroupIndices.remove(index)
+                    else expandedGroupIndices.add(index)
+                },
+                onFilterSelected = onFilterSelected,
+            )
         }
     }
 }
@@ -210,6 +308,43 @@ private data class FilterGroup(
 private class FilterOption(
     val titleRes: StringResource,
     val factory: () -> Filter,
+)
+
+private val SimpleFilterOptions: List<FilterOption> = listOf(
+    FilterOption(
+        titleRes = Res.string.images_only,
+        factory = {
+            Filter.Attribute.Embed(
+                embedType = Filter.Attribute.Embed.Kind.Image,
+                operator = Filter.Comparator.Equality.Equal,
+            )
+        },
+    ),
+    FilterOption(
+        titleRes = Res.string.images_and_videos_only,
+        factory = {
+            Filter.Or(
+                filters = listOf(
+                    Filter.Attribute.Embed(
+                        embedType = Filter.Attribute.Embed.Kind.Image,
+                        operator = Filter.Comparator.Equality.Equal,
+                    ),
+                    Filter.Attribute.Embed(
+                        embedType = Filter.Attribute.Embed.Kind.Video,
+                        operator = Filter.Comparator.Equality.Equal,
+                    ),
+                ),
+            )
+        },
+    ),
+    FilterOption(
+        titleRes = Res.string.posts_from_profiles,
+        factory = Filter.Social.UserList::empty,
+    ),
+    FilterOption(
+        titleRes = Res.string.posts_with_hashtags,
+        factory = Filter.Entity.Matches::empty,
+    ),
 )
 
 private val AllFilterGroups: List<FilterGroup> = listOf(
@@ -285,18 +420,18 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
                 titleRes = Res.string.social_user_list,
                 factory = Filter.Social.UserList::empty,
             ),
-            FilterOption(
-                titleRes = Res.string.social_starter_pack,
-                factory = Filter.Social.StarterPack::empty,
-            ),
-            FilterOption(
-                titleRes = Res.string.social_list_member,
-                factory = Filter.Social.ListMember::empty,
-            ),
-            FilterOption(
-                titleRes = Res.string.social_magic_audience,
-                factory = Filter.Social.MagicAudience::empty,
-            ),
+//            FilterOption(
+//                titleRes = Res.string.social_starter_pack,
+//                factory = Filter.Social.StarterPack::empty,
+//            ),
+//            FilterOption(
+//                titleRes = Res.string.social_list_member,
+//                factory = Filter.Social.ListMember::empty,
+//            ),
+//            FilterOption(
+//                titleRes = Res.string.social_magic_audience,
+//                factory = Filter.Social.MagicAudience::empty,
+//            ),
         ),
     ),
     FilterGroup(
@@ -361,3 +496,5 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
         ),
     ),
 )
+
+private const val SheetHeightFraction = 0.8f

@@ -14,14 +14,18 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.gallery.ui
+package com.tunjid.heron.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -42,8 +46,58 @@ fun Indicator(
     spacing: Dp = 6.dp,
     maxVisibleDots: Int = 5,
 ) {
-    val pageCount = pagerState.pageCount
-    if (pageCount <= 1) return
+    Indicator(
+        modifier = modifier,
+        itemCount = pagerState.pageCount,
+        activeColor = activeColor,
+        inactiveColor = inactiveColor,
+        indicatorSize = indicatorSize,
+        spacing = spacing,
+        maxVisibleDots = maxVisibleDots,
+        currentPosition = { pagerState.currentPage + pagerState.currentPageOffsetFraction },
+    )
+}
+
+@Composable
+fun Indicator(
+    modifier: Modifier = Modifier,
+    lazyListState: LazyListState,
+    activeColor: Color = MaterialTheme.colorScheme.primary,
+    inactiveColor: Color = MaterialTheme.colorScheme.primary.withDim(true),
+    indicatorSize: Dp = 6.dp,
+    spacing: Dp = 6.dp,
+    maxVisibleDots: Int = 5,
+) {
+    val itemCount by remember { derivedStateOf { lazyListState.layoutInfo.totalItemsCount } }
+    Indicator(
+        modifier = modifier,
+        itemCount = itemCount,
+        activeColor = activeColor,
+        inactiveColor = inactiveColor,
+        indicatorSize = indicatorSize,
+        spacing = spacing,
+        maxVisibleDots = maxVisibleDots,
+        currentPosition = {
+            val firstVisibleItem = lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()
+            if (firstVisibleItem == null || firstVisibleItem.size == 0) 0f
+            else lazyListState.firstVisibleItemIndex +
+                (lazyListState.firstVisibleItemScrollOffset.toFloat() / firstVisibleItem.size)
+        },
+    )
+}
+
+@Composable
+fun Indicator(
+    modifier: Modifier = Modifier,
+    itemCount: Int,
+    activeColor: Color = MaterialTheme.colorScheme.primary,
+    inactiveColor: Color = MaterialTheme.colorScheme.primary.withDim(true),
+    indicatorSize: Dp = 6.dp,
+    spacing: Dp = 6.dp,
+    maxVisibleDots: Int = 5,
+    currentPosition: () -> Float,
+) {
+    if (itemCount <= 1) return
 
     val density = LocalDensity.current
     val indicatorSizePx = with(density) { indicatorSize.toPx() }
@@ -57,23 +111,21 @@ fun Indicator(
             .width(with(density) { totalWidth.toDp() })
             .height(indicatorSize),
     ) {
-        val currentPage = pagerState.currentPage
-        val offset = pagerState.currentPageOffsetFraction
-        val currentPos = currentPage + offset
+        val currentPos = currentPosition()
 
         // Calculate the center of the visible window
-        val viewCenter = if (pageCount <= maxVisibleDots) {
-            (pageCount - 1) / 2f
+        val viewCenter = if (itemCount <= maxVisibleDots) {
+            (itemCount - 1) / 2f
         } else {
             // Clamp the view center so we don't scroll past the start or end
             val lowerBound = (maxVisibleDots / 2).toFloat()
-            val upperBound = (pageCount - 1 - (maxVisibleDots / 2)).toFloat()
+            val upperBound = (itemCount - 1 - (maxVisibleDots / 2)).toFloat()
             currentPos.coerceIn(lowerBound, upperBound)
         }
 
         val canvasCenter = size.width / 2f
 
-        for (i in 0 until pageCount) {
+        for (i in 0 until itemCount) {
             // Calculate visual position relative to canvas center
             val distFromViewCenter = i - viewCenter
             val x = canvasCenter + distFromViewCenter * stepPx
@@ -93,7 +145,7 @@ fun Indicator(
             }
 
             // Edge scaling for shifting effect
-            if (pageCount > maxVisibleDots) {
+            if (itemCount > maxVisibleDots) {
                 val distFromView = (i - viewCenter).absoluteValue
                 val halfVisible = maxVisibleDots / 2f
 
