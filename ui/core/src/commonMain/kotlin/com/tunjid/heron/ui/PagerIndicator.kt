@@ -79,11 +79,9 @@ fun Indicator(
         maxVisibleDots = maxVisibleDots,
         currentPosition = {
             val firstVisibleItem = lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()
-            if (firstVisibleItem == null) 0f
-            else {
-                lazyListState.firstVisibleItemIndex +
-                    (lazyListState.firstVisibleItemScrollOffset.toFloat() / firstVisibleItem.size)
-            }
+            if (firstVisibleItem == null || firstVisibleItem.size == 0) 0f
+            else lazyListState.firstVisibleItemIndex +
+                (lazyListState.firstVisibleItemScrollOffset.toFloat() / firstVisibleItem.size)
         },
     )
 }

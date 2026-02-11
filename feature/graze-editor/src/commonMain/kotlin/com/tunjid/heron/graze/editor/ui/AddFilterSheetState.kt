@@ -40,7 +40,6 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -148,7 +147,10 @@ private fun AddFilterBottomSheet(
                     onTabReselected = onTabSelected,
                 ),
             )
-
+            val selectFilter: (Filter) -> Unit = {
+                onFilterSelected(it)
+                state.hide()
+            }
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier
@@ -157,17 +159,11 @@ private fun AddFilterBottomSheet(
             ) { page ->
                 when (page) {
                     0 -> SimpleFilterList(
-                        onFilterSelected = {
-                            onFilterSelected(it)
-                            state.hide()
-                        },
+                        onFilterSelected = selectFilter,
                     )
 
                     1 -> AdvancedFilterList(
-                        onFilterSelected = {
-                            onFilterSelected(it)
-                            state.hide()
-                        },
+                        onFilterSelected = selectFilter,
                     )
                 }
             }
