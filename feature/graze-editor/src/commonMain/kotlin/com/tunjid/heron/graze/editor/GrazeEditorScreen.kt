@@ -423,6 +423,8 @@ fun FilterLeaf(
         is Filter.Social.UserList -> SocialUserListFilter(
             modifier = modifier,
             filter = filter,
+            results = profileSearchResults,
+            onProfileQueryChanged = onProfileQueryChanged,
             onUpdate = onUpdate,
             onRemove = onRemove,
         )
