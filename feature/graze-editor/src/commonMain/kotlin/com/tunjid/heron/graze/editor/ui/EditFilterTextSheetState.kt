@@ -226,11 +226,16 @@ class EditFilterTextSheetState(
                             .fillMaxWidth(),
                     )
 
-                    if (options is Options.Collection.SuggestedProfiles) {
+                    val suggestions = when (options) {
+                        is Options.Single.SuggestedProfiles -> options.profileSuggestions
+                        is Options.Collection.SuggestedProfiles -> options.profileSuggestions
+                        else -> null
+                    }
+                    if (suggestions != null) {
                         ProfileSearchResults(
                             modifier = Modifier
                                 .fillMaxWidth(),
-                            results = options.profileSuggestions,
+                            results = suggestions,
                             onProfileClicked = { profile ->
                                 options.onTextConfirmed(profile.handle.id)
                                 state.hide()
