@@ -176,23 +176,22 @@ private fun AddFilterBottomSheet(
 }
 
 @Composable
-private fun filterTabs(): SnapshotStateList<Tab> =
-    remember { mutableStateListOf<Tab>() }.apply {
-        if (isEmpty()) {
-            add(
-                Tab(
-                    title = stringResource(Res.string.simple_filters),
-                    hasUpdate = false,
-                ),
-            )
-            add(
-                Tab(
-                    title = stringResource(Res.string.advanced_filters),
-                    hasUpdate = false,
-                ),
-            )
-        }
+private fun filterTabs(): List<Tab> {
+    val simpleFilters = stringResource(Res.string.simple_filters)
+    val advancedFilters = stringResource(Res.string.advanced_filters)
+    return remember(simpleFilters, advancedFilters) {
+        listOf(
+            Tab(
+                title = simpleFilters,
+                hasUpdate = false,
+            ),
+            Tab(
+                title = advancedFilters,
+                hasUpdate = false,
+            ),
+        )
     }
+}
 
 @Composable
 private fun SimpleFilterList(
