@@ -20,6 +20,9 @@
     <string name="add_item">Add Item</string>
     <string name="remove_item">Remove Item</string>
     <string name="edit_item">Edit Item</string>
+    <string name="add_profile">Add Profile</string>
+    <string name="remove_profile">Remove Profile</string>
+    <string name="edit_profile">Edit Profile</string>
     <string name="attribute_compare">Attribute Compare</string>
     <string name="selector">Selector</string>
     <string name="value">Value</string>
@@ -74,11 +77,18 @@
     <string name="tag">Tag</string>
     <string name="graze_editor">Graze Editor</string>
     <string name="graze_editor_level">Graze Editor (level %1$d)</string>
-    <string name="all_of_these_and">All of these (AND)</string>
-    <string name="any_of_these_or">Any of these (OR)</string>
+    <string name="all_of_these_and">Match all of these</string>
+    <string name="any_of_these_or">Match any of these</string>
     <string name="items_count">%1$d items</string>
     <string name="unknown_filter">Unknown Filter</string>
     <string name="done">Done</string>
+
+    <string name="simple_filters">Simple Filters</string>
+    <string name="advanced_filters">Advanced Filters</string>
+    <string name="images_only">Posts with images only</string>
+    <string name="images_and_videos_only">Posts with images or videos only</string>
+    <string name="posts_from_profiles">Posts from these profiles</string>
+    <string name="posts_with_hashtags">Posts with these hashtags</string>
 
     <!-- Filter Leaf Descriptions -->
     <string name="desc_attribute_compare">Attribute: %1$s %2$s %3$s</string>

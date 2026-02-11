@@ -55,6 +55,7 @@ import com.tunjid.heron.graze.editor.ui.EditFilterTextSheetState.Companion.remem
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.add_item
+import heron.feature.graze_editor.generated.resources.add_profile
 import heron.feature.graze_editor.generated.resources.comparator_equal
 import heron.feature.graze_editor.generated.resources.comparator_greater_than
 import heron.feature.graze_editor.generated.resources.comparator_greater_than_or_equal
@@ -189,6 +190,7 @@ fun ChipFilter(
     modifier: Modifier = Modifier,
     title: String,
     tint: Color = Color.Unspecified,
+    buttonStringResource: StringResource = Res.string.add_profile,
     items: List<String>,
     onItemsUpdated: (List<String>) -> Unit,
     onRemove: () -> Unit,
@@ -210,6 +212,7 @@ fun ChipFilter(
             )
             FilterTextChips(
                 editFilterTextSheetState = editFilterTextSheetState,
+                buttonStringResource = buttonStringResource,
                 onItemsUpdated = onItemsUpdated,
                 items = items,
             )
@@ -267,6 +270,7 @@ fun ThresholdSlider(
 fun FilterTextChips(
     modifier: Modifier = Modifier,
     editFilterTextSheetState: EditFilterTextSheetState,
+    buttonStringResource: StringResource = Res.string.add_item,
     onItemsUpdated: (List<String>) -> Unit,
     items: List<String>,
 ) {
@@ -312,7 +316,7 @@ fun FilterTextChips(
                             .animateBounds(this@LookaheadScope)
                             .fillMaxWidth(),
                     ) {
-                        Text(text = stringResource(Res.string.add_item))
+                        Text(text = stringResource(buttonStringResource))
                     }
                 }
             },
