@@ -74,11 +74,11 @@ class EditFilterTextSheetState(
 
             class Text(
                 title: String,
-            ) : Options(title)
+            ) : Single(title)
 
             class SuggestedProfiles(
                 title: String,
-            ) : Collection(title) {
+            ) : Single(title) {
                 var profileSuggestions by mutableStateOf(emptyList<Profile>())
             }
         }
