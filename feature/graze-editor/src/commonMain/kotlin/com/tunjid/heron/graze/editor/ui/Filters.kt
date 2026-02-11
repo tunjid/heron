@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.graze.editor.ui
 
+import androidx.compose.animation.animateBounds
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -42,11 +44,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
+import com.tunjid.heron.graze.editor.ui.EditFilterTextSheetState.Companion.rememberEditFilterTextState
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.add_item
@@ -120,8 +125,7 @@ fun StandardFilter(
     title: String,
     tint: Color = Color.Unspecified,
     onRemove: () -> Unit,
-    startContent: @Composable () -> Unit,
-    endContent: @Composable () -> Unit,
+    rowContent: @Composable RowScope.() -> Unit,
     additionalContent: @Composable () -> Unit = {},
 ) {
     FilterCard(
@@ -141,6 +145,28 @@ fun StandardFilter(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            rowContent()
+        }
+        additionalContent()
+    }
+}
+
+@Composable
+fun StandardFilter(
+    modifier: Modifier = Modifier,
+    title: String,
+    tint: Color = Color.Unspecified,
+    onRemove: () -> Unit,
+    startContent: @Composable () -> Unit,
+    endContent: @Composable () -> Unit,
+    additionalContent: @Composable () -> Unit = {},
+) {
+    StandardFilter(
+        modifier = modifier,
+        title = title,
+        tint = tint,
+        onRemove = onRemove,
+        rowContent = {
             Box(
                 modifier = Modifier
                     .weight(1f),
@@ -153,9 +179,9 @@ fun StandardFilter(
             ) {
                 endContent()
             }
-        }
-        additionalContent()
-    }
+        },
+        additionalContent = additionalContent,
+    )
 }
 
 @Composable
@@ -177,55 +203,15 @@ fun ChipFilter(
         startContent = startContent,
         endContent = endContent,
         additionalContent = {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                itemVerticalAlignment = Alignment.CenterVertically,
-                content = {
-                    val addTextSheetState = rememberAddTextSheetState(
-                        title = title,
-                        onTextConfirmed = { updatedText ->
-                            onItemsUpdated(
-                                items
-                                    .minus(startingText)
-                                    .plus(updatedText)
-                                    .distinct(),
-                            )
-                        },
-                    )
-                    items.forEach {
-                        InputChip(
-                            selected = false,
-                            onClick = {
-                                addTextSheetState.show(currentText = it)
-                            },
-                            trailingIcon = {
-                                Icon(
-                                    modifier = Modifier
-                                        .clickable {
-                                            onItemsUpdated(items.minus(it))
-                                        },
-                                    imageVector = Icons.Rounded.Cancel,
-                                    contentDescription = stringResource(CommonStrings.cancel),
-                                )
-                            },
-                            label = {
-                                Text(text = it)
-                            },
-                        )
-                    }
-                    Spacer(Modifier.height(16.dp))
-                    FilledTonalButton(
-                        onClick = {
-                            addTextSheetState.show()
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                    ) {
-                        Text(text = stringResource(Res.string.add_item))
-                    }
-                },
+            val editFilterTextSheetState = rememberEditFilterTextState(
+                title = title,
+                onItemsUpdated = onItemsUpdated,
+                items = items,
+            )
+            FilterTextChips(
+                editFilterTextSheetState = editFilterTextSheetState,
+                onItemsUpdated = onItemsUpdated,
+                items = items,
             )
         },
     )
@@ -273,6 +259,63 @@ fun ThresholdSlider(
             value = threshold.toFloat(),
             onValueChange = { onThresholdChanged(it.toDouble()) },
             valueRange = 0.1f..1f,
+        )
+    }
+}
+
+@Composable
+fun FilterTextChips(
+    modifier: Modifier = Modifier,
+    editFilterTextSheetState: EditFilterTextSheetState,
+    onItemsUpdated: (List<String>) -> Unit,
+    items: List<String>,
+) {
+    LookaheadScope {
+        FlowRow(
+            modifier = modifier,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            itemVerticalAlignment = Alignment.CenterVertically,
+            content = {
+                items.forEach { text ->
+                    key(text) {
+                        InputChip(
+                            modifier = Modifier
+                                .animateBounds(this@LookaheadScope),
+                            selected = false,
+                            onClick = {
+                                editFilterTextSheetState.show(currentText = text)
+                            },
+                            trailingIcon = {
+                                Icon(
+                                    modifier = Modifier
+                                        .clickable {
+                                            onItemsUpdated(items.minus(text))
+                                        },
+                                    imageVector = Icons.Rounded.Cancel,
+                                    contentDescription = stringResource(CommonStrings.cancel),
+                                )
+                            },
+                            label = {
+                                Text(text = text)
+                            },
+                        )
+                    }
+                }
+                Spacer(Modifier.height(16.dp))
+                key("button") {
+                    FilledTonalButton(
+                        onClick = {
+                            editFilterTextSheetState.show()
+                        },
+                        modifier = Modifier
+                            .animateBounds(this@LookaheadScope)
+                            .fillMaxWidth(),
+                    ) {
+                        Text(text = stringResource(Res.string.add_item))
+                    }
+                }
+            },
         )
     }
 }

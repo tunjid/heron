@@ -21,24 +21,23 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.graze.Filter
-import com.tunjid.heron.timeline.ui.profile.ProfileSearchResults
+import com.tunjid.heron.graze.editor.ui.EditFilterTextSheetState.Companion.rememberEditFilterProfileTextState
 import heron.feature.graze_editor.generated.resources.Res
+import heron.feature.graze_editor.generated.resources.add_item
 import heron.feature.graze_editor.generated.resources.audience_id
-import heron.feature.graze_editor.generated.resources.dids_comma_separated
 import heron.feature.graze_editor.generated.resources.direction
+import heron.feature.graze_editor.generated.resources.edit_item
 import heron.feature.graze_editor.generated.resources.social_graph
 import heron.feature.graze_editor.generated.resources.social_graph_direction_followers
 import heron.feature.graze_editor.generated.resources.social_graph_direction_following
@@ -96,41 +95,48 @@ fun SocialGraphFilter(
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                val textFieldState = remember {
-                    TextFieldState(
-                        initialText = filter.username,
-                    )
-                }
+                val addTextSheetState = rememberEditFilterProfileTextState(
+                    title = stringResource(Res.string.username),
+                    suggestedProfiles = results,
+                    onTextConfirmed = { profileHandle ->
+                        onUpdate(
+                            filter.copy(
+                                username = profileHandle,
+                            ),
+                        )
+                    },
+                )
                 OutlinedTextField(
-                    state = textFieldState,
+                    value = filter.username,
+                    onValueChange = {},
+                    readOnly = true,
                     label = {
                         Text(text = stringResource(Res.string.username))
                     },
                     modifier = Modifier
                         .fillMaxWidth(),
                 )
-                ProfileSearchResults(
+
+                FilledTonalButton(
+                    onClick = {
+                        addTextSheetState.show(
+                            currentText = filter.username,
+                        )
+                    },
                     modifier = Modifier
                         .fillMaxWidth(),
-                    results = results,
-                    onProfileClicked = { profile ->
-                        textFieldState.edit {
-                            replace(
-                                start = 0,
-                                end = length,
-                                text = profile.handle.id,
-                            )
-                            selection = TextRange(profile.handle.id.length)
-                        }
-                    },
-                )
+                ) {
+                    Text(
+                        text = stringResource(
+                            if (filter.username.isBlank()) Res.string.add_item
+                            else Res.string.edit_item,
+                        ),
+                    )
+                }
+
                 LaunchedEffect(Unit) {
-                    snapshotFlow { textFieldState.text }
-                        .collect {
-                            val text = it.toString()
-                            onUpdate(filter.copy(username = text))
-                            onProfileQueryChanged(text)
-                        }
+                    snapshotFlow { addTextSheetState.options.text }
+                        .collect(onProfileQueryChanged)
                 }
             }
         },
@@ -140,37 +146,53 @@ fun SocialGraphFilter(
 @Composable
 fun SocialUserListFilter(
     filter: Filter.Social.UserList,
+    results: List<Profile>,
+    onProfileQueryChanged: (String) -> Unit,
     onUpdate: (Filter.Social.UserList) -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    FilterCard(
+    StandardFilter(
         modifier = modifier,
+        title = stringResource(Res.string.social_user_list),
         onRemove = onRemove,
-    ) {
-        Text(
-            text = stringResource(Res.string.social_user_list),
-            style = MaterialTheme.typography.titleSmall,
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        ComparatorDropdown(
-            selected = filter.operator,
-            options = Filter.Comparator.Set.entries,
-            onSelect = { onUpdate(filter.copy(operator = it)) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(
-            modifier = Modifier.height(8.dp),
-        )
-        OutlinedTextField(
-            value = filter.dids.joinToString(", "),
-            onValueChange = { onUpdate(filter.copy(dids = it.split(",").map { s -> s.trim() })) },
-            label = { Text(text = stringResource(Res.string.dids_comma_separated)) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
+        rowContent = {
+            ComparatorDropdown(
+                selected = filter.operator,
+                options = Filter.Comparator.Set.entries,
+                onSelect = { onUpdate(filter.copy(operator = it)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            )
+        },
+
+        additionalContent = {
+            val addTextSheetState = rememberEditFilterProfileTextState(
+                title = stringResource(Res.string.username),
+                suggestedProfiles = results,
+                onItemsUpdated = {
+                    onUpdate(
+                        filter.copy(dids = it),
+                    )
+                },
+                items = filter.dids,
+            )
+            FilterTextChips(
+                editFilterTextSheetState = addTextSheetState,
+                onItemsUpdated = {
+                    onUpdate(
+                        filter.copy(dids = it),
+                    )
+                },
+                items = filter.dids,
+            )
+            LaunchedEffect(Unit) {
+                snapshotFlow { addTextSheetState.options.text }
+                    .collect(onProfileQueryChanged)
+            }
+        },
+    )
 }
 
 @Composable

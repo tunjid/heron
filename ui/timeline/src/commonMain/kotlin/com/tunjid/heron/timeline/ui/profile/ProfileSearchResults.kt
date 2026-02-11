@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.timeline.ui.profile
 
+import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,9 +29,11 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.contentDescription
@@ -45,29 +48,39 @@ fun ProfileSearchResults(
     results: List<Profile>,
     onProfileClicked: (Profile) -> Unit,
 ) {
-    ElevatedCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.elevatedCardColors(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-    ) {
-        Column {
-            results.forEachIndexed { index, profile ->
-                ProfileResultItem(
-                    profile = profile,
-                    onProfileClicked = onProfileClicked,
-                    modifier = Modifier
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                )
+    LookaheadScope {
+        ElevatedCard(
+            modifier = modifier
+                .animateBounds(this@LookaheadScope)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.elevatedCardColors(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        ) {
+            Column {
+                results.forEachIndexed { index, profile ->
+                    key(profile.did.id) {
+                        ProfileResultItem(
+                            profile = profile,
+                            onProfileClicked = onProfileClicked,
+                            modifier = Modifier
+                                .animateBounds(this@LookaheadScope)
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                        )
+                    }
 
-                if (index != results.lastIndex) {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 12.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                        thickness = 0.8.dp,
-                    )
+                    if (index != results.lastIndex) {
+                        key("${profile.did.id}-divider") {
+                            HorizontalDivider(
+                                modifier = Modifier
+                                    .animateBounds(this@LookaheadScope)
+                                    .padding(horizontal = 12.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant,
+                                thickness = 0.8.dp,
+                            )
+                        }
+                    }
                 }
             }
         }
