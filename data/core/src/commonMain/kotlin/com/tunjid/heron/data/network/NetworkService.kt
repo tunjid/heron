@@ -26,6 +26,7 @@ import io.ktor.client.HttpClient
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.currentCoroutineContext
 import sh.christian.ozone.api.response.AtpResponse
 
 internal interface NetworkService {
@@ -56,6 +57,12 @@ internal class KtorNetworkService(
         },
     )
 
+    private val validatingApi = XrpcBlueskyApi(
+        httpClient = httpClient.config {
+            sessionManager.manage(config = this)
+        },
+    )
+
     override suspend fun <T : Any> runCatchingWithMonitoredNetworkRetry(
         times: Int,
         initialDelay: Duration,
@@ -67,7 +74,14 @@ internal class KtorNetworkService(
         initialDelay,
         maxDelay,
         factor,
-        block = { block(api) },
+        block = {
+            block(
+                when (currentCoroutineContext()[SessionContext.Key]) {
+                    is SessionContext.Previous -> validatingApi
+                    else -> api
+                },
+            )
+        },
     ).mapCatchingUnlessCancelled { atpResponse ->
         when (atpResponse) {
             is AtpResponse.Failure -> throw AtProtoException(
