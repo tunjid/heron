@@ -9,13 +9,16 @@ internal sealed class SessionContext : CoroutineContext.Element {
         get() = SessionContext
 
     abstract val tokens: SavedState.AuthTokens?
+    abstract val profileData: SavedState.ProfileData
 
     data class Current(
         override val tokens: SavedState.AuthTokens?,
+        override val profileData: SavedState.ProfileData,
     ) : SessionContext()
 
     data class Previous(
         override val tokens: SavedState.AuthTokens.Authenticated,
+        override val profileData: SavedState.ProfileData,
     ) : SessionContext()
 
     companion object Key : CoroutineContext.Key<SessionContext>
