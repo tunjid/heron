@@ -48,6 +48,7 @@ import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -55,7 +56,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.withContext
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 
@@ -179,40 +179,20 @@ internal class AuthTokenRepository(
     override suspend fun switchSession(
         sessionSummary: SessionSummary,
     ): Outcome = runCatchingUnlessCancelled {
-        // Get the stored auth for the target session
-        val targetProfileAuth = savedStateDataSource.savedState.value
-            .profileData[sessionSummary.profileId]
-            ?.auth as? SavedState.AuthTokens.Authenticated
-            ?: return@runCatchingUnlessCancelled Outcome.Failure(
-                Exception("No authenticated session found for ${sessionSummary.profileId}"),
-            )
-
-        // Validate tokens by making an API call with SessionContext.Previous
-        // This will auto-refresh if needed and save via updateAuth
-        withContext(SessionContext.Previous(targetProfileAuth)) {
-            networkService.runCatchingWithMonitoredNetworkRetry {
-                getSession()
-            }.getOrElse {
-                // If validation fails, don't proceed with switch
-                return@getOrElse Outcome.Failure(
-                    Exception("Failed to validate session for ${sessionSummary.profileId}: ${it.message}", it),
-                )
+        val switched = savedStateDataSource.inCurrentProfileSession { currentProfileId ->
+            val freshAuth = savedStateDataSource.inPastSession(sessionSummary.profileId) {
+                networkService.runCatchingWithMonitoredNetworkRetry {
+                    getSession()
+                }.getOrElse {
+                    return@inPastSession null
+                }
+                currentCoroutineContext()[SessionContext]?.tokens as? SavedState.AuthTokens.Authenticated
             }
-        }
+                ?: return@inCurrentProfileSession false
 
-        // IMPORTANT: Re-read tokens using first() to ensure we get the latest value
-        // If refresh happened, tokens were saved via updateAuth and StateFlow should have emitted
-        val freshAuth = savedStateDataSource.savedState
-            .first()
-            .profileData[sessionSummary.profileId]
-            ?.auth as? SavedState.AuthTokens.Authenticated
-            ?: return@runCatchingUnlessCancelled Outcome.Failure(
-                Exception("Session tokens unavailable after validation"),
-            )
-
-        // Atomic switch
-        val switched = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-            if (signedInProfileId == sessionSummary.profileId) return@inCurrentProfileSession true
+            if (currentProfileId == sessionSummary.profileId) {
+                return@inCurrentProfileSession true
+            }
 
             savedStateDataSource.switchSession(
                 profileId = sessionSummary.profileId,
@@ -222,13 +202,14 @@ internal class AuthTokenRepository(
             true
         } ?: true
 
-        if (!switched) return@runCatchingUnlessCancelled Outcome.Failure(
-            SessionSwitchException(sessionSummary.profileId),
-        )
+        if (!switched) {
+            return@runCatchingUnlessCancelled Outcome.Failure(
+                SessionSwitchException(sessionSummary.profileId),
+            )
+        }
 
-        // Update user data for the new session
-        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-            if (signedInProfileId == sessionSummary.profileId) {
+        savedStateDataSource.inCurrentProfileSession { newProfileId ->
+            if (newProfileId == sessionSummary.profileId) {
                 updateSignedInUser()
             } else {
                 expiredSessionOutcome()
