@@ -462,9 +462,16 @@ internal suspend fun SavedStateDataSource.updateSignedInUserNotifications(
 internal suspend inline fun <T> SavedStateDataSource.inCurrentProfileSession(
     crossinline block: suspend (ProfileId?) -> T,
 ): T? {
-    val currentSavedState = savedState.first { it != InitialSavedState }
-    val currentProfileId = currentSavedState.signedInProfileId
-    return withContext(SessionContext.Current(currentSavedState.auth)) {
+    val state = savedState.first { it != InitialSavedState }
+    val currentProfileId = state.signedInProfileId
+    val profileData = currentProfileId?.let { state.profileData[it] }
+
+    return withContext(
+        SessionContext.Current(
+            tokens = profileData?.auth,
+            profileData = profileData ?: SavedState.ProfileData.defaultGuestData,
+        ),
+    ) {
         coroutineScope {
             select {
                 async {
@@ -485,7 +492,16 @@ internal suspend inline fun <T> SavedStateDataSource.inCurrentProfileSession(
 internal suspend inline fun SavedStateDataSource.onEachSignedInProfile(
     crossinline block: suspend () -> Unit,
 ) = observedSignedInProfileId.collectLatest { profileId ->
-    if (profileId != null) withContext(SessionContext.Current(savedState.value.auth)) {
+    if (profileId == null) return@collectLatest
+    val state = savedState.value
+    val profileData = state.profileData[profileId] ?: return@collectLatest
+
+    withContext(
+        SessionContext.Current(
+            tokens = profileData.auth,
+            profileData = profileData,
+        ),
+    ) {
         block()
     }
 }
@@ -496,10 +512,17 @@ internal suspend inline fun SavedStateDataSource.onEachSignedInProfile(
 internal inline fun <T> SavedStateDataSource.singleAuthorizedSessionFlow(
     crossinline block: suspend (ProfileId) -> Flow<T>,
 ): Flow<T> = observedSignedInProfileId
-    .flatMapLatest { signedInProfileId ->
-        if (signedInProfileId == null) emptyFlow()
-        else block(signedInProfileId)
-            .flowOn(SessionContext.Current(tokens = savedState.value.auth))
+    .flatMapLatest { profileId ->
+        if (profileId == null) return@flatMapLatest emptyFlow()
+        val state = savedState.value
+        val profileData = state.profileData[profileId] ?: return@flatMapLatest emptyFlow()
+        block(profileId)
+            .flowOn(
+                SessionContext.Current(
+                    tokens = profileData.auth,
+                    profileData = profileData,
+                ),
+            )
     }
 
 /**
@@ -508,10 +531,40 @@ internal inline fun <T> SavedStateDataSource.singleAuthorizedSessionFlow(
 internal inline fun <T> SavedStateDataSource.singleSessionFlow(
     crossinline block: suspend (ProfileId?) -> Flow<T>,
 ): Flow<T> = observedSignedInProfileId
-    .flatMapLatest { signedInProfileId ->
-        block(signedInProfileId)
-            .flowOn(SessionContext.Current(tokens = savedState.value.auth))
+    .flatMapLatest { profileId ->
+        val state = savedState.value
+        val profileData = profileId?.let { state.profileData[it] }
+        block(profileId)
+            .flowOn(
+                SessionContext.Current(
+                    tokens = profileData?.auth,
+                    profileData = profileData ?: SavedState.ProfileData.defaultGuestData,
+                ),
+            )
     }
+
+/**
+ * Runs [block] in the context of a past (non-active) session.
+ * Cancels if the auth is missing or the session becomes invalid.
+ */
+internal suspend inline fun <T> SavedStateDataSource.inPastSession(
+    profileId: ProfileId,
+    crossinline block: suspend (SavedState.AuthTokens.Authenticated) -> T,
+): T? {
+    val state = savedState.first { it != InitialSavedState }
+
+    val profileData = state.profileData[profileId] ?: return null
+    val auth = profileData.auth as? SavedState.AuthTokens.Authenticated ?: return null
+
+    return withContext(
+        SessionContext.Previous(
+            tokens = auth,
+            profileData = profileData,
+        ),
+    ) {
+        block(auth)
+    }
+}
 
 internal fun expiredSessionOutcome() = Outcome.Failure(ExpiredSessionException())
 
