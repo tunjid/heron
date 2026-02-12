@@ -33,6 +33,7 @@ import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.network.SessionContext
 import com.tunjid.heron.data.network.SessionManager
 import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
@@ -54,6 +55,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withContext
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 
@@ -177,20 +179,38 @@ internal class AuthTokenRepository(
     override suspend fun switchSession(
         sessionSummary: SessionSummary,
     ): Outcome = runCatchingUnlessCancelled {
-        // Token refresh happens before the session switch, so that the atomic block is fully synchronous
-        val freshAuth = savedStateDataSource.inCurrentProfileSession { _ ->
-            val targetProfileData = savedStateDataSource.savedState.value
-                .profileData[sessionSummary.profileId]
-                ?: return@inCurrentProfileSession null
+        // Get the stored auth for the target session
+        val targetProfileAuth = savedStateDataSource.savedState.value
+            .profileData[sessionSummary.profileId]
+            ?.auth as? SavedState.AuthTokens.Authenticated
+            ?: return@runCatchingUnlessCancelled Outcome.Failure(
+                Exception("No authenticated session found for ${sessionSummary.profileId}"),
+            )
 
-            val targetAuthTokens =
-                targetProfileData.auth as? SavedState.AuthTokens.Authenticated
-                    ?: return@inCurrentProfileSession null
+        // Validate tokens by making an API call with SessionContext.Previous
+        // This will auto-refresh if needed and save via updateAuth
+        withContext(SessionContext.Previous(targetProfileAuth)) {
+            networkService.runCatchingWithMonitoredNetworkRetry {
+                getSession()
+            }.getOrElse {
+                // If validation fails, don't proceed with switch
+                return@getOrElse Outcome.Failure(
+                    Exception("Failed to validate session for ${sessionSummary.profileId}: ${it.message}", it),
+                )
+            }
+        }
 
-            sessionManager.refreshSessionToken(targetAuthTokens)
-        } ?: return@runCatchingUnlessCancelled expiredSessionOutcome()
+        // IMPORTANT: Re-read tokens using first() to ensure we get the latest value
+        // If refresh happened, tokens were saved via updateAuth and StateFlow should have emitted
+        val freshAuth = savedStateDataSource.savedState
+            .first()
+            .profileData[sessionSummary.profileId]
+            ?.auth as? SavedState.AuthTokens.Authenticated
+            ?: return@runCatchingUnlessCancelled Outcome.Failure(
+                Exception("Session tokens unavailable after validation"),
+            )
 
-        // Switching should cause the current session to expire
+        // Atomic switch
         val switched = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
             if (signedInProfileId == sessionSummary.profileId) return@inCurrentProfileSession true
 
@@ -199,7 +219,7 @@ internal class AuthTokenRepository(
                 freshAuth = freshAuth,
             )
 
-            false
+            true
         } ?: true
 
         if (!switched) return@runCatchingUnlessCancelled Outcome.Failure(
