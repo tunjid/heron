@@ -130,6 +130,7 @@ sealed interface Filter {
     data class And(
         @Transient
         override val id: Id = Id(),
+        @SerialName("and")
         override val filters: List<Filter>,
     ) : Root {
         companion object {
@@ -144,6 +145,7 @@ sealed interface Filter {
     data class Or(
         @Transient
         override val id: Id = Id(),
+        @SerialName("or")
         override val filters: List<Filter>,
     ) : Root {
         companion object {
