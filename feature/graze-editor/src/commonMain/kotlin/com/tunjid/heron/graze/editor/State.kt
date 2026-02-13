@@ -30,7 +30,7 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     val feed: GrazeFeed = GrazeFeed.Pending(
-        recordKey = RecordKey("test"),
+        recordKey = RecordKey("test2"),
         filter = Filter.And(
             filters = emptyList(),
         ),

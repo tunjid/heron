@@ -20,13 +20,20 @@ import kotlin.jvm.JvmInline
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonObject
 
 /**
  * Root interface for the Graze filter hierarchy.
@@ -112,15 +119,15 @@ sealed interface Filter {
 // 2. Logic Containers
 // ==============================================================================
 
-    @Serializable
+    @Serializable(with = RootSerializer::class)
     sealed interface Root : Filter {
         val filters: List<Filter>
     }
 
     @Serializable
+    @SerialName("and")
     data class And(
         override val id: Id = Id(),
-        @SerialName("and")
         override val filters: List<Filter>,
     ) : Root {
         companion object {
@@ -131,15 +138,65 @@ sealed interface Filter {
     }
 
     @Serializable
+    @SerialName("or")
     data class Or(
         override val id: Id = Id(),
-        @SerialName("or")
         override val filters: List<Filter>,
     ) : Root {
         companion object {
             fun empty() = Or(
                 filters = emptyList(),
             )
+        }
+    }
+
+    object RootSerializer : KSerializer<Root> {
+        private val delegate = PolymorphicSerializer(Root::class)
+        override val descriptor: SerialDescriptor = delegate.descriptor
+
+        override fun serialize(encoder: Encoder, value: Root) {
+            if (encoder is JsonEncoder) {
+                val json = encoder.json
+                val filtersElement = json.encodeToJsonElement(
+                    ListSerializer(Filter.serializer()),
+                    value.filters,
+                )
+                val jsonObject = buildJsonObject {
+                    when (value) {
+                        is And -> put("and", filtersElement)
+                        is Or -> put("or", filtersElement)
+                    }
+                }
+                encoder.encodeJsonElement(jsonObject)
+            } else {
+                delegate.serialize(encoder, value)
+            }
+        }
+
+        override fun deserialize(decoder: Decoder): Root {
+            if (decoder is JsonDecoder) {
+                val jsonObject = decoder.decodeJsonElement().jsonObject
+
+                return when {
+                    "and" in jsonObject -> {
+                        val filters = decoder.json.decodeFromJsonElement(
+                            ListSerializer(Filter.serializer()),
+                            jsonObject["and"]!!,
+                        )
+                        And(filters = filters)
+                    }
+                    "or" in jsonObject -> {
+                        val filters = decoder.json.decodeFromJsonElement(
+                            ListSerializer(Filter.serializer()),
+                            jsonObject["or"]!!,
+                        )
+                        Or(filters = filters)
+                    }
+                    else -> throw SerializationException("Expected 'and' or 'or' key for Filter.Root")
+                }
+            } else {
+                return delegate.deserialize(decoder)
+            }
         }
     }
 
@@ -387,6 +444,7 @@ sealed interface Filter {
                     )
                 }
             }
+
             companion object {
                 fun empty() = Graph(
                     username = "",
@@ -990,9 +1048,9 @@ val Filter.Attribute.Embed.Kind.isGalleryMedia
         Filter.Attribute.Embed.Kind.Image,
         Filter.Attribute.Embed.Kind.ImageGroup,
         Filter.Attribute.Embed.Kind.Video,
-        -> true
+            -> true
         Filter.Attribute.Embed.Kind.Link,
         Filter.Attribute.Embed.Kind.Post,
         Filter.Attribute.Embed.Kind.Gif,
-        -> false
+            -> false
     }

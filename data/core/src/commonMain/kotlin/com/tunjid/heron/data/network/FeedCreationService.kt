@@ -28,6 +28,7 @@ import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.call.save
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.logging.LogLevel
@@ -35,7 +36,9 @@ import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.resources.request
 import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
@@ -67,10 +70,10 @@ internal class GrazeFeedCreationService @Inject constructor(
             url.takeFrom(InternalEndpoints.HeronEndpoint)
         }
         install(Logging) {
-            level = LogLevel.INFO
+            level = LogLevel.BODY
             logger = object : Logger {
                 override fun log(message: String) {
-//                    println("Logger Ktor => $message")
+                    println("Logger Ktor => $message")
                 }
             }
         }
@@ -121,18 +124,23 @@ internal class GrazeFeedCreationService @Inject constructor(
                 ),
             )
         }.mapCatchingUnlessCancelled { tokenResponse ->
-            println("GOT TOKEN: ${tokenResponse.token}")
 
-            val response = feedCreationClient.request(call.path) {
-                method = HttpMethod.Post
+            val response = feedCreationClient.post(call.path) {
                 setBody(body)
                 contentType(ContentType.Application.Json)
                 bearerAuth(tokenResponse.token)
             }
 
-            if (!response.status.isSuccess()) throw Exception("")
+            response.call.save()
+
+
+            if (!response.status.isSuccess()) throw Exception(response.bodyAsText())
             response.body<T>()
         }
+            .onFailure{
+                println("Fail $it")
+                it.printStackTrace()
+            }
     } ?: expiredSessionResult()
 }
 
