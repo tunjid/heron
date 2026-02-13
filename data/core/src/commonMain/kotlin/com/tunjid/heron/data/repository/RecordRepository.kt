@@ -30,6 +30,11 @@ import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.graze.GrazeFeed
+import com.tunjid.heron.data.network.FeedCreationService
+import com.tunjid.heron.data.network.GrazeResponse
+import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.mapDistinctUntilChanged
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.withRefresh
@@ -44,6 +49,10 @@ interface RecordRepository {
     fun embeddableRecord(
         uri: EmbeddableRecordUri,
     ): Flow<Record.Embeddable>
+
+    suspend fun updateGrazeFeed(
+        update: GrazeFeed.Update,
+    ): Result<GrazeFeed?>
 }
 
 internal class OfflineRecordRepository @Inject constructor(
@@ -54,6 +63,8 @@ internal class OfflineRecordRepository @Inject constructor(
     private val feedGeneratorDao: FeedGeneratorDao,
     private val savedStateDataSource: SavedStateDataSource,
     private val recordResolver: RecordResolver,
+    private val feedCreationService: FeedCreationService,
+    private val networkService: NetworkService,
 ) : RecordRepository {
 
     override val subscribedLabelers: Flow<List<Labeler>> =
@@ -98,4 +109,30 @@ internal class OfflineRecordRepository @Inject constructor(
             .withRefresh {
                 recordResolver.resolve(uri)
             }
+
+    override suspend fun updateGrazeFeed(
+        update: GrazeFeed.Update,
+    ): Result<GrazeFeed?> = feedCreationService.updateGrazeFeed(
+        update = update,
+    ).mapCatchingUnlessCancelled { response ->
+        when (response) {
+            is GrazeResponse.Algorithm -> {
+                GrazeFeed.Created(
+                    recordKey = update.recordKey,
+                    filter = response.algorithm.manifest.filter,
+                )
+            }
+            is GrazeResponse.ContentMode -> {
+                check(update is GrazeFeed.Update.Put)
+
+                GrazeFeed.Created(
+                    recordKey = update.recordKey,
+                    filter = update.feed.filter,
+                )
+            }
+            is GrazeResponse.Delete -> {
+                null
+            }
+        }
+    }
 }

@@ -21,6 +21,8 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.graze.Filter
+import com.tunjid.heron.data.graze.GrazeFeed
+import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -30,6 +32,7 @@ import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
@@ -59,6 +62,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualGrazeEditorViewModel(
     navActions: (NavigationMutation) -> Unit,
     searchRepository: SearchRepository,
+    recordRepository: RecordRepository,
     @Assisted
     scope: CoroutineScope,
     @Assisted
@@ -78,6 +82,9 @@ class ActualGrazeEditorViewModel(
                         )
                         is Action.SearchProfiles -> action.flow.searchMutations(
                             searchRepository = searchRepository,
+                        )
+                        is Action.Save -> action.flow.saveMutations(
+                            recordRepository = recordRepository,
                         )
                         is Action.EditorNavigation -> action.flow.editorNavigationMutations()
                         is Action.EditFilter -> action.flow.editFilterFilterMutations()
@@ -110,6 +117,22 @@ private fun Flow<Action.SearchProfiles>.searchMutations(
             }
         }
 
+private fun Flow<Action.Save>.saveMutations(
+    recordRepository: RecordRepository,
+): Flow<Mutation<State>> =
+    mapLatestToManyMutations { action ->
+        recordRepository.updateGrazeFeed(
+            when (val feed = action.feed) {
+                is GrazeFeed.Created -> GrazeFeed.Update.Edit(
+                    feed = feed,
+                )
+                is GrazeFeed.Pending -> GrazeFeed.Update.Create(
+                    feed = feed,
+                )
+            },
+        )
+    }
+
 private fun Flow<Action.EditorNavigation>.editorNavigationMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         when (action) {
@@ -131,34 +154,38 @@ private fun Flow<Action.EditorNavigation>.editorNavigationMutations(): Flow<Muta
 
 private fun Flow<Action.EditFilter>.editFilterFilterMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
+        val editedFilter = feed.filter.updateAt(action.path) { target ->
+            if (action is Action.EditFilter.FlipRootFilter) when (target) {
+                is Filter.And -> Filter.Or(
+                    id = target.id,
+                    filters = target.filters,
+                )
+                is Filter.Or -> Filter.And(
+                    id = target.id,
+                    filters = target.filters,
+                )
+            }
+            else target.updateFilters { filters ->
+                when (action) {
+                    is Action.EditFilter.AddFilter -> filters + action.filter
+                    is Action.EditFilter.RemoveFilter -> filters.filterIndexed { index, _ ->
+                        index != action.index
+                    }
+                    is Action.EditFilter.UpdateFilter -> filters.mapIndexed { index, filter ->
+                        if (index == action.index) action.filter
+                        else filter
+                    }
+                    is Action.EditFilter.FlipRootFilter -> throw IllegalArgumentException(
+                        "Flip action should not operate on non root filters",
+                    )
+                }
+            }
+        }
         copy(
             suggestedProfiles = emptyList(),
-            filter = filter.updateAt(action.path) { target ->
-                if (action is Action.EditFilter.FlipRootFilter) when (target) {
-                    is Filter.And -> Filter.Or(
-                        id = target.id,
-                        filters = target.filters,
-                    )
-                    is Filter.Or -> Filter.And(
-                        id = target.id,
-                        filters = target.filters,
-                    )
-                }
-                else target.updateFilters { filters ->
-                    when (action) {
-                        is Action.EditFilter.AddFilter -> filters + action.filter
-                        is Action.EditFilter.RemoveFilter -> filters.filterIndexed { index, _ ->
-                            index != action.index
-                        }
-                        is Action.EditFilter.UpdateFilter -> filters.mapIndexed { index, filter ->
-                            if (index == action.index) action.filter
-                            else filter
-                        }
-                        is Action.EditFilter.FlipRootFilter -> throw IllegalArgumentException(
-                            "Flip action should not operate on non root filters",
-                        )
-                    }
-                }
+            feed = when (val currentFeed = feed) {
+                is GrazeFeed.Created -> currentFeed.copy(filter = editedFilter)
+                is GrazeFeed.Pending -> currentFeed.copy(filter = editedFilter)
             },
         )
     }

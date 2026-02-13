@@ -37,6 +37,8 @@ import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.files.createFileManager
 import com.tunjid.heron.data.network.BlueskyJson
 import com.tunjid.heron.data.network.ConnectivityNetworkMonitor
+import com.tunjid.heron.data.network.FeedCreationService
+import com.tunjid.heron.data.network.GrazeFeedCreationService
 import com.tunjid.heron.data.network.KtorNetworkService
 import com.tunjid.heron.data.network.NetworkConnectionException
 import com.tunjid.heron.data.network.NetworkMonitor
@@ -241,6 +243,12 @@ class DataBindings(
     internal fun provideVideoUploadService(
         videoUploadService: SuspendingVideoUploadService,
     ): VideoUploadService = videoUploadService
+
+    @SingleIn(AppScope::class)
+    @Provides
+    internal fun provideFeedCreationService(
+        feedCreationService: GrazeFeedCreationService,
+    ): FeedCreationService = feedCreationService
 
     @SingleIn(AppScope::class)
     @Provides

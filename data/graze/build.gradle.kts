@@ -31,6 +31,8 @@ kotlin {
 
         commonMain {
             dependencies {
+                implementation(project(":data:models"))
+
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.cbor)
                 implementation(libs.kotlinx.serialization.protobuf)
