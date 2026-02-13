@@ -118,9 +118,9 @@ sealed interface Filter {
     }
 
     @Serializable
-    @SerialName("and")
     data class And(
         override val id: Id = Id(),
+        @SerialName("and")
         override val filters: List<Filter>,
     ) : Root {
         companion object {
@@ -131,9 +131,9 @@ sealed interface Filter {
     }
 
     @Serializable
-    @SerialName("or")
     data class Or(
         override val id: Id = Id(),
+        @SerialName("or")
         override val filters: List<Filter>,
     ) : Root {
         companion object {
