@@ -24,6 +24,7 @@ import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.Transient
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
@@ -127,6 +128,7 @@ sealed interface Filter {
     @Serializable
     @SerialName("and")
     data class And(
+        @Transient
         override val id: Id = Id(),
         override val filters: List<Filter>,
     ) : Root {
@@ -140,6 +142,7 @@ sealed interface Filter {
     @Serializable
     @SerialName("or")
     data class Or(
+        @Transient
         override val id: Id = Id(),
         override val filters: List<Filter>,
     ) : Root {
@@ -210,6 +213,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("attribute_compare")
         data class Compare(
+            @Transient
             override val id: Id = Id(),
             val selector: Selector,
             val operator: Comparator,
@@ -249,6 +253,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("embed_type")
         data class Embed(
+            @Transient
             override val id: Id = Id(),
             val operator: Comparator.Equality,
             val embedType: Kind,
@@ -295,6 +300,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("entity_matches")
         data class Matches(
+            @Transient
             override val id: Id = Id(),
             override val entityType: Type,
             override val values: List<String>,
@@ -310,6 +316,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("entity_excludes")
         data class Excludes(
+            @Transient
             override val id: Id = Id(),
             override val entityType: Type,
             override val values: List<String>,
@@ -350,6 +357,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("regex_matches")
         data class Matches(
+            @Transient
             override val id: Id = Id(),
             val variable: String,
             val pattern: String,
@@ -367,6 +375,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("regex_negation_matches")
         data class Negation(
+            @Transient
             override val id: Id = Id(),
             val variable: String,
             val pattern: String,
@@ -384,6 +393,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("regex_any")
         data class Any(
+            @Transient
             override val id: Id = Id(),
             val variable: String,
             val terms: List<String>,
@@ -401,6 +411,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("regex_none")
         data class None(
+            @Transient
             override val id: Id = Id(),
             val variable: String,
             val terms: List<String>,
@@ -426,6 +437,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("social_graph")
         data class Graph(
+            @Transient
             override val id: Id = Id(),
             val username: String,
             val operator: Comparator.Set,
@@ -457,6 +469,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("social_list")
         data class UserList(
+            @Transient
             override val id: Id = Id(),
             val dids: List<String>,
             val operator: Comparator.Set,
@@ -472,6 +485,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("starter_pack_member")
         data class StarterPack(
+            @Transient
             override val id: Id = Id(),
             val url: String,
             val operator: Comparator.Set,
@@ -487,6 +501,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("list_member")
         data class ListMember(
+            @Transient
             override val id: Id = Id(),
             val url: String,
             val operator: Comparator.Set,
@@ -502,6 +517,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("magic_audience")
         data class MagicAudience(
+            @Transient
             override val id: Id = Id(),
             val audienceId: String,
             val operator: Comparator.Set,
@@ -526,6 +542,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("text_similarity")
         data class Similarity(
+            @Transient
             override val id: Id = Id(),
             val path: String,
             val config: Config,
@@ -556,6 +573,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("model_probability")
         data class Probability(
+            @Transient
             override val id: Id = Id(),
             val config: Config,
             val operator: Comparator.Range,
@@ -581,6 +599,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("content_moderation")
         data class Moderation(
+            @Transient
             override val id: Id = Id(),
             val category: Category,
             val operator: Comparator.Range,
@@ -636,6 +655,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("language_analysis")
         data class Language(
+            @Transient
             override val id: Id = Id(),
             @SerialName("language_name")
             val category: Category,
@@ -704,6 +724,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("sentiment_analysis")
         data class Sentiment(
+            @Transient
             override val id: Id = Id(),
             @SerialName("sentiment_category")
             val category: Category,
@@ -738,6 +759,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("financial_sentiment_analysis")
         data class FinancialSentiment(
+            @Transient
             override val id: Id = Id(),
             @SerialName("financial_category")
             val category: Category,
@@ -772,6 +794,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("emotion_sentiment_analysis")
         data class Emotion(
+            @Transient
             override val id: Id = Id(),
             @SerialName("emotion_category")
             val category: Category,
@@ -856,6 +879,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("toxicity_analysis")
         data class Toxicity(
+            @Transient
             override val id: Id = Id(),
             @SerialName("toxic_category")
             val category: Category,
@@ -896,6 +920,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("topic_analysis")
         data class Topic(
+            @Transient
             override val id: Id = Id(),
             @SerialName("topic_label")
             val category: Category,
@@ -962,6 +987,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("text_arbitrary")
         data class TextArbitrary(
+            @Transient
             override val id: Id = Id(),
             @SerialName("tag")
             val category: Category,
@@ -989,6 +1015,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("image_nsfw")
         data class ImageNsfw(
+            @Transient
             override val id: Id = Id(),
             @SerialName("tag")
             val category: Category,
@@ -1017,6 +1044,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("image_arbitrary")
         data class ImageArbitrary(
+            @Transient
             override val id: Id = Id(),
             @SerialName("tag")
             val category: Category,
