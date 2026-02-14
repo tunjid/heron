@@ -19,4 +19,5 @@
     <string name="back">Back</string>
     <string name="scroll_to_top">Scroll to top</string>
     <string name="more_options">More Options</string>
+    <string name="edit_feed">Edit Feed</string>
 </resources>
