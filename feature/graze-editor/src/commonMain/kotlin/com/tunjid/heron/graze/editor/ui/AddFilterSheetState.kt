@@ -28,8 +28,27 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.CallSplit
+import androidx.compose.material.icons.automirrored.rounded.CompareArrows
+import androidx.compose.material.icons.rounded.AttachMoney
+import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.Face
+import androidx.compose.material.icons.rounded.Gavel
+import androidx.compose.material.icons.rounded.Group
+import androidx.compose.material.icons.rounded.Image
+import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Mood
+import androidx.compose.material.icons.rounded.PermMedia
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.SelectAll
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Tag
+import androidx.compose.material.icons.rounded.Topic
+import androidx.compose.material.icons.rounded.VisibilityOff
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -43,6 +62,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.ui.Tab
@@ -204,6 +224,12 @@ private fun SimpleFilterList(
                 colors = ListItemDefaults.colors(
                     containerColor = Color.Transparent,
                 ),
+                leadingContent = {
+                    Icon(
+                        imageVector = option.icon,
+                        contentDescription = null,
+                    )
+                },
                 headlineContent = {
                     Text(
                         text = stringResource(option.titleRes),
@@ -282,6 +308,12 @@ private fun FilterGroupItem(
                         colors = ListItemDefaults.colors(
                             containerColor = Color.Transparent,
                         ),
+                        leadingContent = {
+                            Icon(
+                                imageVector = option.icon,
+                                contentDescription = null,
+                            )
+                        },
                         headlineContent = {
                             Text(
                                 text = stringResource(option.titleRes),
@@ -307,12 +339,14 @@ private data class FilterGroup(
 @Stable
 private class FilterOption(
     val titleRes: StringResource,
+    val icon: ImageVector,
     val factory: () -> Filter,
 )
 
 private val SimpleFilterOptions: List<FilterOption> = listOf(
     FilterOption(
         titleRes = Res.string.images_only,
+        icon = Icons.Rounded.Image,
         factory = {
             Filter.Attribute.Embed(
                 embedType = Filter.Attribute.Embed.Kind.Image,
@@ -322,6 +356,7 @@ private val SimpleFilterOptions: List<FilterOption> = listOf(
     ),
     FilterOption(
         titleRes = Res.string.images_and_videos_only,
+        icon = Icons.Rounded.PermMedia,
         factory = {
             Filter.Or(
                 filters = listOf(
@@ -339,10 +374,12 @@ private val SimpleFilterOptions: List<FilterOption> = listOf(
     ),
     FilterOption(
         titleRes = Res.string.posts_from_profiles,
+        icon = Icons.Rounded.Person,
         factory = Filter.Social.UserList::empty,
     ),
     FilterOption(
         titleRes = Res.string.posts_with_hashtags,
+        icon = Icons.Rounded.Tag,
         factory = Filter.Entity.Matches::empty,
     ),
 )
@@ -353,10 +390,12 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
         options = listOf(
             FilterOption(
                 titleRes = Res.string.all_of_these_and,
+                icon = Icons.Rounded.SelectAll,
                 factory = Filter.And::empty,
             ),
             FilterOption(
                 titleRes = Res.string.any_of_these_or,
+                icon = Icons.AutoMirrored.Rounded.CallSplit,
                 factory = Filter.Or::empty,
             ),
         ),
@@ -366,10 +405,12 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
         options = listOf(
             FilterOption(
                 titleRes = Res.string.attribute_compare,
+                icon = Icons.AutoMirrored.Rounded.CompareArrows,
                 factory = Filter.Attribute.Compare::empty,
             ),
             FilterOption(
                 titleRes = Res.string.embed_type,
+                icon = Icons.Rounded.PermMedia,
                 factory = Filter.Attribute.Embed::empty,
             ),
         ),
@@ -379,10 +420,12 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
         options = listOf(
             FilterOption(
                 titleRes = Res.string.entity_matches,
+                icon = Icons.Rounded.Search,
                 factory = Filter.Entity.Matches::empty,
             ),
             FilterOption(
                 titleRes = Res.string.entity_excludes,
+                icon = Icons.Rounded.Block,
                 factory = Filter.Entity.Excludes::empty,
             ),
         ),
@@ -414,10 +457,12 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
         options = listOf(
             FilterOption(
                 titleRes = Res.string.social_graph,
+                icon = Icons.Rounded.Share,
                 factory = Filter.Social.Graph::empty,
             ),
             FilterOption(
                 titleRes = Res.string.social_user_list,
+                icon = Icons.Rounded.Group,
                 factory = Filter.Social.UserList::empty,
             ),
 //            FilterOption(
@@ -448,6 +493,7 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
 //            ),
             FilterOption(
                 titleRes = Res.string.content_moderation,
+                icon = Icons.Rounded.Gavel,
                 factory = Filter.ML.Moderation::empty,
             ),
         ),
@@ -457,26 +503,32 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
         options = listOf(
             FilterOption(
                 titleRes = Res.string.language_analysis,
+                icon = Icons.Rounded.Language,
                 factory = Filter.Analysis.Language::empty,
             ),
             FilterOption(
                 titleRes = Res.string.sentiment_analysis,
+                icon = Icons.Rounded.Mood,
                 factory = Filter.Analysis.Sentiment::empty,
             ),
             FilterOption(
                 titleRes = Res.string.financial_sentiment,
+                icon = Icons.Rounded.AttachMoney,
                 factory = Filter.Analysis.FinancialSentiment::empty,
             ),
             FilterOption(
                 titleRes = Res.string.emotion_analysis,
+                icon = Icons.Rounded.Face,
                 factory = Filter.Analysis.Emotion::empty,
             ),
             FilterOption(
                 titleRes = Res.string.toxicity_analysis,
+                icon = Icons.Rounded.Warning,
                 factory = Filter.Analysis.Toxicity::empty,
             ),
             FilterOption(
                 titleRes = Res.string.topic_analysis,
+                icon = Icons.Rounded.Topic,
                 factory = Filter.Analysis.Topic::empty,
             ),
             // Unsupported for now
@@ -486,6 +538,7 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
 //            ),
             FilterOption(
                 titleRes = Res.string.image_nsfw,
+                icon = Icons.Rounded.VisibilityOff,
                 factory = Filter.Analysis.ImageNsfw::empty,
             ),
             // Unsupported for now
