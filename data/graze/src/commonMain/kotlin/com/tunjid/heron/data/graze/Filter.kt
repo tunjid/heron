@@ -16,8 +16,7 @@
 
 package com.tunjid.heron.data.graze
 
-import com.tunjid.heron.data.graze.serializers.ComparatorSerializer
-import com.tunjid.heron.data.graze.serializers.RootSerializer
+import com.tunjid.heron.data.graze.serializers.*
 import kotlin.jvm.JvmInline
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -28,7 +27,7 @@ import kotlinx.serialization.Transient
 /**
  * Root interface for the Graze filter hierarchy.
  */
-@Serializable
+@Serializable(with = FilterSerializer::class)
 sealed interface Filter {
     val id: Id
 
@@ -91,6 +90,9 @@ sealed interface Filter {
         val filters: List<Filter>
     }
 
+    @Serializable(with = LeafSerializer::class)
+    sealed interface Leaf : Filter
+
     @Serializable
     @SerialName("and")
     data class And(
@@ -126,7 +128,7 @@ sealed interface Filter {
 // ==============================================================================
 
     @Serializable
-    sealed interface Attribute : Filter {
+    sealed interface Attribute : Leaf {
 
         @Serializable
         @SerialName("attribute_compare")
@@ -211,7 +213,7 @@ sealed interface Filter {
 // ==============================================================================
 
     @Serializable
-    sealed interface Entity : Filter {
+    sealed interface Entity : Leaf {
         val entityType: Type
         val values: List<String>
 
@@ -270,7 +272,7 @@ sealed interface Filter {
 // ==============================================================================
 
     @Serializable
-    sealed interface Regex : Filter {
+    sealed interface Regex : Leaf {
 
         @Serializable
         @SerialName("regex_matches")
@@ -350,7 +352,7 @@ sealed interface Filter {
 // ==============================================================================
 
     @Serializable
-    sealed interface Social : Filter {
+    sealed interface Social : Leaf {
 
         @Serializable
         @SerialName("social_graph")
@@ -454,7 +456,7 @@ sealed interface Filter {
 // ==============================================================================
 
     @Serializable
-    sealed interface ML : Filter {
+    sealed interface ML : Leaf {
         val threshold: Double
 
         @Serializable
@@ -566,7 +568,7 @@ sealed interface Filter {
 // ==============================================================================
 
     @Serializable
-    sealed interface Analysis : Filter {
+    sealed interface Analysis : Leaf {
         val operator: Comparator.Range
         val threshold: Double
 
