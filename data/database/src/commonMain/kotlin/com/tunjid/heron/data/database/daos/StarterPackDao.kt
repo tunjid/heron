@@ -70,4 +70,14 @@ interface StarterPackDao {
     suspend fun upsertStarterPacks(
         entities: List<StarterPackEntity>,
     )
+
+    @Query(
+        """
+            DELETE FROM starterPacks
+            WHERE uri = :uri
+        """,
+    )
+    suspend fun deleteStarterPack(
+        uri: StarterPackUri,
+    )
 }

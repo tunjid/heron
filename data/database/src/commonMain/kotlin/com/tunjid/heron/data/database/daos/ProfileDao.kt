@@ -23,6 +23,8 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.Upsert
+import com.tunjid.heron.data.core.types.BlockUri
+import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
@@ -145,5 +147,27 @@ interface ProfileDao {
     @Update(entity = ProfileViewerStateEntity::class)
     suspend fun updatePartialProfileViewer(
         partial: ProfileViewerStateEntity.MutedPartial,
+    )
+
+    @Query(
+        """
+        UPDATE profileViewerStates
+        SET `following` = NULL
+        WHERE `following` = :uri
+    """,
+    )
+    suspend fun deleteFollow(
+        uri: FollowUri,
+    )
+
+    @Query(
+        """
+        UPDATE profileViewerStates
+        SET blocking = NULL
+        WHERE blocking = :uri
+    """,
+    )
+    suspend fun deleteBlock(
+        uri: BlockUri,
     )
 }
