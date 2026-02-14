@@ -85,7 +85,7 @@ sealed interface Filter {
 // 2. Logic Containers
 // ==============================================================================
 
-    @Serializable(with = RootSerializer::class)
+    @Serializable(with = RootFilterSerializer::class)
     sealed interface Root : Filter {
         val filters: List<Filter>
     }

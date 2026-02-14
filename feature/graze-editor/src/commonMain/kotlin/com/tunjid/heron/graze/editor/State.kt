@@ -24,13 +24,14 @@ import com.tunjid.heron.data.graze.GrazeFeed
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.treenav.strings.Route
+import kotlin.time.Clock.System
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
     val feed: GrazeFeed = GrazeFeed.Pending(
-        recordKey = RecordKey("test2"),
+        recordKey = RecordKey("test-${System.now().epochSeconds}"),
         filter = Filter.And(
             filters = emptyList(),
         ),

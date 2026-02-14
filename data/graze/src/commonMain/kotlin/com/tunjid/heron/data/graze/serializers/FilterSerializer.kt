@@ -33,7 +33,7 @@ object FilterSerializer : KSerializer<Filter> {
     override fun serialize(encoder: Encoder, value: Filter) {
         if (encoder is JsonEncoder) {
             when (value) {
-                is Filter.Root -> encoder.json.encodeToJsonElement(RootSerializer, value)
+                is Filter.Root -> encoder.json.encodeToJsonElement(RootFilterSerializer, value)
                 is Filter.Leaf -> encoder.json.encodeToJsonElement(LeafSerializer, value)
             }
                 .let { encoder.encodeJsonElement(it) }
@@ -48,7 +48,7 @@ object FilterSerializer : KSerializer<Filter> {
             val jsonObject = tree.jsonObject
 
             return if ("and" in jsonObject || "or" in jsonObject) {
-                decoder.json.decodeFromJsonElement(RootSerializer, tree)
+                decoder.json.decodeFromJsonElement(RootFilterSerializer, tree)
             } else {
                 decoder.json.decodeFromJsonElement(LeafSerializer, tree)
             }

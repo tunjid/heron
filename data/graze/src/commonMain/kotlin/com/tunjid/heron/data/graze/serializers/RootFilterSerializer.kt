@@ -29,7 +29,7 @@ import kotlinx.serialization.json.JsonEncoder
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
 
-object RootSerializer : KSerializer<Filter.Root> {
+object RootFilterSerializer : KSerializer<Filter.Root> {
     private val delegate = PolymorphicSerializer(Filter.Root::class)
     override val descriptor: SerialDescriptor = delegate.descriptor
 
