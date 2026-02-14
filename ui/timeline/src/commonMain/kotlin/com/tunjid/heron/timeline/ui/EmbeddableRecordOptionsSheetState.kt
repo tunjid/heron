@@ -133,6 +133,7 @@ private fun EmbeddableRecordOptionsBottomSheet(
                     onClick = {
                         state.currentRecordUri
                             ?.let(onEditClicked)
+                        state.hide()
                     },
                 ) {
                     BottomSheetItemCardRow(
