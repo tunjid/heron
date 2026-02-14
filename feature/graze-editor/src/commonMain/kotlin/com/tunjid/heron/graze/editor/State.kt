@@ -17,20 +17,28 @@
 package com.tunjid.heron.graze.editor
 
 import androidx.navigationevent.NavigationEventInfo
+import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.graze.Filter
+import com.tunjid.heron.data.graze.GrazeFeed
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.treenav.strings.Route
+import kotlin.time.Clock.System
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
-    val filter: Filter.Root = Filter.And(
-        filters = emptyList(),
+    val feed: GrazeFeed = GrazeFeed.Pending(
+        recordKey = RecordKey("test-${System.now().epochSeconds}"),
+        filter = Filter.And(
+            filters = emptyList(),
+        ),
     ),
     val currentPath: List<Int> = emptyList(),
+    val feedGenerator: FeedGenerator? = null,
     @Transient
     val suggestedProfiles: List<Profile> = emptyList(),
     @Transient
@@ -42,7 +50,7 @@ fun State(
 ) = State()
 
 val State.currentFilter
-    get() = currentPath.fold(filter) { current, index ->
+    get() = currentPath.fold(feed.filter) { current, index ->
         current.filters[index] as Filter.Root
     }
 
@@ -83,6 +91,10 @@ sealed class Action(val key: String) {
     data class SearchProfiles(
         val query: String,
     ) : Action("SearchProfiles")
+
+    data class Save(
+        val feed: GrazeFeed,
+    ) : Action("Save")
 
     sealed class Navigate :
         Action(key = "Navigate"),

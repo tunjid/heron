@@ -16,22 +16,21 @@
 
 package com.tunjid.heron.data.graze
 
+import com.tunjid.heron.data.graze.serializers.ComparatorSerializer
+import com.tunjid.heron.data.graze.serializers.FilterSerializer
+import com.tunjid.heron.data.graze.serializers.LeafSerializer
+import com.tunjid.heron.data.graze.serializers.RootFilterSerializer
 import kotlin.jvm.JvmInline
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.Transient
 
 /**
  * Root interface for the Graze filter hierarchy.
  */
-@Serializable
+@Serializable(with = FilterSerializer::class)
 sealed interface Filter {
     val id: Id
 
@@ -85,42 +84,29 @@ sealed interface Filter {
         }
     }
 
-    /**
-     * Custom serializer that uses the `value` property for both serialization and deserialization.
-     * This ensures a single source of truth for the operator strings.
-     */
-    object ComparatorSerializer : KSerializer<Comparator> {
-        override val descriptor: SerialDescriptor =
-            PrimitiveSerialDescriptor("Comparator", PrimitiveKind.STRING)
-
-        // Pre-aggregated list of all possible comparators to avoid recreating it on every deserialize call
-        private val allComparators: List<Comparator> =
-            Comparator.Equality.entries + Comparator.Range.entries + Comparator.Set.entries
-
-        override fun serialize(encoder: Encoder, value: Comparator) {
-            encoder.encodeString(value.value)
-        }
-
-        override fun deserialize(decoder: Decoder): Comparator {
-            val decoded = decoder.decodeString()
-            return allComparators.find { it.value == decoded }
-                ?: throw IllegalArgumentException("Unknown comparator: $decoded")
-        }
-    }
-
 // ==============================================================================
 // 2. Logic Containers
 // ==============================================================================
 
-    @Serializable
+    @Serializable(with = RootFilterSerializer::class)
     sealed interface Root : Filter {
         val filters: List<Filter>
+
+        companion object {
+            internal const val AND = "and"
+            internal const val OR = "or"
+        }
     }
 
+    @Serializable(with = LeafSerializer::class)
+    sealed interface Leaf : Filter
+
     @Serializable
-    @SerialName("and")
+    @SerialName(Root.AND)
     data class And(
+        @Transient
         override val id: Id = Id(),
+        @SerialName(Root.AND)
         override val filters: List<Filter>,
     ) : Root {
         companion object {
@@ -131,9 +117,11 @@ sealed interface Filter {
     }
 
     @Serializable
-    @SerialName("or")
+    @SerialName(Root.OR)
     data class Or(
+        @Transient
         override val id: Id = Id(),
+        @SerialName(Root.OR)
         override val filters: List<Filter>,
     ) : Root {
         companion object {
@@ -148,11 +136,12 @@ sealed interface Filter {
 // ==============================================================================
 
     @Serializable
-    sealed interface Attribute : Filter {
+    sealed interface Attribute : Leaf {
 
         @Serializable
         @SerialName("attribute_compare")
         data class Compare(
+            @Transient
             override val id: Id = Id(),
             val selector: Selector,
             val operator: Comparator,
@@ -192,6 +181,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("embed_type")
         data class Embed(
+            @Transient
             override val id: Id = Id(),
             val operator: Comparator.Equality,
             val embedType: Kind,
@@ -231,13 +221,14 @@ sealed interface Filter {
 // ==============================================================================
 
     @Serializable
-    sealed interface Entity : Filter {
+    sealed interface Entity : Leaf {
         val entityType: Type
         val values: List<String>
 
         @Serializable
         @SerialName("entity_matches")
         data class Matches(
+            @Transient
             override val id: Id = Id(),
             override val entityType: Type,
             override val values: List<String>,
@@ -253,6 +244,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("entity_excludes")
         data class Excludes(
+            @Transient
             override val id: Id = Id(),
             override val entityType: Type,
             override val values: List<String>,
@@ -288,11 +280,12 @@ sealed interface Filter {
 // ==============================================================================
 
     @Serializable
-    sealed interface Regex : Filter {
+    sealed interface Regex : Leaf {
 
         @Serializable
         @SerialName("regex_matches")
         data class Matches(
+            @Transient
             override val id: Id = Id(),
             val variable: String,
             val pattern: String,
@@ -310,6 +303,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("regex_negation_matches")
         data class Negation(
+            @Transient
             override val id: Id = Id(),
             val variable: String,
             val pattern: String,
@@ -327,6 +321,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("regex_any")
         data class Any(
+            @Transient
             override val id: Id = Id(),
             val variable: String,
             val terms: List<String>,
@@ -344,6 +339,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("regex_none")
         data class None(
+            @Transient
             override val id: Id = Id(),
             val variable: String,
             val terms: List<String>,
@@ -364,11 +360,12 @@ sealed interface Filter {
 // ==============================================================================
 
     @Serializable
-    sealed interface Social : Filter {
+    sealed interface Social : Leaf {
 
         @Serializable
         @SerialName("social_graph")
         data class Graph(
+            @Transient
             override val id: Id = Id(),
             val username: String,
             val operator: Comparator.Set,
@@ -387,6 +384,7 @@ sealed interface Filter {
                     )
                 }
             }
+
             companion object {
                 fun empty() = Graph(
                     username = "",
@@ -399,6 +397,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("social_list")
         data class UserList(
+            @Transient
             override val id: Id = Id(),
             val dids: List<String>,
             val operator: Comparator.Set,
@@ -414,6 +413,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("starter_pack_member")
         data class StarterPack(
+            @Transient
             override val id: Id = Id(),
             val url: String,
             val operator: Comparator.Set,
@@ -429,6 +429,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("list_member")
         data class ListMember(
+            @Transient
             override val id: Id = Id(),
             val url: String,
             val operator: Comparator.Set,
@@ -444,6 +445,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("magic_audience")
         data class MagicAudience(
+            @Transient
             override val id: Id = Id(),
             val audienceId: String,
             val operator: Comparator.Set,
@@ -462,12 +464,13 @@ sealed interface Filter {
 // ==============================================================================
 
     @Serializable
-    sealed interface ML : Filter {
+    sealed interface ML : Leaf {
         val threshold: Double
 
         @Serializable
         @SerialName("text_similarity")
         data class Similarity(
+            @Transient
             override val id: Id = Id(),
             val path: String,
             val config: Config,
@@ -498,6 +501,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("model_probability")
         data class Probability(
+            @Transient
             override val id: Id = Id(),
             val config: Config,
             val operator: Comparator.Range,
@@ -523,6 +527,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("content_moderation")
         data class Moderation(
+            @Transient
             override val id: Id = Id(),
             val category: Category,
             val operator: Comparator.Range,
@@ -571,13 +576,14 @@ sealed interface Filter {
 // ==============================================================================
 
     @Serializable
-    sealed interface Analysis : Filter {
+    sealed interface Analysis : Leaf {
         val operator: Comparator.Range
         val threshold: Double
 
         @Serializable
         @SerialName("language_analysis")
         data class Language(
+            @Transient
             override val id: Id = Id(),
             @SerialName("language_name")
             val category: Category,
@@ -646,6 +652,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("sentiment_analysis")
         data class Sentiment(
+            @Transient
             override val id: Id = Id(),
             @SerialName("sentiment_category")
             val category: Category,
@@ -680,6 +687,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("financial_sentiment_analysis")
         data class FinancialSentiment(
+            @Transient
             override val id: Id = Id(),
             @SerialName("financial_category")
             val category: Category,
@@ -714,6 +722,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("emotion_sentiment_analysis")
         data class Emotion(
+            @Transient
             override val id: Id = Id(),
             @SerialName("emotion_category")
             val category: Category,
@@ -798,6 +807,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("toxicity_analysis")
         data class Toxicity(
+            @Transient
             override val id: Id = Id(),
             @SerialName("toxic_category")
             val category: Category,
@@ -838,6 +848,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("topic_analysis")
         data class Topic(
+            @Transient
             override val id: Id = Id(),
             @SerialName("topic_label")
             val category: Category,
@@ -904,6 +915,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("text_arbitrary")
         data class TextArbitrary(
+            @Transient
             override val id: Id = Id(),
             @SerialName("tag")
             val category: Category,
@@ -931,6 +943,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("image_nsfw")
         data class ImageNsfw(
+            @Transient
             override val id: Id = Id(),
             @SerialName("tag")
             val category: Category,
@@ -959,6 +972,7 @@ sealed interface Filter {
         @Serializable
         @SerialName("image_arbitrary")
         data class ImageArbitrary(
+            @Transient
             override val id: Id = Id(),
             @SerialName("tag")
             val category: Category,
@@ -984,15 +998,3 @@ sealed interface Filter {
         }
     }
 }
-
-val Filter.Attribute.Embed.Kind.isGalleryMedia
-    get() = when (this) {
-        Filter.Attribute.Embed.Kind.Image,
-        Filter.Attribute.Embed.Kind.ImageGroup,
-        Filter.Attribute.Embed.Kind.Video,
-        -> true
-        Filter.Attribute.Embed.Kind.Link,
-        Filter.Attribute.Embed.Kind.Post,
-        Filter.Attribute.Embed.Kind.Gif,
-        -> false
-    }

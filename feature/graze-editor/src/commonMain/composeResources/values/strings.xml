@@ -82,6 +82,7 @@
     <string name="items_count">%1$d items</string>
     <string name="unknown_filter">Unknown Filter</string>
     <string name="done">Done</string>
+    <string name="error_saving_graze_feed">Error saving Graze feed:\n %1$s</string>
 
     <string name="simple_filters">Simple Filters</string>
     <string name="advanced_filters">Advanced Filters</string>
