@@ -276,6 +276,11 @@ fun grazeEditorDestination(
     models = listOfNotNull(
         feedGenerator,
     ),
+    miscQueryParams = feedGenerator?.let {
+        mapOf(
+            "sharedUri" to listOf(it.uri.uri),
+        )
+    } ?: emptyMap(),
     referringRouteOption = ReferringRouteOption.Current,
 )
 
