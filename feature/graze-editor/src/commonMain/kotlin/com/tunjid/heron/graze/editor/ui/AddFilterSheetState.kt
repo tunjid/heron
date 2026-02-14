@@ -30,6 +30,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.CallSplit
 import androidx.compose.material.icons.automirrored.rounded.CompareArrows
+import androidx.compose.material.icons.automirrored.rounded.ManageSearch
+import androidx.compose.material.icons.rounded.AccountTree
+import androidx.compose.material.icons.rounded.Analytics
 import androidx.compose.material.icons.rounded.AttachMoney
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.ExpandLess
@@ -40,13 +43,16 @@ import androidx.compose.material.icons.rounded.Group
 import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Mood
+import androidx.compose.material.icons.rounded.People
 import androidx.compose.material.icons.rounded.PermMedia
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Psychology
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SelectAll
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Tag
 import androidx.compose.material.icons.rounded.Topic
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Icon
@@ -283,6 +289,12 @@ private fun FilterGroupItem(
             colors = ListItemDefaults.colors(
                 containerColor = Color.Transparent,
             ),
+            leadingContent = {
+                Icon(
+                    imageVector = group.icon,
+                    contentDescription = null,
+                )
+            },
             headlineContent = {
                 Text(
                     text = stringResource(group.nameRes),
@@ -333,6 +345,7 @@ private fun FilterGroupItem(
 
 private data class FilterGroup(
     val nameRes: StringResource,
+    val icon: ImageVector,
     val options: List<FilterOption>,
 )
 
@@ -387,6 +400,7 @@ private val SimpleFilterOptions: List<FilterOption> = listOf(
 private val AllFilterGroups: List<FilterGroup> = listOf(
     FilterGroup(
         nameRes = Res.string.filter_group_logic,
+        icon = Icons.Rounded.AccountTree,
         options = listOf(
             FilterOption(
                 titleRes = Res.string.all_of_these_and,
@@ -402,6 +416,7 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
     ),
     FilterGroup(
         nameRes = Res.string.filter_group_attribute,
+        icon = Icons.Rounded.Tune,
         options = listOf(
             FilterOption(
                 titleRes = Res.string.attribute_compare,
@@ -417,6 +432,7 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
     ),
     FilterGroup(
         nameRes = Res.string.filter_group_entity,
+        icon = Icons.AutoMirrored.Rounded.ManageSearch,
         options = listOf(
             FilterOption(
                 titleRes = Res.string.entity_matches,
@@ -433,6 +449,7 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
     // No regular expression support for now
 //    FilterGroup(
 //        nameRes = Res.string.filter_group_regex,
+//        icon = Icons.Rounded.RegularExpression,
 //        options = listOf(
 //            FilterOption(
 //                titleRes = Res.string.regex_matches,
@@ -454,6 +471,7 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
 //    ),
     FilterGroup(
         nameRes = Res.string.filter_group_social,
+        icon = Icons.Rounded.People,
         options = listOf(
             FilterOption(
                 titleRes = Res.string.social_graph,
@@ -481,6 +499,7 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
     ),
     FilterGroup(
         nameRes = Res.string.filter_group_ml,
+        icon = Icons.Rounded.Psychology,
         options = listOf(
             // Unsupported for now
 //            FilterOption(
@@ -500,6 +519,7 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
     ),
     FilterGroup(
         nameRes = Res.string.filter_group_analysis,
+        icon = Icons.Rounded.Analytics,
         options = listOf(
             FilterOption(
                 titleRes = Res.string.language_analysis,
