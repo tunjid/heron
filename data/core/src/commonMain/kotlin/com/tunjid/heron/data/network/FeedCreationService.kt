@@ -21,6 +21,9 @@ import com.tunjid.heron.data.InternalEndpoints
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.data.graze.GrazeFeed
+import com.tunjid.heron.data.logging.LogPriority
+import com.tunjid.heron.data.logging.logcat
+import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.expiredSessionResult
 import com.tunjid.heron.data.repository.inCurrentProfileSession
@@ -71,7 +74,7 @@ internal class GrazeFeedCreationService @Inject constructor(
             level = LogLevel.BODY
             logger = object : Logger {
                 override fun log(message: String) {
-                    println("Logger Ktor => $message")
+//                    println("Logger Ktor => $message")
                 }
             }
         }
@@ -135,8 +138,9 @@ internal class GrazeFeedCreationService @Inject constructor(
             response.body<T>()
         }
             .onFailure {
-                println("Fail $it")
-                it.printStackTrace()
+                logcat(LogPriority.DEBUG) {
+                    "Failed graze call notification for ${call.path}: ${it.loggableText()}"
+                }
             }
     } ?: expiredSessionResult()
 }

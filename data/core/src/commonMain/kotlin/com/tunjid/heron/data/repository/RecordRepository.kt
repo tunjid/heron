@@ -139,14 +139,9 @@ internal class OfflineRecordRepository @Inject constructor(
                         filter = response.algorithm.manifest.filter,
                     )
                 }
-                is GrazeResponse.Created -> {
-                    check(update is GrazeFeed.Update.Put)
-                    GrazeFeed.Created(
-                        recordKey = update.recordKey,
-                        filter = update.feed.filter,
-                    )
-                }
-                is GrazeResponse.Edited -> {
+                is GrazeResponse.Created,
+                is GrazeResponse.Edited,
+                -> {
                     check(update is GrazeFeed.Update.Put)
                     GrazeFeed.Created(
                         recordKey = update.recordKey,
