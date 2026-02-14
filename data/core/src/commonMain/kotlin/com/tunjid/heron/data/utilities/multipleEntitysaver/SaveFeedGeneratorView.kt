@@ -33,7 +33,7 @@ internal fun MultipleEntitySaver.add(
     add(
         FeedGeneratorEntity(
             cid = feedGeneratorView.cid.cid.let(::FeedGeneratorId),
-            did = feedGeneratorView.did.did.let(::FeedGeneratorId),
+            did = feedGeneratorView.did.did.let(::ProfileId),
             uri = feedGeneratorView.uri.atUri.let(::FeedGeneratorUri),
             creatorId = feedGeneratorView.creator.did.did.let(::ProfileId),
             displayName = feedGeneratorView.displayName,

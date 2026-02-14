@@ -20,6 +20,7 @@ import com.atproto.server.GetServiceAuthQueryParams
 import com.tunjid.heron.data.InternalEndpoints
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.graze.Filter
+import com.tunjid.heron.data.graze.GrazeDid
 import com.tunjid.heron.data.graze.GrazeFeed
 import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
@@ -119,7 +120,7 @@ internal class GrazeFeedCreationService @Inject constructor(
         networkService.runCatchingWithMonitoredNetworkRetry {
             getServiceAuth(
                 GetServiceAuthQueryParams(
-                    aud = GrazeDid,
+                    aud = Did(GrazeDid.id),
                     exp = Clock.System.now().epochSeconds + 30.minutes.inWholeSeconds,
                     lxm = call.lexicon,
                 ),
@@ -144,8 +145,6 @@ internal class GrazeFeedCreationService @Inject constructor(
             }
     } ?: expiredSessionResult()
 }
-
-internal val GrazeDid = Did("did:web:api.graze.social")
 
 private enum class GrazeCall(
     val path: String,
