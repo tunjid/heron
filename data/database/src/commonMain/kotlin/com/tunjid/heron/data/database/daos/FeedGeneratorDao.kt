@@ -61,4 +61,14 @@ interface FeedGeneratorDao {
     suspend fun upsertFeedGenerators(
         entities: List<FeedGeneratorEntity>,
     )
+
+    @Query(
+        """
+            DELETE FROM feedGenerators
+            WHERE uri = :uri
+        """,
+    )
+    suspend fun deleteFeedGenerator(
+        uri: FeedGeneratorUri,
+    )
 }
