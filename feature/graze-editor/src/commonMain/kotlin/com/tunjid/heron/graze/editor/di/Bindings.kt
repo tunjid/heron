@@ -52,6 +52,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.ui.AppBarButton
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -70,6 +71,7 @@ import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.add_filter
 import heron.feature.graze_editor.generated.resources.graze_editor
 import heron.feature.graze_editor.generated.resources.graze_editor_level
+import heron.ui.core.generated.resources.save
 import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/graze-editor"
@@ -162,7 +164,7 @@ class GrazeEditorBindings(
                         actions = {
                             AppBarButton(
                                 icon = Icons.Rounded.Save,
-                                iconDescription = "Save",
+                                iconDescription = stringResource(CommonStrings.save),
                                 onClick = {
                                     viewModel.accept(
                                         Action.Save(
