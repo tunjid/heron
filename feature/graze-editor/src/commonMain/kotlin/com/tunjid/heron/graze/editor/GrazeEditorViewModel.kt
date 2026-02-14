@@ -44,6 +44,8 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
+import heron.feature.graze_editor.generated.resources.Res
+import heron.feature.graze_editor.generated.resources.error_saving_graze_feed
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -172,7 +174,14 @@ private fun Flow<Action.Save>.saveMutations(
                 )
             }
             .onFailure {
-                emit { copy(messages = messages + Memo.Text(it.message ?: "")) }
+                emit {
+                    copy(
+                        messages = messages + Memo.Resource(
+                            stringResource = Res.string.error_saving_graze_feed,
+                            args = listOf(it.message ?: ""),
+                        ),
+                    )
+                }
             }
     }
 
