@@ -167,7 +167,7 @@ class GrazeEditorBindings(
                                 iconDescription = stringResource(CommonStrings.save),
                                 onClick = {
                                     viewModel.accept(
-                                        Action.Save(
+                                        Action.Load.Save(
                                             feed = state.feed,
                                         ),
                                     )
