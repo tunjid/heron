@@ -72,10 +72,10 @@ internal class GrazeFeedCreationService @Inject constructor(
             url.takeFrom(InternalEndpoints.HeronEndpoint)
         }
         install(Logging) {
-            level = LogLevel.BODY
+            level = LogLevel.INFO
             logger = object : Logger {
                 override fun log(message: String) {
-//                    println("Logger Ktor => $message")
+                    logcat(LogPriority.VERBOSE) { message }
                 }
             }
         }

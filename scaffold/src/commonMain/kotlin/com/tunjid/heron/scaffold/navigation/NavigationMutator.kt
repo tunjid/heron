@@ -29,7 +29,6 @@ import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
-import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UrlEncodableModel
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
@@ -44,6 +43,7 @@ import com.tunjid.heron.data.repository.EmptyNavigation
 import com.tunjid.heron.data.repository.InitialNavigation
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.UserDataRepository
+import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
@@ -276,11 +276,7 @@ fun grazeEditorDestination(
     models = listOfNotNull(
         feedGenerator,
     ),
-    miscQueryParams = feedGenerator?.let {
-        mapOf(
-            "sharedUri" to listOf(it.uri.uri),
-        )
-    } ?: emptyMap(),
+    sharedUri = feedGenerator?.uri?.asGenericUri(),
     referringRouteOption = ReferringRouteOption.Current,
 )
 
