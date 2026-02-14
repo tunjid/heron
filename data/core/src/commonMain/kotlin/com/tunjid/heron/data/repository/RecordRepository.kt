@@ -175,7 +175,7 @@ private suspend fun NetworkService.updateFeedRecord(
                     record = BskyFeed(
                         did = GrazeDid,
                         displayName = "Graze Feed",
-                        description = "A custom feed created with Graze",
+                        description = "A custom feed created with \uD80C\uDD63 and \uD83D\uDC2E",
                         createdAt = Clock.System.now(),
                         contentMode = response.contentMode,
                     ).asJsonContent(BskyFeed.serializer()),
@@ -194,8 +194,7 @@ private suspend fun NetworkService.updateFeedRecord(
 
                 val currentRecord = currentRecordResponse
                     .value
-                    .safeDecodeAs<BskyFeed>()
-                    ?: throw IllegalStateException("Failed to decode record")
+                    .decodeAs<BskyFeed>()
 
                 putRecord(
                     PutRecordRequest(
@@ -204,10 +203,8 @@ private suspend fun NetworkService.updateFeedRecord(
                         rkey = RKey(response.rkey.value),
                         record = currentRecord.copy(
                             contentMode = when (response) {
-                                is GrazeResponse.Created -> response.contentMode
                                 is GrazeResponse.Read -> response.contentMode
                                 is GrazeResponse.Edited -> response.contentMode
-                                is GrazeResponse.Deleted -> throw IllegalStateException("Should not happen")
                             },
                         ).asJsonContent(BskyFeed.serializer()),
                         swapRecord = currentRecordResponse.cid,

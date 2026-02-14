@@ -60,6 +60,14 @@ fun RecordUri.requireCollection(): String =
         is UnknownRecordUri -> throw UnresolvableRecordException(this)
     }
 
+fun recordUri(
+    profileId: ProfileId,
+    namespace: String,
+    recordKey: RecordKey,
+) = requireNotNull(
+    "${Uri.Host.AtProto.prefix}/${profileId.id}/$namespace/${recordKey.value}".asRecordUriOrNull(),
+)
+
 val RecordUri.recordKey: RecordKey
     get() = requireNotNull(
         uri.atUriComponents { _, _, rKeyRange ->

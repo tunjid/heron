@@ -17,6 +17,7 @@
 package com.tunjid.heron.graze.editor
 
 import androidx.navigationevent.NavigationEventInfo
+import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.graze.Filter
@@ -37,6 +38,7 @@ data class State(
         ),
     ),
     val currentPath: List<Int> = emptyList(),
+    val feedGenerator: FeedGenerator? = null,
     @Transient
     val suggestedProfiles: List<Profile> = emptyList(),
     @Transient
