@@ -47,7 +47,7 @@ object FilterSerializer : KSerializer<Filter> {
             val tree = decoder.decodeJsonElement()
             val jsonObject = tree.jsonObject
 
-            return if ("and" in jsonObject || "or" in jsonObject) {
+            return if (Filter.Root.AND in jsonObject || Filter.Root.OR in jsonObject) {
                 decoder.json.decodeFromJsonElement(RootFilterSerializer, tree)
             } else {
                 decoder.json.decodeFromJsonElement(LeafSerializer, tree)

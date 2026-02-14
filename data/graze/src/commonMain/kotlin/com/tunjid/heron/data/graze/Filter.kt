@@ -88,17 +88,22 @@ sealed interface Filter {
     @Serializable(with = RootFilterSerializer::class)
     sealed interface Root : Filter {
         val filters: List<Filter>
+
+        companion object {
+            internal const val AND = "and"
+            internal const val OR = "or"
+        }
     }
 
     @Serializable(with = LeafSerializer::class)
     sealed interface Leaf : Filter
 
     @Serializable
-    @SerialName("and")
+    @SerialName(Root.AND)
     data class And(
         @Transient
         override val id: Id = Id(),
-        @SerialName("and")
+        @SerialName(Root.AND)
         override val filters: List<Filter>,
     ) : Root {
         companion object {
@@ -109,11 +114,11 @@ sealed interface Filter {
     }
 
     @Serializable
-    @SerialName("or")
+    @SerialName(Root.OR)
     data class Or(
         @Transient
         override val id: Id = Id(),
-        @SerialName("or")
+        @SerialName(Root.OR)
         override val filters: List<Filter>,
     ) : Root {
         companion object {
@@ -990,15 +995,3 @@ sealed interface Filter {
         }
     }
 }
-
-val Filter.Attribute.Embed.Kind.isGalleryMedia
-    get() = when (this) {
-        Filter.Attribute.Embed.Kind.Image,
-        Filter.Attribute.Embed.Kind.ImageGroup,
-        Filter.Attribute.Embed.Kind.Video,
-            -> true
-        Filter.Attribute.Embed.Kind.Link,
-        Filter.Attribute.Embed.Kind.Post,
-        Filter.Attribute.Embed.Kind.Gif,
-            -> false
-    }

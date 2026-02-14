@@ -133,11 +133,10 @@ internal class GrazeFeedCreationService @Inject constructor(
 
             response.call.save()
 
-
             if (!response.status.isSuccess()) throw Exception(response.bodyAsText())
             response.body<T>()
         }
-            .onFailure{
+            .onFailure {
                 println("Fail $it")
                 it.printStackTrace()
             }

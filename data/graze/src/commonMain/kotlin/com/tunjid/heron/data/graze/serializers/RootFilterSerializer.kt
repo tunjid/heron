@@ -42,8 +42,8 @@ object RootFilterSerializer : KSerializer<Filter.Root> {
             )
             val jsonObject = buildJsonObject {
                 when (value) {
-                    is Filter.And -> put("and", filtersElement)
-                    is Filter.Or -> put("or", filtersElement)
+                    is Filter.And -> put(Filter.Root.AND, filtersElement)
+                    is Filter.Or -> put(Filter.Root.OR, filtersElement)
                 }
             }
             encoder.encodeJsonElement(jsonObject)
@@ -57,21 +57,21 @@ object RootFilterSerializer : KSerializer<Filter.Root> {
             val jsonObject = decoder.decodeJsonElement().jsonObject
 
             return when {
-                "and" in jsonObject -> {
+                Filter.Root.AND in jsonObject -> {
                     val filters = decoder.json.decodeFromJsonElement(
                         ListSerializer(Filter.serializer()),
-                        jsonObject["and"]!!,
+                        jsonObject[Filter.Root.AND]!!,
                     )
                     Filter.And(filters = filters)
                 }
-                "or" in jsonObject -> {
+                Filter.Root.OR in jsonObject -> {
                     val filters = decoder.json.decodeFromJsonElement(
                         ListSerializer(Filter.serializer()),
-                        jsonObject["or"]!!,
+                        jsonObject[Filter.Root.OR]!!,
                     )
                     Filter.Or(filters = filters)
                 }
-                else -> throw SerializationException("Expected 'and' or 'or' key for Filter.Root")
+                else -> throw SerializationException("Expected '${Filter.Root.AND}' or '${Filter.Root.OR}' key for Filter.Root")
             }
         } else {
             return delegate.deserialize(decoder)
