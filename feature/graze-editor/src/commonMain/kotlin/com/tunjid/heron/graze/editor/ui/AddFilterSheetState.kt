@@ -35,6 +35,7 @@ import androidx.compose.material.icons.rounded.AccountTree
 import androidx.compose.material.icons.rounded.Analytics
 import androidx.compose.material.icons.rounded.AttachMoney
 import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.Diversity3
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Face
@@ -43,7 +44,6 @@ import androidx.compose.material.icons.rounded.Group
 import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Mood
-import androidx.compose.material.icons.rounded.People
 import androidx.compose.material.icons.rounded.PermMedia
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Psychology
@@ -471,7 +471,7 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
 //    ),
     FilterGroup(
         nameRes = Res.string.filter_group_social,
-        icon = Icons.Rounded.People,
+        icon = Icons.Rounded.Diversity3,
         options = listOf(
             FilterOption(
                 titleRes = Res.string.social_graph,
