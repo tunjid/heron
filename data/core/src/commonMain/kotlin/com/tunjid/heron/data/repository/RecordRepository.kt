@@ -16,6 +16,11 @@
 
 package com.tunjid.heron.data.repository
 
+import app.bsky.feed.Generator as BskyFeed
+import com.atproto.repo.CreateRecordRequest
+import com.atproto.repo.DeleteRecordRequest
+import com.atproto.repo.GetRecordQueryParams
+import com.atproto.repo.PutRecordRequest
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
@@ -23,6 +28,7 @@ import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
@@ -32,15 +38,22 @@ import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.graze.GrazeFeed
 import com.tunjid.heron.data.network.FeedCreationService
+import com.tunjid.heron.data.network.GrazeDid
 import com.tunjid.heron.data.network.GrazeResponse
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.mapDistinctUntilChanged
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
+import com.tunjid.heron.data.utilities.safeDecodeAs
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
+import kotlin.time.Clock
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
+import sh.christian.ozone.api.Did
+import sh.christian.ozone.api.Nsid
+import sh.christian.ozone.api.RKey
 
 interface RecordRepository {
 
@@ -112,26 +125,103 @@ internal class OfflineRecordRepository @Inject constructor(
 
     override suspend fun updateGrazeFeed(
         update: GrazeFeed.Update,
-    ): Result<GrazeFeed?> = feedCreationService.updateGrazeFeed(
-        update = update,
-    ).mapCatchingUnlessCancelled { response ->
-        when (response) {
-            is GrazeResponse.Algorithm -> {
-                GrazeFeed.Created(
-                    recordKey = update.recordKey,
-                    filter = response.algorithm.manifest.filter,
-                )
-            }
-            is GrazeResponse.ContentMode -> {
-                check(update is GrazeFeed.Update.Put)
+    ): Result<GrazeFeed?> = savedStateDataSource.inCurrentProfileSession { profileId ->
+        if (profileId == null) return@inCurrentProfileSession expiredSessionResult()
 
-                GrazeFeed.Created(
-                    recordKey = update.recordKey,
-                    filter = update.feed.filter,
+        feedCreationService.updateGrazeFeed(
+            update = update,
+        ).mapCatchingUnlessCancelled { response ->
+            networkService.updateFeedRecord(response, profileId)
+            when (response) {
+                is GrazeResponse.Read -> {
+                    GrazeFeed.Created(
+                        recordKey = update.recordKey,
+                        filter = response.algorithm.manifest.filter,
+                    )
+                }
+                is GrazeResponse.Created -> {
+                    check(update is GrazeFeed.Update.Put)
+                    GrazeFeed.Created(
+                        recordKey = update.recordKey,
+                        filter = update.feed.filter,
+                    )
+                }
+                is GrazeResponse.Edited -> {
+                    check(update is GrazeFeed.Update.Put)
+                    GrazeFeed.Created(
+                        recordKey = update.recordKey,
+                        filter = update.feed.filter,
+                    )
+                }
+                is GrazeResponse.Deleted -> {
+                    null
+                }
+            }
+        }
+    } ?: expiredSessionResult()
+}
+
+private suspend fun NetworkService.updateFeedRecord(
+    response: GrazeResponse,
+    profileId: ProfileId,
+) {
+    runCatchingWithMonitoredNetworkRetry {
+        when (response) {
+            is GrazeResponse.Created -> createRecord(
+                CreateRecordRequest(
+                    repo = Did(profileId.id),
+                    collection = Nsid(FeedGeneratorUri.NAMESPACE),
+                    rkey = RKey(response.rkey.value),
+                    record = BskyFeed(
+                        did = GrazeDid,
+                        displayName = "Graze Feed",
+                        description = "A custom feed created with Graze",
+                        createdAt = Clock.System.now(),
+                        contentMode = response.contentMode,
+                    ).asJsonContent(BskyFeed.serializer()),
+                ),
+            )
+            is GrazeResponse.Edited,
+            is GrazeResponse.Read,
+            -> {
+                val currentRecordResponse = getRecord(
+                    GetRecordQueryParams(
+                        repo = Did(profileId.id),
+                        collection = Nsid(FeedGeneratorUri.NAMESPACE),
+                        rkey = RKey(response.rkey.value),
+                    ),
+                ).requireResponse()
+
+                val currentRecord = currentRecordResponse
+                    .value
+                    .safeDecodeAs<BskyFeed>()
+                    ?: throw IllegalStateException("Failed to decode record")
+
+                putRecord(
+                    PutRecordRequest(
+                        repo = Did(profileId.id),
+                        collection = Nsid(FeedGeneratorUri.NAMESPACE),
+                        rkey = RKey(response.rkey.value),
+                        record = currentRecord.copy(
+                            contentMode = when (response) {
+                                is GrazeResponse.Created -> response.contentMode
+                                is GrazeResponse.Read -> response.contentMode
+                                is GrazeResponse.Edited -> response.contentMode
+                                is GrazeResponse.Deleted -> throw IllegalStateException("Should not happen")
+                            },
+                        ).asJsonContent(BskyFeed.serializer()),
+                        swapRecord = currentRecordResponse.cid,
+                    ),
                 )
             }
-            is GrazeResponse.Delete -> {
-                null
+            is GrazeResponse.Deleted -> {
+                deleteRecord(
+                    DeleteRecordRequest(
+                        repo = Did(profileId.id),
+                        collection = Nsid(FeedGeneratorUri.NAMESPACE),
+                        rkey = RKey(response.rkey.value),
+                    ),
+                )
             }
         }
     }

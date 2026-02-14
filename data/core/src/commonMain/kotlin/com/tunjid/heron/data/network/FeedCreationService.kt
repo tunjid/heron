@@ -34,13 +34,11 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
-import io.ktor.client.plugins.resources.request
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
-import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.http.takeFrom
@@ -86,22 +84,22 @@ internal class GrazeFeedCreationService @Inject constructor(
         update: GrazeFeed.Update,
     ): Result<GrazeResponse> =
         when (update) {
-            is GrazeFeed.Update.Create -> performRequest<GrazeResponse.ContentMode>(
+            is GrazeFeed.Update.Create -> performRequest<GrazeResponse.Created>(
                 call = GrazeCall.Create,
                 body = update.feed,
             )
-            is GrazeFeed.Update.Delete -> performRequest<GrazeResponse.Delete>(
+            is GrazeFeed.Update.Delete -> performRequest<GrazeResponse.Deleted>(
                 call = (GrazeCall.Delete),
                 body = RecordKeyBody(
                     recordKey = update.recordKey,
                 ),
             )
 
-            is GrazeFeed.Update.Edit -> performRequest<GrazeResponse.ContentMode>(
+            is GrazeFeed.Update.Edit -> performRequest<GrazeResponse.Edited>(
                 call = GrazeCall.Edit,
                 body = update.feed,
             )
-            is GrazeFeed.Update.Get -> performRequest<GrazeResponse.Algorithm>(
+            is GrazeFeed.Update.Get -> performRequest<GrazeResponse.Read>(
                 call = GrazeCall.Get,
                 body = RecordKeyBody(
                     recordKey = update.recordKey,
@@ -143,7 +141,7 @@ internal class GrazeFeedCreationService @Inject constructor(
     } ?: expiredSessionResult()
 }
 
-private val GrazeDid = Did("did:web:api.graze.social")
+internal val GrazeDid = Did("did:web:api.graze.social")
 
 private enum class GrazeCall(
     val path: String,
@@ -175,20 +173,29 @@ private data class RecordKeyBody(
 
 @Serializable
 internal sealed interface GrazeResponse {
+
+    val rkey: RecordKey
+
     @Serializable
-    data class Delete(
-        val rkey: RecordKey,
+    data class Deleted(
+        override val rkey: RecordKey,
     ) : GrazeResponse
 
     @Serializable
-    data class ContentMode(
-        val rkey: RecordKey,
+    data class Created(
+        override val rkey: RecordKey,
         val contentMode: String,
     ) : GrazeResponse
 
     @Serializable
-    data class Algorithm(
-        val rkey: RecordKey,
+    data class Edited(
+        override val rkey: RecordKey,
+        val contentMode: String,
+    ) : GrazeResponse
+
+    @Serializable
+    data class Read(
+        override val rkey: RecordKey,
         val contentMode: String,
         val algorithm: Detail,
     ) : GrazeResponse {
