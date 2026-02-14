@@ -122,7 +122,7 @@ object FakeTimeline {
 
     val sampleFeedGenerator: FeedGenerator = FeedGenerator(
         cid = FeedGeneratorId("fg-1"),
-        did = FeedGeneratorId("fg-1"),
+        did = ProfileId("fg-1"),
         uri = FeedGeneratorUri("at://feed/generator/1"),
         avatar = ImageUri("at://image/avatar/fgenerator-1"),
         likeCount = 42L,

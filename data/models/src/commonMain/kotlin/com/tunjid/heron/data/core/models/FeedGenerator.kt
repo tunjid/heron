@@ -20,13 +20,14 @@ import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorId
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ProfileId
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class FeedGenerator(
     val cid: FeedGeneratorId,
-    val did: FeedGeneratorId,
+    val did: ProfileId,
     val uri: FeedGeneratorUri,
     val avatar: ImageUri?,
     val likeCount: Long?,

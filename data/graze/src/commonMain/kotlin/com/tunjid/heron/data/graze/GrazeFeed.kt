@@ -16,6 +16,8 @@
 
 package com.tunjid.heron.data.graze
 
+import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -76,3 +78,8 @@ sealed interface GrazeFeed {
         ) : Update
     }
 }
+
+val FeedGenerator.isGrazeFeed: Boolean
+    get() = did == GrazeDid
+
+val GrazeDid = ProfileId("did:web:api.graze.social")

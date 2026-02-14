@@ -36,9 +36,9 @@ import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.graze.GrazeDid
 import com.tunjid.heron.data.graze.GrazeFeed
 import com.tunjid.heron.data.network.FeedCreationService
-import com.tunjid.heron.data.network.GrazeDid
 import com.tunjid.heron.data.network.GrazeResponse
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.asJsonContent
@@ -167,7 +167,7 @@ private suspend fun NetworkService.updateFeedRecord(
                     collection = Nsid(FeedGeneratorUri.NAMESPACE),
                     rkey = RKey(response.rkey.value),
                     record = BskyFeed(
-                        did = GrazeDid,
+                        did = Did(GrazeDid.id),
                         displayName = "Graze Feed",
                         description = "A custom feed created with \uD80C\uDD63 and \uD83D\uDC2E",
                         createdAt = Clock.System.now(),
