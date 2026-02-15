@@ -43,6 +43,8 @@ sealed interface GrazeFeed {
         @SerialName("rkey")
         override val recordKey: RecordKey,
         override val filter: Filter.Root,
+        val displayName: String? = null,
+        val description: String? = null,
     ) : Editable
 
     @Serializable

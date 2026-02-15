@@ -29,7 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.graze.Filter
-import com.tunjid.heron.graze.editor.ui.EditFilterTextSheetState.Companion.rememberEditFilterProfileTextState
+import com.tunjid.heron.graze.editor.ui.SelectTextSheetState.Companion.rememberSelectProfileHandleState
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.add_profile
 import heron.feature.graze_editor.generated.resources.direction
@@ -90,7 +90,7 @@ fun SocialGraphFilter(
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                val addTextSheetState = rememberEditFilterProfileTextState(
+                val selectTextSheetState = rememberSelectProfileHandleState(
                     title = stringResource(Res.string.username),
                     suggestedProfiles = results,
                     onTextConfirmed = { profileHandle ->
@@ -114,7 +114,7 @@ fun SocialGraphFilter(
 
                 FilledTonalButton(
                     onClick = {
-                        addTextSheetState.show(
+                        selectTextSheetState.show(
                             currentText = filter.username,
                         )
                     },
@@ -130,7 +130,7 @@ fun SocialGraphFilter(
                 }
 
                 LaunchedEffect(Unit) {
-                    snapshotFlow { addTextSheetState.options.text }
+                    snapshotFlow { selectTextSheetState.options.text }
                         .collect(onProfileQueryChanged)
                 }
             }
@@ -168,14 +168,14 @@ fun SocialUserListFilter(
                     filter.copy(dids = it),
                 )
             }
-            val editFilterTextSheetState = rememberEditFilterProfileTextState(
+            val editFilterTextSheetState = rememberSelectProfileHandleState(
                 title = stringResource(Res.string.username),
                 suggestedProfiles = results,
                 onItemsUpdated = onItemsUpdated,
                 items = filter.dids,
             )
             FilterTextChips(
-                editFilterTextSheetState = editFilterTextSheetState,
+                selectTextSheetState = editFilterTextSheetState,
                 buttonStringResource = Res.string.add_profile,
                 onItemsUpdated = onItemsUpdated,
                 items = filter.dids,
