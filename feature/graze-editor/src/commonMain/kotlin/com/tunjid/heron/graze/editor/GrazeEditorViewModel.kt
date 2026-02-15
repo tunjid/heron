@@ -112,6 +112,7 @@ class ActualGrazeEditorViewModel(
                         )
                         is Action.EditorNavigation -> action.flow.editorNavigationMutations()
                         is Action.EditFilter -> action.flow.editFilterFilterMutations()
+                        is Action.Metadata -> action.flow.updateMetadataMutations()
                     }
                 }
         },
@@ -164,7 +165,7 @@ private fun Flow<Action.Update>.updateMutations(
                     )
                 }
 
-                emit { copy(feed = grazeFeed, isLoading = false) }
+                emit { copy(grazeFeed = grazeFeed, isLoading = false) }
 
                 // Observe the feed
                 emitAll(
@@ -195,6 +196,22 @@ private fun Flow<Action.Update>.updateMutations(
             }
     }
 
+private fun Flow<Action.Metadata>.updateMetadataMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        when (action) {
+            is Action.Metadata.SetRecordKey if grazeFeed is GrazeFeed.Pending -> copy(
+                grazeFeed = grazeFeed.copy(recordKey = action.recordKey),
+            )
+            is Action.Metadata.FeedGenerator if grazeFeed is GrazeFeed.Created -> copy(
+                grazeFeed = grazeFeed.copy(
+                    displayName = action.displayName,
+                    description = action.description,
+                ),
+            )
+            else -> this
+        }
+    }
+
 private fun Flow<Action.EditorNavigation>.editorNavigationMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         when (action) {
@@ -216,7 +233,7 @@ private fun Flow<Action.EditorNavigation>.editorNavigationMutations(): Flow<Muta
 
 private fun Flow<Action.EditFilter>.editFilterFilterMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
-        val editedFilter = feed.filter.updateAt(action.path) { target ->
+        val editedFilter = grazeFeed.filter.updateAt(action.path) { target ->
             if (action is Action.EditFilter.FlipRootFilter) when (target) {
                 is Filter.And -> Filter.Or(
                     id = target.id,
@@ -245,7 +262,7 @@ private fun Flow<Action.EditFilter>.editFilterFilterMutations(): Flow<Mutation<S
         }
         copy(
             suggestedProfiles = emptyList(),
-            feed = when (val currentFeed = feed) {
+            grazeFeed = when (val currentFeed = grazeFeed) {
                 is GrazeFeed.Created -> currentFeed.copy(filter = editedFilter)
                 is GrazeFeed.Pending -> currentFeed.copy(filter = editedFilter)
             },

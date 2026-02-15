@@ -51,7 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
-import com.tunjid.heron.graze.editor.ui.EditFilterTextSheetState.Companion.rememberEditFilterTextState
+import com.tunjid.heron.graze.editor.ui.SelectTextSheetState.Companion.rememberSelectTextState
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.add_item
@@ -205,13 +205,13 @@ fun ChipFilter(
         startContent = startContent,
         endContent = endContent,
         additionalContent = {
-            val editFilterTextSheetState = rememberEditFilterTextState(
+            val selectTextSheetState = rememberSelectTextState(
                 title = title,
                 onItemsUpdated = onItemsUpdated,
                 items = items,
             )
             FilterTextChips(
-                editFilterTextSheetState = editFilterTextSheetState,
+                selectTextSheetState = selectTextSheetState,
                 buttonStringResource = buttonStringResource,
                 onItemsUpdated = onItemsUpdated,
                 items = items,
@@ -269,7 +269,7 @@ fun ThresholdSlider(
 @Composable
 fun FilterTextChips(
     modifier: Modifier = Modifier,
-    editFilterTextSheetState: EditFilterTextSheetState,
+    selectTextSheetState: SelectTextSheetState,
     buttonStringResource: StringResource = Res.string.add_item,
     onItemsUpdated: (List<String>) -> Unit,
     items: List<String>,
@@ -288,7 +288,7 @@ fun FilterTextChips(
                                 .animateBounds(this@LookaheadScope),
                             selected = false,
                             onClick = {
-                                editFilterTextSheetState.show(currentText = text)
+                                selectTextSheetState.show(currentText = text)
                             },
                             trailingIcon = {
                                 Icon(
@@ -310,7 +310,7 @@ fun FilterTextChips(
                 key("button") {
                     FilledTonalButton(
                         onClick = {
-                            editFilterTextSheetState.show()
+                            selectTextSheetState.show()
                         },
                         modifier = Modifier
                             .animateBounds(this@LookaheadScope)

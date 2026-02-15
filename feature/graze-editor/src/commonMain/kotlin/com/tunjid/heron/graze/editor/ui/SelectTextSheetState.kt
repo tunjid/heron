@@ -18,6 +18,7 @@ package com.tunjid.heron.graze.editor.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
@@ -43,7 +44,7 @@ import heron.feature.graze_editor.generated.resources.done
 import org.jetbrains.compose.resources.stringResource
 
 @Stable
-class EditFilterTextSheetState(
+class SelectTextSheetState(
     val options: Options,
     scope: BottomSheetScope,
 ) : BottomSheetState(scope) {
@@ -102,52 +103,52 @@ class EditFilterTextSheetState(
 
     companion object {
         @Composable
-        fun rememberEditFilterTextState(
+        fun rememberSelectTextState(
             title: String,
             onTextConfirmed: Options.(String) -> Unit,
-        ): EditFilterTextSheetState {
+        ): SelectTextSheetState {
             val options = remember {
                 Options.Single.Text(title)
             }.also {
                 it.title = title
             }
-            return rememberEditFilterTextState(
+            return rememberSelectTextState(
                 options = options,
                 onTextConfirmed = onTextConfirmed,
             )
         }
 
         @Composable
-        fun rememberEditFilterProfileTextState(
+        fun rememberSelectProfileHandleState(
             title: String,
             suggestedProfiles: List<Profile>,
             onTextConfirmed: Options.(String) -> Unit,
-        ): EditFilterTextSheetState {
+        ): SelectTextSheetState {
             val options = remember {
                 Options.Single.SuggestedProfiles(title)
             }.also {
                 it.title = title
                 it.profileSuggestions = suggestedProfiles
             }
-            return rememberEditFilterTextState(
+            return rememberSelectTextState(
                 options = options,
                 onTextConfirmed = onTextConfirmed,
             )
         }
 
         @Composable
-        fun rememberEditFilterTextState(
+        fun rememberSelectTextState(
             title: String,
             items: List<String>,
             onItemsUpdated: (List<String>) -> Unit,
-        ): EditFilterTextSheetState {
+        ): SelectTextSheetState {
             val options = remember {
                 Options.Collection.Text(title)
             }.also {
                 it.title = title
                 it.items = items
             }
-            return rememberEditFilterTextState(
+            return rememberSelectTextState(
                 options = options,
                 onTextConfirmed = { updatedText ->
                     onItemsUpdated(
@@ -158,12 +159,12 @@ class EditFilterTextSheetState(
         }
 
         @Composable
-        fun rememberEditFilterProfileTextState(
+        fun rememberSelectProfileHandleState(
             title: String,
             suggestedProfiles: List<Profile>,
             items: List<String>,
             onItemsUpdated: (List<String>) -> Unit,
-        ): EditFilterTextSheetState {
+        ): SelectTextSheetState {
             val options = remember {
                 Options.Collection.SuggestedProfiles(title)
             }.also {
@@ -171,7 +172,7 @@ class EditFilterTextSheetState(
                 it.items = items
                 it.profileSuggestions = suggestedProfiles
             }
-            return rememberEditFilterTextState(
+            return rememberSelectTextState(
                 options = options,
                 onTextConfirmed = { updatedText ->
                     onItemsUpdated(
@@ -182,17 +183,17 @@ class EditFilterTextSheetState(
         }
 
         @Composable
-        private inline fun rememberEditFilterTextState(
+        private inline fun rememberSelectTextState(
             options: Options,
             crossinline onTextConfirmed: Options.(String) -> Unit,
-        ): EditFilterTextSheetState {
+        ): SelectTextSheetState {
             val state = rememberBottomSheetState { scope ->
-                EditFilterTextSheetState(
+                SelectTextSheetState(
                     options = options,
                     scope = scope,
                 )
             }
-            AddTextBottomSheet(
+            SelectTextBottomSheet(
                 state = state,
                 onTextConfirmed = onTextConfirmed,
             )
@@ -200,8 +201,8 @@ class EditFilterTextSheetState(
         }
 
         @Composable
-        private inline fun AddTextBottomSheet(
-            state: EditFilterTextSheetState,
+        private inline fun SelectTextBottomSheet(
+            state: SelectTextSheetState,
             crossinline onTextConfirmed: Options.(String) -> Unit,
         ) {
             state.ModalBottomSheet {
@@ -209,6 +210,7 @@ class EditFilterTextSheetState(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .fillMaxHeight(0.5f)
                         .padding(horizontal = 16.dp)
                         .padding(bottom = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -261,7 +263,7 @@ class EditFilterTextSheetState(
     }
 }
 
-private fun EditFilterTextSheetState.Options.Collection.replaceOrAdd(
+private fun SelectTextSheetState.Options.Collection.replaceOrAdd(
     items: List<String>,
     updatedText: String,
 ): List<String> = items

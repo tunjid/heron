@@ -25,7 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
-import com.tunjid.heron.graze.editor.ui.EditFilterTextSheetState.Companion.rememberEditFilterTextState
+import com.tunjid.heron.graze.editor.ui.SelectTextSheetState.Companion.rememberSelectTextState
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.attribute_compare
 import heron.feature.graze_editor.generated.resources.edit_item
@@ -77,7 +77,7 @@ fun AttributeCompareFilter(
             )
         },
         additionalContent = {
-            val editFilterTextSheetState = rememberEditFilterTextState(
+            val selectTextSheetState = rememberSelectTextState(
                 title = stringResource(Res.string.attribute_compare),
                 onTextConfirmed = {
                     onUpdate(filter.copy(targetValue = it))
@@ -93,7 +93,7 @@ fun AttributeCompareFilter(
             )
             FilledTonalButton(
                 onClick = {
-                    editFilterTextSheetState.show(currentText = filter.targetValue)
+                    selectTextSheetState.show(currentText = filter.targetValue)
                 },
                 modifier = Modifier
                     .fillMaxWidth()

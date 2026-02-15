@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Save
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -37,6 +36,7 @@ import com.tunjid.heron.graze.editor.GrazeEditorScreen
 import com.tunjid.heron.graze.editor.RouteViewModelInitializer
 import com.tunjid.heron.graze.editor.currentFilter
 import com.tunjid.heron.graze.editor.ui.Title
+import com.tunjid.heron.graze.editor.ui.TopBarActions
 import com.tunjid.heron.graze.editor.ui.rememberAddFilterSheetState
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -48,8 +48,6 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransformProvider
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
-import com.tunjid.heron.ui.AppBarButton
-import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -69,7 +67,6 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.add_filter
-import heron.ui.core.generated.resources.save
 import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/graze/create"
@@ -206,16 +203,10 @@ class GrazeEditorBindings(
                             )
                         },
                         actions = {
-                            AppBarButton(
-                                icon = Icons.Rounded.Save,
-                                iconDescription = stringResource(CommonStrings.save),
-                                onClick = {
-                                    viewModel.accept(
-                                        Action.Update.Save(
-                                            feed = state.feed,
-                                        ),
-                                    )
-                                },
+                            TopBarActions(
+                                grazeFeed = state.grazeFeed,
+                                feedGenerator = state.feedGenerator,
+                                actions = viewModel.accept,
                             )
                         },
                         onBackPressed = {
