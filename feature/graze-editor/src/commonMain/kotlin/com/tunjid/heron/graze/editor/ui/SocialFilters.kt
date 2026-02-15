@@ -168,20 +168,20 @@ fun SocialUserListFilter(
                     filter.copy(dids = it),
                 )
             }
-            val editFilterTextSheetState = rememberSelectProfileHandleState(
+            val selectTextSheetState = rememberSelectProfileHandleState(
                 title = stringResource(Res.string.username),
                 suggestedProfiles = results,
                 onItemsUpdated = onItemsUpdated,
                 items = filter.dids,
             )
             FilterTextChips(
-                selectTextSheetState = editFilterTextSheetState,
+                selectTextSheetState = selectTextSheetState,
                 buttonStringResource = Res.string.add_profile,
                 onItemsUpdated = onItemsUpdated,
                 items = filter.dids,
             )
             LaunchedEffect(Unit) {
-                snapshotFlow { editFilterTextSheetState.options.text }
+                snapshotFlow { selectTextSheetState.options.text }
                     .collect(onProfileQueryChanged)
             }
         },

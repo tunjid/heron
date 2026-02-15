@@ -77,7 +77,7 @@ fun AttributeCompareFilter(
             )
         },
         additionalContent = {
-            val editFilterTextSheetState = rememberSelectTextState(
+            val selectTextSheetState = rememberSelectTextState(
                 title = stringResource(Res.string.attribute_compare),
                 onTextConfirmed = {
                     onUpdate(filter.copy(targetValue = it))
@@ -93,7 +93,7 @@ fun AttributeCompareFilter(
             )
             FilledTonalButton(
                 onClick = {
-                    editFilterTextSheetState.show(currentText = filter.targetValue)
+                    selectTextSheetState.show(currentText = filter.targetValue)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
