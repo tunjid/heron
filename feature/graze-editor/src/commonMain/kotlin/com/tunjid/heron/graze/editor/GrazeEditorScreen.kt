@@ -64,6 +64,8 @@ import com.tunjid.heron.graze.editor.ui.UnsupportedFilter
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.Indicator
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.modifiers.blockClickEvents
+import com.tunjid.heron.ui.modifiers.ifTrue
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.all_of_these_and
 import heron.feature.graze_editor.generated.resources.any_of_these_or
@@ -82,7 +84,11 @@ fun GrazeEditorScreen(
     modifier: Modifier = Modifier,
 ) = with(paneScaffoldState) {
     AnimatedContent(
-        modifier = modifier,
+        modifier = modifier
+            .ifTrue(
+                predicate = state.isLoading,
+                block = Modifier::blockClickEvents,
+            ),
         targetState = state.currentFilter to state.currentPath,
         contentKey = { (currentFilter) -> currentFilter.id },
         transitionSpec = {
