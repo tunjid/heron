@@ -48,6 +48,8 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransformProvider
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
+import com.tunjid.heron.ui.modifiers.blockClickEvents
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -206,6 +208,7 @@ class GrazeEditorBindings(
                             TopBarActions(
                                 grazeFeed = state.grazeFeed,
                                 feedGenerator = state.feedGenerator,
+                                enabled = !state.isLoading,
                                 actions = viewModel.accept,
                             )
                         },
@@ -222,6 +225,7 @@ class GrazeEditorBindings(
                         text = stringResource(Res.string.add_filter),
                         icon = Icons.Rounded.Add,
                         expanded = true,
+                        enabled = !state.isLoading,
                         onClick = addFilterSheetState::show,
                     )
                 },

@@ -24,6 +24,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,15 +39,20 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.graze.editor.ui.AnalysisFilter
@@ -64,6 +70,9 @@ import com.tunjid.heron.graze.editor.ui.UnsupportedFilter
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.Indicator
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.modifiers.blockClickEvents
+import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.all_of_these_and
 import heron.feature.graze_editor.generated.resources.any_of_these_or
@@ -72,6 +81,7 @@ import heron.feature.graze_editor.generated.resources.model_probability
 import heron.feature.graze_editor.generated.resources.remove_filter
 import heron.feature.graze_editor.generated.resources.text_similarity
 import heron.feature.graze_editor.generated.resources.unknown_filter
+import heron.ui.core.generated.resources.go_back
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -82,7 +92,11 @@ fun GrazeEditorScreen(
     modifier: Modifier = Modifier,
 ) = with(paneScaffoldState) {
     AnimatedContent(
-        modifier = modifier,
+        modifier = modifier
+            .ifTrue(
+                predicate = state.isLoading,
+                block = Modifier::blockClickEvents,
+            ),
         targetState = state.currentFilter to state.currentPath,
         contentKey = { (currentFilter) -> currentFilter.id },
         transitionSpec = {
@@ -172,6 +186,37 @@ fun GrazeEditorScreen(
                             index = index,
                             path = currentPath,
                         )
+                    },
+                )
+            }
+        }
+    }
+    if (state.isLoading) Dialog(
+        onDismissRequest = {},
+        properties = remember {
+            DialogProperties(
+                dismissOnBackPress = false,
+                dismissOnClickOutside = false,
+            )
+        },
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(30.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                CircularProgressIndicator()
+
+                FilledTonalButton(
+                    onClick = {
+                        actions(Action.Navigate.Pop)
+                    },
+                    content = {
+                        Text(stringResource(CommonStrings.go_back))
                     },
                 )
             }

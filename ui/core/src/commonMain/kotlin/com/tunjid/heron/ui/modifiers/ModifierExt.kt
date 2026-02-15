@@ -16,11 +16,16 @@
 
 package com.tunjid.heron.ui.modifiers
 
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Dp
 
 /**
@@ -52,6 +57,15 @@ fun Modifier.blur(
     this.shape = shape
     this.clip = clip()
 }
+
+fun Modifier.blockClickEvents() =
+    pointerInput(Unit) {
+        awaitEachGesture {
+            val down = awaitFirstDown(pass = PointerEventPass.Initial)
+            down.consume()
+            waitForUpOrCancellation(PointerEventPass.Initial)?.consume()
+        }
+    }
 
 inline fun Modifier.ifTrue(
     predicate: Boolean,

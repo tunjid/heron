@@ -37,6 +37,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.modifiers.blockClickEvents
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
 
@@ -129,15 +130,6 @@ private fun SensitiveContentButton(
         },
     )
 }
-
-private fun Modifier.blockClickEvents() =
-    pointerInput(Unit) {
-        awaitEachGesture {
-            val down = awaitFirstDown(pass = PointerEventPass.Initial)
-            down.consume()
-            waitForUpOrCancellation(PointerEventPass.Initial)?.consume()
-        }
-    }
 
 private val SensitiveContentBlurRadius = 120.dp
 private const val SensitiveContentBlurClip = true

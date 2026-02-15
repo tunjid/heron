@@ -49,6 +49,7 @@ import org.jetbrains.compose.resources.stringResource
 fun TopBarActions(
     grazeFeed: GrazeFeed.Editable,
     feedGenerator: FeedGenerator?,
+    enabled: Boolean,
     actions: (Action) -> Unit,
 ) {
     val editRecordKeySheetState = rememberSelectTextState(
@@ -68,6 +69,7 @@ fun TopBarActions(
     }
     AppBarButton(
         icon = Icons.Rounded.Save,
+        enabled = enabled,
         iconDescription = stringResource(CommonStrings.save),
         onClick = {
             actions(
@@ -80,6 +82,7 @@ fun TopBarActions(
     Box {
         var showMenu by remember { mutableStateOf(false) }
         IconButton(
+            enabled = enabled,
             onClick = {
                 if (grazeFeed is GrazeFeed.Pending) editRecordKeySheetState.show(
                     currentText = grazeFeed.recordKey.value,
