@@ -70,7 +70,7 @@ fun Title(
             is Title.Created -> TimelineTitle(
                 modifier = Modifier,
                 movableElementSharedTransitionScope = paneScaffoldState,
-                timeline = remember {
+                timeline = remember(currentTitle.feedGenerator) {
                     Timeline.Home.Feed.stub(currentTitle.feedGenerator)
                 },
                 sharedElementPrefix = currentTitle.sharedElementPrefix,
