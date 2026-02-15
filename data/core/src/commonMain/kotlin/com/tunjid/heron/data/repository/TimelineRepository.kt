@@ -1228,14 +1228,16 @@ private suspend fun TimelineDao.isFirstPageForDifferentAnchor(
 }
 
 private fun FeedGeneratorEntity.supportsMediaPresentation() =
-    when (contentMode) {
-        Token.ContentModeVideo.value,
-        "app.bsky.feed.defs#contentModeVideo",
-        "app.bsky.feed.defs#contentModePhoto",
-        "app.bsky.feed.defs#contentModeImage",
-        "app.bsky.feed.defs#contentModeMedia",
-        "com.tunjid.heron.defs#contentModeMedia",
-        -> true
+    contentMode in MEDIA_CONTENT_MODES
 
-        else -> false
-    }
+private val MEDIA_CONTENT_MODES = setOf(
+    Token.ContentModeVideo.value,
+    "app.bsky.feed.defs#contentModeVideo",
+    "app.bsky.feed.defs#contentModePhoto",
+    "app.bsky.feed.defs#contentModeImage",
+    "app.bsky.feed.defs#contentModeMedia",
+    "com.tunjid.heron.defs#contentModeImage",
+    "com.tunjid.heron.defs#contentModeMedia",
+    "dev.tunji.heron.defs#contentModeImage",
+    "dev.tunji.heron.defs#contentModeMedia",
+)
