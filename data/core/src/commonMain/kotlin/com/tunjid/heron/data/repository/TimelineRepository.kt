@@ -1236,7 +1236,7 @@ private fun FeedGeneratorEntity.supportsMediaPresentation() =
         "app.bsky.feed.defs#contentModeMedia",
         "com.tunjid.heron.defs#contentModeImage",
         "com.tunjid.heron.defs#contentModeMedia",
-        "dev.tunjid.heron.defs#contentModeImage",
+        "dev.tunji.heron.defs#contentModeImage",
         "dev.tunji.heron.defs#contentModeMedia",
         -> true
 
