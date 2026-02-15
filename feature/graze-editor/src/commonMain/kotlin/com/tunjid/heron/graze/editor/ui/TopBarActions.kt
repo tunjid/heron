@@ -59,14 +59,12 @@ fun TopBarActions(
         )
     }
     val editFeedInfoSheetState = rememberEditFeedInfoSheetState { name, description ->
-        if (grazeFeed is GrazeFeed.Created) {
-            actions(
-                Action.Metadata.FeedGenerator(
-                    displayName = name,
-                    description = description,
-                ),
-            )
-        }
+        actions(
+            Action.Metadata.FeedGenerator(
+                displayName = name,
+                description = description,
+            ),
+        )
     }
     AppBarButton(
         icon = Icons.Rounded.Save,
@@ -106,8 +104,8 @@ fun TopBarActions(
                     onClick = {
                         showMenu = false
                         editFeedInfoSheetState.show(
-                            currentName = feedGenerator?.displayName ?: "",
-                            currentDescription = feedGenerator?.description,
+                            currentName = grazeFeed.displayName ?: feedGenerator?.displayName ?: "",
+                            currentDescription = grazeFeed.description ?: feedGenerator?.description,
                         )
                     },
                 )
