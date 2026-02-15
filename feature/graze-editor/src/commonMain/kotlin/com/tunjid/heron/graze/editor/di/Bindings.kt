@@ -16,10 +16,6 @@
 
 package com.tunjid.heron.graze.editor.di
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -32,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
+import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.graze.editor.Action
 import com.tunjid.heron.graze.editor.ActualGrazeEditorViewModel
@@ -39,11 +36,11 @@ import com.tunjid.heron.graze.editor.FilterNavigationEventInfo
 import com.tunjid.heron.graze.editor.GrazeEditorScreen
 import com.tunjid.heron.graze.editor.RouteViewModelInitializer
 import com.tunjid.heron.graze.editor.currentFilter
+import com.tunjid.heron.graze.editor.ui.Title
 import com.tunjid.heron.graze.editor.ui.rememberAddFilterSheetState
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
-import com.tunjid.heron.scaffold.scaffold.AppBarTitle
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
@@ -56,11 +53,14 @@ import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
+import com.tunjid.treenav.strings.PathPattern
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.RouteParser
+import com.tunjid.treenav.strings.mappedRoutePath
 import com.tunjid.treenav.strings.routeOf
+import com.tunjid.treenav.strings.toRouteTrie
 import com.tunjid.treenav.strings.urlRouteMatcher
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Includes
@@ -69,12 +69,11 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.add_filter
-import heron.feature.graze_editor.generated.resources.graze_editor
-import heron.feature.graze_editor.generated.resources.graze_editor_level
 import heron.ui.core.generated.resources.save
 import org.jetbrains.compose.resources.stringResource
 
-private const val RoutePattern = "/graze-editor"
+private const val RoutePattern = "/graze/create"
+private const val EditPattern = "/graze/edit/{feedGeneratorRecordKey}"
 
 private fun createRoute(
     routeParams: RouteParams,
@@ -85,6 +84,22 @@ private fun createRoute(
     ),
 )
 
+private val Route.feedGeneratorRecordKey by mappedRoutePath(
+    mapper = ::RecordKey,
+)
+
+private val RequestTrie = mapOf(
+    PathPattern(RoutePattern) to {
+        null
+    },
+    PathPattern(EditPattern) to { route: Route ->
+        Action.Update.InitialLoad(route.feedGeneratorRecordKey)
+    },
+).toRouteTrie()
+
+internal val Route.initialLoad: Action.Update?
+    get() = checkNotNull(RequestTrie[this]).invoke(this)
+
 @BindingContainer
 object GrazeEditorNavigationBindings {
 
@@ -94,6 +109,15 @@ object GrazeEditorNavigationBindings {
     fun provideRouteMatcher(): RouteMatcher =
         urlRouteMatcher(
             routePattern = RoutePattern,
+            routeMapper = ::createRoute,
+        )
+
+    @Provides
+    @IntoMap
+    @StringKey(EditPattern)
+    fun provideEditRouteMatcher(): RouteMatcher =
+        urlRouteMatcher(
+            routePattern = EditPattern,
             routeMapper = ::createRoute,
         )
 }
@@ -108,6 +132,25 @@ class GrazeEditorBindings(
     @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
+        routeParser: RouteParser,
+        viewModelInitializer: RouteViewModelInitializer,
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
+        routeParser = routeParser,
+        viewModelInitializer = viewModelInitializer,
+    )
+
+    @Provides
+    @IntoMap
+    @StringKey(EditPattern)
+    fun provideEditPaneEntry(
+        routeParser: RouteParser,
+        viewModelInitializer: RouteViewModelInitializer,
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(
+        routeParser = routeParser,
+        viewModelInitializer = viewModelInitializer,
+    )
+
+    fun routePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
     ): PaneEntry<ThreePane, Route> = threePaneEntry(
@@ -142,24 +185,25 @@ class GrazeEditorBindings(
                 topBar = {
                     PoppableDestinationTopAppBar(
                         title = {
-                            AnimatedContent(
-                                targetState = state.currentPath,
-                                transitionSpec = {
-                                    TitleTransitionSpec
+                            Title(
+                                title = remember(
+                                    state.currentPath,
+                                    state.feedGenerator,
+                                    state.sharedElementPrefix,
+                                ) {
+                                    when (val feedGenerator = state.feedGenerator) {
+                                        null -> Title.Pending(
+                                            path = state.currentPath,
+                                        )
+                                        else -> Title.Created(
+                                            path = state.currentPath,
+                                            feedGenerator = feedGenerator,
+                                            sharedElementPrefix = state.sharedElementPrefix,
+                                        )
+                                    }
                                 },
-                            ) { currentPath ->
-                                AppBarTitle(
-                                    modifier = Modifier,
-                                    title =
-                                    if (currentPath.isEmpty()) stringResource(
-                                        Res.string.graze_editor,
-                                    )
-                                    else stringResource(
-                                        Res.string.graze_editor_level,
-                                        currentPath.size,
-                                    ),
-                                )
-                            }
+                                paneScaffoldState = this,
+                            )
                         },
                         actions = {
                             AppBarButton(
@@ -167,7 +211,7 @@ class GrazeEditorBindings(
                                 iconDescription = stringResource(CommonStrings.save),
                                 onClick = {
                                     viewModel.accept(
-                                        Action.Load.Save(
+                                        Action.Update.Save(
                                             feed = state.feed,
                                         ),
                                     )
@@ -214,5 +258,3 @@ class GrazeEditorBindings(
         },
     )
 }
-
-private val TitleTransitionSpec = fadeIn() togetherWith fadeOut()

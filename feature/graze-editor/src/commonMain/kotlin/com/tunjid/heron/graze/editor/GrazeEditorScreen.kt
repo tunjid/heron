@@ -18,6 +18,9 @@ package com.tunjid.heron.graze.editor
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
@@ -82,6 +85,9 @@ fun GrazeEditorScreen(
         modifier = modifier,
         targetState = state.currentFilter to state.currentPath,
         contentKey = { (currentFilter) -> currentFilter.id },
+        transitionSpec = {
+            FilterTransitionSpec
+        },
     ) { (currentFilter, currentPath) ->
         Column(
             modifier = Modifier
@@ -512,3 +518,5 @@ fun FilterLeaf(
 private fun Filter.Root.backgroundSharedElementKey(): String = "$id-background"
 
 private val FilterRowShape = RoundedCornerShape(8.dp)
+
+private val FilterTransitionSpec = fadeIn() togetherWith fadeOut()

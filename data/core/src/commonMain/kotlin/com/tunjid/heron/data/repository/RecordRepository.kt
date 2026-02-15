@@ -64,7 +64,7 @@ interface RecordRepository {
 
     suspend fun updateGrazeFeed(
         update: GrazeFeed.Update,
-    ): Result<GrazeFeed?>
+    ): Result<GrazeFeed>
 }
 
 internal class OfflineRecordRepository @Inject constructor(
@@ -124,7 +124,7 @@ internal class OfflineRecordRepository @Inject constructor(
 
     override suspend fun updateGrazeFeed(
         update: GrazeFeed.Update,
-    ): Result<GrazeFeed?> = savedStateDataSource.inCurrentProfileSession { profileId ->
+    ): Result<GrazeFeed> = savedStateDataSource.inCurrentProfileSession { profileId ->
         if (profileId == null) return@inCurrentProfileSession expiredSessionResult()
 
         feedCreationService.updateGrazeFeed(
@@ -148,7 +148,9 @@ internal class OfflineRecordRepository @Inject constructor(
                     )
                 }
                 is GrazeResponse.Deleted -> {
-                    null
+                    GrazeFeed.Deleted(
+                        recordKey = update.recordKey,
+                    )
                 }
             }
         }

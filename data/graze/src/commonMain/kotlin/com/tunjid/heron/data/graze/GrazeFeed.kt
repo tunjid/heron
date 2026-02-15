@@ -25,20 +25,30 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed interface GrazeFeed {
     val recordKey: RecordKey
-    val filter: Filter.Root
+
+    @Serializable
+    sealed interface Editable : GrazeFeed {
+        val filter: Filter.Root
+    }
 
     @Serializable
     data class Pending(
         @SerialName("rkey")
         override val recordKey: RecordKey,
         override val filter: Filter.Root,
-    ) : GrazeFeed
+    ) : Editable
 
     @Serializable
     data class Created(
         @SerialName("rkey")
         override val recordKey: RecordKey,
         override val filter: Filter.Root,
+    ) : Editable
+
+    @Serializable
+    data class Deleted(
+        @SerialName("rkey")
+        override val recordKey: RecordKey,
     ) : GrazeFeed
 
     @Serializable
@@ -46,7 +56,7 @@ sealed interface GrazeFeed {
 
         @Serializable
         sealed interface Put : Update {
-            val feed: GrazeFeed
+            val feed: GrazeFeed.Editable
         }
 
         val recordKey: RecordKey

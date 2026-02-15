@@ -43,7 +43,6 @@ import com.tunjid.heron.data.repository.EmptyNavigation
 import com.tunjid.heron.data.repository.InitialNavigation
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.UserDataRepository
-import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
@@ -271,12 +270,16 @@ fun mutesDestination(): NavigationAction.Destination = pathDestination(
 
 fun grazeEditorDestination(
     feedGenerator: FeedGenerator? = null,
+    sharedElementPrefix: String? = null,
 ): NavigationAction.Destination = pathDestination(
-    path = "/graze-editor",
+    path = when (feedGenerator) {
+        null -> "/graze/create"
+        else -> "/graze/edit/${feedGenerator.uri.recordKey}"
+    },
     models = listOfNotNull(
         feedGenerator,
     ),
-    sharedUri = feedGenerator?.uri?.asGenericUri(),
+    sharedElementPrefix = sharedElementPrefix,
     referringRouteOption = ReferringRouteOption.Current,
 )
 

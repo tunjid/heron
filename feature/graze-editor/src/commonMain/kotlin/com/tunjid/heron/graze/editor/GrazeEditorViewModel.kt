@@ -21,22 +21,23 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
-import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
-import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
-import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.types.recordUriOrNull
 import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.data.graze.GrazeFeed
+import com.tunjid.heron.data.graze.GrazeFeed.Update.Create
+import com.tunjid.heron.data.graze.GrazeFeed.Update.Delete
+import com.tunjid.heron.data.graze.GrazeFeed.Update.Edit
+import com.tunjid.heron.data.graze.GrazeFeed.Update.Get
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
+import com.tunjid.heron.graze.editor.di.initialLoad
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
-import com.tunjid.heron.scaffold.navigation.sharedUri
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -49,6 +50,7 @@ import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
 import heron.feature.graze_editor.generated.resources.Res
+import heron.feature.graze_editor.generated.resources.error_deleting_graze_feed
 import heron.feature.graze_editor.generated.resources.error_fetching_graze_feed
 import heron.feature.graze_editor.generated.resources.error_saving_graze_feed
 import kotlin.time.Clock
@@ -103,7 +105,7 @@ class ActualGrazeEditorViewModel(
                         is Action.SearchProfiles -> action.flow.searchMutations(
                             searchRepository = searchRepository,
                         )
-                        is Action.Load -> action.flow.loadMutations(
+                        is Action.Update -> action.flow.updateMutations(
                             recordRepository = recordRepository,
                             authRepository = authRepository,
                             navActions = navActions,
@@ -118,14 +120,7 @@ class ActualGrazeEditorViewModel(
 private fun Flow<Action>.withInitialLoad(
     route: Route,
 ) = onStart {
-    val recordUri = route.sharedUri
-        ?.asEmbeddableRecordUriOrNull()
-
-    if (recordUri != null) emit(
-        Action.Load.InitialLoad(
-            recordUri = recordUri,
-        ),
-    )
+    route.initialLoad?.let { emit(it) }
 }
 
 private fun Flow<Action.SearchProfiles>.searchMutations(
@@ -151,70 +146,53 @@ private fun Flow<Action.SearchProfiles>.searchMutations(
             }
         }
 
-private fun Flow<Action.Load>.loadMutations(
+private fun Flow<Action.Update>.updateMutations(
     recordRepository: RecordRepository,
     authRepository: AuthRepository,
     navActions: (NavigationMutation) -> Unit,
 ): Flow<Mutation<State>> =
     mapLatestToManyMutations { action ->
-        when (action) {
-            is Action.Load.InitialLoad -> recordRepository.updateGrazeFeed(
-                update = GrazeFeed.Update.Get(recordKey = action.recordUri.recordKey),
-            ).onSuccess { grazeFeed ->
-                if (grazeFeed == null) return@onSuccess emit { withFetchErrorMessage() }
-
-                emit { copy(feed = grazeFeed) }
-                emitAll(
-                    recordRepository.embeddableRecord(action.recordUri)
-                        .loadFeedMutations(),
-                )
-            }
-                .onFailure {
-                    emit { withFetchErrorMessage() }
-                }
-            is Action.Load.Save -> recordRepository.updateGrazeFeed(
-                when (val feed = action.feed) {
-                    is GrazeFeed.Created -> GrazeFeed.Update.Edit(
-                        feed = feed,
-                    )
-                    is GrazeFeed.Pending -> GrazeFeed.Update.Create(
-                        feed = feed,
-                    )
-                },
-            )
-                .onSuccess { grazeFeed ->
-                    if (grazeFeed == null) return@onSuccess emitAll(
+        emit { copy(isLoading = true) }
+        recordRepository.updateGrazeFeed(
+            action.toGrazeFeedUpdate(),
+        )
+            .onSuccess { grazeFeed ->
+                if (grazeFeed !is GrazeFeed.Editable) {
+                    return@onSuccess emitAll(
                         flowOf(Action.Navigate.Pop)
                             .consumeNavigationActions(navActions),
                     )
-                    emit { copy(feed = grazeFeed) }
-                    emitAll(
-                        authRepository.signedInUser
-                            .mapNotNull { it?.did }
-                            .distinctUntilChanged()
-                            .map {
-                                recordUriOrNull(
-                                    profileId = it,
-                                    namespace = FeedGeneratorUri.NAMESPACE,
-                                    recordKey = grazeFeed.recordKey,
-                                )
-                            }
-                            .filterIsInstance<FeedGeneratorUri>()
-                            .flatMapLatest(recordRepository::embeddableRecord)
-                            .loadFeedMutations(),
+                }
+
+                emit { copy(feed = grazeFeed, isLoading = false) }
+
+                // Observe the feed
+                emitAll(
+                    authRepository.signedInUser
+                        .mapNotNull { it?.did }
+                        .distinctUntilChanged()
+                        .map {
+                            recordUriOrNull(
+                                profileId = it,
+                                namespace = FeedGeneratorUri.NAMESPACE,
+                                recordKey = grazeFeed.recordKey,
+                            )
+                        }
+                        .filterIsInstance<FeedGeneratorUri>()
+                        .flatMapLatest(recordRepository::embeddableRecord)
+                        .distinctUntilChanged()
+                        .filterIsInstance<FeedGenerator>()
+                        .mapToMutation { copy(feedGenerator = it) },
+                )
+            }
+            .onFailure { throwable ->
+                emit {
+                    copy(
+                        isLoading = false,
+                        messages = messages + action.toErrorMessage(throwable),
                     )
                 }
-                .onFailure {
-                    emit {
-                        copy(
-                            messages = messages + Memo.Resource(
-                                stringResource = Res.string.error_saving_graze_feed,
-                                args = listOf(it.message ?: ""),
-                            ),
-                        )
-                    }
-                }
-        }
+            }
     }
 
 private fun Flow<Action.EditorNavigation>.editorNavigationMutations(): Flow<Mutation<State>> =
@@ -274,17 +252,6 @@ private fun Flow<Action.EditFilter>.editFilterFilterMutations(): Flow<Mutation<S
         )
     }
 
-private fun Flow<Record.Embeddable>.loadFeedMutations(): Flow<Mutation<State>> =
-    distinctUntilChanged()
-        .filterIsInstance<FeedGenerator>()
-        .mapToMutation { copy(feedGenerator = it) }
-
-private fun State.withFetchErrorMessage(): State = copy(
-    messages = messages + Memo.Resource(
-        stringResource = Res.string.error_fetching_graze_feed,
-    ),
-)
-
 private fun Filter.Root.updateAt(
     path: List<Int>,
     update: (Filter.Root) -> Filter.Root,
@@ -312,6 +279,25 @@ private inline fun Filter.Root.updateFilters(
         is Filter.And -> copy(filters = updatedFilters)
         is Filter.Or -> copy(filters = updatedFilters)
     }
+}
+
+private fun Action.Update.toGrazeFeedUpdate(): GrazeFeed.Update = when (this) {
+    is Action.Update.InitialLoad -> Get(recordKey = recordKey)
+    is Action.Update.Save -> when (val feed = feed) {
+        is GrazeFeed.Created -> Edit(feed = feed)
+        is GrazeFeed.Pending -> Create(feed = feed)
+    }
+    is Action.Update.Delete -> Delete(recordKey = recordKey)
+}
+
+private fun Action.Update.toErrorMessage(throwable: Throwable): Memo.Resource {
+    val message = throwable.message ?: ""
+    val stringResource = when (this) {
+        is Action.Update.Delete -> Res.string.error_deleting_graze_feed
+        is Action.Update.InitialLoad -> Res.string.error_fetching_graze_feed
+        is Action.Update.Save -> Res.string.error_saving_graze_feed
+    }
+    return Memo.Resource(stringResource = stringResource, args = listOf(message))
 }
 
 private const val SEARCH_DEBOUNCE_MILLIS = 300L

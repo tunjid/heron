@@ -231,6 +231,7 @@ class FeedBindings(
                                     ?.timeline
                                     ?.withFeedTimelineOrNull(Timeline.Home.Feed::feedGenerator)
                                     ?: return@onEditClicked,
+                                sharedElementPrefix = state.sharedElementPrefix,
                             ),
                         ),
                     )
