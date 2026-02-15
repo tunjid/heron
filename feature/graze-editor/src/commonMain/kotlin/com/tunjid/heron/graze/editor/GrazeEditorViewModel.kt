@@ -154,25 +154,10 @@ private fun Flow<Action.Update>.updateMutations(
     mapLatestToManyMutations { action ->
         emit { copy(isLoading = true) }
         recordRepository.updateGrazeFeed(
-            when (action) {
-                is Action.Update.InitialLoad -> Get(
-                    recordKey = action.recordKey,
-                )
-                is Action.Update.Save -> when (val feed = action.feed) {
-                    is GrazeFeed.Created -> Edit(
-                        feed = feed,
-                    )
-                    is GrazeFeed.Pending -> Create(
-                        feed = feed,
-                    )
-                }
-                is Action.Update.Delete -> Delete(
-                    recordKey = action.recordKey,
-                )
-            },
+            action.toGrazeFeedUpdate(),
         )
             .onSuccess { grazeFeed ->
-                if (action is Action.Update.Delete || grazeFeed !is GrazeFeed.Editable) {
+                if (grazeFeed !is GrazeFeed.Editable) {
                     return@onSuccess emitAll(
                         flowOf(Action.Navigate.Pop)
                             .consumeNavigationActions(navActions),
@@ -200,24 +185,11 @@ private fun Flow<Action.Update>.updateMutations(
                         .mapToMutation { copy(feedGenerator = it) },
                 )
             }
-            .onFailure {
+            .onFailure { throwable ->
                 emit {
                     copy(
                         isLoading = false,
-                        messages = messages + when (action) {
-                            is Action.Update.Delete -> Memo.Resource(
-                                stringResource = Res.string.error_deleting_graze_feed,
-                                args = listOf(it.message ?: ""),
-                            )
-                            is Action.Update.InitialLoad -> Memo.Resource(
-                                stringResource = Res.string.error_fetching_graze_feed,
-                                args = listOf(it.message ?: ""),
-                            )
-                            is Action.Update.Save -> Memo.Resource(
-                                stringResource = Res.string.error_saving_graze_feed,
-                                args = listOf(it.message ?: ""),
-                            )
-                        },
+                        messages = messages + action.toErrorMessage(throwable),
                     )
                 }
             }
@@ -307,6 +279,25 @@ private inline fun Filter.Root.updateFilters(
         is Filter.And -> copy(filters = updatedFilters)
         is Filter.Or -> copy(filters = updatedFilters)
     }
+}
+
+private fun Action.Update.toGrazeFeedUpdate(): GrazeFeed.Update = when (this) {
+    is Action.Update.InitialLoad -> Get(recordKey = recordKey)
+    is Action.Update.Save -> when (val feed = feed) {
+        is GrazeFeed.Created -> Edit(feed = feed)
+        is GrazeFeed.Pending -> Create(feed = feed)
+    }
+    is Action.Update.Delete -> Delete(recordKey = recordKey)
+}
+
+private fun Action.Update.toErrorMessage(throwable: Throwable): Memo.Resource {
+    val message = throwable.message ?: ""
+    val stringResource = when (this) {
+        is Action.Update.Delete -> Res.string.error_deleting_graze_feed
+        is Action.Update.InitialLoad -> Res.string.error_fetching_graze_feed
+        is Action.Update.Save -> Res.string.error_saving_graze_feed
+    }
+    return Memo.Resource(stringResource = stringResource, args = listOf(message))
 }
 
 private const val SEARCH_DEBOUNCE_MILLIS = 300L
