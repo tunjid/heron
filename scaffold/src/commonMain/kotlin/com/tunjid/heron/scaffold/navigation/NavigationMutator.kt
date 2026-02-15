@@ -274,7 +274,7 @@ fun grazeEditorDestination(
 ): NavigationAction.Destination = pathDestination(
     path = when (feedGenerator) {
         null -> "/graze/create"
-        else -> "/graze/edit/${feedGenerator.uri.recordKey}"
+        else -> "/graze/edit/${feedGenerator.uri.recordKey.value}"
     },
     models = listOfNotNull(
         feedGenerator,
