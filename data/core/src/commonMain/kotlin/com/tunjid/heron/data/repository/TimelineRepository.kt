@@ -1232,6 +1232,7 @@ private fun FeedGeneratorEntity.supportsMediaPresentation() =
 
 private val MEDIA_CONTENT_MODES = setOf(
     Token.ContentModeVideo.value,
+    "app.bsky.feed.defs#contentModeVideo",
     "app.bsky.feed.defs#contentModePhoto",
     "app.bsky.feed.defs#contentModeImage",
     "app.bsky.feed.defs#contentModeMedia",
