@@ -33,7 +33,7 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
-    val feed: GrazeFeed = GrazeFeed.Pending(
+    val feed: GrazeFeed.Editable = GrazeFeed.Pending(
         recordKey = RecordKey("test-${Clock.System.now().epochSeconds}"),
         filter = Filter.And(
             filters = emptyList(),
@@ -106,7 +106,7 @@ sealed class Action(val key: String) {
         ) : Update()
 
         data class Save(
-            val feed: GrazeFeed,
+            val feed: GrazeFeed.Editable,
         ) : Update()
 
         data class Delete(

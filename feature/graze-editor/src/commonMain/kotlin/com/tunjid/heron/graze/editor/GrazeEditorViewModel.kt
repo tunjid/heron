@@ -25,7 +25,10 @@ import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.recordUriOrNull
 import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.data.graze.GrazeFeed
-import com.tunjid.heron.data.graze.GrazeFeed.Update.*
+import com.tunjid.heron.data.graze.GrazeFeed.Update.Create
+import com.tunjid.heron.data.graze.GrazeFeed.Update.Delete
+import com.tunjid.heron.data.graze.GrazeFeed.Update.Edit
+import com.tunjid.heron.data.graze.GrazeFeed.Update.Get
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SearchQuery
@@ -169,32 +172,11 @@ private fun Flow<Action.Update>.updateMutations(
             },
         )
             .onSuccess { grazeFeed ->
-                if (grazeFeed == null) when (action) {
-                    is Action.Update.InitialLoad -> return@onSuccess emit {
-                        copy(
-                            isLoading = false,
-                            messages = messages + Memo.Resource(
-                                stringResource = Res.string.error_fetching_graze_feed,
-                            ),
-                        )
-                    }
-                    is Action.Update.Save -> return@onSuccess emit {
-                        copy(
-                            isLoading = false,
-                            messages = messages + Memo.Resource(
-                                stringResource = Res.string.error_saving_graze_feed,
-                            ),
-                        )
-                    }
-                    is Action.Update.Delete -> return@onSuccess emitAll(
+                if (action is Action.Update.Delete || grazeFeed !is GrazeFeed.Editable) {
+                    return@onSuccess emitAll(
                         flowOf(Action.Navigate.Pop)
                             .consumeNavigationActions(navActions),
                     )
-                }
-
-                if (action is Action.Update.Delete) {
-                    // Unexpected state
-                    return@onSuccess
                 }
 
                 emit { copy(feed = grazeFeed, isLoading = false) }
@@ -229,6 +211,7 @@ private fun Flow<Action.Update>.updateMutations(
                             )
                             is Action.Update.InitialLoad -> Memo.Resource(
                                 stringResource = Res.string.error_fetching_graze_feed,
+                                args = listOf(it.message ?: ""),
                             )
                             is Action.Update.Save -> Memo.Resource(
                                 stringResource = Res.string.error_saving_graze_feed,

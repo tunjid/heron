@@ -42,6 +42,7 @@ sealed class Title {
 
     data class Created(
         override val path: List<Int>,
+        val sharedElementPrefix: String,
         val feedGenerator: FeedGenerator,
     ) : Title()
 }
@@ -72,7 +73,7 @@ fun Title(
                 timeline = remember {
                     Timeline.Home.Feed.stub(currentTitle.feedGenerator)
                 },
-                sharedElementPrefix = "",
+                sharedElementPrefix = currentTitle.sharedElementPrefix,
                 hasUpdates = false,
                 onPresentationSelected = { _, _ -> },
             )
