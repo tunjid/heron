@@ -84,6 +84,7 @@
     <string name="done">Done</string>
     <string name="error_fetching_graze_feed">Error fetching Graze feed. Please make sure it exists or try again.</string>
     <string name="error_saving_graze_feed">Error saving Graze feed:\n %1$s</string>
+    <string name="error_deleting_graze_feed">Error deleting Graze feed:\n %1$s</string>
 
     <string name="simple_filters">Simple Filters</string>
     <string name="advanced_filters">Advanced Filters</string>

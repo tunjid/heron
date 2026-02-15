@@ -19,12 +19,12 @@ package com.tunjid.heron.graze.editor
 import androidx.navigationevent.NavigationEventInfo
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Profile
-import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.data.graze.GrazeFeed
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.model
+import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.treenav.strings.Route
 import kotlin.time.Clock
@@ -41,6 +41,8 @@ data class State(
     ),
     val currentPath: List<Int> = emptyList(),
     val feedGenerator: FeedGenerator? = null,
+    val sharedElementPrefix: String,
+    val isLoading: Boolean = false,
     @Transient
     val suggestedProfiles: List<Profile> = emptyList(),
     @Transient
@@ -51,6 +53,7 @@ fun State(
     route: Route,
 ) = State(
     feedGenerator = route.model(),
+    sharedElementPrefix = route.sharedElementPrefix,
 )
 
 val State.currentFilter
@@ -96,15 +99,19 @@ sealed class Action(val key: String) {
         val query: String,
     ) : Action("SearchProfiles")
 
-    sealed class Load : Action("Load") {
+    sealed class Update : Action("Load") {
 
         data class InitialLoad(
-            val recordUri: EmbeddableRecordUri,
-        ) : Load()
+            val recordKey: RecordKey,
+        ) : Update()
 
         data class Save(
             val feed: GrazeFeed,
-        ) : Load()
+        ) : Update()
+
+        data class Delete(
+            val recordKey: RecordKey,
+        ) : Update()
     }
 
     sealed class Navigate :
