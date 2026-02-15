@@ -55,13 +55,12 @@ sealed interface GrazeFeed {
 
     @Serializable
     sealed interface Update {
+        val recordKey: RecordKey
 
         @Serializable
         sealed interface Put : Update {
-            val feed: GrazeFeed.Editable
+            val feed: Editable
         }
-
-        val recordKey: RecordKey
 
         @Serializable
         data class Create(
