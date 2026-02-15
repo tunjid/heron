@@ -32,7 +32,6 @@ import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.call.save
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.logging.LogLevel
@@ -43,6 +42,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.http.takeFrom
@@ -90,22 +90,22 @@ internal class GrazeFeedCreationService @Inject constructor(
         when (update) {
             is GrazeFeed.Update.Create -> performRequest<GrazeResponse.Created>(
                 call = GrazeCall.Create,
-                body = update.feed,
+                body = GrazeRequestBody.Feed(update.feed),
             )
             is GrazeFeed.Update.Delete -> performRequest<GrazeResponse.Deleted>(
                 call = (GrazeCall.Delete),
-                body = RecordKeyBody(
+                body = GrazeRequestBody.Key(
                     recordKey = update.recordKey,
                 ),
             )
 
             is GrazeFeed.Update.Edit -> performRequest<GrazeResponse.Edited>(
                 call = GrazeCall.Edit,
-                body = update.feed,
+                body = GrazeRequestBody.Feed(update.feed),
             )
             is GrazeFeed.Update.Get -> performRequest<GrazeResponse.Read>(
                 call = GrazeCall.Get,
-                body = RecordKeyBody(
+                body = GrazeRequestBody.Key(
                     recordKey = update.recordKey,
                 ),
             )
@@ -113,8 +113,8 @@ internal class GrazeFeedCreationService @Inject constructor(
 
     private suspend inline fun <reified T : GrazeResponse> performRequest(
         call: GrazeCall,
-        body: Any,
-    ): Result<T> = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        body: GrazeRequestBody,
+    ): Result<GrazeResponse> = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
         if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionResult()
 
         networkService.runCatchingWithMonitoredNetworkRetry {
@@ -126,16 +126,18 @@ internal class GrazeFeedCreationService @Inject constructor(
                 ),
             )
         }.mapCatchingUnlessCancelled { tokenResponse ->
-
             val response = feedCreationClient.post(call.path) {
-                setBody(body)
+                setBody(body.body())
                 contentType(ContentType.Application.Json)
                 bearerAuth(tokenResponse.token)
             }
 
-            response.call.save()
-
-            if (!response.status.isSuccess()) throw Exception(response.bodyAsText())
+            if (!response.status.isSuccess()) when (response.status) {
+                HttpStatusCode.NotFound -> return@mapCatchingUnlessCancelled GrazeResponse.Deleted(
+                    rkey = body.recordKey,
+                )
+                else -> throw Exception(response.bodyAsText())
+            }
             response.body<T>()
         }
             .onFailure {
@@ -168,11 +170,28 @@ private enum class GrazeCall(
     ),
 }
 
-@Serializable
-private data class RecordKeyBody(
-    @SerialName("rkey")
-    val recordKey: RecordKey,
-)
+private sealed interface GrazeRequestBody {
+    val recordKey: RecordKey
+
+    fun body(): Any
+
+    @Serializable
+    data class Key(
+        @SerialName("rkey")
+        override val recordKey: RecordKey,
+    ) : GrazeRequestBody {
+        override fun body(): Any = this
+    }
+
+    data class Feed(
+        val feed: GrazeFeed,
+    ) : GrazeRequestBody {
+        override val recordKey: RecordKey
+            get() = feed.recordKey
+
+        override fun body(): Any = feed
+    }
+}
 
 @Serializable
 internal sealed interface GrazeResponse {
