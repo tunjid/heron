@@ -193,7 +193,7 @@ class SelectTextSheetState(
                     scope = scope,
                 )
             }
-            SelecTextBottomSheet(
+            SelectTextBottomSheet(
                 state = state,
                 onTextConfirmed = onTextConfirmed,
             )
@@ -201,7 +201,7 @@ class SelectTextSheetState(
         }
 
         @Composable
-        private inline fun SelecTextBottomSheet(
+        private inline fun SelectTextBottomSheet(
             state: SelectTextSheetState,
             crossinline onTextConfirmed: Options.(String) -> Unit,
         ) {

@@ -47,7 +47,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun TopBarActions(
-    grazeFeed: GrazeFeed,
+    grazeFeed: GrazeFeed.Editable,
     feedGenerator: FeedGenerator?,
     actions: (Action) -> Unit,
 ) {
@@ -62,7 +62,6 @@ fun TopBarActions(
         if (grazeFeed is GrazeFeed.Created) {
             actions(
                 Action.Metadata.FeedGenerator(
-                    feed = grazeFeed,
                     displayName = name,
                     description = description,
                 ),
@@ -73,7 +72,7 @@ fun TopBarActions(
         icon = Icons.Rounded.Save,
         iconDescription = stringResource(CommonStrings.save),
         onClick = {
-            if (grazeFeed is GrazeFeed.Pending) actions(
+            actions(
                 Action.Update.Save(
                     feed = grazeFeed,
                 ),

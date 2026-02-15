@@ -120,7 +120,6 @@ sealed class Action(val key: String) {
         ) : Metadata()
 
         data class FeedGenerator(
-            val feed: GrazeFeed.Created,
             val displayName: String,
             val description: String?,
         ) : Metadata()
