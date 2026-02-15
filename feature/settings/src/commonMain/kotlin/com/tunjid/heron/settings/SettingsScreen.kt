@@ -31,6 +31,7 @@ import com.tunjid.heron.scaffold.navigation.notificationSettingsDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.settings.ui.AccountSwitchingItem
+import com.tunjid.heron.settings.ui.AccountSwitchingTransitionLayer
 import com.tunjid.heron.settings.ui.AppearanceItem
 import com.tunjid.heron.settings.ui.ContentAndMediaItem
 import com.tunjid.heron.settings.ui.FeedbackItem
@@ -38,7 +39,6 @@ import com.tunjid.heron.settings.ui.ModerationItem
 import com.tunjid.heron.settings.ui.NotificationSettingsItem
 import com.tunjid.heron.settings.ui.OpenSourceLibrariesItem
 import com.tunjid.heron.settings.ui.SignOutItem
-import com.tunjid.heron.settings.ui.SwitchingAccountOverlay
 
 @Composable
 internal fun SettingsScreen(
@@ -60,9 +60,11 @@ internal fun SettingsScreen(
                     onAddAccountClick = {
                         actions(Action.Navigate.To(signInDestination()))
                     },
-                    onAccountSelected = { sessionSummary ->
-                        actions(Action.SwitchSession(sessionSummary))
+                    onAccountSelected = { session ->
+                        actions(Action.SwitchSession(session))
                     },
+                    paneScaffoldState = paneScaffoldState,
+                    activeProfileId = state.activeProfileId,
                 )
                 ContentAndMediaItem(
                     modifier = Modifier
@@ -119,11 +121,10 @@ internal fun SettingsScreen(
             }
         }
 
-        if (state.isSwitchingAccount) {
-            SwitchingAccountOverlay(
-                profileId = state.switchingToProfile,
-                pastSessions = state.pastSessions,
-            )
-        }
+        AccountSwitchingTransitionLayer(
+            paneScaffoldState = paneScaffoldState,
+            phase = state.switchPhase,
+            session = state.switchingSession,
+        )
     }
 }
