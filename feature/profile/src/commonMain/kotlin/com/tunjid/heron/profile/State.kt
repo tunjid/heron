@@ -73,6 +73,7 @@ data class State(
     val isSignedInProfile: Boolean = false,
     val viewerState: ProfileViewerState? = null,
     val avatarSharedElementKey: String,
+    val currentPage: Int = 0,
     val commonFollowers: List<Profile> = emptyList(),
     val timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean> = emptyMap(),
     val subscribedLabelers: Labelers = emptyList(),
@@ -80,6 +81,8 @@ data class State(
     val preferences: Preferences = Preferences.EmptyPreferences,
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
+    @Transient
+    val recentLists: List<FeedList> = emptyList(),
     @Transient
     val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
     @Transient
@@ -226,6 +229,10 @@ sealed class Action(val key: String) {
         ) : Mute()
     }
 
+    data class PageChanged(
+        val page: Int,
+    ) : Action(key = "PageChanged")
+
     data class UpdateMutedWord(
         val mutedWordPreference: List<MutedWordPreference>,
     ) : Action(key = "UpdateMutedWord")
@@ -253,6 +260,8 @@ sealed class Action(val key: String) {
     data class UpdatePreferences(
         val update: Timeline.Update,
     ) : Action(key = "UpdatePreferences")
+
+    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
     sealed class Navigate :
         Action(key = "Navigate"),

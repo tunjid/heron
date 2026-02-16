@@ -124,4 +124,14 @@ interface ListDao {
     suspend fun upsertListItems(
         entities: List<ListMemberEntity>,
     )
+
+    @Query(
+        """
+            DELETE FROM lists
+            WHERE uri = :uri
+        """,
+    )
+    suspend fun deleteList(
+        uri: ListUri,
+    )
 }

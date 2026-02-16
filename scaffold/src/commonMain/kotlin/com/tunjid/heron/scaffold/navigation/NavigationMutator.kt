@@ -25,10 +25,10 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Start
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
-import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.UrlEncodableModel
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
@@ -265,6 +265,21 @@ fun blocksDestination(): NavigationAction.Destination = pathDestination(
 
 fun mutesDestination(): NavigationAction.Destination = pathDestination(
     path = "/moderation/muted-accounts",
+    referringRouteOption = ReferringRouteOption.Current,
+)
+
+fun grazeEditorDestination(
+    feedGenerator: FeedGenerator? = null,
+    sharedElementPrefix: String? = null,
+): NavigationAction.Destination = pathDestination(
+    path = when (feedGenerator) {
+        null -> "/graze/create"
+        else -> "/graze/edit/${feedGenerator.uri.recordKey.value}"
+    },
+    models = listOfNotNull(
+        feedGenerator,
+    ),
+    sharedElementPrefix = sharedElementPrefix,
     referringRouteOption = ReferringRouteOption.Current,
 )
 

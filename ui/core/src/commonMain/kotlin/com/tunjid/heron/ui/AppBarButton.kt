@@ -32,6 +32,7 @@ fun AppBarButton(
     modifier: Modifier = Modifier,
     icon: ImageVector,
     iconDescription: String,
+    enabled: Boolean = true,
     tint: Color = MaterialTheme.colorScheme.primary,
     onClick: () -> Unit,
 ) {
@@ -40,6 +41,7 @@ fun AppBarButton(
         shape = CircleShape,
     ) {
         IconButton(
+            enabled = enabled,
             onClick = onClick,
             modifier = Modifier
                 .size(UiTokens.appBarButtonSize),

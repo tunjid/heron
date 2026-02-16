@@ -64,4 +64,14 @@ interface LabelDao {
     suspend fun upsertLabelers(
         entities: List<LabelerEntity>,
     )
+
+    @Query(
+        """
+            DELETE FROM labelers
+            WHERE uri = :uri
+        """,
+    )
+    suspend fun deleteLabeler(
+        uri: LabelerUri,
+    )
 }

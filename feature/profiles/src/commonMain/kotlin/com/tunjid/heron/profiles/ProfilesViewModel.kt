@@ -24,6 +24,7 @@ import com.tunjid.heron.data.repository.PostDataQuery
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.ProfilesQuery
+import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -68,6 +69,7 @@ class ActualProfilesViewModel(
     authRepository: AuthRepository,
     postRepository: PostRepository,
     profileRepository: ProfileRepository,
+    recordRepository: RecordRepository,
     writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
@@ -94,6 +96,7 @@ class ActualProfilesViewModel(
                         stateHolder = this@transform,
                         postRepository = postRepository,
                         profileRepository = profileRepository,
+                        recordRepository = recordRepository,
                     )
 
                     is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
@@ -121,6 +124,7 @@ suspend fun Flow<Action.Tile>.profilesLoadMutations(
     stateHolder: SuspendingStateHolder<State>,
     postRepository: PostRepository,
     profileRepository: ProfileRepository,
+    recordRepository: RecordRepository,
 ): Flow<Mutation<State>> =
     map { it.tilingAction }
         .tilingMutations(
@@ -164,7 +168,7 @@ suspend fun Flow<Action.Tile>.profilesLoadMutations(
                     }
                     is Load.Moderation.Blocks -> {
                         check(query is DataQuery)
-                        profileRepository.blocks(query, cursor)
+                        recordRepository.blocks(query, cursor)
                     }
                     is Load.Moderation.Mutes -> {
                         check(query is DataQuery)

@@ -78,7 +78,6 @@ fun SettingsItemRow(
                     .semantics {
                         contentDescription = title
                     }
-                    .fillMaxWidth()
                     .padding(
                         horizontal = 24.dp,
                         vertical = 8.dp,
@@ -127,15 +126,13 @@ fun ExpandableSettingsItemRow(
             ),
     ) {
         SettingsItemRow(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             title = title,
             icon = icon,
             titleColor = titleColor,
         ) {
             val iconRotation = animateFloatAsState(
-                targetValue = if (isExpanded) 0f
-                else 180f,
+                targetValue = if (isExpanded) 0f else 180f,
                 animationSpec = spring(
                     stiffness = Spring.StiffnessMediumLow,
                 ),

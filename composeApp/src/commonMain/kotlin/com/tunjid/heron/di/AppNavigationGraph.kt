@@ -21,6 +21,7 @@ import com.tunjid.heron.conversation.di.ConversationNavigationBindings
 import com.tunjid.heron.editprofile.di.EditProfileNavigationBindings
 import com.tunjid.heron.feed.di.FeedNavigationBindings
 import com.tunjid.heron.gallery.di.GalleryNavigationBindings
+import com.tunjid.heron.graze.editor.di.GrazeEditorNavigationBindings
 import com.tunjid.heron.home.di.HomeNavigationBindings
 import com.tunjid.heron.list.di.ListNavigationBindings
 import com.tunjid.heron.messages.di.MessagesNavigationBindings
@@ -55,6 +56,7 @@ interface AppNavigationGraph {
             @Includes editProfileNavigationBindings: EditProfileNavigationBindings,
             @Includes feedNavigationBindings: FeedNavigationBindings,
             @Includes galleryNavigationBindings: GalleryNavigationBindings,
+            @Includes grazeEditorNavigationBindings: GrazeEditorNavigationBindings,
             @Includes homeNavigationBindings: HomeNavigationBindings,
             @Includes listNavigationBindings: ListNavigationBindings,
             @Includes messagesNavigationBindings: MessagesNavigationBindings,

@@ -88,6 +88,7 @@ import com.tunjid.heron.data.repository.distinctUntilChangedSignedProfilePrefere
 import com.tunjid.heron.data.repository.expiredSessionResult
 import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.repository.singleSessionFlow
+import com.tunjid.heron.data.utilities.AtProtoException
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.Collections.requireRecordUri
 import com.tunjid.heron.data.utilities.LazyList
@@ -98,6 +99,7 @@ import com.tunjid.heron.data.utilities.recordResolver.RecordResolver.TimelineIte
 import com.tunjid.heron.data.utilities.toDistinctUntilChangedFlowOrEmpty
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
@@ -425,9 +427,23 @@ internal class OfflineRecordResolver @Inject constructor(
                 }
             is UnknownRecordUri -> Result.failure(UnresolvableRecordException(uri))
         }
-    }?.onFailure {
+    }?.onFailure { throwable ->
         logcat(LogPriority.WARN) {
-            "Failed to resolve $uri. Cause: ${it.loggableText()}"
+            "Failed to resolve $uri. Cause: ${throwable.loggableText()}"
+        }
+        if (isNotFound(throwable).also { println("NOT: $it") }) {
+            when (uri) {
+                is BlockUri -> profileDao.deleteBlock(uri)
+                is FeedGeneratorUri -> feedGeneratorDao.deleteFeedGenerator(uri)
+                is LabelerUri -> labelDao.deleteLabeler(uri)
+                is ListUri -> listDao.deleteList(uri)
+                is PostUri -> postDao.deletePost(uri)
+                is StarterPackUri -> starterPackDao.deleteStarterPack(uri)
+                is FollowUri -> profileDao.deleteFollow(uri)
+                is LikeUri -> postDao.deletePostViewerStatisticsLike(uri)
+                is RepostUri -> postDao.deletePostViewerStatisticsRepost(uri)
+                is UnknownRecordUri -> Unit
+            }
         }
     } ?: expiredSessionResult()
 
@@ -567,3 +583,19 @@ internal class OfflineRecordResolver @Inject constructor(
         }
     }
 }
+
+private fun isNotFound(throwable: Throwable): Boolean {
+    if (throwable !is AtProtoException) return false
+    if (throwable.statusCode == HttpStatusCode.NotFound.value) return true
+
+    val message = throwable.message ?: return false
+
+    // At proto is not consistent in its not found messaging
+    return throwable.statusCode == HttpStatusCode.BadRequest.value &&
+        NotFoundVariants.any { it in message }
+}
+
+private val NotFoundVariants = setOf(
+    "could not find",
+    "not found",
+)

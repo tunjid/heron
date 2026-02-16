@@ -39,6 +39,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransformProvider
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
+import com.tunjid.heron.settings.AccountSwitchPhase
 import com.tunjid.heron.settings.Action
 import com.tunjid.heron.settings.ActualSettingsViewModel
 import com.tunjid.heron.settings.RouteViewModelInitializer
@@ -149,15 +150,21 @@ class SettingsBindings(
                                 title = stringResource(Res.string.settings),
                             )
                         },
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        onBackPressed = {
+                            if (state.switchPhase == AccountSwitchPhase.IDLE) {
+                                viewModel.accept(Action.Navigate.Pop)
+                            }
+                        },
                     )
                 },
                 navigationBar = {
-                    PaneNavigationBar(
-                        modifier = Modifier.offset {
-                            bottomNavigationNestedScrollConnection.offset.round()
-                        },
-                    )
+                    if (state.switchPhase == AccountSwitchPhase.IDLE) {
+                        PaneNavigationBar(
+                            modifier = Modifier.offset {
+                                bottomNavigationNestedScrollConnection.offset.round()
+                            },
+                        )
+                    }
                 },
                 navigationRail = {
                     PaneNavigationRail()

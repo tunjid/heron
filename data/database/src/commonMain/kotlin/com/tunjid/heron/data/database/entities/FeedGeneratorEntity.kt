@@ -51,7 +51,7 @@ import kotlin.time.Instant
 )
 data class FeedGeneratorEntity(
     val cid: FeedGeneratorId,
-    val did: FeedGeneratorId,
+    val did: ProfileId,
     @PrimaryKey
     val uri: FeedGeneratorUri,
     val avatar: ImageUri?,

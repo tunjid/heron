@@ -17,22 +17,14 @@
 package com.tunjid.heron.data.repository
 
 import app.bsky.actor.Profile as BskyProfile
-import app.bsky.feed.GetActorFeedsQueryParams
-import app.bsky.feed.GetActorFeedsResponse
 import app.bsky.graph.Block as BskyBlock
 import app.bsky.graph.Follow as BskyFollow
-import app.bsky.graph.GetActorStarterPacksQueryParams
-import app.bsky.graph.GetActorStarterPacksResponse
-import app.bsky.graph.GetBlocksQueryParams
-import app.bsky.graph.GetBlocksResponse
 import app.bsky.graph.GetFollowersQueryParams
 import app.bsky.graph.GetFollowersResponse
 import app.bsky.graph.GetFollowsQueryParams
 import app.bsky.graph.GetFollowsResponse
 import app.bsky.graph.GetListQueryParams
 import app.bsky.graph.GetListResponse
-import app.bsky.graph.GetListsQueryParams
-import app.bsky.graph.GetListsResponse
 import app.bsky.graph.GetMutesQueryParams
 import app.bsky.graph.GetMutesResponse
 import app.bsky.graph.MuteActorRequest
@@ -46,13 +38,10 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.DataQuery
-import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
-import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.BlockUri
@@ -63,15 +52,10 @@ import com.tunjid.heron.data.core.types.RecordCreationException
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.utilities.Outcome
-import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.ProfileDao
-import com.tunjid.heron.data.database.daos.StarterPackDao
-import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
-import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedListMemberEntity
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
-import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
@@ -151,26 +135,6 @@ interface ProfileRepository {
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>>
 
-    fun blocks(
-        query: DataQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<ProfileWithViewerState>>
-
-    fun starterPacks(
-        query: ProfilesQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<StarterPack>>
-
-    fun lists(
-        query: ProfilesQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<FeedList>>
-
-    fun feedGenerators(
-        query: ProfilesQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<FeedGenerator>>
-
     suspend fun sendConnection(
         connection: Profile.Connection,
     ): Outcome
@@ -187,8 +151,6 @@ interface ProfileRepository {
 internal class OfflineProfileRepository @Inject constructor(
     private val profileDao: ProfileDao,
     private val listDao: ListDao,
-    private val starterPackDao: StarterPackDao,
-    private val feedGeneratorDao: FeedGeneratorDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val profileLookup: ProfileLookup,
     private val networkService: NetworkService,
@@ -371,150 +333,6 @@ internal class OfflineProfileRepository @Inject constructor(
                 responseProfileViews = GetMutesResponse::mutes,
                 responseCursor = GetMutesResponse::cursor,
             )
-        }
-
-    override fun blocks(
-        query: DataQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<ProfileWithViewerState>> =
-        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
-            profileLookup.profilesWithViewerState(
-                signedInProfileId = signedInProfileId,
-                cursor = cursor,
-                responseFetcher = {
-                    getBlocks(
-                        GetBlocksQueryParams(
-                            limit = query.data.limit,
-                            cursor = cursor.value,
-                        ),
-                    )
-                },
-                responseProfileViews = GetBlocksResponse::blocks,
-                responseCursor = GetBlocksResponse::cursor,
-            )
-        }
-
-    override fun starterPacks(
-        query: ProfilesQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<StarterPack>> =
-        savedStateDataSource.singleSessionFlow {
-            val profileDid = profileLookup.lookupProfileDid(
-                profileId = query.profileId,
-            ) ?: return@singleSessionFlow emptyFlow()
-
-            combine(
-                starterPackDao.profileStarterPacks(
-                    creatorId = profileDid.did,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
-                    .map { populatedStarterPackEntities ->
-                        populatedStarterPackEntities.map(PopulatedStarterPackEntity::asExternalModel)
-                    },
-                networkService.nextCursorFlow(
-                    currentCursor = cursor,
-                    currentRequestWithNextCursor = {
-                        getActorStarterPacks(
-                            params = GetActorStarterPacksQueryParams(
-                                actor = profileDid,
-                                limit = query.data.limit,
-                                cursor = cursor.value,
-                            ),
-                        )
-                    },
-                    nextCursor = GetActorStarterPacksResponse::cursor,
-                    onResponse = {
-                        multipleEntitySaverProvider.saveInTransaction {
-                            starterPacks.forEach(::add)
-                        }
-                    },
-                ),
-                ::CursorList,
-            )
-                .distinctUntilChanged()
-        }
-
-    override fun lists(
-        query: ProfilesQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<FeedList>> =
-        savedStateDataSource.singleSessionFlow {
-            val profileDid = profileLookup.lookupProfileDid(
-                profileId = query.profileId,
-            ) ?: return@singleSessionFlow emptyFlow()
-
-            combine(
-                listDao.profileLists(
-                    creatorId = profileDid.did,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
-                    .map { populatedListEntities ->
-                        populatedListEntities.map(PopulatedListEntity::asExternalModel)
-                    },
-                networkService.nextCursorFlow(
-                    currentCursor = cursor,
-                    currentRequestWithNextCursor = {
-                        getLists(
-                            params = GetListsQueryParams(
-                                actor = profileDid,
-                                limit = query.data.limit,
-                                cursor = cursor.value,
-                            ),
-                        )
-                    },
-                    nextCursor = GetListsResponse::cursor,
-                    onResponse = {
-                        multipleEntitySaverProvider.saveInTransaction {
-                            lists.forEach(::add)
-                        }
-                    },
-                ),
-                ::CursorList,
-            )
-                .distinctUntilChanged()
-        }
-
-    override fun feedGenerators(
-        query: ProfilesQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<FeedGenerator>> =
-        savedStateDataSource.singleSessionFlow {
-            val profileDid = profileLookup.lookupProfileDid(
-                profileId = query.profileId,
-            ) ?: return@singleSessionFlow emptyFlow()
-
-            combine(
-                feedGeneratorDao.profileFeedGenerators(
-                    creatorId = profileDid.did,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
-                    .map { populatedFeedGeneratorEntities ->
-                        populatedFeedGeneratorEntities.map(PopulatedFeedGeneratorEntity::asExternalModel)
-                    },
-                networkService.nextCursorFlow(
-                    currentCursor = cursor,
-                    currentRequestWithNextCursor = {
-                        getActorFeeds(
-                            params = GetActorFeedsQueryParams(
-                                actor = profileDid,
-                                limit = query.data.limit,
-                                cursor = cursor.value,
-                            ),
-                        )
-                    },
-                    nextCursor = GetActorFeedsResponse::cursor,
-                    onResponse = {
-                        multipleEntitySaverProvider.saveInTransaction {
-                            feeds.forEach(::add)
-                        }
-                    },
-                ),
-                ::CursorList,
-            )
-                .distinctUntilChanged()
         }
 
     override suspend fun sendConnection(

@@ -35,6 +35,7 @@ import com.tunjid.heron.data.repository.singleAuthorizedSessionFlow
 import dev.zacsweers.metro.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -347,7 +348,7 @@ private fun Writable.writeTimeout() =
         -> BasicWriteTimeout
     }
 
-private val VideoWriteTimeout = 60.seconds
+private val VideoWriteTimeout = 8.minutes
 
 private val ImageWriteTimeout = 20.seconds
 private val BasicWriteTimeout = 10.seconds

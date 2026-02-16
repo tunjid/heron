@@ -114,4 +114,5 @@
     <string name="following">Following</string>
     <string name="blocked_accounts">Blocked Accounts</string>
     <string name="muted_accounts">Muted Accounts</string>
+    <string name="feed_generator_create">Create feed</string>
 </resources>

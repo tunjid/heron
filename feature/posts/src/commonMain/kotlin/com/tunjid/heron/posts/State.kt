@@ -18,6 +18,7 @@ package com.tunjid.heron.posts
 
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
@@ -40,6 +41,8 @@ data class State(
     val preferences: Preferences = Preferences.EmptyPreferences,
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
+    @Transient
+    val recentLists: List<FeedList> = emptyList(),
     @Transient
     override val tilingData: TilingState.Data<PostDataQuery, TimelineItem> = TilingState.Data(
         currentQuery = PostDataQuery(
@@ -85,6 +88,8 @@ sealed class Action(val key: String) {
     data class SnackbarDismissed(
         val message: Memo,
     ) : Action(key = "SnackbarDismissed")
+
+    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
     sealed class Navigate :
         Action(key = "Navigate"),

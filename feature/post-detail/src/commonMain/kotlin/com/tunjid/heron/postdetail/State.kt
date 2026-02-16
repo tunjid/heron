@@ -18,6 +18,7 @@ package com.tunjid.heron.postdetail
 
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
@@ -47,6 +48,8 @@ data class State(
     val signedInProfileId: ProfileId? = null,
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
+    @Transient
+    val recentLists: List<FeedList> = emptyList(),
     @Transient
     val items: List<TimelineItem> = emptyList(),
     @Transient
@@ -107,6 +110,8 @@ sealed class Action(val key: String) {
     data class SnackbarDismissed(
         val message: Memo,
     ) : Action(key = "SnackbarDismissed")
+
+    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
     sealed class Navigate :
         Action(key = "Navigate"),

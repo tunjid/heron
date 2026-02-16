@@ -30,12 +30,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
 import com.tunjid.heron.data.di.DataBindings
+import com.tunjid.heron.data.graze.isGrazeFeed
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.getAsRawUri
@@ -50,6 +52,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOptio
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.conversationDestination
+import com.tunjid.heron.scaffold.navigation.grazeEditorDestination
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
@@ -86,6 +89,7 @@ import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
 import heron.feature.feed.generated.resources.Res
+import heron.feature.feed.generated.resources.edit_feed
 import heron.feature.feed.generated.resources.scroll_to_top
 import org.jetbrains.compose.resources.stringResource
 
@@ -197,9 +201,15 @@ class FeedBindings(
             val state by viewModel.state.collectAsStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
+            val editFeedText = stringResource(Res.string.edit_feed)
             val recordOptionsSheetState = rememberUpdatedEmbeddableRecordOptionsState(
                 signedInProfileId = state.signedInProfileId,
                 recentConversations = state.recentConversations,
+                editTitle = state.timelineState?.timeline?.withFeedTimelineOrNull { timeline ->
+                    val isEditable = timeline.feedGenerator.isGrazeFeed &&
+                        state.signedInProfileId == timeline.feedGenerator.creator.did
+                    if (isEditable) editFeedText else null
+                },
                 onShareInConversationClicked = { recordUri, conversation ->
                     viewModel.accept(
                         Action.Navigate.To(
@@ -209,6 +219,19 @@ class FeedBindings(
                                 sharedElementPrefix = conversation.id.id,
                                 sharedUri = recordUri.asGenericUri(),
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            ),
+                        ),
+                    )
+                },
+                onEditClicked = onEditClicked@{
+                    viewModel.accept(
+                        Action.Navigate.To(
+                            grazeEditorDestination(
+                                feedGenerator = state.timelineState
+                                    ?.timeline
+                                    ?.withFeedTimelineOrNull(Timeline.Home.Feed::feedGenerator)
+                                    ?: return@onEditClicked,
+                                sharedElementPrefix = state.sharedElementPrefix,
                             ),
                         ),
                     )

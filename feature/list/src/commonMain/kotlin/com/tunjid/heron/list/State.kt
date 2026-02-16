@@ -61,6 +61,8 @@ data class State(
     @Transient
     val stateHolders: List<ListScreenStateHolders> = emptyList(),
     @Transient
+    val recentLists: List<FeedList> = emptyList(),
+    @Transient
     val messages: List<Memo> = emptyList(),
 )
 
@@ -184,6 +186,8 @@ sealed class Action(val key: String) {
     data class UpdateFeedListStatus(
         val update: Timeline.Update,
     ) : Action(key = "UpdateFeedGeneratorStatus")
+
+    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
     sealed class Navigate :
         Action(key = "Navigate"),

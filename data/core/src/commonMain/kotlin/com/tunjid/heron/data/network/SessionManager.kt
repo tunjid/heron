@@ -62,8 +62,10 @@ import io.ktor.http.encodedPath
 import io.ktor.http.isSuccess
 import io.ktor.http.set
 import io.ktor.http.takeFrom
+import io.ktor.util.collections.ConcurrentMap
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
@@ -261,8 +263,25 @@ internal class PersistedSessionManager @Inject constructor(
         }
         install(
             atProtoAuth(
-                readAuth = savedStateDataSource.signedInAuth::first,
-                saveAuth = savedStateDataSource::setAuth,
+                readAuth = {
+                    when (val sessionContext = currentSessionContext()) {
+                        is SessionContext.Previous -> sessionContext.tokens
+                        else -> savedStateDataSource.signedInAuth.first()
+                    }
+                },
+                saveAuth = { tokens ->
+                    when (val sessionContext = currentSessionContext()) {
+                        is SessionContext.Previous -> {
+                            val profileId = sessionContext.tokens.authProfileId
+                            if (tokens != null) savedStateDataSource.updateAuth(
+                                profileId = profileId,
+                                auth = tokens,
+                            )
+                            else savedStateDataSource.removeAuth(profileId)
+                        }
+                        else -> savedStateDataSource.setAuth(tokens)
+                    }
+                },
                 authenticate = ::authenticate,
                 refresh = ::refresh,
             ),
@@ -400,6 +419,13 @@ private fun atProtoAuth(
             context.url.set(
                 host = Url(urlString = SignedOutUrl).host,
             )
+        } else if (authTokens != null && !ChatProxyPaths.any(predicate = context.url.encodedPath::endsWith)) {
+            val pdsUrl = Url(authTokens.defaultUrl)
+            if (context.url.host != pdsUrl.host) {
+                context.url.protocol = pdsUrl.protocol
+                context.url.host = pdsUrl.host
+                context.url.port = pdsUrl.port
+            }
         }
 
         if (!context.headers.contains(Authorization) && authTokens != null) {

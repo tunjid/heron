@@ -131,4 +131,20 @@
     <string name="writable_repost">repost</string>
     <string name="writable_repost_removal">repost removal</string>
     <string name="writable_thread_gate_update">post reply update</string>
+    <string name="empty_timeline_generic">This feed is empty</string>
+    <string name="empty_timeline_generic_description">When you follow people, their posts will show up here.</string>
+    <string name="empty_timeline_feed">This feed is empty</string>
+    <string name="empty_timeline_feed_description">There are no posts in this feed yet.</string>
+    <string name="empty_timeline_list">This list is empty</string>
+    <string name="empty_timeline_list_description">There are no posts in this list yet.</string>
+    <string name="empty_timeline_posts">No posts yet</string>
+    <string name="empty_timeline_posts_description">This user hasn\'t posted anything yet.</string>
+    <string name="empty_timeline_replies">No replies yet</string>
+    <string name="empty_timeline_replies_description">This user hasn\'t replied to any posts yet.</string>
+    <string name="empty_timeline_likes">No likes yet</string>
+    <string name="empty_timeline_likes_description">This user hasn\'t liked any posts yet.</string>
+    <string name="empty_timeline_media">No media yet</string>
+    <string name="empty_timeline_media_description">This user hasn\'t posted any photos or videos yet.</string>
+    <string name="empty_timeline_videos">No videos yet</string>
+    <string name="empty_timeline_videos_description">This user hasn\'t posted any videos yet.</string>
 </resources>

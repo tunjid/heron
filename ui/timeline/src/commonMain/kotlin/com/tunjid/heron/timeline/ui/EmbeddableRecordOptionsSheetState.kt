@@ -18,17 +18,24 @@ package com.tunjid.heron.timeline.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.timeline.utilities.BottomSheetItemCard
+import com.tunjid.heron.timeline.utilities.BottomSheetItemCardRow
 import com.tunjid.heron.timeline.utilities.CopyToClipboardCard
 import com.tunjid.heron.timeline.utilities.SendDirectMessageCard
 import com.tunjid.heron.timeline.utilities.ShareInPostCard
@@ -65,7 +72,9 @@ class EmbeddableRecordOptionsSheetState private constructor(
         @Composable
         fun rememberUpdatedEmbeddableRecordOptionsState(
             signedInProfileId: ProfileId?,
+            editTitle: String?,
             recentConversations: List<Conversation>,
+            onEditClicked: (EmbeddableRecordUri) -> Unit,
             onShareInConversationClicked: (EmbeddableRecordUri, Conversation) -> Unit,
             onShareInPostClicked: (EmbeddableRecordUri) -> Unit,
         ): EmbeddableRecordOptionsSheetState {
@@ -82,6 +91,8 @@ class EmbeddableRecordOptionsSheetState private constructor(
 
             EmbeddableRecordOptionsBottomSheet(
                 state = state,
+                editTitle = editTitle,
+                onEditClicked = onEditClicked,
                 onShareInConversationClicked = onShareInConversationClicked,
                 onShareInPostClicked = onShareInPostClicked,
             )
@@ -94,6 +105,8 @@ class EmbeddableRecordOptionsSheetState private constructor(
 @Composable
 private fun EmbeddableRecordOptionsBottomSheet(
     state: EmbeddableRecordOptionsSheetState,
+    editTitle: String?,
+    onEditClicked: (EmbeddableRecordUri) -> Unit,
     onShareInConversationClicked: (EmbeddableRecordUri, Conversation) -> Unit,
     onShareInPostClicked: (EmbeddableRecordUri) -> Unit,
 ) {
@@ -114,7 +127,25 @@ private fun EmbeddableRecordOptionsBottomSheet(
                     state.hide()
                 },
             )
-
+            if (editTitle != null) {
+                BottomSheetItemCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        state.currentRecordUri
+                            ?.let(onEditClicked)
+                        state.hide()
+                    },
+                ) {
+                    BottomSheetItemCardRow(
+                        modifier = Modifier
+                            .semantics {
+                                contentDescription = editTitle
+                            },
+                        icon = Icons.Rounded.Edit,
+                        text = editTitle,
+                    )
+                }
+            }
             ShareInPostCard {
                 state.currentRecordUri?.let { uri ->
                     onShareInPostClicked(uri)

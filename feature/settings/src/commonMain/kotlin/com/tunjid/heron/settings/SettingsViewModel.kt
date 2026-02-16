@@ -18,15 +18,21 @@ package com.tunjid.heron.settings
 
 import androidx.lifecycle.ViewModel
 import com.mikepenz.aboutlibraries.Libs
+import com.tunjid.heron.data.core.models.SessionSummary
+import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
+import com.tunjid.heron.scaffold.navigation.NavigationContext
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
+import com.tunjid.heron.scaffold.navigation.resetAuthNavigation
+import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
+import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
@@ -35,13 +41,21 @@ import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
 import heron.feature.settings.generated.resources.Res
+import heron.feature.settings.generated.resources.switch_account_failed
+import kotlin.collections.plus
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 internal typealias SettingsStateHolder = ActionStateMutator<Action, StateFlow<State>>
@@ -72,6 +86,12 @@ class ActualSettingsViewModel(
                 userDataRepository = userDataRepository,
             ),
             loadOpenSourceLibraryMutations(),
+            loadSessionSummaryMutations(
+                authRepository = authRepository,
+            ),
+            observeActiveProfileMutations(
+                authRepository = authRepository,
+            ),
         ),
         actionTransform = transform@{ actions ->
             actions.toMutationStream(
@@ -103,7 +123,10 @@ class ActualSettingsViewModel(
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
-
+                    is Action.SwitchSession -> action.flow.handleSwitchSessionMutations(
+                        authRepository = authRepository,
+                        navActions = navActions,
+                    )
                     Action.SignOut -> action.flow.mapToManyMutations {
                         authRepository.signOut()
                     }
@@ -128,6 +151,84 @@ fun loadOpenSourceLibraryMutations(): Flow<Mutation<State>> = flow {
     }
     emit { copy(openSourceLibraries = libs) }
 }
+
+private fun loadSessionSummaryMutations(
+    authRepository: AuthRepository,
+): Flow<Mutation<State>> =
+    authRepository.pastSessions
+        .mapToMutation { sessionSummaries ->
+            copy(pastSessions = sessionSummaries)
+        }
+
+private fun Flow<Action.SwitchSession>.handleSwitchSessionMutations(
+    authRepository: AuthRepository,
+    navActions: (NavigationMutation) -> Unit,
+): Flow<Mutation<State>> =
+    debounce(SwitchActionDebounce)
+        .mapLatestToManyMutations {
+            switchSessionMutation(
+                authRepository = authRepository,
+                sessionSummary = it.sessionSummary,
+                navActions = navActions,
+            )
+        }
+
+private suspend fun FlowCollector<Mutation<State>>.switchSessionMutation(
+    authRepository: AuthRepository,
+    sessionSummary: SessionSummary,
+    navActions: (NavigationMutation) -> Unit,
+) {
+    emit {
+        copy(
+            switchPhase = AccountSwitchPhase.MORPHING,
+            switchingSession = sessionSummary,
+        )
+    }
+
+    delay(AccountSwitchPhase.MORPHING.changeDelay)
+
+    emit { copy(switchPhase = AccountSwitchPhase.LOADING) }
+
+    when (val outcome = authRepository.switchSession(sessionSummary)) {
+        is Outcome.Success -> {
+            emit { copy(switchPhase = AccountSwitchPhase.SUCCESS) }
+
+            delay(AccountSwitchPhase.SUCCESS.changeDelay)
+
+            navActions(NavigationContext::resetAuthNavigation)
+
+            emit {
+                copy(
+                    switchPhase = AccountSwitchPhase.IDLE,
+                    switchingSession = null,
+                )
+            }
+        }
+
+        is Outcome.Failure -> {
+            emit {
+                copy(
+                    switchPhase = AccountSwitchPhase.IDLE,
+                    switchingSession = null,
+                    messages = messages.plus(
+                        outcome.exception.message?.let(Memo::Text)
+                            ?: Memo.Resource(Res.string.switch_account_failed),
+                    ).distinct(),
+                )
+            }
+        }
+    }
+}
+
+private fun observeActiveProfileMutations(
+    authRepository: AuthRepository,
+): Flow<Mutation<State>> =
+    authRepository.signedInUser
+        .map { it?.did }
+        .distinctUntilChanged()
+        .mapToMutation { profileId ->
+            copy(activeProfileId = profileId)
+        }
 
 private fun Flow<Action.SetRefreshHomeTimelinesOnLaunch>.homeTimelineRefreshOnLaunchMutations(
     userDataRepository: UserDataRepository,
@@ -168,3 +269,13 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
     mapToMutation { action ->
         copy(messages = messages - action.message)
     }
+
+private val AccountSwitchPhase.changeDelay
+    get() = when (this) {
+        AccountSwitchPhase.IDLE -> 0.milliseconds
+        AccountSwitchPhase.MORPHING -> 180.milliseconds
+        AccountSwitchPhase.SUCCESS -> 220.milliseconds
+        AccountSwitchPhase.LOADING -> 0.milliseconds
+    }
+
+private val SwitchActionDebounce = 200.milliseconds

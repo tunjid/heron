@@ -247,6 +247,8 @@ class ListBindings(
             val recordOptionsSheetState = rememberUpdatedEmbeddableRecordOptionsState(
                 signedInProfileId = state.signedInProfileId,
                 recentConversations = state.recentConversations,
+                editTitle = null,
+                onEditClicked = {},
                 onShareInConversationClicked = { recordUri, conversation ->
                     viewModel.accept(
                         Action.Navigate.To(

@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.compose
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,16 +28,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -71,11 +66,10 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.PostActions
-import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
+import com.tunjid.heron.timeline.ui.profile.ProfileSearchResults
 import com.tunjid.heron.timeline.utilities.EmbeddedRecord
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
-import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.AvatarSize
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.detectActiveLink
@@ -131,7 +125,7 @@ internal fun ComposeScreen(
             },
         )
         if (state.suggestedProfiles.isNotEmpty()) {
-            AutoCompletePostProfileSearchResults(
+            ProfileSearchResults(
                 results = state.suggestedProfiles.take(MAX_SUGGESTED_PROFILES),
                 onProfileClicked = { profile ->
                     // insert handle into text field
@@ -377,75 +371,6 @@ private fun PostComposition(
     LaunchedEffect(Unit) {
         textFieldFocusRequester.requestFocus()
     }
-}
-
-@Composable
-fun AutoCompletePostProfileSearchResults(
-    modifier: Modifier = Modifier,
-    results: List<Profile>,
-    onProfileClicked: (Profile) -> Unit,
-) {
-    ElevatedCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.elevatedCardColors(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-    ) {
-        Column {
-            results.forEachIndexed { index, profile ->
-                ProfileResultItem(
-                    profile = profile,
-                    onProfileClicked = onProfileClicked,
-                    modifier = Modifier
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                )
-
-                if (index != results.lastIndex) {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 12.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                        thickness = 0.8.dp,
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ProfileResultItem(
-    profile: Profile,
-    onProfileClicked: (Profile) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    AttributionLayout(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { onProfileClicked(profile) },
-        avatar = {
-            AsyncImage(
-                args = remember(profile.avatar) {
-                    ImageArgs(
-                        url = profile.avatar?.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = profile.contentDescription,
-                        shape = RoundedPolygonShape.Circle,
-                    )
-                },
-                modifier = Modifier
-                    .size(36.dp),
-            )
-        },
-        label = {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                ProfileName(profile = profile)
-                ProfileHandle(profile = profile)
-            }
-        },
-        action = { /* no follow/edit chip for mention autocomplete */ },
-    )
 }
 
 @OptIn(ExperimentalUuidApi::class)

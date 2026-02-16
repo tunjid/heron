@@ -18,6 +18,7 @@ package com.tunjid.heron.settings
 
 import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
@@ -27,7 +28,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.scaffold.navigation.moderationDestination
 import com.tunjid.heron.scaffold.navigation.notificationSettingsDestination
+import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.settings.ui.AccountSwitchingItem
+import com.tunjid.heron.settings.ui.AccountSwitchingTransitionLayer
 import com.tunjid.heron.settings.ui.AppearanceItem
 import com.tunjid.heron.settings.ui.ContentAndMediaItem
 import com.tunjid.heron.settings.ui.FeedbackItem
@@ -43,65 +47,84 @@ internal fun SettingsScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .verticalScroll(rememberScrollState())
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        state.signedInProfilePreferences?.let { signedInProfilePreferences ->
-            ContentAndMediaItem(
-                modifier = Modifier
-                    .animateBounds(paneScaffoldState),
-                signedInProfilePreferences = signedInProfilePreferences,
-                setRefreshHomeTimelineOnLaunch = {
-                    actions(Action.SetRefreshHomeTimelinesOnLaunch(it))
-                },
-                setAutoplayTimelineVideos = {
-                    actions(Action.SetAutoPlayTimelineVideos(it))
-                },
-            )
-            ModerationItem(
-                modifier = Modifier
-                    .animateBounds(paneScaffoldState),
-            ) {
-                actions(Action.Navigate.To(moderationDestination()))
-            }
-            NotificationSettingsItem(
-                modifier = Modifier
-                    .animateBounds(paneScaffoldState),
-            ) {
-                actions(Action.Navigate.To(notificationSettingsDestination()))
-            }
-            AppearanceItem(
-                modifier = Modifier
-                    .animateBounds(paneScaffoldState),
-                signedInProfilePreferences = signedInProfilePreferences,
-                setDynamicThemingPreference = {
-                    actions(Action.SetDynamicThemingPreference(it))
-                },
-                setCompactNavigation = {
-                    actions(Action.SetCompactNavigation(it))
-                },
-                setAutoHideBottomNavigation = {
-                    actions(Action.SetAutoHideBottomNavigation(it))
-                },
-            )
-        }
-        FeedbackItem(
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .animateBounds(paneScaffoldState),
-        )
-        OpenSourceLibrariesItem(
-            modifier = Modifier
-                .animateBounds(paneScaffoldState),
-            libraries = state.openSourceLibraries,
-        )
-        SignOutItem(
-            modifier = Modifier
-                .animateBounds(paneScaffoldState),
+                .verticalScroll(rememberScrollState())
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            actions(Action.SignOut)
+            state.signedInProfilePreferences?.let { signedInProfilePreferences ->
+                AccountSwitchingItem(
+                    sessionSummaries = state.pastSessions,
+                    onAddAccountClick = {
+                        actions(Action.Navigate.To(signInDestination()))
+                    },
+                    onAccountSelected = { session ->
+                        actions(Action.SwitchSession(session))
+                    },
+                    paneScaffoldState = paneScaffoldState,
+                    activeProfileId = state.activeProfileId,
+                )
+                ContentAndMediaItem(
+                    modifier = Modifier
+                        .animateBounds(paneScaffoldState),
+                    signedInProfilePreferences = signedInProfilePreferences,
+                    setRefreshHomeTimelineOnLaunch = {
+                        actions(Action.SetRefreshHomeTimelinesOnLaunch(it))
+                    },
+                    setAutoplayTimelineVideos = {
+                        actions(Action.SetAutoPlayTimelineVideos(it))
+                    },
+                )
+                ModerationItem(
+                    modifier = Modifier
+                        .animateBounds(paneScaffoldState),
+                ) {
+                    actions(Action.Navigate.To(moderationDestination()))
+                }
+                NotificationSettingsItem(
+                    modifier = Modifier
+                        .animateBounds(paneScaffoldState),
+                ) {
+                    actions(Action.Navigate.To(notificationSettingsDestination()))
+                }
+                AppearanceItem(
+                    modifier = Modifier
+                        .animateBounds(paneScaffoldState),
+                    signedInProfilePreferences = signedInProfilePreferences,
+                    setDynamicThemingPreference = {
+                        actions(Action.SetDynamicThemingPreference(it))
+                    },
+                    setCompactNavigation = {
+                        actions(Action.SetCompactNavigation(it))
+                    },
+                    setAutoHideBottomNavigation = {
+                        actions(Action.SetAutoHideBottomNavigation(it))
+                    },
+                )
+            }
+            FeedbackItem(
+                modifier = Modifier
+                    .animateBounds(paneScaffoldState),
+            )
+            OpenSourceLibrariesItem(
+                modifier = Modifier
+                    .animateBounds(paneScaffoldState),
+                libraries = state.openSourceLibraries,
+            )
+            SignOutItem(
+                modifier = Modifier
+                    .animateBounds(paneScaffoldState),
+            ) {
+                actions(Action.SignOut)
+            }
         }
+
+        AccountSwitchingTransitionLayer(
+            paneScaffoldState = paneScaffoldState,
+            phase = state.switchPhase,
+            session = state.switchingSession,
+        )
     }
 }

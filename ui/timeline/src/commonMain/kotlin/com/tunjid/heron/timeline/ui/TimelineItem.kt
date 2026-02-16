@@ -61,10 +61,12 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.post.PostReasonLine
+import com.tunjid.heron.timeline.ui.post.feature.EmptyPost
 import com.tunjid.heron.timeline.ui.post.feature.LoadingPost
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
 import com.tunjid.heron.timeline.utilities.authorMuted
 import com.tunjid.heron.timeline.utilities.createdAt
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.timeline.generated.resources.Res
@@ -120,6 +122,11 @@ fun TimelineItem(
                         modifier = Modifier
                             .fillMaxWidth(),
                         presentation = presentation,
+                    )
+                    is TimelineItem.Empty -> EmptyPost(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        item = item,
                     )
                     is TimelineItem.Thread if presentation == Timeline.Presentation.Text.WithEmbed -> ThreadedPost(
                         modifier = Modifier
@@ -380,10 +387,15 @@ fun TimelineCard(
         if (item.isThreadedAncestorOrAnchor) 0.dp
         else presentation.timelineCardPadding
 
-    val isFlat = cornerRadius == 0.dp
+    val isEmpty = item is TimelineItem.Empty
+    val isFlat = isEmpty || cornerRadius == 0.dp
 
     ElevatedCard(
-        modifier = modifier,
+        modifier = modifier
+            .ifTrue(
+                predicate = isEmpty,
+                block = Modifier::fillMaxHeight,
+            ),
         shape = animateDpAsState(cornerRadius).value.let(::RoundedCornerShape),
         colors =
         if (isFlat) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)

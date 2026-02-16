@@ -84,6 +84,10 @@ internal data class VersionedSavedState(
             ?.let(profileData::get)
             ?.auth
 
+    override fun profileData(
+        profileId: ProfileId,
+    ): ProfileData? = profileData[profileId]
+
     companion object {
         internal val Initial: VersionedSavedState = VersionedSavedState(
             version = CurrentVersion,

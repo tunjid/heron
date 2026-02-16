@@ -89,6 +89,7 @@ kotlin {
             implementation(project(":feature:edit-profile"))
             implementation(project(":feature:feed"))
             implementation(project(":feature:gallery"))
+            implementation(project(":feature:graze-editor"))
             implementation(project(":feature:home"))
             implementation(project(":feature:list"))
             implementation(project(":feature:messages"))

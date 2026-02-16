@@ -28,6 +28,7 @@ object FakeTimeline {
         name = "Following",
         position = 0,
         lastRefreshed = Instant.parse("2024-01-01T00:00:00Z"),
+        itemsAvailable = 0,
         presentation = Timeline.Presentation.Text.WithEmbed,
         isPinned = false,
     )
@@ -36,6 +37,7 @@ object FakeTimeline {
         profileId = ProfileId("did:example:123"),
         type = Timeline.Profile.Type.Posts,
         lastRefreshed = Instant.parse("2024-01-02T00:00:00Z"),
+        itemsAvailable = 0,
         presentation = Timeline.Presentation.Text.WithEmbed,
     )
 
@@ -122,7 +124,7 @@ object FakeTimeline {
 
     val sampleFeedGenerator: FeedGenerator = FeedGenerator(
         cid = FeedGeneratorId("fg-1"),
-        did = FeedGeneratorId("fg-1"),
+        did = ProfileId("fg-1"),
         uri = FeedGeneratorUri("at://feed/generator/1"),
         avatar = ImageUri("at://image/avatar/fgenerator-1"),
         likeCount = 42L,

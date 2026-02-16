@@ -19,6 +19,7 @@ package com.tunjid.heron.feed
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
@@ -51,6 +52,8 @@ data class State(
     val signedInProfileId: ProfileId? = null,
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
+    @Transient
+    val recentLists: List<FeedList> = emptyList(),
     @Transient
     val timelineState: TimelineState? = null,
     @Transient
@@ -110,6 +113,8 @@ sealed class Action(val key: String) {
     ) : Action(key = "UpdateFeedGeneratorStatus")
 
     data object ScrollToTop : Action(key = "ScrollToTop")
+
+    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
     sealed class Navigate :
         Action(key = "Navigate"),

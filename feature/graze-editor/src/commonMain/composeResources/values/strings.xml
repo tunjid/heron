@@ -1,0 +1,275 @@
+<!--
+  ~    Copyright 2024 Adetunji Dahunsi
+  ~
+  ~    Licensed under the Apache License, Version 2.0 (the "License");
+  ~    you may not use this file except in compliance with the License.
+  ~    You may obtain a copy of the License at
+  ~
+  ~        http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~    Unless required by applicable law or agreed to in writing, software
+  ~    distributed under the License is distributed on an "AS IS" BASIS,
+  ~    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~    See the License for the specific language governing permissions and
+  ~    limitations under the License.
+  -->
+
+<resources>
+    <string name="add_filter">Add Filter</string>
+    <string name="remove_filter">Remove Filter</string>
+    <string name="add_item">Add Item</string>
+    <string name="remove_item">Remove Item</string>
+    <string name="edit_item">Edit Item</string>
+    <string name="add_profile">Add Profile</string>
+    <string name="remove_profile">Remove Profile</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="attribute_compare">Attribute Compare</string>
+    <string name="selector">Selector</string>
+    <string name="value">Value</string>
+    <string name="embed_type">Embed Type</string>
+    <string name="entity_matches">Entity Matches</string>
+    <string name="entity_type">Entity Type</string>
+    <string name="unsupported_filter">Unsupported Filter</string>
+    <string name="values_comma_separated">Values (comma separated)</string>
+    <string name="entity_excludes">Entity Excludes</string>
+    <string name="regex_matches">Regex Matches</string>
+    <string name="regex_negation">Regex Negation</string>
+    <string name="variable">Variable</string>
+    <string name="pattern">Pattern</string>
+    <string name="case_insensitive">Case Insensitive</string>
+    <string name="regex_any">Regex Any</string>
+    <string name="terms_comma_separated">Terms (comma separated)</string>
+    <string name="regex_none">Regex None</string>
+    <string name="social_graph">Social Graph</string>
+    <string name="username">Username</string>
+    <string name="direction">Direction</string>
+    <string name="social_user_list">Social User List</string>
+    <string name="dids_comma_separated">DIDs (comma separated)</string>
+    <string name="social_starter_pack">Social Starter Pack</string>
+    <string name="url">URL</string>
+    <string name="social_list_member">Social List Member</string>
+    <string name="social_magic_audience">Social Magic Audience</string>
+    <string name="audience_id">Audience ID</string>
+    <string name="text_similarity">Text Similarity</string>
+    <string name="path">Path</string>
+    <string name="model_name">Model Name</string>
+    <string name="anchor_text">Anchor Text</string>
+    <string name="threshold">Threshold</string>
+    <string name="threshold_percent">Threshold: %1$d%</string>
+    <string name="model_probability">Model Probability</string>
+    <string name="content_moderation">Content Moderation</string>
+    <string name="category">Category</string>
+    <string name="language_analysis">Language Analysis</string>
+    <string name="sentiment_analysis">Sentiment Analysis</string>
+    <string name="financial_sentiment">Financial Sentiment</string>
+    <string name="emotion_analysis">Emotion Analysis</string>
+    <string name="toxicity_analysis">Toxicity Analysis</string>
+    <string name="topic_analysis">Topic Analysis</string>
+    <string name="text_arbitrary">Text Arbitrary</string>
+    <string name="image_nsfw">Image NSFW</string>
+    <string name="image_arbitrary">Image Arbitrary</string>
+    <string name="language_name">Language Name</string>
+    <string name="sentiment_category">Sentiment Category</string>
+    <string name="financial_category">Financial Category</string>
+    <string name="emotion_category">Emotion Category</string>
+    <string name="toxic_category">Toxic Category</string>
+    <string name="topic_label">Topic Label</string>
+    <string name="tag">Tag</string>
+    <string name="graze_editor">Graze Editor</string>
+    <string name="all_of_these_and">Match all of these</string>
+    <string name="any_of_these_or">Match any of these</string>
+    <string name="items_count">level %1$d, %2$d items</string>
+    <string name="unknown_filter">Unknown Filter</string>
+    <string name="done">Done</string>
+    <string name="error_fetching_graze_feed">Error fetching Graze feed:\n %1$s</string>
+    <string name="error_saving_graze_feed">Error saving Graze feed:\n %1$s</string>
+    <string name="error_deleting_graze_feed">Error deleting Graze feed:\n %1$s</string>
+    <string name="edit_feed_name">Feed Name</string>
+    <string name="edit_feed_description">Feed Description</string>
+    <string name="delete_feed">Delete Feed</string>
+    <string name="edit_feed">Edit Feed</string>
+    <string name="edit_record_key">Edit Record Key</string>
+
+    <string name="simple_filters">Simple Filters</string>
+    <string name="advanced_filters">Advanced Filters</string>
+    <string name="images_only">Posts with images only</string>
+    <string name="images_and_videos_only">Posts with images or videos only</string>
+    <string name="posts_from_profiles">Posts from these profiles</string>
+    <string name="posts_with_hashtags">Posts with these hashtags</string>
+
+    <!-- Filter Leaf Descriptions -->
+    <string name="desc_attribute_compare">Attribute: %1$s %2$s %3$s</string>
+    <string name="desc_embed_type">Embed: %1$s %2$s</string>
+    <string name="desc_entity_matches">Entity Matches: %1$s</string>
+    <string name="desc_entity_excludes">Entity Excludes: %1$s</string>
+    <string name="desc_regex_matches">Regex Matches: %1$s</string>
+    <string name="desc_regex_negation">Regex Negation: %1$s</string>
+    <string name="desc_regex_any">Regex Any: %1$s</string>
+    <string name="desc_regex_none">Regex None: %1$s</string>
+    <string name="desc_social_graph">Social Graph: %1$s</string>
+    <string name="desc_social_user_list">User List: %1$d users</string>
+    <string name="desc_social_starter_pack">Starter Pack: %1$s</string>
+    <string name="desc_social_list_member">List Member: %1$s</string>
+    <string name="desc_social_magic_audience">Magic Audience: %1$s</string>
+    <string name="desc_ml_similarity">ML Similarity: %1$s</string>
+    <string name="desc_ml_probability">ML Probability: %1$s</string>
+    <string name="desc_ml_moderation">Content Moderation: %1$s</string>
+    <string name="desc_analysis">Analysis: %1$s</string>
+
+    <!-- Comparators -->
+    <string name="comparator_label">Comparison</string>
+    <string name="comparator_equal">Is</string>
+    <string name="comparator_not_equal">Is Not</string>
+    <string name="comparator_greater_than">Greater Than</string>
+    <string name="comparator_less_than">Less Than</string>
+    <string name="comparator_greater_than_or_equal">Greater Than or Equal</string>
+    <string name="comparator_less_than_or_equal">Less Than or Equal</string>
+    <string name="comparator_in">In</string>
+    <string name="comparator_not_in">Not In</string>
+
+    <!-- Attribute Selectors -->
+    <string name="selector_text">Text</string>
+    <string name="selector_reply">Reply</string>
+    <string name="selector_embed">Embed</string>
+    <string name="selector_user_handle">User Handle</string>
+    <string name="selector_mention_handle">Mention Handle</string>
+    <string name="selector_quote_author_handle">Quote Author Handle</string>
+    <string name="selector_unknown">Unknown Selector</string>
+
+    <!-- Embed kinds -->
+    <string name="embed_kind_label">Embed kind</string>
+    <string name="embed_kind_image">Image</string>
+    <string name="embed_kind_image_group">Image Group</string>
+    <string name="embed_kind_gif">Gif</string>
+    <string name="embed_kind_link">Link</string>
+    <string name="embed_kind_post">Quote</string>
+    <string name="embed_kind_video">Video</string>
+
+    <!-- Entity types -->
+    <string name="entity_type_label">Entity type</string>
+    <string name="entity_type_hashtag">Hashtags</string>
+    <string name="entity_type_language">Languages</string>
+    <string name="entity_type_url">Urls</string>
+    <string name="entity_type_mention">Mentions</string>
+    <string name="entity_type_domain">Domains</string>
+
+    <!-- Content Moderation Categories -->
+    <string name="moderation_category_sexual">Sexual</string>
+    <string name="moderation_category_hate">Hate</string>
+    <string name="moderation_category_violence">Violence</string>
+    <string name="moderation_category_harassment">Harassment</string>
+    <string name="moderation_category_self_harm">Self Harm</string>
+    <string name="moderation_category_sexual_minors">Sexual (Minors)</string>
+    <string name="moderation_category_hate_threatening">Hate (Threatening)</string>
+    <string name="moderation_category_violence_graphic">Violence (Graphic)</string>
+    <string name="moderation_category_ok">OK</string>
+    <string name="moderation_category_unknown">Unknown</string>
+
+    <!-- Analysis - Language -->
+    <string name="analysis_language_japanese">Japanese</string>
+    <string name="analysis_language_dutch">Dutch</string>
+    <string name="analysis_language_arabic">Arabic</string>
+    <string name="analysis_language_polish">Polish</string>
+    <string name="analysis_language_german">German</string>
+    <string name="analysis_language_italian">Italian</string>
+    <string name="analysis_language_portuguese">Portuguese</string>
+    <string name="analysis_language_turkish">Turkish</string>
+    <string name="analysis_language_spanish">Spanish</string>
+    <string name="analysis_language_hindi">Hindi</string>
+    <string name="analysis_language_greek">Greek</string>
+    <string name="analysis_language_urdu">Urdu</string>
+    <string name="analysis_language_bulgarian">Bulgarian</string>
+    <string name="analysis_language_english">English</string>
+    <string name="analysis_language_french">French</string>
+    <string name="analysis_language_chinese">Chinese</string>
+    <string name="analysis_language_russian">Russian</string>
+    <string name="analysis_language_thai">Thai</string>
+    <string name="analysis_language_swahili">Swahili</string>
+    <string name="analysis_language_vietnamese">Vietnamese</string>
+
+    <!-- Analysis - Sentiment -->
+    <string name="analysis_sentiment_positive">Positive</string>
+    <string name="analysis_sentiment_negative">Negative</string>
+    <string name="analysis_sentiment_neutral">Neutral</string>
+
+    <!-- Analysis - Emotion -->
+    <string name="analysis_emotion_admiration">Admiration</string>
+    <string name="analysis_emotion_amusement">Amusement</string>
+    <string name="analysis_emotion_anger">Anger</string>
+    <string name="analysis_emotion_annoyance">Annoyance</string>
+    <string name="analysis_emotion_approval">Approval</string>
+    <string name="analysis_emotion_caring">Caring</string>
+    <string name="analysis_emotion_confusion">Confusion</string>
+    <string name="analysis_emotion_curiosity">Curiosity</string>
+    <string name="analysis_emotion_desire">Desire</string>
+    <string name="analysis_emotion_disappointment">Disappointment</string>
+    <string name="analysis_emotion_disapproval">Disapproval</string>
+    <string name="analysis_emotion_disgust">Disgust</string>
+    <string name="analysis_emotion_embarrassment">Embarrassment</string>
+    <string name="analysis_emotion_excitement">Excitement</string>
+    <string name="analysis_emotion_fear">Fear</string>
+    <string name="analysis_emotion_gratitude">Gratitude</string>
+    <string name="analysis_emotion_grief">Grief</string>
+    <string name="analysis_emotion_joy">Joy</string>
+    <string name="analysis_emotion_love">Love</string>
+    <string name="analysis_emotion_nervousness">Nervousness</string>
+    <string name="analysis_emotion_optimism">Optimism</string>
+    <string name="analysis_emotion_pride">Pride</string>
+    <string name="analysis_emotion_realization">Realization</string>
+    <string name="analysis_emotion_relief">Relief</string>
+    <string name="analysis_emotion_remorse">Remorse</string>
+    <string name="analysis_emotion_sadness">Sadness</string>
+    <string name="analysis_emotion_surprise">Surprise</string>
+    <string name="analysis_emotion_neutral">Neutral</string>
+
+    <!-- Analysis - Toxicity -->
+    <string name="analysis_toxicity_toxic">Toxic</string>
+    <string name="analysis_toxicity_severe_toxicity">Severe Toxicity</string>
+    <string name="analysis_toxicity_obscene">Obscene</string>
+    <string name="analysis_toxicity_threat">Threat</string>
+    <string name="analysis_toxicity_insult">Insult</string>
+    <string name="analysis_toxicity_identity_hate">Identity Hate</string>
+
+    <!-- Analysis - Topic -->
+    <string name="analysis_topic_arts_culture">Arts &amp; Culture</string>
+    <string name="analysis_topic_business_entrepreneurs">Business &amp; Entrepreneurs</string>
+    <string name="analysis_topic_celebrity_pop_culture">Celebrity &amp; Pop Culture</string>
+    <string name="analysis_topic_diaries_daily_life">Diaries &amp; Daily Life</string>
+    <string name="analysis_topic_family">Family</string>
+    <string name="analysis_topic_fashion_style">Fashion &amp; Style</string>
+    <string name="analysis_topic_film_tv_video">Film, TV &amp; Video</string>
+    <string name="analysis_topic_fitness_health">Fitness &amp; Health</string>
+    <string name="analysis_topic_food_dining">Food &amp; Dining</string>
+    <string name="analysis_topic_gaming">Gaming</string>
+    <string name="analysis_topic_learning_educational">Learning &amp; Educational</string>
+    <string name="analysis_topic_music">Music</string>
+    <string name="analysis_topic_news_social_concern">News &amp; Social Concern</string>
+    <string name="analysis_topic_other_hobbies">Other Hobbies</string>
+    <string name="analysis_topic_relationships">Relationships</string>
+    <string name="analysis_topic_science_technology">Science &amp; Technology</string>
+    <string name="analysis_topic_sports">Sports</string>
+    <string name="analysis_topic_travel_adventure">Travel &amp; Adventure</string>
+    <string name="analysis_topic_youth_student_life">Youth &amp; Student Life</string>
+
+    <!-- Analysis - NSFW -->
+    <string name="analysis_nsfw_nsfw">NSFW</string>
+    <string name="analysis_nsfw_sfw">SFW</string>
+
+    <!-- Analysis - Arbitrary -->
+    <string name="analysis_arbitrary_default">Default</string>
+
+    <!-- Filter Groups -->
+    <string name="filter_group_logic">Logic</string>
+    <string name="filter_group_attribute">Attributes</string>
+    <string name="filter_group_entity">Entities</string>
+    <string name="filter_group_regex">Regex</string>
+    <string name="filter_group_social">Social</string>
+    <string name="filter_group_ml">Machine Learning</string>
+    <string name="filter_group_analysis">Analysis</string>
+
+    <!-- Social Graph Directions -->
+  <string name="social_graph_direction_following">Following</string>
+  <string name="social_graph_direction_followers">Followers</string>
+  <string name="social_graph_direction_unknown">Unknown</string>
+  <string name="social_graph_direction_of">of</string>
+</resources>

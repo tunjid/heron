@@ -85,6 +85,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.take
@@ -191,6 +192,10 @@ class ActualProfileViewModel(
                         is Action.Mute -> action.flow.muteAccountMutations(
                             writeQueue = writeQueue,
                         )
+                        is Action.PageChanged -> action.flow.pageChangeMutations()
+                        is Action.UpdateRecentLists -> action.flow.recentListsMutations(
+                            recordRepository = recordRepository,
+                        )
                     }
                 },
             )
@@ -204,6 +209,16 @@ fun recentConversationMutations(
         .mapToMutation { conversations ->
             copy(recentConversations = conversations)
         }
+
+fun Flow<Action.UpdateRecentLists>.recentListsMutations(
+    recordRepository: RecordRepository,
+): Flow<Mutation<State>> =
+    flatMapLatest {
+        recordRepository.recentLists
+            .mapToMutation { lists ->
+                copy(recentLists = lists)
+            }
+    }
 
 private fun loadPreferencesMutations(
     userDataRepository: UserDataRepository,
@@ -326,7 +341,7 @@ private fun loadProfileMutations(
                                     if (!profile.isLabeler) addAll(
                                         scope.recordStateHolders(
                                             profileId = profile.did,
-                                            profileRepository = profileRepository,
+                                            recordRepository = recordRepository,
                                         ),
                                     )
                                 },
@@ -474,9 +489,14 @@ private fun Flow<Action.UpdatePreferences>.feedGeneratorStatusMutations(
         }
     }
 
+private fun Flow<Action.PageChanged>.pageChangeMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(currentPage = action.page)
+    }
+
 private fun CoroutineScope.recordStateHolders(
     profileId: Id.Profile,
-    profileRepository: ProfileRepository,
+    recordRepository: RecordRepository,
 ): List<ProfileScreenStateHolders.Records<*>> =
     listOfNotNull(
         ProfileScreenStateHolders.Records.Feeds(
@@ -491,7 +511,7 @@ private fun CoroutineScope.recordStateHolders(
                     ),
                 ),
                 itemId = FeedGenerator::cid,
-                cursorListLoader = profileRepository::feedGenerators,
+                cursorListLoader = recordRepository::feedGenerators,
             ),
         ),
         ProfileScreenStateHolders.Records.StarterPacks(
@@ -506,7 +526,7 @@ private fun CoroutineScope.recordStateHolders(
                     ),
                 ),
                 itemId = StarterPack::cid,
-                cursorListLoader = profileRepository::starterPacks,
+                cursorListLoader = recordRepository::starterPacks,
             ),
         ),
         ProfileScreenStateHolders.Records.Lists(
@@ -521,7 +541,7 @@ private fun CoroutineScope.recordStateHolders(
                     ),
                 ),
                 itemId = FeedList::cid,
-                cursorListLoader = profileRepository::lists,
+                cursorListLoader = recordRepository::lists,
             ),
         ),
     )

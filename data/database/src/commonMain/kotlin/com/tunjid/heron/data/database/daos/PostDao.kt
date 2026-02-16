@@ -23,7 +23,9 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.Upsert
+import com.tunjid.heron.data.core.types.LikeUri
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.RepostUri
 import com.tunjid.heron.data.database.entities.BookmarkEntity
 import com.tunjid.heron.data.database.entities.EmbeddedPopulatedPostEntity
 import com.tunjid.heron.data.database.entities.PopulatedPostEntity
@@ -406,4 +408,36 @@ interface PostDao {
     fun postThread(
         postUri: String,
     ): Flow<List<ThreadedPostEntity>>
+
+    @Query(
+        """
+            DELETE FROM posts
+            WHERE uri = :postUri
+        """,
+    )
+    suspend fun deletePost(
+        postUri: PostUri,
+    )
+
+    @Query(
+        """
+            UPDATE postViewerStatistics
+            SET likeUri = NULL
+            WHERE likeUri = :likeUri
+        """,
+    )
+    suspend fun deletePostViewerStatisticsLike(
+        likeUri: LikeUri,
+    )
+
+    @Query(
+        """
+            UPDATE postViewerStatistics
+            SET repostUri = NULL
+            WHERE repostUri = :repostUri
+        """,
+    )
+    suspend fun deletePostViewerStatisticsRepost(
+        repostUri: RepostUri,
+    )
 }
