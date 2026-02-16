@@ -24,6 +24,7 @@ import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.data.graze.GrazeFeed
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.ui.text.Memo
@@ -134,5 +135,21 @@ sealed class Action(val key: String) {
         Action(key = "Navigate"),
         NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
+
+        data class PopFeed(
+            val recordKey: RecordKey,
+        ) : Navigate() {
+            override val navigationMutation: NavigationMutation = {
+                navState.copy(
+                    stacks = navState.stacks.map { stackNav ->
+                        stackNav.copy(
+                            children = stackNav.children.filterNot { route ->
+                                route.id.endsWith(recordKey.value)
+                            },
+                        )
+                    },
+                )
+            }
+        }
     }
 }
