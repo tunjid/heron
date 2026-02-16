@@ -27,9 +27,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.graze.editor.ui.SelectTextSheetState.Companion.rememberSelectProfileHandleState
+import com.tunjid.heron.timeline.ui.SelectListSheetState.Companion.rememberSelectListSheetState
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.add_profile
 import heron.feature.graze_editor.generated.resources.direction
@@ -206,17 +208,71 @@ fun SocialStarterPackFilter(
 }
 
 @Composable
-@Suppress("unused")
 fun SocialListMemberFilter(
     filter: Filter.Social.ListMember,
+    recentLists: List<FeedList>,
+    onUpdateRecentLists: () -> Unit,
     onUpdate: (Filter.Social.ListMember) -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    UnsupportedFilter(
+    val sheetState = rememberSelectListSheetState(
+        lists = recentLists,
+        onListSelected = { list ->
+            onUpdate(
+                filter.copy(url = list.uri.uri),
+            )
+        },
+    )
+    StandardFilter(
         modifier = modifier,
+        tint = filter.validationTint(),
         title = stringResource(Res.string.social_list_member),
         onRemove = onRemove,
+        rowContent = {
+            ComparatorDropdown(
+                selected = filter.operator,
+                options = Filter.Comparator.Set.entries,
+                onSelect = { onUpdate(filter.copy(operator = it)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            )
+        },
+        additionalContent = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                OutlinedTextField(
+                    value = recentLists.find { it.uri.uri == filter.url }?.name ?: filter.url,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = {
+                        Text(text = stringResource(Res.string.social_list_member))
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                )
+
+                FilledTonalButton(
+                    onClick = {
+                        onUpdateRecentLists()
+                        sheetState.show()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                ) {
+                    Text(
+                        text = stringResource(
+                            if (filter.url.isBlank()) Res.string.add_profile
+                            else Res.string.edit_profile,
+                        ),
+                    )
+                }
+            }
+        },
     )
 }
 

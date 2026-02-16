@@ -41,6 +41,7 @@ import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Face
 import androidx.compose.material.icons.rounded.Gavel
 import androidx.compose.material.icons.rounded.Group
+import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Mood
@@ -106,6 +107,7 @@ import heron.feature.graze_editor.generated.resources.posts_with_hashtags
 import heron.feature.graze_editor.generated.resources.sentiment_analysis
 import heron.feature.graze_editor.generated.resources.simple_filters
 import heron.feature.graze_editor.generated.resources.social_graph
+import heron.feature.graze_editor.generated.resources.social_list_member
 import heron.feature.graze_editor.generated.resources.social_user_list
 import heron.feature.graze_editor.generated.resources.topic_analysis
 import heron.feature.graze_editor.generated.resources.toxicity_analysis
@@ -487,10 +489,11 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
 //                titleRes = Res.string.social_starter_pack,
 //                factory = Filter.Social.StarterPack::empty,
 //            ),
-//            FilterOption(
-//                titleRes = Res.string.social_list_member,
-//                factory = Filter.Social.ListMember::empty,
-//            ),
+            FilterOption(
+                titleRes = Res.string.social_list_member,
+                icon = Icons.Rounded.Groups,
+                factory = Filter.Social.ListMember::empty,
+            ),
 //            FilterOption(
 //                titleRes = Res.string.social_magic_audience,
 //                factory = Filter.Social.MagicAudience::empty,
