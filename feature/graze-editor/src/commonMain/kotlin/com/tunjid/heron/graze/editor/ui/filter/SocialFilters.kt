@@ -56,6 +56,7 @@ fun SocialGraphFilter(
 ) {
     StandardFilter(
         modifier = modifier,
+        tint = filter.validationTint(),
         title = stringResource(Res.string.social_graph),
         onRemove = onRemove,
         startContent = {
@@ -149,6 +150,7 @@ fun SocialUserListFilter(
 ) {
     StandardFilter(
         modifier = modifier,
+        tint = filter.validationTint(),
         title = stringResource(Res.string.social_user_list),
         onRemove = onRemove,
         rowContent = {

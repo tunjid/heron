@@ -58,6 +58,7 @@ fun AttributeCompareFilter(
 ) {
     StandardFilter(
         modifier = modifier,
+        tint = filter.validationTint(),
         title = stringResource(Res.string.attribute_compare),
         onRemove = onRemove,
         startContent = {
@@ -114,6 +115,7 @@ fun AttributeEmbedFilter(
 ) {
     StandardFilter(
         modifier = modifier,
+        tint = filter.validationTint(),
         title = stringResource(Res.string.embed_type),
         onRemove = onRemove,
         startContent = {

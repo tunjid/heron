@@ -17,6 +17,7 @@
 package com.tunjid.heron.graze.editor.ui.filter
 
 import androidx.compose.animation.animateBounds
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,8 +52,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
+import com.tunjid.heron.data.graze.isValid
 import com.tunjid.heron.graze.editor.ui.SelectTextSheetState
 import com.tunjid.heron.graze.editor.ui.SelectTextSheetState.Companion.rememberSelectTextState
+import com.tunjid.heron.ui.UiTokens.withDim
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.add_item
@@ -324,6 +327,15 @@ fun FilterTextChips(
         )
     }
 }
+
+@Composable
+fun Filter.validationTint(): Color =
+    animateColorAsState(
+        targetValue = when (isValid) {
+            true -> MaterialTheme.colorScheme.secondaryContainer
+            false -> MaterialTheme.colorScheme.errorContainer
+        }.withDim(true),
+    ).value
 
 val Filter.Comparator.stringRes: StringResource
     get() = when (this) {

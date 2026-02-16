@@ -161,6 +161,7 @@ fun AnalysisFilter(
 
     StandardFilter(
         modifier = modifier,
+        tint = filter.validationTint(),
         title = title,
         onRemove = onRemove,
         startContent = {
