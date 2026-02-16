@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.graze.editor.ui
+package com.tunjid.heron.graze.editor.ui.filter
 
 import androidx.compose.animation.animateBounds
 import androidx.compose.animation.animateContentSize
@@ -51,6 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
+import com.tunjid.heron.graze.editor.ui.SelectTextSheetState
 import com.tunjid.heron.graze.editor.ui.SelectTextSheetState.Companion.rememberSelectTextState
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.graze_editor.generated.resources.Res

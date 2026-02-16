@@ -14,13 +14,15 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.graze.editor.ui
+package com.tunjid.heron.graze.editor.ui.filter
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.graze.Filter
+import com.tunjid.heron.graze.editor.ui.ComparatorDropdown
+import com.tunjid.heron.graze.editor.ui.Dropdown
 import com.tunjid.heron.ui.UiTokens.withDim
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.entity_excludes
@@ -95,6 +97,7 @@ fun EntityFilter(
                                 entityType = filter.entityType,
                                 values = filter.values,
                             )
+
                             Filter.Comparator.Set.NotIn -> Filter.Entity.Excludes(
                                 id = filter.id,
                                 entityType = filter.entityType,
