@@ -210,7 +210,7 @@ class SelectTextSheetState(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(0.5f)
+                        .fillMaxHeight(0.8f)
                         .padding(horizontal = 16.dp)
                         .padding(bottom = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),

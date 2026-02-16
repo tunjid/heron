@@ -28,6 +28,8 @@ sealed interface GrazeFeed {
 
     @Serializable
     sealed interface Editable : GrazeFeed {
+        val displayName: String?
+        val description: String?
         val filter: Filter.Root
     }
 
@@ -35,6 +37,8 @@ sealed interface GrazeFeed {
     data class Pending(
         @SerialName("rkey")
         override val recordKey: RecordKey,
+        override val displayName: String? = null,
+        override val description: String? = null,
         override val filter: Filter.Root,
     ) : Editable
 
@@ -42,9 +46,9 @@ sealed interface GrazeFeed {
     data class Created(
         @SerialName("rkey")
         override val recordKey: RecordKey,
+        override val displayName: String? = null,
+        override val description: String? = null,
         override val filter: Filter.Root,
-        val displayName: String? = null,
-        val description: String? = null,
     ) : Editable
 
     @Serializable

@@ -206,7 +206,7 @@ fun GrazeEditorScreen(
             contentAlignment = Alignment.Center,
         ) {
             Column(
-                verticalArrangement = Arrangement.spacedBy(30.dp),
+                verticalArrangement = Arrangement.spacedBy(56.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 CircularProgressIndicator()

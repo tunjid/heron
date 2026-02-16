@@ -84,10 +84,7 @@ fun TopBarActions(
         IconButton(
             enabled = enabled,
             onClick = {
-                if (grazeFeed is GrazeFeed.Pending) editRecordKeySheetState.show(
-                    currentText = grazeFeed.recordKey.value,
-                )
-                else showMenu = true
+                showMenu = true
             },
             content = {
                 Icon(
@@ -97,29 +94,36 @@ fun TopBarActions(
             },
         )
 
-        if (grazeFeed is GrazeFeed.Created) {
-            DropdownMenu(
-                expanded = showMenu,
-                onDismissRequest = { showMenu = false },
-            ) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(Res.string.edit_feed)) },
-                    onClick = {
-                        showMenu = false
-                        editFeedInfoSheetState.show(
-                            currentName = grazeFeed.displayName ?: feedGenerator?.displayName ?: "",
-                            currentDescription = grazeFeed.description ?: feedGenerator?.description,
-                        )
-                    },
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(Res.string.delete_feed)) },
-                    onClick = {
-                        showMenu = false
-                        actions(Action.Update.Delete(grazeFeed.recordKey))
-                    },
-                )
-            }
+        DropdownMenu(
+            expanded = showMenu,
+            onDismissRequest = { showMenu = false },
+        ) {
+            if (grazeFeed is GrazeFeed.Pending) DropdownMenuItem(
+                text = { Text(stringResource(Res.string.edit_record_key)) },
+                onClick = {
+                    showMenu = false
+                    editRecordKeySheetState.show(
+                        currentText = grazeFeed.recordKey.value,
+                    )
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.edit_feed)) },
+                onClick = {
+                    showMenu = false
+                    editFeedInfoSheetState.show(
+                        currentName = grazeFeed.displayName ?: feedGenerator?.displayName ?: "",
+                        currentDescription = grazeFeed.description ?: feedGenerator?.description,
+                    )
+                },
+            )
+            if (grazeFeed is GrazeFeed.Created) DropdownMenuItem(
+                text = { Text(stringResource(Res.string.delete_feed)) },
+                onClick = {
+                    showMenu = false
+                    actions(Action.Update.Delete(grazeFeed.recordKey))
+                },
+            )
         }
     }
 }

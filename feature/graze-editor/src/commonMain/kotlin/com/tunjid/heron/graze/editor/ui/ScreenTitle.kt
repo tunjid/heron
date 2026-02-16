@@ -60,10 +60,7 @@ fun Title(
             TitleTransitionSpec
         },
         contentKey = { currentTitle ->
-            when (currentTitle) {
-                is Title.Created -> currentTitle.path.joinToString("created")
-                is Title.Pending -> currentTitle.path.joinToString("pending")
-            }
+            currentTitle.transitionKey()
         },
     ) { currentTitle ->
         when (currentTitle) {
@@ -90,6 +87,11 @@ fun Title(
             )
         }
     }
+}
+
+private fun Title.transitionKey(): String = when (this) {
+    is Title.Created -> "${feedGenerator.displayName}-${path.joinToString("created")}"
+    is Title.Pending -> path.joinToString("pending")
 }
 
 private val TitleTransitionSpec = fadeIn() togetherWith fadeOut()

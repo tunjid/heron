@@ -205,11 +205,17 @@ private fun Flow<Action.Metadata>.updateMetadataMutations(): Flow<Mutation<State
             is Action.Metadata.SetRecordKey if grazeFeed is GrazeFeed.Pending -> copy(
                 grazeFeed = grazeFeed.copy(recordKey = action.recordKey),
             )
-            is Action.Metadata.FeedGenerator if grazeFeed is GrazeFeed.Created -> copy(
-                grazeFeed = grazeFeed.copy(
-                    displayName = action.displayName,
-                    description = action.description,
-                ),
+            is Action.Metadata.FeedGenerator -> copy(
+                grazeFeed = when (grazeFeed) {
+                    is GrazeFeed.Created -> grazeFeed.copy(
+                        displayName = action.displayName,
+                        description = action.description,
+                    )
+                    is GrazeFeed.Pending -> grazeFeed.copy(
+                        displayName = action.displayName,
+                        description = action.description,
+                    )
+                },
             )
             else -> this
         }
