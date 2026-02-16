@@ -40,7 +40,10 @@ import com.tunjid.tiler.distinctBy
 import com.tunjid.tiler.emptyTiledList
 import com.tunjid.tiler.filter
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -178,7 +181,27 @@ private fun timelineUpdateMutations(
             )
         },
     )
-        .mapToMutation { copy(timeline = it) }
+        .mapLatestToManyMutations { newTimeline ->
+            emit { copy(timeline = newTimeline) }
+
+            if (newTimeline.isEmpty()) {
+                delay(EMPTY_STATE_DELAY)
+                emit {
+                    if (this@emit.timeline.isEmpty()) {
+                        copy(
+                            tilingData = tilingData.copy(
+                                items = buildTiledList {
+                                    add(
+                                        query = tilingData.currentQuery,
+                                        item = TimelineItem.Empty(this@emit.timeline),
+                                    )
+                                },
+                            ),
+                        )
+                    } else this
+                }
+            }
+        }
 
 private fun Flow<TimelineState.Action.UpdatePreferredPresentation>.updatePreferredPresentationMutations(
     timelineRepository: TimelineRepository,
@@ -195,6 +218,9 @@ private fun Flow<TimelineState.Action.DismissRefresh>.dismissRefreshMutations():
             tilingData = tilingData.withRefreshedStatus(),
         )
     }
+
+private fun Timeline.isEmpty(): Boolean =
+    itemsAvailable == 0L && lastRefreshed != null
 
 private fun TimelineQuery.updateData(
     data: CursorQuery.Data,
@@ -221,8 +247,10 @@ private fun TiledList<TimelineQuery, TimelineItem>.filterThreadDuplicates(): Til
             }
 
             is TimelineItem.Single -> !threadRootIds.contains(item.post.cid)
-            is TimelineItem.Loading -> false
+            is TimelineItem.Placeholder -> false
         }
     }
         .distinctBy(TimelineItem::id)
 }
+
+private val EMPTY_STATE_DELAY = 1.4.seconds

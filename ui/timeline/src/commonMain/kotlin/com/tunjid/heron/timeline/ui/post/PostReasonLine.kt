@@ -60,7 +60,7 @@ internal fun PostReasonLine(
 
         is TimelineItem.Thread,
         is TimelineItem.Single,
-        is TimelineItem.Loading,
+        is TimelineItem.Placeholder,
         -> Unit
     }
 }

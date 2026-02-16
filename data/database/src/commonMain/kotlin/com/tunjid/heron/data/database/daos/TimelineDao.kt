@@ -72,6 +72,21 @@ interface TimelineDao {
 
     @Query(
         """
+        SELECT COUNT(*) FROM timelineItems
+        WHERE sourceId = :sourceId
+        AND CASE WHEN :viewingProfileId IS NOT NULL
+            THEN viewingProfileId = :viewingProfileId
+            ELSE viewingProfileId IS NULL
+        END
+    """,
+    )
+    fun count(
+        viewingProfileId: String?,
+        sourceId: String,
+    ): Flow<Long>
+
+    @Query(
+        """
             SELECT * FROM timelinePreferences
             WHERE sourceId = :sourceId
             AND CASE WHEN :viewingProfileId IS NOT NULL

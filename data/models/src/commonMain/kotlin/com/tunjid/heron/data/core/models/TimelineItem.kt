@@ -37,6 +37,8 @@ sealed interface Timeline {
 
     val lastRefreshed: Instant?
 
+    val itemsAvailable: Long
+
     val presentation: Presentation
 
     val supportedPresentations: List<Presentation>
@@ -85,6 +87,7 @@ sealed interface Timeline {
             override val name: String,
             override val position: Int,
             override val lastRefreshed: Instant?,
+            override val itemsAvailable: Long,
             override val presentation: Presentation,
             override val isPinned: Boolean,
         ) : Home(
@@ -97,6 +100,7 @@ sealed interface Timeline {
         data class List(
             override val position: Int,
             override val lastRefreshed: Instant?,
+            override val itemsAvailable: Long,
             override val presentation: Presentation,
             override val isPinned: Boolean,
             val feedList: FeedList,
@@ -114,6 +118,7 @@ sealed interface Timeline {
                 ) = List(
                     position = 0,
                     lastRefreshed = null,
+                    itemsAvailable = list.listItemCount ?: 0,
                     presentation = Text.WithEmbed,
                     isPinned = false,
                     feedList = list,
@@ -125,6 +130,7 @@ sealed interface Timeline {
         data class Feed(
             override val position: Int,
             override val lastRefreshed: Instant?,
+            override val itemsAvailable: Long,
             override val presentation: Presentation,
             override val supportedPresentations: kotlin.collections.List<Presentation>,
             override val isPinned: Boolean,
@@ -141,6 +147,7 @@ sealed interface Timeline {
                 ) = Feed(
                     position = 0,
                     lastRefreshed = null,
+                    itemsAvailable = 0,
                     presentation = Text.WithEmbed,
                     supportedPresentations = emptyList(),
                     isPinned = false,
@@ -161,6 +168,7 @@ sealed interface Timeline {
         val profileId: ProfileId,
         val type: Type,
         override val lastRefreshed: Instant?,
+        override val itemsAvailable: Long,
         override val presentation: Presentation,
     ) : Timeline {
 
@@ -389,7 +397,7 @@ sealed class TimelineItem {
             is Pinned,
             is Thread,
             is Single,
-            is Loading,
+            is Placeholder,
             -> post.indexedAt
 
             is Repost -> at
@@ -441,10 +449,7 @@ sealed class TimelineItem {
         override val signedInProfileId: ProfileId?,
     ) : TimelineItem()
 
-    data class Loading @OptIn(ExperimentalUuidApi::class) constructor(
-        override val id: String = Uuid.random().toString(),
-    ) : TimelineItem() {
-
+    sealed class Placeholder : TimelineItem() {
         override val post: Post
             get() = LoadingPost
 
@@ -452,6 +457,16 @@ sealed class TimelineItem {
         override val threadGate: ThreadGate? = null
         override val appliedLabels: AppliedLabels = LoadingAppliedLabels
         override val signedInProfileId: ProfileId? = null
+    }
+
+    data class Loading @OptIn(ExperimentalUuidApi::class) constructor(
+        override val id: String = Uuid.random().toString(),
+    ) : Placeholder()
+
+    data class Empty(
+        val timeline: Timeline,
+    ) : Placeholder() {
+        override val id: String = timeline.sourceId
     }
 
     companion object {
