@@ -21,7 +21,6 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,7 +33,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.SwapHoriz
@@ -50,7 +48,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -349,11 +346,6 @@ fun FilterRow(
                 val lazyListState = rememberLazyListState()
                 LazyRow(
                     modifier = Modifier
-                        .border(
-                            width = Dp.Hairline,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            shape = FilterRowShape,
-                        )
                         .fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     flingBehavior = rememberSnapFlingBehavior(
@@ -589,7 +581,5 @@ fun FilterLeaf(
 }
 
 private fun Filter.Root.backgroundSharedElementKey(): String = "$id-background"
-
-private val FilterRowShape = RoundedCornerShape(8.dp)
 
 private val FilterTransitionSpec = fadeIn() togetherWith fadeOut()
