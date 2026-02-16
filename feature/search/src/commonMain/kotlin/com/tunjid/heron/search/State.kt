@@ -18,6 +18,7 @@ package com.tunjid.heron.search
 
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
@@ -119,6 +120,8 @@ data class State(
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
     @Transient
+    val recentLists: List<FeedList> = emptyList(),
+    @Transient
     val starterPacksWithMembers: List<SuggestedStarterPack> = emptyList(),
     @Transient
     val feedGenerators: List<FeedGenerator> = emptyList(),
@@ -178,6 +181,8 @@ sealed class Action(val key: String) {
     data class UpdateFeedGeneratorStatus(
         val update: Timeline.Update,
     ) : Action(key = "UpdateFeedGeneratorStatus")
+
+    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
     sealed class Navigate :
         Action(key = "Navigate"),

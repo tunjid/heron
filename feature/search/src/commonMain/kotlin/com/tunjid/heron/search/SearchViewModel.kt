@@ -27,6 +27,7 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
+import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
@@ -88,6 +89,7 @@ class SearchViewModel(
     navActions: (NavigationMutation) -> Unit,
     authRepository: AuthRepository,
     messageRepository: MessageRepository,
+    recordRepository: RecordRepository,
     searchRepository: SearchRepository,
     profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
@@ -170,6 +172,9 @@ class SearchViewModel(
                     )
                     is Action.MuteAccount -> action.flow.muteAccountMutations(
                         writeQueue = writeQueue,
+                    )
+                    is Action.UpdateRecentLists -> action.flow.recentListsMutations(
+                        recordRepository = recordRepository,
                     )
                 }
             }
@@ -475,6 +480,16 @@ private fun Flow<Action.UpdateFeedGeneratorStatus>.feedGeneratorStatusMutations(
         writable.writeStatusMessage(status)?.let {
             emit { copy(messages = messages + it) }
         }
+    }
+
+fun Flow<Action.UpdateRecentLists>.recentListsMutations(
+    recordRepository: RecordRepository,
+): Flow<Mutation<State>> =
+    flatMapLatest {
+        recordRepository.recentLists
+            .mapToMutation { lists ->
+                copy(recentLists = lists)
+            }
     }
 
 private fun CoroutineScope.searchStateHolders(

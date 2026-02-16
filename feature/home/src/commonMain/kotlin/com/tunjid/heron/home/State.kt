@@ -17,6 +17,7 @@
 package com.tunjid.heron.home
 
 import com.tunjid.heron.data.core.models.Conversation
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
@@ -41,6 +42,8 @@ data class State(
     val preferences: Preferences = Preferences.EmptyPreferences,
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
+    @Transient
+    val recentLists: List<FeedList> = emptyList(),
     @Transient
     val timelinePreferenceSaveRequestId: String? = null,
     @Transient
@@ -117,6 +120,8 @@ sealed class Action(val key: String) {
     ) : Action(key = "MuteAccount")
 
     data object RefreshCurrentTab : Action(key = "RefreshCurrentTab")
+
+    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
     sealed class UpdateTimeline : Action(key = "Timeline") {
         data object RequestUpdate : UpdateTimeline()

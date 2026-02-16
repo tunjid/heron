@@ -82,6 +82,8 @@ data class State(
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
     @Transient
+    val recentLists: List<FeedList> = emptyList(),
+    @Transient
     val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
     @Transient
     val stateHolders: List<ProfileScreenStateHolders> = emptyList(),
@@ -258,6 +260,8 @@ sealed class Action(val key: String) {
     data class UpdatePreferences(
         val update: Timeline.Update,
     ) : Action(key = "UpdatePreferences")
+
+    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
     sealed class Navigate :
         Action(key = "Navigate"),

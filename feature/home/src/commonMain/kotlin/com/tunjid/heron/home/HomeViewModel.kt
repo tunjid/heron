@@ -24,6 +24,7 @@ import com.tunjid.heron.data.core.models.sourceId
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
+import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
@@ -59,6 +60,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.take
 
 internal typealias HomeStateHolder = ActionStateMutator<Action, StateFlow<State>>
@@ -74,6 +76,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 @AssistedInject
 class ActualHomeViewModel(
     authRepository: AuthRepository,
+    recordRepository: RecordRepository,
     searchRepository: SearchRepository,
     messageRepository: MessageRepository,
     timelineRepository: TimelineRepository,
@@ -143,6 +146,9 @@ class ActualHomeViewModel(
                     is Action.MuteAccount -> action.flow.muteAccountMutations(
                         writeQueue = writeQueue,
                     )
+                    is Action.UpdateRecentLists -> action.flow.recentListsMutations(
+                        recordRepository = recordRepository,
+                    )
                 }
             }
         },
@@ -204,6 +210,16 @@ fun recentConversationMutations(
         .mapToMutation { conversations ->
             copy(recentConversations = conversations)
         }
+
+fun Flow<Action.UpdateRecentLists>.recentListsMutations(
+    recordRepository: RecordRepository,
+): Flow<Mutation<State>> =
+    flatMapLatest {
+        recordRepository.recentLists
+            .mapToMutation { lists ->
+                copy(recentLists = lists)
+            }
+    }
 
 private fun loadPreferencesMutations(
     userDataRepository: UserDataRepository,
