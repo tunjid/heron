@@ -43,6 +43,7 @@ import dev.zacsweers.metro.AssistedInject
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.switch_account_failed
 import kotlin.collections.plus
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -163,7 +164,7 @@ private fun Flow<Action.SwitchSession>.handleSwitchSessionMutations(
     authRepository: AuthRepository,
     navActions: (NavigationMutation) -> Unit,
 ): Flow<Mutation<State>> =
-    debounce(200)
+    debounce(SwitchActionDebounce)
         .mapLatestToManyMutations {
             switchSessionMutation(
                 authRepository = authRepository,
@@ -184,7 +185,7 @@ private suspend fun FlowCollector<Mutation<State>>.switchSessionMutation(
         )
     }
 
-    delay(180)
+    delay(AccountSwitchPhase.MORPHING.changeDelay)
 
     emit { copy(switchPhase = AccountSwitchPhase.LOADING) }
 
@@ -192,7 +193,7 @@ private suspend fun FlowCollector<Mutation<State>>.switchSessionMutation(
         is Outcome.Success -> {
             emit { copy(switchPhase = AccountSwitchPhase.SUCCESS) }
 
-            delay(220)
+            delay(AccountSwitchPhase.SUCCESS.changeDelay)
 
             navActions(NavigationContext::resetAuthNavigation)
 
@@ -268,3 +269,13 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
     mapToMutation { action ->
         copy(messages = messages - action.message)
     }
+
+private val AccountSwitchPhase.changeDelay
+    get() = when (this) {
+        AccountSwitchPhase.IDLE -> 0.milliseconds
+        AccountSwitchPhase.MORPHING -> 180.milliseconds
+        AccountSwitchPhase.SUCCESS -> 220.milliseconds
+        AccountSwitchPhase.LOADING -> 0.milliseconds
+    }
+
+private val SwitchActionDebounce = 200.milliseconds

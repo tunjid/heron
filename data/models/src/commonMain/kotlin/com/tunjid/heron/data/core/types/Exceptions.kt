@@ -50,5 +50,5 @@ class RecordCreationException(
 ) : IllegalArgumentException("Record creation for $profileId in collection $collection failed")
 
 class SessionSwitchException(
-    profileId: ProfileId,
-) : Exception("Unable to switch to a session for profile with id $profileId")
+    profileId: Id.Profile,
+) : Exception("Unable to switch to a accounts to $profileId")
