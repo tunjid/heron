@@ -35,7 +35,7 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     val grazeFeed: GrazeFeed.Editable = GrazeFeed.Pending(
-        recordKey = RecordKey("test-${Clock.System.now().epochSeconds}"),
+        recordKey = RecordKey("feed-${Clock.System.now().epochSeconds}"),
         filter = Filter.And(
             filters = emptyList(),
         ),

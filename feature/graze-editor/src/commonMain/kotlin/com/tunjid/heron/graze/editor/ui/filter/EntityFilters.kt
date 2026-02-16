@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.ui.UiTokens.withDim
 import heron.feature.graze_editor.generated.resources.Res
+import heron.feature.graze_editor.generated.resources.add_item
 import heron.feature.graze_editor.generated.resources.entity_excludes
 import heron.feature.graze_editor.generated.resources.entity_matches
 import heron.feature.graze_editor.generated.resources.entity_type_domain
@@ -54,6 +55,7 @@ fun EntityFilter(
                 is Filter.Entity.Matches -> Res.string.entity_matches
             },
         ),
+        buttonStringResource = Res.string.add_item,
         onRemove = onRemove,
         items = filter.values,
         onItemsUpdated = {
