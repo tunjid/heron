@@ -346,7 +346,12 @@ internal class OfflineRecordRepository @Inject constructor(
         feedCreationService.updateGrazeFeed(
             update = update,
         ).mapCatchingUnlessCancelled { response ->
-            networkService.updateFeedRecord(response, profileId)
+            val put = update as? GrazeFeed.Update.Put
+            networkService.updateFeedRecord(
+                response = response,
+                profileId = profileId,
+                editableFeed = put?.feed,
+            )
             when (response) {
                 is GrazeResponse.Read -> {
                     GrazeFeed.Created(
@@ -374,6 +379,7 @@ internal class OfflineRecordRepository @Inject constructor(
 }
 
 private suspend fun NetworkService.updateFeedRecord(
+    editableFeed: GrazeFeed.Editable?,
     response: GrazeResponse,
     profileId: ProfileId,
 ) {
@@ -386,8 +392,8 @@ private suspend fun NetworkService.updateFeedRecord(
                     rkey = RKey(response.rkey.value),
                     record = BskyFeed(
                         did = Did(GrazeDid.id),
-                        displayName = "Graze Feed",
-                        description = "A custom feed created with \uD80C\uDD63 and \uD83D\uDC2E",
+                        displayName = editableFeed?.displayName ?: "Graze Feed",
+                        description = editableFeed?.description ?: "A custom feed created with \uD80C\uDD63 and \uD83D\uDC2E",
                         createdAt = Clock.System.now(),
                         contentMode = response.contentMode,
                     ).asJsonContent(BskyFeed.serializer()),
@@ -414,6 +420,8 @@ private suspend fun NetworkService.updateFeedRecord(
                         collection = Nsid(FeedGeneratorUri.NAMESPACE),
                         rkey = RKey(response.rkey.value),
                         record = currentRecord.copy(
+                            displayName = editableFeed?.displayName ?: currentRecord.displayName,
+                            description = editableFeed?.description ?: currentRecord.description,
                             contentMode = when (response) {
                                 is GrazeResponse.Read -> response.contentMode
                                 is GrazeResponse.Edited -> response.contentMode
