@@ -27,14 +27,22 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
-    val isSwitchingAccount: Boolean = false,
-    val switchingToProfile: ProfileId? = null,
+    val activeProfileId: ProfileId? = null,
+    val switchPhase: AccountSwitchPhase = AccountSwitchPhase.IDLE,
+    val switchingSession: SessionSummary? = null,
     val signedInProfilePreferences: Preferences? = null,
     val openSourceLibraries: Libs? = null,
     val pastSessions: List<SessionSummary> = emptyList(),
     @Transient
     val messages: List<Memo> = emptyList(),
 )
+
+enum class AccountSwitchPhase {
+    IDLE,
+    MORPHING,
+    SUCCESS,
+    LOADING,
+}
 
 sealed class Action(val key: String) {
 

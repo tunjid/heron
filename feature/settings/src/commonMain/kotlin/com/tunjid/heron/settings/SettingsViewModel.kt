@@ -46,12 +46,15 @@ import kotlin.collections.plus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 internal typealias SettingsStateHolder = ActionStateMutator<Action, StateFlow<State>>
@@ -83,6 +86,9 @@ class ActualSettingsViewModel(
             ),
             loadOpenSourceLibraryMutations(),
             loadSessionSummaryMutations(
+                authRepository = authRepository,
+            ),
+            observeActiveProfileMutations(
                 authRepository = authRepository,
             ),
         ),
@@ -173,33 +179,55 @@ private suspend fun FlowCollector<Mutation<State>>.switchSessionMutation(
 ) {
     emit {
         copy(
-            isSwitchingAccount = true,
-            switchingToProfile = sessionSummary.profileId,
+            switchPhase = AccountSwitchPhase.MORPHING,
+            switchingSession = sessionSummary,
         )
     }
+
+    delay(180)
+
+    emit { copy(switchPhase = AccountSwitchPhase.LOADING) }
+
     when (val outcome = authRepository.switchSession(sessionSummary)) {
         is Outcome.Success -> {
+            emit { copy(switchPhase = AccountSwitchPhase.SUCCESS) }
+
+            delay(220)
+
+            navActions(NavigationContext::resetAuthNavigation)
+
             emit {
                 copy(
-                    isSwitchingAccount = false,
-                    switchingToProfile = null,
+                    switchPhase = AccountSwitchPhase.IDLE,
+                    switchingSession = null,
                 )
             }
-            navActions(NavigationContext::resetAuthNavigation)
         }
-        is Outcome.Failure -> emit {
-            copy(
-                isSwitchingAccount = false,
-                switchingToProfile = null,
-                messages = messages.plus(
-                    outcome.exception.message
-                        ?.let(Memo::Text)
-                        ?: Memo.Resource(Res.string.switch_account_failed),
-                ).distinct(),
-            )
+
+        is Outcome.Failure -> {
+            emit {
+                copy(
+                    switchPhase = AccountSwitchPhase.IDLE,
+                    switchingSession = null,
+                    messages = messages.plus(
+                        outcome.exception.message?.let(Memo::Text)
+                            ?: Memo.Resource(Res.string.switch_account_failed),
+                    ).distinct(),
+                )
+            }
         }
     }
 }
+
+private fun observeActiveProfileMutations(
+    authRepository: AuthRepository,
+): Flow<Mutation<State>> =
+    authRepository.signedInUser
+        .map { it?.did }
+        .distinctUntilChanged()
+        .mapToMutation { profileId ->
+            copy(activeProfileId = profileId)
+        }
 
 private fun Flow<Action.SetRefreshHomeTimelinesOnLaunch>.homeTimelineRefreshOnLaunchMutations(
     userDataRepository: UserDataRepository,

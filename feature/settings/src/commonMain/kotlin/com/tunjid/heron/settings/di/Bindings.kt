@@ -16,11 +16,9 @@
 
 package com.tunjid.heron.settings.di
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -41,6 +39,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransformProvider
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
+import com.tunjid.heron.settings.AccountSwitchPhase
 import com.tunjid.heron.settings.Action
 import com.tunjid.heron.settings.ActualSettingsViewModel
 import com.tunjid.heron.settings.RouteViewModelInitializer
@@ -152,14 +151,14 @@ class SettingsBindings(
                             )
                         },
                         onBackPressed = {
-                            if (!state.isSwitchingAccount) {
+                            if (state.switchPhase == AccountSwitchPhase.IDLE) {
                                 viewModel.accept(Action.Navigate.Pop)
                             }
                         },
                     )
                 },
                 navigationBar = {
-                    if (!state.isSwitchingAccount) {
+                    if (state.switchPhase == AccountSwitchPhase.IDLE) {
                         PaneNavigationBar(
                             modifier = Modifier.offset {
                                 bottomNavigationNestedScrollConnection.offset.round()
