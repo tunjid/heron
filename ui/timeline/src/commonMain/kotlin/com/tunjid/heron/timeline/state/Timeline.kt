@@ -191,7 +191,7 @@ private fun timelineUpdateMutations(
                             items = buildTiledList {
                                 add(
                                     query = tilingData.currentQuery,
-                                    item = TimelineItem.Empty,
+                                    item = TimelineItem.Empty(timeline),
                                 )
                             },
                         ),
@@ -244,8 +244,7 @@ private fun TiledList<TimelineQuery, TimelineItem>.filterThreadDuplicates(): Til
             }
 
             is TimelineItem.Single -> !threadRootIds.contains(item.post.cid)
-            is TimelineItem.Empty -> true
-            is TimelineItem.Loading -> false
+            is TimelineItem.Placeholder -> false
         }
     }
         .distinctBy(TimelineItem::id)

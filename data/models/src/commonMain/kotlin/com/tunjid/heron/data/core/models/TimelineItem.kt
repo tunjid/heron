@@ -397,8 +397,7 @@ sealed class TimelineItem {
             is Pinned,
             is Thread,
             is Single,
-            is Loading,
-            is Empty,
+            is Placeholder,
             -> post.indexedAt
 
             is Repost -> at
@@ -450,10 +449,7 @@ sealed class TimelineItem {
         override val signedInProfileId: ProfileId?,
     ) : TimelineItem()
 
-    data class Loading @OptIn(ExperimentalUuidApi::class) constructor(
-        override val id: String = Uuid.random().toString(),
-    ) : TimelineItem() {
-
+    sealed class Placeholder: TimelineItem() {
         override val post: Post
             get() = LoadingPost
 
@@ -463,16 +459,14 @@ sealed class TimelineItem {
         override val signedInProfileId: ProfileId? = null
     }
 
-    data object Empty : TimelineItem() {
-        override val id: String = "empty-timeline-item"
+    data class Loading @OptIn(ExperimentalUuidApi::class) constructor(
+        override val id: String = Uuid.random().toString(),
+    ) : Placeholder()
 
-        override val post: Post
-            get() = LoadingPost
-
-        override val isMuted: Boolean = false
-        override val threadGate: ThreadGate? = null
-        override val appliedLabels: AppliedLabels = LoadingAppliedLabels
-        override val signedInProfileId: ProfileId? = null
+    data class Empty(
+        val timeline: Timeline,
+    ) : Placeholder() {
+        override val id: String = timeline.sourceId
     }
 
     companion object {
