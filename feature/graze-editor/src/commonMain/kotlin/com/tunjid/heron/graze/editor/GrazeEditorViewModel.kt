@@ -163,7 +163,7 @@ private fun Flow<Action.Update>.updateMutations(
             .onSuccess { grazeFeed ->
                 if (grazeFeed !is GrazeFeed.Editable) {
                     return@onSuccess emitAll(
-                        flowOf(Action.Navigate.PopFeed(action.recordKey))
+                        flowOf(Action.Navigate.PopFeed(action.associatedRecordKey))
                             .consumeNavigationActions(navActions),
                     )
                 }
@@ -317,11 +317,11 @@ private inline fun Filter.Root.updateFilters(
     }
 }
 
-private val Action.Update.recordKey
+private val Action.Update.associatedRecordKey
     get() = when (this) {
-        is Action.Update.Delete -> this.recordKey
-        is Action.Update.InitialLoad -> this.recordKey
-        is Action.Update.Save -> this.feed.recordKey
+        is Action.Update.Delete -> recordKey
+        is Action.Update.InitialLoad -> recordKey
+        is Action.Update.Save -> feed.recordKey
     }
 private fun Action.Update.toGrazeFeedUpdate(): GrazeFeed.Update = when (this) {
     is Action.Update.InitialLoad -> Get(recordKey = recordKey)

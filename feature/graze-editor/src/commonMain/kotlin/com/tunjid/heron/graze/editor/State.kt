@@ -144,7 +144,7 @@ sealed class Action(val key: String) {
                     stacks = navState.stacks.map { stackNav ->
                         stackNav.copy(
                             children = stackNav.children.filterNot { route ->
-                                route.id.endsWith(recordKey.value)
+                                route.id.substringBefore('?').endsWith(recordKey.value)
                             },
                         )
                     },
