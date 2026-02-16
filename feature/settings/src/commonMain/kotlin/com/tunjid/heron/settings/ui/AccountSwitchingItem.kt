@@ -211,7 +211,7 @@ private fun MovableElementSharedTransitionScope.CollapsedSummaries(
         settingsItemRow()
         Row(
             modifier = Modifier
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = 22.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             OverlappingAvatarRow(
@@ -338,8 +338,7 @@ private fun MovableElementSharedTransitionScope.SessionSummaries(
                 Row(
                     modifier = Modifier
                         // Fill max width is needed so the text measuring doesn't cause
-                        // animation glitches. This is also why the link is used for clicking
-                        // as opposed to the full text.
+                        // animation glitches.
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp),
                 ) {
