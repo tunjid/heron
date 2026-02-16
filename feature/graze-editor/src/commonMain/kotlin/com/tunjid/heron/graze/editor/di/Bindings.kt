@@ -188,11 +188,14 @@ class GrazeEditorBindings(
                                 title = remember(
                                     state.currentPath,
                                     state.feedGenerator,
+                                    state.grazeFeed,
                                     state.sharedElementPrefix,
                                 ) {
                                     when (val feedGenerator = state.feedGenerator) {
                                         null -> Title.Pending(
                                             path = state.currentPath,
+                                            recordKey = state.grazeFeed.recordKey,
+                                            displayName = state.grazeFeed.displayName,
                                         )
                                         else -> Title.Created(
                                             path = state.currentPath,

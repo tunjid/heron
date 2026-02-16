@@ -20,17 +20,23 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Timeline
-import com.tunjid.heron.scaffold.scaffold.AppBarTitle
+import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.utilities.TimelineTitle
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.graze_editor
-import heron.feature.graze_editor.generated.resources.graze_editor_level
 import org.jetbrains.compose.resources.stringResource
 
 sealed class Title {
@@ -38,6 +44,8 @@ sealed class Title {
 
     data class Pending(
         override val path: List<Int>,
+        val recordKey: RecordKey,
+        val displayName: String?,
     ) : Title()
 
     data class Created(
@@ -47,6 +55,7 @@ sealed class Title {
     ) : Title()
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun Title(
     modifier: Modifier = Modifier,
@@ -74,24 +83,33 @@ fun Title(
                 hasUpdates = false,
                 onPresentationSelected = { _, _ -> },
             )
-            is Title.Pending -> AppBarTitle(
-                modifier = Modifier,
-                title =
-                if (currentTitle.path.isEmpty()) stringResource(
-                    Res.string.graze_editor,
+            is Title.Pending -> Column(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp),
+            ) {
+                Text(
+                    modifier = Modifier,
+                    text = currentTitle.displayName ?: stringResource(Res.string.graze_editor),
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 1,
+                    style = MaterialTheme.typography.titleSmallEmphasized,
                 )
-                else stringResource(
-                    Res.string.graze_editor_level,
-                    currentTitle.path.size,
-                ),
-            )
+                Text(
+                    modifier = Modifier,
+                    text = currentTitle.recordKey.value,
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 1,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.outline,
+                )
+            }
         }
     }
 }
 
 private fun Title.transitionKey(): String = when (this) {
     is Title.Created -> "${feedGenerator.displayName}-${path.joinToString("created")}"
-    is Title.Pending -> path.joinToString("pending")
+    is Title.Pending -> "${recordKey.value}-${path.joinToString("pending")}"
 }
 
 private val TitleTransitionSpec = fadeIn() togetherWith fadeOut()

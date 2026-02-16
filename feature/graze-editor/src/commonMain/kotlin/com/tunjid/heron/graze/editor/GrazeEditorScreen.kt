@@ -115,6 +115,7 @@ fun GrazeEditorScreen(
                 modifier = Modifier,
                 isAnd = currentFilter is Filter.And,
                 size = currentFilter.filters.size,
+                level = currentPath.size + 1,
                 animatedVisibilityScope = this@AnimatedContent,
                 paneScaffoldState = paneScaffoldState,
                 id = currentFilter.id,
@@ -317,6 +318,7 @@ fun FilterRow(
                     .fillMaxWidth(),
                 isAnd = filter is Filter.And,
                 size = filter.filters.size,
+                level = path.size + 2,
                 onFlipClicked = {
                     onFlipClicked(path + index)
                 },
@@ -383,6 +385,7 @@ private fun RootFilterDescription(
     id: Filter.Id,
     isAnd: Boolean,
     size: Int,
+    level: Int,
     onFlipClicked: () -> Unit,
     onRemove: (() -> Unit)?,
 ) = with(paneScaffoldState) {
@@ -440,6 +443,7 @@ private fun RootFilterDescription(
                 ),
             text = stringResource(
                 Res.string.items_count,
+                level,
                 size,
             ),
             style = MaterialTheme.typography.bodyMedium,
