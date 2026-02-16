@@ -185,17 +185,19 @@ private fun timelineUpdateMutations(
 
             if (newTimeline.isEmpty()) {
                 delay(2.seconds)
-                if (timeline.isEmpty()) emit {
-                    copy(
-                        tilingData = tilingData.copy(
-                            items = buildTiledList {
-                                add(
-                                    query = tilingData.currentQuery,
-                                    item = TimelineItem.Empty(timeline),
-                                )
-                            },
-                        ),
-                    )
+                emit {
+                    if (this@emit.timeline.isEmpty()) {
+                        copy(
+                            tilingData = tilingData.copy(
+                                items = buildTiledList {
+                                    add(
+                                        query = tilingData.currentQuery,
+                                        item = TimelineItem.Empty(this@emit.timeline),
+                                    )
+                                },
+                            ),
+                        )
+                    } else this
                 }
             }
         }
