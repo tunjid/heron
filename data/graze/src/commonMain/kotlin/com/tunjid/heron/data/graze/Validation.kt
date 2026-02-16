@@ -21,14 +21,13 @@ val Filter.isValid: Boolean
         is Filter.Root -> filters.isNotEmpty() && filters.all(Filter::isValid)
         is Filter.Attribute.Compare -> targetValue.isNotBlank()
         is Filter.Attribute.Embed -> true
-        is Filter.Entity.Matches -> values.isNotEmpty() && values.all(String::isNotBlank)
-        is Filter.Entity.Excludes -> values.isNotEmpty() && values.all(String::isNotBlank)
+        is Filter.Entity -> values.isListOfNonBlankStrings()
         is Filter.Regex.Matches -> pattern.isNotBlank()
         is Filter.Regex.Negation -> pattern.isNotBlank()
-        is Filter.Regex.Any -> terms.isNotEmpty() && terms.all(String::isNotBlank)
-        is Filter.Regex.None -> terms.isNotEmpty() && terms.all(String::isNotBlank)
+        is Filter.Regex.Any -> terms.isListOfNonBlankStrings()
+        is Filter.Regex.None -> terms.isListOfNonBlankStrings()
         is Filter.Social.Graph -> username.isNotBlank()
-        is Filter.Social.UserList -> dids.isNotEmpty() && dids.all(String::isNotBlank)
+        is Filter.Social.UserList -> dids.isListOfNonBlankStrings()
         is Filter.Social.StarterPack -> url.isNotBlank()
         is Filter.Social.ListMember -> url.isNotBlank()
         is Filter.Social.MagicAudience -> audienceId.isNotBlank()
@@ -37,3 +36,5 @@ val Filter.isValid: Boolean
         is Filter.ML.Moderation -> true
         is Filter.Analysis -> true
     }
+
+private fun List<String>.isListOfNonBlankStrings() = isNotEmpty() && all(String::isNotBlank)
