@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.graze.editor.ui
+package com.tunjid.heron.graze.editor.ui.filter
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.material3.MaterialTheme
@@ -95,6 +95,7 @@ fun EntityFilter(
                                 entityType = filter.entityType,
                                 values = filter.values,
                             )
+
                             Filter.Comparator.Set.NotIn -> Filter.Entity.Excludes(
                                 id = filter.id,
                                 entityType = filter.entityType,
