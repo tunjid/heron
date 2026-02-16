@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
 interface UserDataRepository {
+
     val notificationPreferences: Flow<NotificationPreferences>
 
     val preferences: Flow<Preferences>

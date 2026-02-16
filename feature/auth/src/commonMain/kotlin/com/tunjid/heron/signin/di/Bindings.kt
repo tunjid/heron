@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -63,6 +64,7 @@ import com.tunjid.heron.signin.RouteViewModelInitializer
 import com.tunjid.heron.signin.SignInScreen
 import com.tunjid.heron.signin.authMode
 import com.tunjid.heron.signin.canSignInLater
+import com.tunjid.heron.signin.canSwitchAccount
 import com.tunjid.heron.signin.createSessionAction
 import com.tunjid.heron.signin.submitButtonEnabled
 import com.tunjid.heron.signin.ui.stringResource
@@ -198,6 +200,7 @@ class SignInBindings(
                         ),
                         icon = when {
                             state.canSignInLater -> Icons.Rounded.Timer
+                            state.canSwitchAccount -> Icons.Rounded.SwapHoriz
                             else -> Icons.Rounded.Check
                         },
                         enabled = state.submitButtonEnabled,
