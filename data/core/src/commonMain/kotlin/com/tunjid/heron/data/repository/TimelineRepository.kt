@@ -1228,7 +1228,7 @@ private fun TimelineDao.timelineState(
         viewingProfileId = viewingProfileId?.id,
         sourceId = sourceId,
     ),
-    ::TimelineState
+    ::TimelineState,
 ).distinctUntilChanged()
 
 private suspend fun TimelineDao.isFirstPageForDifferentAnchor(
