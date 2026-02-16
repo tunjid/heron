@@ -415,22 +415,6 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
         ),
     ),
     FilterGroup(
-        nameRes = Res.string.filter_group_attribute,
-        icon = Icons.Rounded.Tune,
-        options = listOf(
-            FilterOption(
-                titleRes = Res.string.attribute_compare,
-                icon = Icons.AutoMirrored.Rounded.CompareArrows,
-                factory = Filter.Attribute.Compare::empty,
-            ),
-            FilterOption(
-                titleRes = Res.string.embed_type,
-                icon = Icons.Rounded.PermMedia,
-                factory = Filter.Attribute.Embed::empty,
-            ),
-        ),
-    ),
-    FilterGroup(
         nameRes = Res.string.filter_group_entity,
         icon = Icons.AutoMirrored.Rounded.ManageSearch,
         options = listOf(
@@ -443,6 +427,22 @@ private val AllFilterGroups: List<FilterGroup> = listOf(
                 titleRes = Res.string.entity_excludes,
                 icon = Icons.Rounded.Block,
                 factory = Filter.Entity.Excludes::empty,
+            ),
+        ),
+    ),
+    FilterGroup(
+        nameRes = Res.string.filter_group_attribute,
+        icon = Icons.Rounded.Tune,
+        options = listOf(
+            FilterOption(
+                titleRes = Res.string.attribute_compare,
+                icon = Icons.AutoMirrored.Rounded.CompareArrows,
+                factory = Filter.Attribute.Compare::empty,
+            ),
+            FilterOption(
+                titleRes = Res.string.embed_type,
+                icon = Icons.Rounded.PermMedia,
+                factory = Filter.Attribute.Embed::empty,
             ),
         ),
     ),

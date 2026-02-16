@@ -45,6 +45,7 @@ fun MLModerationFilter(
 ) {
     StandardFilter(
         modifier = modifier,
+        tint = filter.validationTint(),
         title = stringResource(Res.string.content_moderation),
         onRemove = onRemove,
         startContent = {

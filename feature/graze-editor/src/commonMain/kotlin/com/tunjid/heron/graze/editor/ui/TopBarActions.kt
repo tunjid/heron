@@ -33,6 +33,7 @@ import androidx.compose.runtime.setValue
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.graze.GrazeFeed
+import com.tunjid.heron.data.graze.isValid
 import com.tunjid.heron.graze.editor.Action
 import com.tunjid.heron.graze.editor.ui.SelectTextSheetState.Companion.rememberSelectTextState
 import com.tunjid.heron.ui.AppBarButton
@@ -69,7 +70,7 @@ fun TopBarActions(
     }
     AppBarButton(
         icon = Icons.Rounded.Save,
-        enabled = enabled,
+        enabled = enabled && grazeFeed.filter.isValid,
         iconDescription = stringResource(CommonStrings.save),
         onClick = {
             actions(
