@@ -264,13 +264,13 @@ internal class PersistedSessionManager @Inject constructor(
         install(
             atProtoAuth(
                 readAuth = {
-                    when (val sessionContext = currentCoroutineContext()[SessionContext.Key]) {
+                    when (val sessionContext = currentSessionContext()) {
                         is SessionContext.Previous -> sessionContext.tokens
                         else -> savedStateDataSource.signedInAuth.first()
                     }
                 },
                 saveAuth = { tokens ->
-                    when (val sessionContext = currentCoroutineContext()[SessionContext.Key]) {
+                    when (val sessionContext = currentSessionContext()) {
                         is SessionContext.Previous -> {
                             val profileId = sessionContext.tokens.authProfileId
                             if (tokens != null) savedStateDataSource.updateAuth(

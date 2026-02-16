@@ -2,6 +2,7 @@ package com.tunjid.heron.data.network
 
 import com.tunjid.heron.data.repository.SavedState
 import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.currentCoroutineContext
 
 internal sealed class SessionContext : CoroutineContext.Element {
 
@@ -23,3 +24,6 @@ internal sealed class SessionContext : CoroutineContext.Element {
 
     companion object Key : CoroutineContext.Key<SessionContext>
 }
+
+internal suspend fun currentSessionContext() =
+    currentCoroutineContext()[SessionContext.Key]

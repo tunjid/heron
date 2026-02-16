@@ -76,7 +76,7 @@ internal class KtorNetworkService(
         factor,
         block = {
             block(
-                when (currentCoroutineContext()[SessionContext.Key]) {
+                when (currentSessionContext()) {
                     is SessionContext.Previous -> validatingApi
                     else -> api
                 },

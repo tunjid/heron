@@ -71,6 +71,10 @@ abstract class SavedState {
 
     abstract val pastSessions: List<SessionSummary>?
 
+    abstract fun profileData(
+        profileId: ProfileId,
+    ): ProfileData?
+
     @Serializable
     sealed class AuthTokens {
         abstract val authProfileId: ProfileId
@@ -267,12 +271,6 @@ private fun SavedState.AuthTokens?.ifSignedIn(): SavedState.AuthTokens.Authentic
         -> null
     }
 
-internal val SavedState.profileData: Map<ProfileId, SavedState.ProfileData>
-    get() = when (this) {
-        is VersionedSavedState -> this.profileData
-        else -> emptyMap()
-    }
-
 private val SavedState.signedInProfileId: ProfileId?
     get() = auth.ifSignedIn()?.authProfileId
 
@@ -464,7 +462,7 @@ internal suspend inline fun <T> SavedStateDataSource.inCurrentProfileSession(
 ): T? {
     val state = savedState.first { it != InitialSavedState }
     val currentProfileId = state.signedInProfileId
-    val profileData = currentProfileId?.let { state.profileData[it] }
+    val profileData = currentProfileId?.let { state.profileData(it) }
 
     return withContext(
         SessionContext.Current(
@@ -493,8 +491,7 @@ internal suspend inline fun SavedStateDataSource.onEachSignedInProfile(
     crossinline block: suspend () -> Unit,
 ) = observedSignedInProfileId.collectLatest { profileId ->
     if (profileId == null) return@collectLatest
-    val state = savedState.value
-    val profileData = state.profileData[profileId] ?: return@collectLatest
+    val profileData = savedState.value.signedInProfileData ?: return@collectLatest
 
     withContext(
         SessionContext.Current(
@@ -514,8 +511,8 @@ internal inline fun <T> SavedStateDataSource.singleAuthorizedSessionFlow(
 ): Flow<T> = observedSignedInProfileId
     .flatMapLatest { profileId ->
         if (profileId == null) return@flatMapLatest emptyFlow()
-        val state = savedState.value
-        val profileData = state.profileData[profileId] ?: return@flatMapLatest emptyFlow()
+        val profileData = savedState.value.signedInProfileData ?: return@flatMapLatest emptyFlow()
+
         block(profileId)
             .flowOn(
                 SessionContext.Current(
@@ -532,8 +529,7 @@ internal inline fun <T> SavedStateDataSource.singleSessionFlow(
     crossinline block: suspend (ProfileId?) -> Flow<T>,
 ): Flow<T> = observedSignedInProfileId
     .flatMapLatest { profileId ->
-        val state = savedState.value
-        val profileData = profileId?.let { state.profileData[it] }
+        val profileData = profileId?.let { savedState.value.profileData(it) }
         block(profileId)
             .flowOn(
                 SessionContext.Current(
@@ -553,7 +549,7 @@ internal suspend inline fun <T> SavedStateDataSource.inPastSession(
 ): T? {
     val state = savedState.first { it != InitialSavedState }
 
-    val profileData = state.profileData[profileId] ?: return null
+    val profileData = state.profileData(profileId) ?: return null
     val auth = profileData.auth as? SavedState.AuthTokens.Authenticated ?: return null
 
     return withContext(

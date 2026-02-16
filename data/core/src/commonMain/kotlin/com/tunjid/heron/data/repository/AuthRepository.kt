@@ -15,6 +15,7 @@
  */
 
 package com.tunjid.heron.data.repository
+
 import app.bsky.actor.GetPreferencesResponse
 import app.bsky.actor.GetProfileQueryParams
 import app.bsky.actor.SavedFeedType
@@ -32,8 +33,9 @@ import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.logging.LogPriority
+import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.network.SessionContext
 import com.tunjid.heron.data.network.SessionManager
 import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
@@ -48,7 +50,6 @@ import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -179,40 +180,43 @@ internal class AuthTokenRepository(
     override suspend fun switchSession(
         sessionSummary: SessionSummary,
     ): Outcome = runCatchingUnlessCancelled {
-        val switched = savedStateDataSource.inCurrentProfileSession { currentProfileId ->
+        savedStateDataSource.inCurrentProfileSession { currentProfileId ->
+            if (currentProfileId == sessionSummary.profileId) {
+                return@inCurrentProfileSession
+            }
+
             val freshAuth = savedStateDataSource.inPastSession(sessionSummary.profileId) {
                 networkService.runCatchingWithMonitoredNetworkRetry {
                     getSession()
-                }.getOrElse {
-                    return@inPastSession null
-                }
-                currentCoroutineContext()[SessionContext]?.tokens as? SavedState.AuthTokens.Authenticated
-            }
-                ?: return@inCurrentProfileSession false
+                }.getOrNull()
 
-            if (currentProfileId == sessionSummary.profileId) {
-                return@inCurrentProfileSession true
-            }
+                val authenticatedToken = savedStateDataSource.savedState
+                    .value
+                    .profileData(sessionSummary.profileId)
+                    ?.auth
 
+                authenticatedToken as? SavedState.AuthTokens.Authenticated
+            }
+                ?: return@inCurrentProfileSession
+
+            // Switching should cause the current session to expire
             savedStateDataSource.switchSession(
                 profileId = sessionSummary.profileId,
                 freshAuth = freshAuth,
             )
 
-            true
-        } ?: true
-
-        if (!switched) {
-            return@runCatchingUnlessCancelled Outcome.Failure(
-                SessionSwitchException(sessionSummary.profileId),
-            )
+            logcat(LogPriority.WARN) {
+                """
+                    Session was successfully switched to ${sessionSummary.profileId},
+                     this coroutine should have been cancelled.
+                """.trimIndent()
+            }
         }
 
         savedStateDataSource.inCurrentProfileSession { newProfileId ->
-            if (newProfileId == sessionSummary.profileId) {
-                updateSignedInUser()
-            } else {
-                expiredSessionOutcome()
+            when (newProfileId) {
+                sessionSummary.profileId -> updateSignedInUser()
+                else -> SessionSwitchException(sessionSummary.profileId)
             }
         } ?: expiredSessionOutcome()
     }.toOutcome()
