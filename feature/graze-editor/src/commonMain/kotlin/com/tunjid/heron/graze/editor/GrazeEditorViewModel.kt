@@ -320,8 +320,14 @@ private inline fun Filter.Root.updateFilters(
 private fun Action.Update.toGrazeFeedUpdate(): GrazeFeed.Update = when (this) {
     is Action.Update.InitialLoad -> Get(recordKey = recordKey)
     is Action.Update.Save -> when (val feed = feed) {
-        is GrazeFeed.Created -> Edit(feed = feed)
-        is GrazeFeed.Pending -> Create(feed = feed)
+        is GrazeFeed.Created -> Edit(
+            feed = feed,
+        )
+        is GrazeFeed.Pending -> Create(
+            feed = feed.copy(
+                displayName = feed.displayName ?: feed.recordKey.value,
+            ),
+        )
     }
     is Action.Update.Delete -> Delete(recordKey = recordKey)
 }

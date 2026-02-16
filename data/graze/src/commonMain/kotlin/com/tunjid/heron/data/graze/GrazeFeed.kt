@@ -37,7 +37,7 @@ sealed interface GrazeFeed {
     data class Pending(
         @SerialName("rkey")
         override val recordKey: RecordKey,
-        override val displayName: String = "My custom feed",
+        override val displayName: String? = null,
         override val description: String? = null,
         override val filter: Filter.Root,
     ) : Editable
