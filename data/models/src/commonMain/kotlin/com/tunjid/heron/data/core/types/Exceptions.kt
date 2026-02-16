@@ -51,4 +51,4 @@ class RecordCreationException(
 
 class SessionSwitchException(
     profileId: Id.Profile,
-) : Exception("Unable to switch to a accounts to $profileId")
+) : Exception("Unable to switch sessions to $profileId")
