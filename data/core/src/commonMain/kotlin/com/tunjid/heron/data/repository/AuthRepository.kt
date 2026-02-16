@@ -216,7 +216,7 @@ internal class AuthTokenRepository(
         savedStateDataSource.inCurrentProfileSession { newProfileId ->
             when (newProfileId) {
                 sessionSummary.profileId -> updateSignedInUser()
-                else -> throw SessionSwitchException(sessionSummary.profileId)
+                else -> throw SessionSwitchException(sessionSummary.profileHandle)
             }
         } ?: expiredSessionOutcome()
     }.toOutcome()
