@@ -18,7 +18,7 @@ package com.tunjid.heron.data.graze
 
 val Filter.isValid: Boolean
     get() = when (this) {
-        is Filter.Root -> filters.all(Filter::isValid)
+        is Filter.Root -> filters.isNotEmpty() && filters.all(Filter::isValid)
         is Filter.Attribute.Compare -> targetValue.isNotBlank()
         is Filter.Attribute.Embed -> true
         is Filter.Entity.Matches -> values.isNotEmpty()

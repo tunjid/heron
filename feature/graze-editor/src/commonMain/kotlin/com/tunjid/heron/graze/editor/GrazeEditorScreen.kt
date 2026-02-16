@@ -39,6 +39,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -67,6 +68,7 @@ import com.tunjid.heron.graze.editor.ui.filter.SocialMagicAudienceFilter
 import com.tunjid.heron.graze.editor.ui.filter.SocialStarterPackFilter
 import com.tunjid.heron.graze.editor.ui.filter.SocialUserListFilter
 import com.tunjid.heron.graze.editor.ui.filter.UnsupportedFilter
+import com.tunjid.heron.graze.editor.ui.filter.validationTint
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.Indicator
 import com.tunjid.heron.ui.UiTokens
@@ -299,6 +301,9 @@ fun FilterRow(
                 sharedContentState = rememberSharedContentState(filter.backgroundSharedElementKey()),
                 animatedVisibilityScope = animatedVisibilityScope,
             ),
+        colors = CardDefaults.cardColors(
+            containerColor = filter.validationTint(),
+        ),
         onClick = {
             enterFilter(index)
         },
