@@ -61,6 +61,7 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.post.PostReasonLine
+import com.tunjid.heron.timeline.ui.post.feature.EmptyPost
 import com.tunjid.heron.timeline.ui.post.feature.LoadingPost
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
 import com.tunjid.heron.timeline.utilities.authorMuted
@@ -120,6 +121,11 @@ fun TimelineItem(
                         modifier = Modifier
                             .fillMaxWidth(),
                         presentation = presentation,
+                    )
+                    is TimelineItem.Empty -> EmptyPost(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        item = item,
                     )
                     is TimelineItem.Thread if presentation == Timeline.Presentation.Text.WithEmbed -> ThreadedPost(
                         modifier = Modifier

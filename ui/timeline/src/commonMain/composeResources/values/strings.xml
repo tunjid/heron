@@ -131,4 +131,12 @@
     <string name="writable_repost">repost</string>
     <string name="writable_repost_removal">repost removal</string>
     <string name="writable_thread_gate_update">post reply update</string>
+    <string name="empty_timeline_generic">This feed is empty</string>
+    <string name="empty_timeline_feed">This feed is empty</string>
+    <string name="empty_timeline_list">This list is empty</string>
+    <string name="empty_timeline_posts">No posts yet</string>
+    <string name="empty_timeline_replies">No replies yet</string>
+    <string name="empty_timeline_likes">No likes yet</string>
+    <string name="empty_timeline_media">No media yet</string>
+    <string name="empty_timeline_videos">No videos yet</string>
 </resources>

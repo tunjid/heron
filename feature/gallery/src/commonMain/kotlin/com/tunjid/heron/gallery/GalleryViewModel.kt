@@ -411,6 +411,7 @@ private fun profileGalleryTimeline(
             profileId = source.profileId,
             type = source.type,
             lastRefreshed = null,
+            itemsAvailable = 0,
             presentation = Timeline.Presentation.Media.Expanded,
         )
     }

@@ -449,7 +449,7 @@ sealed class TimelineItem {
         override val signedInProfileId: ProfileId?,
     ) : TimelineItem()
 
-    sealed class Placeholder: TimelineItem() {
+    sealed class Placeholder : TimelineItem() {
         override val post: Post
             get() = LoadingPost
 
