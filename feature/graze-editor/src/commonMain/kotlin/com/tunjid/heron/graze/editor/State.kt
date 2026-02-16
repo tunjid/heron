@@ -18,6 +18,7 @@ package com.tunjid.heron.graze.editor
 
 import androidx.navigationevent.NavigationEventInfo
 import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.graze.Filter
@@ -43,6 +44,8 @@ data class State(
     val feedGenerator: FeedGenerator? = null,
     val sharedElementPrefix: String,
     val isLoading: Boolean = false,
+    @Transient
+    val recentLists: List<FeedList> = emptyList(),
     @Transient
     val suggestedProfiles: List<Profile> = emptyList(),
     @Transient
@@ -124,6 +127,8 @@ sealed class Action(val key: String) {
             val description: String?,
         ) : Metadata()
     }
+
+    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
     sealed class Navigate :
         Action(key = "Navigate"),

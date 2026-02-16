@@ -85,6 +85,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.take
@@ -192,6 +193,9 @@ class ActualProfileViewModel(
                             writeQueue = writeQueue,
                         )
                         is Action.PageChanged -> action.flow.pageChangeMutations()
+                        is Action.UpdateRecentLists -> action.flow.recentListsMutations(
+                            recordRepository = recordRepository,
+                        )
                     }
                 },
             )
@@ -205,6 +209,16 @@ fun recentConversationMutations(
         .mapToMutation { conversations ->
             copy(recentConversations = conversations)
         }
+
+fun Flow<Action.UpdateRecentLists>.recentListsMutations(
+    recordRepository: RecordRepository,
+): Flow<Mutation<State>> =
+    flatMapLatest {
+        recordRepository.recentLists
+            .mapToMutation { lists ->
+                copy(recentLists = lists)
+            }
+    }
 
 private fun loadPreferencesMutations(
     userDataRepository: UserDataRepository,

@@ -26,6 +26,7 @@ import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.PostDataQuery
 import com.tunjid.heron.data.repository.PostRepository
+import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.repository.recentConversations
 import com.tunjid.heron.data.utilities.writequeue.Writable
@@ -58,6 +59,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 
 internal typealias PostsStateHolder = ActionStateMutator<Action, StateFlow<State>>
@@ -75,6 +77,7 @@ class ActualPostsViewModel(
     navActions: (NavigationMutation) -> Unit,
     postsRepository: PostRepository,
     messageRepository: MessageRepository,
+    recordRepository: RecordRepository,
     userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
     @Assisted
@@ -140,6 +143,9 @@ class ActualPostsViewModel(
                     is Action.MuteAccount -> action.flow.muteAccountMutations(
                         writeQueue = writeQueue,
                     )
+                    is Action.UpdateRecentLists -> action.flow.recentListsMutations(
+                        recordRepository = recordRepository,
+                    )
                 }
             }
         },
@@ -176,6 +182,16 @@ private fun recentConversationMutations(
         .mapToMutation { conversations ->
             copy(recentConversations = conversations)
         }
+
+fun Flow<Action.UpdateRecentLists>.recentListsMutations(
+    recordRepository: RecordRepository,
+): Flow<Mutation<State>> =
+    flatMapLatest {
+        recordRepository.recentLists
+            .mapToMutation { lists ->
+                copy(recentLists = lists)
+            }
+    }
 
 private fun loadPreferencesMutations(
     userDataRepository: UserDataRepository,

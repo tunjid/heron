@@ -27,6 +27,7 @@ import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
+import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.repository.UserDataRepository
@@ -66,6 +67,7 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -87,6 +89,7 @@ class ActualListViewModel(
     messageRepository: MessageRepository,
     timelineRepository: TimelineRepository,
     profileRepository: ProfileRepository,
+    recordRepository: RecordRepository,
     authRepository: AuthRepository,
     userDataRepository: UserDataRepository,
     @Assisted
@@ -149,6 +152,9 @@ class ActualListViewModel(
                         )
                         is Action.MuteAccount -> action.flow.muteAccountMutations(
                             writeQueue = writeQueue,
+                        )
+                        is Action.UpdateRecentLists -> action.flow.recentListsMutations(
+                            recordRepository = recordRepository,
                         )
                     }
                 },
@@ -395,6 +401,16 @@ private fun Flow<Action.UpdateFeedListStatus>.feedListStatusMutations(
         writable.writeStatusMessage(status)?.let {
             emit { copy(messages = messages + it) }
         }
+    }
+
+fun Flow<Action.UpdateRecentLists>.recentListsMutations(
+    recordRepository: RecordRepository,
+): Flow<Mutation<State>> =
+    flatMapLatest {
+        recordRepository.recentLists
+            .mapToMutation { lists ->
+                copy(recentLists = lists)
+            }
     }
 
 private fun listStatusMutations(

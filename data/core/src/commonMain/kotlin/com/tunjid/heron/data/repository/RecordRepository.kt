@@ -56,6 +56,7 @@ import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.graze.GrazeDid
 import com.tunjid.heron.data.graze.GrazeFeed
 import com.tunjid.heron.data.network.FeedCreationService
@@ -72,12 +73,15 @@ import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
@@ -85,6 +89,8 @@ import sh.christian.ozone.api.RKey
 interface RecordRepository {
 
     val subscribedLabelers: Flow<List<Labeler>>
+
+    val recentLists: Flow<List<FeedList>>
 
     fun embeddableRecord(
         uri: EmbeddableRecordUri,
@@ -116,6 +122,8 @@ interface RecordRepository {
 }
 
 internal class OfflineRecordRepository @Inject constructor(
+    @AppMainScope
+    appMainScope: CoroutineScope,
     private val postDao: PostDao,
     private val listDao: ListDao,
     private val labelDao: LabelDao,
@@ -131,6 +139,20 @@ internal class OfflineRecordRepository @Inject constructor(
 
     override val subscribedLabelers: Flow<List<Labeler>> =
         recordResolver.subscribedLabelers
+
+    override val recentLists: Flow<List<FeedList>> =
+        savedStateDataSource.singleAuthorizedSessionFlow { profileId ->
+            listDao.profileLists(
+                creatorId = profileId.id,
+                limit = 30,
+                offset = 0,
+            ).map { it.map(PopulatedListEntity::asExternalModel) }
+        }
+            .stateIn(
+                scope = appMainScope,
+                started = SharingStarted.WhileSubscribed(1_000),
+                initialValue = emptyList(),
+            )
 
     override fun embeddableRecord(uri: EmbeddableRecordUri): Flow<Record.Embeddable> =
         when (uri) {
