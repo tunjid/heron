@@ -325,7 +325,8 @@ private fun Action.Update.toGrazeFeedUpdate(): GrazeFeed.Update = when (this) {
         )
         is GrazeFeed.Pending -> Create(
             feed = feed.copy(
-                displayName = feed.displayName ?: feed.recordKey.value,
+                displayName = feed.displayName.takeUnless(String?::isNullOrBlank)
+                    ?: feed.recordKey.value,
             ),
         )
     }
