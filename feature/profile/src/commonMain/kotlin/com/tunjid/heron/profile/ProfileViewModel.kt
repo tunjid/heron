@@ -327,7 +327,7 @@ private fun loadProfileMutations(
                                     if (!profile.isLabeler) addAll(
                                         scope.recordStateHolders(
                                             profileId = profile.did,
-                                            profileRepository = profileRepository,
+                                            recordRepository = recordRepository,
                                         ),
                                     )
                                 },
@@ -482,7 +482,7 @@ private fun Flow<Action.PageChanged>.pageChangeMutations(): Flow<Mutation<State>
 
 private fun CoroutineScope.recordStateHolders(
     profileId: Id.Profile,
-    profileRepository: ProfileRepository,
+    recordRepository: RecordRepository,
 ): List<ProfileScreenStateHolders.Records<*>> =
     listOfNotNull(
         ProfileScreenStateHolders.Records.Feeds(
@@ -497,7 +497,7 @@ private fun CoroutineScope.recordStateHolders(
                     ),
                 ),
                 itemId = FeedGenerator::cid,
-                cursorListLoader = profileRepository::feedGenerators,
+                cursorListLoader = recordRepository::feedGenerators,
             ),
         ),
         ProfileScreenStateHolders.Records.StarterPacks(
@@ -512,7 +512,7 @@ private fun CoroutineScope.recordStateHolders(
                     ),
                 ),
                 itemId = StarterPack::cid,
-                cursorListLoader = profileRepository::starterPacks,
+                cursorListLoader = recordRepository::starterPacks,
             ),
         ),
         ProfileScreenStateHolders.Records.Lists(
@@ -527,7 +527,7 @@ private fun CoroutineScope.recordStateHolders(
                     ),
                 ),
                 itemId = FeedList::cid,
-                cursorListLoader = profileRepository::lists,
+                cursorListLoader = recordRepository::lists,
             ),
         ),
     )
