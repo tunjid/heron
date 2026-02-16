@@ -999,16 +999,16 @@ internal class OfflineTimelineRepository(
         name: String,
         position: Int,
         isPinned: Boolean,
-    ): Flow<Timeline.Home.Following> = timelineDao.lastFetchKey(
-        viewingProfileId = signedInProfileId?.id,
+    ): Flow<Timeline.Home.Following> = timelineDao.timelineState(
+        viewingProfileId = signedInProfileId,
         sourceId = Constants.timelineFeed.uri,
     )
-        .distinctUntilChanged()
-        .map { timelinePreferenceEntity ->
+        .map { (timelinePreferenceEntity, count) ->
             Timeline.Home.Following(
                 name = name,
                 position = position,
                 lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
+                itemsAvailable = count,
                 presentation = timelinePreferenceEntity.preferredPresentation(),
                 isPinned = isPinned,
             )
@@ -1025,16 +1025,16 @@ internal class OfflineTimelineRepository(
         .mapNotNull(List<PopulatedProfileEntity>::firstOrNull)
         .distinctUntilChangedBy { it.entity.did }
         .flatMapLatest { populatedProfileEntity ->
-            timelineDao.lastFetchKey(
-                viewingProfileId = signedInProfileId?.id,
+            timelineDao.timelineState(
+                viewingProfileId = signedInProfileId,
                 sourceId = type.sourceId(populatedProfileEntity.entity.did),
             )
-                .distinctUntilChanged()
-                .map { timelinePreferenceEntity ->
+                .map { (timelinePreferenceEntity, count) ->
                     Timeline.Profile(
                         profileId = populatedProfileEntity.entity.did,
                         type = type,
                         lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
+                        itemsAvailable = count,
                         presentation = timelinePreferenceEntity.preferredPresentation(),
                     )
                 }
@@ -1050,16 +1050,16 @@ internal class OfflineTimelineRepository(
         .filterNotNull()
         .distinctUntilChanged()
         .flatMapLatest { populatedFeedGeneratorEntity ->
-            timelineDao.lastFetchKey(
-                viewingProfileId = signedInProfileId?.id,
+            timelineDao.timelineState(
+                viewingProfileId = signedInProfileId,
                 sourceId = populatedFeedGeneratorEntity.entity.uri.uri,
             )
-                .distinctUntilChanged()
-                .map { timelinePreferenceEntity ->
+                .map { (timelinePreferenceEntity, count) ->
                     Timeline.Home.Feed(
                         position = position,
                         feedGenerator = populatedFeedGeneratorEntity.asExternalModel(),
                         lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
+                        itemsAvailable = count,
                         presentation = timelinePreferenceEntity.preferredPresentation(),
                         supportedPresentations = listOfNotNull(
                             Timeline.Presentation.Text.WithEmbed,
@@ -1091,17 +1091,18 @@ internal class OfflineTimelineRepository(
     ): Flow<Timeline.Home.List> = listDao.list(uri.uri)
         .filterNotNull()
         .distinctUntilChangedBy(PopulatedListEntity::entity)
-        .flatMapLatest {
-            timelineDao.lastFetchKey(
-                viewingProfileId = signedInProfileId?.id,
-                sourceId = it.entity.uri.uri,
+        .flatMapLatest { populatedListEntity ->
+            timelineDao.timelineState(
+                viewingProfileId = signedInProfileId,
+                sourceId = populatedListEntity.entity.uri.uri,
             )
-                .distinctUntilChanged()
-                .map { timelinePreferenceEntity ->
+                .map { (timelinePreferenceEntity, count) ->
+                    val feedList = populatedListEntity.asExternalModel()
                     Timeline.Home.List(
                         position = position,
-                        feedList = it.asExternalModel(),
+                        feedList = feedList,
                         lastRefreshed = timelinePreferenceEntity?.lastFetchedAt,
+                        itemsAvailable = count,
                         presentation = timelinePreferenceEntity.preferredPresentation(),
                         isPinned = isPinned,
                     )
@@ -1215,6 +1216,21 @@ private fun TimelinePreferencesEntity?.preferredPresentation(): Timeline.Present
         else -> Timeline.Presentation.Text.WithEmbed
     }
 
+private fun TimelineDao.timelineState(
+    viewingProfileId: ProfileId?,
+    sourceId: String,
+): Flow<TimelineState> = combine(
+    lastFetchKey(
+        viewingProfileId = viewingProfileId?.id,
+        sourceId = sourceId,
+    ),
+    count(
+        viewingProfileId = viewingProfileId?.id,
+        sourceId = sourceId,
+    ),
+    ::TimelineState
+).distinctUntilChanged()
+
 private suspend fun TimelineDao.isFirstPageForDifferentAnchor(
     signedInProfileId: ProfileId?,
     query: TimelineQuery,
@@ -1226,6 +1242,11 @@ private suspend fun TimelineDao.isFirstPageForDifferentAnchor(
     ).first()?.lastFetchedAt
     return lastFetchedAt?.toEpochMilliseconds() != query.data.cursorAnchor.toEpochMilliseconds()
 }
+
+private data class TimelineState(
+    val preferences: TimelinePreferencesEntity?,
+    val count: Long,
+)
 
 private fun FeedGeneratorEntity.supportsMediaPresentation() =
     contentMode in MEDIA_CONTENT_MODES
