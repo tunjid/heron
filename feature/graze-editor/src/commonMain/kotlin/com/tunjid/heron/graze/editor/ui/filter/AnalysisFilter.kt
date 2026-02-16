@@ -20,8 +20,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.tunjid.heron.data.graze.Filter
-import com.tunjid.heron.graze.editor.ui.ComparatorDropdown
-import com.tunjid.heron.graze.editor.ui.Dropdown
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.analysis_arbitrary_default
 import heron.feature.graze_editor.generated.resources.analysis_emotion_admiration

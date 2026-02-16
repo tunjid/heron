@@ -29,8 +29,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.graze.Filter
-import com.tunjid.heron.graze.editor.ui.ComparatorDropdown
-import com.tunjid.heron.graze.editor.ui.Dropdown
 import com.tunjid.heron.graze.editor.ui.SelectTextSheetState.Companion.rememberSelectProfileHandleState
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.add_profile
