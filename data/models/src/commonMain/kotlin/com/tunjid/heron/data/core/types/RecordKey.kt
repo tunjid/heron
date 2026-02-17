@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.core.types
 
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.jvm.JvmInline
 import kotlin.random.Random
 import kotlin.time.Clock
@@ -30,19 +31,37 @@ value class RecordKey(
     companion object {
         private const val ALPHABET = "234567abcdefghijklmnopqrstuvwxyz"
         private const val MASK = 0x1FL // Binary 11111, used to get the 5 least significant bits.
+        private val clockId = Random.nextInt(0, 1024)
+
+        @OptIn(ExperimentalAtomicApi::class)
+        private val lastTid = kotlin.concurrent.atomics.AtomicLong(0L)
 
         /**
          * Generates a new [RecordKey] with a valid AT Protocol TID.
          *
-         * This method should not be used in concurrent environments as it
-         * does not guarantee that the tid monotonically increases.
+         * This method is thread-safe and guarantees that TIDs are monotonic.
          */
-        @OptIn(ExperimentalTime::class)
+        @OptIn(ExperimentalTime::class, ExperimentalAtomicApi::class)
         fun generate(): RecordKey {
             val timeMicros = Clock.System.now().toEpochMilliseconds() * 1000
-            val clockId = Random.nextInt(0, 1024)
-            val tidInt = (timeMicros shl 10) or clockId.toLong()
-            return RecordKey(encode(tidInt))
+            val timestampPart = timeMicros shl 10
+
+            var nextTid: Long
+            do {
+                val last = lastTid.load()
+                // The timestamp part of the last generated TID
+                val lastTimestampPart = last and ((-1L) shl 10)
+
+                nextTid = if (timestampPart > lastTimestampPart) {
+                    // Current time is ahead, we can use it with the static clockId
+                    timestampPart or clockId.toLong()
+                } else {
+                    // Same millisecond or clock went backwards, increment the last TID
+                    last + 1
+                }
+            } while (!lastTid.compareAndSet(last, nextTid))
+
+            return RecordKey(encode(nextTid))
         }
 
         /**
