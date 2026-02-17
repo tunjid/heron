@@ -30,18 +30,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.tunjid.heron.data.core.models.FeedGenerator
-import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.graze.GrazeFeed
 import com.tunjid.heron.data.graze.isValid
-import com.tunjid.heron.graze.editor.Action
-import com.tunjid.heron.graze.editor.ui.SelectTextSheetState.Companion.rememberSelectTextState
 import com.tunjid.heron.ui.AppBarButton
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.delete_feed
 import heron.feature.graze_editor.generated.resources.edit_feed
-import heron.feature.graze_editor.generated.resources.edit_record_key
 import heron.ui.core.generated.resources.more_options
 import heron.ui.core.generated.resources.save
 import org.jetbrains.compose.resources.stringResource
@@ -49,36 +44,16 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun TopBarActions(
     grazeFeed: GrazeFeed.Editable,
-    feedGenerator: FeedGenerator?,
     enabled: Boolean,
-    actions: (Action) -> Unit,
+    onEditClicked: () -> Unit,
+    onSaveClicked: () -> Unit,
+    onDeleteClicked: () -> Unit,
 ) {
-    val editRecordKeySheetState = rememberSelectTextState(
-        title = stringResource(Res.string.edit_record_key),
-    ) { text ->
-        actions(
-            Action.Metadata.SetRecordKey(RecordKey(text)),
-        )
-    }
-    val editFeedInfoSheetState = rememberEditFeedInfoSheetState { name, description ->
-        actions(
-            Action.Metadata.FeedGenerator(
-                displayName = name,
-                description = description,
-            ),
-        )
-    }
     AppBarButton(
         icon = Icons.Rounded.Save,
         enabled = enabled && grazeFeed.filter.isValid,
         iconDescription = stringResource(CommonStrings.save),
-        onClick = {
-            actions(
-                Action.Update.Save(
-                    feed = grazeFeed,
-                ),
-            )
-        },
+        onClick = onSaveClicked,
     )
     Box {
         var showMenu by remember { mutableStateOf(false) }
@@ -99,30 +74,18 @@ fun TopBarActions(
             expanded = showMenu,
             onDismissRequest = { showMenu = false },
         ) {
-            if (grazeFeed is GrazeFeed.Pending) DropdownMenuItem(
-                text = { Text(stringResource(Res.string.edit_record_key)) },
-                onClick = {
-                    showMenu = false
-                    editRecordKeySheetState.show(
-                        currentText = grazeFeed.recordKey.value,
-                    )
-                },
-            )
             DropdownMenuItem(
                 text = { Text(stringResource(Res.string.edit_feed)) },
                 onClick = {
                     showMenu = false
-                    editFeedInfoSheetState.show(
-                        currentName = grazeFeed.displayName ?: feedGenerator?.displayName ?: "",
-                        currentDescription = grazeFeed.description ?: feedGenerator?.description,
-                    )
+                    onEditClicked()
                 },
             )
             if (grazeFeed is GrazeFeed.Created) DropdownMenuItem(
                 text = { Text(stringResource(Res.string.delete_feed)) },
                 onClick = {
                     showMenu = false
-                    actions(Action.Update.Delete(grazeFeed.recordKey))
+                    onDeleteClicked()
                 },
             )
         }

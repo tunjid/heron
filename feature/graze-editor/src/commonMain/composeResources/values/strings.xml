@@ -75,7 +75,8 @@
     <string name="toxic_category">Toxic Category</string>
     <string name="topic_label">Topic Label</string>
     <string name="tag">Tag</string>
-    <string name="graze_editor">Graze Editor</string>
+    <string name="graze_editor">Create a Graze feed</string>
+    <string name="no_display_name">No feed name set</string>
     <string name="all_of_these_and">Match all of these</string>
     <string name="any_of_these_or">Match any of these</string>
     <string name="items_count">level %1$d, %2$d items</string>

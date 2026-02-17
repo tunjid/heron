@@ -34,10 +34,13 @@ import com.tunjid.heron.graze.editor.ActualGrazeEditorViewModel
 import com.tunjid.heron.graze.editor.FilterNavigationEventInfo
 import com.tunjid.heron.graze.editor.GrazeEditorScreen
 import com.tunjid.heron.graze.editor.RouteViewModelInitializer
+import com.tunjid.heron.graze.editor.State
 import com.tunjid.heron.graze.editor.currentFilter
+import com.tunjid.heron.graze.editor.ui.EditFeedInfoSheetState
 import com.tunjid.heron.graze.editor.ui.Title
 import com.tunjid.heron.graze.editor.ui.TopBarActions
 import com.tunjid.heron.graze.editor.ui.rememberAddFilterSheetState
+import com.tunjid.heron.graze.editor.ui.rememberEditFeedInfoSheetState
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -48,8 +51,6 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransformProvider
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
-import com.tunjid.heron.ui.modifiers.blockClickEvents
-import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -182,6 +183,15 @@ class GrazeEditorBindings(
                 onSnackBarMessageConsumed = {
                 },
                 topBar = {
+                    val editFeedInfoSheetState =
+                        rememberEditFeedInfoSheetState { name, description ->
+                            viewModel.accept(
+                                Action.Metadata(
+                                    displayName = name,
+                                    description = description,
+                                ),
+                            )
+                        }
                     PoppableDestinationTopAppBar(
                         title = {
                             Title(
@@ -205,14 +215,30 @@ class GrazeEditorBindings(
                                     }
                                 },
                                 paneScaffoldState = this,
+                                onTitleClicked = {
+                                    editFeedInfoSheetState.editFeed(state)
+                                },
                             )
                         },
                         actions = {
                             TopBarActions(
                                 grazeFeed = state.grazeFeed,
-                                feedGenerator = state.feedGenerator,
                                 enabled = !state.isLoading,
-                                actions = viewModel.accept,
+                                onEditClicked = {
+                                    editFeedInfoSheetState.editFeed(state)
+                                },
+                                onSaveClicked = {
+                                    viewModel.accept(
+                                        Action.Update.Save(
+                                            feed = state.grazeFeed,
+                                        ),
+                                    )
+                                },
+                                onDeleteClicked = {
+                                    viewModel.accept(
+                                        Action.Update.Delete(state.grazeFeed.recordKey),
+                                    )
+                                },
                             )
                         },
                         onBackPressed = {
@@ -254,5 +280,17 @@ class GrazeEditorBindings(
                 viewModel.accept(Action.EditorNavigation.ExitFilter)
             }
         },
+    )
+}
+
+private fun EditFeedInfoSheetState.editFeed(
+    state: State,
+) {
+    show(
+        currentName = state.grazeFeed.displayName
+            ?: state.feedGenerator?.displayName
+            ?: "",
+        currentDescription = state.grazeFeed.description
+            ?: state.feedGenerator?.description,
     )
 }

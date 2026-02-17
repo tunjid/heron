@@ -99,7 +99,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                         modifier = Modifier
                             .size(36.dp),
                         sharedContentState = rememberSharedContentState(
-                            key = SignedInUserAvatarSharedElementKey,
+                            key = UiTokens.SignedInUserAvatarSharedElementKey,
                         ),
                     ) {
                         AsyncImage(
@@ -108,7 +108,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                                 .clickable {
                                     onSignedInProfileClicked(
                                         profile,
-                                        SignedInUserAvatarSharedElementKey,
+                                        UiTokens.SignedInUserAvatarSharedElementKey,
                                     )
                                 },
                             args = remember(profile) {
@@ -211,11 +211,6 @@ private fun Modifier.rootAppBarBlur(
     progress = progress,
 )
 
-private val BackArrowEnter: EnterTransition = slideInHorizontally { -it }
-private val BackArrowExit: ExitTransition = slideOutHorizontally { -it }
-
 private val RootAppBarBlurRadius = 60.dp
-
-private const val SignedInUserAvatarSharedElementKey = "self"
 private const val MaxTransparency = 0.1f
 private const val HundredPercent = 1f

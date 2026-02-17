@@ -36,7 +36,7 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     val grazeFeed: GrazeFeed.Editable = GrazeFeed.Pending(
-        recordKey = RecordKey("feed-${Clock.System.now().epochSeconds}"),
+        recordKey = RecordKey.generate(),
         filter = Filter.And(
             filters = emptyList(),
         ),
@@ -118,16 +118,10 @@ sealed class Action(val key: String) {
         ) : Update()
     }
 
-    sealed class Metadata : Action("Metadata") {
-        data class SetRecordKey(
-            val recordKey: RecordKey,
-        ) : Metadata()
-
-        data class FeedGenerator(
-            val displayName: String,
-            val description: String?,
-        ) : Metadata()
-    }
+    data class Metadata(
+        val displayName: String,
+        val description: String?,
+    ) : Action("Metadata")
 
     data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
