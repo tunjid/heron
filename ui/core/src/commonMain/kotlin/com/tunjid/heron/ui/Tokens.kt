@@ -47,6 +47,8 @@ object UiTokens {
 
     val BookmarkBlue: Color = Color(0xFF1D9BF0)
 
+    const val SignedInUserAvatarSharedElementKey = "self"
+
     const val navigationBarSharedElementZIndex = 10f
     const val appBarSharedElementZIndex = 12f
     const val fabSharedElementZIndex = 14f

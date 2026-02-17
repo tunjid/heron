@@ -196,13 +196,6 @@ private suspend fun FlowCollector<Mutation<State>>.switchSessionMutation(
             delay(AccountSwitchPhase.SUCCESS.changeDelay)
 
             navActions(NavigationContext::resetAuthNavigation)
-
-            emit {
-                copy(
-                    switchPhase = AccountSwitchPhase.IDLE,
-                    switchingSession = null,
-                )
-            }
         }
 
         is Outcome.Failure -> {

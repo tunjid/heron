@@ -17,6 +17,8 @@
 package com.tunjid.heron.settings
 
 import androidx.compose.animation.animateBounds
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,14 +26,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.tunjid.composables.ui.animate
 import com.tunjid.heron.scaffold.navigation.moderationDestination
 import com.tunjid.heron.scaffold.navigation.notificationSettingsDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.settings.ui.AccountSwitchingItem
-import com.tunjid.heron.settings.ui.AccountSwitchingTransitionLayer
 import com.tunjid.heron.settings.ui.AppearanceItem
 import com.tunjid.heron.settings.ui.ContentAndMediaItem
 import com.tunjid.heron.settings.ui.FeedbackItem
@@ -47,25 +51,28 @@ internal fun SettingsScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            state.signedInProfilePreferences?.let { signedInProfilePreferences ->
-                AccountSwitchingItem(
-                    sessionSummaries = state.pastSessions,
-                    onAddAccountClick = {
-                        actions(Action.Navigate.To(signInDestination()))
-                    },
-                    onAccountSelected = { session ->
-                        actions(Action.SwitchSession(session))
-                    },
-                    paneScaffoldState = paneScaffoldState,
-                    activeProfileId = state.activeProfileId,
-                )
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        state.signedInProfilePreferences?.let { signedInProfilePreferences ->
+            AccountSwitchingItem(
+                modifier = Modifier,
+                sessionSummaries = state.pastSessions,
+                switchPhase = state.switchPhase,
+                activeProfileId = state.activeProfileId,
+                switchingSession = state.switchingSession,
+                onAddAccountClick = {
+                    actions(Action.Navigate.To(signInDestination()))
+                },
+                onAccountSelected = { session ->
+                    actions(Action.SwitchSession(session))
+                },
+                paneScaffoldState = paneScaffoldState,
+            )
+            if (state.switchPhase == AccountSwitchPhase.IDLE) {
                 ContentAndMediaItem(
                     modifier = Modifier
                         .animateBounds(paneScaffoldState),
@@ -103,28 +110,22 @@ internal fun SettingsScreen(
                         actions(Action.SetAutoHideBottomNavigation(it))
                     },
                 )
-            }
-            FeedbackItem(
-                modifier = Modifier
-                    .animateBounds(paneScaffoldState),
-            )
-            OpenSourceLibrariesItem(
-                modifier = Modifier
-                    .animateBounds(paneScaffoldState),
-                libraries = state.openSourceLibraries,
-            )
-            SignOutItem(
-                modifier = Modifier
-                    .animateBounds(paneScaffoldState),
-            ) {
-                actions(Action.SignOut)
+                FeedbackItem(
+                    modifier = Modifier
+                        .animateBounds(paneScaffoldState),
+                )
+                OpenSourceLibrariesItem(
+                    modifier = Modifier
+                        .animateBounds(paneScaffoldState),
+                    libraries = state.openSourceLibraries,
+                )
+                SignOutItem(
+                    modifier = Modifier
+                        .animateBounds(paneScaffoldState),
+                ) {
+                    actions(Action.SignOut)
+                }
             }
         }
-
-        AccountSwitchingTransitionLayer(
-            paneScaffoldState = paneScaffoldState,
-            phase = state.switchPhase,
-            session = state.switchingSession,
-        )
     }
 }

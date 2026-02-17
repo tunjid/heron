@@ -1,6 +1,8 @@
 package com.tunjid.heron.settings.ui
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.animateBounds
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloat
@@ -9,7 +11,6 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,12 +37,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.movableContentWithReceiverOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,6 +62,7 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.settings.AccountSwitchPhase
 import com.tunjid.heron.ui.OverlappingAvatarRow
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.feature.settings.generated.resources.Res
@@ -73,10 +75,12 @@ import org.jetbrains.compose.resources.stringResource
 fun AccountSwitchingItem(
     modifier: Modifier = Modifier,
     paneScaffoldState: PaneScaffoldState,
+    switchPhase: AccountSwitchPhase,
     activeProfileId: ProfileId?,
     sessionSummaries: List<SessionSummary>,
     onAddAccountClick: () -> Unit,
     onAccountSelected: (SessionSummary) -> Unit,
+    switchingSession: SessionSummary?,
 ) {
     when {
         sessionSummaries.size <= 1 -> {
@@ -87,34 +91,51 @@ fun AccountSwitchingItem(
             )
         }
         else -> {
-            MultiSessionLayout(
-                paneMovableElementSharedTransitionScope = paneScaffoldState,
-                modifier = modifier,
+            val state = rememberAnimationData(
                 activeProfileId = activeProfileId,
-                summaries = remember(sessionSummaries) {
+                sessionSummaries = remember(sessionSummaries) {
                     when (sessionSummaries.size) {
                         in 0..MaxSessionsDisplayed -> sessionSummaries
                         else -> sessionSummaries.take(MaxSessionsDisplayed)
                     }
                 },
-                onAddAccountClick = onAddAccountClick,
-                onAccountSelected = onAccountSelected,
+                switchingSession = switchingSession,
+                switchPhase = switchPhase,
             )
+            AnimatedContent(
+                targetState = switchingSession,
+            ) { session ->
+                if (session == null) MultiSessionLayout(
+                    paneMovableElementSharedTransitionScope = paneScaffoldState,
+                    animatedVisibilityScope = this,
+                    modifier = modifier,
+                    accountSwitchState = state,
+                    onAddAccountClick = onAddAccountClick,
+                    onAccountSelected = onAccountSelected,
+                )
+                else AccountSwitchingTransitionLayer(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    paneScaffoldState = paneScaffoldState,
+                    animatedVisibilityScope = this,
+                    phase = switchPhase,
+                    session = session,
+                )
+            }
         }
     }
 }
 
 @Composable
-fun MultiSessionLayout(
+private fun MultiSessionLayout(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier,
-    activeProfileId: ProfileId?,
-    summaries: List<SessionSummary>,
+    accountSwitchState: AccountSwitchState,
     onAddAccountClick: () -> Unit,
     onAccountSelected: (SessionSummary) -> Unit,
 ) {
-    var isExpanded by rememberSaveable { mutableStateOf(false) }
-    val onExpansionToggled = { isExpanded = !isExpanded }
+    val onExpansionToggled = { accountSwitchState.isExpanded = !accountSwitchState.isExpanded }
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -129,25 +150,18 @@ fun MultiSessionLayout(
             }
         }
         val expandButtonContent = remember {
-            movableContentWithReceiverOf<MovableElementSharedTransitionScope, Boolean> { expanded ->
+            movableContentWithReceiverOf<MovableElementSharedTransitionScope, AccountSwitchState> { state ->
                 ExpandButton(
-                    isExpanded = expanded,
+                    accountSwitchState = state,
                     onExpansionToggled = onExpansionToggled,
                 )
             }
         }
         val sessionSummariesContent = remember {
-            movableContentWithReceiverOf<
-                MovableElementSharedTransitionScope,
-                Boolean,
-                ProfileId?,
-                List<SessionSummary>,
-                >
-            { isExpanded, activeProfileId, summaries ->
+            movableContentWithReceiverOf<MovableElementSharedTransitionScope, AccountSwitchState, AnimatedVisibilityScope> { state, scope ->
                 SessionSummaries(
-                    isExpanded = isExpanded,
-                    activeProfileId = activeProfileId,
-                    sessionSummaries = summaries,
+                    animatedVisibilityScope = scope,
+                    accountSwitchState = state,
                     onAccountSelected = onAccountSelected,
                     onExpansionToggled = onExpansionToggled,
                 )
@@ -159,17 +173,17 @@ fun MultiSessionLayout(
                     .animateBounds(this)
                     .clip(ExpandableAvatarRowShape),
             ) {
-                if (isExpanded) ExpandedSummaries(
-                    activeProfileId = activeProfileId,
-                    summaries = summaries,
+                if (accountSwitchState.isExpanded) ExpandedSummaries(
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    accountSwitchState = accountSwitchState,
                     onExpansionToggled = onExpansionToggled,
                     settingsItemRow = settingsItemRow,
                     expandButtonContent = expandButtonContent,
                     sessionSummariesContent = sessionSummariesContent,
                 )
                 else CollapsedSummaries(
-                    activeProfileId = activeProfileId,
-                    summaries = summaries,
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    accountSwitchState = accountSwitchState,
                     onExpansionToggled = onExpansionToggled,
                     settingsItemRow = settingsItemRow,
                     expandButtonContent = expandButtonContent,
@@ -180,7 +194,7 @@ fun MultiSessionLayout(
         AnimatedVisibility(
             modifier = Modifier
                 .padding(horizontal = 24.dp),
-            visible = isExpanded,
+            visible = accountSwitchState.isExpanded,
         ) {
             SettingsItemRow(
                 title = stringResource(Res.string.add_or_reauthenticate_account),
@@ -194,12 +208,12 @@ fun MultiSessionLayout(
 
 @Composable
 private fun MovableElementSharedTransitionScope.CollapsedSummaries(
-    activeProfileId: ProfileId?,
-    summaries: List<SessionSummary>,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    accountSwitchState: AccountSwitchState,
     onExpansionToggled: () -> Unit,
     settingsItemRow: @Composable () -> Unit,
-    expandButtonContent: @Composable MovableElementSharedTransitionScope.(Boolean) -> Unit,
-    sessionSummariesContent: @Composable MovableElementSharedTransitionScope.(Boolean, ProfileId?, List<SessionSummary>) -> Unit,
+    expandButtonContent: @Composable MovableElementSharedTransitionScope.(AccountSwitchState) -> Unit,
+    sessionSummariesContent: @Composable MovableElementSharedTransitionScope.(AccountSwitchState, AnimatedVisibilityScope) -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -216,26 +230,26 @@ private fun MovableElementSharedTransitionScope.CollapsedSummaries(
         ) {
             OverlappingAvatarRow(
                 modifier = Modifier
-                    .width(summaries.collapsedAvatarsWidth()),
+                    .width(accountSwitchState.sessionSummaries.collapsedAvatarsWidth()),
                 overlap = CollapsedAvatarOverlap,
-                maxItems = summaries.size,
+                maxItems = accountSwitchState.sessionSummaries.size,
                 content = {
-                    sessionSummariesContent(false, activeProfileId, summaries)
+                    sessionSummariesContent(accountSwitchState, animatedVisibilityScope)
                 },
             )
-            expandButtonContent(false)
+            expandButtonContent(accountSwitchState)
         }
     }
 }
 
 @Composable
 private fun MovableElementSharedTransitionScope.ExpandedSummaries(
-    activeProfileId: ProfileId?,
-    summaries: List<SessionSummary>,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    accountSwitchState: AccountSwitchState,
     onExpansionToggled: () -> Unit,
     settingsItemRow: @Composable () -> Unit,
-    expandButtonContent: @Composable MovableElementSharedTransitionScope.(Boolean) -> Unit,
-    sessionSummariesContent: @Composable MovableElementSharedTransitionScope.(Boolean, ProfileId?, List<SessionSummary>) -> Unit,
+    expandButtonContent: @Composable MovableElementSharedTransitionScope.(AccountSwitchState) -> Unit,
+    sessionSummariesContent: @Composable MovableElementSharedTransitionScope.(AccountSwitchState, AnimatedVisibilityScope) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -251,7 +265,7 @@ private fun MovableElementSharedTransitionScope.ExpandedSummaries(
                 Modifier
                     .padding(horizontal = 20.dp),
             ) {
-                expandButtonContent(true)
+                expandButtonContent(accountSwitchState)
             }
         }
         Column(
@@ -259,17 +273,17 @@ private fun MovableElementSharedTransitionScope.ExpandedSummaries(
                 .padding(horizontal = 48.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            sessionSummariesContent(true, activeProfileId, summaries)
+            sessionSummariesContent(accountSwitchState, animatedVisibilityScope)
         }
     }
 }
 
 @Composable
 private fun MovableElementSharedTransitionScope.ExpandButton(
-    isExpanded: Boolean,
+    accountSwitchState: AccountSwitchState,
     onExpansionToggled: () -> Unit,
 ) {
-    val rotation = animateFloatAsState(if (isExpanded) 180f else 0f)
+    val rotation = animateFloatAsState(if (accountSwitchState.isExpanded) 180f else 0f)
     IconButton(
         modifier = Modifier
             .animateBounds(
@@ -293,46 +307,44 @@ private fun MovableElementSharedTransitionScope.ExpandButton(
 
 @Composable
 private fun MovableElementSharedTransitionScope.SessionSummaries(
-    isExpanded: Boolean,
-    activeProfileId: ProfileId?,
-    sessionSummaries: List<SessionSummary>,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    accountSwitchState: AccountSwitchState,
     onAccountSelected: (SessionSummary) -> Unit,
     onExpansionToggled: () -> Unit,
 ) {
-    sessionSummaries.forEach { summary ->
+    accountSwitchState.sessionSummaries.forEach { summary ->
         Row(
             modifier = Modifier
                 .animateBounds(lookaheadScope = this@SessionSummaries)
                 .clickable {
-                    if (isExpanded) onAccountSelected(summary)
+                    if (accountSwitchState.isExpanded) onAccountSelected(summary)
                     else onExpansionToggled()
                 },
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val isActive = summary.profileId == activeProfileId
-
-            PaneStickySharedElement(
+            val isActive = summary.profileId == accountSwitchState.activeProfileId
+            AsyncImage(
                 modifier = Modifier
-                    .size(ExpandableAvatarSize),
-                sharedContentState = rememberSharedContentState(summary.sharedElementKey),
-            ) {
-                AsyncImage(
-                    modifier = Modifier
-                        .fillParentAxisIfFixedOrWrap()
-                        .clip(CircleShape),
-                    args = ImageArgs(
+                    .sharedElement(
+                        sharedContentState = rememberSharedContentState(summary.sharedElementKey),
+                        animatedVisibilityScope = animatedVisibilityScope,
+                    )
+                    .size(ExpandableAvatarSize)
+                    .clip(CircleShape),
+                args = remember(summary.profileAvatar) {
+                    ImageArgs(
                         url = summary.profileAvatar?.uri,
                         contentScale = ContentScale.Crop,
                         contentDescription = summary.profileHandle.id,
                         shape = RoundedPolygonShape.Circle,
-                    ),
-                )
-            }
+                    )
+                },
+            )
 
             AnimatedVisibility(
                 modifier = Modifier
                     .fillMaxWidth(),
-                visible = isExpanded,
+                visible = accountSwitchState.isExpanded,
                 exit = fadeOut(),
             ) {
                 Row(
@@ -364,24 +376,16 @@ private fun MovableElementSharedTransitionScope.SessionSummaries(
 }
 
 @Composable
-fun AccountSwitchingTransitionLayer(
+private fun AccountSwitchingTransitionLayer(
+    modifier: Modifier = Modifier,
     paneScaffoldState: PaneScaffoldState,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     phase: AccountSwitchPhase,
-    session: SessionSummary?,
+    session: SessionSummary,
 ) = with(paneScaffoldState) {
-    if (phase == AccountSwitchPhase.IDLE || session == null) return@with
-
     val transition = updateTransition(phase, label = "accountSwitch")
 
-    val dimAlpha by transition.animateFloat(label = "dim") {
-        when (it) {
-            AccountSwitchPhase.MORPHING -> 0.18f
-            AccountSwitchPhase.SUCCESS -> 0.25f
-            else -> 0f
-        }
-    }
-
-    val scaleState = transition.animateFloat(
+    val scale by transition.animateFloat(
         label = "scale",
         transitionSpec = {
             when (targetState) {
@@ -408,15 +412,21 @@ fun AccountSwitchingTransitionLayer(
     }
 
     Box(
-        modifier = Modifier
+        modifier = modifier
+            .padding(
+                vertical = 32.dp,
+            )
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.scrim.copy(alpha = dimAlpha))
             .clickable(enabled = false) {},
         contentAlignment = Alignment.Center,
     ) {
         Box(contentAlignment = Alignment.Center) {
             PaneSharedElement(
-                sharedContentState = rememberSharedContentState("avatar_${session.profileId}"),
+                modifier = Modifier
+                    .size(88.dp * scale),
+                sharedContentState = rememberSharedContentState(
+                    key = UiTokens.SignedInUserAvatarSharedElementKey,
+                ),
             ) {
                 AsyncImage(
                     args = remember(session.profileAvatar) {
@@ -428,11 +438,11 @@ fun AccountSwitchingTransitionLayer(
                         )
                     },
                     modifier = Modifier
-                        .size(88.dp)
-                        .graphicsLayer {
-                            scaleX = scaleState.value
-                            scaleY = scaleState.value
-                        },
+                        .sharedElement(
+                            sharedContentState = rememberSharedContentState(session.sharedElementKey),
+                            animatedVisibilityScope = animatedVisibilityScope,
+                        )
+                        .fillParentAxisIfFixedOrWrap(),
                 )
             }
 
@@ -486,6 +496,42 @@ private fun SuccessCheckmarkOverlay(
                 },
         )
     }
+}
+
+@Composable
+private fun rememberAnimationData(
+    activeProfileId: ProfileId?,
+    sessionSummaries: List<SessionSummary>,
+    switchingSession: SessionSummary?,
+    switchPhase: AccountSwitchPhase,
+): AccountSwitchState {
+    return remember {
+        AccountSwitchState(
+            activeProfileId = activeProfileId,
+            sessionSummaries = sessionSummaries,
+            switchingSession = switchingSession,
+            switchPhase = switchPhase,
+        )
+    }.also {
+        it.activeProfileId = activeProfileId
+        it.sessionSummaries = sessionSummaries
+        it.switchingSession = switchingSession
+        it.switchPhase = switchPhase
+    }
+}
+
+@Stable
+private class AccountSwitchState(
+    activeProfileId: ProfileId?,
+    sessionSummaries: List<SessionSummary>,
+    switchingSession: SessionSummary?,
+    switchPhase: AccountSwitchPhase,
+) {
+    var isExpanded by mutableStateOf(false)
+    var activeProfileId by mutableStateOf(activeProfileId)
+    var sessionSummaries by mutableStateOf(sessionSummaries)
+    var switchingSession by mutableStateOf(switchingSession)
+    var switchPhase by mutableStateOf(switchPhase)
 }
 
 private val SessionSummary.sharedElementKey: String
