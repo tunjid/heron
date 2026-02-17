@@ -201,24 +201,18 @@ private fun Flow<Action.Update>.updateMutations(
 
 private fun Flow<Action.Metadata>.updateMetadataMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
-        when (action) {
-            is Action.Metadata.SetRecordKey if grazeFeed is GrazeFeed.Pending -> copy(
-                grazeFeed = grazeFeed.copy(recordKey = action.recordKey),
-            )
-            is Action.Metadata.FeedGenerator -> copy(
-                grazeFeed = when (grazeFeed) {
-                    is GrazeFeed.Created -> grazeFeed.copy(
-                        displayName = action.displayName,
-                        description = action.description,
-                    )
-                    is GrazeFeed.Pending -> grazeFeed.copy(
-                        displayName = action.displayName,
-                        description = action.description,
-                    )
-                },
-            )
-            else -> this
-        }
+        copy(
+            grazeFeed = when (grazeFeed) {
+                is GrazeFeed.Created -> grazeFeed.copy(
+                    displayName = action.displayName,
+                    description = action.description,
+                )
+                is GrazeFeed.Pending -> grazeFeed.copy(
+                    displayName = action.displayName,
+                    description = action.description,
+                )
+            },
+        )
     }
 
 private fun Flow<Action.EditorNavigation>.editorNavigationMutations(): Flow<Mutation<State>> =

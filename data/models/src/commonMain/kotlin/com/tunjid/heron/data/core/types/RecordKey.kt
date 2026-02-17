@@ -17,10 +17,43 @@
 package com.tunjid.heron.data.core.types
 
 import kotlin.jvm.JvmInline
+import kotlin.random.Random
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlinx.serialization.Serializable
 
 @Serializable
 @JvmInline
 value class RecordKey(
     val value: String,
-)
+) {
+    companion object {
+        private const val ALPHABET = "234567abcdefghijklmnopqrstuvwxyz"
+
+        /**
+         * Generates a new [RecordKey] with a valid AT Protocol TID.
+         *
+         * This method should not be used in concurrent environments as it
+         * does not guarantee that the tid monotonically increases.
+         */
+        @OptIn(ExperimentalTime::class)
+        fun generate(): RecordKey {
+            val timeMicros = Clock.System.now().toEpochMilliseconds() * 1000
+            val clockId = Random.nextInt(0, 1024)
+            val tidInt = (timeMicros shl 10) or clockId.toLong()
+            return RecordKey(encode(tidInt))
+        }
+
+        private fun encode(value: Long): String {
+            if (value == 0L) return "2222222222222"
+            val buffer = CharArray(13)
+            var current = value
+            for (i in 12 downTo 0) {
+                val index = (current and 0x1FL).toInt()
+                buffer[i] = ALPHABET[index]
+                current = current ushr 5
+            }
+            return buffer.concatToString()
+        }
+    }
+}
