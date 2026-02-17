@@ -214,7 +214,13 @@ internal class EditableTimelineState private constructor(
         @Composable
         fun rememberEditableTimelineState(
             timelines: List<Timeline.Home>,
-        ): EditableTimelineState = remember {
+        ): EditableTimelineState = remember(
+            // Only timeline order should recreate state
+            timelines.joinToString(
+                separator = "-",
+                transform = Timeline.Home::sourceId,
+            ),
+        ) {
             EditableTimelineState(
                 timelines = timelines.toMutableStateList(),
             )
