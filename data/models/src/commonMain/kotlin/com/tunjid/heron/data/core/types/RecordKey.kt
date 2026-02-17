@@ -29,6 +29,7 @@ value class RecordKey(
 ) {
     companion object {
         private const val ALPHABET = "234567abcdefghijklmnopqrstuvwxyz"
+        private const val MASK = 0x1FL // Binary 11111, used to get the 5 least significant bits.
 
         /**
          * Generates a new [RecordKey] with a valid AT Protocol TID.
@@ -44,13 +45,29 @@ value class RecordKey(
             return RecordKey(encode(tidInt))
         }
 
-        private fun encode(value: Long): String {
-            if (value == 0L) return "2222222222222"
+        /**
+         * Encodes a 64-bit Long into a 13-character base32-sortable string.
+         *
+         * @param value The 64-bit integer TID.
+         * @return The encoded 13-character string.
+         */
+        fun encode(value: Long): String {
+            // The spec defines TID for integer zero as a special case.
+            if (value == 0L) {
+                return "2222222222222"
+            }
+
+            // A 64-bit number requires 13 characters in base32 (ceil(64 / 5) = 13).
             val buffer = CharArray(13)
             var current = value
+
+            // We iterate from right to left, filling the buffer.
             for (i in 12 downTo 0) {
-                val index = (current and 0x1FL).toInt()
+                // Get the index for the alphabet by masking the 5 least significant bits.
+                val index = (current and MASK).toInt()
                 buffer[i] = ALPHABET[index]
+                // Right-shift by 5 to process the next 5 bits in the next iteration.
+                // `ushr` is an unsigned shift, which is important for handling the sign bit correctly.
                 current = current ushr 5
             }
             return buffer.concatToString()
