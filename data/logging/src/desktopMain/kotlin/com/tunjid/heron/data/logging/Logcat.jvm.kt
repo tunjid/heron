@@ -26,20 +26,17 @@ class JvmLogger : Logger {
     }
 }
 
-actual inline fun Any.logcat(
-    priority: LogPriority,
-    tag: String?,
-    message: () -> String,
-) {
+actual inline fun Any.logcat(priority: LogPriority, tag: String?, message: () -> String) {
     this.squareLogcat(
-        priority = when (priority) {
-            LogPriority.VERBOSE -> SquareLogPriority.VERBOSE
-            LogPriority.DEBUG -> SquareLogPriority.DEBUG
-            LogPriority.INFO -> SquareLogPriority.INFO
-            LogPriority.WARN -> SquareLogPriority.WARN
-            LogPriority.ERROR -> SquareLogPriority.ERROR
-            LogPriority.ASSERT -> SquareLogPriority.ASSERT
-        },
+        priority =
+            when (priority) {
+                LogPriority.VERBOSE -> SquareLogPriority.VERBOSE
+                LogPriority.DEBUG -> SquareLogPriority.DEBUG
+                LogPriority.INFO -> SquareLogPriority.INFO
+                LogPriority.WARN -> SquareLogPriority.WARN
+                LogPriority.ERROR -> SquareLogPriority.ERROR
+                LogPriority.ASSERT -> SquareLogPriority.ASSERT
+            },
         tag = tag,
         message = message,
     )

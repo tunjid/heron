@@ -62,10 +62,7 @@ internal typealias SettingsStateHolder = ActionStateMutator<Action, StateFlow<St
 
 @AssistedFactory
 fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
-        scope: CoroutineScope,
-        route: Route,
-    ): ActualSettingsViewModel
+    override fun invoke(scope: CoroutineScope, route: Route): ActualSettingsViewModel
 }
 
 @AssistedInject
@@ -73,117 +70,104 @@ class ActualSettingsViewModel(
     authRepository: AuthRepository,
     userDataRepository: UserDataRepository,
     navActions: (NavigationMutation) -> Unit,
-    @Assisted
-    scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
-    @Assisted route: Route,
-) : ViewModel(viewModelScope = scope),
+    @Assisted scope: CoroutineScope,
+    @Suppress("UNUSED_PARAMETER") @Assisted route: Route,
+) :
+    ViewModel(viewModelScope = scope),
     SettingsStateHolder by scope.actionStateFlowMutator(
         initialState = State(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = listOf(
-            signedInProfileSavedStateMutations(
-                userDataRepository = userDataRepository,
+        inputs =
+            listOf(
+                signedInProfileSavedStateMutations(userDataRepository = userDataRepository),
+                loadOpenSourceLibraryMutations(),
+                loadSessionSummaryMutations(authRepository = authRepository),
+                observeActiveProfileMutations(authRepository = authRepository),
             ),
-            loadOpenSourceLibraryMutations(),
-            loadSessionSummaryMutations(
-                authRepository = authRepository,
-            ),
-            observeActiveProfileMutations(
-                authRepository = authRepository,
-            ),
-        ),
         actionTransform = transform@{ actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+                actions.toMutationStream(keySelector = Action::key) {
+                    when (val action = type()) {
+                        is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 
-                    is Action.SetRefreshHomeTimelinesOnLaunch -> action.flow.homeTimelineRefreshOnLaunchMutations(
-                        userDataRepository = userDataRepository,
-                    )
+                        is Action.SetRefreshHomeTimelinesOnLaunch ->
+                            action.flow.homeTimelineRefreshOnLaunchMutations(
+                                userDataRepository = userDataRepository
+                            )
 
-                    is Action.SetAutoPlayTimelineVideos -> action.flow.timelineVideoAutoPlayMutations(
-                        userDataRepository = userDataRepository,
-                    )
+                        is Action.SetAutoPlayTimelineVideos ->
+                            action.flow.timelineVideoAutoPlayMutations(
+                                userDataRepository = userDataRepository
+                            )
 
-                    is Action.SetDynamicThemingPreference -> action.flow.toggleDynamicTheming(
-                        userDataRepository = userDataRepository,
-                    )
+                        is Action.SetDynamicThemingPreference ->
+                            action.flow.toggleDynamicTheming(
+                                userDataRepository = userDataRepository
+                            )
 
-                    is Action.SetCompactNavigation -> action.flow.toggleCompactNavigation(
-                        userDataRepository = userDataRepository,
-                    )
+                        is Action.SetCompactNavigation ->
+                            action.flow.toggleCompactNavigation(
+                                userDataRepository = userDataRepository
+                            )
 
-                    is Action.SetAutoHideBottomNavigation -> action.flow.toggleAutoHideBottomNavigation(
-                        userDataRepository = userDataRepository,
-                    )
+                        is Action.SetAutoHideBottomNavigation ->
+                            action.flow.toggleAutoHideBottomNavigation(
+                                userDataRepository = userDataRepository
+                            )
 
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
-                    is Action.SwitchSession -> action.flow.handleSwitchSessionMutations(
-                        authRepository = authRepository,
-                        navActions = navActions,
-                    )
-                    Action.SignOut -> action.flow.mapToManyMutations {
-                        authRepository.signOut()
+                        is Action.Navigate ->
+                            action.flow.consumeNavigationActions(
+                                navigationMutationConsumer = navActions
+                            )
+                        is Action.SwitchSession ->
+                            action.flow.handleSwitchSessionMutations(
+                                authRepository = authRepository,
+                                navActions = navActions,
+                            )
+                        Action.SignOut ->
+                            action.flow.mapToManyMutations { authRepository.signOut() }
                     }
                 }
-            }
-        },
+            },
     )
 
 fun signedInProfileSavedStateMutations(
-    userDataRepository: UserDataRepository,
+    userDataRepository: UserDataRepository
 ): Flow<Mutation<State>> =
-    userDataRepository.preferences
-        .mapToMutation {
-            copy(signedInProfilePreferences = it)
-        }
+    userDataRepository.preferences.mapToMutation { copy(signedInProfilePreferences = it) }
 
 fun loadOpenSourceLibraryMutations(): Flow<Mutation<State>> = flow {
-    val libs = withContext(Dispatchers.IO) {
-        Libs.Builder()
-            .withJson(Res.readBytes("files/aboutlibraries.json").decodeToString())
-            .build()
-    }
+    val libs =
+        withContext(Dispatchers.IO) {
+            Libs.Builder()
+                .withJson(Res.readBytes("files/aboutlibraries.json").decodeToString())
+                .build()
+        }
     emit { copy(openSourceLibraries = libs) }
 }
 
-private fun loadSessionSummaryMutations(
-    authRepository: AuthRepository,
-): Flow<Mutation<State>> =
-    authRepository.pastSessions
-        .mapToMutation { sessionSummaries ->
-            copy(pastSessions = sessionSummaries)
-        }
+private fun loadSessionSummaryMutations(authRepository: AuthRepository): Flow<Mutation<State>> =
+    authRepository.pastSessions.mapToMutation { sessionSummaries ->
+        copy(pastSessions = sessionSummaries)
+    }
 
 private fun Flow<Action.SwitchSession>.handleSwitchSessionMutations(
     authRepository: AuthRepository,
     navActions: (NavigationMutation) -> Unit,
 ): Flow<Mutation<State>> =
-    debounce(SwitchActionDebounce)
-        .mapLatestToManyMutations {
-            switchSessionMutation(
-                authRepository = authRepository,
-                sessionSummary = it.sessionSummary,
-                navActions = navActions,
-            )
-        }
+    debounce(SwitchActionDebounce).mapLatestToManyMutations {
+        switchSessionMutation(
+            authRepository = authRepository,
+            sessionSummary = it.sessionSummary,
+            navActions = navActions,
+        )
+    }
 
 private suspend fun FlowCollector<Mutation<State>>.switchSessionMutation(
     authRepository: AuthRepository,
     sessionSummary: SessionSummary,
     navActions: (NavigationMutation) -> Unit,
 ) {
-    emit {
-        copy(
-            switchPhase = AccountSwitchPhase.MORPHING,
-            switchingSession = sessionSummary,
-        )
-    }
+    emit { copy(switchPhase = AccountSwitchPhase.MORPHING, switchingSession = sessionSummary) }
 
     delay(AccountSwitchPhase.MORPHING.changeDelay)
 
@@ -203,60 +187,54 @@ private suspend fun FlowCollector<Mutation<State>>.switchSessionMutation(
                 copy(
                     switchPhase = AccountSwitchPhase.IDLE,
                     switchingSession = null,
-                    messages = messages.plus(
-                        outcome.exception.message?.let(Memo::Text)
-                            ?: Memo.Resource(Res.string.switch_account_failed),
-                    ).distinct(),
+                    messages =
+                        messages
+                            .plus(
+                                outcome.exception.message?.let(Memo::Text)
+                                    ?: Memo.Resource(Res.string.switch_account_failed)
+                            )
+                            .distinct(),
                 )
             }
         }
     }
 }
 
-private fun observeActiveProfileMutations(
-    authRepository: AuthRepository,
-): Flow<Mutation<State>> =
+private fun observeActiveProfileMutations(authRepository: AuthRepository): Flow<Mutation<State>> =
     authRepository.signedInUser
         .map { it?.did }
         .distinctUntilChanged()
-        .mapToMutation { profileId ->
-            copy(activeProfileId = profileId)
-        }
+        .mapToMutation { profileId -> copy(activeProfileId = profileId) }
 
 private fun Flow<Action.SetRefreshHomeTimelinesOnLaunch>.homeTimelineRefreshOnLaunchMutations(
-    userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    mapToManyMutations { (refreshOnLaunch) ->
-        userDataRepository.setRefreshedHomeTimelineOnLaunch(refreshOnLaunch)
-    }
+    userDataRepository: UserDataRepository
+): Flow<Mutation<State>> = mapToManyMutations { (refreshOnLaunch) ->
+    userDataRepository.setRefreshedHomeTimelineOnLaunch(refreshOnLaunch)
+}
 
 private fun Flow<Action.SetAutoPlayTimelineVideos>.timelineVideoAutoPlayMutations(
-    userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    mapToManyMutations { (autoPlayTimelineVideos) ->
-        userDataRepository.setAutoPlayTimelineVideos(autoPlayTimelineVideos)
-    }
+    userDataRepository: UserDataRepository
+): Flow<Mutation<State>> = mapToManyMutations { (autoPlayTimelineVideos) ->
+    userDataRepository.setAutoPlayTimelineVideos(autoPlayTimelineVideos)
+}
 
 private fun Flow<Action.SetDynamicThemingPreference>.toggleDynamicTheming(
-    userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    mapToManyMutations { (dynamicTheming) ->
-        userDataRepository.setDynamicTheming(dynamicTheming)
-    }
+    userDataRepository: UserDataRepository
+): Flow<Mutation<State>> = mapToManyMutations { (dynamicTheming) ->
+    userDataRepository.setDynamicTheming(dynamicTheming)
+}
 
 private fun Flow<Action.SetCompactNavigation>.toggleCompactNavigation(
-    userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    mapToManyMutations { (compactNavigation) ->
-        userDataRepository.setCompactNavigation(compactNavigation)
-    }
+    userDataRepository: UserDataRepository
+): Flow<Mutation<State>> = mapToManyMutations { (compactNavigation) ->
+    userDataRepository.setCompactNavigation(compactNavigation)
+}
 
 private fun Flow<Action.SetAutoHideBottomNavigation>.toggleAutoHideBottomNavigation(
-    userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    mapToManyMutations { (autoHideBottomNavigation) ->
-        userDataRepository.setAutoHideBottomNavigation(autoHideBottomNavigation)
-    }
+    userDataRepository: UserDataRepository
+): Flow<Mutation<State>> = mapToManyMutations { (autoHideBottomNavigation) ->
+    userDataRepository.setAutoHideBottomNavigation(autoHideBottomNavigation)
+}
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
@@ -264,11 +242,12 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
     }
 
 private val AccountSwitchPhase.changeDelay
-    get() = when (this) {
-        AccountSwitchPhase.IDLE -> 0.milliseconds
-        AccountSwitchPhase.MORPHING -> 180.milliseconds
-        AccountSwitchPhase.SUCCESS -> 220.milliseconds
-        AccountSwitchPhase.LOADING -> 0.milliseconds
-    }
+    get() =
+        when (this) {
+            AccountSwitchPhase.IDLE -> 0.milliseconds
+            AccountSwitchPhase.MORPHING -> 180.milliseconds
+            AccountSwitchPhase.SUCCESS -> 220.milliseconds
+            AccountSwitchPhase.LOADING -> 0.milliseconds
+        }
 
 private val SwitchActionDebounce = 200.milliseconds

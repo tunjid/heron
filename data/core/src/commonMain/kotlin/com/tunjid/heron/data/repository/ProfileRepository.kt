@@ -89,16 +89,11 @@ import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
 
 @Serializable
-data class ProfilesQuery(
-    val profileId: Id.Profile,
-    override val data: CursorQuery.Data,
-) : CursorQuery
+data class ProfilesQuery(val profileId: Id.Profile, override val data: CursorQuery.Data) :
+    CursorQuery
 
 @Serializable
-data class ListMemberQuery(
-    val listUri: Uri,
-    override val data: CursorQuery.Data,
-) : CursorQuery
+data class ListMemberQuery(val listUri: Uri, override val data: CursorQuery.Data) : CursorQuery
 
 interface ProfileRepository {
 
@@ -106,49 +101,28 @@ interface ProfileRepository {
 
     fun profile(profileId: Id.Profile): Flow<Profile>
 
-    fun profileRelationships(
-        profileIds: Set<Id.Profile>,
-    ): Flow<List<ProfileViewerState>>
+    fun profileRelationships(profileIds: Set<Id.Profile>): Flow<List<ProfileViewerState>>
 
-    fun commonFollowers(
-        otherProfileId: Id.Profile,
-        limit: Long,
-    ): Flow<List<Profile>>
+    fun commonFollowers(otherProfileId: Id.Profile, limit: Long): Flow<List<Profile>>
 
-    fun listMembers(
-        query: ListMemberQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<ListMember>>
+    fun listMembers(query: ListMemberQuery, cursor: Cursor): Flow<CursorList<ListMember>>
 
-    fun followers(
-        query: ProfilesQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<ProfileWithViewerState>>
+    fun followers(query: ProfilesQuery, cursor: Cursor): Flow<CursorList<ProfileWithViewerState>>
 
-    fun following(
-        query: ProfilesQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<ProfileWithViewerState>>
+    fun following(query: ProfilesQuery, cursor: Cursor): Flow<CursorList<ProfileWithViewerState>>
 
-    fun mutes(
-        query: DataQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<ProfileWithViewerState>>
+    fun mutes(query: DataQuery, cursor: Cursor): Flow<CursorList<ProfileWithViewerState>>
 
-    suspend fun sendConnection(
-        connection: Profile.Connection,
-    ): Outcome
+    suspend fun sendConnection(connection: Profile.Connection): Outcome
 
-    suspend fun updateRestriction(
-        restriction: Profile.Restriction,
-    ): Outcome
+    suspend fun updateRestriction(restriction: Profile.Restriction): Outcome
 
-    suspend fun updateProfile(
-        update: Profile.Update,
-    ): Outcome
+    suspend fun updateProfile(update: Profile.Update): Outcome
 }
 
-internal class OfflineProfileRepository @Inject constructor(
+internal class OfflineProfileRepository
+@Inject
+constructor(
     private val profileDao: ProfileDao,
     private val listDao: ListDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
@@ -160,21 +134,18 @@ internal class OfflineProfileRepository @Inject constructor(
 
     override fun signedInProfile(): Flow<Profile> =
         savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
-            profileDao.profiles(
-                signedInProfiledId = signedInProfileId.id,
-                ids = listOf(signedInProfileId),
-            )
+            profileDao
+                .profiles(
+                    signedInProfiledId = signedInProfileId.id,
+                    ids = listOf(signedInProfileId),
+                )
                 .mapNotNullDistinctUntilChanged { it.firstOrNull()?.asExternalModel() }
         }
 
-    override fun profile(
-        profileId: Id.Profile,
-    ): Flow<Profile> =
+    override fun profile(profileId: Id.Profile): Flow<Profile> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            profileDao.profiles(
-                signedInProfiledId = signedInProfileId?.id,
-                ids = listOf(profileId),
-            )
+            profileDao
+                .profiles(signedInProfiledId = signedInProfileId?.id, ids = listOf(profileId))
                 .mapNotNullDistinctUntilChanged { it.firstOrNull()?.asExternalModel() }
                 .withRefresh {
                     profileLookup.refreshProfile(
@@ -184,81 +155,71 @@ internal class OfflineProfileRepository @Inject constructor(
                 }
         }
 
-    override fun profileRelationships(
-        profileIds: Set<Id.Profile>,
-    ): Flow<List<ProfileViewerState>> =
+    override fun profileRelationships(profileIds: Set<Id.Profile>): Flow<List<ProfileViewerState>> =
         savedStateDataSource.singleAuthorizedSessionFlow {
-            profileDao.viewerState(
-                profileId = it.id,
-                otherProfileIds = profileIds,
-            )
+            profileDao
+                .viewerState(profileId = it.id, otherProfileIds = profileIds)
                 .distinctUntilChanged()
                 .map { viewerEntities ->
                     viewerEntities.map(ProfileViewerStateEntity::asExternalModel)
                 }
         }
 
-    override fun commonFollowers(
-        otherProfileId: Id.Profile,
-        limit: Long,
-    ): Flow<List<Profile>> =
+    override fun commonFollowers(otherProfileId: Id.Profile, limit: Long): Flow<List<Profile>> =
         savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
-            val otherProfileResolvedId = profileLookup.lookupProfileDid(
-                profileId = otherProfileId,
-            )?.did ?: return@singleAuthorizedSessionFlow emptyFlow()
+            val otherProfileResolvedId =
+                profileLookup.lookupProfileDid(profileId = otherProfileId)?.did
+                    ?: return@singleAuthorizedSessionFlow emptyFlow()
 
-            profileDao.commonFollowers(
-                profileId = signedInProfileId.id,
-                otherProfileId = otherProfileResolvedId,
-                limit = limit,
-            )
+            profileDao
+                .commonFollowers(
+                    profileId = signedInProfileId.id,
+                    otherProfileId = otherProfileResolvedId,
+                    limit = limit,
+                )
                 .distinctUntilChanged()
                 .map { profileEntities ->
                     profileEntities.map(PopulatedProfileEntity::asExternalModel)
                 }
         }
 
-    override fun listMembers(
-        query: ListMemberQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<ListMember>> =
+    override fun listMembers(query: ListMemberQuery, cursor: Cursor): Flow<CursorList<ListMember>> =
         savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
             combine(
-                listDao.listMembers(
-                    listUri = query.listUri.uri,
-                    signedInUserId = signedInProfileId.id,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
-                    .map {
-                        it.map(PopulatedListMemberEntity::asExternalModel)
-                    },
-                networkService.nextCursorFlow(
-                    currentCursor = cursor,
-                    currentRequestWithNextCursor = {
-                        getList(
-                            GetListQueryParams(
-                                list = query.listUri.uri.let(::AtUri),
-                                limit = query.data.limit,
-                                cursor = cursor.value,
-                            ),
+                    listDao
+                        .listMembers(
+                            listUri = query.listUri.uri,
+                            signedInUserId = signedInProfileId.id,
+                            offset = query.data.offset,
+                            limit = query.data.limit,
                         )
-                    },
-                    nextCursor = GetListResponse::cursor,
-                    onResponse = {
-                        multipleEntitySaverProvider.saveInTransaction {
-                            add(list)
-                            items.forEach { listItemView ->
-                                add(
-                                    listUri = list.uri.atUri.let(::ListUri),
-                                    listItemView = listItemView,
+                        .map { it.map(PopulatedListMemberEntity::asExternalModel) },
+                    networkService.nextCursorFlow(
+                        currentCursor = cursor,
+                        currentRequestWithNextCursor = {
+                            getList(
+                                GetListQueryParams(
+                                    list = query.listUri.uri.let(::AtUri),
+                                    limit = query.data.limit,
+                                    cursor = cursor.value,
                                 )
+                            )
+                        },
+                        nextCursor = GetListResponse::cursor,
+                        onResponse = {
+                            multipleEntitySaverProvider.saveInTransaction {
+                                add(list)
+                                items.forEach { listItemView ->
+                                    add(
+                                        listUri = list.uri.atUri.let(::ListUri),
+                                        listItemView = listItemView,
+                                    )
+                                }
                             }
-                        }
-                    },
-                ),
-                ::CursorList,
-            )
+                        },
+                    ),
+                    ::CursorList,
+                )
                 .distinctUntilChanged()
         }
 
@@ -267,9 +228,9 @@ internal class OfflineProfileRepository @Inject constructor(
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            val profileDid = profileLookup.lookupProfileDid(
-                profileId = query.profileId,
-            ) ?: return@singleSessionFlow emptyFlow()
+            val profileDid =
+                profileLookup.lookupProfileDid(profileId = query.profileId)
+                    ?: return@singleSessionFlow emptyFlow()
 
             profileLookup.profilesWithViewerState(
                 signedInProfileId = signedInProfileId,
@@ -280,7 +241,7 @@ internal class OfflineProfileRepository @Inject constructor(
                             actor = profileDid,
                             limit = query.data.limit,
                             cursor = cursor.value,
-                        ),
+                        )
                     )
                 },
                 responseProfileViews = GetFollowersResponse::followers,
@@ -293,9 +254,9 @@ internal class OfflineProfileRepository @Inject constructor(
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            val profileDid = profileLookup.lookupProfileDid(
-                profileId = query.profileId,
-            ) ?: return@singleSessionFlow emptyFlow()
+            val profileDid =
+                profileLookup.lookupProfileDid(profileId = query.profileId)
+                    ?: return@singleSessionFlow emptyFlow()
 
             profileLookup.profilesWithViewerState(
                 signedInProfileId = signedInProfileId,
@@ -306,7 +267,7 @@ internal class OfflineProfileRepository @Inject constructor(
                             actor = profileDid,
                             limit = query.data.limit,
                             cursor = cursor.value,
-                        ),
+                        )
                     )
                 },
                 responseProfileViews = GetFollowsResponse::follows,
@@ -314,208 +275,217 @@ internal class OfflineProfileRepository @Inject constructor(
             )
         }
 
-    override fun mutes(
-        query: DataQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<ProfileWithViewerState>> =
+    override fun mutes(query: DataQuery, cursor: Cursor): Flow<CursorList<ProfileWithViewerState>> =
         savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
             profileLookup.profilesWithViewerState(
                 signedInProfileId = signedInProfileId,
                 cursor = cursor,
                 responseFetcher = {
-                    getMutes(
-                        GetMutesQueryParams(
-                            limit = query.data.limit,
-                            cursor = cursor.value,
-                        ),
-                    )
+                    getMutes(GetMutesQueryParams(limit = query.data.limit, cursor = cursor.value))
                 },
                 responseProfileViews = GetMutesResponse::mutes,
                 responseCursor = GetMutesResponse::cursor,
             )
         }
 
-    override suspend fun sendConnection(
-        connection: Profile.Connection,
-    ): Outcome = when (connection) {
-        is Profile.Connection.Follow -> networkService.runCatchingWithMonitoredNetworkRetry {
-            createRecord(
-                CreateRecordRequest(
-                    repo = connection.signedInProfileId.id.let(::Did),
-                    collection = Nsid(FollowUri.NAMESPACE),
-                    record = BskyFollow(
-                        subject = connection.profileId.id.let(::Did),
-                        createdAt = Clock.System.now(),
-                    ).asJsonContent(BskyFollow.serializer()),
-                ),
-            )
-        }
-            .toOutcome {
-                if (it.validationStatus !is CreateRecordValidationStatus.Valid) {
-                    throw RecordCreationException(
-                        profileId = connection.signedInProfileId,
-                        collection = FollowUri.NAMESPACE,
-                    )
-                }
-                profileDao.updatePartialProfileViewers(
-                    listOf(
-                        ProfileViewerStateEntity.Partial(
-                            profileId = connection.signedInProfileId,
-                            otherProfileId = connection.profileId,
-                            following = it.uri.atUri.let(::FollowUri),
-                            followedBy = connection.followedBy,
-                        ),
-                    ),
-                )
-            }
+    override suspend fun sendConnection(connection: Profile.Connection): Outcome =
+        when (connection) {
+            is Profile.Connection.Follow ->
+                networkService
+                    .runCatchingWithMonitoredNetworkRetry {
+                        createRecord(
+                            CreateRecordRequest(
+                                repo = connection.signedInProfileId.id.let(::Did),
+                                collection = Nsid(FollowUri.NAMESPACE),
+                                record =
+                                    BskyFollow(
+                                            subject = connection.profileId.id.let(::Did),
+                                            createdAt = Clock.System.now(),
+                                        )
+                                        .asJsonContent(BskyFollow.serializer()),
+                            )
+                        )
+                    }
+                    .toOutcome {
+                        if (it.validationStatus !is CreateRecordValidationStatus.Valid) {
+                            throw RecordCreationException(
+                                profileId = connection.signedInProfileId,
+                                collection = FollowUri.NAMESPACE,
+                            )
+                        }
+                        profileDao.updatePartialProfileViewers(
+                            listOf(
+                                ProfileViewerStateEntity.Partial(
+                                    profileId = connection.signedInProfileId,
+                                    otherProfileId = connection.profileId,
+                                    following = it.uri.atUri.let(::FollowUri),
+                                    followedBy = connection.followedBy,
+                                )
+                            )
+                        )
+                    }
 
-        is Profile.Connection.Unfollow -> networkService.runCatchingWithMonitoredNetworkRetry {
-            deleteRecord(
-                DeleteRecordRequest(
-                    repo = connection.signedInProfileId.id.let(::Did),
-                    collection = Nsid(FollowUri.NAMESPACE),
-                    rkey = connection.followUri.recordKey.value.let(::RKey),
-                ),
-            )
+            is Profile.Connection.Unfollow ->
+                networkService
+                    .runCatchingWithMonitoredNetworkRetry {
+                        deleteRecord(
+                            DeleteRecordRequest(
+                                repo = connection.signedInProfileId.id.let(::Did),
+                                collection = Nsid(FollowUri.NAMESPACE),
+                                rkey = connection.followUri.recordKey.value.let(::RKey),
+                            )
+                        )
+                    }
+                    .toOutcome {
+                        profileDao.updatePartialProfileViewers(
+                            listOf(
+                                ProfileViewerStateEntity.Partial(
+                                    profileId = connection.signedInProfileId,
+                                    otherProfileId = connection.profileId,
+                                    following = null,
+                                    followedBy = connection.followedBy,
+                                )
+                            )
+                        )
+                    }
         }
-            .toOutcome {
-                profileDao.updatePartialProfileViewers(
-                    listOf(
-                        ProfileViewerStateEntity.Partial(
-                            profileId = connection.signedInProfileId,
-                            otherProfileId = connection.profileId,
-                            following = null,
-                            followedBy = connection.followedBy,
-                        ),
-                    ),
-                )
-            }
-    }
 
-    override suspend fun updateRestriction(
-        restriction: Profile.Restriction,
-    ): Outcome = when (restriction) {
-        is Profile.Restriction.Block.Add -> networkService.runCatchingWithMonitoredNetworkRetry {
-            createRecord(
-                CreateRecordRequest(
-                    repo = restriction.signedInProfileId.id.let(::Did),
-                    collection = Nsid(BlockUri.NAMESPACE),
-                    record = BskyBlock(
-                        subject = restriction.profileId.id.let(::Did),
-                        createdAt = Clock.System.now(),
-                    ).asJsonContent(BskyBlock.serializer()),
-                ),
-            )
-        }.toOutcome {
-            if (it.validationStatus !is CreateRecordValidationStatus.Valid) {
-                throw RecordCreationException(
-                    profileId = restriction.signedInProfileId,
-                    collection = BlockUri.NAMESPACE,
-                )
-            }
-            profileDao.updatePartialProfileViewer(
-                ProfileViewerStateEntity.BlockPartial(
-                    profileId = restriction.signedInProfileId,
-                    otherProfileId = restriction.profileId,
-                    blocking = it.uri.atUri.let(::BlockUri),
-                ),
-            )
-        }
-        is Profile.Restriction.Block.Remove -> networkService.runCatchingWithMonitoredNetworkRetry {
-            deleteRecord(
-                DeleteRecordRequest(
-                    repo = restriction.signedInProfileId.id.let(::Did),
-                    collection = Nsid(BlockUri.NAMESPACE),
-                    rkey = restriction.blockUri.recordKey.value.let(::RKey),
-                ),
-            )
-        }.toOutcome {
-            profileDao.updatePartialProfileViewer(
-                ProfileViewerStateEntity.BlockPartial(
-                    profileId = restriction.signedInProfileId,
-                    otherProfileId = restriction.profileId,
-                    blocking = null,
-                ),
-            )
-        }
-        is Profile.Restriction.Mute -> networkService.runCatchingWithMonitoredNetworkRetry {
-            when (restriction) {
-                is Profile.Restriction.Mute.Add -> muteActor(
-                    MuteActorRequest(restriction.profileId.id.let(::Did)),
-                )
-                is Profile.Restriction.Mute.Remove -> unmuteActor(
-                    UnmuteActorRequest(restriction.profileId.id.let(::Did)),
-                )
-            }
-        }.toOutcome {
-            profileDao.updatePartialProfileViewer(
-                ProfileViewerStateEntity.MutedPartial(
-                    profileId = restriction.signedInProfileId,
-                    otherProfileId = restriction.profileId,
-                    muted = restriction is Profile.Restriction.Mute.Add,
-                ),
-            )
-        }
-    }
-
-    override suspend fun updateProfile(
-        update: Profile.Update,
-    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
-
-        coroutineScope {
-            val (avatarBlob, bannerBlob) = listOf(
-                update.avatarFile,
-                update.bannerFile,
-            ).map { file ->
-                async {
-                    if (file == null) return@async null
-                    networkService.runCatchingWithMonitoredNetworkRetry {
-                        fileManager.source(file).use { source ->
-                            uploadBlob(ByteReadChannel(source))
+    override suspend fun updateRestriction(restriction: Profile.Restriction): Outcome =
+        when (restriction) {
+            is Profile.Restriction.Block.Add ->
+                networkService
+                    .runCatchingWithMonitoredNetworkRetry {
+                        createRecord(
+                            CreateRecordRequest(
+                                repo = restriction.signedInProfileId.id.let(::Did),
+                                collection = Nsid(BlockUri.NAMESPACE),
+                                record =
+                                    BskyBlock(
+                                            subject = restriction.profileId.id.let(::Did),
+                                            createdAt = Clock.System.now(),
+                                        )
+                                        .asJsonContent(BskyBlock.serializer()),
+                            )
+                        )
+                    }
+                    .toOutcome {
+                        if (it.validationStatus !is CreateRecordValidationStatus.Valid) {
+                            throw RecordCreationException(
+                                profileId = restriction.signedInProfileId,
+                                collection = BlockUri.NAMESPACE,
+                            )
+                        }
+                        profileDao.updatePartialProfileViewer(
+                            ProfileViewerStateEntity.BlockPartial(
+                                profileId = restriction.signedInProfileId,
+                                otherProfileId = restriction.profileId,
+                                blocking = it.uri.atUri.let(::BlockUri),
+                            )
+                        )
+                    }
+            is Profile.Restriction.Block.Remove ->
+                networkService
+                    .runCatchingWithMonitoredNetworkRetry {
+                        deleteRecord(
+                            DeleteRecordRequest(
+                                repo = restriction.signedInProfileId.id.let(::Did),
+                                collection = Nsid(BlockUri.NAMESPACE),
+                                rkey = restriction.blockUri.recordKey.value.let(::RKey),
+                            )
+                        )
+                    }
+                    .toOutcome {
+                        profileDao.updatePartialProfileViewer(
+                            ProfileViewerStateEntity.BlockPartial(
+                                profileId = restriction.signedInProfileId,
+                                otherProfileId = restriction.profileId,
+                                blocking = null,
+                            )
+                        )
+                    }
+            is Profile.Restriction.Mute ->
+                networkService
+                    .runCatchingWithMonitoredNetworkRetry {
+                        when (restriction) {
+                            is Profile.Restriction.Mute.Add ->
+                                muteActor(MuteActorRequest(restriction.profileId.id.let(::Did)))
+                            is Profile.Restriction.Mute.Remove ->
+                                unmuteActor(UnmuteActorRequest(restriction.profileId.id.let(::Did)))
                         }
                     }
-                        .onSuccess { fileManager.delete(file) }
-                        .getOrNull()
-                        ?.blob
-                }
-            }.awaitAll()
-
-            networkService.runCatchingWithMonitoredNetworkRetry {
-                getRecord(
-                    GetRecordQueryParams(
-                        repo = update.profileId.id.let(::Did),
-                        collection = Nsid(Collections.Profile),
-                        rkey = Collections.SelfRecordKey,
-                    ),
-                )
-            }
-                .mapCatchingUnlessCancelled {
-                    val existingProfile = it.value.decodeAs<BskyProfile>()
-
-                    val request = PutRecordRequest(
-                        repo = update.profileId.id.let(::Did),
-                        collection = Nsid(Collections.Profile),
-                        rkey = Collections.SelfRecordKey,
-                        record = existingProfile.copy(
-                            displayName = update.displayName,
-                            description = update.description,
-                            avatar = avatarBlob ?: existingProfile.avatar,
-                            banner = bannerBlob ?: existingProfile.banner,
+                    .toOutcome {
+                        profileDao.updatePartialProfileViewer(
+                            ProfileViewerStateEntity.MutedPartial(
+                                profileId = restriction.signedInProfileId,
+                                otherProfileId = restriction.profileId,
+                                muted = restriction is Profile.Restriction.Mute.Add,
+                            )
                         )
-                            .asJsonContent(BskyProfile.serializer()),
-                    )
-
-                    networkService.runCatchingWithMonitoredNetworkRetry {
-                        putRecord(request)
-                    }.getOrThrow()
-
-                    profileLookup.refreshProfile(
-                        signedInProfileId = signedInProfileId,
-                        profileId = update.profileId,
-                    )
-                }
-                .toOutcome()
+                    }
         }
-    } ?: expiredSessionOutcome()
+
+    override suspend fun updateProfile(update: Profile.Update): Outcome =
+        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+            if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+
+            coroutineScope {
+                val (avatarBlob, bannerBlob) =
+                    listOf(update.avatarFile, update.bannerFile)
+                        .map { file ->
+                            async {
+                                if (file == null) return@async null
+                                networkService
+                                    .runCatchingWithMonitoredNetworkRetry {
+                                        fileManager.source(file).use { source ->
+                                            uploadBlob(ByteReadChannel(source))
+                                        }
+                                    }
+                                    .onSuccess { fileManager.delete(file) }
+                                    .getOrNull()
+                                    ?.blob
+                            }
+                        }
+                        .awaitAll()
+
+                networkService
+                    .runCatchingWithMonitoredNetworkRetry {
+                        getRecord(
+                            GetRecordQueryParams(
+                                repo = update.profileId.id.let(::Did),
+                                collection = Nsid(Collections.Profile),
+                                rkey = Collections.SelfRecordKey,
+                            )
+                        )
+                    }
+                    .mapCatchingUnlessCancelled {
+                        val existingProfile = it.value.decodeAs<BskyProfile>()
+
+                        val request =
+                            PutRecordRequest(
+                                repo = update.profileId.id.let(::Did),
+                                collection = Nsid(Collections.Profile),
+                                rkey = Collections.SelfRecordKey,
+                                record =
+                                    existingProfile
+                                        .copy(
+                                            displayName = update.displayName,
+                                            description = update.description,
+                                            avatar = avatarBlob ?: existingProfile.avatar,
+                                            banner = bannerBlob ?: existingProfile.banner,
+                                        )
+                                        .asJsonContent(BskyProfile.serializer()),
+                            )
+
+                        networkService
+                            .runCatchingWithMonitoredNetworkRetry { putRecord(request) }
+                            .getOrThrow()
+
+                        profileLookup.refreshProfile(
+                            signedInProfileId = signedInProfileId,
+                            profileId = update.profileId,
+                        )
+                    }
+                    .toOutcome()
+            }
+        } ?: expiredSessionOutcome()
 }

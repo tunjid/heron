@@ -18,7 +18,6 @@ package com.tunjid.heron.data.core.utilities
 
 sealed class Outcome {
     data object Success : Outcome()
-    data class Failure(
-        val exception: Throwable,
-    ) : Outcome()
+
+    data class Failure(val exception: Throwable) : Outcome()
 }

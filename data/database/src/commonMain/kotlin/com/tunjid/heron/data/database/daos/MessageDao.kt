@@ -76,7 +76,7 @@ interface MessageDao {
             DESC
             LIMIT :limit
             OFFSET :offset
-        """,
+        """
     )
     fun conversations(
         ownerId: String,
@@ -93,7 +93,7 @@ interface MessageDao {
             DESC
             LIMIT :limit
             OFFSET :offset
-        """,
+        """
     )
     fun messages(
         conversationId: String,
@@ -102,50 +102,26 @@ interface MessageDao {
         offset: Long,
     ): Flow<List<PopulatedMessageEntity>>
 
-    @Upsert
-    suspend fun upsertConversations(
-        entities: List<ConversationEntity>,
-    )
+    @Upsert suspend fun upsertConversations(entities: List<ConversationEntity>)
 
-    @Upsert
-    suspend fun upsertConversationMembers(
-        entities: List<ConversationMembersEntity>,
-    )
+    @Upsert suspend fun upsertConversationMembers(entities: List<ConversationMembersEntity>)
 
-    @Upsert
-    suspend fun upsertMessages(
-        entities: List<MessageEntity>,
-    )
+    @Upsert suspend fun upsertMessages(entities: List<MessageEntity>)
 
-    @Upsert
-    suspend fun upsertMessageReactions(
-        entities: List<MessageReactionEntity>,
-    )
+    @Upsert suspend fun upsertMessageReactions(entities: List<MessageReactionEntity>)
 
-    @Upsert
-    suspend fun upsertMessageFeeds(
-        entities: List<MessageFeedGeneratorEntity>,
-    )
+    @Upsert suspend fun upsertMessageFeeds(entities: List<MessageFeedGeneratorEntity>)
 
-    @Upsert
-    suspend fun upsertMessageLists(
-        entities: List<MessageListEntity>,
-    )
+    @Upsert suspend fun upsertMessageLists(entities: List<MessageListEntity>)
 
-    @Upsert
-    suspend fun upsertMessageStarterPacks(
-        entities: List<MessageStarterPackEntity>,
-    )
+    @Upsert suspend fun upsertMessageStarterPacks(entities: List<MessageStarterPackEntity>)
 
-    @Upsert
-    suspend fun upsertMessagePosts(
-        entities: List<MessagePostEntity>,
-    )
+    @Upsert suspend fun upsertMessagePosts(entities: List<MessagePostEntity>)
 
     @Query(
         """
         DELETE FROM conversations
-    """,
+    """
     )
     suspend fun deleteAllConversations()
 
@@ -153,19 +129,15 @@ interface MessageDao {
         """
         DELETE FROM messages
         WHERE conversationId = :conversationId
-    """,
+    """
     )
-    suspend fun deleteAllMessages(
-        conversationId: String,
-    )
+    suspend fun deleteAllMessages(conversationId: String)
 
     @Query(
         """
         DELETE FROM messageReactions
         WHERE messageId in (:messageIds)
-    """,
+    """
     )
-    suspend fun deleteMessageReactions(
-        messageIds: Collection<MessageId>,
-    )
+    suspend fun deleteMessageReactions(messageIds: Collection<MessageId>)
 }

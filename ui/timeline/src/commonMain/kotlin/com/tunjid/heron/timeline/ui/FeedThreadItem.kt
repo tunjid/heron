@@ -57,35 +57,37 @@ fun FeedThreadItem(
         ) {
             val author: Profile = post.author
             AsyncImage(
-                modifier = Modifier
-                    .size(UiTokens.avatarSize),
-                args = ImageArgs(
-                    url = author.avatar?.uri,
-                    contentDescription = author.displayName ?: author.handle.id,
-                    contentScale = ContentScale.Crop,
-                    shape = RoundedPolygonShape.Circle,
-                ),
+                modifier = Modifier.size(UiTokens.avatarSize),
+                args =
+                    ImageArgs(
+                        url = author.avatar?.uri,
+                        contentDescription = author.displayName ?: author.handle.id,
+                        contentScale = ContentScale.Crop,
+                        shape = RoundedPolygonShape.Circle,
+                    ),
             )
             Column(Modifier.weight(1f)) {
-//                PostHeadline(now, post.createdAt, author)
-//                PostReasonLine(post.reason, onOpenUser)
+                //                PostHeadline(now, post.createdAt, author)
+                //                PostReasonLine(post.reason, onOpenUser)
                 Column(
                     modifier = Modifier.padding(bottom = 8.dp),
                     verticalArrangement = spacedBy(8.dp),
                 ) {
-                    CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.headlineSmall) {
-//                        PostText(post, {}, onProfileClicked)
+                    CompositionLocalProvider(
+                        LocalTextStyle provides MaterialTheme.typography.headlineSmall
+                    ) {
+                        //                        PostText(post, {}, onProfileClicked)
                     }
-//                    PostEmbed(
-//                        now = now,
-//                        embed = post.embed,
-//                        quote = post.quote,
-//                        onPostMediaClicked = onPostMediaClicked,
-//                        onPostClicked = onOpenPost,
-//                    )
-//                    post.record?.let {
-//                        PostDate(it.createdAt)
-//                    }
+                    //                    PostEmbed(
+                    //                        now = now,
+                    //                        embed = post.embed,
+                    //                        quote = post.quote,
+                    //                        onPostMediaClicked = onPostMediaClicked,
+                    //                        onPostClicked = onOpenPost,
+                    //                    )
+                    //                    post.record?.let {
+                    //                        PostDate(it.createdAt)
+                    //                    }
                 }
             }
         }
@@ -95,25 +97,22 @@ fun FeedThreadItem(
                 HorizontalDivider(thickness = 1.dp)
 
                 Box(modifier = Modifier.padding(start = 80.dp)) {
-                    PostStatistics(
-                        post = post,
-                        onReplyToPost = onReplyToPost,
-                    )
+                    PostStatistics(post = post, onReplyToPost = onReplyToPost)
                 }
             }
 
             HorizontalDivider(thickness = 1.dp)
 
             Box(modifier = Modifier.padding(start = 80.dp, top = 8.dp, bottom = 8.dp)) {
-//                PostActions(
-//                    replyCount = null,
-//                    repostCount = null,
-//                    likeCount = null,
-//                    reposted = false,
-//                    liked = false,
-//                    iconSize = 24.dp,
-//                    onReplyToPost = onReplyToPost,
-//                )
+                //                PostActions(
+                //                    replyCount = null,
+                //                    repostCount = null,
+                //                    likeCount = null,
+                //                    reposted = false,
+                //                    liked = false,
+                //                    iconSize = 24.dp,
+                //                    onReplyToPost = onReplyToPost,
+                //                )
             }
 
             HorizontalDivider(thickness = 1.dp)

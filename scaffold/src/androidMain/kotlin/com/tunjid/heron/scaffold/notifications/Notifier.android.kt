@@ -39,33 +39,33 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.tunjid.heron.scaffold.scaffold.LocalAppState
 
 @Composable
-actual fun notificationPermissionsLauncher(
-    onPermissionResult: (Boolean) -> Unit,
-): () -> Unit {
+actual fun notificationPermissionsLauncher(onPermissionResult: (Boolean) -> Unit): () -> Unit {
     val activity = LocalActivity.current
     val appState = LocalAppState.current
 
     var rationale by remember { mutableStateOf<NotificationDialogRationale?>(null) }
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        val permissionRequestLauncher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.RequestPermission(),
-            onResult = { hasPermissions ->
-                onPermissionResult(hasPermissions)
-                if (!activity.shouldShowRationale() && !hasPermissions) {
-                    rationale = NotificationDialogRationale.GoToSettings
-                }
-            },
-        )
+        val permissionRequestLauncher =
+            rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.RequestPermission(),
+                onResult = { hasPermissions ->
+                    onPermissionResult(hasPermissions)
+                    if (!activity.shouldShowRationale() && !hasPermissions) {
+                        rationale = NotificationDialogRationale.GoToSettings
+                    }
+                },
+            )
         rationale?.let {
             NotificationsRationaleDialog(it) { callingRationale, shouldRequestPermissions ->
                 if (shouldRequestPermissions) {
-                    appState.onNotificationAction(NotificationAction.RequestedNotificationPermission)
+                    appState.onNotificationAction(
+                        NotificationAction.RequestedNotificationPermission
+                    )
                     when (callingRationale) {
                         NotificationDialogRationale.GoToSettings -> activity.maybeOpenAppSettings()
-                        NotificationDialogRationale.RequestPermissions -> permissionRequestLauncher.launch(
-                            Manifest.permission.POST_NOTIFICATIONS,
-                        )
+                        NotificationDialogRationale.RequestPermissions ->
+                            permissionRequestLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
                 }
                 rationale = null
@@ -76,7 +76,9 @@ actual fun notificationPermissionsLauncher(
                 if (activity.shouldShowRationale()) {
                     rationale = NotificationDialogRationale.RequestPermissions
                 } else {
-                    appState.onNotificationAction(NotificationAction.RequestedNotificationPermission)
+                    appState.onNotificationAction(
+                        NotificationAction.RequestedNotificationPermission
+                    )
                     permissionRequestLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }
             }
@@ -87,13 +89,11 @@ actual fun notificationPermissionsLauncher(
 @Composable
 actual fun hasNotificationPermissions(): Boolean {
     val context = LocalContext.current
-    var hasPermissions by remember(context) {
-        mutableStateOf(context.hasNotificationPermissions())
-    }
+    var hasPermissions by remember(context) { mutableStateOf(context.hasNotificationPermissions()) }
 
     LifecycleResumeEffect(context) {
         hasPermissions = context.hasNotificationPermissions()
-        onPauseOrDispose { }
+        onPauseOrDispose {}
     }
 
     return hasPermissions
@@ -101,10 +101,8 @@ actual fun hasNotificationPermissions(): Boolean {
 
 private fun Context.hasNotificationPermissions() =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.POST_NOTIFICATIONS,
-        ) == PackageManager.PERMISSION_GRANTED
+        ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
     } else true
 
 private fun Activity?.shouldShowRationale(): Boolean {
@@ -118,9 +116,10 @@ private fun Activity?.shouldShowRationale(): Boolean {
 
 private fun Activity?.maybeOpenAppSettings() {
     this ?: return
-    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-        data = AndroidUri.fromParts("package", packageName, null)
-    }
+    val intent =
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = AndroidUri.fromParts("package", packageName, null)
+        }
     startActivity(intent)
 }
 

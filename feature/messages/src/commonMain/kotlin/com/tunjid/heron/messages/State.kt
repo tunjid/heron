@@ -30,56 +30,35 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
-    @Transient
-    val signedInProfile: Profile? = null,
-    override val tilingData: TilingState.Data<ConversationQuery, Conversation> = TilingState.Data(
-        currentQuery = ConversationQuery(
-            data = CursorQuery.Data(
-                page = 0,
-                cursorAnchor = Clock.System.now(),
-                limit = 15,
-            ),
+    @Transient val signedInProfile: Profile? = null,
+    override val tilingData: TilingState.Data<ConversationQuery, Conversation> =
+        TilingState.Data(
+            currentQuery =
+                ConversationQuery(
+                    data = CursorQuery.Data(page = 0, cursorAnchor = Clock.System.now(), limit = 15)
+                )
         ),
-    ),
-    @Transient
-    val isSearching: Boolean = false,
-    @Transient
-    val searchQuery: String = "",
-    @Transient
-    val messages: List<Memo> = emptyList(),
-    @Transient
-    val autoCompletedProfiles: List<ProfileWithViewerState> = emptyList(),
+    @Transient val isSearching: Boolean = false,
+    @Transient val searchQuery: String = "",
+    @Transient val messages: List<Memo> = emptyList(),
+    @Transient val autoCompletedProfiles: List<ProfileWithViewerState> = emptyList(),
 ) : TilingState<ConversationQuery, Conversation>
 
 sealed class Action(val key: String) {
 
-    data class Tile(
-        val tilingAction: TilingState.Action,
-    ) : Action(key = "Tile")
+    data class Tile(val tilingAction: TilingState.Action) : Action(key = "Tile")
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
-    data class SetIsSearching(
-        val isSearching: Boolean,
-    ) : Action(key = "SetIsSearching")
+    data class SetIsSearching(val isSearching: Boolean) : Action(key = "SetIsSearching")
 
-    data class SearchQueryChanged(
-        val query: String,
-    ) : Action(key = "SearchQueryChanged")
+    data class SearchQueryChanged(val query: String) : Action(key = "SearchQueryChanged")
 
-    data class ResolveConversation(
-        val with: Profile,
-    ) : Action(key = "ResolveConversation")
+    data class ResolveConversation(val with: Profile) : Action(key = "ResolveConversation")
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(),
-            NavigationAction by delegate
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
+        data class To(val delegate: NavigationAction.Destination) :
+            Navigate(), NavigationAction by delegate
     }
 }
 

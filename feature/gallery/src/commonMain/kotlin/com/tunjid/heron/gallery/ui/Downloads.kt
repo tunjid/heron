@@ -56,87 +56,80 @@ internal fun ImageDownloadState.DownloadButton(
     val coroutineScope = rememberCoroutineScope()
     val downloadStatusState = stateFor(item)
 
-    Box(
-        modifier = modifier,
-    ) {
-        val contentModifier = Modifier
-            .align(Alignment.Center)
-            .size(40.dp)
+    Box(modifier = modifier) {
+        val contentModifier = Modifier.align(Alignment.Center).size(40.dp)
 
-        val onDownloadClicked: () -> Unit = remember(item.image.fullsize) {
-            {
-                coroutineScope.launch {
-                    imageLoader.download(ImageRequest.Network(item.image.fullsize.uri))
-                        .collectLatest { updateStateFor(item, it) }
+        val onDownloadClicked: () -> Unit =
+            remember(item.image.fullsize) {
+                {
+                    coroutineScope.launch {
+                        imageLoader
+                            .download(ImageRequest.Network(item.image.fullsize.uri))
+                            .collectLatest { updateStateFor(item, it) }
+                    }
                 }
             }
-        }
 
         AnimatedContent(
             targetState = downloadStatusState,
             contentKey = DownloadStatus?::contentKey,
         ) { status ->
             when (status) {
-                DownloadStatus.Complete -> Icon(
-                    imageVector = Icons.Rounded.Check,
-                    contentDescription = stringResource(Res.string.download_complete),
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = contentModifier,
-                )
-                DownloadStatus.Failed -> IconButton(
-                    modifier = contentModifier,
-                    onClick = { updateStateFor(item, null) },
-                ) {
+                DownloadStatus.Complete ->
                     Icon(
-                        imageVector = Icons.Rounded.Error,
-                        contentDescription = stringResource(Res.string.download_failed),
-                        tint = MaterialTheme.colorScheme.error,
+                        imageVector = Icons.Rounded.Check,
+                        contentDescription = stringResource(Res.string.download_complete),
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = contentModifier,
                     )
-                }
-                DownloadStatus.Indeterminate -> CircularProgressIndicator(
-                    modifier = contentModifier,
-                )
-                is DownloadStatus.Progress -> CircularProgressIndicator(
-                    modifier = contentModifier,
-                    // let is needed bc of compose lint about method references
-                    progress = animateFloatAsState(status.fraction).let { state ->
-                        state::value
-                    },
-                )
-                null -> IconButton(
-                    modifier = contentModifier,
-                    onClick = onDownloadClicked,
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Download,
-                        contentDescription = stringResource(Res.string.download),
-                        tint = MaterialTheme.colorScheme.outline,
+                DownloadStatus.Failed ->
+                    IconButton(
                         modifier = contentModifier,
+                        onClick = { updateStateFor(item, null) },
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Error,
+                            contentDescription = stringResource(Res.string.download_failed),
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = contentModifier,
+                        )
+                    }
+                DownloadStatus.Indeterminate ->
+                    CircularProgressIndicator(modifier = contentModifier)
+                is DownloadStatus.Progress ->
+                    CircularProgressIndicator(
+                        modifier = contentModifier,
+                        // let is needed bc of compose lint about method references
+                        progress =
+                            animateFloatAsState(status.fraction).let { state -> state::value },
                     )
-                }
+                null ->
+                    IconButton(modifier = contentModifier, onClick = onDownloadClicked) {
+                        Icon(
+                            imageVector = Icons.Rounded.Download,
+                            contentDescription = stringResource(Res.string.download),
+                            tint = MaterialTheme.colorScheme.outline,
+                            modifier = contentModifier,
+                        )
+                    }
             }
         }
     }
 }
 
 private val DownloadStatus?.contentKey
-    get() = when (this) {
-        null -> "-"
-        else -> this::class.simpleName
-    }
+    get() =
+        when (this) {
+            null -> "-"
+            else -> this::class.simpleName
+        }
 
 internal class ImageDownloadState {
     private val states = mutableStateMapOf<String, DownloadStatus?>()
 
-    fun stateFor(
-        photo: GalleryItem.Media.Photo,
-    ): DownloadStatus? = states[photo.image.fullsize.uri]
+    fun stateFor(photo: GalleryItem.Media.Photo): DownloadStatus? = states[photo.image.fullsize.uri]
 
-    fun updateStateFor(
-        photo: GalleryItem.Media.Photo,
-        status: DownloadStatus?,
-    ) {
+    fun updateStateFor(photo: GalleryItem.Media.Photo, status: DownloadStatus?) {
         states[photo.image.fullsize.uri] = status
     }
 }

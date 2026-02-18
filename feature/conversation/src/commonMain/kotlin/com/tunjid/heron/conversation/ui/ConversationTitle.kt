@@ -55,12 +55,10 @@ internal fun ConversationTitle(
     paneScaffoldState: PaneScaffoldState,
     onProfileClicked: (Profile) -> Unit,
 ) {
-    val hasMultipleParticipants = remember(
-        signedInProfileId,
-        participants.size,
-    ) {
-        participants.filter { it.did != signedInProfileId }.size > 1
-    }
+    val hasMultipleParticipants =
+        remember(signedInProfileId, participants.size) {
+            participants.filter { it.did != signedInProfileId }.size > 1
+        }
     if (hasMultipleParticipants) {
         MultipleParticipantTitle(
             sharedElementPrefix = sharedElementPrefix,
@@ -85,45 +83,36 @@ private fun MultipleParticipantTitle(
     participants: List<Profile>,
     paneScaffoldState: PaneScaffoldState,
     onProfileClicked: (Profile) -> Unit,
-) = with(paneScaffoldState) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        participants.forEachIndexed { index, participant ->
-            UpdatedMovableSharedElementOf(
-                sharedContentState = rememberSharedContentState(
-                    key = participant.avatarSharedElementKey(
-                        prefix = sharedElementPrefix,
-                    ),
-                ),
-                state = remember(participant.avatar?.uri) {
-                    ImageArgs(
-                        url = participant.avatar?.uri,
-                        contentScale = ContentScale.Crop,
-                        shape = RoundedPolygonShape.Circle,
-                        contentDescription = null,
-                    )
-                },
-                zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),
-                modifier = Modifier
-                    .size(32.dp)
-                    .offset(x = index * (-8).dp)
-                    .clickable { onProfileClicked(participant) },
-                sharedElement = { args, innerModifier ->
-                    AsyncImage(args, innerModifier)
-                },
-            )
+) =
+    with(paneScaffoldState) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            participants.forEachIndexed { index, participant ->
+                UpdatedMovableSharedElementOf(
+                    sharedContentState =
+                        rememberSharedContentState(
+                            key = participant.avatarSharedElementKey(prefix = sharedElementPrefix)
+                        ),
+                    state =
+                        remember(participant.avatar?.uri) {
+                            ImageArgs(
+                                url = participant.avatar?.uri,
+                                contentScale = ContentScale.Crop,
+                                shape = RoundedPolygonShape.Circle,
+                                contentDescription = null,
+                            )
+                        },
+                    zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),
+                    modifier =
+                        Modifier.size(32.dp).offset(x = index * (-8).dp).clickable {
+                            onProfileClicked(participant)
+                        },
+                    sharedElement = { args, innerModifier -> AsyncImage(args, innerModifier) },
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(modifier = Modifier, text = "roomName")
         }
-        Spacer(
-            modifier = Modifier
-                .width(16.dp),
-        )
-        Text(
-            modifier = Modifier,
-            text = "roomName",
-        )
     }
-}
 
 @Composable
 private fun SingleMemberTitle(
@@ -132,46 +121,37 @@ private fun SingleMemberTitle(
     participants: List<Profile>,
     paneScaffoldState: PaneScaffoldState,
     onProfileClicked: (Profile) -> Unit,
-) = with(paneScaffoldState) {
-    val profile = participants.firstOrNull { it.did != signedInProfileId } ?: return
-    AttributionLayout(
-        modifier = Modifier
-            .clickable { onProfileClicked(profile) },
-        avatar = {
-            UpdatedMovableStickySharedElementOf(
-                modifier = Modifier
-                    .size(UiTokens.avatarSize)
-                    .clickable { onProfileClicked(profile) },
-                sharedContentState = rememberSharedContentState(
-                    key = profile.avatarSharedElementKey(
-                        prefix = sharedElementPrefix,
-                    ),
-                ),
-                zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),
-                state = remember(profile.avatar) {
-                    ImageArgs(
-                        url = profile.avatar?.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = profile.contentDescription,
-                        shape = RoundedPolygonShape.Circle,
-                    )
-                },
-                sharedElement = { state, modifier ->
-                    AsyncImage(state, modifier)
-                },
-            )
-        },
-        label = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                ProfileName(
-                    profile = profile,
+) =
+    with(paneScaffoldState) {
+        val profile = participants.firstOrNull { it.did != signedInProfileId } ?: return
+        AttributionLayout(
+            modifier = Modifier.clickable { onProfileClicked(profile) },
+            avatar = {
+                UpdatedMovableStickySharedElementOf(
+                    modifier =
+                        Modifier.size(UiTokens.avatarSize).clickable { onProfileClicked(profile) },
+                    sharedContentState =
+                        rememberSharedContentState(
+                            key = profile.avatarSharedElementKey(prefix = sharedElementPrefix)
+                        ),
+                    zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),
+                    state =
+                        remember(profile.avatar) {
+                            ImageArgs(
+                                url = profile.avatar?.uri,
+                                contentScale = ContentScale.Crop,
+                                contentDescription = profile.contentDescription,
+                                shape = RoundedPolygonShape.Circle,
+                            )
+                        },
+                    sharedElement = { state, modifier -> AsyncImage(state, modifier) },
                 )
-                ProfileHandle(
-                    profile = profile,
-                )
-            }
-        },
-    )
-}
+            },
+            label = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    ProfileName(profile = profile)
+                    ProfileHandle(profile = profile)
+                }
+            },
+        )
+    }

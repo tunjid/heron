@@ -26,32 +26,24 @@ import com.tunjid.heron.data.database.entities.PostEntity
 
 @Entity(
     tableName = "messagePosts",
-    primaryKeys = [
-        "messageId",
-        "postUri",
-    ],
-    foreignKeys = [
-        ForeignKey(
-            entity = MessageEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["messageId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = PostEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["postUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["messageId"]),
-        Index(value = ["postUri"]),
-    ],
+    primaryKeys = ["messageId", "postUri"],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = MessageEntity::class,
+                parentColumns = ["id"],
+                childColumns = ["messageId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = PostEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["postUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    indices = [Index(value = ["messageId"]), Index(value = ["postUri"])],
 )
-data class MessagePostEntity(
-    val messageId: MessageId,
-    val postUri: PostUri,
-)
+data class MessagePostEntity(val messageId: MessageId, val postUri: PostUri)

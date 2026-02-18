@@ -13,26 +13,26 @@ import kotlin.test.assertEquals
 
 @Burst
 class ProfileSerializationTest(
-    val format: SerializationTestHelper.Format = burstValues(
-        SerializationTestHelper.Format.CBOR,
-        SerializationTestHelper.Format.PROTOBUF,
-    ),
-    val original: Profile = burstValues(
-        sampleProfile(),
-        stubProfile(
-            did = ProfileId("did:example:stub"),
-            handle = ProfileHandle("stubuser"),
-            displayName = "Stub User",
+    val format: SerializationTestHelper.Format =
+        burstValues(SerializationTestHelper.Format.CBOR, SerializationTestHelper.Format.PROTOBUF),
+    val original: Profile =
+        burstValues(
+            sampleProfile(),
+            stubProfile(
+                did = ProfileId("did:example:stub"),
+                handle = ProfileHandle("stubuser"),
+                displayName = "Stub User",
+            ),
         ),
-    ),
 ) {
     @Test
     fun roundTrip() {
-        val decoded = SerializationTestHelper.roundTrip(
-            format = format,
-            value = original,
-            serializer = Profile.serializer(),
-        )
+        val decoded =
+            SerializationTestHelper.roundTrip(
+                format = format,
+                value = original,
+                serializer = Profile.serializer(),
+            )
         assertEquals(original, decoded)
     }
 }

@@ -26,15 +26,9 @@ interface OauthFlowState {
 }
 
 sealed class OauthFlowResult {
-    data class Success(
-        val callbackUri: GenericUri,
-        val issuer: String,
-    ) : OauthFlowResult()
+    data class Success(val callbackUri: GenericUri, val issuer: String) : OauthFlowResult()
 
     data object Failure : OauthFlowResult()
 }
 
-@Composable
-expect fun rememberOauthFlowState(
-    onResult: (OauthFlowResult) -> Unit,
-): OauthFlowState
+@Composable expect fun rememberOauthFlowState(onResult: (OauthFlowResult) -> Unit): OauthFlowState

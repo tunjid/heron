@@ -38,7 +38,8 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 
 @Stable
-internal class ExoPlayerState internal constructor(
+internal class ExoPlayerState
+internal constructor(
     videoId: String,
     videoUrl: String,
     thumbnail: String?,
@@ -91,85 +92,88 @@ internal class ExoPlayerState internal constructor(
     override var status by mutableStateOf<PlayerStatus>(PlayerStatus.Idle.Initial)
         internal set
 
-    override var videoStill by mutableStateOf<ImageBitmap?>(
-        value = null,
-        policy = referentialEqualityPolicy(),
-    )
+    override var videoStill by
+        mutableStateOf<ImageBitmap?>(value = null, policy = referentialEqualityPolicy())
 
     internal val player by exoPlayerState
 
-    internal val playerListener = object : Player.Listener {
+    internal val playerListener =
+        object : Player.Listener {
 
-        override fun onVideoSizeChanged(size: VideoSize) {
-            updateVideoSize(size)
-        }
-
-        override fun onPlayWhenReadyChanged(
-            playWhenReady: Boolean,
-            reason: Int,
-        ) {
-            // Paused at the end of a media item in the playlist that is not looping, record end of playback
-            if (!playWhenReady && reason == Player.PLAY_WHEN_READY_CHANGE_REASON_END_OF_MEDIA_ITEM) {
-                onVideoEnded()
-            } else {
-                status = when {
-                    playWhenReady && player?.playbackState == Player.STATE_READY && autoplay -> PlayerStatus.Play.Confirmed
-                    playWhenReady -> PlayerStatus.Play.Requested
-                    status == PlayerStatus.Idle.Initial -> status
-                    else -> PlayerStatus.Pause.Confirmed
-                }
+            override fun onVideoSizeChanged(size: VideoSize) {
+                updateVideoSize(size)
             }
-            player?.videoSize?.let(::updateVideoSize)
-            updateFromPlayer()
-        }
 
-        override fun onPlaybackStateChanged(playbackState: Int) {
-            isLoading = playbackState != Player.STATE_READY
-            status = when {
-                playbackState == Player.STATE_READY && player?.playWhenReady == true -> PlayerStatus.Play.Confirmed
-                player?.playWhenReady == true -> PlayerStatus.Play.Requested
-                else -> status
-            }
-            player?.videoSize?.let(::updateVideoSize)
-            updateFromPlayer()
-            when (playbackState) {
-                Player.STATE_READY -> Unit
-
-                Player.STATE_ENDED -> {
+            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                // Paused at the end of a media item in the playlist that is not looping, record end
+                // of playback
+                if (
+                    !playWhenReady &&
+                        reason == Player.PLAY_WHEN_READY_CHANGE_REASON_END_OF_MEDIA_ITEM
+                ) {
                     onVideoEnded()
+                } else {
+                    status =
+                        when {
+                            playWhenReady &&
+                                player?.playbackState == Player.STATE_READY &&
+                                autoplay -> PlayerStatus.Play.Confirmed
+                            playWhenReady -> PlayerStatus.Play.Requested
+                            status == PlayerStatus.Idle.Initial -> status
+                            else -> PlayerStatus.Pause.Confirmed
+                        }
                 }
+                player?.videoSize?.let(::updateVideoSize)
+                updateFromPlayer()
+            }
 
-                Player.STATE_BUFFERING -> Unit
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                isLoading = playbackState != Player.STATE_READY
+                status =
+                    when {
+                        playbackState == Player.STATE_READY && player?.playWhenReady == true ->
+                            PlayerStatus.Play.Confirmed
+                        player?.playWhenReady == true -> PlayerStatus.Play.Requested
+                        else -> status
+                    }
+                player?.videoSize?.let(::updateVideoSize)
+                updateFromPlayer()
+                when (playbackState) {
+                    Player.STATE_READY -> Unit
 
-                Player.STATE_IDLE -> {
-                    status = PlayerStatus.Idle.Initial
+                    Player.STATE_ENDED -> {
+                        onVideoEnded()
+                    }
+
+                    Player.STATE_BUFFERING -> Unit
+
+                    Player.STATE_IDLE -> {
+                        status = PlayerStatus.Idle.Initial
+                    }
                 }
             }
-        }
 
-        override fun onRenderedFirstFrame() {
-            this@ExoPlayerState.hasRenderedFirstFrame = true
-            player?.videoSize?.let(::updateVideoSize)
-            updateFromPlayer()
-        }
+            override fun onRenderedFirstFrame() {
+                this@ExoPlayerState.hasRenderedFirstFrame = true
+                player?.videoSize?.let(::updateVideoSize)
+                updateFromPlayer()
+            }
 
-        override fun onVolumeChanged(volume: Float) {
-            updateFromPlayer()
-        }
+            override fun onVolumeChanged(volume: Float) {
+                updateFromPlayer()
+            }
 
-        override fun onEvents(
-            player: Player,
-            events: Player.Events,
-        ) {
-            updateFromPlayer()
+            override fun onEvents(player: Player, events: Player.Events) {
+                updateFromPlayer()
+            }
         }
-    }
 
     private fun updateVideoSize(size: VideoSize) {
-        videoSize = when (val intSize = size.toIntSize()) {
-            IntSize.Zero -> videoSize
-            else -> intSize
-        }
+        videoSize =
+            when (val intSize = size.toIntSize()) {
+                IntSize.Zero -> videoSize
+                else -> intSize
+            }
     }
 
     internal fun updateFromPlayer() {
@@ -182,9 +186,10 @@ internal class ExoPlayerState internal constructor(
 
     /** Whether the video should reset to the beginning. */
     override val shouldReplay: Boolean
-        get() = (totalDuration - lastPositionMs) <= END_OF_VIDEO_RESOLUTION_THRESHOLD_MS &&
-            totalDuration != 0L &&
-            !isLooping
+        get() =
+            (totalDuration - lastPositionMs) <= END_OF_VIDEO_RESOLUTION_THRESHOLD_MS &&
+                totalDuration != 0L &&
+                !isLooping
 
     private fun onVideoEnded() = Unit
 }
@@ -209,7 +214,8 @@ internal fun ExoPlayer.bind(state: ExoPlayerState) {
     isMuted = state.isMuted
 
     repeatMode = if (state.isLooping) REPEAT_MODE_ONE else REPEAT_MODE_OFF
-    // Stop ExoPlayer from automatically advancing to the next item in the playlist if we're not looping.
+    // Stop ExoPlayer from automatically advancing to the next item in the playlist if we're not
+    // looping.
     pauseAtEndOfMediaItems = !state.isLooping
 }
 

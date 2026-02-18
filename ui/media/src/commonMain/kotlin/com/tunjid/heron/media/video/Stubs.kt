@@ -38,21 +38,19 @@ object StubVideoPlayerController : VideoPlayerController {
         thumbnail: String?,
         isLooping: Boolean,
         autoplay: Boolean,
-    ): VideoPlayerState = idsToStates.getOrPut(videoId) {
-        NoOpVideoPlayerState(
-            videoId = videoId,
-            thumbnailUrl = thumbnail,
-            autoplay = autoplay,
-            videoUrl = videoUrl,
-            isLooping = isLooping,
-            isMuted = isMuted,
-        )
-    }
+    ): VideoPlayerState =
+        idsToStates.getOrPut(videoId) {
+            NoOpVideoPlayerState(
+                videoId = videoId,
+                thumbnailUrl = thumbnail,
+                autoplay = autoplay,
+                videoUrl = videoUrl,
+                isLooping = isLooping,
+                isMuted = isMuted,
+            )
+        }
 
-    override fun play(
-        videoId: String?,
-        seekToMs: Long?,
-    ) = Unit
+    override fun play(videoId: String?, seekToMs: Long?) = Unit
 
     override fun pauseActiveVideo() = Unit
 
@@ -62,9 +60,7 @@ object StubVideoPlayerController : VideoPlayerController {
 
     override fun retry(videoId: String) = Unit
 
-    override fun unregisterAll(
-        retainedVideoIds: Set<String>,
-    ): Set<String> = retainedVideoIds
+    override fun unregisterAll(retainedVideoIds: Set<String>): Set<String> = retainedVideoIds
 }
 
 private data class NoOpVideoPlayerState(

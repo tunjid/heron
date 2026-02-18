@@ -48,56 +48,51 @@ fun FeedGenerator(
     feedGenerator: FeedGenerator,
     status: Timeline.Home.Status?,
     onFeedGeneratorStatusUpdated: (Update.OfFeedGenerator) -> Unit,
-) = with(movableElementSharedTransitionScope) {
-    RecordLayout(
-        modifier = modifier,
-        movableElementSharedTransitionScope = movableElementSharedTransitionScope,
-        title = feedGenerator.displayName,
-        subtitle = stringResource(
-            Res.string.feed_by,
-            feedGenerator.creator.handle.id,
-        ),
-        description = feedGenerator.description,
-        sharedElementPrefix = sharedElementPrefix,
-        sharedElementType = feedGenerator.uri,
-        blurb = stringResource(
-            Res.string.liked_by,
-            format(feedGenerator.likeCount ?: 0L),
-        ),
-        avatar = {
-            val avatar = feedGenerator.avatar.orDefault
-            PaneStickySharedElement(
-                modifier = Modifier
-                    .size(44.dp),
-                sharedContentState = rememberSharedContentState(
-                    key = feedGenerator.avatarSharedElementKey(sharedElementPrefix),
-                ),
-            ) {
-                AsyncImage(
-                    modifier = Modifier
-                        .fillParentAxisIfFixedOrWrap(),
-                    args = remember(avatar) {
-                        ImageArgs(
-                            url = avatar.uri,
-                            contentScale = ContentScale.Crop,
-                            contentDescription = null,
-                            shape = FeedGeneratorCollectionShape,
-                        )
-                    },
-                )
-            }
-        },
-        action = {
-            status?.let { currentStatus ->
-                FeedGeneratorStatus(
-                    status = currentStatus,
-                    uri = feedGenerator.uri,
-                    onFeedGeneratorStatusUpdated = onFeedGeneratorStatusUpdated,
-                )
-            }
-        },
-    )
-}
+) =
+    with(movableElementSharedTransitionScope) {
+        RecordLayout(
+            modifier = modifier,
+            movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+            title = feedGenerator.displayName,
+            subtitle = stringResource(Res.string.feed_by, feedGenerator.creator.handle.id),
+            description = feedGenerator.description,
+            sharedElementPrefix = sharedElementPrefix,
+            sharedElementType = feedGenerator.uri,
+            blurb = stringResource(Res.string.liked_by, format(feedGenerator.likeCount ?: 0L)),
+            avatar = {
+                val avatar = feedGenerator.avatar.orDefault
+                PaneStickySharedElement(
+                    modifier = Modifier.size(44.dp),
+                    sharedContentState =
+                        rememberSharedContentState(
+                            key = feedGenerator.avatarSharedElementKey(sharedElementPrefix)
+                        ),
+                ) {
+                    AsyncImage(
+                        modifier = Modifier.fillParentAxisIfFixedOrWrap(),
+                        args =
+                            remember(avatar) {
+                                ImageArgs(
+                                    url = avatar.uri,
+                                    contentScale = ContentScale.Crop,
+                                    contentDescription = null,
+                                    shape = FeedGeneratorCollectionShape,
+                                )
+                            },
+                    )
+                }
+            },
+            action = {
+                status?.let { currentStatus ->
+                    FeedGeneratorStatus(
+                        status = currentStatus,
+                        uri = feedGenerator.uri,
+                        onFeedGeneratorStatusUpdated = onFeedGeneratorStatusUpdated,
+                    )
+                }
+            },
+        )
+    }
 
 @Composable
 fun FeedGeneratorStatus(
@@ -108,11 +103,12 @@ fun FeedGeneratorStatus(
     TimelineStatusSelection(
         currentStatus = status,
         onStatusSelected = { selectedStatus ->
-            val update = when (selectedStatus) {
-                Timeline.Home.Status.Pinned -> Update.OfFeedGenerator.Pin(uri)
-                Timeline.Home.Status.Saved -> Update.OfFeedGenerator.Save(uri)
-                Timeline.Home.Status.None -> Update.OfFeedGenerator.Remove(uri)
-            }
+            val update =
+                when (selectedStatus) {
+                    Timeline.Home.Status.Pinned -> Update.OfFeedGenerator.Pin(uri)
+                    Timeline.Home.Status.Saved -> Update.OfFeedGenerator.Save(uri)
+                    Timeline.Home.Status.None -> Update.OfFeedGenerator.Remove(uri)
+                }
             onFeedGeneratorStatusUpdated(update)
         },
     )

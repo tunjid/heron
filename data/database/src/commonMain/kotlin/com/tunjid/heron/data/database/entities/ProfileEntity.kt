@@ -33,16 +33,9 @@ import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
 import kotlin.time.Instant
 
-@Entity(
-    tableName = "profiles",
-    indices = [
-        Index(value = ["did"]),
-        Index(value = ["handle"]),
-    ],
-)
+@Entity(tableName = "profiles", indices = [Index(value = ["did"]), Index(value = ["handle"])])
 data class ProfileEntity(
-    @PrimaryKey
-    val did: ProfileId,
+    @PrimaryKey val did: ProfileId,
     val handle: ProfileHandle,
     val displayName: String?,
     val description: String?,
@@ -54,8 +47,7 @@ data class ProfileEntity(
     val joinedViaStarterPack: GenericId?,
     val indexedAt: Instant?,
     val createdAt: Instant?,
-    @Embedded
-    val associated: Associated,
+    @Embedded val associated: Associated,
 ) {
     data class Partial(
         val did: ProfileId,
@@ -74,80 +66,68 @@ data class ProfileEntity(
     )
 }
 
-fun ProfileEntity.partial() = ProfileEntity.Partial(
-    did = did,
-    handle = handle,
-    displayName = displayName,
-    avatar = avatar,
-)
+fun ProfileEntity.partial() =
+    ProfileEntity.Partial(did = did, handle = handle, displayName = displayName, avatar = avatar)
 
-fun ProfileEntity?.asExternalModel(
-    labels: List<Label> = emptyList(),
-) =
+fun ProfileEntity?.asExternalModel(labels: List<Label> = emptyList()) =
     if (this == null) emptyProfile()
-    else Profile(
-        did = did,
-        handle = handle,
-        displayName = displayName,
-        description = description,
-        avatar = avatar,
-        banner = banner,
-        followersCount = followersCount,
-        followsCount = followsCount,
-        postsCount = postsCount,
-        joinedViaStarterPack = joinedViaStarterPack,
-        indexedAt = indexedAt,
-        createdAt = createdAt,
-        metadata = Profile.Metadata(
-            createdListCount = associated.createdListCount ?: 0,
-            createdFeedGeneratorCount = associated.createdFeedGeneratorCount ?: 0,
-            createdStarterPackCount = associated.createdStarterPackCount ?: 0,
-            chat = Profile.ChatInfo(
-                allowed = associated.allowedChat(),
-            ),
-        ),
-        labels = labels,
-        isLabeler = associated.labeler ?: false,
-    )
+    else
+        Profile(
+            did = did,
+            handle = handle,
+            displayName = displayName,
+            description = description,
+            avatar = avatar,
+            banner = banner,
+            followersCount = followersCount,
+            followsCount = followsCount,
+            postsCount = postsCount,
+            joinedViaStarterPack = joinedViaStarterPack,
+            indexedAt = indexedAt,
+            createdAt = createdAt,
+            metadata =
+                Profile.Metadata(
+                    createdListCount = associated.createdListCount ?: 0,
+                    createdFeedGeneratorCount = associated.createdFeedGeneratorCount ?: 0,
+                    createdStarterPackCount = associated.createdStarterPackCount ?: 0,
+                    chat = Profile.ChatInfo(allowed = associated.allowedChat()),
+                ),
+            labels = labels,
+            isLabeler = associated.labeler ?: false,
+        )
 
 data class PopulatedProfileEntity(
-    @Embedded
-    val entity: ProfileEntity,
-    @Embedded
-    val relationship: ProfileViewerStateEntity?,
-    @Relation(
-        parentColumn = "did",
-        entityColumn = "uri",
-    )
-    val labelEntities: List<LabelEntity>,
+    @Embedded val entity: ProfileEntity,
+    @Embedded val relationship: ProfileViewerStateEntity?,
+    @Relation(parentColumn = "did", entityColumn = "uri") val labelEntities: List<LabelEntity>,
 )
 
-fun PopulatedProfileEntity.asExternalModel() = with(entity) {
-    Profile(
-        did = did,
-        handle = handle,
-        displayName = displayName,
-        description = description,
-        avatar = avatar,
-        banner = banner,
-        followersCount = followersCount,
-        followsCount = followsCount,
-        postsCount = postsCount,
-        joinedViaStarterPack = joinedViaStarterPack,
-        indexedAt = indexedAt,
-        createdAt = createdAt,
-        metadata = Profile.Metadata(
-            createdListCount = associated.createdListCount ?: 0,
-            createdFeedGeneratorCount = associated.createdFeedGeneratorCount ?: 0,
-            createdStarterPackCount = associated.createdStarterPackCount ?: 0,
-            chat = Profile.ChatInfo(
-                allowed = associated.allowedChat(),
-            ),
-        ),
-        labels = labelEntities.map(LabelEntity::asExternalModel),
-        isLabeler = associated.labeler ?: false,
-    )
-}
+fun PopulatedProfileEntity.asExternalModel() =
+    with(entity) {
+        Profile(
+            did = did,
+            handle = handle,
+            displayName = displayName,
+            description = description,
+            avatar = avatar,
+            banner = banner,
+            followersCount = followersCount,
+            followsCount = followsCount,
+            postsCount = postsCount,
+            joinedViaStarterPack = joinedViaStarterPack,
+            indexedAt = indexedAt,
+            createdAt = createdAt,
+            metadata =
+                Profile.Metadata(
+                    createdListCount = associated.createdListCount ?: 0,
+                    createdFeedGeneratorCount = associated.createdFeedGeneratorCount ?: 0,
+                    createdStarterPackCount = associated.createdStarterPackCount ?: 0,
+                    chat = Profile.ChatInfo(allowed = associated.allowedChat()),
+                ),
+            labels = labelEntities.map(LabelEntity::asExternalModel),
+            isLabeler = associated.labeler ?: false,
+        )
+    }
 
 fun PopulatedProfileEntity.asExternalModelWithViewerState() =
     ProfileWithViewerState(
@@ -162,10 +142,7 @@ private fun ProfileEntity.Associated?.allowedChat(): Profile.ChatInfo.Allowed =
         else -> Profile.ChatInfo.Allowed.NoOne
     }
 
-private fun emptyProfile() = stubProfile(
-    did = ProfileId(""),
-    handle = ProfileHandle(""),
-)
+private fun emptyProfile() = stubProfile(did = ProfileId(""), handle = ProfileHandle(""))
 
 private const val ALLOW_DMS_ALL = "all"
 private const val ALLOW_DMS_FOLLOWING = "following"

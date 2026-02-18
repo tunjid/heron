@@ -48,11 +48,9 @@ fun LabelerSettings(
 ) {
     val state by stateHolder.state.collectAsStateWithLifecycle()
     LazyColumn(
-        modifier = modifier
-            .fillMaxWidth(),
-        contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-            isCompact = prefersCompactBottomNav,
-        ),
+        modifier = modifier.fillMaxWidth(),
+        contentPadding =
+            UiTokens.bottomNavAndInsetPaddingValues(isCompact = prefersCompactBottomNav),
     ) {
         val languageTag = Locale.current.toLanguageTag()
         items(
@@ -61,11 +59,7 @@ fun LabelerSettings(
                 Column {
                     val locale = labelSetting.definition.locale(languageTag)
                     LabelSetting(
-                        modifier = Modifier
-                            .padding(
-                                horizontal = 16.dp,
-                                vertical = 8.dp,
-                            ),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         enabled = state.subscribed,
                         labelName = locale?.name ?: labelSetting.definition.identifier.value,
                         labelDescription = locale?.description,
@@ -84,9 +78,10 @@ fun LabelerSettings(
 }
 
 private val Label.Visibility.stringRes
-    get() = when (this) {
-        Label.Visibility.Ignore -> Res.string.label_off
-        Label.Visibility.Warn -> Res.string.label_show_badge
-        Label.Visibility.Hide -> Res.string.label_hide
-        else -> CommonStrings.unknown_label
-    }
+    get() =
+        when (this) {
+            Label.Visibility.Ignore -> Res.string.label_off
+            Label.Visibility.Warn -> Res.string.label_show_badge
+            Label.Visibility.Hide -> Res.string.label_hide
+            else -> CommonStrings.unknown_label
+        }

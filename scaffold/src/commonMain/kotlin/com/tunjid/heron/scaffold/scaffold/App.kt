@@ -50,19 +50,15 @@ import com.tunjid.treenav.compose.threepane.panedecorators.threePaneAdaptiveDeco
 import com.tunjid.treenav.compose.threepane.panedecorators.threePaneMovableSharedElementDecorator
 import com.tunjid.treenav.strings.Route
 
-/**
- * Root scaffold for the app
- */
+/** Root scaffold for the app */
 @Composable
-fun App(
-    modifier: Modifier,
-    appState: AppState,
-) {
+fun App(modifier: Modifier, appState: AppState) {
     AppTheme(
-        theme = when (appState.preferences?.local?.useDynamicTheming) {
-            true -> Theme.Dynamic
-            else -> Theme.Default
-        },
+        theme =
+            when (appState.preferences?.local?.useDynamicTheming) {
+                true -> Theme.Dynamic
+                else -> Theme.Default
+            }
     ) {
         CompositionLocalProvider(
             LocalAppState provides appState,
@@ -71,65 +67,52 @@ fun App(
         ) {
             Surface {
                 // Root LookaheadScope used to anchor all shared element transitions
-                SharedTransitionLayout(
-                    modifier = modifier.fillMaxSize(),
-                ) {
+                SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
                     val density = LocalDensity.current
                     val movableSharedElementHostState = remember {
                         MovableSharedElementHostState<ThreePane, Route>(
-                            sharedTransitionScope = this,
+                            sharedTransitionScope = this
                         )
                     }
-                    val windowWidth = rememberUpdatedState(
-                        with(density) {
-                            LocalWindowInfo.current.containerSize.width.toDp()
-                        },
-                    )
+                    val windowWidth =
+                        rememberUpdatedState(
+                            with(density) { LocalWindowInfo.current.containerSize.width.toDp() }
+                        )
                     if (!sharedElementsCoordinatesSet()) return@SharedTransitionLayout
 
-                    val displayState = appState.rememberMultiPaneDisplayState(
-                        paneDecorators = remember {
-                            listOf(
-                                threePaneAdaptiveDecorator(
-                                    secondaryPaneBreakPoint = mutableStateOf(
-                                        SecondaryPaneMinWidthBreakpointDp,
-                                    ),
-                                    tertiaryPaneBreakPoint = mutableStateOf(
-                                        TertiaryPaneMinWidthBreakpointDp,
-                                    ),
-                                    windowWidthState = windowWidth,
-                                ),
-                                threePaneMovableSharedElementDecorator(
-                                    movableSharedElementHostState,
-                                ),
-                            )
-                        },
-                    )
-                    MultiPaneDisplay(
-                        modifier = Modifier.fillMaxSize(),
-                        state = displayState,
-                    ) {
-                        val splitPaneState = remember {
-                            SplitPaneState(
-                                paneNavigationState = { this.paneNavigationState },
-                                density = density,
-                                windowWidth = windowWidth,
-                                hasCompatBottomNav = {
-                                    appState.prefersCompactBottomNav
-                                },
-                            )
-                        }.also {
-                            it.update(
-                                density = density,
-                            )
-                        }
-                        CompositionLocalProvider(
-                            LocalSplitPaneState provides splitPaneState,
-                        ) {
+                    val displayState =
+                        appState.rememberMultiPaneDisplayState(
+                            paneDecorators =
+                                remember {
+                                    listOf(
+                                        threePaneAdaptiveDecorator(
+                                            secondaryPaneBreakPoint =
+                                                mutableStateOf(SecondaryPaneMinWidthBreakpointDp),
+                                            tertiaryPaneBreakPoint =
+                                                mutableStateOf(TertiaryPaneMinWidthBreakpointDp),
+                                            windowWidthState = windowWidth,
+                                        ),
+                                        threePaneMovableSharedElementDecorator(
+                                            movableSharedElementHostState
+                                        ),
+                                    )
+                                }
+                        )
+                    MultiPaneDisplay(modifier = Modifier.fillMaxSize(), state = displayState) {
+                        val splitPaneState =
+                            remember {
+                                    SplitPaneState(
+                                        paneNavigationState = { this.paneNavigationState },
+                                        density = density,
+                                        windowWidth = windowWidth,
+                                        hasCompatBottomNav = { appState.prefersCompactBottomNav },
+                                    )
+                                }
+                                .also { it.update(density = density) }
+                        CompositionLocalProvider(LocalSplitPaneState provides splitPaneState) {
                             SplitLayout(
                                 state = splitPaneState.splitLayoutState,
-                                modifier = modifier
-                                    .fillMaxSize(),
+                                modifier = modifier.fillMaxSize(),
                                 itemSeparators = { _, offset ->
                                     DraggableThumb(
                                         splitLayoutState = splitPaneState.splitLayoutState,
@@ -144,30 +127,30 @@ fun App(
                         }
 
                         val navigationEventDispatcher =
-                            LocalNavigationEventDispatcherOwner.current!!
-                                .navigationEventDispatcher
+                            LocalNavigationEventDispatcherOwner.current!!.navigationEventDispatcher
 
                         LaunchedEffect(navigationEventDispatcher) {
-                            navigationEventDispatcher.transitionState
-                                .collect { eventState ->
-                                    when (eventState) {
-                                        is NavigationEventTransitionState.Idle -> {
-                                            appState.backPreviewState.progress = 0f
-                                        }
+                            navigationEventDispatcher.transitionState.collect { eventState ->
+                                when (eventState) {
+                                    is NavigationEventTransitionState.Idle -> {
+                                        appState.backPreviewState.progress = 0f
+                                    }
 
-                                        is NavigationEventTransitionState.InProgress -> {
-                                            appState.backPreviewState.progress =
-                                                eventState.latestEvent.progress
-                                            appState.backPreviewState.atStart =
-                                                eventState.latestEvent.swipeEdge == NavigationEvent.EDGE_LEFT
-                                            appState.backPreviewState.pointerOffset =
-                                                Offset(
+                                    is NavigationEventTransitionState.InProgress -> {
+                                        appState.backPreviewState.progress =
+                                            eventState.latestEvent.progress
+                                        appState.backPreviewState.atStart =
+                                            eventState.latestEvent.swipeEdge ==
+                                                NavigationEvent.EDGE_LEFT
+                                        appState.backPreviewState.pointerOffset =
+                                            Offset(
                                                     eventState.latestEvent.touchX,
                                                     eventState.latestEvent.touchY,
-                                                ).round()
-                                        }
+                                                )
+                                                .round()
                                     }
                                 }
+                            }
                         }
                     }
                 }
@@ -178,9 +161,7 @@ fun App(
 
 @Composable
 private fun sharedElementsCoordinatesSet(): Boolean {
-    var coordinatesSet by remember {
-        mutableStateOf(false)
-    }
+    var coordinatesSet by remember { mutableStateOf(false) }
     Spacer(
         Modifier.layout { measurable, constraints ->
             val placeable = measurable.measure(constraints)
@@ -190,7 +171,7 @@ private fun sharedElementsCoordinatesSet(): Boolean {
                 }
                 placeable.place(0, 0)
             }
-        },
+        }
     )
     return coordinatesSet
 }

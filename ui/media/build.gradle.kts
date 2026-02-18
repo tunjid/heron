@@ -22,9 +22,8 @@ plugins {
     id("org.jetbrains.compose")
     alias(libs.plugins.composeCompiler)
 }
-android {
-    namespace = "com.tunjid.heron.ui.images"
-}
+
+android { namespace = "com.tunjid.heron.ui.images" }
 
 kotlin {
     sourceSets {
@@ -73,10 +72,10 @@ kotlin {
                 implementation(libs.vlc.java)
             }
         }
-//        iosMain {
-//            dependencies {
-//                implementation(libs.ktor.client.darwin)
-//            }
-//        }
+        //        iosMain {
+        //            dependencies {
+        //                implementation(libs.ktor.client.darwin)
+        //            }
+        //        }
     }
 }

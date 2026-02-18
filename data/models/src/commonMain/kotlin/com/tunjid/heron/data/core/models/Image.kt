@@ -28,7 +28,4 @@ data class Image(
     override val height: Long?,
 ) : AspectRatio
 
-@Serializable
-data class ImageList(
-    val images: List<Image>,
-) : Embed.Media
+@Serializable data class ImageList(val images: List<Image>) : Embed.Media

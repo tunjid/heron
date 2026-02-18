@@ -27,16 +27,10 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.timeline.ui.post.PostMetadata
 
 sealed interface PostAction {
-    data class OfLinkTarget(
-        val post: Post,
-        val linkTarget: LinkTarget,
-    ) : PostAction
+    data class OfLinkTarget(val post: Post, val linkTarget: LinkTarget) : PostAction
 
-    data class OfProfile(
-        val profile: Profile,
-        val post: Post,
-        val quotingPostUri: PostUri?,
-    ) : PostAction
+    data class OfProfile(val profile: Profile, val post: Post, val quotingPostUri: PostUri?) :
+        PostAction
 
     data class OfPost(
         val post: Post,
@@ -44,10 +38,7 @@ sealed interface PostAction {
         val isMainPost: Boolean,
     ) : PostAction
 
-    data class OfRecord(
-        val record: Record,
-        val owningPostUri: PostUri,
-    ) : PostAction
+    data class OfRecord(val record: Record, val owningPostUri: PostUri) : PostAction
 
     data class OfMedia(
         val media: Embed.Media,
@@ -59,22 +50,16 @@ sealed interface PostAction {
 
     sealed interface Options : PostAction
 
-    data class OfReply(
-        val post: Post,
-    ) : Options
+    data class OfReply(val post: Post) : Options
 
     data class OfInteraction(
         val interaction: Post.Interaction,
         val viewerStats: Post.ViewerStats?,
     ) : Options
 
-    data class OfMetadata(
-        val metadata: PostMetadata,
-    ) : Options
+    data class OfMetadata(val metadata: PostMetadata) : Options
 
-    data class OfMore(
-        val post: Post,
-    ) : Options
+    data class OfMore(val post: Post) : Options
 }
 
 @Stable

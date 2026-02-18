@@ -80,8 +80,9 @@ fun Indicator(
         currentPosition = {
             val firstVisibleItem = lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()
             if (firstVisibleItem == null || firstVisibleItem.size == 0) 0f
-            else lazyListState.firstVisibleItemIndex +
-                (lazyListState.firstVisibleItemScrollOffset.toFloat() / firstVisibleItem.size)
+            else
+                lazyListState.firstVisibleItemIndex +
+                    (lazyListState.firstVisibleItemScrollOffset.toFloat() / firstVisibleItem.size)
         },
     )
 }
@@ -106,22 +107,19 @@ fun Indicator(
 
     val totalWidth = (maxVisibleDots * stepPx) - spacingPx
 
-    Canvas(
-        modifier = modifier
-            .width(with(density) { totalWidth.toDp() })
-            .height(indicatorSize),
-    ) {
+    Canvas(modifier = modifier.width(with(density) { totalWidth.toDp() }).height(indicatorSize)) {
         val currentPos = currentPosition()
 
         // Calculate the center of the visible window
-        val viewCenter = if (itemCount <= maxVisibleDots) {
-            (itemCount - 1) / 2f
-        } else {
-            // Clamp the view center so we don't scroll past the start or end
-            val lowerBound = (maxVisibleDots / 2).toFloat()
-            val upperBound = (itemCount - 1 - (maxVisibleDots / 2)).toFloat()
-            currentPos.coerceIn(lowerBound, upperBound)
-        }
+        val viewCenter =
+            if (itemCount <= maxVisibleDots) {
+                (itemCount - 1) / 2f
+            } else {
+                // Clamp the view center so we don't scroll past the start or end
+                val lowerBound = (maxVisibleDots / 2).toFloat()
+                val upperBound = (itemCount - 1 - (maxVisibleDots / 2)).toFloat()
+                currentPos.coerceIn(lowerBound, upperBound)
+            }
 
         val canvasCenter = size.width / 2f
 
@@ -138,11 +136,12 @@ fun Indicator(
 
             // Active dot is 1.2x bigger than inactive (1.0x).
             // Scale changes linearly with offset.
-            var scale = if (distFromSelection < 1f) {
-                1.2f - 0.2f * distFromSelection
-            } else {
-                1.0f
-            }
+            var scale =
+                if (distFromSelection < 1f) {
+                    1.2f - 0.2f * distFromSelection
+                } else {
+                    1.0f
+                }
 
             // Edge scaling for shifting effect
             if (itemCount > maxVisibleDots) {
@@ -159,17 +158,14 @@ fun Indicator(
 
             val radius = (indicatorSizePx / 2f) * scale
 
-            val color = if (distFromSelection < 1f) {
-                lerp(activeColor, inactiveColor, distFromSelection)
-            } else {
-                inactiveColor
-            }
+            val color =
+                if (distFromSelection < 1f) {
+                    lerp(activeColor, inactiveColor, distFromSelection)
+                } else {
+                    inactiveColor
+                }
 
-            drawCircle(
-                color = color,
-                radius = radius,
-                center = Offset(x, size.height / 2f),
-            )
+            drawCircle(color = color, radius = radius, center = Offset(x, size.height / 2f))
         }
     }
 }

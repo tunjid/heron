@@ -35,29 +35,20 @@ import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import kotlin.jvm.JvmInline
 
-/**
- * Class for inferring the position of a video in a column of [TimelineItem.Thread] [Post]s.
- */
+/** Class for inferring the position of a video in a column of [TimelineItem.Thread] [Post]s. */
 @Stable
-class ThreadedVideoPositionStates<T>(
-    private val id: T.() -> String,
-) {
+class ThreadedVideoPositionStates<T>(private val id: T.() -> String) {
     private val itemIdsToStates = mutableStateMapOf<String, ThreadedVideoPositionState>()
 
     @Composable
     fun getOrCreateStateFor(item: T): ThreadedVideoPositionState {
-        val state = itemIdsToStates.getOrPut(
-            key = item.id(),
-            defaultValue = ::ThreadedVideoPositionState,
-        )
-        DisposableEffect(Unit) {
-            onDispose { itemIdsToStates.remove(item.id()) }
-        }
+        val state =
+            itemIdsToStates.getOrPut(key = item.id(), defaultValue = ::ThreadedVideoPositionState)
+        DisposableEffect(Unit) { onDispose { itemIdsToStates.remove(item.id()) } }
         return state
     }
 
-    fun retrieveStateFor(item: T): ThreadedVideoPositionState? =
-        itemIdsToStates[item.id()]
+    fun retrieveStateFor(item: T): ThreadedVideoPositionState? = itemIdsToStates[item.id()]
 }
 
 @Stable
@@ -71,23 +62,18 @@ class ThreadedVideoPositionState : State {
     companion object {
 
         /**
-         * Modifier for keeping track of the position of a video in a timeline item that may
-         * be threaded.
+         * Modifier for keeping track of the position of a video in a timeline item that may be
+         * threaded.
          */
-        fun Modifier.threadedVideoPosition(
-            state: ThreadedVideoPositionState,
-        ) = this.then(ThreadedVideoPositionElement(state))
+        fun Modifier.threadedVideoPosition(state: ThreadedVideoPositionState) =
+            this.then(ThreadedVideoPositionElement(state))
 
-        /**
-         * Internal modifier for marking child positions in a threaded timeline item.
-         */
-        internal fun Modifier.childThreadNode(
-            videoId: String?,
-        ) = this.then(ThreadedVideoPositionElement(ChildState(videoId)))
+        /** Internal modifier for marking child positions in a threaded timeline item. */
+        internal fun Modifier.childThreadNode(videoId: String?) =
+            this.then(ThreadedVideoPositionElement(ChildState(videoId)))
 
-        private data class ThreadedVideoPositionElement(
-            private val state: State,
-        ) : ModifierNodeElement<ThreadedVideoPositionNode>() {
+        private data class ThreadedVideoPositionElement(private val state: State) :
+            ModifierNodeElement<ThreadedVideoPositionNode>() {
             override fun create(): ThreadedVideoPositionNode =
                 ThreadedVideoPositionNode(state = state)
 
@@ -100,11 +86,8 @@ class ThreadedVideoPositionState : State {
             }
         }
 
-        private class ThreadedVideoPositionNode(
-            var state: State,
-        ) : Modifier.Node(),
-            TraversableNode,
-            ThreadTraversalNode {
+        private class ThreadedVideoPositionNode(var state: State) :
+            Modifier.Node(), TraversableNode, ThreadTraversalNode {
 
             override val traverseKey: Any = ThreadTraversalNode.Companion.ThreadTraversalKey
 
@@ -131,27 +114,27 @@ class ThreadedVideoPositionState : State {
 
             override fun videoIdAt(fraction: Float): String? =
                 if (!isAttached) null
-                else when (val currentState = state) {
-                    is ChildState -> currentState.videoId
-                    is ThreadedVideoPositionState -> {
-                        val total = requireLayoutCoordinates().size.height
-                        val limit = total * fraction
-                        var seen = 0f
-                        var videoId: String? = null
+                else
+                    when (val currentState = state) {
+                        is ChildState -> currentState.videoId
+                        is ThreadedVideoPositionState -> {
+                            val total = requireLayoutCoordinates().size.height
+                            val limit = total * fraction
+                            var seen = 0f
+                            var videoId: String? = null
 
-                        traverseDescendants<ThreadTraversalNode> { currentNode ->
-                            seen += currentNode.requireLayoutCoordinates().size.height
-                            if (seen > limit) {
-                                videoId = currentNode.videoIdAt(fraction)
-                                if (videoId != null) CancelTraversal
-                                else ContinueTraversal
-                            } else {
-                                ContinueTraversal
+                            traverseDescendants<ThreadTraversalNode> { currentNode ->
+                                seen += currentNode.requireLayoutCoordinates().size.height
+                                if (seen > limit) {
+                                    videoId = currentNode.videoIdAt(fraction)
+                                    if (videoId != null) CancelTraversal else ContinueTraversal
+                                } else {
+                                    ContinueTraversal
+                                }
                             }
+                            videoId
                         }
-                        videoId
                     }
-                }
         }
     }
 }
@@ -161,9 +144,7 @@ private sealed interface State {
 }
 
 @JvmInline
-value class ChildState(
-    val videoId: String?,
-) : State {
+value class ChildState(val videoId: String?) : State {
     override fun videoIdAt(fraction: Float): String? = videoId
 }
 
@@ -177,10 +158,11 @@ internal sealed interface ThreadTraversalNode : TraversableNode {
 }
 
 internal val Post.videoId
-    get() = when (val embed = embed) {
-        null -> null
-        is ExternalEmbed -> null
-        is ImageList -> null
-        is Video -> embed.playlist.uri
-        UnknownEmbed -> null
-    }
+    get() =
+        when (val embed = embed) {
+            null -> null
+            is ExternalEmbed -> null
+            is ImageList -> null
+            is Video -> embed.playlist.uri
+            UnknownEmbed -> null
+        }

@@ -66,10 +66,7 @@ internal typealias PostsStateHolder = ActionStateMutator<Action, StateFlow<State
 
 @AssistedFactory
 fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
-        scope: CoroutineScope,
-        route: Route,
-    ): ActualPostsViewModel
+    override fun invoke(scope: CoroutineScope, route: Route): ActualPostsViewModel
 }
 
 @AssistedInject
@@ -80,75 +77,73 @@ class ActualPostsViewModel(
     recordRepository: RecordRepository,
     userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
-    @Assisted
-    scope: CoroutineScope,
-    @Assisted
-    route: Route,
-) : ViewModel(viewModelScope = scope),
+    @Assisted scope: CoroutineScope,
+    @Assisted route: Route,
+) :
+    ViewModel(viewModelScope = scope),
     PostsStateHolder by scope.actionStateFlowMutator(
-        initialState = State(
-            tilingData = TilingState.Data(
-                currentQuery = when (val request = route.postsRequest) {
-                    is PostsRequest.Quotes -> PostDataQuery(
-                        profileId = request.profileHandleOrId,
-                        postRecordKey = request.postRecordKey,
-                        data = CursorQuery.Data(
-                            page = 0,
-                            cursorAnchor = Clock.System.now(),
-                        ),
+        initialState =
+            State(
+                tilingData =
+                    TilingState.Data(
+                        currentQuery =
+                            when (val request = route.postsRequest) {
+                                is PostsRequest.Quotes ->
+                                    PostDataQuery(
+                                        profileId = request.profileHandleOrId,
+                                        postRecordKey = request.postRecordKey,
+                                        data =
+                                            CursorQuery.Data(
+                                                page = 0,
+                                                cursorAnchor = Clock.System.now(),
+                                            ),
+                                    )
+                                PostsRequest.Saved ->
+                                    PostDataQuery(
+                                        profileId = ProfileHandle(""),
+                                        postRecordKey = RecordKey(""),
+                                        data =
+                                            CursorQuery.Data(
+                                                page = 0,
+                                                cursorAnchor = Clock.System.now(),
+                                            ),
+                                    )
+                            }
                     )
-                    PostsRequest.Saved -> PostDataQuery(
-                        profileId = ProfileHandle(""),
-                        postRecordKey = RecordKey(""),
-                        data = CursorQuery.Data(
-                            page = 0,
-                            cursorAnchor = Clock.System.now(),
-                        ),
-                    )
-                },
             ),
-        ),
-        inputs = listOf(
-            recentConversationMutations(
-                messageRepository = messageRepository,
+        inputs =
+            listOf(
+                recentConversationMutations(messageRepository = messageRepository),
+                loadPreferencesMutations(userDataRepository = userDataRepository),
             ),
-            loadPreferencesMutations(
-                userDataRepository = userDataRepository,
-            ),
-        ),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         actionTransform = transform@{ actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
-                    is Action.Tile -> action.flow.postsLoadMutations(
-                        request = route.postsRequest,
-                        stateHolder = this@transform,
-                        postsRepository = postsRepository,
-                    )
-                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.BlockAccount -> action.flow.blockAccountMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.MuteAccount -> action.flow.muteAccountMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.UpdateRecentLists -> action.flow.recentListsMutations(
-                        recordRepository = recordRepository,
-                    )
+                actions.toMutationStream(keySelector = Action::key) {
+                    when (val action = type()) {
+                        is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+                        is Action.Navigate ->
+                            action.flow.consumeNavigationActions(
+                                navigationMutationConsumer = navActions
+                            )
+                        is Action.Tile ->
+                            action.flow.postsLoadMutations(
+                                request = route.postsRequest,
+                                stateHolder = this@transform,
+                                postsRepository = postsRepository,
+                            )
+                        is Action.SendPostInteraction ->
+                            action.flow.postInteractionMutations(writeQueue = writeQueue)
+                        is Action.UpdateMutedWord ->
+                            action.flow.updateMutedWordMutations(writeQueue = writeQueue)
+                        is Action.BlockAccount ->
+                            action.flow.blockAccountMutations(writeQueue = writeQueue)
+                        is Action.MuteAccount ->
+                            action.flow.muteAccountMutations(writeQueue = writeQueue)
+                        is Action.UpdateRecentLists ->
+                            action.flow.recentListsMutations(recordRepository = recordRepository)
+                    }
                 }
-            }
-        },
+            },
     )
 
 private suspend fun Flow<Action.Tile>.postsLoadMutations(
@@ -176,84 +171,67 @@ private suspend fun Flow<Action.Tile>.postsLoadMutations(
         )
 
 private fun recentConversationMutations(
-    messageRepository: MessageRepository,
+    messageRepository: MessageRepository
 ): Flow<Mutation<State>> =
-    messageRepository.recentConversations()
-        .mapToMutation { conversations ->
-            copy(recentConversations = conversations)
-        }
+    messageRepository.recentConversations().mapToMutation { conversations ->
+        copy(recentConversations = conversations)
+    }
 
 fun Flow<Action.UpdateRecentLists>.recentListsMutations(
-    recordRepository: RecordRepository,
-): Flow<Mutation<State>> =
-    flatMapLatest {
-        recordRepository.recentLists
-            .mapToMutation { lists ->
-                copy(recentLists = lists)
-            }
-    }
+    recordRepository: RecordRepository
+): Flow<Mutation<State>> = flatMapLatest {
+    recordRepository.recentLists.mapToMutation { lists -> copy(recentLists = lists) }
+}
 
 private fun loadPreferencesMutations(
-    userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    userDataRepository.preferences
-        .mapToMutation {
-            copy(preferences = it)
-        }
+    userDataRepository: UserDataRepository
+): Flow<Mutation<State>> = userDataRepository.preferences.mapToMutation { copy(preferences = it) }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
-    writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        val writable = Writable.Interaction(action.interaction)
-        val status = writeQueue.enqueue(writable)
-        writable.writeStatusMessage(status)?.let {
-            emit { copy(messages = messages + it) }
-        }
-    }
+    writeQueue: WriteQueue
+): Flow<Mutation<State>> = mapToManyMutations { action ->
+    val writable = Writable.Interaction(action.interaction)
+    val status = writeQueue.enqueue(writable)
+    writable.writeStatusMessage(status)?.let { emit { copy(messages = messages + it) } }
+}
 
 private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
-    writeQueue: WriteQueue,
+    writeQueue: WriteQueue
 ): Flow<Mutation<State>> = mapToManyMutations {
-    val writable = Writable.TimelineUpdate(
-        Timeline.Update.OfMutedWord.ReplaceAll(
-            mutedWordPreferences = it.mutedWordPreference,
-        ),
-    )
+    val writable =
+        Writable.TimelineUpdate(
+            Timeline.Update.OfMutedWord.ReplaceAll(mutedWordPreferences = it.mutedWordPreference)
+        )
     val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
+    writable.writeStatusMessage(status)?.let { emit { copy(messages = messages + it) } }
 }
 
 private fun Flow<Action.BlockAccount>.blockAccountMutations(
-    writeQueue: WriteQueue,
+    writeQueue: WriteQueue
 ): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
-    val writable = Writable.Restriction(
-        Profile.Restriction.Block.Add(
-            signedInProfileId = action.signedInProfileId,
-            profileId = action.profileId,
-        ),
-    )
+    val writable =
+        Writable.Restriction(
+            Profile.Restriction.Block.Add(
+                signedInProfileId = action.signedInProfileId,
+                profileId = action.profileId,
+            )
+        )
     val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
+    writable.writeStatusMessage(status)?.let { emit { copy(messages = messages + it) } }
 }
 
 private fun Flow<Action.MuteAccount>.muteAccountMutations(
-    writeQueue: WriteQueue,
+    writeQueue: WriteQueue
 ): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
-    val writable = Writable.Restriction(
-        Profile.Restriction.Mute.Add(
-            signedInProfileId = action.signedInProfileId,
-            profileId = action.profileId,
-        ),
-    )
+    val writable =
+        Writable.Restriction(
+            Profile.Restriction.Mute.Add(
+                signedInProfileId = action.signedInProfileId,
+                profileId = action.profileId,
+            )
+        )
     val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
+    writable.writeStatusMessage(status)?.let { emit { copy(messages = messages + it) } }
 }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
@@ -264,5 +242,4 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
 private fun PostDataQuery.updateData(newData: CursorQuery.Data): PostDataQuery =
     copy(data = newData)
 
-private fun PostDataQuery.refresh(): PostDataQuery =
-    copy(data = data.reset())
+private fun PostDataQuery.refresh(): PostDataQuery = copy(data = data.reset())

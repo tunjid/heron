@@ -26,31 +26,32 @@ internal object Migration21To22NotificationsOwnerIds : Migration(21, 22) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(
             """
-                CREATE TABLE IF NOT EXISTS `notifications_new` (
-                    `cid` TEXT NOT NULL,
-                    `uri` TEXT NOT NULL,
-                    `authorId` TEXT NOT NULL,
-                    `ownerId` TEXT NOT NULL,
-                    `reason` TEXT NOT NULL,
-                    `reasonSubject` TEXT,
-                    `associatedPostUri` TEXT,
-                    `isRead` INTEGER NOT NULL,
-                    `indexedAt` INTEGER NOT NULL,
-                    PRIMARY KEY(`uri`),
-                    FOREIGN KEY(`associatedPostUri`)
-                        REFERENCES `posts`(`uri`)
-                        ON UPDATE NO ACTION
-                        ON DELETE CASCADE,
-                    FOREIGN KEY(`authorId`)
-                        REFERENCES `profiles`(`did`)
-                        ON UPDATE NO ACTION
-                        ON DELETE CASCADE,
-                    FOREIGN KEY(`ownerId`)
-                        REFERENCES `profiles`(`did`)
-                        ON UPDATE NO ACTION
-                        ON DELETE CASCADE
-                )
-            """.trimIndent(),
+            CREATE TABLE IF NOT EXISTS `notifications_new` (
+                `cid` TEXT NOT NULL,
+                `uri` TEXT NOT NULL,
+                `authorId` TEXT NOT NULL,
+                `ownerId` TEXT NOT NULL,
+                `reason` TEXT NOT NULL,
+                `reasonSubject` TEXT,
+                `associatedPostUri` TEXT,
+                `isRead` INTEGER NOT NULL,
+                `indexedAt` INTEGER NOT NULL,
+                PRIMARY KEY(`uri`),
+                FOREIGN KEY(`associatedPostUri`)
+                    REFERENCES `posts`(`uri`)
+                    ON UPDATE NO ACTION
+                    ON DELETE CASCADE,
+                FOREIGN KEY(`authorId`)
+                    REFERENCES `profiles`(`did`)
+                    ON UPDATE NO ACTION
+                    ON DELETE CASCADE,
+                FOREIGN KEY(`ownerId`)
+                    REFERENCES `profiles`(`did`)
+                    ON UPDATE NO ACTION
+                    ON DELETE CASCADE
+            )
+            """
+                .trimIndent()
         )
 
         connection.execSQL("DROP TABLE notifications")
@@ -58,8 +59,14 @@ internal object Migration21To22NotificationsOwnerIds : Migration(21, 22) {
 
         connection.execSQL("CREATE INDEX `index_notifications_uri` ON notifications (`uri`);")
         connection.execSQL("CREATE INDEX `index_notifications_cid` ON notifications (`cid`);")
-        connection.execSQL("CREATE INDEX `index_notifications_authorId` ON notifications (`authorId`);")
-        connection.execSQL("CREATE INDEX `index_notifications_ownerId` ON notifications (`ownerId`);")
-        connection.execSQL("CREATE INDEX `index_notifications_indexedAt` ON notifications (`indexedAt`);")
+        connection.execSQL(
+            "CREATE INDEX `index_notifications_authorId` ON notifications (`authorId`);"
+        )
+        connection.execSQL(
+            "CREATE INDEX `index_notifications_ownerId` ON notifications (`ownerId`);"
+        )
+        connection.execSQL(
+            "CREATE INDEX `index_notifications_indexedAt` ON notifications (`indexedAt`);"
+        )
     }
 }

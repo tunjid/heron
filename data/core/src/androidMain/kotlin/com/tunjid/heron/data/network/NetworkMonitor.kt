@@ -14,8 +14,6 @@
  *    limitations under the License.
  */
 
-@file:Suppress("ktlint:standard:no-empty-file")
-
 package com.tunjid.heron.data.network
 
 // import android.content.Context

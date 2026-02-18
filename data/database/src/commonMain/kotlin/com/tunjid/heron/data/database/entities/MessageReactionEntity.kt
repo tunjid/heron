@@ -25,30 +25,25 @@ import kotlin.time.Instant
 
 @Entity(
     tableName = "messageReactions",
-    primaryKeys = [
-        "value",
-        "messageId",
-        "senderId",
-    ],
-    foreignKeys = [
-        ForeignKey(
-            entity = MessageEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["messageId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["senderId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["createdAt"]),
-    ],
+    primaryKeys = ["value", "messageId", "senderId"],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = MessageEntity::class,
+                parentColumns = ["id"],
+                childColumns = ["messageId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["senderId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    indices = [Index(value = ["createdAt"])],
 )
 data class MessageReactionEntity(
     val value: String,

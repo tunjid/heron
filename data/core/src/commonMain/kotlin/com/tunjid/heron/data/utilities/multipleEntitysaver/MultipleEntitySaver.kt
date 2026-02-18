@@ -73,7 +73,9 @@ import com.tunjid.heron.data.utilities.triage
 import dev.zacsweers.metro.Inject
 import kotlin.time.Instant
 
-class MultipleEntitySaverProvider @Inject constructor(
+class MultipleEntitySaverProvider
+@Inject
+constructor(
     private val postDao: PostDao,
     private val labelDao: LabelDao,
     private val listDao: ListDao,
@@ -87,30 +89,28 @@ class MultipleEntitySaverProvider @Inject constructor(
     private val threadGateDao: ThreadGateDao,
     private val transactionWriter: TransactionWriter,
 ) {
-    internal suspend fun saveInTransaction(
-        block: suspend MultipleEntitySaver.() -> Unit,
-    ) = MultipleEntitySaver(
-        postDao = postDao,
-        labelDao = labelDao,
-        listDao = listDao,
-        embedDao = embedDao,
-        profileDao = profileDao,
-        timelineDao = timelineDao,
-        feedGeneratorDao = feedGeneratorDao,
-        notificationsDao = notificationsDao,
-        starterPackDao = starterPackDao,
-        messageDao = messageDao,
-        threadGateDao = threadGateDao,
-        transactionWriter = transactionWriter,
-    ).apply {
-        block()
-        saveInTransaction()
-    }
+    internal suspend fun saveInTransaction(block: suspend MultipleEntitySaver.() -> Unit) =
+        MultipleEntitySaver(
+                postDao = postDao,
+                labelDao = labelDao,
+                listDao = listDao,
+                embedDao = embedDao,
+                profileDao = profileDao,
+                timelineDao = timelineDao,
+                feedGeneratorDao = feedGeneratorDao,
+                notificationsDao = notificationsDao,
+                starterPackDao = starterPackDao,
+                messageDao = messageDao,
+                threadGateDao = threadGateDao,
+                transactionWriter = transactionWriter,
+            )
+            .apply {
+                block()
+                saveInTransaction()
+            }
 }
 
-/**
- * Utility class for persisting multiple entities in a transaction.
- */
+/** Utility class for persisting multiple entities in a transaction. */
 internal class MultipleEntitySaver(
     private val postDao: PostDao,
     private val labelDao: LabelDao,
@@ -189,119 +189,107 @@ internal class MultipleEntitySaver(
     private val threadGateHiddenPostEntities = LazyList<ThreadGateHiddenPostEntity>()
 
     /**
-     * Saves all entities added to this [MultipleEntitySaver] in a single transaction
-     * and clears the saved models for the next transaction.
+     * Saves all entities added to this [MultipleEntitySaver] in a single transaction and clears the
+     * saved models for the next transaction.
      */
-    suspend fun saveInTransaction() = transactionWriter.inTransaction {
-        // Order matters to satisfy foreign key constraints
-        val (fullProfileEntities, usablePartialProfileEntities, emptyProfileEntities) = profileEntities.list.triage(
-            firstPredicate = {
-                it.handle != Constants.unknownAuthorHandle &&
-                    it.followersCount != null &&
-                    it.followsCount != null &&
-                    it.postsCount != null
-            },
-            // Profiles from messages may just be empty profiles with Dids
-            secondPredicate = {
-                it.handle != Constants.unknownAuthorHandle && it.displayName != null
-            },
-        )
-        profileDao.upsertProfiles(fullProfileEntities)
-        profileDao.insertOrPartiallyUpdateProfiles(usablePartialProfileEntities)
-        profileDao.insertOrIgnoreProfiles(emptyProfileEntities)
+    suspend fun saveInTransaction() =
+        transactionWriter.inTransaction {
+            // Order matters to satisfy foreign key constraints
+            val (fullProfileEntities, usablePartialProfileEntities, emptyProfileEntities) =
+                profileEntities.list.triage(
+                    firstPredicate = {
+                        it.handle != Constants.unknownAuthorHandle &&
+                            it.followersCount != null &&
+                            it.followsCount != null &&
+                            it.postsCount != null
+                    },
+                    // Profiles from messages may just be empty profiles with Dids
+                    secondPredicate = {
+                        it.handle != Constants.unknownAuthorHandle && it.displayName != null
+                    },
+                )
+            profileDao.upsertProfiles(fullProfileEntities)
+            profileDao.insertOrPartiallyUpdateProfiles(usablePartialProfileEntities)
+            profileDao.insertOrIgnoreProfiles(emptyProfileEntities)
 
-        val (fullPostEntities, partialPostEntities, stubbedPostEntities) = postEntities.list.triage(
-            firstPredicate = { it.hasThreadGate != null && !it.cid.isStubbedId() },
-            secondPredicate = { !it.cid.isStubbedId() },
-        )
-        postDao.upsertPosts(fullPostEntities)
-        postDao.insertOrPartiallyUpdatePosts(partialPostEntities)
-        postDao.insertOrIgnorePosts(stubbedPostEntities)
+            val (fullPostEntities, partialPostEntities, stubbedPostEntities) =
+                postEntities.list.triage(
+                    firstPredicate = { it.hasThreadGate != null && !it.cid.isStubbedId() },
+                    secondPredicate = { !it.cid.isStubbedId() },
+                )
+            postDao.upsertPosts(fullPostEntities)
+            postDao.insertOrPartiallyUpdatePosts(partialPostEntities)
+            postDao.insertOrIgnorePosts(stubbedPostEntities)
 
-        embedDao.upsertExternalEmbeds(externalEmbedEntities.list)
-        embedDao.upsertImages(imageEntities.list)
-        embedDao.upsertVideos(videoEntities.list)
+            embedDao.upsertExternalEmbeds(externalEmbedEntities.list)
+            embedDao.upsertImages(imageEntities.list)
+            embedDao.upsertVideos(videoEntities.list)
 
-        postDao.insertOrIgnorePostPosts(postPostEntities.list)
+            postDao.insertOrIgnorePostPosts(postPostEntities.list)
 
-        postDao.insertOrIgnorePostExternalEmbeds(postExternalEmbedEntities.list)
-        postDao.insertOrIgnorePostImages(postImageEntities.list)
-        postDao.insertOrIgnorePostVideos(postVideoEntities.list)
+            postDao.insertOrIgnorePostExternalEmbeds(postExternalEmbedEntities.list)
+            postDao.insertOrIgnorePostImages(postImageEntities.list)
+            postDao.insertOrIgnorePostVideos(postVideoEntities.list)
 
-        postDao.upsertPostThreads(postThreadEntities.list)
-        postDao.upsertPostStatistics(postViewerStatisticsEntities.list)
-        postDao.upsertPostLikes(postLikeEntities.list)
-        postDao.upsertBookmarks(postBookmarkEntities.list)
+            postDao.upsertPostThreads(postThreadEntities.list)
+            postDao.upsertPostStatistics(postViewerStatisticsEntities.list)
+            postDao.upsertPostLikes(postLikeEntities.list)
+            postDao.upsertBookmarks(postBookmarkEntities.list)
 
-        val (fullProfileViewerEntities, partialProfileViewerEntities) = profileViewerEntities.list
-            .partition {
-                it.commonFollowersCount != null
-            }
-        profileDao.upsertProfileViewers(
-            fullProfileViewerEntities,
-        )
-        profileDao.insertOrPartiallyUpdateProfileViewers(
-            partialProfileViewerEntities,
-        )
+            val (fullProfileViewerEntities, partialProfileViewerEntities) =
+                profileViewerEntities.list.partition { it.commonFollowersCount != null }
+            profileDao.upsertProfileViewers(fullProfileViewerEntities)
+            profileDao.insertOrPartiallyUpdateProfileViewers(partialProfileViewerEntities)
 
-        notificationsDao.upsertNotifications(notificationEntities.list)
+            notificationsDao.upsertNotifications(notificationEntities.list)
 
-        // Order matters to satisfy foreign key constraints
-        val (fullListEntities, partialListEntities) = listEntities.list.partition {
-            it.description != null && it.indexedAt != Instant.DISTANT_PAST
-        }
-        listDao.upsertLists(fullListEntities)
-        listDao.insertOrPartiallyUpdateLists(partialListEntities)
+            // Order matters to satisfy foreign key constraints
+            val (fullListEntities, partialListEntities) =
+                listEntities.list.partition {
+                    it.description != null && it.indexedAt != Instant.DISTANT_PAST
+                }
+            listDao.upsertLists(fullListEntities)
+            listDao.insertOrPartiallyUpdateLists(partialListEntities)
 
-        listDao.upsertListItems(listItemEntities.list)
-        starterPackDao.upsertStarterPacks(starterPackEntities.list)
+            listDao.upsertListItems(listItemEntities.list)
+            starterPackDao.upsertStarterPacks(starterPackEntities.list)
 
-        feedGeneratorDao.upsertFeedGenerators(feedGeneratorEntities.list)
+            feedGeneratorDao.upsertFeedGenerators(feedGeneratorEntities.list)
 
-        labelDao.upsertLabelers(labelerEntities.list)
-        labelDao.upsertLabelValueDefinitions(labelDefinitionsEntities.list)
-        labelDao.upsertLabels(labelEntities.list)
+            labelDao.upsertLabelers(labelerEntities.list)
+            labelDao.upsertLabelValueDefinitions(labelDefinitionsEntities.list)
+            labelDao.upsertLabels(labelEntities.list)
 
-        timelineDao.upsertTimelineItems(timelineItemEntities.list)
+            timelineDao.upsertTimelineItems(timelineItemEntities.list)
 
-        messageDao.upsertConversations(conversationEntities.list)
-        messageDao.upsertConversationMembers(conversationMemberEntities.list)
-        messageDao.upsertMessages(messageEntities.list)
-        messageDao.deleteMessageReactions(
-            messageEntities.list.mapTo(
-                mutableSetOf(),
-                MessageEntity::id,
-            ),
-        )
-        messageDao.upsertMessageReactions(messageReactionEntities.list)
-        messageDao.upsertMessageFeeds(messageFeedGeneratorEntities.list)
-        messageDao.upsertMessageLists(messageListEntities.list)
-        messageDao.upsertMessageStarterPacks(messageStarterPackEntities.list)
-        messageDao.upsertMessagePosts(messagePostEntities.list)
-
-        threadGateDao.deleteThreadGates(
-            postUris = postEntities.list.mapNotNull {
-                if (it.hasThreadGate == false) it.uri
-                else null
-            },
-        )
-        if (threadGateEntities.list.isNotEmpty()) {
-            threadGateDao.upsertThreadGates(threadGateEntities.list)
-            val threadGateUris = threadGateEntities.list.map(
-                ThreadGateEntity::uri,
+            messageDao.upsertConversations(conversationEntities.list)
+            messageDao.upsertConversationMembers(conversationMemberEntities.list)
+            messageDao.upsertMessages(messageEntities.list)
+            messageDao.deleteMessageReactions(
+                messageEntities.list.mapTo(mutableSetOf(), MessageEntity::id)
             )
-            // keep thread gates in sync
-            threadGateDao.deleteThreadGateAllowedLists(threadGateUris)
-            threadGateDao.deleteThreadGateHiddenPosts(threadGateUris)
-            threadGateDao.upsertThreadGateAllowedLists(threadGateAllowedListEntities.list)
-            threadGateDao.upsertThreadGateHiddenPosts(threadGateHiddenPostEntities.list)
-        }
-    }
+            messageDao.upsertMessageReactions(messageReactionEntities.list)
+            messageDao.upsertMessageFeeds(messageFeedGeneratorEntities.list)
+            messageDao.upsertMessageLists(messageListEntities.list)
+            messageDao.upsertMessageStarterPacks(messageStarterPackEntities.list)
+            messageDao.upsertMessagePosts(messagePostEntities.list)
 
-    fun MultipleEntitySaver.associatePostEmbeds(
-        postEntity: PostEntity,
-        embedEntity: PostEmbed,
-    ) {
+            threadGateDao.deleteThreadGates(
+                postUris =
+                    postEntities.list.mapNotNull { if (it.hasThreadGate == false) it.uri else null }
+            )
+            if (threadGateEntities.list.isNotEmpty()) {
+                threadGateDao.upsertThreadGates(threadGateEntities.list)
+                val threadGateUris = threadGateEntities.list.map(ThreadGateEntity::uri)
+                // keep thread gates in sync
+                threadGateDao.deleteThreadGateAllowedLists(threadGateUris)
+                threadGateDao.deleteThreadGateHiddenPosts(threadGateUris)
+                threadGateDao.upsertThreadGateAllowedLists(threadGateAllowedListEntities.list)
+                threadGateDao.upsertThreadGateHiddenPosts(threadGateHiddenPostEntities.list)
+            }
+        }
+
+    fun MultipleEntitySaver.associatePostEmbeds(postEntity: PostEntity, embedEntity: PostEmbed) {
         when (embedEntity) {
             is ExternalEmbedEntity -> {
                 add(embedEntity)

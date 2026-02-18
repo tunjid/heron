@@ -73,46 +73,34 @@ import org.jetbrains.compose.resources.stringResource
 private const val SavedRoutePattern = "/saved"
 private const val QuotesRoutePattern = "/profile/{profileHandleOrId}/post/{postRecordKey}/quotes"
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-    children = listOfNotNull(
-        routeParams.decodeReferringRoute(),
-    ),
-)
+private fun createRoute(routeParams: RouteParams) =
+    routeOf(params = routeParams, children = listOfNotNull(routeParams.decodeReferringRoute()))
 
 internal sealed class PostsRequest {
     data object Saved : PostsRequest()
-    data class Quotes(
-        val profileHandleOrId: ProfileHandleOrId,
-        val postRecordKey: RecordKey,
-    ) : PostsRequest()
+
+    data class Quotes(val profileHandleOrId: ProfileHandleOrId, val postRecordKey: RecordKey) :
+        PostsRequest()
 }
 
-private fun postsRouteMatcher(pattern: String) = urlRouteMatcher(
-    routePattern = pattern,
-    routeMapper = ::createRoute,
-)
+private fun postsRouteMatcher(pattern: String) =
+    urlRouteMatcher(routePattern = pattern, routeMapper = ::createRoute)
 
-private val Route.profileHandleOrId by mappedRoutePath(
-    mapper = ::ProfileHandleOrId,
-)
-private val Route.postRecordKey by mappedRoutePath(
-    mapper = ::RecordKey,
-)
+private val Route.profileHandleOrId by mappedRoutePath(mapper = ::ProfileHandleOrId)
+private val Route.postRecordKey by mappedRoutePath(mapper = ::RecordKey)
 
-private val RequestTrie = mapOf(
-    PathPattern(SavedRoutePattern) to { route: Route ->
-        PostsRequest.Saved
-    },
-    PathPattern(QuotesRoutePattern) to { route: Route ->
-        PostsRequest.Quotes(
-            profileHandleOrId = route.profileHandleOrId,
-            postRecordKey = route.postRecordKey,
+private val RequestTrie =
+    mapOf(
+            PathPattern(SavedRoutePattern) to { route: Route -> PostsRequest.Saved },
+            PathPattern(QuotesRoutePattern) to
+                { route: Route ->
+                    PostsRequest.Quotes(
+                        profileHandleOrId = route.profileHandleOrId,
+                        postRecordKey = route.postRecordKey,
+                    )
+                },
         )
-    },
-).toRouteTrie()
+        .toRouteTrie()
 
 internal val Route.postsRequest: PostsRequest
     get() = checkNotNull(RequestTrie[this]).invoke(this)
@@ -143,10 +131,8 @@ class PostsBindings(
     fun provideSavedPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(routeParser = routeParser, viewModelInitializer = viewModelInitializer)
 
     @Provides
     @IntoMap
@@ -154,89 +140,87 @@ class PostsBindings(
     fun provideQuotesPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(routeParser = routeParser, viewModelInitializer = viewModelInitializer)
 
     private fun routePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = threePaneEntry<Route>(
-        contentTransform = predictiveBackContentTransformProvider(),
-        paneMapping = { route ->
-            mapOf(
-                ThreePane.Primary to route,
-                ThreePane.Secondary to route.children.firstOrNull() as? Route,
-            )
-        },
-        render = { route ->
-            val viewModel = viewModel<ActualPostsViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = routeParser.hydrate(route),
+    ) =
+        threePaneEntry<Route>(
+            contentTransform = predictiveBackContentTransformProvider(),
+            paneMapping = { route ->
+                mapOf(
+                    ThreePane.Primary to route,
+                    ThreePane.Secondary to route.children.firstOrNull() as? Route,
                 )
-            }
-            val state by viewModel.state.collectAsStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
+            },
+            render = { route ->
+                val viewModel =
+                    viewModel<ActualPostsViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = routeParser.hydrate(route),
+                        )
+                    }
+                val state by viewModel.state.collectAsStateWithLifecycle()
+                val paneScaffoldState = rememberPaneScaffoldState()
 
-            val topAppBarNestedScrollConnection =
-                topAppBarNestedScrollConnection()
+                val topAppBarNestedScrollConnection = topAppBarNestedScrollConnection()
 
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                )
+                val bottomNavigationNestedScrollConnection =
+                    bottomNavigationNestedScrollConnection(
+                        isCompact = paneScaffoldState.prefersCompactBottomNav
+                    )
 
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .nestedScroll(topAppBarNestedScrollConnection)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
+                paneScaffoldState.PaneScaffold(
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+                            .nestedScroll(topAppBarNestedScrollConnection)
+                            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                                nestedScroll(bottomNavigationNestedScrollConnection)
+                            },
+                    showNavigation = true,
+                    snackBarMessages = state.messages,
+                    onSnackBarMessageConsumed = { viewModel.accept(Action.SnackbarDismissed(it)) },
+                    topBar = {
+                        PoppableDestinationTopAppBar(
+                            title = {
+                                AppBarTitle(
+                                    title =
+                                        stringResource(
+                                            when (route.postsRequest) {
+                                                is PostsRequest.Quotes -> Res.string.quotes
+                                                PostsRequest.Saved -> Res.string.bookmarks
+                                            }
+                                        )
+                                )
+                            },
+                            transparencyFactor =
+                                topAppBarNestedScrollConnection::verticalOffsetProgress,
+                            onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        )
                     },
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
-                },
-                topBar = {
-                    PoppableDestinationTopAppBar(
-                        title = {
-                            AppBarTitle(
-                                title = stringResource(
-                                    when (route.postsRequest) {
-                                        is PostsRequest.Quotes -> Res.string.quotes
-                                        PostsRequest.Saved -> Res.string.bookmarks
-                                    },
-                                ),
-                            )
-                        },
-                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
-                    )
-                },
-                navigationBar = {
-                    PaneNavigationBar(
-                        modifier = Modifier.offset {
-                            bottomNavigationNestedScrollConnection.offset.round()
-                        },
-                    )
-                },
-                navigationRail = {
-                    PaneNavigationRail()
-                },
-                content = {
-                    PostsScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = viewModel.accept,
-                        modifier = Modifier,
-                    )
-                    SecondaryPaneCloseBackHandler()
-                },
-            )
-        },
-    )
+                    navigationBar = {
+                        PaneNavigationBar(
+                            modifier =
+                                Modifier.offset {
+                                    bottomNavigationNestedScrollConnection.offset.round()
+                                }
+                        )
+                    },
+                    navigationRail = { PaneNavigationRail() },
+                    content = {
+                        PostsScreen(
+                            paneScaffoldState = this,
+                            state = state,
+                            actions = viewModel.accept,
+                            modifier = Modifier,
+                        )
+                        SecondaryPaneCloseBackHandler()
+                    },
+                )
+            },
+        )
 }

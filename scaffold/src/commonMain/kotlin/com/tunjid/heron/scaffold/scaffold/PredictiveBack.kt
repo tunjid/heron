@@ -31,21 +31,17 @@ import com.tunjid.treenav.compose.PaneScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.adaptTo
 
-fun Modifier.predictiveBackPlacement(
-    paneScaffoldState: PaneScaffoldState,
-): Modifier = with(paneScaffoldState) {
-    val shouldDrawBackground = paneState.pane == ThreePane.Primary &&
-        inPredictiveBack &&
-        isActive &&
-        appState.dismissBehavior != AppState.DismissBehavior.Gesture.DragToPop
+fun Modifier.predictiveBackPlacement(paneScaffoldState: PaneScaffoldState): Modifier =
+    with(paneScaffoldState) {
+        val shouldDrawBackground =
+            paneState.pane == ThreePane.Primary &&
+                inPredictiveBack &&
+                isActive &&
+                appState.dismissBehavior != AppState.DismissBehavior.Gesture.DragToPop
 
-    ifTrue(shouldDrawBackground) {
-        backPreview(appState.backPreviewState)
+        ifTrue(shouldDrawBackground) { backPreview(appState.backPreviewState) }
+            .animatedRoundedCornerClip(cornerRadius = if (shouldDrawBackground) 16.dp else 0.dp)
     }
-        .animatedRoundedCornerClip(
-            cornerRadius = if (shouldDrawBackground) 16.dp else 0.dp,
-        )
-}
 
 fun predictiveBackContentTransformProvider(): PaneScope<ThreePane, *>.() -> ContentTransform =
     PredictiveBackContentTransformProvider()::contentTransform
@@ -53,35 +49,35 @@ fun predictiveBackContentTransformProvider(): PaneScope<ThreePane, *>.() -> Cont
 private class PredictiveBackContentTransformProvider {
     private val previewedRouteIds = mutableSetOf<String>()
 
-    fun contentTransform(
-        scope: PaneScope<ThreePane, *>,
-    ): ContentTransform = with(scope) {
-        val routeId = paneState.currentDestination?.id
-        val wasPreviewed = routeId in previewedRouteIds
+    fun contentTransform(scope: PaneScope<ThreePane, *>): ContentTransform =
+        with(scope) {
+            val routeId = paneState.currentDestination?.id
+            val wasPreviewed = routeId in previewedRouteIds
 
-        val isStillVisible = wasPreviewed && isActive
+            val isStillVisible = wasPreviewed && isActive
 
-        ContentTransform(
-            targetContentEnter =
-            if (isStillVisible) EnterTransition.None
-            else fadeIn(
-                animationSpec = NavigationAnimationSpec,
-            ),
-            initialContentExit =
-            if (isStillVisible) ExitTransition.None
-            else fadeOut(
-                animationSpec = NavigationAnimationSpec,
-                targetAlpha = if (inPredictiveBack) PredictiveBackTargetAlpha else FullAlpha,
-            ),
-        ).adaptTo(paneScope = this)
-            .also {
-                if (wasPreviewed) previewedRouteIds.remove(routeId)
-                else if (!isActive && inPredictiveBack && routeId != null) {
-                    previewedRouteIds.clear()
-                    previewedRouteIds.add(routeId)
+            ContentTransform(
+                    targetContentEnter =
+                        if (isStillVisible) EnterTransition.None
+                        else fadeIn(animationSpec = NavigationAnimationSpec),
+                    initialContentExit =
+                        if (isStillVisible) ExitTransition.None
+                        else
+                            fadeOut(
+                                animationSpec = NavigationAnimationSpec,
+                                targetAlpha =
+                                    if (inPredictiveBack) PredictiveBackTargetAlpha else FullAlpha,
+                            ),
+                )
+                .adaptTo(paneScope = this)
+                .also {
+                    if (wasPreviewed) previewedRouteIds.remove(routeId)
+                    else if (!isActive && inPredictiveBack && routeId != null) {
+                        previewedRouteIds.clear()
+                        previewedRouteIds.add(routeId)
+                    }
                 }
-            }
-    }
+        }
 }
 
 private val NavigationAnimationSpec = tween<Float>(700)

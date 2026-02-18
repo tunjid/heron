@@ -25,8 +25,8 @@ import com.tunjid.heron.data.core.types.ProfileHandle
 fun AnnotatedString.links(): List<Link> {
     val byteOffsets = text.byteOffsets()
 
-    val mentions = handleRegex.findAll(text)
-        .map {
+    val mentions =
+        handleRegex.findAll(text).map {
             Link(
                 start = byteOffsets.indexOf(it.range.first),
                 end = byteOffsets.indexOf(it.range.last + 1),
@@ -35,8 +35,8 @@ fun AnnotatedString.links(): List<Link> {
             )
         }
 
-    val hashtags = hashtagRegex.findAll(text)
-        .map {
+    val hashtags =
+        hashtagRegex.findAll(text).map {
             Link(
                 start = byteOffsets.indexOf(it.range.first),
                 end = byteOffsets.indexOf(it.range.last + 1),
@@ -44,8 +44,8 @@ fun AnnotatedString.links(): List<Link> {
             )
         }
 
-    val hyperlinks = hyperlinkRegex.findAll(text)
-        .map {
+    val hyperlinks =
+        hyperlinkRegex.findAll(text).map {
             var url = it.groupValues[2]
             if (!url.startsWith("http")) {
                 url = "https://$url"
@@ -65,15 +65,12 @@ fun AnnotatedString.links(): List<Link> {
     return (mentions + hashtags + hyperlinks).toList()
 }
 
-private val handleRegex = Regex(
-    "(^|\\s|\\()(@)([a-zA-Z0-9.-]+)(\\b)",
-)
+private val handleRegex = Regex("(^|\\s|\\()(@)([a-zA-Z0-9.-]+)(\\b)")
 
-private val hashtagRegex = Regex(
-    "(^|\\s|\\()(#)([a-zA-Z0-9]+)(\\b)",
-)
+private val hashtagRegex = Regex("(^|\\s|\\()(#)([a-zA-Z0-9]+)(\\b)")
 
-private val hyperlinkRegex = Regex(
-    "(^|\\s|\\()((https?://\\S+)|(([a-z][a-z0-9]*(\\.[a-z0-9]+)+)\\S*))",
-    setOf(RegexOption.IGNORE_CASE, RegexOption.MULTILINE),
-)
+private val hyperlinkRegex =
+    Regex(
+        "(^|\\s|\\()((https?://\\S+)|(([a-z][a-z0-9]*(\\.[a-z0-9]+)+)\\S*))",
+        setOf(RegexOption.IGNORE_CASE, RegexOption.MULTILINE),
+    )

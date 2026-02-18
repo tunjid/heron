@@ -19,5 +19,4 @@ package com.tunjid.heron.data.network.oauth.crypto
 import dev.whyoleg.cryptography.CryptographyProvider
 import dev.whyoleg.cryptography.providers.jdk.JDK
 
-actual fun platformCryptographyProvider(): CryptographyProvider =
-    CryptographyProvider.Companion.JDK
+actual fun platformCryptographyProvider(): CryptographyProvider = CryptographyProvider.Companion.JDK

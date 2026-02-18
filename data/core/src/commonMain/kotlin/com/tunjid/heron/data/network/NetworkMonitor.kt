@@ -31,47 +31,37 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.plus
 
-/**
- * An interface that reports if there's a network connection
- */
+/** An interface that reports if there's a network connection */
 interface NetworkMonitor {
     val isConnected: Flow<Boolean>
 }
 
-internal class ConnectivityNetworkMonitor @Inject constructor(
-    @AppMainScope
-    appMainScope: CoroutineScope,
-    @IODispatcher
-    ioDispatcher: CoroutineDispatcher,
+internal class ConnectivityNetworkMonitor
+@Inject
+constructor(
+    @AppMainScope appMainScope: CoroutineScope,
+    @IODispatcher ioDispatcher: CoroutineDispatcher,
     private val connectivity: Connectivity,
 ) : NetworkMonitor {
-    override val isConnected: Flow<Boolean> = flow {
-        connectivity.start()
-        try {
-            emitAll(
-                connectivity.statusUpdates.map {
-                    it.isConnected
-                },
+    override val isConnected: Flow<Boolean> =
+        flow {
+                connectivity.start()
+                try {
+                    emitAll(connectivity.statusUpdates.map { it.isConnected })
+                } finally {
+                    connectivity.stop()
+                }
+            }
+            .stateIn(
+                scope = appMainScope + ioDispatcher,
+                initialValue = true,
+                // TODO: Can this be WhileSubscribed?
+                //  The backing library isn't thread safe for start / stop.
+                started = SharingStarted.Lazily,
             )
-        } finally {
-            connectivity.stop()
-        }
-    }
-        .stateIn(
-            scope = appMainScope + ioDispatcher,
-            initialValue = true,
-            // TODO: Can this be WhileSubscribed?
-            //  The backing library isn't thread safe for start / stop.
-            started = SharingStarted.Lazily,
-        )
 }
 
-class NetworkConnectionException(
-    val url: Url,
-    cause: Throwable,
-) : Exception(
-    "Network error attempting to reach $url",
-    cause,
-)
+class NetworkConnectionException(val url: Url, cause: Throwable) :
+    Exception("Network error attempting to reach $url", cause)
 
 internal expect fun Throwable.isNetworkConnectionError(): Boolean

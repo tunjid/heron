@@ -26,54 +26,39 @@ import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.database.entities.PostEntity
 
-@Entity(
-    tableName = "images",
-)
+@Entity(tableName = "images")
 data class ImageEntity(
-    @PrimaryKey
-    val fullSize: ImageUri,
+    @PrimaryKey val fullSize: ImageUri,
     val thumb: ImageUri,
     val alt: String,
     val width: Long?,
     val height: Long?,
 ) : PostEmbed
 
-/**
- * Cross reference for many to many relationship between [Post] and [ImageEntity]
- */
+/** Cross reference for many to many relationship between [Post] and [ImageEntity] */
 @Entity(
     tableName = "postImages",
     primaryKeys = ["postUri", "imageUri"],
-    foreignKeys = [
-        ForeignKey(
-            entity = PostEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["postUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = ImageEntity::class,
-            parentColumns = ["fullSize"],
-            childColumns = ["imageUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["postUri"]),
-        Index(value = ["imageUri"]),
-    ],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = PostEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["postUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = ImageEntity::class,
+                parentColumns = ["fullSize"],
+                childColumns = ["imageUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    indices = [Index(value = ["postUri"]), Index(value = ["imageUri"])],
 )
-data class PostImageEntity(
-    val postUri: PostUri,
-    val imageUri: ImageUri,
-)
+data class PostImageEntity(val postUri: PostUri, val imageUri: ImageUri)
 
-fun ImageEntity.asExternalModel() = Image(
-    fullsize = fullSize,
-    thumb = thumb,
-    alt = alt,
-    width = width,
-    height = height,
-)
+fun ImageEntity.asExternalModel() =
+    Image(fullsize = fullSize, thumb = thumb, alt = alt, width = width, height = height)

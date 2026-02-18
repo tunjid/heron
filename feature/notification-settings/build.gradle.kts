@@ -21,9 +21,7 @@ plugins {
     id("ksp-convention")
 }
 
-android {
-    namespace = "com.tunjid.heron.feature.notificationsettings"
-}
+android { namespace = "com.tunjid.heron.feature.notificationsettings" }
 
 kotlin {
     sourceSets {

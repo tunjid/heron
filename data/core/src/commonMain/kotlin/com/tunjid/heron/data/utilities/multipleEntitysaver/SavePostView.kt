@@ -28,77 +28,50 @@ import com.tunjid.heron.data.network.models.quotedPostEmbedEntities
 import com.tunjid.heron.data.network.models.quotedPostEntity
 import com.tunjid.heron.data.network.models.quotedPostProfileView
 
-internal fun MultipleEntitySaver.add(
-    viewingProfileId: ProfileId?,
-    postView: PostView,
-) {
+internal fun MultipleEntitySaver.add(viewingProfileId: ProfileId?, postView: PostView) {
     val postEntity = postView.postEntity().also(::add)
     postView.labels?.forEach(::add)
 
-    add(
-        viewingProfileId = viewingProfileId,
-        profileView = postView.author,
-    )
+    add(viewingProfileId = viewingProfileId, profileView = postView.author)
     postView.embedEntities().forEach { embedEntity ->
-        associatePostEmbeds(
-            postEntity = postEntity,
-            embedEntity = embedEntity,
-        )
+        associatePostEmbeds(postEntity = postEntity, embedEntity = embedEntity)
     }
 
-    postView.viewer?.postViewerStatisticsEntity(
-        postUri = postEntity.uri,
-        viewingProfileId = viewingProfileId,
-    )?.let(::add)
+    postView.viewer
+        ?.postViewerStatisticsEntity(postUri = postEntity.uri, viewingProfileId = viewingProfileId)
+        ?.let(::add)
 
     postView.threadgate?.let(::add)
 
     postView.quotedPostEntity()?.let { embeddedPostEntity ->
         add(embeddedPostEntity)
-        add(
-            PostPostEntity(
-                postUri = postEntity.uri,
-                embeddedPostUri = embeddedPostEntity.uri,
-            ),
-        )
+        add(PostPostEntity(postUri = postEntity.uri, embeddedPostUri = embeddedPostEntity.uri))
         postView.quotedPostEmbedEntities().forEach { embedEntity ->
-            associatePostEmbeds(
-                postEntity = embeddedPostEntity,
-                embedEntity = embedEntity,
-            )
+            associatePostEmbeds(postEntity = embeddedPostEntity, embedEntity = embedEntity)
         }
     }
 
-    val recordUnion = when (val embed = postView.embed) {
-        is PostViewEmbedUnion.RecordView -> embed.value.record
-        is PostViewEmbedUnion.RecordWithMediaView -> embed.value.record.record
-        else -> null
-    }
+    val recordUnion =
+        when (val embed = postView.embed) {
+            is PostViewEmbedUnion.RecordView -> embed.value.record
+            is PostViewEmbedUnion.RecordWithMediaView -> embed.value.record.record
+            else -> null
+        }
 
     when (recordUnion) {
-        is RecordViewRecordUnion.FeedGeneratorView ->
-            add(recordUnion.value)
-        is RecordViewRecordUnion.GraphListView ->
-            add(recordUnion.value)
-        is RecordViewRecordUnion.GraphStarterPackViewBasic ->
-            add(recordUnion.value)
+        is RecordViewRecordUnion.FeedGeneratorView -> add(recordUnion.value)
+        is RecordViewRecordUnion.GraphListView -> add(recordUnion.value)
+        is RecordViewRecordUnion.GraphStarterPackViewBasic -> add(recordUnion.value)
         is RecordViewRecordUnion.LabelerLabelerView ->
-            add(
-                viewingProfileId = viewingProfileId,
-                labeler = recordUnion.value,
-            )
+            add(viewingProfileId = viewingProfileId, labeler = recordUnion.value)
         is RecordViewRecordUnion.Unknown,
         is RecordViewRecordUnion.ViewBlocked,
         is RecordViewRecordUnion.ViewDetached,
         is RecordViewRecordUnion.ViewNotFound,
         is RecordViewRecordUnion.ViewRecord,
-        null,
-        -> Unit
+        null -> Unit
     }
     postView.quotedPostProfileView()?.let {
-        add(
-            viewingProfileId = viewingProfileId,
-            profileView = it,
-        )
+        add(viewingProfileId = viewingProfileId, profileView = it)
     }
 }

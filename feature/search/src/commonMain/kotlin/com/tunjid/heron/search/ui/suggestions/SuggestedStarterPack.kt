@@ -55,10 +55,7 @@ import heron.feature.search.generated.resources.Res
 import heron.feature.search.generated.resources.by_creator
 import org.jetbrains.compose.resources.stringResource
 
-data class SuggestedStarterPack(
-    val starterPack: StarterPack,
-    val members: List<ListMember>,
-)
+data class SuggestedStarterPack(val starterPack: StarterPack, val members: List<ListMember>)
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -67,104 +64,102 @@ fun SuggestedStarterPack(
     movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     starterPackWithMembers: SuggestedStarterPack,
     onListMemberClicked: (ListMember) -> Unit,
-) = with(movableElementSharedTransitionScope) {
-    OutlinedCard(
-        modifier = modifier,
-        content = {
-            Column(
-                modifier = Modifier
-                    .padding(
-                        horizontal = 16.dp,
-                        vertical = 12.dp,
-                    ),
-            ) {
-                OverlappingAvatarRow(
-                    overlap = AvatarOverlap,
-                    maxItems = MaxAvatars,
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                ) {
-                    val count = MaxAvatars - 1
-                    if (starterPackWithMembers.members.isEmpty()) (0..<count).forEach { index ->
-                        Surface(
-                            modifier = Modifier
-                                .zIndex((MaxAvatars - index).toFloat())
-                                .fillMaxWidth()
-                                .aspectRatio(1f),
-                            shape = CircleShape,
-                        ) { }
-                    }
-                    else starterPackWithMembers.members.take(count)
-                        .forEachIndexed { index, listMember ->
-                            UpdatedMovableStickySharedElementOf(
-                                modifier = Modifier
-                                    .zIndex((MaxAvatars - index).toFloat())
-                                    .fillMaxWidth()
-                                    .aspectRatio(1f)
-                                    .clickable { onListMemberClicked(listMember) },
-                                sharedContentState = with(movableElementSharedTransitionScope) {
-                                    rememberSharedContentState(
-                                        key = listMember.avatarSharedElementKey(),
-                                    )
-                                },
-                                state = remember(listMember.subject.avatar) {
-                                    ImageArgs(
-                                        url = listMember.subject.avatar?.uri,
-                                        contentScale = ContentScale.Crop,
-                                        shape = RoundedPolygonShape.Circle,
-                                    )
-                                },
-                                sharedElement = { state, modifier ->
-                                    AsyncImage(state, modifier)
-                                },
-                            )
-                        }
-                    starterPackWithMembers.starterPack.list?.listItemCount?.let { joined ->
-                        val itemsLeft = joined - starterPackWithMembers.members.size
-                        Box(
-                            modifier = Modifier
-                                .background(
-                                    color = MaterialTheme.colorScheme.surfaceColorAtElevation(56.dp),
+) =
+    with(movableElementSharedTransitionScope) {
+        OutlinedCard(
+            modifier = modifier,
+            content = {
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                    OverlappingAvatarRow(
+                        overlap = AvatarOverlap,
+                        maxItems = MaxAvatars,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        val count = MaxAvatars - 1
+                        if (starterPackWithMembers.members.isEmpty())
+                            (0..<count).forEach { index ->
+                                Surface(
+                                    modifier =
+                                        Modifier.zIndex((MaxAvatars - index).toFloat())
+                                            .fillMaxWidth()
+                                            .aspectRatio(1f),
                                     shape = CircleShape,
+                                ) {}
+                            }
+                        else
+                            starterPackWithMembers.members.take(count).forEachIndexed {
+                                index,
+                                listMember ->
+                                UpdatedMovableStickySharedElementOf(
+                                    modifier =
+                                        Modifier.zIndex((MaxAvatars - index).toFloat())
+                                            .fillMaxWidth()
+                                            .aspectRatio(1f)
+                                            .clickable { onListMemberClicked(listMember) },
+                                    sharedContentState =
+                                        with(movableElementSharedTransitionScope) {
+                                            rememberSharedContentState(
+                                                key = listMember.avatarSharedElementKey()
+                                            )
+                                        },
+                                    state =
+                                        remember(listMember.subject.avatar) {
+                                            ImageArgs(
+                                                url = listMember.subject.avatar?.uri,
+                                                contentScale = ContentScale.Crop,
+                                                shape = RoundedPolygonShape.Circle,
+                                            )
+                                        },
+                                    sharedElement = { state, modifier ->
+                                        AsyncImage(state, modifier)
+                                    },
                                 )
-                                .zIndex(0f)
-                                .fillMaxWidth()
-                                .aspectRatio(1f),
-                        ) {
-                            Text(
-                                modifier = Modifier
-                                    .padding(start = AvatarOverlap)
-                                    .align(Alignment.Center),
-                                text = profilesLeftInStarterPack(itemsLeft),
-                                textAlign = TextAlign.Center,
-                                style = MaterialTheme.typography.labelSmall,
-                            )
+                            }
+                        starterPackWithMembers.starterPack.list?.listItemCount?.let { joined ->
+                            val itemsLeft = joined - starterPackWithMembers.members.size
+                            Box(
+                                modifier =
+                                    Modifier.background(
+                                            color =
+                                                MaterialTheme.colorScheme.surfaceColorAtElevation(
+                                                    56.dp
+                                                ),
+                                            shape = CircleShape,
+                                        )
+                                        .zIndex(0f)
+                                        .fillMaxWidth()
+                                        .aspectRatio(1f)
+                            ) {
+                                Text(
+                                    modifier =
+                                        Modifier.padding(start = AvatarOverlap)
+                                            .align(Alignment.Center),
+                                    text = profilesLeftInStarterPack(itemsLeft),
+                                    textAlign = TextAlign.Center,
+                                    style = MaterialTheme.typography.labelSmall,
+                                )
+                            }
                         }
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = starterPackWithMembers.starterPack.name)
+                    Text(
+                        text =
+                            stringResource(
+                                Res.string.by_creator,
+                                remember(starterPackWithMembers.starterPack.creator.handle) {
+                                    starterPackWithMembers.starterPack.creator.handle.id
+                                },
+                            ),
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.outline,
+                    )
                 }
-                Spacer(
-                    modifier = Modifier
-                        .height(8.dp),
-                )
-                Text(
-                    text = starterPackWithMembers.starterPack.name,
-                )
-                Text(
-                    text = stringResource(
-                        Res.string.by_creator,
-                        remember(starterPackWithMembers.starterPack.creator.handle) {
-                            starterPackWithMembers.starterPack.creator.handle.id
-                        },
-                    ),
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline,
-                )
-            }
-        },
-    )
-}
+            },
+        )
+    }
 
 internal fun ListMember.avatarSharedElementKey(): String =
     subject.avatarSharedElementKey(SuggestedMemberSharedElementPrefix)

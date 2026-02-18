@@ -21,13 +21,8 @@ import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.nativeCanvas
 import coil3.PlatformContext
 
-internal actual fun coil3.Image.renderInto(
-    canvas: Canvas,
-) = draw(canvas.nativeCanvas)
+internal actual fun coil3.Image.renderInto(canvas: Canvas) = draw(canvas.nativeCanvas)
 
-fun imageLoader(): ImageLoader = CoilImageLoader.create(
-    context = PlatformContext.INSTANCE,
-)
+fun imageLoader(): ImageLoader = CoilImageLoader.create(context = PlatformContext.INSTANCE)
 
-@Composable
-internal actual fun coil3.Image.AnimationEffect() = Unit
+@Composable internal actual fun coil3.Image.AnimationEffect() = Unit

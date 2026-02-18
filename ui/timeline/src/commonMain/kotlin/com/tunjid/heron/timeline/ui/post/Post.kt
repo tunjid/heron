@@ -112,50 +112,42 @@ internal fun Post(
     postActions: PostActions,
     timeline: @Composable (BoxScope.() -> Unit) = {},
 ) {
-    Box(
-        modifier = modifier
-            .childThreadNode(videoId = post.videoId),
-    ) {
-        if (presentation == Timeline.Presentation.Text.WithEmbed) Box(
-            modifier = Modifier
-                .matchParentSize()
-                .padding(horizontal = 8.dp),
-            content = timeline,
-        )
-        val postData = rememberUpdatedPostData(
-            postActions = postActions,
-            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-            presentationLookaheadScope = presentationLookaheadScope,
-            post = post,
-            threadGate = threadGate,
-            presentation = presentation,
-            appliedLabels = appliedLabels,
-            hasMutedWords = hasMutedWords,
-            isMainPost = isMainPost,
-            sharedElementPrefix = sharedElementPrefix,
-            avatarShape = avatarShape,
-            now = now,
-            createdAt = createdAt,
-            languageTag = Locale.current.toLanguageTag(),
-        )
+    Box(modifier = modifier.childThreadNode(videoId = post.videoId)) {
+        if (presentation == Timeline.Presentation.Text.WithEmbed)
+            Box(
+                modifier = Modifier.matchParentSize().padding(horizontal = 8.dp),
+                content = timeline,
+            )
+        val postData =
+            rememberUpdatedPostData(
+                postActions = postActions,
+                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                presentationLookaheadScope = presentationLookaheadScope,
+                post = post,
+                threadGate = threadGate,
+                presentation = presentation,
+                appliedLabels = appliedLabels,
+                hasMutedWords = hasMutedWords,
+                isMainPost = isMainPost,
+                sharedElementPrefix = sharedElementPrefix,
+                avatarShape = avatarShape,
+                now = now,
+                createdAt = createdAt,
+                languageTag = Locale.current.toLanguageTag(),
+            )
         SensitiveContentBox(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             isBlurred = postData.textBlurred,
             canUnblur = true,
             label = stringResource(Res.string.mute_words_post_hidden),
             icon = Icons.Rounded.VisibilityOff,
-            onUnblurClicked = {
-                postData.hasClickedThroughMutedWords = true
-            },
+            onUnblurClicked = { postData.hasClickedThroughMutedWords = true },
         ) {
             Column(
-                modifier = Modifier
-                    .ifTrue(postData.textBlurred) {
-                        sensitiveContentBlur(MutedWordShape)
-                    }
-                    .padding(vertical = presentation.postVerticalPadding)
-                    .fillMaxWidth(),
+                modifier =
+                    Modifier.ifTrue(postData.textBlurred) { sensitiveContentBlur(MutedWordShape) }
+                        .padding(vertical = presentation.postVerticalPadding)
+                        .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(presentation.postContentSpacing),
             ) {
                 presentation.contentOrder.forEach { order ->
@@ -165,9 +157,8 @@ internal fun Post(
                             PostContent.Attribution -> AttributionContent(postData)
                             PostContent.Embed.Link -> EmbedContent(postData)
                             PostContent.Embed.Media -> EmbedContent(postData)
-                            PostContent.Metadata -> if (isAnchoredInTimeline) MetadataContent(
-                                postData,
-                            )
+                            PostContent.Metadata ->
+                                if (isAnchoredInTimeline) MetadataContent(postData)
                             PostContent.Text -> TextContent(postData)
                             PostContent.Labels -> if (postData.hasLabels) LabelContent(postData)
                         }
@@ -179,184 +170,219 @@ internal fun Post(
 }
 
 @Composable
-private fun AttributionContent(
-    data: PostData,
-) = with(data.paneMovableElementSharedTransitionScope) {
-    when (data.presentation) {
-        Timeline.Presentation.Text.WithEmbed,
-        Timeline.Presentation.Media.Expanded,
-        -> AttributionLayout(
-            modifier = Modifier
-                .contentPresentationPadding(
-                    content = PostContent.Attribution,
-                    presentation = data.presentation,
-                ),
-            avatar = {
-                UpdatedMovableStickySharedElementOf(
-                    modifier = Modifier
-                        .size(UiTokens.avatarSize)
-                        .clip(data.avatarShape)
-                        .clickable {
-                            data.postActions.onPostAction(
-                                PostAction.OfProfile(
-                                    profile = data.post.author,
-                                    post = data.post,
-                                    quotingPostUri = null,
+private fun AttributionContent(data: PostData) =
+    with(data.paneMovableElementSharedTransitionScope) {
+        when (data.presentation) {
+            Timeline.Presentation.Text.WithEmbed,
+            Timeline.Presentation.Media.Expanded ->
+                AttributionLayout(
+                    modifier =
+                        Modifier.contentPresentationPadding(
+                            content = PostContent.Attribution,
+                            presentation = data.presentation,
+                        ),
+                    avatar = {
+                        UpdatedMovableStickySharedElementOf(
+                            modifier =
+                                Modifier.size(UiTokens.avatarSize)
+                                    .clip(data.avatarShape)
+                                    .clickable {
+                                        data.postActions.onPostAction(
+                                            PostAction.OfProfile(
+                                                profile = data.post.author,
+                                                post = data.post,
+                                                quotingPostUri = null,
+                                            )
+                                        )
+                                    },
+                            sharedContentState =
+                                rememberSharedContentState(
+                                    key = data.post.avatarSharedElementKey(data.sharedElementPrefix)
                                 ),
-                            )
-                        },
-                    sharedContentState = rememberSharedContentState(
-                        key = data.post.avatarSharedElementKey(data.sharedElementPrefix),
-                    ),
-                    state = remember(data.post.author.avatar) {
-                        ImageArgs(
-                            url = data.post.author.avatar?.uri,
-                            contentScale = ContentScale.Crop,
-                            contentDescription = data.post.author.displayName
-                                ?: data.post.author.handle.id,
-                            shape = data.avatarShape,
+                            state =
+                                remember(data.post.author.avatar) {
+                                    ImageArgs(
+                                        url = data.post.author.avatar?.uri,
+                                        contentScale = ContentScale.Crop,
+                                        contentDescription =
+                                            data.post.author.displayName
+                                                ?: data.post.author.handle.id,
+                                        shape = data.avatarShape,
+                                    )
+                                },
+                            sharedElement = { state, modifier -> AsyncImage(state, modifier) },
                         )
                     },
-                    sharedElement = { state, modifier ->
-                        AsyncImage(state, modifier)
+                    label = {
+                        PostHeadline(
+                            now = data.now,
+                            createdAt = data.createdAt,
+                            author = data.post.author,
+                            postId = data.post.cid,
+                            sharedElementPrefix = data.sharedElementPrefix,
+                            paneMovableElementSharedTransitionScope = this,
+                            onPostClicked = {
+                                data.postActions.onPostAction(
+                                    PostAction.OfPost(
+                                        post = data.post,
+                                        isMainPost = data.isMainPost,
+                                        warnedAppliedLabels = data.appliedLabels.warned(),
+                                    )
+                                )
+                            },
+                            onAuthorClicked = {
+                                data.postActions.onPostAction(
+                                    PostAction.OfProfile(
+                                        profile = data.post.author,
+                                        post = data.post,
+                                        quotingPostUri = null,
+                                    )
+                                )
+                            },
+                        )
                     },
                 )
-            },
-            label = {
-                PostHeadline(
-                    now = data.now,
-                    createdAt = data.createdAt,
-                    author = data.post.author,
-                    postId = data.post.cid,
+
+            Timeline.Presentation.Media.Condensed -> Unit
+            Timeline.Presentation.Media.Grid -> Unit
+        }
+    }
+
+@Composable
+private fun LabelContent(data: PostData) =
+    with(data.paneMovableElementSharedTransitionScope) {
+        when (data.presentation) {
+            Timeline.Presentation.Text.WithEmbed,
+            Timeline.Presentation.Media.Expanded ->
+                LabelFlowRow(
+                    modifier =
+                        Modifier.contentPresentationPadding(
+                            content = PostContent.Labels,
+                            presentation = data.presentation,
+                        ),
+                    content = {
+                        data.appliedLabels.forEach(
+                            languageTag = data.languageTag,
+                            labels = data.post.author.labels,
+                        ) { label, labelerSummary, localeInfo ->
+                            val authorLabelContentDescription =
+                                stringResource(
+                                    CommonStrings.post_author_label,
+                                    localeInfo.description,
+                                )
+                            PaneStickySharedElement(
+                                modifier = Modifier,
+                                sharedContentState =
+                                    rememberSharedContentState(data.sharedElementKey(label)),
+                            ) {
+                                Label(
+                                    modifier = Modifier.padding(2.dp).fillParentAxisIfFixedOrWrap(),
+                                    contentDescription = authorLabelContentDescription,
+                                    icon = {
+                                        AsyncImage(
+                                            args =
+                                                remember(labelerSummary.creatorAvatar) {
+                                                    ImageArgs(
+                                                        url = labelerSummary.creatorAvatar?.uri,
+                                                        contentScale = ContentScale.Crop,
+                                                        contentDescription = null,
+                                                        shape = data.avatarShape,
+                                                    )
+                                                },
+                                            modifier = Modifier.size(LabelIconSize),
+                                        )
+                                    },
+                                    description = { LabelText(localeInfo.name) },
+                                    onClick = { data.selectedLabel = label },
+                                )
+                            }
+                        }
+                        data.selectedLabel?.let { selectedLabel ->
+                            AppliedLabelDialog(
+                                label = selectedLabel,
+                                languageTag = data.languageTag,
+                                appliedLabels = data.appliedLabels,
+                                onDismiss = { data.selectedLabel = null },
+                                onLabelerSummaryClicked = { labeler ->
+                                    data.selectedLabel = null
+                                    data.postActions.onPostAction(
+                                        PostAction.OfLinkTarget(
+                                            post = data.post,
+                                            linkTarget =
+                                                LinkTarget.UserHandleMention(labeler.creatorHandle),
+                                        )
+                                    )
+                                },
+                            )
+                        }
+                    },
+                )
+
+            Timeline.Presentation.Media.Condensed -> Unit
+            Timeline.Presentation.Media.Grid -> Unit
+        }
+    }
+
+@Composable
+private fun TextContent(data: PostData) =
+    with(data.paneMovableElementSharedTransitionScope) {
+        when (data.presentation) {
+            Timeline.Presentation.Text.WithEmbed,
+            Timeline.Presentation.Media.Expanded ->
+                PostText(
+                    post = data.post,
                     sharedElementPrefix = data.sharedElementPrefix,
                     paneMovableElementSharedTransitionScope = this,
-                    onPostClicked = {
+                    modifier =
+                        Modifier.zIndex(TextContentZIndex)
+                            .contentPresentationPadding(
+                                content = PostContent.Text,
+                                presentation = data.presentation,
+                            )
+                            .animateBounds(
+                                lookaheadScope = data.presentationLookaheadScope,
+                                boundsTransform = data.boundsTransform,
+                            )
+                            .fillMaxWidth(),
+                    maxLines =
+                        when (data.presentation) {
+                            Timeline.Presentation.Text.WithEmbed -> Int.MAX_VALUE
+                            Timeline.Presentation.Media.Condensed ->
+                                throw IllegalArgumentException(
+                                    "Condensed media should not show text"
+                                )
+                            Timeline.Presentation.Media.Grid ->
+                                throw IllegalArgumentException("Grid media should not show text")
+                            Timeline.Presentation.Media.Expanded -> 2
+                        },
+                    onClick = {
                         data.postActions.onPostAction(
                             PostAction.OfPost(
                                 post = data.post,
                                 isMainPost = data.isMainPost,
                                 warnedAppliedLabels = data.appliedLabels.warned(),
-                            ),
+                            )
                         )
                     },
-                    onAuthorClicked = {
+                    onLinkTargetClicked = { post, linkTarget ->
                         data.postActions.onPostAction(
-                            PostAction.OfProfile(
-                                profile = data.post.author,
-                                post = data.post,
-                                quotingPostUri = null,
-                            ),
+                            PostAction.OfLinkTarget(post = post, linkTarget = linkTarget)
                         )
                     },
                 )
-            },
-        )
 
-        Timeline.Presentation.Media.Condensed -> Unit
-        Timeline.Presentation.Media.Grid -> Unit
+            Timeline.Presentation.Media.Condensed -> Unit
+            Timeline.Presentation.Media.Grid -> Unit
+        }
     }
-}
 
 @Composable
-private fun LabelContent(
-    data: PostData,
-) = with(data.paneMovableElementSharedTransitionScope) {
-    when (data.presentation) {
-        Timeline.Presentation.Text.WithEmbed,
-        Timeline.Presentation.Media.Expanded,
-        -> LabelFlowRow(
-            modifier = Modifier
+private fun EmbedContent(data: PostData) {
+    PostEmbed(
+        modifier =
+            Modifier.zIndex(EmbedContentZIndex)
                 .contentPresentationPadding(
-                    content = PostContent.Labels,
-                    presentation = data.presentation,
-                ),
-            content = {
-                data.appliedLabels.forEach(
-                    languageTag = data.languageTag,
-                    labels = data.post.author.labels,
-                ) { label, labelerSummary, localeInfo ->
-                    val authorLabelContentDescription = stringResource(
-                        CommonStrings.post_author_label,
-                        localeInfo.description,
-                    )
-                    PaneStickySharedElement(
-                        modifier = Modifier,
-                        sharedContentState = rememberSharedContentState(
-                            data.sharedElementKey(label),
-                        ),
-                    ) {
-                        Label(
-                            modifier = Modifier
-                                .padding(2.dp)
-                                .fillParentAxisIfFixedOrWrap(),
-                            contentDescription = authorLabelContentDescription,
-                            icon = {
-                                AsyncImage(
-                                    args = remember(labelerSummary.creatorAvatar) {
-                                        ImageArgs(
-                                            url = labelerSummary.creatorAvatar?.uri,
-                                            contentScale = ContentScale.Crop,
-                                            contentDescription = null,
-                                            shape = data.avatarShape,
-                                        )
-                                    },
-                                    modifier = Modifier
-                                        .size(LabelIconSize),
-                                )
-                            },
-                            description = {
-                                LabelText(localeInfo.name)
-                            },
-                            onClick = {
-                                data.selectedLabel = label
-                            },
-                        )
-                    }
-                }
-                data.selectedLabel?.let { selectedLabel ->
-                    AppliedLabelDialog(
-                        label = selectedLabel,
-                        languageTag = data.languageTag,
-                        appliedLabels = data.appliedLabels,
-                        onDismiss = {
-                            data.selectedLabel = null
-                        },
-                        onLabelerSummaryClicked = { labeler ->
-                            data.selectedLabel = null
-                            data.postActions.onPostAction(
-                                PostAction.OfLinkTarget(
-                                    post = data.post,
-                                    linkTarget = LinkTarget.UserHandleMention(
-                                        labeler.creatorHandle,
-                                    ),
-                                ),
-                            )
-                        },
-                    )
-                }
-            },
-        )
-
-        Timeline.Presentation.Media.Condensed -> Unit
-        Timeline.Presentation.Media.Grid -> Unit
-    }
-}
-
-@Composable
-private fun TextContent(
-    data: PostData,
-) = with(data.paneMovableElementSharedTransitionScope) {
-    when (data.presentation) {
-        Timeline.Presentation.Text.WithEmbed,
-        Timeline.Presentation.Media.Expanded,
-        -> PostText(
-            post = data.post,
-            sharedElementPrefix = data.sharedElementPrefix,
-            paneMovableElementSharedTransitionScope = this,
-            modifier = Modifier
-                .zIndex(TextContentZIndex)
-                .contentPresentationPadding(
-                    content = PostContent.Text,
+                    content = data.post.embed.asPostContent(),
                     presentation = data.presentation,
                 )
                 .animateBounds(
@@ -364,56 +390,6 @@ private fun TextContent(
                     boundsTransform = data.boundsTransform,
                 )
                 .fillMaxWidth(),
-            maxLines = when (data.presentation) {
-                Timeline.Presentation.Text.WithEmbed -> Int.MAX_VALUE
-                Timeline.Presentation.Media.Condensed -> throw IllegalArgumentException(
-                    "Condensed media should not show text",
-                )
-                Timeline.Presentation.Media.Grid -> throw IllegalArgumentException(
-                    "Grid media should not show text",
-                )
-                Timeline.Presentation.Media.Expanded -> 2
-            },
-            onClick = {
-                data.postActions.onPostAction(
-                    PostAction.OfPost(
-                        post = data.post,
-                        isMainPost = data.isMainPost,
-                        warnedAppliedLabels = data.appliedLabels.warned(),
-                    ),
-                )
-            },
-            onLinkTargetClicked = { post, linkTarget ->
-                data.postActions.onPostAction(
-                    PostAction.OfLinkTarget(
-                        post = post,
-                        linkTarget = linkTarget,
-                    ),
-                )
-            },
-        )
-
-        Timeline.Presentation.Media.Condensed -> Unit
-        Timeline.Presentation.Media.Grid -> Unit
-    }
-}
-
-@Composable
-private fun EmbedContent(
-    data: PostData,
-) {
-    PostEmbed(
-        modifier = Modifier
-            .zIndex(EmbedContentZIndex)
-            .contentPresentationPadding(
-                content = data.post.embed.asPostContent(),
-                presentation = data.presentation,
-            )
-            .animateBounds(
-                lookaheadScope = data.presentationLookaheadScope,
-                boundsTransform = data.boundsTransform,
-            )
-            .fillMaxWidth(),
         now = data.now,
         embed = data.post.embed,
         embeddedRecord = data.post.embeddedRecord,
@@ -426,15 +402,10 @@ private fun EmbedContent(
         presentation = data.presentation,
         sharedElementPrefix = data.sharedElementPrefix,
         paneMovableElementSharedTransitionScope = data.paneMovableElementSharedTransitionScope,
-        onUnblurClicked = {
-            data.hasClickedThroughSensitiveMedia = true
-        },
+        onUnblurClicked = { data.hasClickedThroughSensitiveMedia = true },
         onLinkTargetClicked = { post, linkTarget ->
             data.postActions.onPostAction(
-                PostAction.OfLinkTarget(
-                    post = post,
-                    linkTarget = linkTarget,
-                ),
+                PostAction.OfLinkTarget(post = post, linkTarget = linkTarget)
             )
         },
         onPostMediaClicked = { media, index, quote ->
@@ -445,15 +416,12 @@ private fun EmbedContent(
                     post = quote ?: data.post,
                     isMainPost = quote == null && data.isMainPost,
                     quotingPostUri = data.post.uri.takeIf { quote != null },
-                ),
+                )
             )
         },
         onEmbeddedRecordClicked = { record ->
             data.postActions.onPostAction(
-                PostAction.OfRecord(
-                    record = record,
-                    owningPostUri = data.post.uri,
-                ),
+                PostAction.OfRecord(record = record, owningPostUri = data.post.uri)
             )
         },
         onQuotedProfileClicked = { quotedPost, quotedProfile ->
@@ -462,35 +430,34 @@ private fun EmbedContent(
                     profile = quotedProfile,
                     post = quotedPost,
                     quotingPostUri = data.post.uri,
-                ),
+                )
             )
         },
     )
 }
 
 @Composable
-private fun ActionsContent(
-    data: PostData,
-) {
+private fun ActionsContent(data: PostData) {
     when (data.presentation) {
         Timeline.Presentation.Text.WithEmbed,
-        Timeline.Presentation.Media.Expanded,
-        -> PostInteractions(
-            post = data.post,
-            sharedElementPrefix = data.sharedElementPrefix,
-            presentation = data.presentation,
-            paneMovableElementSharedTransitionScope = data.paneMovableElementSharedTransitionScope,
-            modifier = Modifier
-                .contentPresentationPadding(
-                    content = PostContent.Actions,
-                    presentation = data.presentation,
-                )
-                .animateBounds(
-                    lookaheadScope = data.presentationLookaheadScope,
-                    boundsTransform = data.boundsTransform,
-                ),
-            onInteraction = data.postActions::onPostAction,
-        )
+        Timeline.Presentation.Media.Expanded ->
+            PostInteractions(
+                post = data.post,
+                sharedElementPrefix = data.sharedElementPrefix,
+                presentation = data.presentation,
+                paneMovableElementSharedTransitionScope =
+                    data.paneMovableElementSharedTransitionScope,
+                modifier =
+                    Modifier.contentPresentationPadding(
+                            content = PostContent.Actions,
+                            presentation = data.presentation,
+                        )
+                        .animateBounds(
+                            lookaheadScope = data.presentationLookaheadScope,
+                            boundsTransform = data.boundsTransform,
+                        ),
+                onInteraction = data.postActions::onPostAction,
+            )
 
         Timeline.Presentation.Media.Condensed -> Unit
         Timeline.Presentation.Media.Grid -> Unit
@@ -498,15 +465,9 @@ private fun ActionsContent(
 }
 
 @Composable
-private fun MetadataContent(
-    data: PostData,
-) {
+private fun MetadataContent(data: PostData) {
     PostMetadata(
-        modifier = Modifier
-            .padding(
-                horizontal = 24.dp,
-                vertical = 4.dp,
-            ),
+        modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp),
         time = data.post.createdAt,
         interactionStatus = data.interactionStatus,
         postUri = data.post.uri,
@@ -514,139 +475,147 @@ private fun MetadataContent(
         reposts = data.post.repostCount,
         quotes = data.post.quoteCount,
         likes = data.post.likeCount,
-        onMetadataClicked = {
-            data.postActions.onPostAction(PostAction.OfMetadata(it))
-        },
+        onMetadataClicked = { data.postActions.onPostAction(PostAction.OfMetadata(it)) },
     )
 }
 
 private fun Modifier.contentPresentationPadding(
     content: PostContent,
     presentation: Timeline.Presentation,
-) = padding(
-    start = presentation.postContentStartPadding(content),
-    end = presentation.postContentEndPadding(content),
-)
+) =
+    padding(
+        start = presentation.postContentStartPadding(content),
+        end = presentation.postContentEndPadding(content),
+    )
 
-/**
- * Vertical content padding for the post composable
- */
+/** Vertical content padding for the post composable */
 private val Timeline.Presentation.postVerticalPadding: Dp
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 8.dp
-        Timeline.Presentation.Media.Expanded -> 8.dp
-        Timeline.Presentation.Media.Condensed -> 0.dp
-        Timeline.Presentation.Media.Grid -> 0.dp
-    }
+    get() =
+        when (this) {
+            Timeline.Presentation.Text.WithEmbed -> 8.dp
+            Timeline.Presentation.Media.Expanded -> 8.dp
+            Timeline.Presentation.Media.Condensed -> 0.dp
+            Timeline.Presentation.Media.Grid -> 0.dp
+        }
 
 private val Timeline.Presentation.postContentSpacing: Dp
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 8.dp
-        Timeline.Presentation.Media.Expanded -> 8.dp
-        Timeline.Presentation.Media.Condensed -> 0.dp
-        Timeline.Presentation.Media.Grid -> 0.dp
-    }
-
-private fun Timeline.Presentation.postContentStartPadding(
-    content: PostContent,
-) = when (content) {
-    PostContent.Actions -> when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 24.dp
-        Timeline.Presentation.Media.Expanded -> 16.dp
-        Timeline.Presentation.Media.Condensed -> 0.dp
-        Timeline.Presentation.Media.Grid -> 0.dp
-    }
-
-    PostContent.Attribution -> when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 8.dp
-        Timeline.Presentation.Media.Expanded -> 8.dp
-        Timeline.Presentation.Media.Condensed -> 0.dp
-        Timeline.Presentation.Media.Grid -> 0.dp
-    }
-
-    is PostContent.Embed -> when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 24.dp
-        Timeline.Presentation.Media.Expanded -> when (content) {
-            PostContent.Embed.Link -> 8.dp
-            PostContent.Embed.Media -> 0.dp
+    get() =
+        when (this) {
+            Timeline.Presentation.Text.WithEmbed -> 8.dp
+            Timeline.Presentation.Media.Expanded -> 8.dp
+            Timeline.Presentation.Media.Condensed -> 0.dp
+            Timeline.Presentation.Media.Grid -> 0.dp
         }
 
-        Timeline.Presentation.Media.Condensed -> 0.dp
-        Timeline.Presentation.Media.Grid -> 0.dp
+private fun Timeline.Presentation.postContentStartPadding(content: PostContent) =
+    when (content) {
+        PostContent.Actions ->
+            when (this) {
+                Timeline.Presentation.Text.WithEmbed -> 24.dp
+                Timeline.Presentation.Media.Expanded -> 16.dp
+                Timeline.Presentation.Media.Condensed -> 0.dp
+                Timeline.Presentation.Media.Grid -> 0.dp
+            }
+
+        PostContent.Attribution ->
+            when (this) {
+                Timeline.Presentation.Text.WithEmbed -> 8.dp
+                Timeline.Presentation.Media.Expanded -> 8.dp
+                Timeline.Presentation.Media.Condensed -> 0.dp
+                Timeline.Presentation.Media.Grid -> 0.dp
+            }
+
+        is PostContent.Embed ->
+            when (this) {
+                Timeline.Presentation.Text.WithEmbed -> 24.dp
+                Timeline.Presentation.Media.Expanded ->
+                    when (content) {
+                        PostContent.Embed.Link -> 8.dp
+                        PostContent.Embed.Media -> 0.dp
+                    }
+
+                Timeline.Presentation.Media.Condensed -> 0.dp
+                Timeline.Presentation.Media.Grid -> 0.dp
+            }
+
+        PostContent.Text ->
+            when (this) {
+                Timeline.Presentation.Text.WithEmbed -> 24.dp
+                Timeline.Presentation.Media.Expanded -> 16.dp
+                Timeline.Presentation.Media.Condensed -> 0.dp
+                Timeline.Presentation.Media.Grid -> 0.dp
+            }
+
+        PostContent.Metadata -> 0.dp
+
+        PostContent.Labels ->
+            when (this) {
+                Timeline.Presentation.Text.WithEmbed -> 24.dp
+                Timeline.Presentation.Media.Expanded -> 8.dp
+                Timeline.Presentation.Media.Condensed -> 0.dp
+                Timeline.Presentation.Media.Grid -> 0.dp
+            }
     }
 
-    PostContent.Text -> when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 24.dp
-        Timeline.Presentation.Media.Expanded -> 16.dp
-        Timeline.Presentation.Media.Condensed -> 0.dp
-        Timeline.Presentation.Media.Grid -> 0.dp
+private fun Timeline.Presentation.postContentEndPadding(content: PostContent) =
+    when (content) {
+        PostContent.Actions ->
+            when (this) {
+                Timeline.Presentation.Text.WithEmbed -> 16.dp
+                Timeline.Presentation.Media.Expanded -> 16.dp
+                Timeline.Presentation.Media.Condensed -> 0.dp
+                Timeline.Presentation.Media.Grid -> 0.dp
+            }
+
+        PostContent.Attribution ->
+            when (this) {
+                Timeline.Presentation.Text.WithEmbed -> 8.dp
+                Timeline.Presentation.Media.Expanded -> 8.dp
+                Timeline.Presentation.Media.Condensed -> 0.dp
+                Timeline.Presentation.Media.Grid -> 0.dp
+            }
+
+        is PostContent.Embed ->
+            when (this) {
+                Timeline.Presentation.Text.WithEmbed -> 16.dp
+                Timeline.Presentation.Media.Expanded ->
+                    when (content) {
+                        PostContent.Embed.Link -> 8.dp
+                        PostContent.Embed.Media -> 0.dp
+                    }
+
+                Timeline.Presentation.Media.Condensed -> 0.dp
+                Timeline.Presentation.Media.Grid -> 0.dp
+            }
+
+        PostContent.Text ->
+            when (this) {
+                Timeline.Presentation.Text.WithEmbed -> 16.dp
+                Timeline.Presentation.Media.Expanded -> 16.dp
+                Timeline.Presentation.Media.Condensed -> 0.dp
+                Timeline.Presentation.Media.Grid -> 0.dp
+            }
+
+        PostContent.Metadata -> 0.dp
+
+        PostContent.Labels ->
+            when (this) {
+                Timeline.Presentation.Text.WithEmbed -> 24.dp
+                Timeline.Presentation.Media.Expanded -> 8.dp
+                Timeline.Presentation.Media.Condensed -> 0.dp
+                Timeline.Presentation.Media.Grid -> 0.dp
+            }
     }
 
-    PostContent.Metadata -> 0.dp
+private fun Embed?.asPostContent() =
+    when (this) {
+        is ImageList,
+        is Video -> PostContent.Embed.Media
 
-    PostContent.Labels -> when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 24.dp
-        Timeline.Presentation.Media.Expanded -> 8.dp
-        Timeline.Presentation.Media.Condensed -> 0.dp
-        Timeline.Presentation.Media.Grid -> 0.dp
+        null,
+        UnknownEmbed,
+        is ExternalEmbed -> PostContent.Embed.Link
     }
-}
-
-private fun Timeline.Presentation.postContentEndPadding(
-    content: PostContent,
-) = when (content) {
-    PostContent.Actions -> when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 16.dp
-        Timeline.Presentation.Media.Expanded -> 16.dp
-        Timeline.Presentation.Media.Condensed -> 0.dp
-        Timeline.Presentation.Media.Grid -> 0.dp
-    }
-
-    PostContent.Attribution -> when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 8.dp
-        Timeline.Presentation.Media.Expanded -> 8.dp
-        Timeline.Presentation.Media.Condensed -> 0.dp
-        Timeline.Presentation.Media.Grid -> 0.dp
-    }
-
-    is PostContent.Embed -> when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 16.dp
-        Timeline.Presentation.Media.Expanded -> when (content) {
-            PostContent.Embed.Link -> 8.dp
-            PostContent.Embed.Media -> 0.dp
-        }
-
-        Timeline.Presentation.Media.Condensed -> 0.dp
-        Timeline.Presentation.Media.Grid -> 0.dp
-    }
-
-    PostContent.Text -> when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 16.dp
-        Timeline.Presentation.Media.Expanded -> 16.dp
-        Timeline.Presentation.Media.Condensed -> 0.dp
-        Timeline.Presentation.Media.Grid -> 0.dp
-    }
-
-    PostContent.Metadata -> 0.dp
-
-    PostContent.Labels -> when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 24.dp
-        Timeline.Presentation.Media.Expanded -> 8.dp
-        Timeline.Presentation.Media.Condensed -> 0.dp
-        Timeline.Presentation.Media.Grid -> 0.dp
-    }
-}
-
-private fun Embed?.asPostContent() = when (this) {
-    is ImageList,
-    is Video,
-    -> PostContent.Embed.Media
-
-    null,
-    UnknownEmbed,
-    is ExternalEmbed,
-    -> PostContent.Embed.Link
-}
 
 @Composable
 private fun rememberUpdatedPostData(
@@ -664,15 +633,39 @@ private fun rememberUpdatedPostData(
     createdAt: Instant,
     languageTag: String,
     isMainPost: Boolean,
-): PostData = rememberSaveable(
-    saver = listSaver(
-        save = { data ->
-            listOf(
-                data.hasClickedThroughMutedWords,
-                data.hasClickedThroughSensitiveMedia,
-            )
-        },
-        restore = { (hasClickedThroughMutedWords, hasClickedThroughSensitiveMedia) ->
+): PostData =
+    rememberSaveable(
+            saver =
+                listSaver(
+                    save = { data ->
+                        listOf(
+                            data.hasClickedThroughMutedWords,
+                            data.hasClickedThroughSensitiveMedia,
+                        )
+                    },
+                    restore = { (hasClickedThroughMutedWords, hasClickedThroughSensitiveMedia) ->
+                        PostData(
+                            postActions = postActions,
+                            paneMovableElementSharedTransitionScope =
+                                paneMovableElementSharedTransitionScope,
+                            presentationLookaheadScope = presentationLookaheadScope,
+                            post = post,
+                            threadGate = threadGate,
+                            presentation = presentation,
+                            appliedLabels = appliedLabels,
+                            hasMutedWords = hasMutedWords,
+                            isMainPost = isMainPost,
+                            sharedElementPrefix = sharedElementPrefix,
+                            avatarShape = avatarShape,
+                            now = now,
+                            created = createdAt,
+                            languageTag = languageTag,
+                            hasClickedThroughMutedWords = hasClickedThroughMutedWords,
+                            hasClickedThroughSensitiveMedia = hasClickedThroughSensitiveMedia,
+                        )
+                    },
+                )
+        ) {
             PostData(
                 postActions = postActions,
                 paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
@@ -688,45 +681,25 @@ private fun rememberUpdatedPostData(
                 now = now,
                 created = createdAt,
                 languageTag = languageTag,
-                hasClickedThroughMutedWords = hasClickedThroughMutedWords,
-                hasClickedThroughSensitiveMedia = hasClickedThroughSensitiveMedia,
             )
-        },
-    ),
-) {
-    PostData(
-        postActions = postActions,
-        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-        presentationLookaheadScope = presentationLookaheadScope,
-        post = post,
-        threadGate = threadGate,
-        presentation = presentation,
-        appliedLabels = appliedLabels,
-        hasMutedWords = hasMutedWords,
-        isMainPost = isMainPost,
-        sharedElementPrefix = sharedElementPrefix,
-        avatarShape = avatarShape,
-        now = now,
-        created = createdAt,
-        languageTag = languageTag,
-    )
-}.also {
-    if (it.presentation != presentation) it.presentationChanged = true
-    it.postActions = postActions
-    it.paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope
-    it.presentationLookaheadScope = presentationLookaheadScope
-    it.post = post
-    it.threadGate = threadGate
-    it.presentation = presentation
-    it.appliedLabels = appliedLabels
-    it.hasMutedWords = hasMutedWords
-    it.isMainPost = isMainPost
-    it.sharedElementPrefix = sharedElementPrefix
-    it.avatarShape = avatarShape
-    it.now = now
-    it.createdAt = createdAt
-    it.languageTag = languageTag
-}
+        }
+        .also {
+            if (it.presentation != presentation) it.presentationChanged = true
+            it.postActions = postActions
+            it.paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope
+            it.presentationLookaheadScope = presentationLookaheadScope
+            it.post = post
+            it.threadGate = threadGate
+            it.presentation = presentation
+            it.appliedLabels = appliedLabels
+            it.hasMutedWords = hasMutedWords
+            it.isMainPost = isMainPost
+            it.sharedElementPrefix = sharedElementPrefix
+            it.avatarShape = avatarShape
+            it.now = now
+            it.createdAt = createdAt
+            it.languageTag = languageTag
+        }
 
 @Stable
 private class PostData(
@@ -748,9 +721,8 @@ private class PostData(
     hasClickedThroughSensitiveMedia: Boolean = false,
 ) {
     var postActions by mutableStateOf(postActions)
-    var paneMovableElementSharedTransitionScope by mutableStateOf(
-        paneMovableElementSharedTransitionScope,
-    )
+    var paneMovableElementSharedTransitionScope by
+        mutableStateOf(paneMovableElementSharedTransitionScope)
     var presentationLookaheadScope by mutableStateOf(presentationLookaheadScope)
     var post by mutableStateOf(post)
     var threadGate by mutableStateOf(threadGate)
@@ -774,17 +746,12 @@ private class PostData(
         get() = post.labels.isNotEmpty() || post.author.labels.isNotEmpty()
 
     val interactionStatus
-        get() = postInteractionStatus(
-            allowed = threadGate?.allowed,
-        )
+        get() = postInteractionStatus(allowed = threadGate?.allowed)
 
-    val boundsTransform = BoundsTransform { _, _ ->
-        SpringSpec.skipIf { !presentationChanged }
-    }
+    val boundsTransform = BoundsTransform { _, _ -> SpringSpec.skipIf { !presentationChanged } }
 
-    fun sharedElementKey(
-        label: Label,
-    ) = "$sharedElementPrefix-${post.uri.uri}-${label.creatorId}-${label.value}"
+    fun sharedElementKey(label: Label) =
+        "$sharedElementPrefix-${post.uri.uri}-${label.creatorId}-${label.value}"
 }
 
 private val PostData.textBlurred: Boolean
@@ -798,65 +765,73 @@ private val PostData.canUnblurMedia: Boolean
 
 private sealed class PostContent(val key: String) {
     data object Attribution : PostContent(key = "Attribution")
+
     data object Text : PostContent(key = "Text")
+
     sealed class Embed : PostContent(key = "Embed") {
         data object Link : Embed()
+
         data object Media : Embed()
     }
 
     data object Metadata : PostContent(key = "Metadata")
+
     data object Actions : PostContent(key = "Actions")
+
     data object Labels : PostContent(key = "Labels")
 }
 
 @Stable
 private val Timeline.Presentation.contentOrder
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> TextAndEmbedOrder
-        Timeline.Presentation.Media.Expanded -> ExpandedMediaOrder
-        Timeline.Presentation.Media.Condensed -> CondensedMediaOrder
-        Timeline.Presentation.Media.Grid -> GridMediaOrder
-    }
+    get() =
+        when (this) {
+            Timeline.Presentation.Text.WithEmbed -> TextAndEmbedOrder
+            Timeline.Presentation.Media.Expanded -> ExpandedMediaOrder
+            Timeline.Presentation.Media.Condensed -> CondensedMediaOrder
+            Timeline.Presentation.Media.Grid -> GridMediaOrder
+        }
 
-private val SpringSpec = spring<Rect>(
-    stiffness = Spring.StiffnessMediumLow,
-)
+private val SpringSpec = spring<Rect>(stiffness = Spring.StiffnessMediumLow)
 
-private val TextAndEmbedOrder = listOf(
-    PostContent.Attribution,
-    PostContent.Labels,
-    PostContent.Text,
-    PostContent.Embed.Media,
-    PostContent.Metadata,
-    PostContent.Actions,
-)
+private val TextAndEmbedOrder =
+    listOf(
+        PostContent.Attribution,
+        PostContent.Labels,
+        PostContent.Text,
+        PostContent.Embed.Media,
+        PostContent.Metadata,
+        PostContent.Actions,
+    )
 
-private val ExpandedMediaOrder = listOf(
-    PostContent.Attribution,
-    PostContent.Labels,
-    PostContent.Embed.Media,
-    PostContent.Actions,
-    PostContent.Text,
-    PostContent.Metadata,
-)
+private val ExpandedMediaOrder =
+    listOf(
+        PostContent.Attribution,
+        PostContent.Labels,
+        PostContent.Embed.Media,
+        PostContent.Actions,
+        PostContent.Text,
+        PostContent.Metadata,
+    )
 
-private val CondensedMediaOrder = listOf(
-    PostContent.Attribution,
-    PostContent.Labels,
-    PostContent.Text,
-    PostContent.Embed.Media,
-    PostContent.Metadata,
-    PostContent.Actions,
-)
+private val CondensedMediaOrder =
+    listOf(
+        PostContent.Attribution,
+        PostContent.Labels,
+        PostContent.Text,
+        PostContent.Embed.Media,
+        PostContent.Metadata,
+        PostContent.Actions,
+    )
 
-private val GridMediaOrder = listOf(
-    PostContent.Attribution,
-    PostContent.Labels,
-    PostContent.Text,
-    PostContent.Embed.Media,
-    PostContent.Metadata,
-    PostContent.Actions,
-)
+private val GridMediaOrder =
+    listOf(
+        PostContent.Attribution,
+        PostContent.Labels,
+        PostContent.Text,
+        PostContent.Embed.Media,
+        PostContent.Metadata,
+        PostContent.Actions,
+    )
 
 private const val EmbedContentZIndex = 2f
 private const val TextContentZIndex = 1f

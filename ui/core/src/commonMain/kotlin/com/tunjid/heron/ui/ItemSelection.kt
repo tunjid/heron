@@ -60,70 +60,59 @@ inline fun <T> ItemSelection(
     crossinline stringResource: T.() -> StringResource,
     crossinline onItemSelected: (T) -> Unit,
 ) {
-    var expandedItem by remember {
-        mutableStateOf(
-            if (alwaysExpanded) selectedItem
-            else null,
-        )
-    }
+    var expandedItem by remember { mutableStateOf(if (alwaysExpanded) selectedItem else null) }
     LookaheadScope {
-        ElevatedCard(
-            modifier = modifier,
-            shape = CircleShape,
-        ) {
+        ElevatedCard(modifier = modifier, shape = CircleShape) {
             Row(
-                modifier = Modifier
-                    .animateContentSize(),
+                modifier = Modifier.animateContentSize(),
                 horizontalArrangement = Arrangement.aligned(Alignment.End),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (availableItems.size > 1) availableItems.forEach { item ->
-                    androidx.compose.runtime.key(item.key()) {
-                        val isSelected = selectedItem == item
-                        AnimatedVisibility(
-                            modifier = Modifier.animateBounds(
-                                lookaheadScope = this@LookaheadScope,
-                            ),
-                            visible = isSelected || expandedItem != null,
-                            enter = fadeIn() + scaleIn(),
-                            exit = fadeOut() + scaleOut(),
-                        ) {
-                            var entered by remember { mutableStateOf(false) }
-                            val progress = animateFloatAsState(if (entered) 1f else 0f)
-                            IconButton(
-                                modifier = Modifier
-                                    .graphicsLayer {
-                                        alpha = progress.value
-                                    }
-                                    .size(40.dp),
-                                onClick = {
-                                    when (expandedItem) {
-                                        null -> expandedItem = item
-                                        item -> if (!alwaysExpanded) expandedItem = null
-                                        else -> onItemSelected(item)
-                                    }
-                                },
-                                content = {
-                                    Icon(
-                                        modifier = Modifier
-                                            .size(24.dp),
-                                        imageVector = item.icon(),
-                                        contentDescription = org.jetbrains.compose.resources.stringResource(
-                                            item.stringResource(),
-                                        ),
-                                        tint = when (item) {
-                                            selectedItem -> MaterialTheme.colorScheme.primary
-                                            else -> MaterialTheme.colorScheme.onSurface
-                                        },
-                                    )
-                                },
-                            )
-                            LaunchedEffect(Unit) {
-                                entered = true
+                if (availableItems.size > 1)
+                    availableItems.forEach { item ->
+                        androidx.compose.runtime.key(item.key()) {
+                            val isSelected = selectedItem == item
+                            AnimatedVisibility(
+                                modifier =
+                                    Modifier.animateBounds(lookaheadScope = this@LookaheadScope),
+                                visible = isSelected || expandedItem != null,
+                                enter = fadeIn() + scaleIn(),
+                                exit = fadeOut() + scaleOut(),
+                            ) {
+                                var entered by remember { mutableStateOf(false) }
+                                val progress = animateFloatAsState(if (entered) 1f else 0f)
+                                IconButton(
+                                    modifier =
+                                        Modifier.graphicsLayer { alpha = progress.value }
+                                            .size(40.dp),
+                                    onClick = {
+                                        when (expandedItem) {
+                                            null -> expandedItem = item
+                                            item -> if (!alwaysExpanded) expandedItem = null
+                                            else -> onItemSelected(item)
+                                        }
+                                    },
+                                    content = {
+                                        Icon(
+                                            modifier = Modifier.size(24.dp),
+                                            imageVector = item.icon(),
+                                            contentDescription =
+                                                org.jetbrains.compose.resources.stringResource(
+                                                    item.stringResource()
+                                                ),
+                                            tint =
+                                                when (item) {
+                                                    selectedItem ->
+                                                        MaterialTheme.colorScheme.primary
+                                                    else -> MaterialTheme.colorScheme.onSurface
+                                                },
+                                        )
+                                    },
+                                )
+                                LaunchedEffect(Unit) { entered = true }
                             }
                         }
                     }
-                }
             }
         }
     }
@@ -134,6 +123,6 @@ inline fun <T> ItemSelection(
                 expandedItem = null
             }
         }
-        onDispose { }
+        onDispose {}
     }
 }

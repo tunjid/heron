@@ -22,14 +22,6 @@ import com.tunjid.heron.data.core.types.ProfileId
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Block(
-    val uri: BlockUri,
-    val cid: GenericId,
-    val subject: ProfileId,
-) : Record {
-    override val reference: Record.Reference =
-        Record.Reference(
-            id = cid,
-            uri = uri,
-        )
+data class Block(val uri: BlockUri, val cid: GenericId, val subject: ProfileId) : Record {
+    override val reference: Record.Reference = Record.Reference(id = cid, uri = uri)
 }

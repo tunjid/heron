@@ -30,23 +30,18 @@ import com.tunjid.heron.data.core.types.ProfileId
 
 @Entity(
     tableName = "conversations",
-    primaryKeys = [
-        "id",
-        "ownerId",
-    ],
-    foreignKeys = [
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["ownerId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["id"]),
-        Index(value = ["ownerId"]),
-    ],
+    primaryKeys = ["id", "ownerId"],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["ownerId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            )
+        ],
+    indices = [Index(value = ["id"]), Index(value = ["ownerId"])],
 )
 data class ConversationEntity(
     val id: ConversationId,
@@ -60,22 +55,19 @@ data class ConversationEntity(
 )
 
 data class PopulatedConversationEntity(
-    @Embedded
-    val entity: ConversationEntity,
-    @Embedded(prefix = "lastMessage_")
-    val lastMessageEntity: MessageEntity?,
-    @Embedded(prefix = "lastMessageReactedTo_")
-    val lastMessageReactedToEntity: MessageEntity?,
-    @Embedded(prefix = "lastReaction_")
-    val lastReactionEntity: MessageReactionEntity?,
+    @Embedded val entity: ConversationEntity,
+    @Embedded(prefix = "lastMessage_") val lastMessageEntity: MessageEntity?,
+    @Embedded(prefix = "lastMessageReactedTo_") val lastMessageReactedToEntity: MessageEntity?,
+    @Embedded(prefix = "lastReaction_") val lastReactionEntity: MessageReactionEntity?,
     @Relation(
         parentColumn = "id",
         entityColumn = "did",
-        associateBy = Junction(
-            value = ConversationMembersEntity::class,
-            parentColumn = "conversationId",
-            entityColumn = "memberId",
-        ),
+        associateBy =
+            Junction(
+                value = ConversationMembersEntity::class,
+                parentColumn = "conversationId",
+                entityColumn = "memberId",
+            ),
     )
     val memberEntities: List<ProfileEntity>,
 )
@@ -90,12 +82,9 @@ fun PopulatedConversationEntity.asExternalModel() =
         lastMessageReactedTo = lastMessageReactedToEntity?.let(::conversationMessage),
     )
 
-private fun PopulatedConversationEntity.conversationMessage(
-    message: MessageEntity,
-): Message? =
-    memberEntities.firstOrNull {
-        it.did == message.senderId
-    }
+private fun PopulatedConversationEntity.conversationMessage(message: MessageEntity): Message? =
+    memberEntities
+        .firstOrNull { it.did == message.senderId }
         ?.let { sender ->
             Message(
                 id = message.id,
@@ -105,17 +94,18 @@ private fun PopulatedConversationEntity.conversationMessage(
                 isDeleted = message.isDeleted,
                 sender = sender.asExternalModel(),
                 embeddedRecord = null,
-                reactions = listOfNotNull(
-                    lastReactionEntity
-                        ?.takeIf { message.id == lastMessageReactedToEntity?.id }
-                        ?.let { _ ->
-                            Message.Reaction(
-                                value = lastReactionEntity.value,
-                                senderId = lastReactionEntity.senderId,
-                                createdAt = lastReactionEntity.createdAt,
-                            )
-                        },
-                ),
+                reactions =
+                    listOfNotNull(
+                        lastReactionEntity
+                            ?.takeIf { message.id == lastMessageReactedToEntity?.id }
+                            ?.let { _ ->
+                                Message.Reaction(
+                                    value = lastReactionEntity.value,
+                                    senderId = lastReactionEntity.senderId,
+                                    createdAt = lastReactionEntity.createdAt,
+                                )
+                            }
+                    ),
                 metadata = message.metadata(),
             )
         }

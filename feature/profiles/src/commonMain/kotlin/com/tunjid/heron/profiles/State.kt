@@ -38,32 +38,33 @@ data class State(
     val signedInProfileId: ProfileId? = null,
     val load: Load,
     override val tilingData: TilingState.Data<CursorQuery, ProfileWithViewerState>,
-    @Transient
-    val messages: List<Memo> = emptyList(),
+    @Transient val messages: List<Memo> = emptyList(),
 ) : TilingState<CursorQuery, ProfileWithViewerState>
 
-fun State(route: Route) = State(
-    load = route.load,
-    tilingData = TilingState.Data(
-        currentQuery = when (val load = route.load) {
-            is Load.Post -> PostDataQuery(
-                profileId = load.profileId,
-                postRecordKey = load.postRecordKey,
-                data = CursorQuery.defaultStartData(),
-            )
+fun State(route: Route) =
+    State(
+        load = route.load,
+        tilingData =
+            TilingState.Data(
+                currentQuery =
+                    when (val load = route.load) {
+                        is Load.Post ->
+                            PostDataQuery(
+                                profileId = load.profileId,
+                                postRecordKey = load.postRecordKey,
+                                data = CursorQuery.defaultStartData(),
+                            )
 
-            is Load.Profile -> ProfilesQuery(
-                profileId = load.profileId,
-                data = CursorQuery.defaultStartData(),
-            )
-            Load.Moderation.Blocks,
-            Load.Moderation.Mutes,
-            -> DataQuery(
-                data = CursorQuery.defaultStartData(),
-            )
-        },
-    ),
-)
+                        is Load.Profile ->
+                            ProfilesQuery(
+                                profileId = load.profileId,
+                                data = CursorQuery.defaultStartData(),
+                            )
+                        Load.Moderation.Blocks,
+                        Load.Moderation.Mutes -> DataQuery(data = CursorQuery.defaultStartData())
+                    }
+            ),
+    )
 
 @Serializable
 sealed class Load {
@@ -89,32 +90,22 @@ sealed class Load {
     sealed class Profile : Load() {
         abstract val profileId: Id.Profile
 
-        @Serializable
-        data class Followers(
-            override val profileId: Id.Profile,
-        ) : Profile()
+        @Serializable data class Followers(override val profileId: Id.Profile) : Profile()
 
-        @Serializable
-        data class Following(
-            override val profileId: Id.Profile,
-        ) : Profile()
+        @Serializable data class Following(override val profileId: Id.Profile) : Profile()
     }
 
     @Serializable
     sealed class Moderation : Load() {
-        @Serializable
-        data object Blocks : Moderation()
+        @Serializable data object Blocks : Moderation()
 
-        @Serializable
-        data object Mutes : Moderation()
+        @Serializable data object Mutes : Moderation()
     }
 }
 
 sealed class Action(val key: String) {
 
-    data class Tile(
-        val tilingAction: TilingState.Action,
-    ) : Action(key = "Load")
+    data class Tile(val tilingAction: TilingState.Action) : Action(key = "Load")
 
     data class ToggleViewerState(
         val signedInProfileId: ProfileId,
@@ -123,18 +114,12 @@ sealed class Action(val key: String) {
         val followedBy: FollowUri?,
     ) : Action(key = "ToggleViewerState")
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(),
-            NavigationAction by delegate
+        data class To(val delegate: NavigationAction.Destination) :
+            Navigate(), NavigationAction by delegate
     }
 }

@@ -39,15 +39,9 @@ actual fun getPlatform(): Platform = AndroidPlatform()
 
 fun createAppState(context: Context): AppState =
     createAppState(
-        imageLoader = {
-            imageLoader(context)
-        },
-        notifier = {
-            AndroidNotifier(context)
-        },
-        logger = {
-            AndroidLogger(context)
-        },
+        imageLoader = { imageLoader(context) },
+        notifier = { AndroidNotifier(context) },
+        logger = { AndroidLogger(context) },
         videoPlayerController = { appMainScope ->
             ExoplayerController(
                 context = context,
@@ -66,5 +60,4 @@ fun createAppState(context: Context): AppState =
         },
     )
 
-private fun Context.savedStatePath(): Path =
-    filesDir.resolve("savedState").absolutePath.toPath()
+private fun Context.savedStatePath(): Path = filesDir.resolve("savedState").absolutePath.toPath()

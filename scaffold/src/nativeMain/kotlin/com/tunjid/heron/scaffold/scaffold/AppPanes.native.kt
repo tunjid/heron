@@ -18,5 +18,4 @@ package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.ui.Modifier
 
-internal actual fun Modifier.platformSystemGestureExclusion(): Modifier =
-    this
+internal actual fun Modifier.platformSystemGestureExclusion(): Modifier = this

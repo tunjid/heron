@@ -22,17 +22,13 @@ import com.tunjid.heron.data.core.types.RecordUri
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/**
- * An AtProto record
- */
+/** An AtProto record */
 @Serializable
 sealed interface Record {
 
     val reference: Reference
 
-    /**
-     * An AtProto record that may be embedded in a [Post]
-     */
+    /** An AtProto record that may be embedded in a [Post] */
     @Serializable
     // This interface used to be called Post.
     // Preserve its existing name for backwards compatibility
@@ -41,9 +37,5 @@ sealed interface Record {
         val embeddableRecordUri: EmbeddableRecordUri
     }
 
-    @Serializable
-    data class Reference(
-        val id: Id,
-        val uri: RecordUri,
-    )
+    @Serializable data class Reference(val id: Id, val uri: RecordUri)
 }

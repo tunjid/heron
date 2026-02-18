@@ -27,32 +27,30 @@ import androidx.compose.runtime.setValue
 /**
  * A state object that "latches" onto a written value.
  *
- * Once [latch] is called, this state will reflect the written value and ignore
- * subsequent writes until the upstream value provided to [rememberLatchedState]
- * changes to match or supersede the latched value.
+ * Once [latch] is called, this state will reflect the written value and ignore subsequent writes
+ * until the upstream value provided to [rememberLatchedState] changes to match or supersede the
+ * latched value.
  */
 @Stable
 interface LatchedState<T> : State<T> {
     /**
-     * Returns true if the local state matches the upstream source of truth.
-     * Returns false if a value has been latched that hasn't been reflected upstream yet.
+     * Returns true if the local state matches the upstream source of truth. Returns false if a
+     * value has been latched that hasn't been reflected upstream yet.
      */
     val isCurrent: Boolean
 
     /**
      * Eagerly updates the local state to the new value.
      *
-     * This operation is "one-way" per sync cycle. Once a value is latched,
-     * further calls to [latch] are ignored until the upstream source catches up.
+     * This operation is "one-way" per sync cycle. Once a value is latched, further calls to [latch]
+     * are ignored until the upstream source catches up.
      */
     fun latch(newValue: T)
 }
 
 @Composable
 fun <T> rememberLatchedState(actualValue: T): LatchedState<T> {
-    val state = remember {
-        SingleWriteLatchedState(actualValue)
-    }
+    val state = remember { SingleWriteLatchedState(actualValue) }
 
     // If caught up or diverged, update
     remember(actualValue) { state.reset(actualValue) }
@@ -60,12 +58,8 @@ fun <T> rememberLatchedState(actualValue: T): LatchedState<T> {
     return state
 }
 
-/**
- * Private implementation to encapsulate the locking logic.
- */
-private class SingleWriteLatchedState<T>(
-    initialValue: T,
-) : LatchedState<T> {
+/** Private implementation to encapsulate the locking logic. */
+private class SingleWriteLatchedState<T>(initialValue: T) : LatchedState<T> {
 
     private val state = mutableStateOf(initialValue)
     var upstreamValue by mutableStateOf(initialValue)

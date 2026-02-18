@@ -43,68 +43,57 @@ fun PostHeadline(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     onPostClicked: () -> Unit,
     onAuthorClicked: () -> Unit,
-) = with(paneMovableElementSharedTransitionScope) {
-    Column {
-        val primaryText = author.displayName ?: author.handle.id
-        val secondaryText = author.handle.id.takeUnless { it == primaryText }
+) =
+    with(paneMovableElementSharedTransitionScope) {
+        Column {
+            val primaryText = author.displayName ?: author.handle.id
+            val secondaryText = author.handle.id.takeUnless { it == primaryText }
 
-        Row(horizontalArrangement = spacedBy(4.dp)) {
-            PaneStickySharedElement(
-                sharedContentState = rememberSharedContentState(
-                    key = author.textSharedElementKey(
-                        prefix = sharedElementPrefix,
-                        postId = postId,
-                        text = primaryText,
-                    ),
-                ),
-            ) {
-                ProfileName(
-                    modifier = Modifier
-                        .clickable { onAuthorClicked() },
-                    profile = author,
-                )
-            }
-            Spacer(
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable { onPostClicked() },
-            )
-            TimeDelta(
-                modifier = Modifier.alignByBaseline(),
-                delta = now - createdAt,
-            )
-        }
-        if (secondaryText != null) {
-            Spacer(Modifier.height(2.dp))
             Row(horizontalArrangement = spacedBy(4.dp)) {
                 PaneStickySharedElement(
-                    modifier = Modifier,
-                    sharedContentState = rememberSharedContentState(
-                        key = author.textSharedElementKey(
-                            prefix = sharedElementPrefix,
-                            postId = postId,
-                            text = secondaryText,
-                        ),
-                    ),
+                    sharedContentState =
+                        rememberSharedContentState(
+                            key =
+                                author.textSharedElementKey(
+                                    prefix = sharedElementPrefix,
+                                    postId = postId,
+                                    text = primaryText,
+                                )
+                        )
                 ) {
-                    ProfileHandle(
-                        modifier = Modifier
-                            .clickable { onAuthorClicked() },
+                    ProfileName(
+                        modifier = Modifier.clickable { onAuthorClicked() },
                         profile = author,
                     )
                 }
-                Spacer(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable { onPostClicked() },
-                )
+                Spacer(modifier = Modifier.weight(1f).clickable { onPostClicked() })
+                TimeDelta(modifier = Modifier.alignByBaseline(), delta = now - createdAt)
+            }
+            if (secondaryText != null) {
+                Spacer(Modifier.height(2.dp))
+                Row(horizontalArrangement = spacedBy(4.dp)) {
+                    PaneStickySharedElement(
+                        modifier = Modifier,
+                        sharedContentState =
+                            rememberSharedContentState(
+                                key =
+                                    author.textSharedElementKey(
+                                        prefix = sharedElementPrefix,
+                                        postId = postId,
+                                        text = secondaryText,
+                                    )
+                            ),
+                    ) {
+                        ProfileHandle(
+                            modifier = Modifier.clickable { onAuthorClicked() },
+                            profile = author,
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f).clickable { onPostClicked() })
+                }
             }
         }
     }
-}
 
-private fun Profile.textSharedElementKey(
-    prefix: String,
-    postId: PostId,
-    text: String,
-): String = "$prefix-${postId.id}-${did.id}-$text"
+private fun Profile.textSharedElementKey(prefix: String, postId: PostId, text: String): String =
+    "$prefix-${postId.id}-${did.id}-$text"

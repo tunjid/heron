@@ -24,15 +24,13 @@ import kotlin.time.Instant
 
 @Entity(
     tableName = "bookmarks",
-    primaryKeys = [
-        "bookmarkedUri",
-        "viewingProfileId",
-    ],
-    indices = [
-        Index(value = ["createdAt"]),
-        Index(value = ["bookmarkedUri"]),
-        Index(value = ["viewingProfileId", "createdAt"]),
-    ],
+    primaryKeys = ["bookmarkedUri", "viewingProfileId"],
+    indices =
+        [
+            Index(value = ["createdAt"]),
+            Index(value = ["bookmarkedUri"]),
+            Index(value = ["viewingProfileId", "createdAt"]),
+        ],
 )
 data class BookmarkEntity(
     val bookmarkedUri: GenericUri,

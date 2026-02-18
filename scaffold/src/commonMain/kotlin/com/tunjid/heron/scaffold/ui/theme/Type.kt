@@ -51,10 +51,11 @@ fun appTypography(fontFamily: FontFamily): Typography {
         titleLarge = base.titleLarge.copy(fontFamily = fontFamily),
         titleMedium = base.titleMedium.copy(fontFamily = fontFamily),
         titleSmall = base.titleSmall.copy(fontFamily = fontFamily),
-        bodyLarge = base.bodyLarge.copy(
-            fontFamily = fontFamily,
-            fontSize = base.bodyLarge.fontSize * 0.95f,
-        ),
+        bodyLarge =
+            base.bodyLarge.copy(
+                fontFamily = fontFamily,
+                fontSize = base.bodyLarge.fontSize * 0.95f,
+            ),
         bodyMedium = base.bodyMedium.copy(fontFamily = fontFamily),
         bodySmall = base.bodySmall.copy(fontFamily = fontFamily),
         labelLarge = base.labelLarge.copy(fontFamily = fontFamily),
@@ -66,21 +67,13 @@ fun appTypography(fontFamily: FontFamily): Typography {
 @Composable
 fun appFont(): FontFamily {
     return FontFamily(
-        Font(
-            resource = Res.font.Roboto_Black,
-            weight = FontWeight.Black,
-            style = FontStyle.Normal,
-        ),
+        Font(resource = Res.font.Roboto_Black, weight = FontWeight.Black, style = FontStyle.Normal),
         Font(
             resource = Res.font.Roboto_BlackItalic,
             weight = FontWeight.Black,
             style = FontStyle.Italic,
         ),
-        Font(
-            resource = Res.font.Roboto_Bold,
-            weight = FontWeight.Bold,
-            style = FontStyle.Normal,
-        ),
+        Font(resource = Res.font.Roboto_Bold, weight = FontWeight.Bold, style = FontStyle.Normal),
         Font(
             resource = Res.font.Roboto_BoldItalic,
             weight = FontWeight.Bold,
@@ -96,11 +89,7 @@ fun appFont(): FontFamily {
             weight = FontWeight.ExtraBold,
             style = FontStyle.Italic,
         ),
-        Font(
-            resource = Res.font.Roboto_Light,
-            weight = FontWeight.Light,
-            style = FontStyle.Normal,
-        ),
+        Font(resource = Res.font.Roboto_Light, weight = FontWeight.Light, style = FontStyle.Normal),
         Font(
             resource = Res.font.Roboto_LightItalic,
             weight = FontWeight.Light,

@@ -24,10 +24,7 @@ import com.tunjid.heron.timeline.ui.post.PostFeatureTextContent
 
 @Composable
 internal fun BlockedPostPost(onClick: (() -> Unit)?) {
-    FeatureContainer(
-        modifier = Modifier.padding(16.dp),
-        onClick = onClick,
-    ) {
+    FeatureContainer(modifier = Modifier.padding(16.dp), onClick = onClick) {
         PostFeatureTextContent(
             title = "Post is blocked",
             description = "You are blocked from reading this post.",

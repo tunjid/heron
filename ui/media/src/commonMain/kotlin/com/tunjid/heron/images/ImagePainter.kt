@@ -32,17 +32,15 @@ import androidx.compose.ui.unit.toSize
 /**
  * A [Painter] that draws the latest image available to it.
  *
- * The Compose snapshot system invalidates on the next tick. For
- * image loads that are async, this often results in images not being
- * drawn on the first frame if it backed by snapshot state.
+ * The Compose snapshot system invalidates on the next tick. For image loads that are async, this
+ * often results in images not being drawn on the first frame if it backed by snapshot state.
  *
- * To work around this, an [com.tunjid.heron.images.ImagePainter]
- * can be remembered in composition, while the image driving [currentImage] can be updated
- * async. If the image is updated before the first frame deadline, the image will be drawn
- * in the first frame.
+ * To work around this, an [com.tunjid.heron.images.ImagePainter] can be remembered in composition,
+ * while the image driving [currentImage] can be updated async. If the image is updated before the
+ * first frame deadline, the image will be drawn in the first frame.
  *
- * The [com.tunjid.heron.images.ImagePainter] should used with the [Image] composable.
- * as the scaling and alignment logic used in the Painter depends on the [Image] composable.
+ * The [com.tunjid.heron.images.ImagePainter] should used with the [Image] composable. as the
+ * scaling and alignment logic used in the Painter depends on the [Image] composable.
  *
  * @param currentImage a means of reading an image that is updated async.
  * @param contentScale the content scale used to render the image.
@@ -63,19 +61,18 @@ internal class ImagePainter(
                     destSize = size.roundToIntSize(),
                     contentScale = contentScale(),
                     alignment = alignment(),
-                    block = {
-                        drawIntoCanvas(image.image::renderInto)
-                    },
+                    block = { drawIntoCanvas(image.image::renderInto) },
                 )
             }
         }
     }
 
     override val intrinsicSize: Size
-        get() = when (val image = currentImage()) {
-            is CoilImage -> image.size.toSize()
-            null -> Size.Unspecified
-        }
+        get() =
+            when (val image = currentImage()) {
+                is CoilImage -> image.size.toSize()
+                null -> Size.Unspecified
+            }
 }
 
 private inline fun DrawScope.scaleAndAlignTo(
@@ -85,31 +82,21 @@ private inline fun DrawScope.scaleAndAlignTo(
     alignment: Alignment,
     crossinline block: DrawScope.() -> Unit,
 ) {
-    val scaleFactor = contentScale.computeScaleFactor(
-        srcSize = srcSize.toSize(),
-        dstSize = destSize.toSize(),
-    )
+    val scaleFactor =
+        contentScale.computeScaleFactor(srcSize = srcSize.toSize(), dstSize = destSize.toSize())
 
-    val alignmentOffset = alignment.align(
-        size = srcSize,
-        space = destSize,
-        layoutDirection = layoutDirection,
-    )
+    val alignmentOffset =
+        alignment.align(size = srcSize, space = destSize, layoutDirection = layoutDirection)
 
-    val translationOffset = Offset(
-        x = alignmentOffset.x * scaleFactor.scaleX,
-        y = alignmentOffset.y * scaleFactor.scaleY,
-    )
+    val translationOffset =
+        Offset(
+            x = alignmentOffset.x * scaleFactor.scaleX,
+            y = alignmentOffset.y * scaleFactor.scaleY,
+        )
 
     translate(
         left = translationOffset.x,
         top = translationOffset.y,
-        block = {
-            scale(
-                scaleX = scaleFactor.scaleX,
-                scaleY = scaleFactor.scaleY,
-                block = block,
-            )
-        },
+        block = { scale(scaleX = scaleFactor.scaleX, scaleY = scaleFactor.scaleY, block = block) },
     )
 }

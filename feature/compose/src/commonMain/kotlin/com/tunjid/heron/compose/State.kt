@@ -42,60 +42,56 @@ data class State(
     val signedInProfile: Profile? = null,
     val fabExpanded: Boolean = true,
     val embeddedRecord: Record.Embeddable? = null,
-    @Transient
-    val interactionsPreference: PostInteractionSettingsPreference? = null,
+    @Transient val interactionsPreference: PostInteractionSettingsPreference? = null,
     @Serializable(with = TextFieldValueSerializer::class)
     val postText: TextFieldValue = TextFieldValue(),
-    @Transient
-    val photos: List<RestrictedFile.Media.Photo> = emptyList(),
-    @Transient
-    val video: RestrictedFile.Media.Video? = null,
-    @Transient
-    val messages: List<Memo> = emptyList(),
-    @Transient
-    val suggestedProfiles: List<Profile> = emptyList(),
+    @Transient val photos: List<RestrictedFile.Media.Photo> = emptyList(),
+    @Transient val video: RestrictedFile.Media.Video? = null,
+    @Transient val messages: List<Memo> = emptyList(),
+    @Transient val suggestedProfiles: List<Profile> = emptyList(),
 )
 
-fun State(route: Route): State = when (val model = route.model<Post.Create>()) {
-    is Post.Create -> State(
-        postText = TextFieldValue(
-            annotatedString = AnnotatedString(
-                when (model) {
-                    is Post.Create.Mention -> "@${model.profile.handle.id} "
-                    is Post.Create.Reply,
-                    is Post.Create.Quote,
-                    Post.Create.Timeline,
-                    -> ""
-                },
-            ),
-            selection = TextRange(
-                if (model is Post.Create.Mention) model.profile.handle.id.length + 2
-                else 0,
-            ),
-        ),
-        sharedElementPrefix = route.sharedElementPrefix,
-        postType = model,
-    )
+fun State(route: Route): State =
+    when (val model = route.model<Post.Create>()) {
+        is Post.Create ->
+            State(
+                postText =
+                    TextFieldValue(
+                        annotatedString =
+                            AnnotatedString(
+                                when (model) {
+                                    is Post.Create.Mention -> "@${model.profile.handle.id} "
+                                    is Post.Create.Reply,
+                                    is Post.Create.Quote,
+                                    Post.Create.Timeline -> ""
+                                }
+                            ),
+                        selection =
+                            TextRange(
+                                if (model is Post.Create.Mention) model.profile.handle.id.length + 2
+                                else 0
+                            ),
+                    ),
+                sharedElementPrefix = route.sharedElementPrefix,
+                postType = model,
+            )
 
-    else -> State(
-        sharedElementPrefix = route.sharedElementPrefix,
-    )
-}
+        else -> State(sharedElementPrefix = route.sharedElementPrefix)
+    }
 
 val State.hasLongPost
-    get() = when (val type = postType) {
-        is Post.Create.Mention -> type.profile.handle.id.length
-        is Post.Create.Reply -> type.parent.record?.text?.length ?: 0
-        is Post.Create.Quote -> 180
-        Post.Create.Timeline -> 0
-        null -> 0
-    } + postText.text.length > 180
+    get() =
+        when (val type = postType) {
+            is Post.Create.Mention -> type.profile.handle.id.length
+            is Post.Create.Reply -> type.parent.record?.text?.length ?: 0
+            is Post.Create.Quote -> 180
+            Post.Create.Timeline -> 0
+            null -> 0
+        } + postText.text.length > 180
 
 sealed class Action(val key: String) {
 
-    data class PostTextChanged(
-        val textFieldValue: TextFieldValue,
-    ) : Action("PostTextChanged")
+    data class PostTextChanged(val textFieldValue: TextFieldValue) : Action("PostTextChanged")
 
     data class CreatePost(
         val postType: Post.Create?,
@@ -107,39 +103,25 @@ sealed class Action(val key: String) {
         val interactionPreference: PostInteractionSettingsPreference?,
     ) : Action("CreatePost")
 
-    data class SetFabExpanded(
-        val expanded: Boolean,
-    ) : Action("SetFabExpanded")
+    data class SetFabExpanded(val expanded: Boolean) : Action("SetFabExpanded")
 
     data class UpdateInteractionSettings(
-        val interactionSettingsPreference: PostInteractionSettingsPreference?,
+        val interactionSettingsPreference: PostInteractionSettingsPreference?
     ) : Action("UpdateInteractionSettings")
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
     sealed class EditMedia : Action("EditMedia") {
-        data class AddPhotos(
-            val photos: List<RestrictedFile.Media.Photo>,
-        ) : EditMedia()
+        data class AddPhotos(val photos: List<RestrictedFile.Media.Photo>) : EditMedia()
 
-        data class AddVideo(
-            val video: RestrictedFile.Media.Video?,
-        ) : EditMedia()
+        data class AddVideo(val video: RestrictedFile.Media.Video?) : EditMedia()
 
-        data class RemoveMedia(
-            val media: RestrictedFile.Media?,
-        ) : EditMedia()
+        data class RemoveMedia(val media: RestrictedFile.Media?) : EditMedia()
 
-        data class UpdateMedia(
-            val media: RestrictedFile.Media?,
-        ) : EditMedia()
+        data class UpdateMedia(val media: RestrictedFile.Media?) : EditMedia()
     }
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
     }
 

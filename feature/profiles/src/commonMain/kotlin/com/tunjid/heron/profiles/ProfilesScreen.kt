@@ -50,15 +50,13 @@ internal fun ProfilesScreen(
     val items by rememberUpdatedState(state.tiledItems)
     val signedInProfileId by rememberUpdatedState(state.signedInProfileId)
     LazyColumn(
-        modifier = modifier
-            .padding(horizontal = 8.dp)
-            .fillMaxSize()
-            .paneClip(),
+        modifier = modifier.padding(horizontal = 8.dp).fillMaxSize().paneClip(),
         state = listState,
-        contentPadding = bottomNavAndInsetPaddingValues(
-            horizontal = 8.dp,
-            isCompact = paneScaffoldState.prefersCompactBottomNav,
-        ),
+        contentPadding =
+            bottomNavAndInsetPaddingValues(
+                horizontal = 8.dp,
+                isCompact = paneScaffoldState.prefersCompactBottomNav,
+            ),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         userScrollEnabled = !paneScaffoldState.isTransitionActive,
     ) {
@@ -67,25 +65,24 @@ internal fun ProfilesScreen(
             key = { it.profile.did.id },
             itemContent = { item ->
                 ProfileWithViewerState(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateItem(),
+                    modifier = Modifier.fillMaxWidth().animateItem(),
                     movableElementSharedTransitionScope = paneScaffoldState,
                     signedInProfileId = signedInProfileId,
                     profile = item.profile,
                     viewerState = item.viewerState,
-                    profileSharedElementKey = Profile::profileWithRelationshipAvatarSharedElementKey,
+                    profileSharedElementKey =
+                        Profile::profileWithRelationshipAvatarSharedElementKey,
                     onProfileClicked = { profile ->
                         actions(
                             Action.Navigate.To(
                                 profileDestination(
-                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                    referringRouteOption =
+                                        NavigationAction.ReferringRouteOption.Current,
                                     profile = profile,
-                                    avatarSharedElementKey = item
-                                        .profile
-                                        .profileWithRelationshipAvatarSharedElementKey(),
-                                ),
-                            ),
+                                    avatarSharedElementKey =
+                                        item.profile.profileWithRelationshipAvatarSharedElementKey(),
+                                )
+                            )
                         )
                     },
                     onViewerStateClicked = { viewerState ->
@@ -96,7 +93,7 @@ internal fun ProfilesScreen(
                                     viewedProfileId = item.profile.did,
                                     following = viewerState?.following,
                                     followedBy = viewerState?.followedBy,
-                                ),
+                                )
                             )
                         }
                     },
@@ -109,15 +106,10 @@ internal fun ProfilesScreen(
         items = items,
         onQueryChanged = { query ->
             actions(
-                Action.Tile(
-                    TilingState.Action.LoadAround(
-                        query ?: state.tilingData.currentQuery,
-                    ),
-                ),
+                Action.Tile(TilingState.Action.LoadAround(query ?: state.tilingData.currentQuery))
             )
         },
     )
 }
 
-private fun Profile.profileWithRelationshipAvatarSharedElementKey() =
-    "profiles-$did"
+private fun Profile.profileWithRelationshipAvatarSharedElementKey() = "profiles-$did"

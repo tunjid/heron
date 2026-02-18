@@ -26,30 +26,25 @@ import com.tunjid.heron.data.database.entities.MessageEntity
 
 @Entity(
     tableName = "messageFeedGenerators",
-    primaryKeys = [
-        "messageId",
-        "feedGeneratorUri",
-    ],
-    foreignKeys = [
-        ForeignKey(
-            entity = MessageEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["messageId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = FeedGeneratorEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["feedGeneratorUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["messageId"]),
-        Index(value = ["feedGeneratorUri"]),
-    ],
+    primaryKeys = ["messageId", "feedGeneratorUri"],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = MessageEntity::class,
+                parentColumns = ["id"],
+                childColumns = ["messageId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = FeedGeneratorEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["feedGeneratorUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    indices = [Index(value = ["messageId"]), Index(value = ["feedGeneratorUri"])],
 )
 data class MessageFeedGeneratorEntity(
     val messageId: MessageId,

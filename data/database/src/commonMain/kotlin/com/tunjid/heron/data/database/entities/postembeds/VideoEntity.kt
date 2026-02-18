@@ -28,12 +28,9 @@ import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.database.entities.PostEntity
 
-@Entity(
-    tableName = "videos",
-)
+@Entity(tableName = "videos")
 data class VideoEntity(
-    @PrimaryKey
-    val cid: GenericId,
+    @PrimaryKey val cid: GenericId,
     val playlist: GenericUri,
     val thumbnail: ImageUri?,
     val alt: String?,
@@ -41,43 +38,37 @@ data class VideoEntity(
     val height: Long?,
 ) : PostEmbed
 
-/**
- * Cross reference for many to many relationship between [Post] and [VideoEntity]
- */
+/** Cross reference for many to many relationship between [Post] and [VideoEntity] */
 @Entity(
     tableName = "postVideos",
     primaryKeys = ["postUri", "videoId"],
-    foreignKeys = [
-        ForeignKey(
-            entity = PostEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["postUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = VideoEntity::class,
-            parentColumns = ["cid"],
-            childColumns = ["videoId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["postUri"]),
-        Index(value = ["videoId"]),
-    ],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = PostEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["postUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = VideoEntity::class,
+                parentColumns = ["cid"],
+                childColumns = ["videoId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    indices = [Index(value = ["postUri"]), Index(value = ["videoId"])],
 )
-data class PostVideoEntity(
-    val postUri: PostUri,
-    val videoId: GenericId,
-)
+data class PostVideoEntity(val postUri: PostUri, val videoId: GenericId)
 
-fun VideoEntity.asExternalModel() = Video(
-    cid = cid,
-    playlist = playlist,
-    thumbnail = thumbnail,
-    alt = alt,
-    width = width,
-    height = height,
-)
+fun VideoEntity.asExternalModel() =
+    Video(
+        cid = cid,
+        playlist = playlist,
+        thumbnail = thumbnail,
+        alt = alt,
+        width = width,
+        height = height,
+    )

@@ -40,7 +40,8 @@ import sh.christian.ozone.api.Did
  * Represents an OAuth token received after a successful authorization or refresh request.
  *
  * @param accessToken The access token used to authenticate API requests.
- * @param refreshToken The refresh token used to obtain a new access token when the current one expires.
+ * @param refreshToken The refresh token used to obtain a new access token when the current one
+ *   expires.
  * @param keyPair The DPoP key pair used for signing requests.
  * @param expiresIn The duration for which the access token is valid.
  * @param scopes The list of scopes granted to the access token.
@@ -57,30 +58,21 @@ data class OAuthToken(
     val subject: Did,
     val nonce: String,
 ) {
-    private val payloadJwt: String by lazy {
-        accessToken.split(".")[1]
-    }
+    private val payloadJwt: String by lazy { accessToken.split(".")[1] }
     private val payloadJson: JsonObject by lazy {
         Json.decodeFromString(JsonObject.serializer(), payloadJwt.decodeBase64String())
     }
 
-    /**
-     * The unique identifier for the OAuth client.
-     */
-    val clientId: String by lazy {
-        requirePayload("client_id")
-    }
+    /** The unique identifier for the OAuth client. */
+    val clientId: String by lazy { requirePayload("client_id") }
 
     /**
-     * The audience of the JWT, typically the DID of the PDS (Personal Data Server) that the token is intended for.
+     * The audience of the JWT, typically the DID of the PDS (Personal Data Server) that the token
+     * is intended for.
      */
-    val audience: Did by lazy {
-        Did(requirePayload("aud"))
-    }
+    val audience: Did by lazy { Did(requirePayload("aud")) }
 
-    /**
-     * The URL of the PDS (Personal Data Server) associated with the audience.
-     */
+    /** The URL of the PDS (Personal Data Server) associated with the audience. */
     val pds: Url by lazy {
         buildUrl {
             protocol = URLProtocol.HTTPS

@@ -37,25 +37,20 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     val signedInProfileId: ProfileId? = null,
+    @Transient val preferences: Preferences = Preferences.EmptyPreferences,
+    @Transient val recentConversations: List<Conversation> = emptyList(),
+    @Transient val recentLists: List<FeedList> = emptyList(),
     @Transient
-    val preferences: Preferences = Preferences.EmptyPreferences,
-    @Transient
-    val recentConversations: List<Conversation> = emptyList(),
-    @Transient
-    val recentLists: List<FeedList> = emptyList(),
-    @Transient
-    override val tilingData: TilingState.Data<PostDataQuery, TimelineItem> = TilingState.Data(
-        currentQuery = PostDataQuery(
-            profileId = ProfileHandle(""),
-            postRecordKey = RecordKey(""),
-            data = CursorQuery.Data(
-                page = 0,
-                cursorAnchor = Clock.System.now(),
-            ),
+    override val tilingData: TilingState.Data<PostDataQuery, TimelineItem> =
+        TilingState.Data(
+            currentQuery =
+                PostDataQuery(
+                    profileId = ProfileHandle(""),
+                    postRecordKey = RecordKey(""),
+                    data = CursorQuery.Data(page = 0, cursorAnchor = Clock.System.now()),
+                )
         ),
-    ),
-    @Transient
-    val messages: List<Memo> = emptyList(),
+    @Transient val messages: List<Memo> = emptyList(),
 ) : TilingState<PostDataQuery, TimelineItem> {
     val isRefreshing: Boolean
         get() = tilingData.status is TilingState.Status.Refreshing
@@ -63,42 +58,28 @@ data class State(
 
 sealed class Action(val key: String) {
 
-    data class Tile(
-        val tilingAction: TilingState.Action,
-    ) : Action("Tile")
+    data class Tile(val tilingAction: TilingState.Action) : Action("Tile")
 
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
+    data class SendPostInteraction(val interaction: Post.Interaction) :
+        Action(key = "SendPostInteraction")
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
+    data class UpdateMutedWord(val mutedWordPreference: List<MutedWordPreference>) :
+        Action(key = "UpdateMutedWord")
 
-    data class BlockAccount(
-        val signedInProfileId: ProfileId,
-        val profileId: ProfileId,
-    ) : Action(key = "BlockAccount")
+    data class BlockAccount(val signedInProfileId: ProfileId, val profileId: ProfileId) :
+        Action(key = "BlockAccount")
 
-    data class MuteAccount(
-        val signedInProfileId: ProfileId,
-        val profileId: ProfileId,
-    ) : Action(key = "MuteAccount")
+    data class MuteAccount(val signedInProfileId: ProfileId, val profileId: ProfileId) :
+        Action(key = "MuteAccount")
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
     data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(),
-            NavigationAction by delegate
+        data class To(val delegate: NavigationAction.Destination) :
+            Navigate(), NavigationAction by delegate
     }
 }

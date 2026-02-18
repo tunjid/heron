@@ -47,20 +47,16 @@ internal fun <T : Record> RecordList(
     val updatedItems by rememberUpdatedState(collectionState.tiledItems)
 
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         state = listState,
-        contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-            horizontal = 8.dp,
-            isCompact = prefersCompactBottomNav,
-        ),
+        contentPadding =
+            UiTokens.bottomNavAndInsetPaddingValues(
+                horizontal = 8.dp,
+                isCompact = prefersCompactBottomNav,
+            ),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        items(
-            items = updatedItems,
-            key = itemKey,
-            itemContent = itemContent,
-        )
+        items(items = updatedItems, key = itemKey, itemContent = itemContent)
     }
 
     listState.PivotedTilingEffect(
@@ -68,8 +64,8 @@ internal fun <T : Record> RecordList(
         onQueryChanged = { query ->
             collectionStateHolder.accept(
                 TilingState.Action.LoadAround(
-                    query = query ?: collectionState.tilingData.currentQuery,
-                ),
+                    query = query ?: collectionState.tilingData.currentQuery
+                )
             )
         },
     )

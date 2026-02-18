@@ -10,25 +10,25 @@ import kotlin.test.assertEquals
 
 @Burst
 class TimelineSerializationTest(
-    val format: SerializationTestHelper.Format = burstValues(
-        SerializationTestHelper.Format.CBOR,
-        SerializationTestHelper.Format.PROTOBUF,
-    ),
-    val original: Timeline = burstValues(
-        FakeTimeline.following,
-        FakeTimeline.listTimeline,
-        FakeTimeline.feedTimeline,
-        FakeTimeline.profileTimeline,
-        FakeTimeline.starterPackTimeline,
-    ),
+    val format: SerializationTestHelper.Format =
+        burstValues(SerializationTestHelper.Format.CBOR, SerializationTestHelper.Format.PROTOBUF),
+    val original: Timeline =
+        burstValues(
+            FakeTimeline.following,
+            FakeTimeline.listTimeline,
+            FakeTimeline.feedTimeline,
+            FakeTimeline.profileTimeline,
+            FakeTimeline.starterPackTimeline,
+        ),
 ) {
     @Test
     fun roundTrip() {
-        val decoded = SerializationTestHelper.roundTrip(
-            format = format,
-            value = original,
-            serializer = Timeline.serializer(),
-        )
+        val decoded =
+            SerializationTestHelper.roundTrip(
+                format = format,
+                value = original,
+                serializer = Timeline.serializer(),
+            )
         assertEquals(original, decoded)
     }
 }

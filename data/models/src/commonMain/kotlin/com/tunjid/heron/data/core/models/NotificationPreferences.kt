@@ -20,29 +20,24 @@ data class NotificationPreferences(
 ) {
 
     companion object {
-        private val defaultFilterable = Preference.Filterable(
-            include = Include.All,
-            list = true,
-            push = true,
-        )
-        private val defaultSimple = Preference.Simple(
-            list = true,
-            push = true,
-        )
-        val Default = NotificationPreferences(
-            follow = defaultFilterable,
-            like = defaultFilterable,
-            likeViaRepost = defaultFilterable,
-            mention = defaultFilterable,
-            quote = defaultFilterable,
-            reply = defaultFilterable,
-            repost = defaultFilterable,
-            repostViaRepost = defaultFilterable,
-            joinedStarterPack = defaultSimple,
-            subscribedPost = defaultSimple,
-            unverified = defaultSimple,
-            verified = defaultSimple,
-        )
+        private val defaultFilterable =
+            Preference.Filterable(include = Include.All, list = true, push = true)
+        private val defaultSimple = Preference.Simple(list = true, push = true)
+        val Default =
+            NotificationPreferences(
+                follow = defaultFilterable,
+                like = defaultFilterable,
+                likeViaRepost = defaultFilterable,
+                mention = defaultFilterable,
+                quote = defaultFilterable,
+                reply = defaultFilterable,
+                repost = defaultFilterable,
+                repostViaRepost = defaultFilterable,
+                joinedStarterPack = defaultSimple,
+                subscribedPost = defaultSimple,
+                unverified = defaultSimple,
+                verified = defaultSimple,
+            )
     }
 
     @Serializable
@@ -54,10 +49,7 @@ data class NotificationPreferences(
         fun allowsPush() = push
 
         @Serializable
-        data class Simple(
-            override val list: Boolean,
-            override val push: Boolean,
-        ) : Preference()
+        data class Simple(override val list: Boolean, override val push: Boolean) : Preference()
 
         @Serializable
         data class Filterable(
@@ -98,28 +90,29 @@ data class NotificationPreferences(
 fun NotificationPreferences.shouldShowNotification(
     reason: Notification.Reason,
     isAuthorFollowed: Boolean = false,
-): Boolean = when (val pref = forReason(reason)) {
-    is NotificationPreferences.Preference.Filterable ->
-        pref.allowsPush() && pref.allowsAuthor(isAuthorFollowed)
-    is NotificationPreferences.Preference.Simple ->
-        pref.allowsPush()
-    null -> false
-}
+): Boolean =
+    when (val pref = forReason(reason)) {
+        is NotificationPreferences.Preference.Filterable ->
+            pref.allowsPush() && pref.allowsAuthor(isAuthorFollowed)
+        is NotificationPreferences.Preference.Simple -> pref.allowsPush()
+        null -> false
+    }
 
 private fun NotificationPreferences.forReason(
-    reason: Notification.Reason,
-): NotificationPreferences.Preference? = when (reason) {
-    Notification.Reason.Follow -> follow
-    Notification.Reason.Like -> like
-    Notification.Reason.LikeViaRepost -> likeViaRepost
-    Notification.Reason.Mention -> mention
-    Notification.Reason.Quote -> quote
-    Notification.Reason.Reply -> reply
-    Notification.Reason.Repost -> repost
-    Notification.Reason.RepostViaRepost -> repostViaRepost
-    Notification.Reason.JoinedStarterPack -> joinedStarterPack
-    Notification.Reason.SubscribedPost -> subscribedPost
-    Notification.Reason.Verified -> verified
-    Notification.Reason.Unverified -> unverified
-    Notification.Reason.Unknown -> null
-}
+    reason: Notification.Reason
+): NotificationPreferences.Preference? =
+    when (reason) {
+        Notification.Reason.Follow -> follow
+        Notification.Reason.Like -> like
+        Notification.Reason.LikeViaRepost -> likeViaRepost
+        Notification.Reason.Mention -> mention
+        Notification.Reason.Quote -> quote
+        Notification.Reason.Reply -> reply
+        Notification.Reason.Repost -> repost
+        Notification.Reason.RepostViaRepost -> repostViaRepost
+        Notification.Reason.JoinedStarterPack -> joinedStarterPack
+        Notification.Reason.SubscribedPost -> subscribedPost
+        Notification.Reason.Verified -> verified
+        Notification.Reason.Unverified -> unverified
+        Notification.Reason.Unknown -> null
+    }

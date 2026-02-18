@@ -26,10 +26,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.timeline.ui.Statistic
 
 @Composable
-internal fun PostStatistics(
-    post: Post,
-    onReplyToPost: (Post) -> Unit,
-) {
+internal fun PostStatistics(post: Post, onReplyToPost: (Post) -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -38,11 +35,7 @@ internal fun PostStatistics(
         val reposts = post.repostCount
         val likes = post.likeCount
 
-        val replyToPost = remember {
-            {
-                onReplyToPost(post)
-            }
-        }
+        val replyToPost = remember { { onReplyToPost(post) } }
         val noOpHandler = { /* TODO */ }
 
         when (replies) {

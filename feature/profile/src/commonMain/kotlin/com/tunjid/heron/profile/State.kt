@@ -77,117 +77,97 @@ data class State(
     val commonFollowers: List<Profile> = emptyList(),
     val timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean> = emptyMap(),
     val subscribedLabelers: Labelers = emptyList(),
-    @Transient
-    val preferences: Preferences = Preferences.EmptyPreferences,
-    @Transient
-    val recentConversations: List<Conversation> = emptyList(),
-    @Transient
-    val recentLists: List<FeedList> = emptyList(),
-    @Transient
-    val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
-    @Transient
-    val stateHolders: List<ProfileScreenStateHolders> = emptyList(),
-    @Transient
-    val messages: List<Memo> = emptyList(),
+    @Transient val preferences: Preferences = Preferences.EmptyPreferences,
+    @Transient val recentConversations: List<Conversation> = emptyList(),
+    @Transient val recentLists: List<FeedList> = emptyList(),
+    @Transient val sourceIdsToHasUpdates: Map<String, Boolean> = emptyMap(),
+    @Transient val stateHolders: List<ProfileScreenStateHolders> = emptyList(),
+    @Transient val messages: List<Memo> = emptyList(),
 )
 
-fun State(route: Route) = State(
-    avatarSharedElementKey = route.avatarSharedElementKey ?: "",
-    profile = route.model<Profile>() ?: stubProfile(
-        did = ProfileId(route.profileHandleOrId.id),
-        handle = ProfileHandle(route.profileHandleOrId.id),
-        avatar = null,
-    ),
-)
+fun State(route: Route) =
+    State(
+        avatarSharedElementKey = route.avatarSharedElementKey ?: "",
+        profile =
+            route.model<Profile>()
+                ?: stubProfile(
+                    did = ProfileId(route.profileHandleOrId.id),
+                    handle = ProfileHandle(route.profileHandleOrId.id),
+                    avatar = null,
+                ),
+    )
 
 val State.isSubscribedToLabeler
     get() = profile.isLabeler && subscribedLabelers.any { it.creator.did == profile.did }
 
 sealed class ProfileScreenStateHolders {
 
-    sealed class Records<T : Record>(
-        private val mutator: RecordStateHolder<T>,
-    ) : ProfileScreenStateHolders(),
-        RecordStateHolder<T> by mutator {
+    sealed class Records<T : Record>(private val mutator: RecordStateHolder<T>) :
+        ProfileScreenStateHolders(), RecordStateHolder<T> by mutator {
 
-        class Feeds(
-            mutator: RecordStateHolder<FeedGenerator>,
-        ) : Records<FeedGenerator>(mutator)
+        class Feeds(mutator: RecordStateHolder<FeedGenerator>) : Records<FeedGenerator>(mutator)
 
-        class Lists(
-            mutator: RecordStateHolder<FeedList>,
-        ) : Records<FeedList>(mutator)
+        class Lists(mutator: RecordStateHolder<FeedList>) : Records<FeedList>(mutator)
 
-        class StarterPacks(
-            mutator: RecordStateHolder<StarterPack>,
-        ) : Records<StarterPack>(mutator)
+        class StarterPacks(mutator: RecordStateHolder<StarterPack>) : Records<StarterPack>(mutator)
     }
 
-    class Timeline(
-        private val mutator: TimelineStateHolder,
-    ) : ProfileScreenStateHolders(),
-        TimelineStateHolder by mutator
+    class Timeline(private val mutator: TimelineStateHolder) :
+        ProfileScreenStateHolders(), TimelineStateHolder by mutator
 
-    class LabelerSettings(
-        private val mutator: LabelerSettingsStateHolder,
-    ) : ProfileScreenStateHolders(),
-        LabelerSettingsStateHolder by mutator {
+    class LabelerSettings(private val mutator: LabelerSettingsStateHolder) :
+        ProfileScreenStateHolders(), LabelerSettingsStateHolder by mutator {
 
         data class Settings(
             val subscribed: Boolean = false,
             val labelSettings: List<LabelSetting> = emptyList(),
         )
 
-        data class LabelSetting(
-            val definition: Label.Definition,
-            val visibility: Label.Visibility,
-        )
+        data class LabelSetting(val definition: Label.Definition, val visibility: Label.Visibility)
     }
 
     val key
-        get() = when (this) {
-            is Records.Feeds -> "Feeds"
-            is Records.Lists -> "Lists"
-            is Records.StarterPacks -> "StarterPacks"
-            is Timeline -> state.value.timeline.sourceId
-            is LabelerSettings -> "LabelerSettings"
+        get() =
+            when (this) {
+                is Records.Feeds -> "Feeds"
+                is Records.Lists -> "Lists"
+                is Records.StarterPacks -> "StarterPacks"
+                is Timeline -> state.value.timeline.sourceId
+                is LabelerSettings -> "LabelerSettings"
+            }
+
+    fun refresh() =
+        when (this) {
+            is Records<*> -> accept(TilingState.Action.Refresh)
+
+            is Timeline ->
+                accept(TimelineState.Action.Tile(tilingAction = TilingState.Action.Refresh))
+            is LabelerSettings -> Unit
         }
-
-    fun refresh() = when (this) {
-        is Records<*> -> accept(
-            TilingState.Action.Refresh,
-        )
-
-        is Timeline -> accept(
-            TimelineState.Action.Tile(
-                tilingAction = TilingState.Action.Refresh,
-            ),
-        )
-        is LabelerSettings -> Unit
-    }
 }
 
 val ProfileScreenStateHolders?.isRefreshing
-    get() = when (this) {
-        is Records<*> -> state.map { it.isRefreshing }
-        is ProfileScreenStateHolders.Timeline -> state.map { it.isRefreshing }
-        is LabelerSettings,
-        null,
-        -> flowOf(false)
-    }
+    get() =
+        when (this) {
+            is Records<*> -> state.map { it.isRefreshing }
+            is ProfileScreenStateHolders.Timeline -> state.map { it.isRefreshing }
+            is LabelerSettings,
+            null -> flowOf(false)
+        }
 
 val ProfileScreenStateHolders?.canRefresh
-    get() = when (this) {
-        is Records<*>,
-        is ProfileScreenStateHolders.Timeline,
-        -> true
-        is LabelerSettings,
-        null,
-        -> false
-    }
+    get() =
+        when (this) {
+            is Records<*>,
+            is ProfileScreenStateHolders.Timeline -> true
+            is LabelerSettings,
+            null -> false
+        }
 
 typealias RecordStateHolder<T> = ActionStateMutator<TilingState.Action, StateFlow<RecordState<T>>>
-typealias LabelerSettingsStateHolder = ActionStateMutator<LabelerSettings.LabelSetting, StateFlow<Settings>>
+
+typealias LabelerSettingsStateHolder =
+    ActionStateMutator<LabelerSettings.LabelSetting, StateFlow<Settings>>
 
 data class RecordState<T : Record>(
     val stringResource: StringResource,
@@ -196,19 +176,12 @@ data class RecordState<T : Record>(
 
 sealed class Action(val key: String) {
 
-    data class BioLinkClicked(
-        val target: LinkTarget,
-    ) : Action(key = "BioLinkClicked")
+    data class BioLinkClicked(val target: LinkTarget) : Action(key = "BioLinkClicked")
 
-    sealed class Moderation(
-        key: String,
-    ) : Action(key)
+    sealed class Moderation(key: String) : Action(key)
 
     sealed class Block : Moderation(key = "Block") {
-        data class Add(
-            val signedInProfileId: ProfileId,
-            val profileId: ProfileId,
-        ) : Block()
+        data class Add(val signedInProfileId: ProfileId, val profileId: ProfileId) : Block()
 
         data class Remove(
             val signedInProfileId: ProfileId,
@@ -218,37 +191,23 @@ sealed class Action(val key: String) {
     }
 
     sealed class Mute : Moderation(key = "Mute") {
-        data class Add(
-            val signedInProfileId: ProfileId,
-            val profileId: ProfileId,
-        ) : Mute()
+        data class Add(val signedInProfileId: ProfileId, val profileId: ProfileId) : Mute()
 
-        data class Remove(
-            val signedInProfileId: ProfileId,
-            val profileId: ProfileId,
-        ) : Mute()
+        data class Remove(val signedInProfileId: ProfileId, val profileId: ProfileId) : Mute()
     }
 
-    data class PageChanged(
-        val page: Int,
-    ) : Action(key = "PageChanged")
+    data class PageChanged(val page: Int) : Action(key = "PageChanged")
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
+    data class UpdateMutedWord(val mutedWordPreference: List<MutedWordPreference>) :
+        Action(key = "UpdateMutedWord")
 
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
+    data class SendPostInteraction(val interaction: Post.Interaction) :
+        Action(key = "SendPostInteraction")
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
-    data class UpdatePageWithUpdates(
-        val sourceId: String,
-        val hasUpdates: Boolean,
-    ) : Action(key = "UpdatePageWithUpdates")
+    data class UpdatePageWithUpdates(val sourceId: String, val hasUpdates: Boolean) :
+        Action(key = "UpdatePageWithUpdates")
 
     data class ToggleViewerState(
         val signedInProfileId: ProfileId,
@@ -257,39 +216,31 @@ sealed class Action(val key: String) {
         val followedBy: FollowUri?,
     ) : Action(key = "ToggleViewerState")
 
-    data class UpdatePreferences(
-        val update: Timeline.Update,
-    ) : Action(key = "UpdatePreferences")
+    data class UpdatePreferences(val update: Timeline.Update) : Action(key = "UpdatePreferences")
 
     data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(),
-            NavigationAction by delegate
+        data class To(val delegate: NavigationAction.Destination) :
+            Navigate(), NavigationAction by delegate
 
-        data class ToAvatar(
-            val profile: Profile,
-            val avatarSharedElementKey: String?,
-        ) : Navigate() {
+        data class ToAvatar(val profile: Profile, val avatarSharedElementKey: String?) :
+            Navigate() {
             override val navigationMutation: NavigationMutation = {
                 routeString(
-                    path = "/profile/${profile.did.id}/avatar",
-                    queryParams = mapOf(
-                        "profile" to listOfNotNull(profile.toUrlEncodedBase64()),
-                        "avatarSharedElementKey" to listOfNotNull(avatarSharedElementKey),
-                        referringRouteQueryParams(ReferringRouteOption.Current),
-                    ),
-                )
+                        path = "/profile/${profile.did.id}/avatar",
+                        queryParams =
+                            mapOf(
+                                "profile" to listOfNotNull(profile.toUrlEncodedBase64()),
+                                "avatarSharedElementKey" to listOfNotNull(avatarSharedElementKey),
+                                referringRouteQueryParams(ReferringRouteOption.Current),
+                            ),
+                    )
                     .toRoute
                     .takeIf { it.id != currentRoute.id }
-                    ?.let(navState::push)
-                    ?: navState
+                    ?.let(navState::push) ?: navState
             }
         }
     }

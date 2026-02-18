@@ -16,9 +16,6 @@
 
 package com.tunjid.heron.timeline.utilities
 
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -33,37 +30,35 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.ui.modifiers.blockClickEvents
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
 
-internal fun Modifier.sensitiveContentBlur(
-    shape: Shape,
-) = drawWithCache {
-    val density = Density(density)
-    val color = Color.Black.copy(alpha = 0.5f)
-    onDrawWithContent {
-        drawContent()
-        drawOutline(
-            outline = shape.createOutline(
-                size = size,
-                layoutDirection = layoutDirection,
-                density = density,
-            ),
-            color = color,
+internal fun Modifier.sensitiveContentBlur(shape: Shape) =
+    drawWithCache {
+            val density = Density(density)
+            val color = Color.Black.copy(alpha = 0.5f)
+            onDrawWithContent {
+                drawContent()
+                drawOutline(
+                    outline =
+                        shape.createOutline(
+                            size = size,
+                            layoutDirection = layoutDirection,
+                            density = density,
+                        ),
+                    color = color,
+                )
+            }
+        }
+        .blur(
+            shape = shape,
+            radius = ::SensitiveContentBlurRadius,
+            clip = ::SensitiveContentBlurClip,
+            progress = { 1f },
         )
-    }
-}
-    .blur(
-        shape = shape,
-        radius = ::SensitiveContentBlurRadius,
-        clip = ::SensitiveContentBlurClip,
-        progress = { 1f },
-    )
 
 @Composable
 internal fun SensitiveContentBox(
@@ -79,20 +74,14 @@ internal fun SensitiveContentBox(
         modifier = modifier,
         content = {
             Box(
-                modifier = Modifier
-                    .ifTrue(
-                        predicate = isBlurred,
-                        block = Modifier::blockClickEvents,
-                    ),
-                content = {
-                    content(isBlurred)
-                },
+                modifier =
+                    Modifier.ifTrue(predicate = isBlurred, block = Modifier::blockClickEvents),
+                content = { content(isBlurred) },
             )
 
             if (isBlurred && canUnblur) {
                 SensitiveContentButton(
-                    modifier = Modifier
-                        .align(Alignment.Center),
+                    modifier = Modifier.align(Alignment.Center),
                     icon = icon,
                     label = label,
                     onClick = onUnblurClicked,
@@ -111,21 +100,14 @@ private fun SensitiveContentButton(
 ) {
     FilledTonalButton(
         modifier = modifier,
-        onClick = {
-            onClick()
-        },
+        onClick = { onClick() },
         content = {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (icon != null) Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                )
-                Text(
-                    text = label,
-                )
+                if (icon != null) Icon(imageVector = icon, contentDescription = null)
+                Text(text = label)
             }
         },
     )

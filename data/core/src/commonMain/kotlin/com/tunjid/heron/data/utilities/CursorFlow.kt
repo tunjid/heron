@@ -38,14 +38,10 @@ internal fun <NetworkResponse : Any> NetworkService.nextCursorFlow(
     // Do nothing, can't tell what the next items are
     if (currentCursor == Cursor.Pending) return@flow
 
-    runCatchingWithMonitoredNetworkRetry {
-        currentRequestWithNextCursor()
-    }
+    runCatchingWithMonitoredNetworkRetry { currentRequestWithNextCursor() }
         .getOrNull()
         ?.let { response ->
-            response.nextCursor()
-                ?.let(Cursor::Next)
-                ?.let { emit(it) }
+            response.nextCursor()?.let(Cursor::Next)?.let { emit(it) }
             onResponse(response)
         }
 }

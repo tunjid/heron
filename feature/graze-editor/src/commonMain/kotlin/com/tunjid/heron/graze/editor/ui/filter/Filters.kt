@@ -85,33 +85,16 @@ fun FilterCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Card(
-        colors = CardDefaults.cardColors(
-            containerColor = tint,
-        ),
-        modifier = modifier
-            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = tint),
+        modifier = modifier.fillMaxWidth(),
     ) {
         Column(
-            modifier = Modifier
-                .animateContentSize()
-                .padding(12.dp),
+            modifier = Modifier.animateContentSize().padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f),
-                ) {
-                    title()
-                }
-                IconButton(
-                    onClick = onRemove,
-                    modifier = Modifier
-                        .size(24.dp),
-                ) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Box(modifier = Modifier.weight(1f)) { title() }
+                IconButton(onClick = onRemove, modifier = Modifier.size(24.dp)) {
                     Icon(
                         imageVector = Icons.Rounded.Close,
                         contentDescription = stringResource(Res.string.remove_filter),
@@ -136,17 +119,11 @@ fun StandardFilter(
     FilterCard(
         modifier = modifier,
         tint = tint,
-        title = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-            )
-        },
+        title = { Text(text = title, style = MaterialTheme.typography.titleSmall) },
         onRemove = onRemove,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -172,18 +149,8 @@ fun StandardFilter(
         tint = tint,
         onRemove = onRemove,
         rowContent = {
-            Box(
-                modifier = Modifier
-                    .weight(1f),
-            ) {
-                startContent()
-            }
-            Box(
-                modifier = Modifier
-                    .weight(1f),
-            ) {
-                endContent()
-            }
+            Box(modifier = Modifier.weight(1f)) { startContent() }
+            Box(modifier = Modifier.weight(1f)) { endContent() }
         },
         additionalContent = additionalContent,
     )
@@ -209,11 +176,12 @@ fun ChipFilter(
         startContent = startContent,
         endContent = endContent,
         additionalContent = {
-            val selectTextSheetState = rememberSelectTextState(
-                title = title,
-                onItemsUpdated = onItemsUpdated,
-                items = items,
-            )
+            val selectTextSheetState =
+                rememberSelectTextState(
+                    title = title,
+                    onItemsUpdated = onItemsUpdated,
+                    items = items,
+                )
             FilterTextChips(
                 selectTextSheetState = selectTextSheetState,
                 buttonStringResource = buttonStringResource,
@@ -234,17 +202,10 @@ fun UnsupportedFilter(
     FilterCard(
         modifier = modifier,
         tint = tint,
-        title = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-            )
-        },
+        title = { Text(text = title, style = MaterialTheme.typography.titleSmall) },
         onRemove = onRemove,
     ) {
-        Text(
-            text = stringResource(Res.string.unsupported_filter),
-        )
+        Text(text = stringResource(Res.string.unsupported_filter))
     }
 }
 
@@ -255,9 +216,7 @@ fun ThresholdSlider(
     modifier: Modifier = Modifier,
 ) {
     val thresholdPercent = (threshold * 100).roundToInt()
-    Column(
-        modifier = modifier.fillMaxWidth(),
-    ) {
+    Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = stringResource(Res.string.threshold_percent, thresholdPercent),
             style = MaterialTheme.typography.labelMedium,
@@ -288,37 +247,26 @@ fun FilterTextChips(
                 items.forEach { text ->
                     key(text) {
                         InputChip(
-                            modifier = Modifier
-                                .animateBounds(this@LookaheadScope),
+                            modifier = Modifier.animateBounds(this@LookaheadScope),
                             selected = false,
-                            onClick = {
-                                selectTextSheetState.show(currentText = text)
-                            },
+                            onClick = { selectTextSheetState.show(currentText = text) },
                             trailingIcon = {
                                 Icon(
-                                    modifier = Modifier
-                                        .clickable {
-                                            onItemsUpdated(items.minus(text))
-                                        },
+                                    modifier =
+                                        Modifier.clickable { onItemsUpdated(items.minus(text)) },
                                     imageVector = Icons.Rounded.Cancel,
                                     contentDescription = stringResource(CommonStrings.cancel),
                                 )
                             },
-                            label = {
-                                Text(text = text)
-                            },
+                            label = { Text(text = text) },
                         )
                     }
                 }
                 Spacer(Modifier.height(16.dp))
                 key("button") {
                     FilledTonalButton(
-                        onClick = {
-                            selectTextSheetState.show()
-                        },
-                        modifier = Modifier
-                            .animateBounds(this@LookaheadScope)
-                            .fillMaxWidth(),
+                        onClick = { selectTextSheetState.show() },
+                        modifier = Modifier.animateBounds(this@LookaheadScope).fillMaxWidth(),
                     ) {
                         Text(text = stringResource(buttonStringResource))
                     }
@@ -331,20 +279,24 @@ fun FilterTextChips(
 @Composable
 fun Filter.validationTint(): Color =
     animateColorAsState(
-        targetValue = when (isValid) {
-            true -> MaterialTheme.colorScheme.secondaryContainer
-            false -> MaterialTheme.colorScheme.errorContainer
-        }.withDim(true),
-    ).value
+            targetValue =
+                when (isValid) {
+                    true -> MaterialTheme.colorScheme.secondaryContainer
+                    false -> MaterialTheme.colorScheme.errorContainer
+                }.withDim(true)
+        )
+        .value
 
 val Filter.Comparator.stringRes: StringResource
-    get() = when (this) {
-        Filter.Comparator.Equality.Equal -> Res.string.comparator_equal
-        Filter.Comparator.Equality.NotEqual -> Res.string.comparator_not_equal
-        Filter.Comparator.Range.GreaterThan -> Res.string.comparator_greater_than
-        Filter.Comparator.Range.LessThan -> Res.string.comparator_less_than
-        Filter.Comparator.Range.GreaterThanOrEqual -> Res.string.comparator_greater_than_or_equal
-        Filter.Comparator.Range.LessThanOrEqual -> Res.string.comparator_less_than_or_equal
-        Filter.Comparator.Set.In -> Res.string.comparator_in
-        Filter.Comparator.Set.NotIn -> Res.string.comparator_not_in
-    }
+    get() =
+        when (this) {
+            Filter.Comparator.Equality.Equal -> Res.string.comparator_equal
+            Filter.Comparator.Equality.NotEqual -> Res.string.comparator_not_equal
+            Filter.Comparator.Range.GreaterThan -> Res.string.comparator_greater_than
+            Filter.Comparator.Range.LessThan -> Res.string.comparator_less_than
+            Filter.Comparator.Range.GreaterThanOrEqual ->
+                Res.string.comparator_greater_than_or_equal
+            Filter.Comparator.Range.LessThanOrEqual -> Res.string.comparator_less_than_or_equal
+            Filter.Comparator.Set.In -> Res.string.comparator_in
+            Filter.Comparator.Set.NotIn -> Res.string.comparator_not_in
+        }

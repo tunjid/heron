@@ -69,11 +69,7 @@ import dev.zacsweers.metro.StringKey
 private const val RoutePattern = "/search"
 private const val RouteQueryPattern = "/search/{query}"
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-)
+private fun createRoute(routeParams: RouteParams) = routeOf(params = routeParams)
 
 internal val Route.query by routePath(default = "")
 
@@ -84,19 +80,13 @@ object SearchNavigationBindings {
     @IntoMap
     @StringKey(RoutePattern)
     fun provideRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RoutePattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = RoutePattern, routeMapper = ::createRoute)
 
     @Provides
     @IntoMap
     @StringKey(RouteQueryPattern)
     fun provideRouteQueryMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RouteQueryPattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = RouteQueryPattern, routeMapper = ::createRoute)
 }
 
 @BindingContainer
@@ -109,131 +99,129 @@ class SearchBindings(
     @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
-    )
+        viewModelInitializer: RouteViewModelInitializer
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(viewModelInitializer = viewModelInitializer)
 
     @Provides
     @IntoMap
     @StringKey(RouteQueryPattern)
     fun providePaneQueryEntry(
-        viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
-    )
+        viewModelInitializer: RouteViewModelInitializer
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(viewModelInitializer = viewModelInitializer)
 
     @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-    private fun routePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
-    ) = threePaneEntry(
-        contentTransform = predictiveBackContentTransformProvider(),
-        render = { route ->
-            val viewModel = viewModel<SearchViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = route,
-                )
-            }
-            val state by viewModel.state.collectAsStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
+    private fun routePaneEntry(viewModelInitializer: RouteViewModelInitializer) =
+        threePaneEntry(
+            contentTransform = predictiveBackContentTransformProvider(),
+            render = { route ->
+                val viewModel =
+                    viewModel<SearchViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = route,
+                        )
+                    }
+                val state by viewModel.state.collectAsStateWithLifecycle()
+                val paneScaffoldState = rememberPaneScaffoldState()
 
-            val topAppBarNestedScrollConnection =
-                topAppBarNestedScrollConnection()
+                val topAppBarNestedScrollConnection = topAppBarNestedScrollConnection()
 
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                )
+                val bottomNavigationNestedScrollConnection =
+                    bottomNavigationNestedScrollConnection(
+                        isCompact = paneScaffoldState.prefersCompactBottomNav
+                    )
 
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .nestedScroll(topAppBarNestedScrollConnection)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
+                paneScaffoldState.PaneScaffold(
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+                            .nestedScroll(topAppBarNestedScrollConnection)
+                            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                                nestedScroll(bottomNavigationNestedScrollConnection)
+                            },
+                    showNavigation = true,
+                    snackBarMessages = state.messages,
+                    onSnackBarMessageConsumed = { viewModel.accept(Action.SnackbarDismissed(it)) },
+                    topBar = {
+                        if (state.isQueryEditable)
+                            RootDestinationTopAppBar(
+                                modifier =
+                                    Modifier.offset {
+                                        topAppBarNestedScrollConnection.offset.round()
+                                    },
+                                signedInProfile = state.signedInProfile,
+                                title = {
+                                    SearchBar(
+                                        searchQuery = state.currentQuery,
+                                        onQueryChanged = { query ->
+                                            viewModel.accept(
+                                                Action.Search.OnSearchQueryChanged(query)
+                                            )
+                                        },
+                                        onQueryConfirmed = {
+                                            viewModel.accept(
+                                                Action.Search.OnSearchQueryConfirmed(
+                                                    isLocalOnly = false
+                                                )
+                                            )
+                                        },
+                                    )
+                                },
+                                transparencyFactor =
+                                    topAppBarNestedScrollConnection::verticalOffsetProgress,
+                                onSignedInProfileClicked = { profile, sharedElementKey ->
+                                    viewModel.accept(
+                                        Action.Navigate.To(
+                                            profileDestination(
+                                                referringRouteOption =
+                                                    NavigationAction.ReferringRouteOption
+                                                        .ParentOrCurrent,
+                                                profile = profile,
+                                                avatarSharedElementKey = sharedElementKey,
+                                            )
+                                        )
+                                    )
+                                },
+                            )
+                        else
+                            PoppableDestinationTopAppBar(
+                                title = {
+                                    Text(
+                                        text = state.currentQuery,
+                                        style = MaterialTheme.typography.titleSmallEmphasized,
+                                    )
+                                },
+                                transparencyFactor =
+                                    topAppBarNestedScrollConnection::verticalOffsetProgress,
+                                onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                            )
                     },
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
-                },
-                topBar = {
-                    if (state.isQueryEditable) RootDestinationTopAppBar(
-                        modifier = Modifier.offset {
-                            topAppBarNestedScrollConnection.offset.round()
-                        },
-                        signedInProfile = state.signedInProfile,
-                        title = {
-                            SearchBar(
-                                searchQuery = state.currentQuery,
-                                onQueryChanged = { query ->
-                                    viewModel.accept(
-                                        Action.Search.OnSearchQueryChanged(query),
-                                    )
-                                },
-                                onQueryConfirmed = {
-                                    viewModel.accept(
-                                        Action.Search.OnSearchQueryConfirmed(isLocalOnly = false),
-                                    )
-                                },
-                            )
-                        },
-                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        onSignedInProfileClicked = { profile, sharedElementKey ->
-                            viewModel.accept(
-                                Action.Navigate.To(
-                                    profileDestination(
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                        profile = profile,
-                                        avatarSharedElementKey = sharedElementKey,
-                                    ),
-                                ),
-                            )
-                        },
-                    )
-                    else PoppableDestinationTopAppBar(
-                        title = {
-                            Text(
-                                text = state.currentQuery,
-                                style = MaterialTheme.typography.titleSmallEmphasized,
-                            )
-                        },
-                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        onBackPressed = {
-                            viewModel.accept(Action.Navigate.Pop)
-                        },
-                    )
-                },
-                snackBarHost = {
-                    PaneSnackbarHost(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
-                    )
-                },
-                navigationBar = {
-                    PaneNavigationBar(
-                        modifier = Modifier
-                            .offset {
-                                bottomNavigationNestedScrollConnection.offset.round()
-                            },
-                    )
-                },
-                navigationRail = {
-                    PaneNavigationRail()
-                },
-                content = {
-                    SearchScreen(
-                        paneScaffoldState = this,
-                        modifier = Modifier,
-                        state = state,
-                        actions = viewModel.accept,
-                    )
-                },
-            )
-        },
-    )
+                    snackBarHost = {
+                        PaneSnackbarHost(
+                            modifier =
+                                Modifier.offset {
+                                    fabOffset(bottomNavigationNestedScrollConnection.offset)
+                                }
+                        )
+                    },
+                    navigationBar = {
+                        PaneNavigationBar(
+                            modifier =
+                                Modifier.offset {
+                                    bottomNavigationNestedScrollConnection.offset.round()
+                                }
+                        )
+                    },
+                    navigationRail = { PaneNavigationRail() },
+                    content = {
+                        SearchScreen(
+                            paneScaffoldState = this,
+                            modifier = Modifier,
+                            state = state,
+                            actions = viewModel.accept,
+                        )
+                    },
+                )
+            },
+        )
 }

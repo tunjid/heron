@@ -40,176 +40,199 @@ internal fun FeedViewPost.feedItemEntity(
     sourceId: String,
     itemSort: Long,
     viewingProfileId: ProfileId?,
-) = TimelineItemEntity(
-    postUri = PostUri(post.uri.atUri),
-    viewingProfileId = viewingProfileId,
-    sourceId = sourceId,
-    itemSort = itemSort,
-    reply = reply?.let {
-        val rootPostEntity = it.root.postEntity()
-        val parentPostEntity = it.parent.postEntity()
-        FeedReplyEntity(
-            rootPostUri = rootPostEntity.uri,
-            rootPostEmbeddedRecordUri = rootPostEntity.record?.embeddedRecordUri,
-            parentPostUri = parentPostEntity.uri,
-            parentPostEmbeddedRecordUri = parentPostEntity.record?.embeddedRecordUri,
-            grandParentPostAuthorId = it.grandparentAuthor?.did?.did?.let(::ProfileId),
-        )
-    },
-    reposter = when (val reason = reason) {
-        is FeedViewPostReasonUnion.ReasonRepost -> ProfileId(reason.value.by.did.did)
-        else -> null
-    },
-    isPinned = reason is FeedViewPostReasonUnion.ReasonPin,
-    hasMedia = when (post.embed) {
-        is PostViewEmbedUnion.ExternalView -> false
-        is PostViewEmbedUnion.ImagesView -> true
-        is PostViewEmbedUnion.RecordView -> false
-        is PostViewEmbedUnion.RecordWithMediaView -> true
-        is PostViewEmbedUnion.Unknown -> false
-        is PostViewEmbedUnion.VideoView -> true
-        null -> false
-    },
-    indexedAt = when (val reason = reason) {
-        is FeedViewPostReasonUnion.ReasonPin -> Instant.DISTANT_PAST
-        is FeedViewPostReasonUnion.ReasonRepost -> reason.value.indexedAt
-        is FeedViewPostReasonUnion.Unknown,
-        null,
-        -> post.indexedAt
-    },
-    embeddedRecordUri = when (val embed = post.embed) {
-        is PostViewEmbedUnion.RecordView -> when (val recordUnion = embed.value.record) {
-            is RecordViewRecordUnion.ViewRecord -> PostUri(recordUnion.value.uri.atUri)
-            is RecordViewRecordUnion.FeedGeneratorView -> FeedGeneratorUri(recordUnion.value.uri.atUri)
-            is RecordViewRecordUnion.GraphListView -> ListUri(recordUnion.value.uri.atUri)
-            is RecordViewRecordUnion.GraphStarterPackViewBasic -> StarterPackUri(recordUnion.value.uri.atUri)
-            is RecordViewRecordUnion.LabelerLabelerView -> null
-            is RecordViewRecordUnion.Unknown -> null
-            is RecordViewRecordUnion.ViewBlocked -> null // TODO: Handle blocked/muted posts later
-            is RecordViewRecordUnion.ViewDetached -> null // TODO: Handle detached posts
-            is RecordViewRecordUnion.ViewNotFound -> null // TODO: Handle deleted/missing posts
-        }
+) =
+    TimelineItemEntity(
+        postUri = PostUri(post.uri.atUri),
+        viewingProfileId = viewingProfileId,
+        sourceId = sourceId,
+        itemSort = itemSort,
+        reply =
+            reply?.let {
+                val rootPostEntity = it.root.postEntity()
+                val parentPostEntity = it.parent.postEntity()
+                FeedReplyEntity(
+                    rootPostUri = rootPostEntity.uri,
+                    rootPostEmbeddedRecordUri = rootPostEntity.record?.embeddedRecordUri,
+                    parentPostUri = parentPostEntity.uri,
+                    parentPostEmbeddedRecordUri = parentPostEntity.record?.embeddedRecordUri,
+                    grandParentPostAuthorId = it.grandparentAuthor?.did?.did?.let(::ProfileId),
+                )
+            },
+        reposter =
+            when (val reason = reason) {
+                is FeedViewPostReasonUnion.ReasonRepost -> ProfileId(reason.value.by.did.did)
+                else -> null
+            },
+        isPinned = reason is FeedViewPostReasonUnion.ReasonPin,
+        hasMedia =
+            when (post.embed) {
+                is PostViewEmbedUnion.ExternalView -> false
+                is PostViewEmbedUnion.ImagesView -> true
+                is PostViewEmbedUnion.RecordView -> false
+                is PostViewEmbedUnion.RecordWithMediaView -> true
+                is PostViewEmbedUnion.Unknown -> false
+                is PostViewEmbedUnion.VideoView -> true
+                null -> false
+            },
+        indexedAt =
+            when (val reason = reason) {
+                is FeedViewPostReasonUnion.ReasonPin -> Instant.DISTANT_PAST
+                is FeedViewPostReasonUnion.ReasonRepost -> reason.value.indexedAt
+                is FeedViewPostReasonUnion.Unknown,
+                null -> post.indexedAt
+            },
+        embeddedRecordUri =
+            when (val embed = post.embed) {
+                is PostViewEmbedUnion.RecordView ->
+                    when (val recordUnion = embed.value.record) {
+                        is RecordViewRecordUnion.ViewRecord -> PostUri(recordUnion.value.uri.atUri)
+                        is RecordViewRecordUnion.FeedGeneratorView ->
+                            FeedGeneratorUri(recordUnion.value.uri.atUri)
+                        is RecordViewRecordUnion.GraphListView ->
+                            ListUri(recordUnion.value.uri.atUri)
+                        is RecordViewRecordUnion.GraphStarterPackViewBasic ->
+                            StarterPackUri(recordUnion.value.uri.atUri)
+                        is RecordViewRecordUnion.LabelerLabelerView -> null
+                        is RecordViewRecordUnion.Unknown -> null
+                        is RecordViewRecordUnion.ViewBlocked ->
+                            null // TODO: Handle blocked/muted posts later
+                        is RecordViewRecordUnion.ViewDetached -> null // TODO: Handle detached posts
+                        is RecordViewRecordUnion.ViewNotFound ->
+                            null // TODO: Handle deleted/missing posts
+                    }
 
-        is PostViewEmbedUnion.RecordWithMediaView -> when (val recordUnion = embed.value.record.record) {
-            is RecordViewRecordUnion.ViewRecord -> PostUri(recordUnion.value.uri.atUri)
-            is RecordViewRecordUnion.FeedGeneratorView -> FeedGeneratorUri(recordUnion.value.uri.atUri)
-            is RecordViewRecordUnion.GraphListView -> ListUri(recordUnion.value.uri.atUri)
-            is RecordViewRecordUnion.GraphStarterPackViewBasic -> StarterPackUri(recordUnion.value.uri.atUri)
-            is RecordViewRecordUnion.LabelerLabelerView -> null
-            is RecordViewRecordUnion.Unknown -> null
-            is RecordViewRecordUnion.ViewBlocked -> null // TODO
-            is RecordViewRecordUnion.ViewDetached -> null // TODO
-            is RecordViewRecordUnion.ViewNotFound -> null // TODO
-        }
-        is PostViewEmbedUnion.ExternalView,
-        is PostViewEmbedUnion.ImagesView,
-        is PostViewEmbedUnion.Unknown,
-        is PostViewEmbedUnion.VideoView,
-        null,
-        -> null
-    },
-
-)
-
-internal fun ReplyRefRootUnion.profileEntity() = when (this) {
-    is ReplyRefRootUnion.PostView -> value.profileEntity()
-    is ReplyRefRootUnion.BlockedPost -> value.author.profileEntity()
-    is ReplyRefRootUnion.NotFoundPost,
-    is ReplyRefRootUnion.Unknown,
-    -> null
-}
-
-internal fun ReplyRefParentUnion.profileEntity() = when (this) {
-    is ReplyRefParentUnion.PostView -> value.profileEntity()
-    is ReplyRefParentUnion.BlockedPost -> value.author.profileEntity()
-    is ReplyRefParentUnion.NotFoundPost,
-    is ReplyRefParentUnion.Unknown,
-    -> null
-}
-
-internal fun ReplyRefRootUnion.postView() = when (val ref = this) {
-    is ReplyRefRootUnion.PostView -> ref.value
-    is ReplyRefRootUnion.BlockedPost,
-    is ReplyRefRootUnion.NotFoundPost,
-    is ReplyRefRootUnion.Unknown,
-    -> null
-}
-
-internal fun ReplyRefParentUnion.postView() = when (val ref = this) {
-    is ReplyRefParentUnion.PostView -> ref.value
-    is ReplyRefParentUnion.BlockedPost,
-    is ReplyRefParentUnion.NotFoundPost,
-    is ReplyRefParentUnion.Unknown,
-    -> null
-}
-
-internal fun ReplyRefRootUnion.postEntity() = when (val ref = this) {
-    is ReplyRefRootUnion.BlockedPost -> stubPostEntity(
-        id = Constants.blockedPostId,
-        uri = ref.value.uri.atUri.let(::PostUri),
-        authorId = ref.value.author.did.did.let(::ProfileId),
+                is PostViewEmbedUnion.RecordWithMediaView ->
+                    when (val recordUnion = embed.value.record.record) {
+                        is RecordViewRecordUnion.ViewRecord -> PostUri(recordUnion.value.uri.atUri)
+                        is RecordViewRecordUnion.FeedGeneratorView ->
+                            FeedGeneratorUri(recordUnion.value.uri.atUri)
+                        is RecordViewRecordUnion.GraphListView ->
+                            ListUri(recordUnion.value.uri.atUri)
+                        is RecordViewRecordUnion.GraphStarterPackViewBasic ->
+                            StarterPackUri(recordUnion.value.uri.atUri)
+                        is RecordViewRecordUnion.LabelerLabelerView -> null
+                        is RecordViewRecordUnion.Unknown -> null
+                        is RecordViewRecordUnion.ViewBlocked -> null // TODO
+                        is RecordViewRecordUnion.ViewDetached -> null // TODO
+                        is RecordViewRecordUnion.ViewNotFound -> null // TODO
+                    }
+                is PostViewEmbedUnion.ExternalView,
+                is PostViewEmbedUnion.ImagesView,
+                is PostViewEmbedUnion.Unknown,
+                is PostViewEmbedUnion.VideoView,
+                null -> null
+            },
     )
 
-    is ReplyRefRootUnion.NotFoundPost -> stubPostEntity(
-        id = Constants.notFoundPostId,
-        uri = ref.value.uri.atUri.let(::PostUri),
-        authorId = Constants.unknownAuthorId,
-    )
+internal fun ReplyRefRootUnion.profileEntity() =
+    when (this) {
+        is ReplyRefRootUnion.PostView -> value.profileEntity()
+        is ReplyRefRootUnion.BlockedPost -> value.author.profileEntity()
+        is ReplyRefRootUnion.NotFoundPost,
+        is ReplyRefRootUnion.Unknown -> null
+    }
 
-    is ReplyRefRootUnion.PostView -> ref.value.postEntity()
+internal fun ReplyRefParentUnion.profileEntity() =
+    when (this) {
+        is ReplyRefParentUnion.PostView -> value.profileEntity()
+        is ReplyRefParentUnion.BlockedPost -> value.author.profileEntity()
+        is ReplyRefParentUnion.NotFoundPost,
+        is ReplyRefParentUnion.Unknown -> null
+    }
 
-    is ReplyRefRootUnion.Unknown -> stubPostEntity(
-        id = Constants.unknownPostId,
-        uri = Constants.unknownPostUri,
-        authorId = Constants.unknownAuthorId,
-    )
-}
+internal fun ReplyRefRootUnion.postView() =
+    when (val ref = this) {
+        is ReplyRefRootUnion.PostView -> ref.value
+        is ReplyRefRootUnion.BlockedPost,
+        is ReplyRefRootUnion.NotFoundPost,
+        is ReplyRefRootUnion.Unknown -> null
+    }
 
-internal fun ReplyRefParentUnion.postEntity() = when (val ref = this) {
-    is ReplyRefParentUnion.BlockedPost -> stubPostEntity(
-        id = Constants.blockedPostId,
-        uri = ref.value.uri.atUri.let(::PostUri),
-        authorId = ref.value.author.did.did.let(::ProfileId),
-    )
+internal fun ReplyRefParentUnion.postView() =
+    when (val ref = this) {
+        is ReplyRefParentUnion.PostView -> ref.value
+        is ReplyRefParentUnion.BlockedPost,
+        is ReplyRefParentUnion.NotFoundPost,
+        is ReplyRefParentUnion.Unknown -> null
+    }
 
-    is ReplyRefParentUnion.NotFoundPost -> stubPostEntity(
-        id = Constants.notFoundPostId,
-        uri = ref.value.uri.atUri.let(::PostUri),
-        authorId = Constants.unknownAuthorId,
-    )
+internal fun ReplyRefRootUnion.postEntity() =
+    when (val ref = this) {
+        is ReplyRefRootUnion.BlockedPost ->
+            stubPostEntity(
+                id = Constants.blockedPostId,
+                uri = ref.value.uri.atUri.let(::PostUri),
+                authorId = ref.value.author.did.did.let(::ProfileId),
+            )
 
-    is ReplyRefParentUnion.PostView -> ref.value.postEntity()
+        is ReplyRefRootUnion.NotFoundPost ->
+            stubPostEntity(
+                id = Constants.notFoundPostId,
+                uri = ref.value.uri.atUri.let(::PostUri),
+                authorId = Constants.unknownAuthorId,
+            )
 
-    is ReplyRefParentUnion.Unknown -> stubPostEntity(
-        id = Constants.unknownPostId,
-        uri = Constants.unknownPostUri,
-        authorId = Constants.unknownAuthorId,
-    )
-}
+        is ReplyRefRootUnion.PostView -> ref.value.postEntity()
+
+        is ReplyRefRootUnion.Unknown ->
+            stubPostEntity(
+                id = Constants.unknownPostId,
+                uri = Constants.unknownPostUri,
+                authorId = Constants.unknownAuthorId,
+            )
+    }
+
+internal fun ReplyRefParentUnion.postEntity() =
+    when (val ref = this) {
+        is ReplyRefParentUnion.BlockedPost ->
+            stubPostEntity(
+                id = Constants.blockedPostId,
+                uri = ref.value.uri.atUri.let(::PostUri),
+                authorId = ref.value.author.did.did.let(::ProfileId),
+            )
+
+        is ReplyRefParentUnion.NotFoundPost ->
+            stubPostEntity(
+                id = Constants.notFoundPostId,
+                uri = ref.value.uri.atUri.let(::PostUri),
+                authorId = Constants.unknownAuthorId,
+            )
+
+        is ReplyRefParentUnion.PostView -> ref.value.postEntity()
+
+        is ReplyRefParentUnion.Unknown ->
+            stubPostEntity(
+                id = Constants.unknownPostId,
+                uri = Constants.unknownPostUri,
+                authorId = Constants.unknownAuthorId,
+            )
+    }
 
 internal fun FeedViewPostReasonUnion.profileEntity() =
     when (this) {
-        is FeedViewPostReasonUnion.ReasonRepost -> ProfileEntity(
-            did = ProfileId(value.by.did.did),
-            handle = ProfileHandle(value.by.handle.handle),
-            displayName = value.by.displayName,
-            description = null,
-            avatar = value.by.avatar?.uri?.let(::ImageUri),
-            banner = null,
-            followersCount = null,
-            followsCount = null,
-            postsCount = null,
-            joinedViaStarterPack = null,
-            indexedAt = null,
-            createdAt = value.by.createdAt,
-            associated = ProfileEntity.Associated(
-                createdListCount = value.by.associated?.lists,
-                createdFeedGeneratorCount = value.by.associated?.feedgens,
-                createdStarterPackCount = value.by.associated?.starterPacks,
-                labeler = value.by.associated?.labeler,
-                allowDms = value.by.associated?.chat?.allowIncoming?.value,
-            ),
-        )
+        is FeedViewPostReasonUnion.ReasonRepost ->
+            ProfileEntity(
+                did = ProfileId(value.by.did.did),
+                handle = ProfileHandle(value.by.handle.handle),
+                displayName = value.by.displayName,
+                description = null,
+                avatar = value.by.avatar?.uri?.let(::ImageUri),
+                banner = null,
+                followersCount = null,
+                followsCount = null,
+                postsCount = null,
+                joinedViaStarterPack = null,
+                indexedAt = null,
+                createdAt = value.by.createdAt,
+                associated =
+                    ProfileEntity.Associated(
+                        createdListCount = value.by.associated?.lists,
+                        createdFeedGeneratorCount = value.by.associated?.feedgens,
+                        createdStarterPackCount = value.by.associated?.starterPacks,
+                        labeler = value.by.associated?.labeler,
+                        allowDms = value.by.associated?.chat?.allowIncoming?.value,
+                    ),
+            )
 
         else -> null
     }

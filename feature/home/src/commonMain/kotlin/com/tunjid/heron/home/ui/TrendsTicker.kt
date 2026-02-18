@@ -75,61 +75,57 @@ fun TrendsTicker(
     trends: List<Trend>,
     onTrendClicked: (Trend) -> Unit,
 ) {
-    Box(
-        modifier = modifier,
-    ) {
+    Box(modifier = modifier) {
         var isVertical by rememberSaveable { mutableStateOf(true) }
-        if (trends.isNotEmpty()) ElevatedCard(
-            modifier = Modifier
-                .height(46.dp),
-            shape = CircleShape,
-            onClick = { isVertical = !isVertical },
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .animateContentSize(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
+        if (trends.isNotEmpty())
+            ElevatedCard(
+                modifier = Modifier.height(46.dp),
+                shape = CircleShape,
+                onClick = { isVertical = !isVertical },
             ) {
-                var ticker by rememberSaveable { mutableStateOf(0) }
-                val focusedIndex = ticker % trends.size
-                val trend = trends[focusedIndex]
+                Row(
+                    modifier = Modifier.fillMaxHeight().animateContentSize(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    var ticker by rememberSaveable { mutableStateOf(0) }
+                    val focusedIndex = ticker % trends.size
+                    val trend = trends[focusedIndex]
 
-                AnimatedContent(
-                    targetState = isVertical,
-                ) { vertical ->
-                    if (vertical) VerticalTicker(
-                        sharedTransitionScope = sharedTransitionScope,
-                        animatedVisibilityScope = this@AnimatedContent,
-                        trend = trend,
-                    )
-                    else HorizontalTicker(
-                        modifier = Modifier
-                            .padding(horizontal = 8.dp),
-                        sharedTransitionScope = sharedTransitionScope,
-                        animatedVisibilityScope = this@AnimatedContent,
-                        focusedIndex = focusedIndex,
-                        trends = trends,
-                        onCollapsed = { firstCompletelyVisibleIndex ->
-                            ticker = firstCompletelyVisibleIndex
-                            isVertical = true
-                        },
-                        onTrendClicked = onTrendClicked,
-                    )
-                }
+                    AnimatedContent(targetState = isVertical) { vertical ->
+                        if (vertical)
+                            VerticalTicker(
+                                sharedTransitionScope = sharedTransitionScope,
+                                animatedVisibilityScope = this@AnimatedContent,
+                                trend = trend,
+                            )
+                        else
+                            HorizontalTicker(
+                                modifier = Modifier.padding(horizontal = 8.dp),
+                                sharedTransitionScope = sharedTransitionScope,
+                                animatedVisibilityScope = this@AnimatedContent,
+                                focusedIndex = focusedIndex,
+                                trends = trends,
+                                onCollapsed = { firstCompletelyVisibleIndex ->
+                                    ticker = firstCompletelyVisibleIndex
+                                    isVertical = true
+                                },
+                                onTrendClicked = onTrendClicked,
+                            )
+                    }
 
-                LaunchedEffect(Unit) {
-                    snapshotFlow { isVertical }
-                        .collectLatest { vertical ->
-                            if (vertical) while (isActive) {
-                                delay(VerticalTickerChangeDelay)
-                                ++ticker
+                    LaunchedEffect(Unit) {
+                        snapshotFlow { isVertical }
+                            .collectLatest { vertical ->
+                                if (vertical)
+                                    while (isActive) {
+                                        delay(VerticalTickerChangeDelay)
+                                        ++ticker
+                                    }
                             }
-                        }
+                    }
                 }
             }
-        }
     }
 }
 
@@ -140,40 +136,37 @@ private fun VerticalTicker(
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     trend: Trend,
-) = with(sharedTransitionScope) {
-    Row(
-        modifier = modifier
-            .fillMaxHeight()
-            .padding(horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Icon(
-            modifier = Modifier,
-            imageVector = Icons.AutoMirrored.Rounded.TrendingUp,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.outline,
-        )
-        AnimatedContent(
-            modifier = Modifier
-                .sharedElement(
-                    sharedContentState = rememberSharedContentState(
-                        key = trend.link,
-                    ),
-                    animatedVisibilityScope = animatedVisibilityScope,
-                ),
-            targetState = trend.tickerValue,
-            transitionSpec = { TextCheckedTransform },
-        ) { currentText ->
-            Text(
+) =
+    with(sharedTransitionScope) {
+        Row(
+            modifier = modifier.fillMaxHeight().padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(
                 modifier = Modifier,
-                text = currentText,
-                color = MaterialTheme.colorScheme.outline,
-                style = MaterialTheme.typography.bodyMediumEmphasized,
+                imageVector = Icons.AutoMirrored.Rounded.TrendingUp,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.outline,
             )
+            AnimatedContent(
+                modifier =
+                    Modifier.sharedElement(
+                        sharedContentState = rememberSharedContentState(key = trend.link),
+                        animatedVisibilityScope = animatedVisibilityScope,
+                    ),
+                targetState = trend.tickerValue,
+                transitionSpec = { TextCheckedTransform },
+            ) { currentText ->
+                Text(
+                    modifier = Modifier,
+                    text = currentText,
+                    color = MaterialTheme.colorScheme.outline,
+                    style = MaterialTheme.typography.bodyMediumEmphasized,
+                )
+            }
         }
     }
-}
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -185,93 +178,82 @@ private fun HorizontalTicker(
     trends: List<Trend>,
     onCollapsed: (Int) -> Unit,
     onTrendClicked: (Trend) -> Unit,
-) = with(sharedTransitionScope) {
-    val state = rememberLazyListState(
-        initialFirstVisibleItemIndex = focusedIndex,
-    )
-    Row(
-        modifier = modifier
-            .fillMaxSize(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        LazyRow(
-            modifier = Modifier
-                .weight(1f)
-                .clip(CircleShape),
-            state = state,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            items(
-                items = trends,
-                key = Trend::link,
-                itemContent = { trend ->
-                    Box(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .clickable { onTrendClicked(trend) }
-                            .padding(
-                                vertical = 4.dp,
-                                horizontal = 6.dp,
-                            )
-                            .animateItem(),
-                    ) {
-                        Text(
-                            modifier = Modifier
-                                .sharedElement(
-                                    sharedContentState = rememberSharedContentState(
-                                        key = trend.link,
+) =
+    with(sharedTransitionScope) {
+        val state = rememberLazyListState(initialFirstVisibleItemIndex = focusedIndex)
+        Row(modifier = modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+            LazyRow(
+                modifier = Modifier.weight(1f).clip(CircleShape),
+                state = state,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                items(
+                    items = trends,
+                    key = Trend::link,
+                    itemContent = { trend ->
+                        Box(
+                            modifier =
+                                Modifier.clip(CircleShape)
+                                    .clickable { onTrendClicked(trend) }
+                                    .padding(vertical = 4.dp, horizontal = 6.dp)
+                                    .animateItem()
+                        ) {
+                            Text(
+                                modifier =
+                                    Modifier.sharedElement(
+                                        sharedContentState =
+                                            rememberSharedContentState(key = trend.link),
+                                        animatedVisibilityScope = animatedVisibilityScope,
                                     ),
-                                    animatedVisibilityScope = animatedVisibilityScope,
-                                ),
-                            text = trend.tickerValue,
-                            color = MaterialTheme.colorScheme.outline,
-                            style = MaterialTheme.typography.bodyMediumEmphasized,
-                        )
-                    }
-                },
-            )
-        }
-        Box(
-            modifier = Modifier
-                .clip(CircleShape)
-                .clickable { onCollapsed(state.middleItemIndex) }
-                .padding(all = 8.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Cancel,
-                contentDescription = stringResource(CommonStrings.close),
-            )
-        }
-    }
-
-    LaunchedEffect(state.isScrollInProgress) {
-        if (state.isScrollInProgress) return@LaunchedEffect
-
-        while (isActive) {
-            with(state) {
-                // When scrolling backward, continue until the start, then reverse.
-                // Otherwise, scroll forward until the end, then reverse.
-                val shouldScrollForward =
-                    if (lastScrolledBackward) !canScrollBackward
-                    else canScrollForward
-
-                val reachedEndWhileScrollingForward = lastScrolledForward && !canScrollForward
-                val reachedStartWhileScrollingBackward = lastScrolledBackward && !canScrollBackward
-
-                if (reachedEndWhileScrollingForward || reachedStartWhileScrollingBackward) {
-                    delay(HorizontalTickerDirectionChangeDelay)
-                }
-
-                withFrameNanos {}
-                scrollBy(
-                    if (shouldScrollForward) HORIZONTAL_TICKER_SCROLL_DELTA
-                    else -HORIZONTAL_TICKER_SCROLL_DELTA,
+                                text = trend.tickerValue,
+                                color = MaterialTheme.colorScheme.outline,
+                                style = MaterialTheme.typography.bodyMediumEmphasized,
+                            )
+                        }
+                    },
+                )
+            }
+            Box(
+                modifier =
+                    Modifier.clip(CircleShape)
+                        .clickable { onCollapsed(state.middleItemIndex) }
+                        .padding(all = 8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Cancel,
+                    contentDescription = stringResource(CommonStrings.close),
                 )
             }
         }
+
+        LaunchedEffect(state.isScrollInProgress) {
+            if (state.isScrollInProgress) return@LaunchedEffect
+
+            while (isActive) {
+                with(state) {
+                    // When scrolling backward, continue until the start, then reverse.
+                    // Otherwise, scroll forward until the end, then reverse.
+                    val shouldScrollForward =
+                        if (lastScrolledBackward) !canScrollBackward else canScrollForward
+
+                    val reachedEndWhileScrollingForward = lastScrolledForward && !canScrollForward
+                    val reachedStartWhileScrollingBackward =
+                        lastScrolledBackward && !canScrollBackward
+
+                    if (reachedEndWhileScrollingForward || reachedStartWhileScrollingBackward) {
+                        delay(HorizontalTickerDirectionChangeDelay)
+                    }
+
+                    withFrameNanos {}
+                    scrollBy(
+                        if (shouldScrollForward) HORIZONTAL_TICKER_SCROLL_DELTA
+                        else -HORIZONTAL_TICKER_SCROLL_DELTA
+                    )
+                }
+            }
+        }
     }
-}
 
 private val Trend.tickerValue
     get() = displayName ?: topic
@@ -293,10 +275,6 @@ private val TextAnimationSpec = tween<IntOffset>(BUTTON_ANIMATION_DURATION_MILLI
 private val VerticalTickerChangeDelay = 4.seconds
 private val HorizontalTickerDirectionChangeDelay = 2.seconds
 
-private val TextCheckedTransform = slideInVertically(
-    animationSpec = TextAnimationSpec,
-    initialOffsetY = { it },
-) togetherWith slideOutVertically(
-    animationSpec = TextAnimationSpec,
-    targetOffsetY = { -it },
-)
+private val TextCheckedTransform =
+    slideInVertically(animationSpec = TextAnimationSpec, initialOffsetY = { it }) togetherWith
+        slideOutVertically(animationSpec = TextAnimationSpec, targetOffsetY = { -it })

@@ -18,8 +18,6 @@ package com.tunjid.heron.settings.ui
 
 import androidx.compose.runtime.Stable
 
-@Stable
-actual fun isDynamicThemingSupported(): Boolean = true
+@Stable actual fun isDynamicThemingSupported(): Boolean = true
 
-@Stable
-actual fun isCompactNavigationSupported(): Boolean = true
+@Stable actual fun isCompactNavigationSupported(): Boolean = true

@@ -17,10 +17,6 @@
 package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -63,22 +59,16 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
     onSignedInProfileClicked: (Profile, String) -> Unit,
 ) {
     TopAppBar(
-        modifier = modifier
-            .rootAppBarBackground(
-                backgroundColor = MaterialTheme.colorScheme.surface,
-                progress = transparencyFactor,
-            )
-            .rootAppBarBlur(transparencyFactor),
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent,
-        ),
+        modifier =
+            modifier
+                .rootAppBarBackground(
+                    backgroundColor = MaterialTheme.colorScheme.surface,
+                    progress = transparencyFactor,
+                )
+                .rootAppBarBlur(transparencyFactor),
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
         navigationIcon = {
-            AppLogo(
-                modifier = Modifier
-                    .padding(start = 8.dp)
-                    .size(36.dp),
-                isRootDestination = true,
-            )
+            AppLogo(modifier = Modifier.padding(start = 8.dp).size(36.dp), isRootDestination = true)
         },
         title = title,
         actions = {
@@ -91,34 +81,32 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                 }
                 Spacer(Modifier.width(8.dp))
             }
-            AnimatedVisibility(
-                visible = signedInProfile != null,
-            ) {
+            AnimatedVisibility(visible = signedInProfile != null) {
                 signedInProfile?.let { profile ->
                     PaneStickySharedElement(
-                        modifier = Modifier
-                            .size(36.dp),
-                        sharedContentState = rememberSharedContentState(
-                            key = UiTokens.SignedInUserAvatarSharedElementKey,
-                        ),
+                        modifier = Modifier.size(36.dp),
+                        sharedContentState =
+                            rememberSharedContentState(
+                                key = UiTokens.SignedInUserAvatarSharedElementKey
+                            ),
                     ) {
                         AsyncImage(
-                            modifier = Modifier
-                                .fillParentAxisIfFixedOrWrap()
-                                .clickable {
+                            modifier =
+                                Modifier.fillParentAxisIfFixedOrWrap().clickable {
                                     onSignedInProfileClicked(
                                         profile,
                                         UiTokens.SignedInUserAvatarSharedElementKey,
                                     )
                                 },
-                            args = remember(profile) {
-                                ImageArgs(
-                                    url = profile.avatar?.uri,
-                                    contentDescription = signedInProfile.displayName,
-                                    contentScale = ContentScale.Crop,
-                                    shape = RoundedPolygonShape.Circle,
-                                )
-                            },
+                            args =
+                                remember(profile) {
+                                    ImageArgs(
+                                        url = profile.avatar?.uri,
+                                        contentDescription = signedInProfile.displayName,
+                                        contentScale = ContentScale.Crop,
+                                        shape = RoundedPolygonShape.Circle,
+                                    )
+                                },
                         )
                     }
                 }
@@ -137,79 +125,59 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
     onBackPressed: () -> Unit,
 ) {
     TopAppBar(
-        modifier = modifier
-            .renderInSharedTransitionScopeOverlay(
-                zIndexInOverlay = UiTokens.appBarSharedElementZIndex,
-                renderInOverlay = {
-                    paneState.pane == ThreePane.Primary &&
-                        isTransitionActive &&
-                        isActive
-                },
-            )
-            .rootAppBarBackground(
-                backgroundColor = MaterialTheme.colorScheme.surface,
-                progress = transparencyFactor,
-            ),
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent,
-        ),
+        modifier =
+            modifier
+                .renderInSharedTransitionScopeOverlay(
+                    zIndexInOverlay = UiTokens.appBarSharedElementZIndex,
+                    renderInOverlay = {
+                        paneState.pane == ThreePane.Primary && isTransitionActive && isActive
+                    },
+                )
+                .rootAppBarBackground(
+                    backgroundColor = MaterialTheme.colorScheme.surface,
+                    progress = transparencyFactor,
+                ),
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
         navigationIcon = {
             AppLogo(
-                modifier = Modifier
-                    .padding(start = 8.dp)
-                    .clip(CircleShape)
-                    .clickable(onClick = onBackPressed)
-                    .size(36.dp),
+                modifier =
+                    Modifier.padding(start = 8.dp)
+                        .clip(CircleShape)
+                        .clickable(onClick = onBackPressed)
+                        .size(36.dp),
                 isRootDestination = false,
             )
         },
-        title = {
-            Box(
-                modifier = Modifier,
-            ) {
-                title()
-            }
-        },
+        title = { Box(modifier = Modifier) { title() } },
         actions = actions,
     )
 }
 
-@Suppress("UnusedReceiverParameter")
-fun PaneScaffoldState.fullAppbarTransparency() = Float.NaN
+@Suppress("UnusedReceiverParameter") fun PaneScaffoldState.fullAppbarTransparency() = Float.NaN
 
 @Composable
-fun AppBarTitle(
-    modifier: Modifier = Modifier,
-    title: String,
-) {
+fun AppBarTitle(modifier: Modifier = Modifier, title: String) {
     Text(
-        modifier = modifier
-            .padding(horizontal = 16.dp),
+        modifier = modifier.padding(horizontal = 16.dp),
         text = title,
         style = MaterialTheme.typography.titleMedium,
     )
 }
 
-private fun Modifier.rootAppBarBackground(
-    backgroundColor: Color,
-    progress: () -> Float,
-): Modifier = drawBehind {
-    drawRect(
-        color = backgroundColor,
-        alpha = when (val currentProgress = progress()) {
-            in 0f..1f -> HundredPercent - (currentProgress * MaxTransparency)
-            else -> 0F
-        },
-    )
-}
+private fun Modifier.rootAppBarBackground(backgroundColor: Color, progress: () -> Float): Modifier =
+    drawBehind {
+        drawRect(
+            color = backgroundColor,
+            alpha =
+                when (val currentProgress = progress()) {
+                    in 0f..1f -> HundredPercent - (currentProgress * MaxTransparency)
+                    else -> 0F
+                },
+        )
+    }
 
-private fun Modifier.rootAppBarBlur(
-    progress: () -> Float,
-): Modifier = blur(
-    shape = RectangleShape,
-    radius = ::RootAppBarBlurRadius,
-    progress = progress,
-)
+private fun Modifier.rootAppBarBlur(progress: () -> Float): Modifier =
+    blur(shape = RectangleShape, radius = ::RootAppBarBlurRadius, progress = progress)
 
 private val RootAppBarBlurRadius = 60.dp
 private const val MaxTransparency = 0.1f

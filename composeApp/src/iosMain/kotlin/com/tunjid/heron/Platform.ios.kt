@@ -44,15 +44,9 @@ actual fun getPlatform(): Platform = IOSPlatform()
 fun createAppState(): AppState =
     createAppState(
         imageLoader = ::imageLoader,
-        notifier = {
-            NoOpNotifier
-        },
-        logger = {
-            IOSLogger()
-        },
-        videoPlayerController = {
-            StubVideoPlayerController
-        },
+        notifier = { NoOpNotifier },
+        logger = { IOSLogger() },
+        videoPlayerController = { StubVideoPlayerController },
         args = { appMainScope ->
             DataBindingArgs(
                 appMainScope = appMainScope,
@@ -66,12 +60,13 @@ fun createAppState(): AppState =
 
 @OptIn(ExperimentalForeignApi::class)
 private fun savedStatePath(): Path {
-    val documentDirectory: NSURL? = NSFileManager.defaultManager.URLForDirectory(
-        directory = NSDocumentDirectory,
-        inDomain = NSUserDomainMask,
-        appropriateForURL = null,
-        create = false,
-        error = null,
-    )
+    val documentDirectory: NSURL? =
+        NSFileManager.defaultManager.URLForDirectory(
+            directory = NSDocumentDirectory,
+            inDomain = NSUserDomainMask,
+            appropriateForURL = null,
+            create = false,
+            error = null,
+        )
     return (requireNotNull(documentDirectory).path + "/heron").toPath()
 }

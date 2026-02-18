@@ -21,11 +21,7 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ThreadGateUri
 import kotlinx.serialization.Serializable
 
-data class ThreadGate(
-    val uri: ThreadGateUri,
-    val gatedPostUri: PostUri,
-    val allowed: Allowed?,
-) {
+data class ThreadGate(val uri: ThreadGateUri, val gatedPostUri: PostUri, val allowed: Allowed?) {
     @Serializable
     data class Allowed(
         val allowsFollowing: Boolean,
@@ -57,18 +53,12 @@ val ThreadGate.Allowed?.allowsAll
 
 @Suppress("DEPRECATION")
 val ThreadGate.Allowed?.allowedListUrisOrEmpty
-    get() = this?.allowedLists
-        ?.map(FeedList::uri)
-        .orEmpty()
-        .plus(
-            this
-                ?.allowedListUris
-                .orEmpty(),
-        )
-        .distinct()
+    get() =
+        this?.allowedLists
+            ?.map(FeedList::uri)
+            .orEmpty()
+            .plus(this?.allowedListUris.orEmpty())
+            .distinct()
 
 val ThreadGate.Allowed?.allowsNone
-    get() = !allowsFollowing &&
-        !allowsFollowers &&
-        !allowsMentioned &&
-        !allowsLists
+    get() = !allowsFollowing && !allowsFollowers && !allowsMentioned && !allowsLists

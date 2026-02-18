@@ -27,31 +27,20 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.tunjid.heron.data.core.models.Profile
 
 @Composable
-fun ProfileName(
-    modifier: Modifier = Modifier,
-    profile: Profile,
-    ellipsize: Boolean = true,
-) {
+fun ProfileName(modifier: Modifier = Modifier, profile: Profile, ellipsize: Boolean = true) {
     Text(
         modifier = modifier,
-        text = remember(profile.displayName) {
-            profile.displayName ?: ""
-        },
+        text = remember(profile.displayName) { profile.displayName ?: "" },
         maxLines = if (ellipsize) 1 else Int.MAX_VALUE,
         style = LocalTextStyle.current.copy(fontWeight = Bold),
     )
 }
 
 @Composable
-fun ProfileHandle(
-    modifier: Modifier = Modifier,
-    profile: Profile,
-) {
+fun ProfileHandle(modifier: Modifier = Modifier, profile: Profile) {
     Text(
         modifier = modifier,
-        text = remember(profile.handle) {
-            profile.handle.id
-        },
+        text = remember(profile.handle) { profile.handle.id },
         overflow = TextOverflow.Ellipsis,
         maxLines = 1,
         style = MaterialTheme.typography.bodySmall,

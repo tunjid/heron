@@ -36,10 +36,8 @@ object RootFilterSerializer : KSerializer<Filter.Root> {
     override fun serialize(encoder: Encoder, value: Filter.Root) {
         if (encoder is JsonEncoder) {
             val json = encoder.json
-            val filtersElement = json.encodeToJsonElement(
-                ListSerializer(Filter.serializer()),
-                value.filters,
-            )
+            val filtersElement =
+                json.encodeToJsonElement(ListSerializer(Filter.serializer()), value.filters)
             val jsonObject = buildJsonObject {
                 when (value) {
                     is Filter.And -> put(Filter.Root.AND, filtersElement)
@@ -58,20 +56,25 @@ object RootFilterSerializer : KSerializer<Filter.Root> {
 
             return when {
                 Filter.Root.AND in jsonObject -> {
-                    val filters = decoder.json.decodeFromJsonElement(
-                        ListSerializer(Filter.serializer()),
-                        jsonObject[Filter.Root.AND]!!,
-                    )
+                    val filters =
+                        decoder.json.decodeFromJsonElement(
+                            ListSerializer(Filter.serializer()),
+                            jsonObject[Filter.Root.AND]!!,
+                        )
                     Filter.And(filters = filters)
                 }
                 Filter.Root.OR in jsonObject -> {
-                    val filters = decoder.json.decodeFromJsonElement(
-                        ListSerializer(Filter.serializer()),
-                        jsonObject[Filter.Root.OR]!!,
-                    )
+                    val filters =
+                        decoder.json.decodeFromJsonElement(
+                            ListSerializer(Filter.serializer()),
+                            jsonObject[Filter.Root.OR]!!,
+                        )
                     Filter.Or(filters = filters)
                 }
-                else -> throw SerializationException("Expected '${Filter.Root.AND}' or '${Filter.Root.OR}' key for Filter.Root")
+                else ->
+                    throw SerializationException(
+                        "Expected '${Filter.Root.AND}' or '${Filter.Root.OR}' key for Filter.Root"
+                    )
             }
         } else {
             return delegate.deserialize(decoder)

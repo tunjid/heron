@@ -32,22 +32,18 @@ interface StarterPackDao {
         """
             SELECT * FROM starterPacks
             WHERE uri = :starterPackUri
-        """,
+        """
     )
-    fun starterPack(
-        starterPackUri: String,
-    ): Flow<PopulatedStarterPackEntity?>
+    fun starterPack(starterPackUri: String): Flow<PopulatedStarterPackEntity?>
 
     @Transaction
     @Query(
         """
             SELECT * FROM starterPacks
 	        WHERE uri IN (:uris)
-        """,
+        """
     )
-    fun starterPacks(
-        uris: Collection<StarterPackUri>,
-    ): Flow<List<PopulatedStarterPackEntity>>
+    fun starterPacks(uris: Collection<StarterPackUri>): Flow<List<PopulatedStarterPackEntity>>
 
     @Transaction
     @Query(
@@ -58,7 +54,7 @@ interface StarterPackDao {
             DESC
             LIMIT :limit
             OFFSET :offset
-        """,
+        """
     )
     fun profileStarterPacks(
         creatorId: String,
@@ -66,18 +62,13 @@ interface StarterPackDao {
         offset: Long,
     ): Flow<List<PopulatedStarterPackEntity>>
 
-    @Upsert
-    suspend fun upsertStarterPacks(
-        entities: List<StarterPackEntity>,
-    )
+    @Upsert suspend fun upsertStarterPacks(entities: List<StarterPackEntity>)
 
     @Query(
         """
             DELETE FROM starterPacks
             WHERE uri = :uri
-        """,
+        """
     )
-    suspend fun deleteStarterPack(
-        uri: StarterPackUri,
-    )
+    suspend fun deleteStarterPack(uri: StarterPackUri)
 }

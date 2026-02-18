@@ -47,36 +47,38 @@ private val ReddishEgretOnTertiaryDark = Color(0xFF283141)
 private val ReddishEgretTertiaryContainerDark = Color(0xFF3E4759)
 private val ReddishEgretOnTertiaryContainerDark = Color(0xFFDAE2F9)
 
-val ReddishEgretLightScheme = lightColorScheme(
-    primary = ReddishEgretPrimaryLight,
-    onPrimary = ReddishEgretOnPrimaryLight,
-    primaryContainer = ReddishEgretPrimaryContainerLight,
-    onPrimaryContainer = ReddishEgretOnPrimaryContainerLight,
-    secondary = ReddishEgretSecondaryLight,
-    onSecondary = ReddishEgretOnSecondaryLight,
-    secondaryContainer = ReddishEgretSecondaryContainerLight,
-    onSecondaryContainer = ReddishEgretOnSecondaryContainerLight,
-    tertiary = ReddishEgretTertiaryLight,
-    onTertiary = ReddishEgretOnTertiaryLight,
-    tertiaryContainer = ReddishEgretTertiaryContainerLight,
-    onTertiaryContainer = ReddishEgretOnTertiaryContainerLight,
-    surface = Color(0xFFF4F7FF),
-    onSurface = Color(0xFF191C20),
-)
+val ReddishEgretLightScheme =
+    lightColorScheme(
+        primary = ReddishEgretPrimaryLight,
+        onPrimary = ReddishEgretOnPrimaryLight,
+        primaryContainer = ReddishEgretPrimaryContainerLight,
+        onPrimaryContainer = ReddishEgretOnPrimaryContainerLight,
+        secondary = ReddishEgretSecondaryLight,
+        onSecondary = ReddishEgretOnSecondaryLight,
+        secondaryContainer = ReddishEgretSecondaryContainerLight,
+        onSecondaryContainer = ReddishEgretOnSecondaryContainerLight,
+        tertiary = ReddishEgretTertiaryLight,
+        onTertiary = ReddishEgretOnTertiaryLight,
+        tertiaryContainer = ReddishEgretTertiaryContainerLight,
+        onTertiaryContainer = ReddishEgretOnTertiaryContainerLight,
+        surface = Color(0xFFF4F7FF),
+        onSurface = Color(0xFF191C20),
+    )
 
-val ReddishEgretDarkScheme = darkColorScheme(
-    primary = ReddishEgretPrimaryDark,
-    onPrimary = ReddishEgretOnPrimaryDark,
-    primaryContainer = ReddishEgretPrimaryContainerDark,
-    onPrimaryContainer = ReddishEgretOnPrimaryContainerDark,
-    secondary = ReddishEgretSecondaryDark,
-    onSecondary = ReddishEgretOnSecondaryDark,
-    secondaryContainer = ReddishEgretSecondaryContainerDark,
-    onSecondaryContainer = ReddishEgretOnSecondaryContainerDark,
-    tertiary = ReddishEgretTertiaryDark,
-    onTertiary = ReddishEgretOnTertiaryDark,
-    tertiaryContainer = ReddishEgretTertiaryContainerDark,
-    onTertiaryContainer = ReddishEgretOnTertiaryContainerDark,
-    surface = Color(0xFF001A40),
-    onSurface = Color(0xFFE1E2E8),
-)
+val ReddishEgretDarkScheme =
+    darkColorScheme(
+        primary = ReddishEgretPrimaryDark,
+        onPrimary = ReddishEgretOnPrimaryDark,
+        primaryContainer = ReddishEgretPrimaryContainerDark,
+        onPrimaryContainer = ReddishEgretOnPrimaryContainerDark,
+        secondary = ReddishEgretSecondaryDark,
+        onSecondary = ReddishEgretOnSecondaryDark,
+        secondaryContainer = ReddishEgretSecondaryContainerDark,
+        onSecondaryContainer = ReddishEgretOnSecondaryContainerDark,
+        tertiary = ReddishEgretTertiaryDark,
+        onTertiary = ReddishEgretOnTertiaryDark,
+        tertiaryContainer = ReddishEgretTertiaryContainerDark,
+        onTertiaryContainer = ReddishEgretOnTertiaryContainerDark,
+        surface = Color(0xFF001A40),
+        onSurface = Color(0xFFE1E2E8),
+    )

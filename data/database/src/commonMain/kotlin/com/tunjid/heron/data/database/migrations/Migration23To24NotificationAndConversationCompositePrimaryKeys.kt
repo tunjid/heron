@@ -26,58 +26,60 @@ internal object Migration23To24NotificationAndConversationCompositePrimaryKeys :
         // Migrate notifications
         connection.execSQL(
             """
-                CREATE TABLE IF NOT EXISTS `notifications_new` (
-                    `cid` TEXT NOT NULL,
-                    `uri` TEXT NOT NULL,
-                    `authorId` TEXT NOT NULL,
-                    `ownerId` TEXT NOT NULL,
-                    `reason` TEXT NOT NULL,
-                    `reasonSubject` TEXT,
-                    `associatedPostUri` TEXT,
-                    `isRead` INTEGER NOT NULL,
-                    `indexedAt` INTEGER NOT NULL,
-                    PRIMARY KEY(`uri`, `ownerId`),
-                    FOREIGN KEY(`associatedPostUri`)
-                        REFERENCES `posts`(`uri`)
-                        ON UPDATE NO ACTION
-                        ON DELETE CASCADE,
-                    FOREIGN KEY(`authorId`)
-                        REFERENCES `profiles`(`did`)
-                        ON UPDATE NO ACTION
-                        ON DELETE CASCADE,
-                    FOREIGN KEY(`ownerId`)
-                        REFERENCES `profiles`(`did`)
-                        ON UPDATE NO ACTION
-                        ON DELETE CASCADE
-                )
-            """.trimIndent(),
+            CREATE TABLE IF NOT EXISTS `notifications_new` (
+                `cid` TEXT NOT NULL,
+                `uri` TEXT NOT NULL,
+                `authorId` TEXT NOT NULL,
+                `ownerId` TEXT NOT NULL,
+                `reason` TEXT NOT NULL,
+                `reasonSubject` TEXT,
+                `associatedPostUri` TEXT,
+                `isRead` INTEGER NOT NULL,
+                `indexedAt` INTEGER NOT NULL,
+                PRIMARY KEY(`uri`, `ownerId`),
+                FOREIGN KEY(`associatedPostUri`)
+                    REFERENCES `posts`(`uri`)
+                    ON UPDATE NO ACTION
+                    ON DELETE CASCADE,
+                FOREIGN KEY(`authorId`)
+                    REFERENCES `profiles`(`did`)
+                    ON UPDATE NO ACTION
+                    ON DELETE CASCADE,
+                FOREIGN KEY(`ownerId`)
+                    REFERENCES `profiles`(`did`)
+                    ON UPDATE NO ACTION
+                    ON DELETE CASCADE
+            )
+            """
+                .trimIndent()
         )
 
         connection.execSQL(
             """
-                INSERT INTO notifications_new (
-                    cid,
-                    uri,
-                    authorId,
-                    ownerId,
-                    reason,
-                    reasonSubject,
-                    associatedPostUri,
-                    isRead,
-                    indexedAt
-                )
-                SELECT
-                    cid,
-                    uri,
-                    authorId,
-                    ownerId,
-                    reason,
-                    reasonSubject,
-                    associatedPostUri,
-                    isRead,
-                    indexedAt
-                FROM notifications
-            """.trimIndent(),
+            INSERT INTO notifications_new (
+                cid,
+                uri,
+                authorId,
+                ownerId,
+                reason,
+                reasonSubject,
+                associatedPostUri,
+                isRead,
+                indexedAt
+            )
+            SELECT
+                cid,
+                uri,
+                authorId,
+                ownerId,
+                reason,
+                reasonSubject,
+                associatedPostUri,
+                isRead,
+                indexedAt
+            FROM notifications
+            """
+                .trimIndent()
         )
 
         connection.execSQL("DROP TABLE notifications")
@@ -85,29 +87,36 @@ internal object Migration23To24NotificationAndConversationCompositePrimaryKeys :
 
         connection.execSQL("CREATE INDEX `index_notifications_uri` ON notifications (`uri`);")
         connection.execSQL("CREATE INDEX `index_notifications_cid` ON notifications (`cid`);")
-        connection.execSQL("CREATE INDEX `index_notifications_authorId` ON notifications (`authorId`);")
-        connection.execSQL("CREATE INDEX `index_notifications_ownerId` ON notifications (`ownerId`);")
-        connection.execSQL("CREATE INDEX `index_notifications_indexedAt` ON notifications (`indexedAt`);")
+        connection.execSQL(
+            "CREATE INDEX `index_notifications_authorId` ON notifications (`authorId`);"
+        )
+        connection.execSQL(
+            "CREATE INDEX `index_notifications_ownerId` ON notifications (`ownerId`);"
+        )
+        connection.execSQL(
+            "CREATE INDEX `index_notifications_indexedAt` ON notifications (`indexedAt`);"
+        )
 
         // Destructively migrate conversation members, the conversation they are a part of cannot
         // be easily obtained
         connection.execSQL(
             """
-                CREATE TABLE IF NOT EXISTS `conversationMembers_new` (
-                    `conversationId` TEXT NOT NULL,
-                    `conversationOwnerId` TEXT NOT NULL,
-                    `memberId` TEXT NOT NULL,
-                    PRIMARY KEY(`conversationId`, `memberId`),
-                    FOREIGN KEY(`conversationId`, `conversationOwnerId`)
-                        REFERENCES `conversations`(`id`, `ownerId`)
-                        ON UPDATE NO ACTION
-                        ON DELETE CASCADE
-                    FOREIGN KEY(`memberId`)
-                        REFERENCES `profiles`(`did`)
-                        ON UPDATE NO ACTION
-                        ON DELETE CASCADE
-                )
-            """.trimIndent(),
+            CREATE TABLE IF NOT EXISTS `conversationMembers_new` (
+                `conversationId` TEXT NOT NULL,
+                `conversationOwnerId` TEXT NOT NULL,
+                `memberId` TEXT NOT NULL,
+                PRIMARY KEY(`conversationId`, `memberId`),
+                FOREIGN KEY(`conversationId`, `conversationOwnerId`)
+                    REFERENCES `conversations`(`id`, `ownerId`)
+                    ON UPDATE NO ACTION
+                    ON DELETE CASCADE
+                FOREIGN KEY(`memberId`)
+                    REFERENCES `profiles`(`did`)
+                    ON UPDATE NO ACTION
+                    ON DELETE CASCADE
+            )
+            """
+                .trimIndent()
         )
 
         connection.execSQL("DROP TABLE conversationMembers")
@@ -117,26 +126,27 @@ internal object Migration23To24NotificationAndConversationCompositePrimaryKeys :
         // be easily obtained
         connection.execSQL(
             """
-                CREATE TABLE IF NOT EXISTS `messages_new` (
-                    `id` TEXT NOT NULL,
-                    `rev` TEXT NOT NULL,
-                    `text` TEXT NOT NULL,
-                    `senderId` TEXT NOT NULL,
-                    `conversationId` TEXT NOT NULL,
-                    `conversationOwnerId` TEXT NOT NULL,
-                    `isDeleted` INTEGER NOT NULL,
-                    `sentAt` INTEGER NOT NULL,
-                    PRIMARY KEY(`id`),
-                    FOREIGN KEY(`conversationId`, `conversationOwnerId`)
-                        REFERENCES `conversations`(`id`, `ownerId`)
-                        ON UPDATE NO ACTION
-                        ON DELETE CASCADE
-                    FOREIGN KEY(`senderId`)
-                        REFERENCES `profiles`(`did`)
-                        ON UPDATE NO ACTION
-                        ON DELETE CASCADE
-                )
-            """.trimIndent(),
+            CREATE TABLE IF NOT EXISTS `messages_new` (
+                `id` TEXT NOT NULL,
+                `rev` TEXT NOT NULL,
+                `text` TEXT NOT NULL,
+                `senderId` TEXT NOT NULL,
+                `conversationId` TEXT NOT NULL,
+                `conversationOwnerId` TEXT NOT NULL,
+                `isDeleted` INTEGER NOT NULL,
+                `sentAt` INTEGER NOT NULL,
+                PRIMARY KEY(`id`),
+                FOREIGN KEY(`conversationId`, `conversationOwnerId`)
+                    REFERENCES `conversations`(`id`, `ownerId`)
+                    ON UPDATE NO ACTION
+                    ON DELETE CASCADE
+                FOREIGN KEY(`senderId`)
+                    REFERENCES `profiles`(`did`)
+                    ON UPDATE NO ACTION
+                    ON DELETE CASCADE
+            )
+            """
+                .trimIndent()
         )
 
         connection.execSQL("DROP TABLE messages")
@@ -147,53 +157,57 @@ internal object Migration23To24NotificationAndConversationCompositePrimaryKeys :
         // Migrate conversations
         connection.execSQL(
             """
-                CREATE TABLE IF NOT EXISTS `conversations_new` (
-                    `id` TEXT NOT NULL,
-                    `rev` TEXT NOT NULL,
-                    `ownerId` TEXT NOT NULL,
-                    `lastMessageId` TEXT,
-                    `lastReactedToMessageId` TEXT,
-                    `muted` INTEGER NOT NULL,
-                    `status` TEXT,
-                    `unreadCount` INTEGER NOT NULL,
-                    PRIMARY KEY(`id`, `ownerId`),
-                    FOREIGN KEY(`ownerId`)
-                        REFERENCES `profiles`(`did`)
-                        ON UPDATE NO ACTION
-                        ON DELETE CASCADE
-                )
-            """.trimIndent(),
+            CREATE TABLE IF NOT EXISTS `conversations_new` (
+                `id` TEXT NOT NULL,
+                `rev` TEXT NOT NULL,
+                `ownerId` TEXT NOT NULL,
+                `lastMessageId` TEXT,
+                `lastReactedToMessageId` TEXT,
+                `muted` INTEGER NOT NULL,
+                `status` TEXT,
+                `unreadCount` INTEGER NOT NULL,
+                PRIMARY KEY(`id`, `ownerId`),
+                FOREIGN KEY(`ownerId`)
+                    REFERENCES `profiles`(`did`)
+                    ON UPDATE NO ACTION
+                    ON DELETE CASCADE
+            )
+            """
+                .trimIndent()
         )
 
         connection.execSQL(
             """
-                INSERT INTO conversations_new (
-                    id,
-                    rev,
-                    ownerId,
-                    lastMessageId,
-                    lastReactedToMessageId,
-                    muted,
-                    status,
-                    unreadCount
-                )
-                SELECT
-                    id,
-                    rev,
-                    ownerId,
-                    lastMessageId,
-                    lastReactedToMessageId,
-                    muted,
-                    status,
-                    unreadCount
-                FROM conversations
-            """.trimIndent(),
+            INSERT INTO conversations_new (
+                id,
+                rev,
+                ownerId,
+                lastMessageId,
+                lastReactedToMessageId,
+                muted,
+                status,
+                unreadCount
+            )
+            SELECT
+                id,
+                rev,
+                ownerId,
+                lastMessageId,
+                lastReactedToMessageId,
+                muted,
+                status,
+                unreadCount
+            FROM conversations
+            """
+                .trimIndent()
         )
 
         connection.execSQL("DROP TABLE conversations")
         connection.execSQL("ALTER TABLE conversations_new RENAME TO conversations")
 
         connection.execSQL("CREATE INDEX `index_conversations_id` ON conversations (`id`);")
-        connection.execSQL("CREATE INDEX `index_conversations_ownerId` ON conversations (`ownerId`);")
+        connection.execSQL(
+            "CREATE INDEX `index_conversations_ownerId` ON conversations (`ownerId`);"
+        )
     }
 }

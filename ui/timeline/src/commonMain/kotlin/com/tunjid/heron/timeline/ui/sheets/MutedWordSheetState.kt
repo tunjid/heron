@@ -86,9 +86,7 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Stable
-class MutedWordsSheetState(
-    scope: BottomSheetScope,
-) : BottomSheetState(scope) {
+class MutedWordsSheetState(scope: BottomSheetScope) : BottomSheetState(scope) {
 
     var mutedWords by mutableStateOf<List<MutedWordPreference>>(emptyList())
         internal set
@@ -101,24 +99,23 @@ class MutedWordsSheetState(
 
     fun addMutedWord() {
         val duration = newWordDuration
-        val expiresAt = duration?.let {
-            Clock.System.now().plus(it)
-        }
+        val expiresAt = duration?.let { Clock.System.now().plus(it) }
 
         if (mutedWords.any { it.value.contentEquals(newWord, ignoreCase = true) }) {
             error = "Word already muted"
             return
         }
 
-        mutedWords = mutedWords + MutedWordPreference(
-            value = newWord,
-            targets = newWordTargets.map { MutedWordPreference.Target(it) },
-            actorTarget =
-            if (newWordExcludeNonFollowers)
-                MutedWordPreference.Target("non_followers")
-            else null,
-            expiresAt = expiresAt,
-        )
+        mutedWords =
+            mutedWords +
+                MutedWordPreference(
+                    value = newWord,
+                    targets = newWordTargets.map { MutedWordPreference.Target(it) },
+                    actorTarget =
+                        if (newWordExcludeNonFollowers) MutedWordPreference.Target("non_followers")
+                        else null,
+                    expiresAt = expiresAt,
+                )
 
         // Reset input fields
         newWord = ""
@@ -151,15 +148,11 @@ class MutedWordsSheetState(
             onSave: (List<MutedWordPreference>) -> Unit,
             onShown: () -> Unit,
         ): MutedWordsSheetState {
-            val state = rememberBottomSheetState(
-                skipPartiallyExpanded = false,
-            ) { scope ->
-                MutedWordsSheetState(
-                    scope = scope,
-                )
-            }.also {
-                it.mutedWords = mutedWordPreferences
-            }
+            val state =
+                rememberBottomSheetState(skipPartiallyExpanded = false) { scope ->
+                        MutedWordsSheetState(scope = scope)
+                    }
+                    .also { it.mutedWords = mutedWordPreferences }
 
             MutedWordsBottomSheet(
                 state = state,
@@ -180,18 +173,12 @@ private fun MutedWordsBottomSheet(
 ) {
     state.ModalBottomSheet {
         LazyColumn(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
+            modifier = modifier.fillMaxSize().padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            item(
-                key = MainTitleKey,
-            ) {
+            item(key = MainTitleKey) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateItem(),
+                    modifier = Modifier.fillMaxWidth().animateItem(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -201,38 +188,22 @@ private fun MutedWordsBottomSheet(
                         fontWeight = FontWeight.SemiBold,
                     )
 
-                    IconButton(
-                        onClick = { state.hide() },
-                        modifier = Modifier.size(40.dp),
-                    ) {
+                    IconButton(onClick = { state.hide() }, modifier = Modifier.size(40.dp)) {
                         Icon(Icons.Default.Close, contentDescription = null)
                     }
                 }
             }
             state.error?.let { error ->
-                item(
-                    key = ErrorKey,
-                ) {
-                    ErrorMessage(
-                        modifier = Modifier
-                            .animateItem(),
-                        error = error,
-                    )
+                item(key = ErrorKey) {
+                    ErrorMessage(modifier = Modifier.animateItem(), error = error)
                 }
             }
-            item(
-                key = InputKey,
-            ) {
+            item(key = InputKey) {
                 Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateItem(),
+                    modifier = Modifier.fillMaxWidth().animateItem(),
                     shape = MaterialTheme.shapes.medium,
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.12f),
-                    border = BorderStroke(
-                        1.dp,
-                        MaterialTheme.colorScheme.outlineVariant,
-                    ),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                     tonalElevation = 0.dp,
                 ) {
                     Column(
@@ -258,13 +229,15 @@ private fun MutedWordsBottomSheet(
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             isError = state.error != null,
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                                disabledContainerColor = MaterialTheme.colorScheme.surface,
-                                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                                unfocusedIndicatorColor = MaterialTheme.colorScheme.outlineVariant,
-                            ),
+                            colors =
+                                TextFieldDefaults.colors(
+                                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                                    disabledContainerColor = MaterialTheme.colorScheme.surface,
+                                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                                    unfocusedIndicatorColor =
+                                        MaterialTheme.colorScheme.outlineVariant,
+                                ),
                             trailingIcon = {
                                 if (state.newWord.isNotBlank()) {
                                     IconButton(onClick = { state.newWord = "" }) {
@@ -272,12 +245,8 @@ private fun MutedWordsBottomSheet(
                                     }
                                 }
                             },
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Done,
-                            ),
-                            keyboardActions = KeyboardActions {
-                                state.addMutedWord()
-                            },
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions { state.addMutedWord() },
                         )
 
                         Text(
@@ -305,9 +274,7 @@ private fun MutedWordsBottomSheet(
                                 DurationChip(
                                     option = option,
                                     isSelected = state.newWordDuration == option.expiresAt,
-                                    onSelected = {
-                                        state.newWordDuration = option.expiresAt
-                                    },
+                                    onSelected = { state.newWordDuration = option.expiresAt },
                                 )
                             }
                         }
@@ -334,19 +301,15 @@ private fun MutedWordsBottomSheet(
                                 MuteTargetChip(
                                     target = target,
                                     isSelected =
-                                    state.newWordTargets.containsAll(target.targets) &&
-                                        target.targets.containsAll(state.newWordTargets),
-                                    onSelected = {
-                                        state.newWordTargets = target.targets
-                                    },
+                                        state.newWordTargets.containsAll(target.targets) &&
+                                            target.targets.containsAll(state.newWordTargets),
+                                    onSelected = { state.newWordTargets = target.targets },
                                 )
                             }
                         }
 
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
@@ -365,19 +328,15 @@ private fun MutedWordsBottomSheet(
 
                             Switch(
                                 checked = state.newWordExcludeNonFollowers,
-                                onCheckedChange = {
-                                    state.newWordExcludeNonFollowers = it
-                                },
+                                onCheckedChange = { state.newWordExcludeNonFollowers = it },
                             )
                         }
 
                         Button(
-                            onClick = {
-                                state.addMutedWord()
-                            },
+                            onClick = { state.addMutedWord() },
                             modifier = Modifier.fillMaxWidth(),
-                            enabled = state.newWord.isNotBlank() &&
-                                state.newWordTargets.isNotEmpty(),
+                            enabled =
+                                state.newWord.isNotBlank() && state.newWordTargets.isNotEmpty(),
                             shape = MaterialTheme.shapes.large,
                         ) {
                             Text(
@@ -388,13 +347,9 @@ private fun MutedWordsBottomSheet(
                     }
                 }
             }
-            item(
-                key = MutedWordsSubtitleKey,
-            ) {
+            item(key = MutedWordsSubtitleKey) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateItem(),
+                    modifier = Modifier.fillMaxWidth().animateItem(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -405,11 +360,7 @@ private fun MutedWordsBottomSheet(
                     )
 
                     if (state.mutedWords.isNotEmpty()) {
-                        TextButton(
-                            onClick = {
-                                state.clearAll()
-                            },
-                        ) {
+                        TextButton(onClick = { state.clearAll() }) {
                             Text(
                                 stringResource(Res.string.clear_all),
                                 color = MaterialTheme.colorScheme.error,
@@ -419,76 +370,53 @@ private fun MutedWordsBottomSheet(
                 }
             }
             if (state.mutedWords.isEmpty()) {
-                item(
-                    key = EmptyKey,
-                ) {
-                    EmptyState(
-                        modifier = Modifier
-                            .animateItem(),
-                    )
-                }
+                item(key = EmptyKey) { EmptyState(modifier = Modifier.animateItem()) }
             } else {
-                items(
-                    items = state.mutedWords,
-                    key = { it.value },
-                ) { mutedWord ->
+                items(items = state.mutedWords, key = { it.value }) { mutedWord ->
                     MutedWordItem(
-                        modifier = Modifier
-                            .animateItem(),
+                        modifier = Modifier.animateItem(),
                         mutedWord = mutedWord,
-                        onRemove = {
-                            state.removeMutedWord(mutedWord.value)
-                        },
+                        onRemove = { state.removeMutedWord(mutedWord.value) },
                     )
                 }
             }
 
-            item(
-                key = BottomPaddingKey,
-            ) {
-                Spacer(
-                    modifier = Modifier
-                        .height(40.dp)
-                        .navigationBarsPadding()
-                        .imePadding(),
-                )
+            item(key = BottomPaddingKey) {
+                Spacer(modifier = Modifier.height(40.dp).navigationBarsPadding().imePadding())
             }
         }
         DisposableEffect(Unit) {
             onShown()
-            onDispose {
-                onSave(state.mutedWords)
-            }
+            onDispose { onSave(state.mutedWords) }
         }
     }
 }
 
 @Composable
-private fun DurationChip(
-    option: DurationOption,
-    isSelected: Boolean,
-    onSelected: () -> Unit,
-) {
-    val containerColor = if (isSelected) {
-        MaterialTheme.colorScheme.primaryContainer
-    } else {
-        MaterialTheme.colorScheme.surfaceVariant
-    }
+private fun DurationChip(option: DurationOption, isSelected: Boolean, onSelected: () -> Unit) {
+    val containerColor =
+        if (isSelected) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant
+        }
 
-    val contentColor = if (isSelected) {
-        MaterialTheme.colorScheme.onPrimaryContainer
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    }
+    val contentColor =
+        if (isSelected) {
+            MaterialTheme.colorScheme.onPrimaryContainer
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        }
 
     Surface(
         shape = MaterialTheme.shapes.large,
         color = containerColor,
-        border = BorderStroke(
-            if (isSelected) 2.dp else 1.dp,
-            if (isSelected) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.outlineVariant,
-        ),
+        border =
+            BorderStroke(
+                if (isSelected) 2.dp else 1.dp,
+                if (isSelected) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.outlineVariant,
+            ),
         onClick = onSelected,
     ) {
         Row(
@@ -497,7 +425,9 @@ private fun DurationChip(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Icon(
-                imageVector = if (isSelected) Icons.Default.RadioButtonChecked else Icons.Default.RadioButtonUnchecked,
+                imageVector =
+                    if (isSelected) Icons.Default.RadioButtonChecked
+                    else Icons.Default.RadioButtonUnchecked,
                 contentDescription = null,
                 tint = contentColor,
                 modifier = Modifier.size(14.dp),
@@ -513,33 +443,30 @@ private fun DurationChip(
 }
 
 @Composable
-private fun MuteTargetChip(
-    target: MuteTargetOption,
-    isSelected: Boolean,
-    onSelected: () -> Unit,
-) {
-    val containerColor = if (isSelected) {
-        MaterialTheme.colorScheme.secondaryContainer
-    } else {
-        MaterialTheme.colorScheme.surfaceVariant
-    }
+private fun MuteTargetChip(target: MuteTargetOption, isSelected: Boolean, onSelected: () -> Unit) {
+    val containerColor =
+        if (isSelected) {
+            MaterialTheme.colorScheme.secondaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant
+        }
 
-    val contentColor = if (isSelected) {
-        MaterialTheme.colorScheme.onSecondaryContainer
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    }
+    val contentColor =
+        if (isSelected) {
+            MaterialTheme.colorScheme.onSecondaryContainer
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        }
 
     Surface(
         shape = MaterialTheme.shapes.large,
         color = containerColor,
-        border = BorderStroke(
-            1.dp,
-            if (isSelected)
-                MaterialTheme.colorScheme.secondary
-            else
-                MaterialTheme.colorScheme.outlineVariant,
-        ),
+        border =
+            BorderStroke(
+                1.dp,
+                if (isSelected) MaterialTheme.colorScheme.secondary
+                else MaterialTheme.colorScheme.outlineVariant,
+            ),
         onClick = onSelected,
     ) {
         Row(
@@ -578,9 +505,7 @@ private fun MutedWordItem(
         tonalElevation = 0.dp,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(
@@ -609,10 +534,7 @@ private fun MutedWordItem(
             OutlinedIconButton(
                 onClick = onRemove,
                 modifier = Modifier.size(32.dp),
-                border = BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                ),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
@@ -626,13 +548,9 @@ private fun MutedWordItem(
 }
 
 @Composable
-private fun EmptyState(
-    modifier: Modifier = Modifier,
-) {
+private fun EmptyState(modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 32.dp),
+        modifier = modifier.fillMaxWidth().padding(vertical = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Icon(
@@ -658,15 +576,10 @@ private fun EmptyState(
 }
 
 @Composable
-private fun ErrorMessage(
-    modifier: Modifier = Modifier,
-    error: String,
-) {
+private fun ErrorMessage(modifier: Modifier = Modifier, error: String) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer,
-        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Row(
@@ -691,9 +604,7 @@ private fun ErrorMessage(
 }
 
 @Composable
-private fun buildMutedWordMeta(
-    mutedWord: MutedWordPreference,
-): String {
+private fun buildMutedWordMeta(mutedWord: MutedWordPreference): String {
     val target = formatTargets(mutedWord.targets)
     val duration = formatDuration(mutedWord.expiresAt)
 
@@ -743,15 +654,9 @@ private fun formatTargets(targets: List<MutedWordPreference.Target>): String {
     }
 }
 
-private data class DurationOption(
-    val label: StringResource,
-    val expiresAt: Duration?,
-)
+private data class DurationOption(val label: StringResource, val expiresAt: Duration?)
 
-private data class MuteTargetOption(
-    val label: StringResource,
-    val targets: List<String>,
-)
+private data class MuteTargetOption(val label: StringResource, val targets: List<String>)
 
 private const val MainTitleKey = "com.tunjid.heron.title_key"
 private const val InputKey = "com.tunjid.heron.input"

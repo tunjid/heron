@@ -3,10 +3,7 @@ package com.tunjid.heron.ui.text
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 
-fun insertMention(
-    postText: TextFieldValue,
-    selectedHandle: String,
-): TextFieldValue {
+fun insertMention(postText: TextFieldValue, selectedHandle: String): TextFieldValue {
     val text = postText.text
     val cursor = postText.selection.start
 
@@ -19,8 +16,5 @@ fun insertMention(
 
     val newCursor = before.length + selectedHandle.length + 2
 
-    return postText.copy(
-        text = newText,
-        selection = TextRange(newCursor),
-    )
+    return postText.copy(text = newText, selection = TextRange(newCursor))
 }

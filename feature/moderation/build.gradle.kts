@@ -21,9 +21,7 @@ plugins {
     id("ksp-convention")
 }
 
-android {
-    namespace = "com.tunjid.heron.feature.moderation"
-}
+android { namespace = "com.tunjid.heron.feature.moderation" }
 
 kotlin {
     sourceSets {

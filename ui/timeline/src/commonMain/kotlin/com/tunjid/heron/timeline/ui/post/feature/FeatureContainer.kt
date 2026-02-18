@@ -36,24 +36,25 @@ internal inline fun FeatureContainer(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val clickableModifier = if (onClick != null) {
-        Modifier.clickable { onClick() }
-    } else {
-        Modifier
-    }
+    val clickableModifier =
+        if (onClick != null) {
+            Modifier.clickable { onClick() }
+        } else {
+            Modifier
+        }
 
     val shape = remember { RoundedCornerShape(8.dp) }
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .border(
-                width = Dp.Hairline,
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
-                shape = shape,
-            )
-            .then(modifier)
-            .then(clickableModifier),
+        modifier =
+            Modifier.fillMaxWidth()
+                .clip(shape)
+                .border(
+                    width = Dp.Hairline,
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
+                    shape = shape,
+                )
+                .then(modifier)
+                .then(clickableModifier)
     ) {
         content()
     }

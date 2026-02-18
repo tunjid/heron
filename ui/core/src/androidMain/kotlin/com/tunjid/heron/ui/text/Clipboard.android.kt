@@ -20,11 +20,4 @@ import android.content.ClipData
 import androidx.compose.ui.platform.ClipEntry
 import com.tunjid.heron.data.core.types.Uri
 
-actual fun Uri.asClipEntry(
-    label: String,
-): ClipEntry = ClipEntry(
-    ClipData.newPlainText(
-        label,
-        uri,
-    ),
-)
+actual fun Uri.asClipEntry(label: String): ClipEntry = ClipEntry(ClipData.newPlainText(label, uri))

@@ -24,10 +24,7 @@ import com.tunjid.heron.timeline.utilities.roundComponent
 import kotlin.time.Duration
 
 @Composable
-fun TimeDelta(
-    delta: Duration,
-    modifier: Modifier = Modifier,
-) {
+fun TimeDelta(delta: Duration, modifier: Modifier = Modifier) {
     Text(
         modifier = modifier,
         text = delta.roundComponent(),

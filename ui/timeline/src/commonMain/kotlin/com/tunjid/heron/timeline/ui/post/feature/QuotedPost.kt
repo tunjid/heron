@@ -67,118 +67,109 @@ fun QuotedPost(
     onLinkTargetClicked: (Post, LinkTarget) -> Unit,
     onProfileClicked: (Post, Profile) -> Unit,
     onPostMediaClicked: (Embed.Media, Int, Post) -> Unit,
-) = with(paneMovableElementSharedTransitionScope) {
-    val author = quotedPost.author
-    Box(
-        modifier = modifier,
-    ) {
-        FeatureContainer(
-            modifier = Modifier.padding(8.dp),
-            onClick = onClick,
-        ) {
-            Row(
-                horizontalArrangement = spacedBy(8.dp),
-            ) {
-                PaneStickySharedElement(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .align(Alignment.CenterVertically),
-                    sharedContentState = rememberSharedContentState(
-                        key = quotedPost.avatarSharedElementKey(sharedElementPrefix),
-                    ),
-                ) {
-                    AsyncImage(
-                        modifier = Modifier
-                            .fillParentAxisIfFixedOrWrap()
-                            .clickable {
-                                onProfileClicked(quotedPost, author)
-                            },
-                        args = ImageArgs(
-                            url = author.avatar?.uri,
-                            contentDescription = author.displayName ?: author.handle.id,
-                            contentScale = ContentScale.Crop,
-                            shape = RoundedPolygonShape.Circle,
-                        ),
+) =
+    with(paneMovableElementSharedTransitionScope) {
+        val author = quotedPost.author
+        Box(modifier = modifier) {
+            FeatureContainer(modifier = Modifier.padding(8.dp), onClick = onClick) {
+                Row(horizontalArrangement = spacedBy(8.dp)) {
+                    PaneStickySharedElement(
+                        modifier = Modifier.size(24.dp).align(Alignment.CenterVertically),
+                        sharedContentState =
+                            rememberSharedContentState(
+                                key = quotedPost.avatarSharedElementKey(sharedElementPrefix)
+                            ),
+                    ) {
+                        AsyncImage(
+                            modifier =
+                                Modifier.fillParentAxisIfFixedOrWrap().clickable {
+                                    onProfileClicked(quotedPost, author)
+                                },
+                            args =
+                                ImageArgs(
+                                    url = author.avatar?.uri,
+                                    contentDescription = author.displayName ?: author.handle.id,
+                                    contentScale = ContentScale.Crop,
+                                    shape = RoundedPolygonShape.Circle,
+                                ),
+                        )
+                    }
+                    PostHeadline(
+                        now = now,
+                        createdAt = quotedPost.record?.createdAt ?: remember { Clock.System.now() },
+                        author = author,
+                        postId = quotedPost.cid,
+                        sharedElementPrefix = sharedElementPrefix,
+                        paneMovableElementSharedTransitionScope =
+                            paneMovableElementSharedTransitionScope,
+                        onPostClicked = onClick,
+                        onAuthorClicked = { onProfileClicked(quotedPost, author) },
                     )
                 }
-                PostHeadline(
-                    now = now,
-                    createdAt = quotedPost.record?.createdAt ?: remember { Clock.System.now() },
-                    author = author,
-                    postId = quotedPost.cid,
+                Spacer(Modifier.height(2.dp))
+                PostText(
+                    post = quotedPost,
                     sharedElementPrefix = sharedElementPrefix,
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                    onPostClicked = onClick,
-                    onAuthorClicked = {
-                        onProfileClicked(quotedPost, author)
-                    },
-                )
-            }
-            Spacer(Modifier.height(2.dp))
-            PostText(
-                post = quotedPost,
-                sharedElementPrefix = sharedElementPrefix,
-                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                maxLines = 3,
-                modifier = Modifier,
-                onClick = onClick,
-                onLinkTargetClicked = onLinkTargetClicked,
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            val uriHandler = LocalUriHandler.current
-            when (val embed = quotedPost.embed) {
-                is ExternalEmbed -> PostExternal(
-                    feature = embed,
-                    postUri = quotedPost.uri,
-                    sharedElementPrefix = sharedElementPrefix,
-                    isBlurred = isBlurred,
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                    // Quotes are exclusively in blog view types
-                    presentation = Timeline.Presentation.Text.WithEmbed,
-                    onClick = {
-                        uriHandler.openUri(embed.uri.uri)
-                    },
+                    paneMovableElementSharedTransitionScope =
+                        paneMovableElementSharedTransitionScope,
+                    maxLines = 3,
+                    modifier = Modifier,
+                    onClick = onClick,
+                    onLinkTargetClicked = onLinkTargetClicked,
                 )
 
-                is ImageList -> PostImages(
-                    modifier = Modifier
-                        .wrapContentWidth()
-                        .heightIn(max = 140.dp),
-                    feature = embed,
-                    postUri = quotedPost.uri,
-                    sharedElementPrefix = sharedElementPrefix,
-                    isBlurred = isBlurred,
-                    matchHeightConstraintsFirst = true,
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                    onImageClicked = { index ->
-                        onPostMediaClicked(embed, index, quotedPost)
-                    },
-                    // Quotes are exclusively in blog view types
-                    presentation = Timeline.Presentation.Text.WithEmbed,
-                )
+                Spacer(Modifier.height(8.dp))
 
-                UnknownEmbed -> UnknownPostPost(onClick = {})
-                is Video -> PostVideo(
-                    modifier = Modifier
-                        .wrapContentWidth()
-                        .heightIn(max = 140.dp),
-                    video = embed,
-                    postUri = quotedPost.uri,
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                    sharedElementPrefix = sharedElementPrefix,
-                    isBlurred = isBlurred,
-                    matchHeightConstraintsFirst = true,
-                    // Quote videos only show in text and embeds
-                    presentation = Timeline.Presentation.Text.WithEmbed,
-                    onClicked = {
-                        onPostMediaClicked(embed, 0, quotedPost)
-                    },
-                )
+                val uriHandler = LocalUriHandler.current
+                when (val embed = quotedPost.embed) {
+                    is ExternalEmbed ->
+                        PostExternal(
+                            feature = embed,
+                            postUri = quotedPost.uri,
+                            sharedElementPrefix = sharedElementPrefix,
+                            isBlurred = isBlurred,
+                            paneMovableElementSharedTransitionScope =
+                                paneMovableElementSharedTransitionScope,
+                            // Quotes are exclusively in blog view types
+                            presentation = Timeline.Presentation.Text.WithEmbed,
+                            onClick = { uriHandler.openUri(embed.uri.uri) },
+                        )
 
-                null -> Unit
+                    is ImageList ->
+                        PostImages(
+                            modifier = Modifier.wrapContentWidth().heightIn(max = 140.dp),
+                            feature = embed,
+                            postUri = quotedPost.uri,
+                            sharedElementPrefix = sharedElementPrefix,
+                            isBlurred = isBlurred,
+                            matchHeightConstraintsFirst = true,
+                            paneMovableElementSharedTransitionScope =
+                                paneMovableElementSharedTransitionScope,
+                            onImageClicked = { index ->
+                                onPostMediaClicked(embed, index, quotedPost)
+                            },
+                            // Quotes are exclusively in blog view types
+                            presentation = Timeline.Presentation.Text.WithEmbed,
+                        )
+
+                    UnknownEmbed -> UnknownPostPost(onClick = {})
+                    is Video ->
+                        PostVideo(
+                            modifier = Modifier.wrapContentWidth().heightIn(max = 140.dp),
+                            video = embed,
+                            postUri = quotedPost.uri,
+                            paneMovableElementSharedTransitionScope =
+                                paneMovableElementSharedTransitionScope,
+                            sharedElementPrefix = sharedElementPrefix,
+                            isBlurred = isBlurred,
+                            matchHeightConstraintsFirst = true,
+                            // Quote videos only show in text and embeds
+                            presentation = Timeline.Presentation.Text.WithEmbed,
+                            onClicked = { onPostMediaClicked(embed, 0, quotedPost) },
+                        )
+
+                    null -> Unit
+                }
             }
         }
     }
-}

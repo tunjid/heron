@@ -21,10 +21,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
-fun viewModelCoroutineScope() = CoroutineScope(
-    context = SupervisorJob() +
-        Dispatchers.Main.immediate +
-        UIStateProducerElement(
-            backgroundDispatcher = Dispatchers.Default,
-        ),
-)
+fun viewModelCoroutineScope() =
+    CoroutineScope(
+        context =
+            SupervisorJob() +
+                Dispatchers.Main.immediate +
+                UIStateProducerElement(backgroundDispatcher = Dispatchers.Default)
+    )

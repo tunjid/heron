@@ -26,25 +26,24 @@ import kotlin.time.Instant
 
 @Entity(
     tableName = "labels",
-    primaryKeys = [
-        "uri",
-        "value",
-    ],
-    foreignKeys = [
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["creatorId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["createdAt"]),
-        Index(value = ["uri"]),
-        Index(value = ["creatorId"]),
-        Index(value = ["value"]),
-    ],
+    primaryKeys = ["uri", "value"],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["creatorId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            )
+        ],
+    indices =
+        [
+            Index(value = ["createdAt"]),
+            Index(value = ["uri"]),
+            Index(value = ["creatorId"]),
+            Index(value = ["value"]),
+        ],
 )
 data class LabelEntity(
     val cid: String?,

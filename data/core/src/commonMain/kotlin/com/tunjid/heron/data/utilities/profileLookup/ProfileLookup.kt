@@ -66,21 +66,16 @@ internal interface ProfileLookup {
         responseCursor: NetworkResponse.() -> String?,
     ): Flow<CursorList<ProfileWithViewerState>>
 
-    suspend fun lookupProfileDid(
-        profileId: Id.Profile,
-    ): Did?
+    suspend fun lookupProfileDid(profileId: Id.Profile): Did?
 
-    suspend fun resolveProfileHandleLinks(
-        links: List<Link>,
-    ): List<Link>
+    suspend fun resolveProfileHandleLinks(links: List<Link>): List<Link>
 
-    suspend fun refreshProfile(
-        signedInProfileId: ProfileId?,
-        profileId: Id.Profile,
-    ): Outcome
+    suspend fun refreshProfile(signedInProfileId: ProfileId?, profileId: Id.Profile): Outcome
 }
 
-internal class OfflineProfileLookup @Inject constructor(
+internal class OfflineProfileLookup
+@Inject
+constructor(
     private val profileDao: ProfileDao,
     private val networkService: NetworkService,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
@@ -95,128 +90,117 @@ internal class OfflineProfileLookup @Inject constructor(
         // Final or pending cursor, nothing to fetch
         if (!cursor.canRequestData) return@flow
 
-        val response = networkService.runCatchingWithMonitoredNetworkRetry(
-            block = responseFetcher,
-        ).getOrNull()
-            ?: return@flow
+        val response =
+            networkService.runCatchingWithMonitoredNetworkRetry(block = responseFetcher).getOrNull()
+                ?: return@flow
 
         val profileViews = response.responseProfileViews()
 
-        val nextCursor = response.responseCursor()
-            ?.let(Cursor::Next)
-            ?: Cursor.Final
+        val nextCursor = response.responseCursor()?.let(Cursor::Next) ?: Cursor.Final
 
         // Emit network results immediately for minimal latency
         emit(
             CursorList(
-                items = profileViews.toProfileWithViewerStates(
-                    signedInProfileId = signedInProfileId,
-                    profileMapper = ProfileView::profile,
-                    profileViewerStateMapper = ProfileView::profileViewerStateEntity,
-                ),
+                items =
+                    profileViews.toProfileWithViewerStates(
+                        signedInProfileId = signedInProfileId,
+                        profileMapper = ProfileView::profile,
+                        profileViewerStateMapper = ProfileView::profileViewerStateEntity,
+                    ),
                 nextCursor = nextCursor,
-            ),
+            )
         )
 
         multipleEntitySaverProvider.saveInTransaction {
-            profileViews
-                .forEach { profileView ->
-                    add(
-                        viewingProfileId = signedInProfileId,
-                        profileView = profileView,
-                    )
-                }
+            profileViews.forEach { profileView ->
+                add(viewingProfileId = signedInProfileId, profileView = profileView)
+            }
         }
 
         emitAll(
-            profileViews.observeProfileWithViewerStates(
-                profileDao = profileDao,
-                signedInProfileId = signedInProfileId,
-                profileMapper = ProfileView::profile,
-                idMapper = { did.did.let(::ProfileId) },
-            )
+            profileViews
+                .observeProfileWithViewerStates(
+                    profileDao = profileDao,
+                    signedInProfileId = signedInProfileId,
+                    profileMapper = ProfileView::profile,
+                    idMapper = { did.did.let(::ProfileId) },
+                )
                 .map { profileWithViewerStates ->
-                    CursorList(
-                        items = profileWithViewerStates,
-                        nextCursor = nextCursor,
-                    )
-                },
+                    CursorList(items = profileWithViewerStates, nextCursor = nextCursor)
+                }
         )
     }
 
-    override suspend fun lookupProfileDid(
-        profileId: Id.Profile,
-    ): Did? {
+    override suspend fun lookupProfileDid(profileId: Id.Profile): Did? {
         val profileHandleOrId = profileId.id
         return when {
             Did.Regex.matches(profileHandleOrId) -> Did(profileHandleOrId)
-            Handle.Regex.matches(profileHandleOrId) -> profileDao.profiles(
-                // Any matching profile will do, the relationship does not matter
-                signedInProfiledId = null,
-                ids = listOf(ProfileHandleOrId(profileHandleOrId)),
-            )
-                .first()
-                .takeIf(List<PopulatedProfileEntity>::isNotEmpty)
-                ?.first()
-                ?.entity
-                ?.did
-                ?.id
-                ?.let(::Did)
-                ?: networkService.runCatchingWithMonitoredNetworkRetry {
-                    resolveHandle(
-                        params = ResolveHandleQueryParams(
-                            Handle(profileHandleOrId),
-                        ),
+            Handle.Regex.matches(profileHandleOrId) ->
+                profileDao
+                    .profiles(
+                        // Any matching profile will do, the relationship does not matter
+                        signedInProfiledId = null,
+                        ids = listOf(ProfileHandleOrId(profileHandleOrId)),
                     )
-                }
-                    .getOrNull()
+                    .first()
+                    .takeIf(List<PopulatedProfileEntity>::isNotEmpty)
+                    ?.first()
+                    ?.entity
                     ?.did
+                    ?.id
+                    ?.let(::Did)
+                    ?: networkService
+                        .runCatchingWithMonitoredNetworkRetry {
+                            resolveHandle(
+                                params = ResolveHandleQueryParams(Handle(profileHandleOrId))
+                            )
+                        }
+                        .getOrNull()
+                        ?.did
             else -> null
         }
     }
 
-    override suspend fun resolveProfileHandleLinks(
-        links: List<Link>,
-    ): List<Link> =
+    override suspend fun resolveProfileHandleLinks(links: List<Link>): List<Link> =
         coroutineScope {
-            links.map { link ->
-                async {
-                    when (val target = link.target) {
-                        is LinkTarget.ExternalLink -> link
-                        is LinkTarget.UserDidMention -> link
-                        is LinkTarget.Hashtag -> link
-                        // Drop unresolvable handles deliberately.
-                        is LinkTarget.UserHandleMention -> {
-                            lookupProfileDid(
-                                profileId = target.handle,
-                            )?.let { did ->
-                                link.copy(
-                                    target = LinkTarget.UserDidMention(did.did.let(::ProfileId)),
-                                )
+                links
+                    .map { link ->
+                        async {
+                            when (val target = link.target) {
+                                is LinkTarget.ExternalLink -> link
+                                is LinkTarget.UserDidMention -> link
+                                is LinkTarget.Hashtag -> link
+                                // Drop unresolvable handles deliberately.
+                                is LinkTarget.UserHandleMention -> {
+                                    lookupProfileDid(profileId = target.handle)?.let { did ->
+                                        link.copy(
+                                            target =
+                                                LinkTarget.UserDidMention(did.did.let(::ProfileId))
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
-                }
-            }.awaitAll()
-        }.filterNotNull()
+                    .awaitAll()
+            }
+            .filterNotNull()
 
     override suspend fun refreshProfile(
         signedInProfileId: ProfileId?,
         profileId: Id.Profile,
     ): Outcome {
-        val profileDid = lookupProfileDid(
-            profileId = profileId,
-        ) ?: return Outcome.Failure(UnresolvableProfileException(profileId))
+        val profileDid =
+            lookupProfileDid(profileId = profileId)
+                ?: return Outcome.Failure(UnresolvableProfileException(profileId))
 
-        return networkService.runCatchingWithMonitoredNetworkRetry {
-            getProfile(GetProfileQueryParams(actor = profileDid))
-        }
+        return networkService
+            .runCatchingWithMonitoredNetworkRetry {
+                getProfile(GetProfileQueryParams(actor = profileDid))
+            }
             .toOutcome { response ->
                 multipleEntitySaverProvider.saveInTransaction {
-                    add(
-                        viewingProfileId = signedInProfileId,
-                        profileView = response,
-                    )
+                    add(viewingProfileId = signedInProfileId, profileView = response)
                 }
             }
     }
@@ -224,14 +208,14 @@ internal class OfflineProfileLookup @Inject constructor(
     private inline fun <ProfileViewType> List<ProfileViewType>.toProfileWithViewerStates(
         signedInProfileId: ProfileId?,
         crossinline profileMapper: ProfileViewType.() -> Profile,
-        crossinline profileViewerStateMapper: ProfileViewType.(ProfileId) -> ProfileViewerStateEntity?,
+        crossinline profileViewerStateMapper:
+            ProfileViewType.(ProfileId) -> ProfileViewerStateEntity?,
     ): List<ProfileWithViewerState> = map { profileView ->
         ProfileWithViewerState(
             profile = profileView.profileMapper(),
             viewerState =
-            if (signedInProfileId == null) null
-            else profileView.profileViewerStateMapper(signedInProfileId)
-                ?.asExternalModel(),
+                if (signedInProfileId == null) null
+                else profileView.profileViewerStateMapper(signedInProfileId)?.asExternalModel(),
         )
     }
 
@@ -243,36 +227,36 @@ internal class OfflineProfileLookup @Inject constructor(
     ): Flow<List<ProfileWithViewerState>> {
         val profileViews = this
         return when (signedInProfileId) {
-            null -> flowOf(
-                map { profileView ->
-                    ProfileWithViewerState(
-                        profile = profileView.profileMapper(),
-                        viewerState = null,
-                    )
-                },
-            )
-
-            else -> profileDao.viewerState(
-                profileId = signedInProfileId.id,
-                otherProfileIds = mapTo(
-                    destination = mutableSetOf(),
-                    transform = idMapper,
-                ),
-            )
-                .distinctUntilChanged()
-                .map { viewerStates ->
-                    val profileIdsToViewerStates = viewerStates.associateBy(
-                        ProfileViewerStateEntity::otherProfileId,
-                    )
-
-                    profileViews.map { profileViewBasic ->
-                        val profile = profileViewBasic.profileMapper()
+            null ->
+                flowOf(
+                    map { profileView ->
                         ProfileWithViewerState(
-                            profile = profile,
-                            viewerState = profileIdsToViewerStates[profile.did]?.asExternalModel(),
+                            profile = profileView.profileMapper(),
+                            viewerState = null,
                         )
                     }
-                }
+                )
+
+            else ->
+                profileDao
+                    .viewerState(
+                        profileId = signedInProfileId.id,
+                        otherProfileIds = mapTo(destination = mutableSetOf(), transform = idMapper),
+                    )
+                    .distinctUntilChanged()
+                    .map { viewerStates ->
+                        val profileIdsToViewerStates =
+                            viewerStates.associateBy(ProfileViewerStateEntity::otherProfileId)
+
+                        profileViews.map { profileViewBasic ->
+                            val profile = profileViewBasic.profileMapper()
+                            ProfileWithViewerState(
+                                profile = profile,
+                                viewerState =
+                                    profileIdsToViewerStates[profile.did]?.asExternalModel(),
+                            )
+                        }
+                    }
         }
     }
 }

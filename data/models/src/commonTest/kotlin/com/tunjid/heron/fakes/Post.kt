@@ -17,19 +17,18 @@ fun samplePost(): Post {
         bookmarkCount = 0,
         indexedAt = Instant.parse("2024-01-01T00:00:00Z"),
         embed = null,
-        record = Post.Record(
-            text = "Hello World!",
-            createdAt = Instant.parse("2024-01-01T00:00:00Z"),
-        ),
-        viewerStats = Post.ViewerStats(
-            likeUri = null,
-            repostUri = null,
-            threadMuted = false,
-            replyDisabled = false,
-            embeddingDisabled = false,
-            pinned = false,
-            bookmarked = false,
-        ),
+        record =
+            Post.Record(text = "Hello World!", createdAt = Instant.parse("2024-01-01T00:00:00Z")),
+        viewerStats =
+            Post.ViewerStats(
+                likeUri = null,
+                repostUri = null,
+                threadMuted = false,
+                replyDisabled = false,
+                embeddingDisabled = false,
+                pinned = false,
+                bookmarked = false,
+            ),
         viewerState = null,
         labels = emptyList(),
         embeddedRecord = null,

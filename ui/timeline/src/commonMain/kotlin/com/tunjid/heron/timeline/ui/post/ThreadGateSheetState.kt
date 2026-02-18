@@ -76,24 +76,20 @@ import heron.ui.timeline.generated.resources.thread_gate_your_followers
 import org.jetbrains.compose.resources.stringResource
 
 @Stable
-sealed class ThreadGateSheetState private constructor(
-    scope: BottomSheetScope,
-) : BottomSheetState(scope) {
+sealed class ThreadGateSheetState private constructor(scope: BottomSheetScope) :
+    BottomSheetState(scope) {
 
     protected var mode by mutableStateOf<Mode?>(null)
     internal var allowed by mutableStateOf<ThreadGate.Allowed?>(null)
 
-    internal val isForSinglePost get() = mode is Mode.Timeline
+    internal val isForSinglePost
+        get() = mode is Mode.Timeline
 
-    internal inline fun updateAllowed(
-        block: ThreadGate.Allowed.() -> ThreadGate.Allowed?,
-    ) {
+    internal inline fun updateAllowed(block: ThreadGate.Allowed.() -> ThreadGate.Allowed?) {
         allowed = (allowed ?: NoneAllowed).block()
     }
 
-    internal inline fun onUpdated(
-        block: (Mode, ThreadGate.Allowed?) -> Unit,
-    ) {
+    internal inline fun onUpdated(block: (Mode, ThreadGate.Allowed?) -> Unit) {
         val currentMode = mode
         val currentAllowed = allowed
         if (currentMode != null) block(currentMode, currentAllowed)
@@ -105,13 +101,9 @@ sealed class ThreadGateSheetState private constructor(
     }
 
     @Stable
-    class OfTimeline(
-        scope: BottomSheetScope,
-    ) : ThreadGateSheetState(scope) {
+    class OfTimeline(scope: BottomSheetScope) : ThreadGateSheetState(scope) {
 
-        fun show(
-            timelineItem: TimelineItem,
-        ) {
+        fun show(timelineItem: TimelineItem) {
             this.mode = Mode.Timeline(timelineItem)
             this.allowed = timelineItem.threadGate?.allowed
 
@@ -120,12 +112,8 @@ sealed class ThreadGateSheetState private constructor(
     }
 
     @Stable
-    class OfPreference(
-        scope: BottomSheetScope,
-    ) : ThreadGateSheetState(scope) {
-        fun show(
-            preference: PostInteractionSettingsPreference?,
-        ) {
+    class OfPreference(scope: BottomSheetScope) : ThreadGateSheetState(scope) {
+        fun show(preference: PostInteractionSettingsPreference?) {
             this.mode = Mode.Preferences(preference)
             this.allowed = preference?.threadGateAllowed
 
@@ -137,38 +125,36 @@ sealed class ThreadGateSheetState private constructor(
 
         @Composable
         fun rememberUpdatedThreadGateSheetState(
-            onThreadGateUpdated: (Post.Interaction.Upsert.Gate) -> Unit,
-        ): OfTimeline = rememberUpdatedGenericThreadGateSheetState(
-            ThreadGateSheetState::OfTimeline,
-        ) { mode, allowed ->
-            require(mode is Mode.Timeline)
-            onThreadGateUpdated(mode.update(allowed))
-        }
+            onThreadGateUpdated: (Post.Interaction.Upsert.Gate) -> Unit
+        ): OfTimeline =
+            rememberUpdatedGenericThreadGateSheetState(ThreadGateSheetState::OfTimeline) {
+                mode,
+                allowed ->
+                require(mode is Mode.Timeline)
+                onThreadGateUpdated(mode.update(allowed))
+            }
 
         @Composable
         fun rememberUpdatedThreadGateSheetState(
-            onDefaultThreadGateUpdated: (PostInteractionSettingsPreference) -> Unit,
-        ): OfPreference = rememberUpdatedGenericThreadGateSheetState(
-            ThreadGateSheetState::OfPreference,
-        ) { mode, allowed ->
-            require(mode is Mode.Preferences)
-            onDefaultThreadGateUpdated(mode.update(allowed))
-        }
+            onDefaultThreadGateUpdated: (PostInteractionSettingsPreference) -> Unit
+        ): OfPreference =
+            rememberUpdatedGenericThreadGateSheetState(ThreadGateSheetState::OfPreference) {
+                mode,
+                allowed ->
+                require(mode is Mode.Preferences)
+                onDefaultThreadGateUpdated(mode.update(allowed))
+            }
 
         @Composable
         private inline fun <T : ThreadGateSheetState> rememberUpdatedGenericThreadGateSheetState(
             crossinline initializer: (BottomSheetScope) -> T,
             crossinline onThreadGateUpdated: (Mode, ThreadGate.Allowed?) -> Unit,
         ): T {
-            val state = rememberBottomSheetState {
-                initializer(it)
-            }
+            val state = rememberBottomSheetState { initializer(it) }
 
             ThreadGateBottomSheet(
                 state = state,
-                onThreadGateUpdated = { mode, allowed ->
-                    onThreadGateUpdated(mode, allowed)
-                },
+                onThreadGateUpdated = { mode, allowed -> onThreadGateUpdated(mode, allowed) },
             )
 
             return state
@@ -183,16 +169,15 @@ private fun ThreadGateBottomSheet(
 ) {
     state.ModalBottomSheet {
         Column(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
+            modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            if (state.isForSinglePost) Text(
-                text = stringResource(Res.string.thread_gate_post_reply_settings),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
+            if (state.isForSinglePost)
+                Text(
+                    text = stringResource(Res.string.thread_gate_post_reply_settings),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
             else InfoBanner()
 
             Text(
@@ -209,48 +194,36 @@ private fun ThreadGateBottomSheet(
                     text = stringResource(Res.string.thread_gate_anyone),
                     selected = state.allowed.allowsAll,
                     modifier = Modifier.weight(1f),
-                    onClick = {
-                        state.updateAllowed { null }
-                    },
+                    onClick = { state.updateAllowed { null } },
                 )
                 SelectionCard(
                     text = stringResource(Res.string.thread_gate_nobody),
                     selected = state.allowed.allowsNone,
                     modifier = Modifier.weight(1f),
-                    onClick = {
-                        state.updateAllowed { NoneAllowed }
-                    },
+                    onClick = { state.updateAllowed { NoneAllowed } },
                 )
             }
 
-            Column(
-                verticalArrangement = Arrangement.spacedBy(0.dp),
-            ) {
+            Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
                 val isCustomOrAnyone = !state.allowed.allowsNone
 
                 SettingsCheckboxRow(
                     text = stringResource(Res.string.thread_gate_your_followers),
                     checked = state.allowed.allowsFollowers,
                     enabled = isCustomOrAnyone,
-                    onClick = {
-                        state.updateAllowed { copy(allowsFollowers = !allowsFollowers) }
-                    },
+                    onClick = { state.updateAllowed { copy(allowsFollowers = !allowsFollowers) } },
                 )
                 SettingsCheckboxRow(
                     text = stringResource(Res.string.thread_gate_people_you_follow),
                     checked = state.allowed.allowsFollowing,
                     enabled = isCustomOrAnyone,
-                    onClick = {
-                        state.updateAllowed { copy(allowsFollowing = !allowsFollowing) }
-                    },
+                    onClick = { state.updateAllowed { copy(allowsFollowing = !allowsFollowing) } },
                 )
                 SettingsCheckboxRow(
                     text = stringResource(Res.string.thread_gate_people_you_mention),
                     checked = state.allowed.allowsMentioned,
                     enabled = isCustomOrAnyone,
-                    onClick = {
-                        state.updateAllowed { copy(allowsMentioned = !allowsMentioned) }
-                    },
+                    onClick = { state.updateAllowed { copy(allowsMentioned = !allowsMentioned) } },
                 )
             }
 
@@ -280,38 +253,38 @@ private fun ThreadGateBottomSheet(
              */
             // Quote Posts Toggle
             /* Comment out for now, out of scope
-             Row(
-             modifier = Modifier
-             .fillMaxWidth()
-             .clip(RoundedCornerShape(8.dp))
-             .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.3f)) // Darker blue in screenshot
-             .padding(horizontal = 16.dp, vertical = 12.dp),
-             horizontalArrangement = Arrangement.SpaceBetween,
-             verticalAlignment = Alignment.CenterVertically,
-             ) {
-             Row(
-             verticalAlignment = Alignment.CenterVertically,
-             horizontalArrangement = Arrangement.spacedBy(12.dp),
-             ) {
-             Icon(
-             imageVector = Icons.Rounded.FormatQuote,
-             contentDescription = null,
-             modifier = Modifier.size(20.dp),
-             )
-             Text(
-             text = stringResource(Res.string.thread_gate_allow_quote_posts),
-             style = MaterialTheme.typography.bodyMedium,
-             fontWeight = FontWeight.Medium,
-             )
-             }
-             Switch(
-             checked = true,
-             onCheckedChange = {
+            Row(
+            modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.3f)) // Darker blue in screenshot
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            ) {
+            Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+            Icon(
+            imageVector = Icons.Rounded.FormatQuote,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+            )
+            Text(
+            text = stringResource(Res.string.thread_gate_allow_quote_posts),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            )
+            }
+            Switch(
+            checked = true,
+            onCheckedChange = {
 
-             },
-             )
-             }
-             */
+            },
+            )
+            }
+            */
             Spacer(Modifier.height(8.dp))
 
             // Save Button
@@ -331,18 +304,18 @@ private fun ThreadGateBottomSheet(
 @Composable
 private fun InfoBanner() {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(8.dp),
-            )
-            .background(
-                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
-                shape = RoundedCornerShape(8.dp),
-            )
-            .padding(12.dp),
+        modifier =
+            Modifier.fillMaxWidth()
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(8.dp),
+                )
+                .background(
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(8.dp),
+                )
+                .padding(12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.Top,
     ) {
@@ -368,28 +341,25 @@ private fun SelectionCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    val backgroundColor = if (selected)
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-    else
-        MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f)
+    val backgroundColor =
+        if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+        else MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f)
 
-    val borderColor = if (selected)
-        MaterialTheme.colorScheme.primary
-    else
-        Color.Transparent
+    val borderColor = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
 
     Row(
-        modifier = modifier
-            .height(50.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .border(
-                width = if (selected) 2.dp else 0.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(8.dp),
-            )
-            .background(backgroundColor)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp),
+        modifier =
+            modifier
+                .height(50.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .border(
+                    width = if (selected) 2.dp else 0.dp,
+                    color = borderColor,
+                    shape = RoundedCornerShape(8.dp),
+                )
+                .background(backgroundColor)
+                .clickable(onClick = onClick)
+                .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         RadioButton(
@@ -414,12 +384,12 @@ private fun SettingsCheckboxRow(
     onClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(horizontal = 4.dp),
+        modifier =
+            Modifier.fillMaxWidth()
+                .height(48.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier)
+                .padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Checkbox(
@@ -431,43 +401,40 @@ private fun SettingsCheckboxRow(
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,
-            color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
-                alpha = 0.38f,
-            ),
+            color =
+                if (enabled) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
         )
     }
 }
 
 sealed class Mode {
 
-    data class Timeline(
-        val item: TimelineItem,
-    ) : Mode() {
-        internal fun update(allowed: ThreadGate.Allowed?) = Post.Interaction.Upsert.Gate(
-            postUri = item.post.uri,
-            threadGateUri = item.threadGate?.uri,
-            allowsFollowing = allowed.allowsFollowing,
-            allowsFollowers = allowed.allowsFollowers,
-            allowsMentioned = allowed.allowsMentioned,
-            allowedListUris = allowed.allowedListUrisOrEmpty,
-        )
+    data class Timeline(val item: TimelineItem) : Mode() {
+        internal fun update(allowed: ThreadGate.Allowed?) =
+            Post.Interaction.Upsert.Gate(
+                postUri = item.post.uri,
+                threadGateUri = item.threadGate?.uri,
+                allowsFollowing = allowed.allowsFollowing,
+                allowsFollowers = allowed.allowsFollowers,
+                allowsMentioned = allowed.allowsMentioned,
+                allowedListUris = allowed.allowedListUrisOrEmpty,
+            )
     }
 
-    data class Preferences(
-        val preference: PostInteractionSettingsPreference?,
-    ) : Mode() {
-        internal fun update(
-            allowed: ThreadGate.Allowed?,
-        ) = PostInteractionSettingsPreference(
-            threadGateAllowed = allowed,
-            allowedEmbeds = preference?.allowedEmbeds,
-        )
+    data class Preferences(val preference: PostInteractionSettingsPreference?) : Mode() {
+        internal fun update(allowed: ThreadGate.Allowed?) =
+            PostInteractionSettingsPreference(
+                threadGateAllowed = allowed,
+                allowedEmbeds = preference?.allowedEmbeds,
+            )
     }
 }
 
-private val NoneAllowed = ThreadGate.Allowed(
-    allowsFollowing = false,
-    allowsFollowers = false,
-    allowsMentioned = false,
-    allowedLists = emptyList(),
-)
+private val NoneAllowed =
+    ThreadGate.Allowed(
+        allowsFollowing = false,
+        allowsFollowers = false,
+        allowsMentioned = false,
+        allowedLists = emptyList(),
+    )

@@ -54,74 +54,80 @@ data class State(
     @Transient val updatedAvatar: RestrictedFile.Media.Photo? = null,
     @Transient val updatedBanner: RestrictedFile.Media.Photo? = null,
     @Transient
-    val fields: List<FormField> = listOf(
-        FormField(
-            id = DisplayName,
-            value = "",
-            maxLines = 1,
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.None,
-                autoCorrectEnabled = true,
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Next,
+    val fields: List<FormField> =
+        listOf(
+            FormField(
+                id = DisplayName,
+                value = "",
+                maxLines = 1,
+                keyboardOptions =
+                    KeyboardOptions(
+                        capitalization = KeyboardCapitalization.None,
+                        autoCorrectEnabled = true,
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next,
+                    ),
+                contentDescription = Memo.Resource(Res.string.display_name),
+                validator =
+                    Validator(
+                        String::isMaxDisplayName to
+                            Memo.Resource(
+                                Res.string.character_limit,
+                                listOf(Res.string.display_name),
+                            )
+                    ),
             ),
-            contentDescription = Memo.Resource(Res.string.display_name),
-            validator = Validator(
-                String::isMaxDisplayName to Memo.Resource(
-                    Res.string.character_limit,
-                    listOf(Res.string.display_name),
-                ),
+            FormField(
+                id = Description,
+                value = "",
+                maxLines = Int.MAX_VALUE,
+                keyboardOptions =
+                    KeyboardOptions(
+                        capitalization = KeyboardCapitalization.None,
+                        autoCorrectEnabled = true,
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Done,
+                    ),
+                contentDescription = Memo.Resource(Res.string.description),
+                validator =
+                    Validator(
+                        String::isMaxDescription to
+                            Memo.Resource(
+                                Res.string.character_limit,
+                                listOf(Res.string.description),
+                            )
+                    ),
             ),
         ),
-        FormField(
-            id = Description,
-            value = "",
-            maxLines = Int.MAX_VALUE,
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.None,
-                autoCorrectEnabled = true,
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Done,
-            ),
-            contentDescription = Memo.Resource(Res.string.description),
-            validator = Validator(
-                String::isMaxDescription to Memo.Resource(
-                    Res.string.character_limit,
-                    listOf(Res.string.description),
-                ),
-            ),
-        ),
-    ),
-    @Transient
-    val messages: List<Memo> = emptyList(),
+    @Transient val messages: List<Memo> = emptyList(),
 )
 
 @OptIn(ExperimentalUuidApi::class)
-fun State(route: Route) = State(
-    profile = route.model<Profile>() ?: stubProfile(
-        did = ProfileId(route.profileHandleOrId.id),
-        handle = ProfileHandle(route.profileHandleOrId.id),
-        avatar = null,
-    ),
-    avatarSharedElementKey = route.avatarSharedElementKey ?: Uuid.random().toString(),
-)
+fun State(route: Route) =
+    State(
+        profile =
+            route.model<Profile>()
+                ?: stubProfile(
+                    did = ProfileId(route.profileHandleOrId.id),
+                    handle = ProfileHandle(route.profileHandleOrId.id),
+                    avatar = null,
+                ),
+        avatarSharedElementKey = route.avatarSharedElementKey ?: Uuid.random().toString(),
+    )
 
-internal fun State.saveProfileAction() = Action.SaveProfile(
-    profileId = profile.did,
-    displayName = fields.valueFor(DisplayName),
-    description = fields.valueFor(Description),
-    avatar = updatedAvatar,
-    banner = updatedBanner,
-)
+internal fun State.saveProfileAction() =
+    Action.SaveProfile(
+        profileId = profile.did,
+        displayName = fields.valueFor(DisplayName),
+        description = fields.valueFor(Description),
+        avatar = updatedAvatar,
+        banner = updatedBanner,
+    )
 
 sealed class Action(val key: String) {
-    data class AvatarPicked(
-        val item: RestrictedFile.Media.Photo,
-    ) : Action(key = "AvatarPicked")
+    data class AvatarPicked(val item: RestrictedFile.Media.Photo) : Action(key = "AvatarPicked")
 
-    data class BannerPicked(
-        val item: RestrictedFile.Media.Photo,
-    ) : Action(key = "BannerPicked")
+    data class BannerPicked(val item: RestrictedFile.Media.Photo) : Action(key = "BannerPicked")
 
     data class SaveProfile(
         val profileId: ProfileId,
@@ -131,24 +137,19 @@ sealed class Action(val key: String) {
         val banner: RestrictedFile.Media.Photo?,
     ) : Action(key = "SaveProfile")
 
-    data class FieldChanged(
-        val id: FormField.Id,
-        val text: String,
-    ) : Action("FieldChanged")
+    data class FieldChanged(val id: FormField.Id, val text: String) : Action("FieldChanged")
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
     }
 }
 
-private val String.isMaxDisplayName get() = length <= MAX_DISPLAY_NAME_LENGTH
-private val String.isMaxDescription get() = length <= MAX_DESCRIPTION_LENGTH
+private val String.isMaxDisplayName
+    get() = length <= MAX_DISPLAY_NAME_LENGTH
+private val String.isMaxDescription
+    get() = length <= MAX_DESCRIPTION_LENGTH
 
 private const val MAX_DISPLAY_NAME_LENGTH = 64
 private const val MAX_DESCRIPTION_LENGTH = 256

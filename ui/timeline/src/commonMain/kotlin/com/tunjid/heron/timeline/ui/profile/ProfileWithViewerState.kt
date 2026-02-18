@@ -72,118 +72,103 @@ fun ProfileWithViewerState(
     profileSharedElementKey: (Profile) -> Any,
     onProfileClicked: (Profile) -> Unit,
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
-) = with(movableElementSharedTransitionScope) {
-    val profileClicked = {
-        onProfileClicked(profile)
-    }
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalAlignment = Alignment.Start,
-    ) {
-        AttributionLayout(
-            modifier = Modifier,
-            avatar = {
-                UpdatedMovableStickySharedElementOf(
-                    modifier = Modifier
-                        .size(UiTokens.avatarSize)
-                        .ifTrue(viewerState.isBlocked) {
-                            blur(
-                                shape = CircleShape,
-                                radius = ::BlockedContentBlurRadius,
-                                clip = ::BlockedContentBlurClip,
-                                progress = ::BlockedContentBlurProgress,
-                            )
-                        }
-                        .clickable(onClick = profileClicked),
-                    sharedContentState = with(movableElementSharedTransitionScope) {
-                        rememberSharedContentState(
-                            key = profileSharedElementKey(profile),
-                        )
-                    },
-                    state = remember(profile.avatar) {
-                        ImageArgs(
-                            url = profile.avatar?.uri,
-                            contentScale = ContentScale.Crop,
-                            contentDescription = profile.contentDescription,
-                            shape = RoundedPolygonShape.Circle,
-                        )
-                    },
-                    sharedElement = { state, modifier ->
-                        AsyncImage(state, modifier)
-                    },
-                )
-            },
-            label = {
-                Column {
-                    ProfileName(
-                        modifier = Modifier,
-                        profile = profile,
-                        ellipsize = false,
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    ProfileHandle(
-                        modifier = Modifier,
-                        profile = profile,
-                    )
-                }
-            },
-            action = {
-                val isSignedInProfile = signedInProfileId == profile.did
-                AnimatedVisibility(
-                    visible = !isSignedInProfile && !viewerState.isRestricted,
-                    content = {
-                        ProfileViewerState(
-                            viewerState = viewerState,
-                            isSignedInProfile = isSignedInProfile,
-                            onClick = {
-                                onViewerStateClicked(viewerState)
+) =
+    with(movableElementSharedTransitionScope) {
+        val profileClicked = { onProfileClicked(profile) }
+        Column(
+            modifier = modifier,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.Start,
+        ) {
+            AttributionLayout(
+                modifier = Modifier,
+                avatar = {
+                    UpdatedMovableStickySharedElementOf(
+                        modifier =
+                            Modifier.size(UiTokens.avatarSize)
+                                .ifTrue(viewerState.isBlocked) {
+                                    blur(
+                                        shape = CircleShape,
+                                        radius = ::BlockedContentBlurRadius,
+                                        clip = ::BlockedContentBlurClip,
+                                        progress = ::BlockedContentBlurProgress,
+                                    )
+                                }
+                                .clickable(onClick = profileClicked),
+                        sharedContentState =
+                            with(movableElementSharedTransitionScope) {
+                                rememberSharedContentState(key = profileSharedElementKey(profile))
                             },
-                        )
-                    },
-                )
-            },
-        )
-        LabelFlowRow {
-            if (viewerState.followsYou) IconLabel(
-                icon = null,
-                contentDescription = stringResource(CommonStrings.viewer_state_follows_you),
-                onClick = profileClicked,
+                        state =
+                            remember(profile.avatar) {
+                                ImageArgs(
+                                    url = profile.avatar?.uri,
+                                    contentScale = ContentScale.Crop,
+                                    contentDescription = profile.contentDescription,
+                                    shape = RoundedPolygonShape.Circle,
+                                )
+                            },
+                        sharedElement = { state, modifier -> AsyncImage(state, modifier) },
+                    )
+                },
+                label = {
+                    Column {
+                        ProfileName(modifier = Modifier, profile = profile, ellipsize = false)
+                        Spacer(Modifier.height(4.dp))
+                        ProfileHandle(modifier = Modifier, profile = profile)
+                    }
+                },
+                action = {
+                    val isSignedInProfile = signedInProfileId == profile.did
+                    AnimatedVisibility(
+                        visible = !isSignedInProfile && !viewerState.isRestricted,
+                        content = {
+                            ProfileViewerState(
+                                viewerState = viewerState,
+                                isSignedInProfile = isSignedInProfile,
+                                onClick = { onViewerStateClicked(viewerState) },
+                            )
+                        },
+                    )
+                },
             )
-            if (viewerState.isBlocked) IconLabel(
-                icon = Icons.Rounded.Block,
-                contentDescription = stringResource(CommonStrings.viewer_state_blocked),
-                onClick = profileClicked,
-            )
-            if (viewerState.isMuted) IconLabel(
-                icon = Icons.AutoMirrored.Rounded.VolumeOff,
-                contentDescription = stringResource(CommonStrings.viewer_state_muted),
-                onClick = profileClicked,
-            )
+            LabelFlowRow {
+                if (viewerState.followsYou)
+                    IconLabel(
+                        icon = null,
+                        contentDescription = stringResource(CommonStrings.viewer_state_follows_you),
+                        onClick = profileClicked,
+                    )
+                if (viewerState.isBlocked)
+                    IconLabel(
+                        icon = Icons.Rounded.Block,
+                        contentDescription = stringResource(CommonStrings.viewer_state_blocked),
+                        onClick = profileClicked,
+                    )
+                if (viewerState.isMuted)
+                    IconLabel(
+                        icon = Icons.AutoMirrored.Rounded.VolumeOff,
+                        contentDescription = stringResource(CommonStrings.viewer_state_muted),
+                        onClick = profileClicked,
+                    )
+            }
         }
     }
-}
 
 @Composable
-private fun IconLabel(
-    icon: ImageVector?,
-    contentDescription: String,
-    onClick: () -> Unit,
-) {
+private fun IconLabel(icon: ImageVector?, contentDescription: String, onClick: () -> Unit) {
     Label(
         isElevated = true,
         contentDescription = contentDescription,
         icon = {
-            if (icon != null) Icon(
-                modifier = Modifier
-                    .size(LabelIconSize),
-                imageVector = icon,
-                contentDescription = null,
-            )
+            if (icon != null)
+                Icon(
+                    modifier = Modifier.size(LabelIconSize),
+                    imageVector = icon,
+                    contentDescription = null,
+                )
         },
-        description = {
-            LabelText(contentDescription)
-        },
+        description = { LabelText(contentDescription) },
         onClick = onClick,
     )
 }

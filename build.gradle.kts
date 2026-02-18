@@ -39,22 +39,19 @@ plugins {
 }
 
 // 1. Register the lifecycle task (Lazy)
-val testDataLayer by tasks.registering {
-    group = "verification"
-    description = "Runs tests for all data modules"
-}
+val testDataLayer by
+    tasks.registering {
+        group = "verification"
+        description = "Runs tests for all data modules"
+    }
 
 allprojects {
     plugins.apply(rootProject.libs.plugins.spotless.get().pluginId)
     extensions.configure<SpotlessExtension> {
         kotlin {
-            target(
-                "src/**/*.kt",
-                "build-logic/**/*.kt",
-                "**/*.kts",
-            )
+            target("src/**/*.kt", "build-logic/**/*.kt", "**/*.kts")
             targetExclude("**/build/**")
-            ktlint(rootProject.libs.ktlint.get().version)
+            ktfmt(libs.ktfmt.get().version).kotlinlangStyle()
         }
     }
 }

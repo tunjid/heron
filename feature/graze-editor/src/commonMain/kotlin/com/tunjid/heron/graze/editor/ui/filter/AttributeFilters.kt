@@ -78,27 +78,21 @@ fun AttributeCompareFilter(
             )
         },
         additionalContent = {
-            val selectTextSheetState = rememberSelectTextState(
-                title = stringResource(Res.string.attribute_compare),
-                onTextConfirmed = {
-                    onUpdate(filter.copy(targetValue = it))
-                },
-            )
+            val selectTextSheetState =
+                rememberSelectTextState(
+                    title = stringResource(Res.string.attribute_compare),
+                    onTextConfirmed = { onUpdate(filter.copy(targetValue = it)) },
+                )
             OutlinedTextField(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 value = filter.targetValue,
                 readOnly = true,
-                onValueChange = { },
+                onValueChange = {},
                 label = { Text(text = stringResource(Res.string.value)) },
             )
             FilledTonalButton(
-                onClick = {
-                    selectTextSheetState.show(currentText = filter.targetValue)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
+                onClick = { selectTextSheetState.show(currentText = filter.targetValue) },
+                modifier = Modifier.fillMaxWidth().height(50.dp),
             ) {
                 Text(text = stringResource(Res.string.edit_item))
             }
@@ -137,21 +131,24 @@ fun AttributeEmbedFilter(
     )
 }
 
-private fun Filter.Attribute.Embed.Kind.stringRes() = when (this) {
-    Filter.Attribute.Embed.Kind.Image -> Res.string.embed_kind_image
-    Filter.Attribute.Embed.Kind.Link -> Res.string.embed_kind_link
-    Filter.Attribute.Embed.Kind.Post -> Res.string.embed_kind_post
-    Filter.Attribute.Embed.Kind.ImageGroup -> Res.string.embed_kind_image_group
-    Filter.Attribute.Embed.Kind.Video -> Res.string.embed_kind_video
-    Filter.Attribute.Embed.Kind.Gif -> Res.string.embed_kind_gif
-}
+private fun Filter.Attribute.Embed.Kind.stringRes() =
+    when (this) {
+        Filter.Attribute.Embed.Kind.Image -> Res.string.embed_kind_image
+        Filter.Attribute.Embed.Kind.Link -> Res.string.embed_kind_link
+        Filter.Attribute.Embed.Kind.Post -> Res.string.embed_kind_post
+        Filter.Attribute.Embed.Kind.ImageGroup -> Res.string.embed_kind_image_group
+        Filter.Attribute.Embed.Kind.Video -> Res.string.embed_kind_video
+        Filter.Attribute.Embed.Kind.Gif -> Res.string.embed_kind_gif
+    }
 
-private fun Filter.Attribute.Compare.Selector.stringRes(): StringResource = when (this) {
-    Filter.Attribute.Compare.Selector.Text -> Res.string.selector_text
-    Filter.Attribute.Compare.Selector.Reply -> Res.string.selector_reply
-    Filter.Attribute.Compare.Selector.Embed -> Res.string.selector_embed
-    Filter.Attribute.Compare.Selector.UserHandle -> Res.string.selector_user_handle
-    Filter.Attribute.Compare.Selector.MentionHandle -> Res.string.selector_mention_handle
-    Filter.Attribute.Compare.Selector.QuoteAuthorHandle -> Res.string.selector_quote_author_handle
-    else -> Res.string.selector_unknown
-}
+private fun Filter.Attribute.Compare.Selector.stringRes(): StringResource =
+    when (this) {
+        Filter.Attribute.Compare.Selector.Text -> Res.string.selector_text
+        Filter.Attribute.Compare.Selector.Reply -> Res.string.selector_reply
+        Filter.Attribute.Compare.Selector.Embed -> Res.string.selector_embed
+        Filter.Attribute.Compare.Selector.UserHandle -> Res.string.selector_user_handle
+        Filter.Attribute.Compare.Selector.MentionHandle -> Res.string.selector_mention_handle
+        Filter.Attribute.Compare.Selector.QuoteAuthorHandle ->
+            Res.string.selector_quote_author_handle
+        else -> Res.string.selector_unknown
+    }

@@ -45,41 +45,23 @@ class SignInPopUpState private constructor() {
 
     companion object {
         @Composable
-        fun rememberSignInPopUpState(
-            onSignInClicked: () -> Unit,
-        ): SignInPopUpState {
+        fun rememberSignInPopUpState(onSignInClicked: () -> Unit): SignInPopUpState {
             val state = remember(::SignInPopUpState)
 
-            SignInPopUp(
-                state = state,
-                onSignInClicked = onSignInClicked,
-            )
+            SignInPopUp(state = state, onSignInClicked = onSignInClicked)
             return state
         }
     }
 }
 
 @Composable
-private fun SignInPopUp(
-    state: SignInPopUpState,
-    onSignInClicked: () -> Unit,
-) {
+private fun SignInPopUp(state: SignInPopUpState, onSignInClicked: () -> Unit) {
     if (!state.visible) return
 
     SimpleDialog(
-        onDismissRequest = {
-            state.visible = false
-        },
-        title = {
-            SimpleDialogTitle(
-                text = stringResource(Res.string.signed_out),
-            )
-        },
-        text = {
-            SimpleDialogText(
-                text = stringResource(Res.string.sign_in_prompt),
-            )
-        },
+        onDismissRequest = { state.visible = false },
+        title = { SimpleDialogTitle(text = stringResource(Res.string.signed_out)) },
+        text = { SimpleDialogText(text = stringResource(Res.string.sign_in_prompt)) },
         confirmButton = {
             PrimaryDialogButton(
                 text = stringResource(CommonStrings.sign_in),
@@ -89,9 +71,7 @@ private fun SignInPopUp(
         dismissButton = {
             NeutralDialogButton(
                 text = stringResource(CommonStrings.dismiss),
-                onClick = {
-                    state.visible = false
-                },
+                onClick = { state.visible = false },
             )
         },
     )

@@ -71,10 +71,7 @@ internal typealias MessagesStateHolder = ActionStateMutator<Action, StateFlow<St
 
 @AssistedFactory
 fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
-        scope: CoroutineScope,
-        route: Route,
-    ): ActualMessagesViewModel
+    override fun invoke(scope: CoroutineScope, route: Route): ActualMessagesViewModel
 }
 
 @AssistedInject
@@ -83,62 +80,51 @@ class ActualMessagesViewModel(
     messagesRepository: MessageRepository,
     searchRepository: SearchRepository,
     navActions: (NavigationMutation) -> Unit,
-    @Assisted
-    scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
-    @Assisted
-    route: Route,
-) : ViewModel(viewModelScope = scope),
+    @Assisted scope: CoroutineScope,
+    @Suppress("UNUSED_PARAMETER") @Assisted route: Route,
+) :
+    ViewModel(viewModelScope = scope),
     MessagesStateHolder by scope.actionStateFlowMutator(
         initialState = State(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = listOf(
-            loadProfileMutations(
-                authRepository,
-            ),
-        ),
+        inputs = listOf(loadProfileMutations(authRepository)),
         actionTransform = transform@{ actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
-                    is Action.SetIsSearching -> action.flow.setIsSearchingMutations()
-                    is Action.SearchQueryChanged -> action.flow.searchQueryChangeMutations(
-                        searchRepository = searchRepository,
-                    )
-                    is Action.ResolveConversation -> action.flow.resolveConversationMutations(
-                        navActions = navActions,
-                        messagesRepository = messagesRepository,
-                    )
-
-                    is Action.Tile ->
-                        action.flow
-                            .map { it.tilingAction }
-                            .tilingMutations(
-                                currentState = { state() },
-                                updateQueryData = { copy(data = it) },
-                                refreshQuery = { copy(data = data.reset()) },
-                                cursorListLoader = messagesRepository::conversations,
-                                onNewItems = { items ->
-                                    items.distinctBy(Conversation::id)
-                                },
-                                onTilingDataUpdated = { copy(tilingData = it) },
+                actions.toMutationStream(keySelector = Action::key) {
+                    when (val action = type()) {
+                        is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+                        is Action.Navigate ->
+                            action.flow.consumeNavigationActions(
+                                navigationMutationConsumer = navActions
                             )
+                        is Action.SetIsSearching -> action.flow.setIsSearchingMutations()
+                        is Action.SearchQueryChanged ->
+                            action.flow.searchQueryChangeMutations(
+                                searchRepository = searchRepository
+                            )
+                        is Action.ResolveConversation ->
+                            action.flow.resolveConversationMutations(
+                                navActions = navActions,
+                                messagesRepository = messagesRepository,
+                            )
+
+                        is Action.Tile ->
+                            action.flow
+                                .map { it.tilingAction }
+                                .tilingMutations(
+                                    currentState = { state() },
+                                    updateQueryData = { copy(data = it) },
+                                    refreshQuery = { copy(data = data.reset()) },
+                                    cursorListLoader = messagesRepository::conversations,
+                                    onNewItems = { items -> items.distinctBy(Conversation::id) },
+                                    onTilingDataUpdated = { copy(tilingData = it) },
+                                )
+                    }
                 }
-            }
-        },
+            },
     )
 
-private fun loadProfileMutations(
-    authRepository: AuthRepository,
-): Flow<Mutation<State>> =
-    authRepository.signedInUser.mapToMutation {
-        copy(signedInProfile = it)
-    }
+private fun loadProfileMutations(authRepository: AuthRepository): Flow<Mutation<State>> =
+    authRepository.signedInUser.mapToMutation { copy(signedInProfile = it) }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
@@ -148,77 +134,71 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
 private fun Flow<Action.ResolveConversation>.resolveConversationMutations(
     navActions: (NavigationMutation) -> Unit,
     messagesRepository: MessageRepository,
-): Flow<Mutation<State>> =
-    mapLatestToManyMutations { action ->
-        try {
+): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
+    try {
             withTimeout(2.seconds) {
-                messagesRepository.resolveConversation(
-                    with = action.with.did,
-                )
+                messagesRepository.resolveConversation(with = action.with.did)
             }
         } catch (e: TimeoutCancellationException) {
             Result.failure(e)
         }
-            .onSuccess { conversationId ->
-                navActions(
-                    conversationDestination(
+        .onSuccess { conversationId ->
+            navActions(
+                conversationDestination(
                         id = conversationId,
                         members = listOf(action.with),
                         sharedElementPrefix = ConversationSearchResult,
                         referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                    ).navigationMutation,
+                    )
+                    .navigationMutation
+            )
+        }
+        .onFailure {
+            emit {
+                copy(
+                    messages =
+                        messages +
+                            Memo.Resource(
+                                Res.string.error_conversation_not_found,
+                                listOf(action.with.contentDescription),
+                            )
                 )
             }
-            .onFailure {
-                emit {
-                    copy(
-                        messages = messages + Memo.Resource(
-                            Res.string.error_conversation_not_found,
-                            listOf(action.with.contentDescription),
-                        ),
-                    )
-                }
-            }
-    }
+        }
+}
 
 private fun Flow<Action.SetIsSearching>.setIsSearchingMutations(): Flow<Mutation<State>> =
-    mapToMutation { copy(isSearching = it.isSearching) }
+    mapToMutation {
+        copy(isSearching = it.isSearching)
+    }
 
 private fun Flow<Action.SearchQueryChanged>.searchQueryChangeMutations(
-    searchRepository: SearchRepository,
+    searchRepository: SearchRepository
 ): Flow<Mutation<State>> = channelFlow {
-    val sharedActions = shareIn(
-        scope = this,
-        started = SharingStarted.WhileSubscribed(),
-        replay = 1,
-    )
-    launch {
-        sharedActions.collectLatest {
-            send { copy(searchQuery = it.query) }
-        }
-    }
+    val sharedActions =
+        shareIn(scope = this, started = SharingStarted.WhileSubscribed(), replay = 1)
+    launch { sharedActions.collectLatest { send { copy(searchQuery = it.query) } } }
     launch {
         sharedActions
-            .debounce {
-                if (it.query.isBlank()) 0.milliseconds
-                else 300.milliseconds
-            }
+            .debounce { if (it.query.isBlank()) 0.milliseconds else 300.milliseconds }
             .flatMapLatest { action ->
                 if (action.query.isBlank()) flowOf(emptyList())
-                else searchRepository.autoCompleteProfileSearch(
-                    query = SearchQuery.OfProfiles(
-                        query = action.query,
-                        isLocalOnly = false,
-                        data = chatSearchData(),
-                    ),
-                    cursor = Cursor.Initial,
-                )
-            }.collect {
+                else
+                    searchRepository.autoCompleteProfileSearch(
+                        query =
+                            SearchQuery.OfProfiles(
+                                query = action.query,
+                                isLocalOnly = false,
+                                data = chatSearchData(),
+                            ),
+                        cursor = Cursor.Initial,
+                    )
+            }
+            .collect {
                 send {
                     copy(
-                        autoCompletedProfiles = it.sortedByDescending(
-                            ProfileWithViewerState::canBeMessaged,
-                        ),
+                        autoCompletedProfiles =
+                            it.sortedByDescending(ProfileWithViewerState::canBeMessaged)
                     )
                 }
             }
@@ -232,8 +212,5 @@ fun ProfileWithViewerState.canBeMessaged() =
         Profile.ChatInfo.Allowed.NoOne -> false
     }
 
-private fun chatSearchData() = CursorQuery.Data(
-    page = 0,
-    cursorAnchor = Clock.System.now(),
-    limit = 30,
-)
+private fun chatSearchData() =
+    CursorQuery.Data(page = 0, cursorAnchor = Clock.System.now(), limit = 30)

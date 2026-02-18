@@ -52,14 +52,8 @@ fun LabelSetting(
     onVisibilityChanged: (Label.Visibility) -> Unit,
 ) {
     val latchedVisibilityState = rememberLatchedState(selectedVisibility)
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(
-            text = labelName,
-            style = MaterialTheme.typography.bodySmallEmphasized,
-        )
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(text = labelName, style = MaterialTheme.typography.bodySmallEmphasized)
         labelDescription?.let {
             Text(
                 text = it,
@@ -83,20 +77,18 @@ fun LabelSetting(
                         // Do nothing, cannot uncheck a label setting
                         else Unit
                     },
-                    modifier = Modifier
-                        .weight(1f)
-                        .semantics {
-                            role = Role.RadioButton
+                    modifier = Modifier.weight(1f).semantics { role = Role.RadioButton },
+                    colors =
+                        ToggleButtonDefaults.toggleButtonColors(
+                            checkedContainerColor = overrideColors.containerColor,
+                            checkedContentColor = overrideColors.contentColor,
+                        ),
+                    shapes =
+                        when (index) {
+                            0 -> LeadingButtonShape
+                            Label.Visibility.all.lastIndex -> TrailingButtonShape
+                            else -> MiddleButtonShape
                         },
-                    colors = ToggleButtonDefaults.toggleButtonColors(
-                        checkedContainerColor = overrideColors.containerColor,
-                        checkedContentColor = overrideColors.contentColor,
-                    ),
-                    shapes = when (index) {
-                        0 -> LeadingButtonShape
-                        Label.Visibility.all.lastIndex -> TrailingButtonShape
-                        else -> MiddleButtonShape
-                    },
                 ) {
                     Text(stringResource(visibilityStringResource(visibility)))
                 }
@@ -106,25 +98,19 @@ fun LabelSetting(
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private val LeadingButtonShape = RoundedCornerShape(
-    topStart = 8.dp,
-    topEnd = 0.dp,
-    bottomStart = 8.dp,
-    bottomEnd = 0.dp,
-).let { ToggleButtonShapes(it, it, it) }
+private val LeadingButtonShape =
+    RoundedCornerShape(topStart = 8.dp, topEnd = 0.dp, bottomStart = 8.dp, bottomEnd = 0.dp).let {
+        ToggleButtonShapes(it, it, it)
+    }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private val MiddleButtonShape = RoundedCornerShape(
-    topStart = 0.dp,
-    topEnd = 0.dp,
-    bottomStart = 0.dp,
-    bottomEnd = 0.dp,
-).let { ToggleButtonShapes(it, it, it) }
+private val MiddleButtonShape =
+    RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomStart = 0.dp, bottomEnd = 0.dp).let {
+        ToggleButtonShapes(it, it, it)
+    }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private val TrailingButtonShape = RoundedCornerShape(
-    topStart = 0.dp,
-    topEnd = 8.dp,
-    bottomStart = 0.dp,
-    bottomEnd = 8.dp,
-).let { ToggleButtonShapes(it, it, it) }
+private val TrailingButtonShape =
+    RoundedCornerShape(topStart = 0.dp, topEnd = 8.dp, bottomStart = 0.dp, bottomEnd = 8.dp).let {
+        ToggleButtonShapes(it, it, it)
+    }

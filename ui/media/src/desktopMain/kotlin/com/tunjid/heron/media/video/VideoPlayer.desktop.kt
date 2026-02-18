@@ -31,24 +31,15 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 
 @Composable
-actual fun VideoPlayer(
-    modifier: Modifier,
-    state: VideoPlayerState,
-) {
+actual fun VideoPlayer(modifier: Modifier, state: VideoPlayerState) {
     check(state is VlcPlayerState)
 
     Box(modifier = modifier) {
         if (state.canShowVideo) {
-            VideoSurface(
-                modifier = Modifier.fillMaxSize(),
-                state = state,
-            )
+            VideoSurface(modifier = Modifier.fillMaxSize(), state = state)
         }
         if (state.canShowStill) {
-            VideoStill(
-                modifier = Modifier.fillMaxSize(),
-                state = state,
-            )
+            VideoStill(modifier = Modifier.fillMaxSize(), state = state)
         }
     }
 
@@ -72,37 +63,30 @@ actual fun VideoPlayer(
 }
 
 @Composable
-private fun VideoSurface(
-    modifier: Modifier,
-    state: VlcPlayerState,
-) {
+private fun VideoSurface(modifier: Modifier, state: VlcPlayerState) {
     SwingPanel(
         background = Color.Black,
         modifier = modifier,
-        factory = {
-            Canvas().apply {
-                background = AwtColor.BLACK
-            }
-        },
-        update = { canvas ->
-            state.setVideoSurface(canvas)
-        },
+        factory = { Canvas().apply { background = AwtColor.BLACK } },
+        update = { canvas -> state.setVideoSurface(canvas) },
     )
 }
 
 private val VlcPlayerState.canShowVideo
-    get() = when (status) {
-        is PlayerStatus.Idle -> false
-        is PlayerStatus.Play -> true
-        is PlayerStatus.Pause -> true
-    }
+    get() =
+        when (status) {
+            is PlayerStatus.Idle -> false
+            is PlayerStatus.Play -> true
+            is PlayerStatus.Pause -> true
+        }
 
 private val VlcPlayerState.canShowStill
-    get() = videoSize == IntSize.Zero ||
-        !hasRenderedFirstFrame ||
-        when (status) {
-            is PlayerStatus.Idle -> true
-            is PlayerStatus.Pause -> false
-            PlayerStatus.Play.Requested -> true
-            PlayerStatus.Play.Confirmed -> false
-        }
+    get() =
+        videoSize == IntSize.Zero ||
+            !hasRenderedFirstFrame ||
+            when (status) {
+                is PlayerStatus.Idle -> true
+                is PlayerStatus.Pause -> false
+                PlayerStatus.Play.Requested -> true
+                PlayerStatus.Play.Confirmed -> false
+            }

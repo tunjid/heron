@@ -10,41 +10,41 @@ import kotlin.test.assertEquals
 
 @Burst
 class TimelineProfileSerializationTest(
-    val format: SerializationTestHelper.Format = burstValues(
-        SerializationTestHelper.Format.CBOR,
-        SerializationTestHelper.Format.PROTOBUF,
-    ),
-    val original: Timeline.Profile = burstValues(
-        Timeline.Profile(
-            profileId = FakeTimeline.profileTimeline.profileId,
-            type = Timeline.Profile.Type.Posts,
-            lastRefreshed = FakeTimeline.profileTimeline.lastRefreshed,
-            itemsAvailable = FakeTimeline.profileTimeline.itemsAvailable,
-            presentation = FakeTimeline.profileTimeline.presentation,
+    val format: SerializationTestHelper.Format =
+        burstValues(SerializationTestHelper.Format.CBOR, SerializationTestHelper.Format.PROTOBUF),
+    val original: Timeline.Profile =
+        burstValues(
+            Timeline.Profile(
+                profileId = FakeTimeline.profileTimeline.profileId,
+                type = Timeline.Profile.Type.Posts,
+                lastRefreshed = FakeTimeline.profileTimeline.lastRefreshed,
+                itemsAvailable = FakeTimeline.profileTimeline.itemsAvailable,
+                presentation = FakeTimeline.profileTimeline.presentation,
+            ),
+            Timeline.Profile(
+                profileId = FakeTimeline.profileTimeline.profileId,
+                type = Timeline.Profile.Type.Replies,
+                lastRefreshed = FakeTimeline.profileTimeline.lastRefreshed,
+                itemsAvailable = FakeTimeline.profileTimeline.itemsAvailable,
+                presentation = FakeTimeline.profileTimeline.presentation,
+            ),
+            Timeline.Profile(
+                profileId = FakeTimeline.profileTimeline.profileId,
+                type = Timeline.Profile.Type.Media,
+                lastRefreshed = FakeTimeline.profileTimeline.lastRefreshed,
+                itemsAvailable = FakeTimeline.profileTimeline.itemsAvailable,
+                presentation = FakeTimeline.profileTimeline.presentation,
+            ),
         ),
-        Timeline.Profile(
-            profileId = FakeTimeline.profileTimeline.profileId,
-            type = Timeline.Profile.Type.Replies,
-            lastRefreshed = FakeTimeline.profileTimeline.lastRefreshed,
-            itemsAvailable = FakeTimeline.profileTimeline.itemsAvailable,
-            presentation = FakeTimeline.profileTimeline.presentation,
-        ),
-        Timeline.Profile(
-            profileId = FakeTimeline.profileTimeline.profileId,
-            type = Timeline.Profile.Type.Media,
-            lastRefreshed = FakeTimeline.profileTimeline.lastRefreshed,
-            itemsAvailable = FakeTimeline.profileTimeline.itemsAvailable,
-            presentation = FakeTimeline.profileTimeline.presentation,
-        ),
-    ),
 ) {
     @Test
     fun roundTrip() {
-        val decoded = SerializationTestHelper.roundTrip(
-            format = format,
-            value = original,
-            serializer = Timeline.Profile.serializer(),
-        )
+        val decoded =
+            SerializationTestHelper.roundTrip(
+                format = format,
+                value = original,
+                serializer = Timeline.Profile.serializer(),
+            )
         assertEquals(original, decoded)
     }
 }

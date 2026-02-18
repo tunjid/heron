@@ -40,26 +40,33 @@ class SavedStateVersion4To5MigrationTest {
     @Test
     fun migrateV4ToV5_withAuth() = runBlocking {
         val profileId = ProfileId("p1")
-        val v4 = SavedStateVersion4(
-            version = 4,
-            navigation = SavedState.Navigation(activeNav = 1),
-            profileData = mapOf(
-                profileId to SavedStateVersion4.ProfileDataV4(
-                    preferences = samplePreferences().asV0().copy(
-                        useDynamicTheming = true,
-                        refreshHomeTimelineOnLaunch = true,
+        val v4 =
+            SavedStateVersion4(
+                version = 4,
+                navigation = SavedState.Navigation(activeNav = 1),
+                profileData =
+                    mapOf(
+                        profileId to
+                            SavedStateVersion4.ProfileDataV4(
+                                preferences =
+                                    samplePreferences()
+                                        .asV0()
+                                        .copy(
+                                            useDynamicTheming = true,
+                                            refreshHomeTimelineOnLaunch = true,
+                                        ),
+                                notifications = sampleNotifications(),
+                                auth =
+                                    SavedState.AuthTokens.Authenticated.Bearer(
+                                        authProfileId = profileId,
+                                        auth = "auth",
+                                        refresh = "refresh",
+                                        authEndpoint = "https://example.com",
+                                    ),
+                            )
                     ),
-                    notifications = sampleNotifications(),
-                    auth = SavedState.AuthTokens.Authenticated.Bearer(
-                        authProfileId = profileId,
-                        auth = "auth",
-                        refresh = "refresh",
-                        authEndpoint = "https://example.com",
-                    ),
-                ),
-            ),
-            activeProfileId = profileId,
-        )
+                activeProfileId = profileId,
+            )
 
         val v4Bytes = SavedStateSerializationHelper.encode(v4, SavedStateVersion4.serializer())
         val migrated = serializer.readFrom(v4Bytes.toBufferedSource())
@@ -90,20 +97,22 @@ class SavedStateVersion4To5MigrationTest {
     @Test
     fun migrateV4ToV5_withoutAuth() = runBlocking {
         val profileId = ProfileId("p1")
-        val v4 = SavedStateVersion4(
-            version = 4,
-            navigation = SavedState.Navigation(activeNav = 1),
-            profileData = mapOf(
-                profileId to SavedStateVersion4.ProfileDataV4(
-                    preferences = samplePreferences().asV0().copy(
-                        useCompactNavigation = true,
+        val v4 =
+            SavedStateVersion4(
+                version = 4,
+                navigation = SavedState.Navigation(activeNav = 1),
+                profileData =
+                    mapOf(
+                        profileId to
+                            SavedStateVersion4.ProfileDataV4(
+                                preferences =
+                                    samplePreferences().asV0().copy(useCompactNavigation = true),
+                                notifications = sampleNotifications(),
+                                auth = null,
+                            )
                     ),
-                    notifications = sampleNotifications(),
-                    auth = null,
-                ),
-            ),
-            activeProfileId = profileId,
-        )
+                activeProfileId = profileId,
+            )
 
         val v4Bytes = SavedStateSerializationHelper.encode(v4, SavedStateVersion4.serializer())
         val migrated = serializer.readFrom(v4Bytes.toBufferedSource())

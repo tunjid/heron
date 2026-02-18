@@ -36,22 +36,19 @@ fun ContentAndMediaItem(
     setAutoplayTimelineVideos: (Boolean) -> Unit,
 ) {
     ExpandableSettingsItemRow(
-        modifier = modifier
-            .fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         title = stringResource(Res.string.content_and_media),
         icon = Icons.Rounded.Newspaper,
     ) {
         SettingsToggleItem(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             text = stringResource(Res.string.refresh_timelines_on_launch),
             enabled = true,
             checked = signedInProfilePreferences.local.refreshHomeTimelineOnLaunch,
             onCheckedChange = setRefreshHomeTimelineOnLaunch,
         )
         SettingsToggleItem(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             text = stringResource(Res.string.auto_play_timeline_videos),
             enabled = true,
             checked = signedInProfilePreferences.local.autoPlayTimelineVideos,

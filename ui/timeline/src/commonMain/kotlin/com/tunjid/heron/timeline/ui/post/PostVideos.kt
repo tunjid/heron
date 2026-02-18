@@ -87,86 +87,80 @@ internal fun PostVideo(
     onClicked: () -> Unit,
 ) {
     val videoPlayerController = LocalVideoPlayerController.current
-    val videoPlayerState = videoPlayerController.rememberUpdatedVideoPlayerState(
-        videoUrl = video.playlist.uri,
-        thumbnail = video.thumbnail?.uri,
-        shape = presentation.videoShape,
-    )
+    val videoPlayerState =
+        videoPlayerController.rememberUpdatedVideoPlayerState(
+            videoUrl = video.playlist.uri,
+            thumbnail = video.thumbnail?.uri,
+            shape = presentation.videoShape,
+        )
     Box(
-        modifier = modifier
-            .aspectRatio(
-                ratio = when (presentation) {
-                    Timeline.Presentation.Media.Condensed,
-                    Timeline.Presentation.Media.Expanded,
-                    Timeline.Presentation.Text.WithEmbed,
-                    -> video.aspectRatioOrSquare
-                    Timeline.Presentation.Media.Grid -> 1f
-                },
+        modifier =
+            modifier.aspectRatio(
+                ratio =
+                    when (presentation) {
+                        Timeline.Presentation.Media.Condensed,
+                        Timeline.Presentation.Media.Expanded,
+                        Timeline.Presentation.Text.WithEmbed -> video.aspectRatioOrSquare
+                        Timeline.Presentation.Media.Grid -> 1f
+                    },
                 matchHeightConstraintsFirst = matchHeightConstraintsFirst,
-            ),
+            )
     ) {
-        val videoModifier = when {
-            isBlurred -> Modifier.sensitiveContentBlur(videoPlayerState.shape)
-            else -> Modifier
-        }
-            .fillMaxSize()
-            .clickable {
-                videoPlayerController.play(videoId = video.playlist.uri)
-                onClicked()
-            }
-        if (!paneMovableElementSharedTransitionScope.isPrimaryOrActive) VideoStill(
-            modifier = videoModifier,
-            state = videoPlayerState,
-        )
-        else paneMovableElementSharedTransitionScope.UpdatedMovableStickySharedElementOf(
-            modifier = videoModifier,
-            sharedContentState = with(paneMovableElementSharedTransitionScope) {
-                rememberSharedContentState(
-                    key = video.sharedElementKey(
-                        prefix = sharedElementPrefix,
-                        postUri = postUri,
-                    ),
-                )
-            },
-            state = videoPlayerState,
-            alternateOutgoingSharedElement = { state, innerModifier ->
-                VideoStill(
-                    modifier = innerModifier,
-                    state = state,
-                )
-            },
-            sharedElement = { state, innerModifier ->
-                VideoPlayer(
-                    modifier = innerModifier,
-                    state = state,
-                )
-            },
-        )
+        val videoModifier =
+            when {
+                    isBlurred -> Modifier.sensitiveContentBlur(videoPlayerState.shape)
+                    else -> Modifier
+                }
+                .fillMaxSize()
+                .clickable {
+                    videoPlayerController.play(videoId = video.playlist.uri)
+                    onClicked()
+                }
+        if (!paneMovableElementSharedTransitionScope.isPrimaryOrActive)
+            VideoStill(modifier = videoModifier, state = videoPlayerState)
+        else
+            paneMovableElementSharedTransitionScope.UpdatedMovableStickySharedElementOf(
+                modifier = videoModifier,
+                sharedContentState =
+                    with(paneMovableElementSharedTransitionScope) {
+                        rememberSharedContentState(
+                            key =
+                                video.sharedElementKey(
+                                    prefix = sharedElementPrefix,
+                                    postUri = postUri,
+                                )
+                        )
+                    },
+                state = videoPlayerState,
+                alternateOutgoingSharedElement = { state, innerModifier ->
+                    VideoStill(modifier = innerModifier, state = state)
+                },
+                sharedElement = { state, innerModifier ->
+                    VideoPlayer(modifier = innerModifier, state = state)
+                },
+            )
         PlayerInfo(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .fillMaxWidth(),
+            modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth(),
             videoPlayerState = videoPlayerState,
             videoPlayerController = videoPlayerController,
         )
 
         PlayButton(
-            modifier = when {
-                isBlurred -> Modifier.blur(
-                    radius = 2.dp,
-                    edgeTreatment = BlurredEdgeTreatment(CircleShape),
-                )
-                else -> Modifier
-            }
-                .align(
+            modifier =
+                when {
+                    isBlurred ->
+                        Modifier.blur(
+                            radius = 2.dp,
+                            edgeTreatment = BlurredEdgeTreatment(CircleShape),
+                        )
+                    else -> Modifier
+                }.align(
                     when (presentation) {
                         Timeline.Presentation.Media.Condensed,
-                        Timeline.Presentation.Media.Grid,
-                        -> Alignment.TopEnd
+                        Timeline.Presentation.Media.Grid -> Alignment.TopEnd
                         Timeline.Presentation.Media.Expanded,
-                        Timeline.Presentation.Text.WithEmbed,
-                        -> Alignment.Center
-                    },
+                        Timeline.Presentation.Text.WithEmbed -> Alignment.Center
+                    }
                 ),
             presentation = presentation,
             videoPlayerState = videoPlayerState,
@@ -187,13 +181,10 @@ private fun PlayerInfo(
     ) {
         Row {
             PlayerControlBackground(
-                onClicked = {
-                    videoPlayerController.pauseActiveVideo()
-                },
+                onClicked = { videoPlayerController.pauseActiveVideo() },
                 content = {
                     Icon(
-                        modifier = Modifier
-                            .padding(4.dp),
+                        modifier = Modifier.padding(4.dp),
                         contentDescription = stringResource(Res.string.pause_video),
                         imageVector = Icons.Rounded.Pause,
                     )
@@ -201,33 +192,27 @@ private fun PlayerInfo(
             )
             PlayerControlBackground {
                 BasicText(
-                    modifier = Modifier
-                        .padding(horizontal = 8.dp),
+                    modifier = Modifier.padding(horizontal = 8.dp),
                     text = videoPlayerState.lastPositionMs.formatVideoDuration(),
                     style = MaterialTheme.typography.bodySmall,
-                    autoSize = TextAutoSize.StepBased(
-                        minFontSize = 8.sp,
-                        maxFontSize = 10.sp,
-                    ),
+                    autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = 10.sp),
                     color = Color.Companion::White,
                 )
             }
             Spacer(Modifier.weight(1f))
             PlayerControlBackground(
-                onClicked = {
-                    videoPlayerController.isMuted = !videoPlayerController.isMuted
-                },
+                onClicked = { videoPlayerController.isMuted = !videoPlayerController.isMuted },
                 content = {
                     Icon(
-                        modifier = Modifier
-                            .padding(4.dp),
-                        contentDescription = stringResource(
-                            if (videoPlayerController.isMuted) Res.string.mute_video
-                            else Res.string.unmute_video,
-                        ),
+                        modifier = Modifier.padding(4.dp),
+                        contentDescription =
+                            stringResource(
+                                if (videoPlayerController.isMuted) Res.string.mute_video
+                                else Res.string.unmute_video
+                            ),
                         imageVector =
-                        if (videoPlayerState.isMuted) Icons.AutoMirrored.Rounded.VolumeOff
-                        else Icons.AutoMirrored.Rounded.VolumeUp,
+                            if (videoPlayerState.isMuted) Icons.AutoMirrored.Rounded.VolumeOff
+                            else Icons.AutoMirrored.Rounded.VolumeUp,
                     )
                 },
             )
@@ -247,19 +232,14 @@ private fun PlayButton(
         visible = videoPlayerState.status !is PlayerStatus.Play,
     ) {
         Box(
-            modifier = Modifier
-                .size(presentation.playButtonBackgroundSize)
-                .background(
-                    color = presentation.playButtonBackgroundColor,
-                    shape = CircleShape,
-                )
-                .clip(CircleShape)
-                .clickable { videoPlayerController.play(videoPlayerState.videoId) },
+            modifier =
+                Modifier.size(presentation.playButtonBackgroundSize)
+                    .background(color = presentation.playButtonBackgroundColor, shape = CircleShape)
+                    .clip(CircleShape)
+                    .clickable { videoPlayerController.play(videoPlayerState.videoId) }
         ) {
             Icon(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(presentation.playButtonIconSize),
+                modifier = Modifier.align(Alignment.Center).size(presentation.playButtonIconSize),
                 contentDescription = stringResource(Res.string.play_video),
                 imageVector = presentation.playButtonIcon,
             )
@@ -268,87 +248,71 @@ private fun PlayButton(
 }
 
 @Composable
-private fun PlayerControlBackground(
-    onClicked: () -> Unit = {},
-    content: @Composable () -> Unit,
-) {
+private fun PlayerControlBackground(onClicked: () -> Unit = {}, content: @Composable () -> Unit) {
     val color = Color.Black.copy(alpha = 0.6f)
     Box(
-        modifier = Modifier
-            .clip(CircleShape)
-            .clickable {
-                onClicked()
-            }
-            .padding(all = 8.dp)
-            .background(
-                color = color,
-                shape = CircleShape,
-            )
-            .height(24.dp),
+        modifier =
+            Modifier.clip(CircleShape)
+                .clickable { onClicked() }
+                .padding(all = 8.dp)
+                .background(color = color, shape = CircleShape)
+                .height(24.dp)
     ) {
-        Box(
-            modifier = Modifier.align(Alignment.Center),
-            content = { content() },
-        )
+        Box(modifier = Modifier.align(Alignment.Center), content = { content() })
     }
 }
 
 private val Timeline.Presentation.videoShape
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> TextWithEmbedShape
-        Timeline.Presentation.Media.Condensed -> CondensedShape
-        Timeline.Presentation.Media.Expanded -> ExpandedShape
-        Timeline.Presentation.Media.Grid -> GridShape
-    }
+    get() =
+        when (this) {
+            Timeline.Presentation.Text.WithEmbed -> TextWithEmbedShape
+            Timeline.Presentation.Media.Condensed -> CondensedShape
+            Timeline.Presentation.Media.Expanded -> ExpandedShape
+            Timeline.Presentation.Media.Grid -> GridShape
+        }
 
 private val Timeline.Presentation.playButtonBackgroundSize
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed,
-        Timeline.Presentation.Media.Expanded,
-        -> 56.dp
+    get() =
+        when (this) {
+            Timeline.Presentation.Text.WithEmbed,
+            Timeline.Presentation.Media.Expanded -> 56.dp
 
-        Timeline.Presentation.Media.Condensed,
-        Timeline.Presentation.Media.Grid,
-        -> 36.dp
-    }
+            Timeline.Presentation.Media.Condensed,
+            Timeline.Presentation.Media.Grid -> 36.dp
+        }
 
 private val Timeline.Presentation.playButtonIconSize
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed,
-        Timeline.Presentation.Media.Expanded,
-        -> 36.dp
+    get() =
+        when (this) {
+            Timeline.Presentation.Text.WithEmbed,
+            Timeline.Presentation.Media.Expanded -> 36.dp
 
-        Timeline.Presentation.Media.Condensed,
-        Timeline.Presentation.Media.Grid,
-        -> 24.dp
-    }
+            Timeline.Presentation.Media.Condensed,
+            Timeline.Presentation.Media.Grid -> 24.dp
+        }
 
 private val Timeline.Presentation.playButtonBackgroundColor
-    @Composable get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed,
-        Timeline.Presentation.Media.Expanded,
-        -> MaterialTheme.colorScheme.secondaryContainer
+    @Composable
+    get() =
+        when (this) {
+            Timeline.Presentation.Text.WithEmbed,
+            Timeline.Presentation.Media.Expanded -> MaterialTheme.colorScheme.secondaryContainer
 
-        Timeline.Presentation.Media.Condensed,
-        Timeline.Presentation.Media.Grid,
-        -> Color.Transparent
-    }
+            Timeline.Presentation.Media.Condensed,
+            Timeline.Presentation.Media.Grid -> Color.Transparent
+        }
 
 private val Timeline.Presentation.playButtonIcon
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed,
-        Timeline.Presentation.Media.Expanded,
-        -> Icons.Rounded.PlayArrow
+    get() =
+        when (this) {
+            Timeline.Presentation.Text.WithEmbed,
+            Timeline.Presentation.Media.Expanded -> Icons.Rounded.PlayArrow
 
-        Timeline.Presentation.Media.Condensed,
-        Timeline.Presentation.Media.Grid,
-        -> Icons.Rounded.Movie
-    }
+            Timeline.Presentation.Media.Condensed,
+            Timeline.Presentation.Media.Grid -> Icons.Rounded.Movie
+        }
 
-fun Video.sharedElementKey(
-    prefix: String,
-    postUri: PostUri,
-) = "$prefix-$postUri-${playlist.uri}"
+fun Video.sharedElementKey(prefix: String, postUri: PostUri) = "$prefix-$postUri-${playlist.uri}"
 
 private val TextWithEmbedShape = RoundedPolygonShape.RoundedRectangle(percent = 0.05f)
 private val CondensedShape = RoundedPolygonShape.RoundedRectangle(percent = 0.0001f)

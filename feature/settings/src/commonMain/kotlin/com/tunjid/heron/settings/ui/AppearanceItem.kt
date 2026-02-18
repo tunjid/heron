@@ -30,11 +30,9 @@ import heron.feature.settings.generated.resources.use_compact_navigation
 import heron.feature.settings.generated.resources.use_dynamic_theming
 import org.jetbrains.compose.resources.stringResource
 
-@Stable
-expect fun isDynamicThemingSupported(): Boolean
+@Stable expect fun isDynamicThemingSupported(): Boolean
 
-@Stable
-expect fun isCompactNavigationSupported(): Boolean
+@Stable expect fun isCompactNavigationSupported(): Boolean
 
 @Composable
 fun AppearanceItem(
@@ -48,30 +46,26 @@ fun AppearanceItem(
     val isCompactNavigationSupported = isCompactNavigationSupported()
 
     ExpandableSettingsItemRow(
-        modifier = modifier
-            .fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         title = stringResource(Res.string.appearance),
         icon = Icons.Rounded.Palette,
     ) {
         SettingsToggleItem(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             text = stringResource(Res.string.use_dynamic_theming),
             enabled = isDynamicThemingSupported,
             checked = signedInProfilePreferences.local.useDynamicTheming,
             onCheckedChange = setDynamicThemingPreference,
         )
         SettingsToggleItem(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             text = stringResource(Res.string.use_compact_navigation),
             enabled = isCompactNavigationSupported,
             checked = signedInProfilePreferences.local.useCompactNavigation,
             onCheckedChange = setCompactNavigation,
         )
         SettingsToggleItem(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             text = stringResource(Res.string.autohide_bottom_navigation),
             enabled = isCompactNavigationSupported,
             checked = signedInProfilePreferences.local.autoHideBottomNavigation,

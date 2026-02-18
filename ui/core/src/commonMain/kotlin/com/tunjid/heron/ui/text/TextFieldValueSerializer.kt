@@ -39,14 +39,15 @@ object TextFieldValueSerializer : KSerializer<TextFieldValue> {
         val selection = value.selection
         val composition = value.composition
 
-        val surrogate = TextInputSnapshot(
-            text = value.text,
-            selectionStart = selection.start,
-            selectionEnd = selection.end,
-            compositionStart = composition?.start ?: -1,
-            compositionEnd = composition?.end ?: -1,
-            links = value.annotatedString.links(),
-        )
+        val surrogate =
+            TextInputSnapshot(
+                text = value.text,
+                selectionStart = selection.start,
+                selectionEnd = selection.end,
+                compositionStart = composition?.start ?: -1,
+                compositionEnd = composition?.end ?: -1,
+                links = value.annotatedString.links(),
+            )
 
         TextInputSnapshot.serializer().serialize(encoder, surrogate)
     }
@@ -54,21 +55,23 @@ object TextFieldValueSerializer : KSerializer<TextFieldValue> {
     override fun deserialize(decoder: Decoder): TextFieldValue {
         val surrogate = TextInputSnapshot.serializer().deserialize(decoder)
 
-        val annotatedString = formatTextPost(
-            text = surrogate.text,
-            textLinks = surrogate.links,
-            textLinkStyles = null,
-        )
+        val annotatedString =
+            formatTextPost(
+                text = surrogate.text,
+                textLinks = surrogate.links,
+                textLinkStyles = null,
+            )
 
         // Reconstruct Selection
         val selection = TextRange(surrogate.selectionStart, surrogate.selectionEnd)
 
         // Reconstruct Composition (restore null if -1)
-        val composition = if (surrogate.compositionStart != -1 && surrogate.compositionEnd != -1) {
-            TextRange(surrogate.compositionStart, surrogate.compositionEnd)
-        } else {
-            null
-        }
+        val composition =
+            if (surrogate.compositionStart != -1 && surrogate.compositionEnd != -1) {
+                TextRange(surrogate.compositionStart, surrogate.compositionEnd)
+            } else {
+                null
+            }
 
         return TextFieldValue(
             annotatedString = annotatedString,

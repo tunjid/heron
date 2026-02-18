@@ -60,18 +60,13 @@ interface TilingState<Query : CursorQuery, Item> {
         val currentQuery: Query,
         val numColumns: Int = 1,
         val status: Status = Status.Initial,
-        @Transient
-        val items: TiledList<Query, Item> = emptyTiledList(),
+        @Transient val items: TiledList<Query, Item> = emptyTiledList(),
     )
 
     sealed class Action {
-        data class GridSize(
-            val numColumns: Int,
-        ) : Action()
+        data class GridSize(val numColumns: Int) : Action()
 
-        data class LoadAround(
-            val query: CursorQuery,
-        ) : Action()
+        data class LoadAround(val query: CursorQuery) : Action()
 
         data object Refresh : Action()
     }
@@ -79,13 +74,9 @@ interface TilingState<Query : CursorQuery, Item> {
     sealed interface Status {
         data object Initial : Status
 
-        data class Refreshing(
-            val cursorAnchor: Instant,
-        ) : Status
+        data class Refreshing(val cursorAnchor: Instant) : Status
 
-        data class Refreshed(
-            val cursorAnchor: Instant,
-        ) : Status
+        data class Refreshed(val cursorAnchor: Instant) : Status
     }
 }
 
@@ -95,19 +86,17 @@ val TilingState<*, *>.isRefreshing
 val <Query : CursorQuery, Item> TilingState<Query, Item>.tiledItems
     get() = tilingData.items
 
-fun <Query : CursorQuery, Item> TilingState.Data<Query, Item>.withRefreshedStatus() = copy(
-    status = refreshedStatus(),
-)
+fun <Query : CursorQuery, Item> TilingState.Data<Query, Item>.withRefreshedStatus() =
+    copy(status = refreshedStatus())
 
 fun <Item, Query : CursorQuery> TilingState.Data<Query, Item>.refreshedStatus() =
-    TilingState.Status.Refreshed(
-        cursorAnchor = currentQuery.data.cursorAnchor,
-    )
+    TilingState.Status.Refreshed(cursorAnchor = currentQuery.data.cursorAnchor)
 
-/**
- * Feed mutations as a function of the user's scroll position
- */
-suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>> Flow<TilingState.Action>.tilingMutations(
+/** Feed mutations as a function of the user's scroll position */
+suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query, Item>> Flow<
+    TilingState.Action
+>
+    .tilingMutations(
     isRefreshedOnNewItems: Boolean = true,
     crossinline currentState: suspend () -> State,
     noinline updateQueryData: Query.(CursorQuery.Data) -> Query,
@@ -120,44 +109,44 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
     // Read the starting state at the time of subscription
     val startingState = currentState().tilingData
     return scan(
-        initial = Pair(
-            MutableStateFlow(startingState.currentQuery),
-            MutableStateFlow(startingState.numColumns),
-        ),
-    ) { accumulator, action ->
-        val (queries, numColumns) = accumulator
-        // update backing states as a side effect
-        when (action) {
-            is TilingState.Action.GridSize -> {
-                numColumns.value = action.numColumns
-            }
-
-            is TilingState.Action.LoadAround -> {
-                if (action.query !is Query) throw IllegalArgumentException(
-                    "Expected query of ${Query::class}, got ${action.query::class}",
+            initial =
+                Pair(
+                    MutableStateFlow(startingState.currentQuery),
+                    MutableStateFlow(startingState.numColumns),
                 )
-                val lastQuery = queries.value
+        ) { accumulator, action ->
+            val (queries, numColumns) = accumulator
+            // update backing states as a side effect
+            when (action) {
+                is TilingState.Action.GridSize -> {
+                    numColumns.value = action.numColumns
+                }
 
-                // Everything is okay, proceed.
-                val hasSameAnchor = !lastQuery.hasDifferentAnchor(action.query)
+                is TilingState.Action.LoadAround -> {
+                    if (action.query !is Query)
+                        throw IllegalArgumentException(
+                            "Expected query of ${Query::class}, got ${action.query::class}"
+                        )
+                    val lastQuery = queries.value
 
-                // Favor the query that was requested with a more current anchor.
-                // The query with the older anchor was most likely triggered by a scroll
-                // at a boundary.
-                val isNewerQuery = action.query.data.cursorAnchor > lastQuery.data.cursorAnchor
+                    // Everything is okay, proceed.
+                    val hasSameAnchor = !lastQuery.hasDifferentAnchor(action.query)
 
-                if (hasSameAnchor || isNewerQuery) queries.update {
-                    action.query
+                    // Favor the query that was requested with a more current anchor.
+                    // The query with the older anchor was most likely triggered by a scroll
+                    // at a boundary.
+                    val isNewerQuery = action.query.data.cursorAnchor > lastQuery.data.cursorAnchor
+
+                    if (hasSameAnchor || isNewerQuery) queries.update { action.query }
+                }
+
+                is TilingState.Action.Refresh -> {
+                    queries.value = refreshQuery(queries.value)
                 }
             }
-
-            is TilingState.Action.Refresh -> {
-                queries.value = refreshQuery(queries.value)
-            }
+            // Emit the same item with each action
+            accumulator
         }
-        // Emit the same item with each action
-        accumulator
-    }
         // Only emit once
         .distinctUntilChanged()
         .flatMapLatest { (queries, numColumns) ->
@@ -167,48 +156,53 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
                 queries.mapToMutation { newQuery ->
                     copy(
                         currentQuery = newQuery,
-                        status = when {
-                            currentQuery.hasDifferentAnchor(newQuery) -> TilingState.Status.Refreshing(
-                                cursorAnchor = newQuery.data.cursorAnchor,
-                            )
-
-                            else -> status
-                        },
-                    )
-                },
-                numColumns.mapToMutation {
-                    copy(numColumns = it)
-                },
-                refreshes.flatMapLatest { refreshedQuery ->
-                    cursorTileInputs<Query, Item>(
-                        numColumns = numColumns,
-                        queries = queries,
-                        updatePage = updateQueryData,
-                    )
-                        .toTiledList(
-                            cursorListTiler(
-                                startingQuery = refreshedQuery,
-                                cursorListLoader = cursorListLoader,
-                                updatePage = updateQueryData,
-                            ),
-                        )
-                }
-                    .mapToMutation<TiledList<Query, Item>, TilingState.Data<Query, Item>> { items ->
-                        // Ignore results from stale queries
-                        if (items.isValidFor(currentQuery)) copy(
-                            items = onNewItems(items),
-                            status = when {
-                                isRefreshedOnNewItems && items.isNotEmpty() -> {
-                                    val fetchedQuery = items.queryAt(0)
-                                    if (fetchedQuery.hasDifferentAnchor(currentQuery)) status
-                                    else TilingState.Status.Refreshed(
-                                        cursorAnchor = fetchedQuery.data.cursorAnchor,
+                        status =
+                            when {
+                                currentQuery.hasDifferentAnchor(newQuery) ->
+                                    TilingState.Status.Refreshing(
+                                        cursorAnchor = newQuery.data.cursorAnchor
                                     )
-                                }
 
                                 else -> status
                             },
-                        )
+                    )
+                },
+                numColumns.mapToMutation { copy(numColumns = it) },
+                refreshes
+                    .flatMapLatest { refreshedQuery ->
+                        cursorTileInputs<Query, Item>(
+                                numColumns = numColumns,
+                                queries = queries,
+                                updatePage = updateQueryData,
+                            )
+                            .toTiledList(
+                                cursorListTiler(
+                                    startingQuery = refreshedQuery,
+                                    cursorListLoader = cursorListLoader,
+                                    updatePage = updateQueryData,
+                                )
+                            )
+                    }
+                    .mapToMutation<TiledList<Query, Item>, TilingState.Data<Query, Item>> { items ->
+                        // Ignore results from stale queries
+                        if (items.isValidFor(currentQuery))
+                            copy(
+                                items = onNewItems(items),
+                                status =
+                                    when {
+                                        isRefreshedOnNewItems && items.isNotEmpty() -> {
+                                            val fetchedQuery = items.queryAt(0)
+                                            if (fetchedQuery.hasDifferentAnchor(currentQuery))
+                                                status
+                                            else
+                                                TilingState.Status.Refreshed(
+                                                    cursorAnchor = fetchedQuery.data.cursorAnchor
+                                                )
+                                        }
+
+                                        else -> status
+                                    },
+                            )
                         else this
                     },
             )
@@ -221,11 +215,9 @@ suspend inline fun <reified Query : CursorQuery, Item, State : TilingState<Query
 }
 
 inline fun <Query : CursorQuery, T, R> ((Query, Cursor) -> Flow<CursorList<T>>).mapCursorList(
-    crossinline mapper: (T) -> R,
+    crossinline mapper: (T) -> R
 ): (Query, Cursor) -> Flow<CursorList<R>> = { query, cursor ->
-    invoke(query, cursor).map { cursorList ->
-        cursorList.mapCursorList(mapper)
-    }
+    invoke(query, cursor).map { cursorList -> cursorList.mapCursorList(mapper) }
 }
 
 fun CursorQuery.Data.reset() = copy(page = 0, cursorAnchor = Clock.System.now())
@@ -234,7 +226,7 @@ fun CursorQuery.hasDifferentAnchor(newQuery: CursorQuery) =
     data.cursorAnchor != newQuery.data.cursorAnchor
 
 fun <Query : CursorQuery, Item> TiledList<Query, Item>.isValidFor(
-    currentQuery: Query,
+    currentQuery: Query
 ): Boolean { // Ignore results from stale queries
     var seenQuery = false
     val lastTileIndex = tileCount - 1
@@ -250,51 +242,44 @@ inline fun <Query : CursorQuery, Item> cursorTileInputs(
     numColumns: Flow<Int>,
     queries: Flow<Query>,
     crossinline updatePage: Query.(CursorQuery.Data) -> Query,
-): Flow<Tile.Input<Query, Item>> = merge(
-    numColumns.map { columns ->
-        Tile.Limiter(
-            maxQueries = 3 * max(1, columns),
-            itemSizeHint = null,
-        )
-    },
-    queries.toPivotedTileInputs(
+): Flow<Tile.Input<Query, Item>> =
+    merge(
         numColumns.map { columns ->
-            val maxNumColumns = max(1, columns)
-            PivotRequest(
-                onCount = maxNumColumns * 3,
-                offCount = maxNumColumns * 2,
-                comparator = cursorQueryComparator(),
-                previousQuery = {
-                    if ((data.page - 1) < 0) null
-                    else updatePage(data.copy(page = data.page - 1))
-                },
-                nextQuery = {
-                    updatePage(data.copy(page = data.page + 1))
-                },
-            )
+            Tile.Limiter(maxQueries = 3 * max(1, columns), itemSizeHint = null)
         },
-    ),
-)
+        queries.toPivotedTileInputs(
+            numColumns.map { columns ->
+                val maxNumColumns = max(1, columns)
+                PivotRequest(
+                    onCount = maxNumColumns * 3,
+                    offCount = maxNumColumns * 2,
+                    comparator = cursorQueryComparator(),
+                    previousQuery = {
+                        if ((data.page - 1) < 0) null
+                        else updatePage(data.copy(page = data.page - 1))
+                    },
+                    nextQuery = { updatePage(data.copy(page = data.page + 1)) },
+                )
+            }
+        ),
+    )
 
 fun <Query : CursorQuery, Item> cursorListTiler(
     startingQuery: Query,
     updatePage: Query.(CursorQuery.Data) -> Query,
     cursorListLoader: (Query, Cursor) -> Flow<CursorList<Item>>,
-): ListTiler<Query, Item> = listTiler(
-    order = Tile.Order.PivotSorted(
-        query = startingQuery,
-        comparator = cursorQueryComparator(),
-    ),
-    fetcher = cursorListQueryFetcher(
-        startingQuery = startingQuery,
-        nextPage = updatePage,
-        cursorListLoader = cursorListLoader,
-    ),
-)
+): ListTiler<Query, Item> =
+    listTiler(
+        order = Tile.Order.PivotSorted(query = startingQuery, comparator = cursorQueryComparator()),
+        fetcher =
+            cursorListQueryFetcher(
+                startingQuery = startingQuery,
+                nextPage = updatePage,
+                cursorListLoader = cursorListLoader,
+            ),
+    )
 
-fun <Query : CursorQuery> cursorQueryComparator() = compareBy { query: Query ->
-    query.data.page
-}
+fun <Query : CursorQuery> cursorQueryComparator() = compareBy { query: Query -> query.data.page }
 
 private inline fun <Query : CursorQuery, Item> cursorListQueryFetcher(
     startingQuery: Query,
@@ -306,23 +291,20 @@ private inline fun <Query : CursorQuery, Item> cursorListQueryFetcher(
         // in memory
         maxTokens = 50,
         // Make sure the first page has an entry for its cursor/token
-        seedQueryTokenMap = mapOf(
-            startingQuery to Cursor.Initial,
-        ),
+        seedQueryTokenMap = mapOf(startingQuery to Cursor.Initial),
         fetcher = { query, cursor ->
-            cursorListLoader(query, cursor)
-                .map { networkCursorList ->
-                    NeighboredFetchResult(
-                        // Set the cursor for the next page and any other page with data available.
-                        //
-                        mapOf(
-                            Pair(
-                                first = query.nextPage(query.data.copy(page = query.data.page + 1)),
-                                second = networkCursorList.nextCursor,
-                            ),
-                        ),
-                        items = networkCursorList,
-                    )
-                }
+            cursorListLoader(query, cursor).map { networkCursorList ->
+                NeighboredFetchResult(
+                    // Set the cursor for the next page and any other page with data available.
+                    //
+                    mapOf(
+                        Pair(
+                            first = query.nextPage(query.data.copy(page = query.data.page + 1)),
+                            second = networkCursorList.nextCursor,
+                        )
+                    ),
+                    items = networkCursorList,
+                )
+            }
         },
     )

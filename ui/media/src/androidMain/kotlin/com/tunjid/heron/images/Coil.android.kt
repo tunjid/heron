@@ -24,23 +24,15 @@ import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.nativeCanvas
 import coil3.DrawableImage
 
-internal actual fun coil3.Image.renderInto(
-    canvas: Canvas,
-) = draw(canvas.nativeCanvas)
+internal actual fun coil3.Image.renderInto(canvas: Canvas) = draw(canvas.nativeCanvas)
 
-fun imageLoader(
-    context: Context,
-): ImageLoader = CoilImageLoader.create(
-    context = context,
-)
+fun imageLoader(context: Context): ImageLoader = CoilImageLoader.create(context = context)
 
 @Composable
 internal actual fun coil3.Image.AnimationEffect() {
     DisposableEffect(this) {
         val animatable = (this@AnimationEffect as? DrawableImage)?.drawable as? Animatable
         animatable?.start()
-        onDispose {
-            animatable?.stop()
-        }
+        onDispose { animatable?.stop() }
     }
 }

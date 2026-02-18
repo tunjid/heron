@@ -45,131 +45,85 @@ data class FormField(
     val id: Id,
     val value: String,
     val maxLines: Int,
-    @Transient
-    val errorMessage: Memo? = null,
-    @Transient
-    val leadingIcon: ImageVector? = null,
-    @Transient
-    val transformation: VisualTransformation = VisualTransformation.None,
-    @Transient
-    val contentType: ContentType? = null,
-    @Transient
-    val contentDescription: Memo? = null,
-    @Transient
-    val keyboardOptions: KeyboardOptions = KeyboardOptions(),
-    @Transient
-    val validator: Validator? = null,
+    @Transient val errorMessage: Memo? = null,
+    @Transient val leadingIcon: ImageVector? = null,
+    @Transient val transformation: VisualTransformation = VisualTransformation.None,
+    @Transient val contentType: ContentType? = null,
+    @Transient val contentDescription: Memo? = null,
+    @Transient val keyboardOptions: KeyboardOptions = KeyboardOptions(),
+    @Transient val validator: Validator? = null,
 ) {
     @JvmInline
-    value class Id(
-        private val id: String,
-    ) {
+    value class Id(private val id: String) {
         override fun toString(): String = id
     }
 
     companion object {
-        val LeadingIconSizeModifier = Modifier
-            .size(24.dp)
+        val LeadingIconSizeModifier = Modifier.size(24.dp)
     }
 }
 
-fun List<FormField>.copyWithValidation(
-    id: FormField.Id,
-    text: String,
-) = map { field ->
-    if (field.id == id) field.copyWithValidation(text)
-    else field
+fun List<FormField>.copyWithValidation(id: FormField.Id, text: String) = map { field ->
+    if (field.id == id) field.copyWithValidation(text) else field
 }
 
-fun List<FormField>.valueFor(id: FormField.Id) =
-    first { it.id == id }.value
+fun List<FormField>.valueFor(id: FormField.Id) = first { it.id == id }.value
 
-fun FormField.copyWithValidation(
-    text: String,
-) = copy(
-    value = text,
-    errorMessage = validator
-        ?.checks
-        ?.firstNotNullOfOrNull { (check, errorRes) ->
-            if (check(text)) null
-            else errorRes
-        },
-)
+fun FormField.copyWithValidation(text: String) =
+    copy(
+        value = text,
+        errorMessage =
+            validator?.checks?.firstNotNullOfOrNull { (check, errorRes) ->
+                if (check(text)) null else errorRes
+            },
+    )
 
-fun FormField.validated() = copy(
-    value = value,
-    errorMessage = validator
-        ?.checks
-        ?.firstNotNullOfOrNull { (check, errorRes) ->
-            if (check(value)) null
-            else errorRes
-        },
-)
+fun FormField.validated() =
+    copy(
+        value = value,
+        errorMessage =
+            validator?.checks?.firstNotNullOfOrNull { (check, errorRes) ->
+                if (check(value)) null else errorRes
+            },
+    )
 
 val FormField.isValid
-    get() = validator
-        ?.checks
-        ?.all { (check) -> check(value) }
-        ?: true
+    get() = validator?.checks?.all { (check) -> check(value) } ?: true
 
-@JvmInline
-value class Validator(
-    val checks: List<Pair<(String) -> Boolean, Memo>>,
-)
+@JvmInline value class Validator(val checks: List<Pair<(String) -> Boolean, Memo>>)
 
-fun Validator(vararg pairs: Pair<(String) -> Boolean, Memo>) =
-    Validator(
-        checks = pairs.asList(),
-    )
+fun Validator(vararg pairs: Pair<(String) -> Boolean, Memo>) = Validator(checks = pairs.asList())
 
 @Composable
 inline fun FormField(
     modifier: Modifier = Modifier,
     field: FormField,
-    crossinline leadingIcon: @Composable () -> Unit = {
-        field.LeadingIcon()
-    },
+    crossinline leadingIcon: @Composable () -> Unit = { field.LeadingIcon() },
     crossinline onValueChange: (field: FormField, newValue: String) -> Unit,
     crossinline keyboardActions: KeyboardActionScope.(FormField) -> Unit,
 ) {
     var hasBeenFocused by remember { mutableStateOf(false) }
     val showError = hasBeenFocused && field.errorMessage != null
     OutlinedTextField(
-        modifier = modifier
-            .semantics {
-                field.contentType?.let { contentType = it }
-            }
-            .onFocusChanged {
-                if (!it.isFocused) hasBeenFocused = true
-            },
+        modifier =
+            modifier
+                .semantics { field.contentType?.let { contentType = it } }
+                .onFocusChanged { if (!it.isFocused) hasBeenFocused = true },
         value = field.value,
         maxLines = field.maxLines,
-        onValueChange = {
-            onValueChange(field, it)
-        },
+        onValueChange = { onValueChange(field, it) },
         shape = MaterialTheme.shapes.large,
         visualTransformation = field.transformation,
         keyboardOptions = field.keyboardOptions,
-        keyboardActions = KeyboardActions {
-            keyboardActions(field)
-        },
-        label = field.contentDescription?.let {
-            {
-                Text(it.message)
-            }
-        },
-        leadingIcon = {
-            leadingIcon()
-        },
-        supportingText = if (showError) field.errorMessage.let {
-            {
-                Text(
-                    text = it.message,
-                    color = MaterialTheme.colorScheme.error,
-                )
-            }
-        }
-        else null,
+        keyboardActions = KeyboardActions { keyboardActions(field) },
+        label = field.contentDescription?.let { { Text(it.message) } },
+        leadingIcon = { leadingIcon() },
+        supportingText =
+            if (showError)
+                field.errorMessage.let {
+                    { Text(text = it.message, color = MaterialTheme.colorScheme.error) }
+                }
+            else null,
     )
 }
 

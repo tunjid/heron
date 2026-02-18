@@ -16,18 +16,9 @@ import heron.ui.timeline.generated.resources.more_options
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun ShareRecordButton(
-    onShareClicked: () -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .padding(horizontal = 3.dp),
-    ) {
-        IconButton(
-            onClick = onShareClicked,
-            modifier = Modifier
-                .size(40.dp),
-        ) {
+fun ShareRecordButton(onShareClicked: () -> Unit) {
+    Box(modifier = Modifier.padding(horizontal = 3.dp)) {
+        IconButton(onClick = onShareClicked, modifier = Modifier.size(40.dp)) {
             Icon(
                 imageVector = Icons.Rounded.ArrowCircleUp,
                 contentDescription = stringResource(Res.string.more_options),

@@ -16,22 +16,18 @@ import com.tunjid.heron.data.core.types.ProfileId
 
 @Entity(
     tableName = "labelers",
-    primaryKeys = [
-        "uri",
-    ],
-    foreignKeys = [
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["creatorId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["uri"]),
-        Index(value = ["creatorId"]),
-    ],
+    primaryKeys = ["uri"],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["creatorId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            )
+        ],
+    indices = [Index(value = ["uri"]), Index(value = ["creatorId"])],
 )
 data class LabelerEntity(
     val cid: LabelerId,
@@ -41,36 +37,23 @@ data class LabelerEntity(
 )
 
 data class PopulatedLabelerEntity(
-    @Embedded
-    val entity: LabelerEntity,
-    @Relation(
-        parentColumn = "creatorId",
-        entityColumn = "did",
-    )
-    val creator: ProfileEntity?,
-    @Relation(
-        parentColumn = "creatorId",
-        entityColumn = "creatorId",
-    )
+    @Embedded val entity: LabelerEntity,
+    @Relation(parentColumn = "creatorId", entityColumn = "did") val creator: ProfileEntity?,
+    @Relation(parentColumn = "creatorId", entityColumn = "creatorId")
     val definitions: List<LabelDefinitionEntity>,
 ) : PopulatedRecordEntity {
     override val recordUri: EmbeddableRecordUri
         get() = entity.uri
 }
 
-fun PopulatedLabelerEntity.asExternalModel(): Labeler = Labeler(
-    uri = entity.uri,
-    cid = entity.cid,
-    likeCount = entity.likeCount,
-    creator = creator
-        ?.asExternalModel()
-        ?: stubProfile(
-            did = entity.creatorId,
-            handle = ProfileHandle(""),
-        ),
-    definitions = definitions
-        .map(LabelDefinitionEntity::asExternalModel),
-    values = definitions.map {
-        Label.Value(it.identifier)
-    },
-)
+fun PopulatedLabelerEntity.asExternalModel(): Labeler =
+    Labeler(
+        uri = entity.uri,
+        cid = entity.cid,
+        likeCount = entity.likeCount,
+        creator =
+            creator?.asExternalModel()
+                ?: stubProfile(did = entity.creatorId, handle = ProfileHandle("")),
+        definitions = definitions.map(LabelDefinitionEntity::asExternalModel),
+        values = definitions.map { Label.Value(it.identifier) },
+    )

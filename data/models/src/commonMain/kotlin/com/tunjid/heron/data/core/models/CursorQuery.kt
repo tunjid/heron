@@ -20,9 +20,7 @@ import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
-/**
- * Basic pagination query type, used for tiled requests.
- */
+/** Basic pagination query type, used for tiled requests. */
 interface CursorQuery {
     val data: Data
 
@@ -31,31 +29,22 @@ interface CursorQuery {
         val page: Int,
 
         /**
-         * The anchor point for the tiling pipeline.
-         * Consecutive queries in a tiling pipeline mush have the same anchor unless
-         * its being refreshed.
+         * The anchor point for the tiling pipeline. Consecutive queries in a tiling pipeline mush
+         * have the same anchor unless its being refreshed.
          */
         val cursorAnchor: Instant,
 
-        /**
-         * How many items to fetch for a query.
-         */
+        /** How many items to fetch for a query. */
         val limit: Long = 30L,
     ) : UrlEncodableModel
 
     companion object {
-        fun defaultStartData(
-            limit: Long = 30L,
-        ) = Data(
-            page = 0,
-            cursorAnchor = Clock.System.now(),
-            limit = limit,
-        )
+        fun defaultStartData(limit: Long = 30L) =
+            Data(page = 0, cursorAnchor = Clock.System.now(), limit = limit)
     }
 }
 
-data class DataQuery(
-    override val data: CursorQuery.Data,
-) : CursorQuery
+data class DataQuery(override val data: CursorQuery.Data) : CursorQuery
 
-val CursorQuery.Data.offset get() = page * limit
+val CursorQuery.Data.offset
+    get() = page * limit

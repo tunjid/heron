@@ -95,33 +95,28 @@ internal fun GalleryImage(
 ) {
     scaffoldState.UpdatedMovableStickySharedElementOf(
         modifier = modifier,
-        sharedContentState = with(scaffoldState) {
-            rememberSharedContentState(
-                key = item.image.sharedElementKey(
-                    prefix = sharedElementPrefix,
-                    postUri = postUri,
-                ),
-                config = viewportSharedContentConfig(
-                    item,
-                    isInViewport,
-                ),
-            )
-        },
-        state = remember(item.image) {
-            ImageArgs(
-                url = item.image.fullsize.uri,
-                thumbnailUrl = item.image.thumb.uri,
-                contentDescription = item.image.alt,
-                contentScale = ContentScale.Crop,
-                shape = RoundedPolygonShape.Rectangle,
-            )
-        },
-        sharedElement = { args, innerModifier ->
-            AsyncImage(
-                modifier = innerModifier,
-                args = args,
-            )
-        },
+        sharedContentState =
+            with(scaffoldState) {
+                rememberSharedContentState(
+                    key =
+                        item.image.sharedElementKey(
+                            prefix = sharedElementPrefix,
+                            postUri = postUri,
+                        ),
+                    config = viewportSharedContentConfig(item, isInViewport),
+                )
+            },
+        state =
+            remember(item.image) {
+                ImageArgs(
+                    url = item.image.fullsize.uri,
+                    thumbnailUrl = item.image.thumb.uri,
+                    contentDescription = item.image.alt,
+                    contentScale = ContentScale.Crop,
+                    shape = RoundedPolygonShape.Rectangle,
+                )
+            },
+        sharedElement = { args, innerModifier -> AsyncImage(modifier = innerModifier, args = args) },
     )
 }
 
@@ -134,43 +129,36 @@ internal fun GalleryVideo(
     sharedElementPrefix: String,
     isInViewport: (GalleryItem.Media) -> Boolean,
 ) {
-    val videoPlayerState = LocalVideoPlayerController.current.rememberUpdatedVideoPlayerState(
-        videoUrl = item.video.playlist.uri,
-        thumbnail = item.video.thumbnail?.uri,
-        shape = RoundedPolygonShape.Rectangle,
-    )
-    if (!paneMovableElementSharedTransitionScope.isPrimaryOrActive) VideoStill(
-        modifier = modifier,
-        state = videoPlayerState,
-    )
-    else paneMovableElementSharedTransitionScope.UpdatedMovableStickySharedElementOf(
-        modifier = modifier,
-        sharedContentState = with(paneMovableElementSharedTransitionScope) {
-            rememberSharedContentState(
-                key = item.video.sharedElementKey(
-                    prefix = sharedElementPrefix,
-                    postUri = postUri,
-                ),
-                config = viewportSharedContentConfig(
-                    item,
-                    isInViewport,
-                ),
-            )
-        },
-        state = videoPlayerState,
-        alternateOutgoingSharedElement = { state, innerModifier ->
-            VideoStill(
-                modifier = innerModifier,
-                state = state,
-            )
-        },
-        sharedElement = { state, innerModifier ->
-            VideoPlayer(
-                modifier = innerModifier,
-                state = state,
-            )
-        },
-    )
+    val videoPlayerState =
+        LocalVideoPlayerController.current.rememberUpdatedVideoPlayerState(
+            videoUrl = item.video.playlist.uri,
+            thumbnail = item.video.thumbnail?.uri,
+            shape = RoundedPolygonShape.Rectangle,
+        )
+    if (!paneMovableElementSharedTransitionScope.isPrimaryOrActive)
+        VideoStill(modifier = modifier, state = videoPlayerState)
+    else
+        paneMovableElementSharedTransitionScope.UpdatedMovableStickySharedElementOf(
+            modifier = modifier,
+            sharedContentState =
+                with(paneMovableElementSharedTransitionScope) {
+                    rememberSharedContentState(
+                        key =
+                            item.video.sharedElementKey(
+                                prefix = sharedElementPrefix,
+                                postUri = postUri,
+                            ),
+                        config = viewportSharedContentConfig(item, isInViewport),
+                    )
+                },
+            state = videoPlayerState,
+            alternateOutgoingSharedElement = { state, innerModifier ->
+                VideoStill(modifier = innerModifier, state = state)
+            },
+            sharedElement = { state, innerModifier ->
+                VideoPlayer(modifier = innerModifier, state = state)
+            },
+        )
 }
 
 @Composable
@@ -184,15 +172,8 @@ internal fun GalleryFooter(
     actions: (Action) -> Unit,
     playerControlsUiState: PlayerControlsUiState,
 ) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .align(Alignment.End)
-                .padding(horizontal = 16.dp),
-        ) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Box(modifier = Modifier.align(Alignment.End).padding(horizontal = 16.dp)) {
             when (item) {
                 is GalleryItem.Media.Photo -> imageDownloadState.DownloadButton(item)
                 is GalleryItem.Media.Video -> videoPlayerController.MuteButton()
@@ -201,18 +182,18 @@ internal fun GalleryFooter(
         GalleryText(
             post = post,
             paneScaffoldState = paneScaffoldState,
-            modifier = Modifier
-                .padding(horizontal = 16.dp),
+            modifier = Modifier.padding(horizontal = 16.dp),
             onClick = {},
             onLinkTargetClicked = { _, target ->
-                if (target is LinkTarget.Navigable) actions(
-                    Action.Navigate.To(
-                        pathDestination(
-                            path = target.path,
-                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                        ),
-                    ),
-                )
+                if (target is LinkTarget.Navigable)
+                    actions(
+                        Action.Navigate.To(
+                            pathDestination(
+                                path = target.path,
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            )
+                        )
+                    )
             },
         )
 
@@ -235,10 +216,11 @@ internal fun MediaOverlay(
     content: @Composable (item: GalleryItem.Media) -> Unit,
 ) {
     val visible by rememberUpdatedState(media != null && isVisible)
-    val alphaState = animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-    )
+    val alphaState =
+        animateFloatAsState(
+            targetValue = if (visible) 1f else 0f,
+            animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        )
     val zIndex by remember {
         derivedStateOf {
             when {
@@ -255,16 +237,15 @@ internal fun MediaOverlay(
     // The Overlay is stateful, so it should not be removed from the composition.
     // So instead of AnimatedVisibility, alpha and zIndices are  manipulated.
     Column(
-        modifier = modifier
-            .zIndex(zIndex)
-            .fillMaxSize()
-            .graphicsLayer { alpha = alphaState.value }
-            .background(color = Color.Black.copy(alpha = 0.8f)),
+        modifier =
+            modifier
+                .zIndex(zIndex)
+                .fillMaxSize()
+                .graphicsLayer { alpha = alphaState.value }
+                .background(color = Color.Black.copy(alpha = 0.8f)),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.End,
-        content = {
-            if (media != null) content(media)
-        },
+        content = { if (media != null) content(media) },
     )
 }
 
@@ -287,12 +268,8 @@ internal fun MediaPoster(
         signedInProfileId = signedInProfileId,
         profile = post.author,
         viewerState = viewerState,
-        profileSharedElementKey = {
-            post.avatarSharedElementKey(sharedElementPrefix)
-        },
-        onProfileClicked = {
-            onProfileClicked(post)
-        },
+        profileSharedElementKey = { post.avatarSharedElementKey(sharedElementPrefix) },
+        onProfileClicked = { onProfileClicked(post) },
         onViewerStateClicked = onViewerStateToggled,
     )
 }
@@ -356,36 +333,24 @@ private fun VideoPlayerControls(
     playerControlsUiState: PlayerControlsUiState,
 ) {
     PlaybackStatus(
-        modifier = Modifier
-            .padding(horizontal = 8.dp)
-            .fillMaxWidth(),
+        modifier = Modifier.padding(horizontal = 8.dp).fillMaxWidth(),
         videoPlayerState = videoPlayerState,
         controlsState = playerControlsUiState,
     )
     LaunchedEffect(Unit) {
-        snapshotFlow { videoPlayerState.status }
-            .collectLatest {
-                playerControlsUiState.update(it)
-            }
+        snapshotFlow { videoPlayerState.status }.collectLatest { playerControlsUiState.update(it) }
     }
 }
 
 @Composable
-private fun VideoPlayerController.MuteButton(
-    modifier: Modifier = Modifier,
-) {
-    IconButton(
-        modifier = modifier,
-        onClick = { isMuted = !isMuted },
-    ) {
+private fun VideoPlayerController.MuteButton(modifier: Modifier = Modifier) {
+    IconButton(modifier = modifier, onClick = { isMuted = !isMuted }) {
         Icon(
             imageVector =
-            if (isMuted) Icons.AutoMirrored.Rounded.VolumeOff
-            else Icons.AutoMirrored.Rounded.VolumeUp,
-            contentDescription = stringResource(
-                if (isMuted) Res.string.mute_video
-                else Res.string.unmute_video,
-            ),
+                if (isMuted) Icons.AutoMirrored.Rounded.VolumeOff
+                else Icons.AutoMirrored.Rounded.VolumeUp,
+            contentDescription =
+                stringResource(if (isMuted) Res.string.mute_video else Res.string.unmute_video),
             tint = MaterialTheme.colorScheme.outline,
             modifier = Modifier.size(40.dp),
         )

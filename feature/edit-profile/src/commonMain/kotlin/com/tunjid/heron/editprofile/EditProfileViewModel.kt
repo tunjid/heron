@@ -55,10 +55,7 @@ internal typealias EditProfileStateHolder = ActionStateMutator<Action, StateFlow
 
 @AssistedFactory
 fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
-        scope: CoroutineScope,
-        route: Route,
-    ): ActualEditProfileViewModel
+    override fun invoke(scope: CoroutineScope, route: Route): ActualEditProfileViewModel
 }
 
 @AssistedInject
@@ -67,66 +64,52 @@ class ActualEditProfileViewModel(
     fileManager: FileManager,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
-    @Assisted
-    scope: CoroutineScope,
-    @Assisted
-    route: Route,
-) : ViewModel(viewModelScope = scope),
+    @Assisted scope: CoroutineScope,
+    @Assisted route: Route,
+) :
+    ViewModel(viewModelScope = scope),
     EditProfileStateHolder by scope.actionStateFlowMutator(
         initialState = State(route),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = listOf(
-            loadProfileMutations(
-                profileRepository = profileRepository,
+        inputs =
+            listOf(
+                loadProfileMutations(profileRepository = profileRepository),
+                pendingUpdateSubmissionMutations(writeQueue = writeQueue),
             ),
-            pendingUpdateSubmissionMutations(
-                writeQueue = writeQueue,
-            ),
-        ),
         actionTransform = transform@{ actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
-                    is Action.AvatarPicked -> action.flow.avatarPickedMutations()
-                    is Action.BannerPicked -> action.flow.bannerPickedMutations()
-                    is Action.FieldChanged -> action.flow.formEditMutations()
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
-                    is Action.SaveProfile -> action.flow.saveProfileMutations(
-                        navActions = navActions,
-                        writeQueue = writeQueue,
-                        fileManager = fileManager,
-                    )
+                actions.toMutationStream(keySelector = Action::key) {
+                    when (val action = type()) {
+                        is Action.Navigate ->
+                            action.flow.consumeNavigationActions(
+                                navigationMutationConsumer = navActions
+                            )
+                        is Action.AvatarPicked -> action.flow.avatarPickedMutations()
+                        is Action.BannerPicked -> action.flow.bannerPickedMutations()
+                        is Action.FieldChanged -> action.flow.formEditMutations()
+                        is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+                        is Action.SaveProfile ->
+                            action.flow.saveProfileMutations(
+                                navActions = navActions,
+                                writeQueue = writeQueue,
+                                fileManager = fileManager,
+                            )
+                    }
                 }
-            }
-        },
+            },
     )
 
-private fun loadProfileMutations(
-    profileRepository: ProfileRepository,
-): Flow<Mutation<State>> =
-    profileRepository.signedInProfile()
-        .mapToMutation { signedInProfile ->
-            copy(
-                profile = signedInProfile,
-                fields = fields
-                    .copyWithValidation(
-                        id = DisplayName,
-                        text = signedInProfile.displayName ?: "",
-                    )
-                    .copyWithValidation(
-                        id = Description,
-                        text = signedInProfile.description ?: "",
-                    ),
-            )
-        }
+private fun loadProfileMutations(profileRepository: ProfileRepository): Flow<Mutation<State>> =
+    profileRepository.signedInProfile().mapToMutation { signedInProfile ->
+        copy(
+            profile = signedInProfile,
+            fields =
+                fields
+                    .copyWithValidation(id = DisplayName, text = signedInProfile.displayName ?: "")
+                    .copyWithValidation(id = Description, text = signedInProfile.description ?: ""),
+        )
+    }
 
-private fun pendingUpdateSubmissionMutations(
-    writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
+private fun pendingUpdateSubmissionMutations(writeQueue: WriteQueue): Flow<Mutation<State>> =
     writeQueue.queueChanges.mapToMutation { writes ->
         copy(submitting = writes.any { it is Writable.ProfileUpdate })
     }
@@ -155,58 +138,55 @@ private fun Flow<Action.SaveProfile>.saveProfileMutations(
     navActions: (NavigationMutation) -> Unit,
     fileManager: FileManager,
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapLatestToManyMutations { action ->
-        emit { copy(submitting = true) }
+): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
+    emit { copy(submitting = true) }
 
-        val updateWrite = Writable.ProfileUpdate(
-            update = Profile.Update(
-                profileId = action.profileId,
-                displayName = action.displayName,
-                description = action.description,
-                avatarFile = action.avatar?.let {
-                    fileManager.toUnrestrictedPhotoFile(it)
-                },
-                bannerFile = action.banner?.let {
-                    fileManager.toUnrestrictedPhotoFile(it)
-                },
-            ),
+    val updateWrite =
+        Writable.ProfileUpdate(
+            update =
+                Profile.Update(
+                    profileId = action.profileId,
+                    displayName = action.displayName,
+                    description = action.description,
+                    avatarFile = action.avatar?.let { fileManager.toUnrestrictedPhotoFile(it) },
+                    bannerFile = action.banner?.let { fileManager.toUnrestrictedPhotoFile(it) },
+                )
         )
 
-        val writeStatus = writeQueue.enqueue(updateWrite)
-        when (writeStatus) {
-            WriteQueue.Status.Dropped -> emit {
+    val writeStatus = writeQueue.enqueue(updateWrite)
+    when (writeStatus) {
+        WriteQueue.Status.Dropped ->
+            emit {
                 copy(
                     messages = messages + Memo.Resource(Res.string.failed_profile_update),
                     submitting = false,
                 )
             }
-            WriteQueue.Status.Duplicate -> emit {
+        WriteQueue.Status.Duplicate ->
+            emit {
                 copy(
                     messages = messages + Memo.Resource(Res.string.duplicate_profile_update),
                     submitting = false,
                 )
             }
-            WriteQueue.Status.Enqueued -> emit {
-                copy(messages = messages + Memo.Resource(Res.string.profile_background_update))
-            }
-        }
-
-        if (writeStatus != WriteQueue.Status.Enqueued) return@mapLatestToManyMutations
-
-        writeQueue.awaitDequeue(updateWrite)
-        emitAll(
-            flowOf(Action.Navigate.Pop).consumeNavigationActions(
-                navigationMutationConsumer = navActions,
-            ),
-        )
+        WriteQueue.Status.Enqueued ->
+            emit { copy(messages = messages + Memo.Resource(Res.string.profile_background_update)) }
     }
 
-private suspend fun FileManager.toUnrestrictedPhotoFile(
-    file: RestrictedFile.Media.Photo,
-): File.Media.Photo? = when (val unrestrictedFile = cacheWithoutRestrictions(file)) {
-    is File.Media.Photo -> unrestrictedFile
-    is File.Media.Video,
-    null,
-    -> null
+    if (writeStatus != WriteQueue.Status.Enqueued) return@mapLatestToManyMutations
+
+    writeQueue.awaitDequeue(updateWrite)
+    emitAll(
+        flowOf(Action.Navigate.Pop)
+            .consumeNavigationActions(navigationMutationConsumer = navActions)
+    )
 }
+
+private suspend fun FileManager.toUnrestrictedPhotoFile(
+    file: RestrictedFile.Media.Photo
+): File.Media.Photo? =
+    when (val unrestrictedFile = cacheWithoutRestrictions(file)) {
+        is File.Media.Photo -> unrestrictedFile
+        is File.Media.Video,
+        null -> null
+    }

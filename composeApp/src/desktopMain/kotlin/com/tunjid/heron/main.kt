@@ -29,14 +29,9 @@ import com.tunjid.heron.scaffold.scaffold.App
 fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
-        state = rememberWindowState(
-            size = DpSize(450.dp, 800.dp),
-        ),
+        state = rememberWindowState(size = DpSize(450.dp, 800.dp)),
         title = "heron",
     ) {
-        App(
-            appState = remember { createAppState() },
-            modifier = Modifier.fillMaxSize(),
-        )
+        App(appState = remember { createAppState() }, modifier = Modifier.fillMaxSize())
     }
 }

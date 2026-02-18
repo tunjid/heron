@@ -79,17 +79,14 @@ internal fun MessagesScreen(
     val listState = rememberLazyListState()
     val items by rememberUpdatedState(state.tiledItems)
 
-    Box(
-        modifier = modifier,
-    ) {
+    Box(modifier = modifier) {
         LazyColumn(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth(),
-            contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-                top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
-                isCompact = paneScaffoldState.prefersCompactBottomNav,
-            ),
+            modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth(),
+            contentPadding =
+                UiTokens.bottomNavAndInsetPaddingValues(
+                    top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+                    isCompact = paneScaffoldState.prefersCompactBottomNav,
+                ),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             items(
@@ -97,8 +94,7 @@ internal fun MessagesScreen(
                 key = { it.id.id },
                 itemContent = { conversation ->
                     Conversation(
-                        modifier = Modifier
-                            .animateItem(),
+                        modifier = Modifier.animateItem(),
                         paneScaffoldState = paneScaffoldState,
                         signedInProfileId = state.signedInProfile?.did,
                         conversation = conversation,
@@ -108,12 +104,14 @@ internal fun MessagesScreen(
                                     conversationDestination(
                                         id = conversation.id,
                                         members = conversation.members,
-                                        sharedElementPrefix = conversationListSharedElementPrefix(
-                                            conversationId = conversation.id,
-                                        ),
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                    ),
-                                ),
+                                        sharedElementPrefix =
+                                            conversationListSharedElementPrefix(
+                                                conversationId = conversation.id
+                                            ),
+                                        referringRouteOption =
+                                            NavigationAction.ReferringRouteOption.Current,
+                                    )
+                                )
                             )
                         },
                     )
@@ -122,18 +120,12 @@ internal fun MessagesScreen(
         }
         AnimatedVisibility(
             visible = state.isSearching,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(
-                    horizontal = 16.dp,
-                ),
+            modifier = Modifier.align(Alignment.TopCenter).padding(horizontal = 16.dp),
         ) {
             ConversationSearchResults(
                 paneScaffoldState = paneScaffoldState,
                 autoCompletedProfiles = state.autoCompletedProfiles,
-                onProfileClicked = {
-                    actions(Action.ResolveConversation(it))
-                },
+                onProfileClicked = { actions(Action.ResolveConversation(it)) },
             )
         }
     }
@@ -143,10 +135,11 @@ internal fun MessagesScreen(
         onQueryChanged = { query ->
             actions(
                 Action.Tile(
-                    tilingAction = TilingState.Action.LoadAround(
-                        query = query ?: state.tilingData.currentQuery,
-                    ),
-                ),
+                    tilingAction =
+                        TilingState.Action.LoadAround(
+                            query = query ?: state.tilingData.currentQuery
+                        )
+                )
             )
         },
     )
@@ -161,26 +154,17 @@ fun Conversation(
     onConversationClicked: () -> Unit,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(68.dp)
-            .padding(
-                horizontal = 8.dp,
-            )
-            .clickable {
+        modifier =
+            modifier.fillMaxWidth().height(68.dp).padding(horizontal = 8.dp).clickable {
                 onConversationClicked()
             },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        val participants = remember(
-            signedInProfileId,
-            conversation.members,
-        ) {
-            conversation.members
-                .filter { it.did != signedInProfileId }
-                .take(3)
-        }
+        val participants =
+            remember(signedInProfileId, conversation.members) {
+                conversation.members.filter { it.did != signedInProfileId }.take(3)
+            }
         ConversationMembers(
             paneScaffoldState = paneScaffoldState,
             members = participants,
@@ -199,51 +183,52 @@ fun ConversationMembers(
     paneScaffoldState: PaneScaffoldState,
     conversationId: ConversationId,
     members: List<Profile>,
-) = with(paneScaffoldState) {
-    FlowRow(
-        modifier = Modifier
-            .width(64.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        val membersSize = members.size
-        members.forEachIndexed { index, profile ->
-            UpdatedMovableStickySharedElementOf(
-                sharedContentState = paneScaffoldState.rememberSharedContentState(
-                    key = profile.avatarSharedElementKey(
-                        prefix = conversationListSharedElementPrefix(conversationId),
-                    ),
-                ),
-                zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),
-                state = remember(profile.did) {
-                    ImageArgs(
-                        url = profile.avatar?.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = null,
-                        shape = RoundedPolygonShape.Circle,
-                    )
-                },
-                modifier = Modifier
-                    .padding(horizontal = 2.dp)
-                    .size(
-                        if (membersSize == 1) 48.dp else 28.dp,
-                    )
-                    .offset(
-                        x = if (membersSize == 2 && index == 1) -(4).dp else 0.dp,
-                        y = if (membersSize == 2) when (index) {
-                            0 -> (-7).dp
-                            else -> 7.dp
-                        }
-                        else 0.dp,
-                    )
-                    .clip(RoundedCornerShape(28.dp)),
-                sharedElement = { args, innerModifier ->
-                    AsyncImage(args, innerModifier)
-                },
-            )
+) =
+    with(paneScaffoldState) {
+        FlowRow(
+            modifier = Modifier.width(64.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            val membersSize = members.size
+            members.forEachIndexed { index, profile ->
+                UpdatedMovableStickySharedElementOf(
+                    sharedContentState =
+                        paneScaffoldState.rememberSharedContentState(
+                            key =
+                                profile.avatarSharedElementKey(
+                                    prefix = conversationListSharedElementPrefix(conversationId)
+                                )
+                        ),
+                    zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),
+                    state =
+                        remember(profile.did) {
+                            ImageArgs(
+                                url = profile.avatar?.uri,
+                                contentScale = ContentScale.Crop,
+                                contentDescription = null,
+                                shape = RoundedPolygonShape.Circle,
+                            )
+                        },
+                    modifier =
+                        Modifier.padding(horizontal = 2.dp)
+                            .size(if (membersSize == 1) 48.dp else 28.dp)
+                            .offset(
+                                x = if (membersSize == 2 && index == 1) -(4).dp else 0.dp,
+                                y =
+                                    if (membersSize == 2)
+                                        when (index) {
+                                            0 -> (-7).dp
+                                            else -> 7.dp
+                                        }
+                                    else 0.dp,
+                            )
+                            .clip(RoundedCornerShape(28.dp)),
+                    sharedElement = { args, innerModifier -> AsyncImage(args, innerModifier) },
+                )
+            }
         }
     }
-}
 
 @Composable
 private fun ConversationDetails(
@@ -251,20 +236,16 @@ private fun ConversationDetails(
     signedInProfileId: ProfileId?,
     conversationSummary: String,
 ) {
-    val profile = remember(participants, signedInProfileId) {
-        participants.firstOrNull { it.did != signedInProfileId }
-    }
-    Column(
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
+    val profile =
+        remember(participants, signedInProfileId) {
+            participants.firstOrNull { it.did != signedInProfileId }
+        }
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         profile?.let {
             ProfileName(profile = it)
             ProfileHandle(profile = it)
         }
-        Text(
-            text = conversationSummary,
-            fontSize = 12.sp,
-        )
+        Text(text = conversationSummary, fontSize = 12.sp)
     }
 }
 
@@ -278,38 +259,39 @@ private fun Conversation.summary(): String {
         // Invalid state.
         // A reaction should not be able to occur if there's no message to react to.
         lastMessage == null -> ""
-        else -> maxOf(
-            a = lastMessage,
-            b = lastMessageReactedTo,
-            comparator = { a, b ->
-                val lastMessageSent = a.sentAt
-                val lastMessageReactedToAt = b.reactions.maxOfOrNull(
-                    Message.Reaction::createdAt,
-                ) ?: Instant.DISTANT_PAST
+        else ->
+            maxOf(
+                    a = lastMessage,
+                    b = lastMessageReactedTo,
+                    comparator = { a, b ->
+                        val lastMessageSent = a.sentAt
+                        val lastMessageReactedToAt =
+                            b.reactions.maxOfOrNull(Message.Reaction::createdAt)
+                                ?: Instant.DISTANT_PAST
 
-                lastMessageSent.compareTo(lastMessageReactedToAt)
-            },
-        ).let { mostRecent ->
-            when (mostRecent) {
-                lastMessageReactedTo -> mostRecent.reactions.first().let { reaction ->
-                    stringResource(
-                        Res.string.sender_reacted,
-                        members.firstOrNull {
-                            it.did == reaction.senderId
-                        }?.displayName ?: "",
-                        reaction.value,
-                        mostRecent.text,
-                    )
+                        lastMessageSent.compareTo(lastMessageReactedToAt)
+                    },
+                )
+                .let { mostRecent ->
+                    when (mostRecent) {
+                        lastMessageReactedTo ->
+                            mostRecent.reactions.first().let { reaction ->
+                                stringResource(
+                                    Res.string.sender_reacted,
+                                    members.firstOrNull { it.did == reaction.senderId }?.displayName
+                                        ?: "",
+                                    reaction.value,
+                                    mostRecent.text,
+                                )
+                            }
+                        lastMessage -> mostRecent.text
+                        else -> ""
+                    }
                 }
-                lastMessage -> mostRecent.text
-                else -> ""
-            }
-        }
     }
 }
 
-private fun conversationListSharedElementPrefix(
-    conversationId: ConversationId,
-) = "$ConversationListSharedElementPrefix-${conversationId.id}"
+private fun conversationListSharedElementPrefix(conversationId: ConversationId) =
+    "$ConversationListSharedElementPrefix-${conversationId.id}"
 
 private const val ConversationListSharedElementPrefix = "conversation-list"

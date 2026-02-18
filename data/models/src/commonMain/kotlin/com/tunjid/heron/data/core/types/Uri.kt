@@ -30,20 +30,16 @@ sealed interface Uri {
     }
 }
 
-@Serializable
-sealed interface RecordUri : Uri
+@Serializable sealed interface RecordUri : Uri
 
-@Serializable
-sealed interface EmbeddableRecordUri : RecordUri
+@Serializable sealed interface EmbeddableRecordUri : RecordUri
 
-/**
- * Extracts the [ProfileId] component from an AT URI string.
- */
+/** Extracts the [ProfileId] component from an AT URI string. */
 fun RecordUri.profileId(): ProfileId =
     requireNotNull(
         uri.atUriComponents { authorityRange, _, _ ->
             ProfileId(uri.substring(authorityRange.start, authorityRange.endExclusive))
-        },
+        }
     )
 
 fun RecordUri.requireCollection(): String =
@@ -60,29 +56,23 @@ fun RecordUri.requireCollection(): String =
         is UnknownRecordUri -> throw UnresolvableRecordException(this)
     }
 
-fun recordUriOrNull(
-    profileId: ProfileId,
-    namespace: String,
-    recordKey: RecordKey,
-): RecordUri? = "${Uri.Host.AtProto.prefix}${profileId.id}/$namespace/${recordKey.value}"
-    .asRecordUriOrNull()
+fun recordUriOrNull(profileId: ProfileId, namespace: String, recordKey: RecordKey): RecordUri? =
+    "${Uri.Host.AtProto.prefix}${profileId.id}/$namespace/${recordKey.value}".asRecordUriOrNull()
 
 val RecordUri.recordKey: RecordKey
-    get() = requireNotNull(
-        uri.atUriComponents { _, _, rKeyRange ->
-            RecordKey(uri.substring(rKeyRange.start, rKeyRange.endExclusive))
-        },
-    )
+    get() =
+        requireNotNull(
+            uri.atUriComponents { _, _, rKeyRange ->
+                RecordKey(uri.substring(rKeyRange.start, rKeyRange.endExclusive))
+            }
+        )
 
-val Uri.domain get() = Url(uri).host.removePrefix("www.")
+val Uri.domain
+    get() = Url(uri).host.removePrefix("www.")
 
 @Serializable
 @JvmInline
-value class PostUri(
-    override val uri: String,
-) : Uri,
-    RecordUri,
-    EmbeddableRecordUri {
+value class PostUri(override val uri: String) : Uri, RecordUri, EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -92,9 +82,7 @@ value class PostUri(
 
 @Serializable
 @JvmInline
-value class ProfileUri(
-    override val uri: String,
-) : Uri {
+value class ProfileUri(override val uri: String) : Uri {
     override fun toString(): String = uri
 
     companion object {
@@ -105,11 +93,7 @@ value class ProfileUri(
 
 @Serializable
 @JvmInline
-value class FeedGeneratorUri(
-    override val uri: String,
-) : Uri,
-    RecordUri,
-    EmbeddableRecordUri {
+value class FeedGeneratorUri(override val uri: String) : Uri, RecordUri, EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -119,11 +103,7 @@ value class FeedGeneratorUri(
 
 @Serializable
 @JvmInline
-value class ListUri(
-    override val uri: String,
-) : Uri,
-    RecordUri,
-    EmbeddableRecordUri {
+value class ListUri(override val uri: String) : Uri, RecordUri, EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -133,11 +113,7 @@ value class ListUri(
 
 @Serializable
 @JvmInline
-value class StarterPackUri(
-    override val uri: String,
-) : Uri,
-    RecordUri,
-    EmbeddableRecordUri {
+value class StarterPackUri(override val uri: String) : Uri, RecordUri, EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -147,11 +123,7 @@ value class StarterPackUri(
 
 @Serializable
 @JvmInline
-value class LabelerUri(
-    override val uri: String,
-) : Uri,
-    RecordUri,
-    EmbeddableRecordUri {
+value class LabelerUri(override val uri: String) : Uri, RecordUri, EmbeddableRecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -161,10 +133,7 @@ value class LabelerUri(
 
 @Serializable
 @JvmInline
-value class LikeUri(
-    override val uri: String,
-) : Uri,
-    RecordUri {
+value class LikeUri(override val uri: String) : Uri, RecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -174,10 +143,7 @@ value class LikeUri(
 
 @Serializable
 @JvmInline
-value class RepostUri(
-    override val uri: String,
-) : Uri,
-    RecordUri {
+value class RepostUri(override val uri: String) : Uri, RecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -187,10 +153,7 @@ value class RepostUri(
 
 @Serializable
 @JvmInline
-value class FollowUri(
-    override val uri: String,
-) : Uri,
-    RecordUri {
+value class FollowUri(override val uri: String) : Uri, RecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -200,10 +163,7 @@ value class FollowUri(
 
 @Serializable
 @JvmInline
-value class BlockUri(
-    override val uri: String,
-) : Uri,
-    RecordUri {
+value class BlockUri(override val uri: String) : Uri, RecordUri {
     override fun toString(): String = uri
 
     companion object {
@@ -213,26 +173,19 @@ value class BlockUri(
 
 @Serializable
 @JvmInline
-value class UnknownRecordUri(
-    override val uri: String,
-) : Uri,
-    RecordUri {
+value class UnknownRecordUri(override val uri: String) : Uri, RecordUri {
     override fun toString(): String = uri
 }
 
 @Serializable
 @JvmInline
-value class ListMemberUri(
-    override val uri: String,
-) : Uri {
+value class ListMemberUri(override val uri: String) : Uri {
     override fun toString(): String = uri
 }
 
 @Serializable
 @JvmInline
-value class ThreadGateUri(
-    override val uri: String,
-) : Uri {
+value class ThreadGateUri(override val uri: String) : Uri {
     override fun toString(): String = uri
 
     companion object {
@@ -242,9 +195,7 @@ value class ThreadGateUri(
 
 @Serializable
 @JvmInline
-value class PostGateUri(
-    override val uri: String,
-) : Uri {
+value class PostGateUri(override val uri: String) : Uri {
     override fun toString(): String = uri
 
     companion object {
@@ -254,44 +205,34 @@ value class PostGateUri(
 
 @Serializable
 @JvmInline
-value class ImageUri(
-    override val uri: String,
-) : Uri {
+value class ImageUri(override val uri: String) : Uri {
     override fun toString(): String = uri
 }
 
 @Serializable
 @JvmInline
-value class GenericUri(
-    override val uri: String,
-) : Uri {
+value class GenericUri(override val uri: String) : Uri {
     override fun toString(): String = uri
 }
 
 @Serializable
 @JvmInline
-value class FileUri(
-    override val uri: String,
-) : Uri {
+value class FileUri(override val uri: String) : Uri {
     override fun toString(): String = uri
 }
 
-/**
- * Returns this [Uri] as a [RecordUri] if applicable.
- */
+/** Returns this [Uri] as a [RecordUri] if applicable. */
 fun Uri.asRecordUriOrNull(): RecordUri? = uri.asRecordUriOrNull()
 
-/**
- * Returns this [Uri] as a [RecordUri] if applicable.
- */
+/** Returns this [Uri] as a [RecordUri] if applicable. */
 fun Uri.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? = uri.asEmbeddableRecordUriOrNull()
 
 /**
  * Parses a string into a specific [RecordUri] object based on its collection.
  *
+ * @return A specific [RecordUri] (e.g., [FeedGeneratorUri], [ListUri], e.t.c) if parsing is
+ *   successful, or `null` if the string is not a valid AT URI.
  * @receiver The string to parse.
- * @return A specific [RecordUri] (e.g., [FeedGeneratorUri], [ListUri], e.t.c)
- * if parsing is successful, or `null` if the string is not a valid AT URI.
  */
 fun String.asRecordUriOrNull(): RecordUri? = atUriComponents { _, collectionRange, _ ->
     when (substring(collectionRange.start, collectionRange.endExclusive)) {
@@ -323,14 +264,14 @@ fun String.asEmbeddableRecordUriOrNull(): EmbeddableRecordUri? =
 /**
  * Parses an AT URI string into its components without using Regex or intermediate data classes.
  *
- * Format expected: at://{authority}/{collection}/{rkey}
- * Example: at://did:plc:12345/app.bsky.feed.post/98765
+ * Format expected: at://{authority}/{collection}/{rkey} Example:
+ * at://did:plc:12345/app.bsky.feed.post/98765
  *
  * @param action A lambda to consume the parsed parts.
  * @return The result of [action] if parsing is successful, or `null` if the format is invalid.
  */
 private inline fun <T> String.atUriComponents(
-    action: (authorityRange: StringRange, collectionRange: StringRange, rKeyRange: StringRange) -> T,
+    action: (authorityRange: StringRange, collectionRange: StringRange, rKeyRange: StringRange) -> T
 ): T? {
     // 1. Validate Prefix "at://"
     if (!this.startsWith(Uri.Host.AtProto.prefix)) return null
@@ -366,17 +307,10 @@ private inline fun <T> String.atUriComponents(
     )
 }
 
-@JvmInline
-private value class StringRange(
-    val packed: Long,
-)
+@JvmInline private value class StringRange(val packed: Long)
 
-private fun StringRange(
-    start: Int,
-    endExclusive: Int,
-) = StringRange(
-    packed = packInts(start, endExclusive),
-)
+private fun StringRange(start: Int, endExclusive: Int) =
+    StringRange(packed = packInts(start, endExclusive))
 
 private val StringRange.start
     get() = unpackInt1(packed)

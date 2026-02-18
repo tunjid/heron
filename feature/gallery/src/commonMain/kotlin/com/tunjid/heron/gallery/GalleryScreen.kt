@@ -107,142 +107,136 @@ internal fun GalleryScreen(
     state: State,
     actions: (Action) -> Unit,
 ) {
-    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
-        isSignedIn = paneScaffoldState.isSignedIn,
-        onSignInClicked = {
-            actions(Action.Navigate.To(signInDestination()))
-        },
-        onInteractionConfirmed = {
-            actions(Action.SendPostInteraction(it))
-        },
-        onQuotePostClicked = { repost ->
-            actions(
-                Action.Navigate.To(
-                    composePostDestination(
-                        type = Post.Create.Quote(repost),
-                        sharedElementPrefix = state.sharedElementPrefix,
-                    ),
-                ),
-            )
-        },
-    )
-    val mutedWordsSheetState = rememberUpdatedMutedWordsSheetState(
-        mutedWordPreferences = state.preferences.mutedWordPreferences,
-        onSave = {
-            actions(Action.UpdateMutedWord(it))
-        },
-        onShown = {},
-    )
-    val profileRestrictionDialogState = rememberProfileRestrictionDialogState(
-        onProfileRestricted = { profileRestriction ->
-            when (profileRestriction) {
-                is PostOption.Moderation.BlockAccount ->
-                    actions(
-                        Action.BlockAccount(
-                            signedInProfileId = profileRestriction.signedInProfileId,
-                            profileId = profileRestriction.post.author.did,
-                        ),
+    val postInteractionSheetState =
+        rememberUpdatedPostInteractionsSheetState(
+            isSignedIn = paneScaffoldState.isSignedIn,
+            onSignInClicked = { actions(Action.Navigate.To(signInDestination())) },
+            onInteractionConfirmed = { actions(Action.SendPostInteraction(it)) },
+            onQuotePostClicked = { repost ->
+                actions(
+                    Action.Navigate.To(
+                        composePostDestination(
+                            type = Post.Create.Quote(repost),
+                            sharedElementPrefix = state.sharedElementPrefix,
+                        )
                     )
+                )
+            },
+        )
+    val mutedWordsSheetState =
+        rememberUpdatedMutedWordsSheetState(
+            mutedWordPreferences = state.preferences.mutedWordPreferences,
+            onSave = { actions(Action.UpdateMutedWord(it)) },
+            onShown = {},
+        )
+    val profileRestrictionDialogState =
+        rememberProfileRestrictionDialogState(
+            onProfileRestricted = { profileRestriction ->
+                when (profileRestriction) {
+                    is PostOption.Moderation.BlockAccount ->
+                        actions(
+                            Action.BlockAccount(
+                                signedInProfileId = profileRestriction.signedInProfileId,
+                                profileId = profileRestriction.post.author.did,
+                            )
+                        )
 
-                is PostOption.Moderation.MuteAccount ->
-                    actions(
-                        Action.MuteAccount(
-                            signedInProfileId = profileRestriction.signedInProfileId,
-                            profileId = profileRestriction.post.author.did,
-                        ),
-                    )
+                    is PostOption.Moderation.MuteAccount ->
+                        actions(
+                            Action.MuteAccount(
+                                signedInProfileId = profileRestriction.signedInProfileId,
+                                profileId = profileRestriction.post.author.did,
+                            )
+                        )
+                }
             }
-        },
-    )
-    val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
-        signedInProfileId = state.signedInProfileId,
-        recentConversations = state.recentConversations,
-        onOptionClicked = { option ->
-            when (option) {
-                is PostOption.ShareInConversation ->
-                    actions(
-                        Action.Navigate.To(
-                            conversationDestination(
-                                id = option.conversation.id,
-                                members = option.conversation.members,
-                                sharedElementPrefix = option.conversation.id.id,
-                                sharedUri = option.post.uri.asGenericUri(),
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                            ),
-                        ),
-                    )
+        )
+    val postOptionsSheetState =
+        rememberUpdatedPostOptionsSheetState(
+            signedInProfileId = state.signedInProfileId,
+            recentConversations = state.recentConversations,
+            onOptionClicked = { option ->
+                when (option) {
+                    is PostOption.ShareInConversation ->
+                        actions(
+                            Action.Navigate.To(
+                                conversationDestination(
+                                    id = option.conversation.id,
+                                    members = option.conversation.members,
+                                    sharedElementPrefix = option.conversation.id.id,
+                                    sharedUri = option.post.uri.asGenericUri(),
+                                    referringRouteOption =
+                                        NavigationAction.ReferringRouteOption.Current,
+                                )
+                            )
+                        )
 
-                // TODO
-                is PostOption.ThreadGate -> Unit
+                    // TODO
+                    is PostOption.ThreadGate -> Unit
 
-                is PostOption.Moderation.BlockAccount ->
-                    profileRestrictionDialogState.show(option)
+                    is PostOption.Moderation.BlockAccount ->
+                        profileRestrictionDialogState.show(option)
 
-                is PostOption.Moderation.MuteAccount ->
-                    profileRestrictionDialogState.show(option)
+                    is PostOption.Moderation.MuteAccount ->
+                        profileRestrictionDialogState.show(option)
 
-                is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
-            }
-        },
-    )
+                    is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
+                }
+            },
+        )
     val updatedItems by rememberUpdatedState(state.items)
     val pagerState = rememberPagerState(pageCount = updatedItems::size)
     val horizontalPagerStates = remember { PagerStates<PostUri>() }
 
-    val dragToPopState = rememberDragToPopState(
-        shouldDragToPop = remember(
-            pagerState,
-            horizontalPagerStates,
-        ) {
-            var lastHorizontalGestureId: Int = -1
-            var overscrollCount = 0
+    val dragToPopState =
+        rememberDragToPopState(
+            shouldDragToPop =
+                remember(pagerState, horizontalPagerStates) {
+                    var lastHorizontalGestureId: Int = -1
+                    var overscrollCount = 0
 
-            canPop@{ delta ->
-                // Already dragging, continue
-                if (isDraggingToPop) return@canPop true
+                    canPop@{ delta ->
+                        // Already dragging, continue
+                        if (isDraggingToPop) return@canPop true
 
-                val isVertical = delta.y.absoluteValue > delta.x.absoluteValue
-                if (isVertical) return@canPop pagerState.isConstrainedBy(delta.y)
+                        val isVertical = delta.y.absoluteValue > delta.x.absoluteValue
+                        if (isVertical) return@canPop pagerState.isConstrainedBy(delta.y)
 
-                // Vertical scroll already begun
-                if (pagerState.currentPageOffsetFraction != 0f) return@canPop false
+                        // Vertical scroll already begun
+                        if (pagerState.currentPageOffsetFraction != 0f) return@canPop false
 
-                val item = updatedItems.getOrNull(pagerState.currentPage)
-                    ?: return@canPop true
+                        val item =
+                            updatedItems.getOrNull(pagerState.currentPage) ?: return@canPop true
 
-                // No items to scroll horizontally
-                if (item.media.size <= 1) return@canPop true
+                        // No items to scroll horizontally
+                        if (item.media.size <= 1) return@canPop true
 
-                val horizontalPagerState = horizontalPagerStates[item.post.uri]
-                    ?: return@canPop true
+                        val horizontalPagerState =
+                            horizontalPagerStates[item.post.uri] ?: return@canPop true
 
-                val hasDifferentPointerId = lastHorizontalGestureId != gestureId
+                        val hasDifferentPointerId = lastHorizontalGestureId != gestureId
 
-                // Reset tracking on item change
-                if (hasDifferentPointerId) {
-                    lastHorizontalGestureId = gestureId
+                        // Reset tracking on item change
+                        if (hasDifferentPointerId) {
+                            lastHorizontalGestureId = gestureId
+                        }
+
+                        val isConstrained = horizontalPagerState.isConstrainedBy(delta.x)
+
+                        if (isConstrained && hasDifferentPointerId) overscrollCount++
+                        else if (!isConstrained && delta.x != 0f) overscrollCount = 0
+
+                        isConstrained && overscrollCount > 1
+                    }
                 }
-
-                val isConstrained = horizontalPagerState.isConstrainedBy(delta.x)
-
-                if (isConstrained && hasDifferentPointerId) overscrollCount++
-                else if (!isConstrained && delta.x != 0f) overscrollCount = 0
-
-                isConstrained && overscrollCount > 1
-            }
-        },
-    )
+        )
 
     VerticalPager(
         state = pagerState,
-        modifier = modifier
-            .dragToPop(dragToPopState)
-            .fillMaxSize(),
+        modifier = modifier.dragToPop(dragToPopState).fillMaxSize(),
         beyondViewportPageCount = PagerPrefetchCount,
         userScrollEnabled = state.canScrollVertically,
-        key = { page ->
-            updatedItems[page].post.uri.uri
-        },
+        key = { page -> updatedItems[page].post.uri.uri },
         pageContent = { page ->
             val item = updatedItems[page]
 
@@ -271,10 +265,11 @@ internal fun GalleryScreen(
             onQueryChanged = { query ->
                 timelineStateHolder.accept(
                     TimelineState.Action.Tile(
-                        tilingAction = TilingState.Action.LoadAround(
-                            query = query ?: timelineState.tilingData.currentQuery,
-                        ),
-                    ),
+                        tilingAction =
+                            TilingState.Action.LoadAround(
+                                query = query ?: timelineState.tilingData.currentQuery
+                            )
+                    )
                 )
             },
         )
@@ -296,75 +291,61 @@ private fun HorizontalItems(
 ) {
     val videoPlayerController = LocalVideoPlayerController.current
     val imageDownloadState = remember(::ImageDownloadState)
-    val playerControlsUiState = remember(videoPlayerController) {
-        PlayerControlsUiState(videoPlayerController)
-    }
+    val playerControlsUiState =
+        remember(videoPlayerController) { PlayerControlsUiState(videoPlayerController) }
 
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .clickable(
-                onClick = playerControlsUiState::toggleVisibility,
-            ),
+        modifier =
+            modifier.fillMaxSize().clickable(onClick = playerControlsUiState::toggleVisibility)
     ) {
-        val pagerState = pagerStates.manage(item.post.uri) {
-            rememberPagerState(
-                initialPage = item.startIndex,
-            ) {
-                item.media.size
+        val pagerState =
+            pagerStates.manage(item.post.uri) {
+                rememberPagerState(initialPage = item.startIndex) { item.media.size }
             }
-        }
 
         HorizontalPager(
-            modifier = Modifier
-                .zIndex(MediaZIndex)
-                .fillMaxSize(),
+            modifier = Modifier.zIndex(MediaZIndex).fillMaxSize(),
             beyondViewportPageCount = PagerPrefetchCount,
             state = pagerState,
             key = { page -> item.media[page].key },
             pageContent = { page ->
                 var windowSize by remember { mutableStateOf(IntSize.Zero) }
-                val isInViewport = remember(item, page) {
-                    inViewport@{ media: GalleryItem.Media ->
-                        val inVerticalViewport = item == focusedItem()
-                        if (!inVerticalViewport) return@inViewport false
-                        media == item.media.getOrNull(pagerState.currentPage)
+                val isInViewport =
+                    remember(item, page) {
+                        inViewport@{ media: GalleryItem.Media ->
+                            val inVerticalViewport = item == focusedItem()
+                            if (!inVerticalViewport) return@inViewport false
+                            media == item.media.getOrNull(pagerState.currentPage)
+                        }
                     }
-                }
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .onSizeChanged {
-                            windowSize = it
-                        },
-                ) {
+                Box(modifier = Modifier.fillMaxSize().onSizeChanged { windowSize = it }) {
                     when (val media = item.media[page]) {
                         is GalleryItem.Media.Photo -> {
-                            val zoomState = rememberGestureZoomState(
-                                options = remember {
-                                    Options(
-                                        scale = Options.Scale.Layout,
-                                        offset = Options.Offset.Layout,
-                                    )
-                                },
-                            )
+                            val zoomState =
+                                rememberGestureZoomState(
+                                    options =
+                                        remember {
+                                            Options(
+                                                scale = Options.Scale.Layout,
+                                                offset = Options.Offset.Layout,
+                                            )
+                                        }
+                                )
                             val coroutineScope = rememberCoroutineScope()
                             GalleryImage(
-                                modifier = Modifier
-                                    .align(Alignment.Center)
-                                    .aspectRatioFor(
-                                        windowSize = windowSize,
-                                        aspectRatio = media.image,
-                                    )
-                                    .gestureZoomable(zoomState)
-                                    .combinedClickable(
-                                        onClick = playerControlsUiState::toggleVisibility,
-                                        onDoubleClick = {
-                                            coroutineScope.launch {
-                                                zoomState.toggleZoom()
-                                            }
-                                        },
-                                    ),
+                                modifier =
+                                    Modifier.align(Alignment.Center)
+                                        .aspectRatioFor(
+                                            windowSize = windowSize,
+                                            aspectRatio = media.image,
+                                        )
+                                        .gestureZoomable(zoomState)
+                                        .combinedClickable(
+                                            onClick = playerControlsUiState::toggleVisibility,
+                                            onDoubleClick = {
+                                                coroutineScope.launch { zoomState.toggleZoom() }
+                                            },
+                                        ),
                                 scaffoldState = paneScaffoldState,
                                 item = media,
                                 sharedElementPrefix = item.sharedElementPrefix,
@@ -373,52 +354,46 @@ private fun HorizontalItems(
                             )
                         }
 
-                        is GalleryItem.Media.Video -> GalleryVideo(
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                                .aspectRatioFor(
-                                    windowSize = windowSize,
-                                    aspectRatio = media.video,
-                                ),
-                            paneMovableElementSharedTransitionScope = paneScaffoldState,
-                            item = media,
-                            sharedElementPrefix = item.sharedElementPrefix,
-                            postUri = item.post.uri,
-                            isInViewport = isInViewport,
-                        )
+                        is GalleryItem.Media.Video ->
+                            GalleryVideo(
+                                modifier =
+                                    Modifier.align(Alignment.Center)
+                                        .aspectRatioFor(
+                                            windowSize = windowSize,
+                                            aspectRatio = media.video,
+                                        ),
+                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                item = media,
+                                sharedElementPrefix = item.sharedElementPrefix,
+                                postUri = item.post.uri,
+                                isInViewport = isInViewport,
+                            )
                     }
                 }
             },
         )
 
         AnimatedVisibility(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 36.dp)
-                .navigationBarsPadding(),
+            modifier =
+                Modifier.align(Alignment.BottomCenter)
+                    .padding(bottom = 36.dp)
+                    .navigationBarsPadding(),
             enter = IndicatorEnterAnimation,
             exit = IndicatorExitAnimation,
             visible = !isDraggingToPop(),
         ) {
-            Indicator(
-                pagerState = pagerState,
-            )
+            Indicator(pagerState = pagerState)
         }
 
         MediaOverlay(
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             media = item.media.getOrNull(pagerState.currentPage),
             isVisible = playerControlsUiState.playerControlsVisible,
         ) { media ->
             val viewedProfileId = item.post.author.did
             MediaPoster(
-                modifier = Modifier
-                    .statusBarsPadding()
-                    .padding(
-                        horizontal = 16.dp,
-                        vertical = 20.dp,
-                    ),
+                modifier =
+                    Modifier.statusBarsPadding().padding(horizontal = 16.dp, vertical = 20.dp),
                 post = item.post,
                 signedInProfileId = signedInProfileId,
                 viewerState = item.viewerState,
@@ -429,63 +404,61 @@ private fun HorizontalItems(
                         Action.Navigate.To(
                             profileDestination(
                                 profile = post.author,
-                                avatarSharedElementKey = post.avatarSharedElementKey(
-                                    prefix = item.posterSharedElementPrefix,
-                                ),
+                                avatarSharedElementKey =
+                                    post.avatarSharedElementKey(
+                                        prefix = item.posterSharedElementPrefix
+                                    ),
                                 referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                            ),
-                        ),
+                            )
+                        )
                     )
                 },
-                onViewerStateToggled = remember(signedInProfileId, viewedProfileId) {
-                    { viewerState ->
-                        signedInProfileId?.let {
-                            actions(
-                                Action.ToggleViewerState(
-                                    signedInProfileId = it,
-                                    viewedProfileId = viewedProfileId,
-                                    following = viewerState?.following,
-                                    followedBy = viewerState?.followedBy,
-                                ),
-                            )
+                onViewerStateToggled =
+                    remember(signedInProfileId, viewedProfileId) {
+                        { viewerState ->
+                            signedInProfileId?.let {
+                                actions(
+                                    Action.ToggleViewerState(
+                                        signedInProfileId = it,
+                                        viewedProfileId = viewedProfileId,
+                                        following = viewerState?.following,
+                                        followedBy = viewerState?.followedBy,
+                                    )
+                                )
+                            }
                         }
-                    }
-                },
+                    },
             )
 
             MediaInteractions(
                 post = item.post,
                 paneScaffoldState = paneScaffoldState,
-                modifier = Modifier
-                    .padding(horizontal = 16.dp),
+                modifier = Modifier.padding(horizontal = 16.dp),
                 onPostInteraction = { interaction ->
                     when (interaction) {
-                        is PostAction.OfInteraction -> postInteractionSheetState.onInteraction(
-                            interaction,
-                        )
+                        is PostAction.OfInteraction ->
+                            postInteractionSheetState.onInteraction(interaction)
                         is PostAction.OfMetadata -> Unit
-                        is PostAction.OfMore -> postOptionsSheetState.showOptions(
-                            interaction.post,
-                        )
-                        is PostAction.OfReply -> actions(
-                            Action.Navigate.To(
-                                if (paneScaffoldState.isSignedOut) signInDestination()
-                                else composePostDestination(
-                                    type = Post.Create.Reply(
-                                        parent = interaction.post,
-                                    ),
-                                    sharedElementPrefix = item.sharedElementPrefix,
-                                ),
-                            ),
-                        )
+                        is PostAction.OfMore -> postOptionsSheetState.showOptions(interaction.post)
+                        is PostAction.OfReply ->
+                            actions(
+                                Action.Navigate.To(
+                                    if (paneScaffoldState.isSignedOut) signInDestination()
+                                    else
+                                        composePostDestination(
+                                            type = Post.Create.Reply(parent = interaction.post),
+                                            sharedElementPrefix = item.sharedElementPrefix,
+                                        )
+                                )
+                            )
                     }
                 },
             )
             GalleryFooter(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 24.dp)
-                    .windowInsetsPadding(insets = WindowInsets.navigationBars),
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .padding(vertical = 24.dp)
+                        .windowInsetsPadding(insets = WindowInsets.navigationBars),
                 item = media,
                 videoPlayerController = videoPlayerController,
                 imageDownloadState = imageDownloadState,
@@ -500,9 +473,7 @@ private fun HorizontalItems(
             denominator = 10,
             itemsAvailable = item.media.size,
             onIndex = { index ->
-                videoPlayerController.playIfVideo(
-                    media = item.media.getOrNull(index.roundToInt()),
-                )
+                videoPlayerController.playIfVideo(media = item.media.getOrNull(index.roundToInt()))
             },
         )
 
@@ -511,7 +482,7 @@ private fun HorizontalItems(
                 .collect { inFocus ->
                     if (!inFocus) return@collect
                     videoPlayerController.playIfVideo(
-                        media = item.media.getOrNull(pagerState.currentPage),
+                        media = item.media.getOrNull(pagerState.currentPage)
                     )
                 }
         }
@@ -520,35 +491,25 @@ private fun HorizontalItems(
     }
 }
 
-private fun Modifier.aspectRatioFor(
-    windowSize: IntSize,
-    aspectRatio: AspectRatio,
-): Modifier {
+private fun Modifier.aspectRatioFor(windowSize: IntSize, aspectRatio: AspectRatio): Modifier {
     val screenAspectRatio = windowSize.width.toFloat() / windowSize.height.toFloat()
     val isWiderAspectRatioThanMedia = screenAspectRatio > aspectRatio.aspectRatioOrSquare
-    return this
-        .fillMaxSize()
+    return this.fillMaxSize()
         .aspectRatio(
             ratio = aspectRatio.aspectRatioOrSquare,
             matchHeightConstraintsFirst = isWiderAspectRatioThanMedia,
         )
 }
 
-private fun VideoPlayerController.playIfVideo(
-    media: GalleryItem.Media?,
-) {
+private fun VideoPlayerController.playIfVideo(media: GalleryItem.Media?) {
     when (media) {
         null -> Unit
         is GalleryItem.Media.Photo -> Unit
-        is GalleryItem.Media.Video -> play(
-            media.video.playlist.uri,
-        )
+        is GalleryItem.Media.Video -> play(media.video.playlist.uri)
     }
 }
 
-private fun ScrollableState.isConstrainedBy(
-    delta: Float,
-): Boolean {
+private fun ScrollableState.isConstrainedBy(delta: Float): Boolean {
     val constrainedAtStart = !canScrollBackward && delta > 0
     val constrainedAtEnd = !canScrollForward && delta < 0
 

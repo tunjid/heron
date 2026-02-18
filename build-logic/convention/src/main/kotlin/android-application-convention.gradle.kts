@@ -14,9 +14,7 @@
  *    limitations under the License.
  */
 
-plugins {
-    id("com.android.application")
-}
+plugins { id("com.android.application") }
 
 android {
     commonConfiguration(this)
@@ -28,9 +26,7 @@ android {
         }
     }
 
-    defaultConfig {
-        targetSdk = 35
-    }
+    defaultConfig { targetSdk = 35 }
 }
 
 addDesugarDependencies()

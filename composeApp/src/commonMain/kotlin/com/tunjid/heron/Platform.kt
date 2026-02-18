@@ -92,132 +92,144 @@ fun createAppState(
 
     val appMainScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
-    val navigationComponent = createGraphFactory<AppNavigationGraph.Factory>().create(
-        signInNavigationBindings = SignInNavigationBindings,
-        composeNavigationBindings = ComposeNavigationBindings,
-        conversationNavigationBindings = ConversationNavigationBindings,
-        feedNavigationBindings = FeedNavigationBindings,
-        editProfileNavigationBindings = EditProfileNavigationBindings,
-        galleryNavigationBindings = GalleryNavigationBindings,
-        grazeEditorNavigationBindings = GrazeEditorNavigationBindings,
-        homeNavigationBindings = HomeNavigationBindings,
-        listNavigationBindings = ListNavigationBindings,
-        messagesNavigationBindings = MessagesNavigationBindings,
-        moderationNavigationBindings = ModerationNavigationBindings,
-        notificationsNavigationBindings = NotificationsNavigationBindings,
-        notificationSettingsNavigationBindings = NotificationSettingsNavigationBindings,
-        postDetailNavigationBindings = PostDetailNavigationBindings,
-        postsNavigationBindings = PostsNavigationBindings,
-        profileNavigationBindings = ProfileNavigationBindings,
-        profileAvatarNavigationBindings = ProfileAvatarNavigationBindings,
-        profilesNavigationBindings = ProfilesNavigationBindings,
-        searchNavigationBindings = SearchNavigationBindings,
-        splashNavigationBindings = SplashNavigationBindings,
-        settingsNavigationBindings = SettingsNavigationBindings,
-    )
+    val navigationComponent =
+        createGraphFactory<AppNavigationGraph.Factory>()
+            .create(
+                signInNavigationBindings = SignInNavigationBindings,
+                composeNavigationBindings = ComposeNavigationBindings,
+                conversationNavigationBindings = ConversationNavigationBindings,
+                feedNavigationBindings = FeedNavigationBindings,
+                editProfileNavigationBindings = EditProfileNavigationBindings,
+                galleryNavigationBindings = GalleryNavigationBindings,
+                grazeEditorNavigationBindings = GrazeEditorNavigationBindings,
+                homeNavigationBindings = HomeNavigationBindings,
+                listNavigationBindings = ListNavigationBindings,
+                messagesNavigationBindings = MessagesNavigationBindings,
+                moderationNavigationBindings = ModerationNavigationBindings,
+                notificationsNavigationBindings = NotificationsNavigationBindings,
+                notificationSettingsNavigationBindings = NotificationSettingsNavigationBindings,
+                postDetailNavigationBindings = PostDetailNavigationBindings,
+                postsNavigationBindings = PostsNavigationBindings,
+                profileNavigationBindings = ProfileNavigationBindings,
+                profileAvatarNavigationBindings = ProfileAvatarNavigationBindings,
+                profilesNavigationBindings = ProfilesNavigationBindings,
+                searchNavigationBindings = SearchNavigationBindings,
+                splashNavigationBindings = SplashNavigationBindings,
+                settingsNavigationBindings = SettingsNavigationBindings,
+            )
 
-    val dataBindings = DataBindings(
-        args = args(appMainScope),
-    )
+    val dataBindings = DataBindings(args = args(appMainScope))
 
-    val scaffoldBindings = ScaffoldBindings(
-        args = ScaffoldBindingArgs(
-            imageLoader = imageLoader(),
-            notifier = notifier(appMainScope),
-            videoPlayerController = videoPlayerController(appMainScope),
-            routeMatchers = navigationComponent.allRouteMatchers,
-        ),
-        dataBindings = dataBindings,
-    )
+    val scaffoldBindings =
+        ScaffoldBindings(
+            args =
+                ScaffoldBindingArgs(
+                    imageLoader = imageLoader(),
+                    notifier = notifier(appMainScope),
+                    videoPlayerController = videoPlayerController(appMainScope),
+                    routeMatchers = navigationComponent.allRouteMatchers,
+                ),
+            dataBindings = dataBindings,
+        )
 
-    val appGraph = createGraphFactory<AppGraph.Factory>().create(
-        dataBindings = dataBindings,
-        scaffoldBindings = scaffoldBindings,
-        signInBindings = SignInBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        composeBindings = ComposeBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        conversationBindings = ConversationBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        editProfileBindings = EditProfileBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-
-        ),
-        feedBindings = FeedBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        galleryBindings = GalleryBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        grazeEditorBindings = GrazeEditorBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        homeBindings = HomeBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        listBindings = ListBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        messagesBindings = MessagesBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        moderationBindings = ModerationBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        notificationsBindings = NotificationsBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        notificationSettingsBindings = NotificationSettingsBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        postDetailBindings = PostDetailBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        postsBindings = PostsBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        profileBindings = ProfileBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        profileAvatarBindings = ProfileAvatarBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        profilesBindings = ProfilesBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        searchBindings = SearchBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        splashBindings = SplashBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-        settingsBindings = SettingsBindings(
-            scaffoldBindings = scaffoldBindings,
-            dataBindings = dataBindings,
-        ),
-    )
+    val appGraph =
+        createGraphFactory<AppGraph.Factory>()
+            .create(
+                dataBindings = dataBindings,
+                scaffoldBindings = scaffoldBindings,
+                signInBindings =
+                    SignInBindings(
+                        scaffoldBindings = scaffoldBindings,
+                        dataBindings = dataBindings,
+                    ),
+                composeBindings =
+                    ComposeBindings(
+                        scaffoldBindings = scaffoldBindings,
+                        dataBindings = dataBindings,
+                    ),
+                conversationBindings =
+                    ConversationBindings(
+                        scaffoldBindings = scaffoldBindings,
+                        dataBindings = dataBindings,
+                    ),
+                editProfileBindings =
+                    EditProfileBindings(
+                        scaffoldBindings = scaffoldBindings,
+                        dataBindings = dataBindings,
+                    ),
+                feedBindings =
+                    FeedBindings(scaffoldBindings = scaffoldBindings, dataBindings = dataBindings),
+                galleryBindings =
+                    GalleryBindings(
+                        scaffoldBindings = scaffoldBindings,
+                        dataBindings = dataBindings,
+                    ),
+                grazeEditorBindings =
+                    GrazeEditorBindings(
+                        scaffoldBindings = scaffoldBindings,
+                        dataBindings = dataBindings,
+                    ),
+                homeBindings =
+                    HomeBindings(scaffoldBindings = scaffoldBindings, dataBindings = dataBindings),
+                listBindings =
+                    ListBindings(scaffoldBindings = scaffoldBindings, dataBindings = dataBindings),
+                messagesBindings =
+                    MessagesBindings(
+                        scaffoldBindings = scaffoldBindings,
+                        dataBindings = dataBindings,
+                    ),
+                moderationBindings =
+                    ModerationBindings(
+                        scaffoldBindings = scaffoldBindings,
+                        dataBindings = dataBindings,
+                    ),
+                notificationsBindings =
+                    NotificationsBindings(
+                        scaffoldBindings = scaffoldBindings,
+                        dataBindings = dataBindings,
+                    ),
+                notificationSettingsBindings =
+                    NotificationSettingsBindings(
+                        scaffoldBindings = scaffoldBindings,
+                        dataBindings = dataBindings,
+                    ),
+                postDetailBindings =
+                    PostDetailBindings(
+                        scaffoldBindings = scaffoldBindings,
+                        dataBindings = dataBindings,
+                    ),
+                postsBindings =
+                    PostsBindings(scaffoldBindings = scaffoldBindings, dataBindings = dataBindings),
+                profileBindings =
+                    ProfileBindings(
+                        scaffoldBindings = scaffoldBindings,
+                        dataBindings = dataBindings,
+                    ),
+                profileAvatarBindings =
+                    ProfileAvatarBindings(
+                        scaffoldBindings = scaffoldBindings,
+                        dataBindings = dataBindings,
+                    ),
+                profilesBindings =
+                    ProfilesBindings(
+                        scaffoldBindings = scaffoldBindings,
+                        dataBindings = dataBindings,
+                    ),
+                searchBindings =
+                    SearchBindings(
+                        scaffoldBindings = scaffoldBindings,
+                        dataBindings = dataBindings,
+                    ),
+                splashBindings =
+                    SplashBindings(
+                        scaffoldBindings = scaffoldBindings,
+                        dataBindings = dataBindings,
+                    ),
+                settingsBindings =
+                    SettingsBindings(
+                        scaffoldBindings = scaffoldBindings,
+                        dataBindings = dataBindings,
+                    ),
+            )
     return appGraph.appState
 }

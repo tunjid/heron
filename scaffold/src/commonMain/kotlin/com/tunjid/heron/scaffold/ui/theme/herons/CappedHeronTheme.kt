@@ -47,36 +47,38 @@ private val CappedHeronOnTertiaryDark = Color(0xFF383000)
 private val CappedHeronTertiaryContainerDark = Color(0xFF514700)
 private val CappedHeronOnTertiaryContainerDark = Color(0xFFFFE351)
 
-val CappedHeronLightScheme = lightColorScheme(
-    primary = CappedHeronPrimaryLight,
-    onPrimary = CappedHeronOnPrimaryLight,
-    primaryContainer = CappedHeronPrimaryContainerLight,
-    onPrimaryContainer = CappedHeronOnPrimaryContainerLight,
-    secondary = CappedHeronSecondaryLight,
-    onSecondary = CappedHeronOnSecondaryLight,
-    secondaryContainer = CappedHeronSecondaryContainerLight,
-    onSecondaryContainer = CappedHeronOnSecondaryContainerLight,
-    tertiary = CappedHeronTertiaryLight,
-    onTertiary = CappedHeronOnTertiaryLight,
-    tertiaryContainer = CappedHeronTertiaryContainerLight,
-    onTertiaryContainer = CappedHeronOnTertiaryContainerLight,
-    surface = Color(0xFFF8FAFF),
-    onSurface = Color(0xFF191C20),
-)
+val CappedHeronLightScheme =
+    lightColorScheme(
+        primary = CappedHeronPrimaryLight,
+        onPrimary = CappedHeronOnPrimaryLight,
+        primaryContainer = CappedHeronPrimaryContainerLight,
+        onPrimaryContainer = CappedHeronOnPrimaryContainerLight,
+        secondary = CappedHeronSecondaryLight,
+        onSecondary = CappedHeronOnSecondaryLight,
+        secondaryContainer = CappedHeronSecondaryContainerLight,
+        onSecondaryContainer = CappedHeronOnSecondaryContainerLight,
+        tertiary = CappedHeronTertiaryLight,
+        onTertiary = CappedHeronOnTertiaryLight,
+        tertiaryContainer = CappedHeronTertiaryContainerLight,
+        onTertiaryContainer = CappedHeronOnTertiaryContainerLight,
+        surface = Color(0xFFF8FAFF),
+        onSurface = Color(0xFF191C20),
+    )
 
-val CappedHeronDarkScheme = darkColorScheme(
-    primary = CappedHeronPrimaryDark,
-    onPrimary = CappedHeronOnPrimaryDark,
-    primaryContainer = CappedHeronPrimaryContainerDark,
-    onPrimaryContainer = CappedHeronOnPrimaryContainerDark,
-    secondary = CappedHeronSecondaryDark,
-    onSecondary = CappedHeronOnSecondaryDark,
-    secondaryContainer = CappedHeronSecondaryContainerDark,
-    onSecondaryContainer = CappedHeronOnSecondaryContainerDark,
-    tertiary = CappedHeronTertiaryDark,
-    onTertiary = CappedHeronOnTertiaryDark,
-    tertiaryContainer = CappedHeronTertiaryContainerDark,
-    onTertiaryContainer = CappedHeronOnTertiaryContainerDark,
-    surface = Color(0xFF001C3B),
-    onSurface = Color(0xFFE1E2E8),
-)
+val CappedHeronDarkScheme =
+    darkColorScheme(
+        primary = CappedHeronPrimaryDark,
+        onPrimary = CappedHeronOnPrimaryDark,
+        primaryContainer = CappedHeronPrimaryContainerDark,
+        onPrimaryContainer = CappedHeronOnPrimaryContainerDark,
+        secondary = CappedHeronSecondaryDark,
+        onSecondary = CappedHeronOnSecondaryDark,
+        secondaryContainer = CappedHeronSecondaryContainerDark,
+        onSecondaryContainer = CappedHeronOnSecondaryContainerDark,
+        tertiary = CappedHeronTertiaryDark,
+        onTertiary = CappedHeronOnTertiaryDark,
+        tertiaryContainer = CappedHeronTertiaryContainerDark,
+        onTertiaryContainer = CappedHeronOnTertiaryContainerDark,
+        surface = Color(0xFF001C3B),
+        onSurface = Color(0xFFE1E2E8),
+    )

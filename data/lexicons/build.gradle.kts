@@ -11,15 +11,12 @@ plugins {
 
 val modulePackageName = "com.tunjid.heron.data.lexicons"
 
-android {
-    namespace = modulePackageName
-}
+android { namespace = modulePackageName }
 
 kotlin {
     sourceSets {
         commonMain {
             dependencies {
-
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.cbor)
                 implementation(libs.kotlinx.serialization.json)
@@ -37,13 +34,7 @@ kotlin {
     }
 }
 
-dependencies {
-    lexicons(
-        fileTree("schemas") {
-            include("**/*.json")
-        },
-    )
-}
+dependencies { lexicons(fileTree("schemas") { include("**/*.json") }) }
 
 lexicons {
     namespace.set(modulePackageName)
@@ -54,7 +45,7 @@ lexicons {
             BinaryDataType.Custom(
                 packageName = "io.ktor.utils.io",
                 simpleNames = listOf("ByteReadChannel"),
-            ),
+            )
         )
     }
 

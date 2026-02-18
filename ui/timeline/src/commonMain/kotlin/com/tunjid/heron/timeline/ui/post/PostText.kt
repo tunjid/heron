@@ -44,43 +44,44 @@ fun PostText(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     onLinkTargetClicked: (Post, LinkTarget) -> Unit,
-) = with(paneMovableElementSharedTransitionScope) {
-    val maybeExternalLink = (post.embed as? ExternalEmbed)?.uri?.uri
-    val text = post.record
-        ?.text
-        ?.removeSuffix(maybeExternalLink.orEmpty())
-        ?.trim()
-        .orEmpty()
+) =
+    with(paneMovableElementSharedTransitionScope) {
+        val maybeExternalLink = (post.embed as? ExternalEmbed)?.uri?.uri
+        val text = post.record?.text?.removeSuffix(maybeExternalLink.orEmpty())?.trim().orEmpty()
 
-    if (text.isBlank()) Spacer(Modifier.height(0.dp))
-    else PaneStickySharedElement(
-        modifier = modifier,
-        sharedContentState = rememberSharedContentState(
-            key = post.textSharedElementKey(
-                prefix = sharedElementPrefix,
-            ),
-        ),
-    ) {
-        SelectionContainer {
-            Text(
-                modifier = Modifier
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    ) { onClick() },
-                text = rememberFormattedTextPost(
-                    text = text,
-                    textLinks = post.record?.links ?: emptyList(),
-                    onLinkTargetClicked = { onLinkTargetClicked(post, it) },
-                ),
-                maxLines = maxLines,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
-            )
-        }
+        if (text.isBlank()) Spacer(Modifier.height(0.dp))
+        else
+            PaneStickySharedElement(
+                modifier = modifier,
+                sharedContentState =
+                    rememberSharedContentState(
+                        key = post.textSharedElementKey(prefix = sharedElementPrefix)
+                    ),
+            ) {
+                SelectionContainer {
+                    Text(
+                        modifier =
+                            Modifier.clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) {
+                                onClick()
+                            },
+                        text =
+                            rememberFormattedTextPost(
+                                text = text,
+                                textLinks = post.record?.links ?: emptyList(),
+                                onLinkTargetClicked = { onLinkTargetClicked(post, it) },
+                            ),
+                        maxLines = maxLines,
+                        overflow = TextOverflow.Ellipsis,
+                        style =
+                            MaterialTheme.typography.bodyLarge.copy(
+                                color = LocalContentColor.current
+                            ),
+                    )
+                }
+            }
     }
-}
 
-private fun Post.textSharedElementKey(
-    prefix: String,
-): String = "$prefix-${cid.id}-text"
+private fun Post.textSharedElementKey(prefix: String): String = "$prefix-${cid.id}-text"

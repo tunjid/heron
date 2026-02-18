@@ -24,19 +24,20 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 
 internal fun Facet.toLinkOrNull(): Link? {
-    return if (features.isEmpty()) null else Link(
-        start = index.byteStart.toInt(),
-        end = index.byteEnd.toInt(),
-        target = when (val feature = features.first()) {
-            is FacetFeatureUnion.Link -> LinkTarget.ExternalLink(
-                feature.value.uri.uri.let(::GenericUri),
-            )
-            is FacetFeatureUnion.Mention -> LinkTarget.UserDidMention(
-                feature.value.did.did.let(::ProfileId),
-            )
+    return if (features.isEmpty()) null
+    else
+        Link(
+            start = index.byteStart.toInt(),
+            end = index.byteEnd.toInt(),
+            target =
+                when (val feature = features.first()) {
+                    is FacetFeatureUnion.Link ->
+                        LinkTarget.ExternalLink(feature.value.uri.uri.let(::GenericUri))
+                    is FacetFeatureUnion.Mention ->
+                        LinkTarget.UserDidMention(feature.value.did.did.let(::ProfileId))
 
-            is FacetFeatureUnion.Tag -> LinkTarget.Hashtag(feature.value.tag)
-            is FacetFeatureUnion.Unknown -> return null
-        },
-    )
+                    is FacetFeatureUnion.Tag -> LinkTarget.Hashtag(feature.value.tag)
+                    is FacetFeatureUnion.Unknown -> return null
+                },
+        )
 }

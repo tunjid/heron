@@ -65,34 +65,25 @@ sealed interface Image {
 }
 
 interface ImageLoader {
-    suspend fun fetchImage(
-        request: ImageRequest,
-        size: IntSize,
-    ): Image?
+    suspend fun fetchImage(request: ImageRequest, size: IntSize): Image?
 
-    fun download(
-        request: ImageRequest.Network,
-    ): Flow<DownloadStatus>
+    fun download(request: ImageRequest.Network): Flow<DownloadStatus>
 }
 
 sealed class ImageRequest {
-    data class Network(
-        val url: String?,
-        val thumbnailUrl: String? = null,
-    ) : ImageRequest()
+    data class Network(val url: String?, val thumbnailUrl: String? = null) : ImageRequest()
 
-    internal data class Local(
-        val file: Any,
-    ) : ImageRequest()
+    internal data class Local(val file: Any) : ImageRequest()
 }
 
 sealed class DownloadStatus {
     data object Failed : DownloadStatus()
+
     data object Indeterminate : DownloadStatus()
+
     data object Complete : DownloadStatus()
-    data class Progress(
-        val fraction: Float,
-    ) : DownloadStatus()
+
+    data class Progress(val fraction: Float) : DownloadStatus()
 }
 
 data class ImageArgs(
@@ -104,17 +95,19 @@ data class ImageArgs(
 )
 
 @Stable
-class ImageState internal constructor(
+class ImageState
+internal constructor(
     args: ImageArgs,
     private val imageLoader: ImageLoader,
     private val windowSize: () -> IntSize,
 ) {
     var args by mutableStateOf(args)
     val imageSize
-        get() = when (val currentImage = image) {
-            null -> IntSize.Zero
-            else -> currentImage.size
-        }
+        get() =
+            when (val currentImage = image) {
+                null -> IntSize.Zero
+                else -> currentImage.size
+            }
 
     internal var image by mutableStateOf<Image?>(null)
     private var layoutSize by mutableStateOf(IntSize.Zero)
@@ -123,76 +116,64 @@ class ImageState internal constructor(
         measureScope: MeasureScope,
         measurable: Measurable,
         constraints: Constraints,
-    ): MeasureResult = with(measureScope) {
-        val imageConstraints = constraints.copy(
-            minWidth = when {
-                constraints.hasBoundedWidth -> constraints.maxWidth
-                else -> constraints.minWidth
-            },
-            minHeight = when {
-                constraints.hasBoundedHeight -> constraints.maxHeight
-                else -> constraints.minHeight
-            },
-        )
-        layoutSize = IntSize(
-            width = imageConstraints.minWidth,
-            height = imageConstraints.minHeight,
-        )
-        val placeable = measurable.measure(imageConstraints)
-        return layout(
-            width = placeable.width,
-            height = placeable.height,
-        ) {
-            placeable.place(0, 0)
+    ): MeasureResult =
+        with(measureScope) {
+            val imageConstraints =
+                constraints.copy(
+                    minWidth =
+                        when {
+                            constraints.hasBoundedWidth -> constraints.maxWidth
+                            else -> constraints.minWidth
+                        },
+                    minHeight =
+                        when {
+                            constraints.hasBoundedHeight -> constraints.maxHeight
+                            else -> constraints.minHeight
+                        },
+                )
+            layoutSize =
+                IntSize(width = imageConstraints.minWidth, height = imageConstraints.minHeight)
+            val placeable = measurable.measure(imageConstraints)
+            return layout(width = placeable.width, height = placeable.height) {
+                placeable.place(0, 0)
+            }
+        }
+
+    internal suspend fun loadImagesForLayoutSize() {
+        combine(requests(), layoutSizes(), ::Pair).distinctUntilChanged().collectLatest {
+            (request, size) ->
+            imageLoader
+                .fetchImage(
+                    request = request,
+                    size =
+                        IntSize(
+                            width = min(size.width, windowSize().width),
+                            height = min(size.height, windowSize().height),
+                        ),
+                )
+                ?.let(::image::set)
         }
     }
 
-    internal suspend fun loadImagesForLayoutSize() {
-        combine(
-            requests(),
-            layoutSizes(),
-            ::Pair,
-        )
-            .distinctUntilChanged()
-            .collectLatest { (request, size) ->
-                imageLoader.fetchImage(
-                    request = request,
-                    size = IntSize(
-                        width = min(size.width, windowSize().width),
-                        height = min(size.height, windowSize().height),
-                    ),
-                )
-                    ?.let(::image::set)
-            }
-    }
-
-    private fun requests(): Flow<ImageRequest> =
-        snapshotFlow { args.request }
+    private fun requests(): Flow<ImageRequest> = snapshotFlow { args.request }
 
     private fun layoutSizes(): Flow<IntSize> =
         snapshotFlow { layoutSize }
             .filter { it.isUsable }
             .withIndex()
             .debounce { (index) ->
-                if (index == 0) 0.milliseconds
-                else ImageLayoutSizeRefetchDebounce.milliseconds
+                if (index == 0) 0.milliseconds else ImageLayoutSizeRefetchDebounce.milliseconds
             }
             .map { it.value }
 }
 
 @Composable
-fun rememberUpdatedImageState(
-    args: ImageArgs,
-): ImageState {
+fun rememberUpdatedImageState(args: ImageArgs): ImageState {
     val imageLoader = LocalImageLoader.current
     val windowSize = rememberUpdatedState(LocalWindowInfo.current.containerSize)
     return remember(imageLoader) {
-        ImageState(
-            args = args,
-            imageLoader = imageLoader,
-            windowSize = windowSize::value,
-        )
-    }
+            ImageState(args = args, imageLoader = imageLoader, windowSize = windowSize::value)
+        }
         .also { it.args = args }
 }
 
@@ -203,16 +184,14 @@ fun ImageArgs(
     contentScale: ContentScale,
     alignment: Alignment = Alignment.Center,
     shape: RoundedPolygonShape,
-) = ImageArgs(
-    request = ImageRequest.Network(
-        url = url,
-        thumbnailUrl = thumbnailUrl,
-    ),
-    contentDescription = contentDescription,
-    contentScale = contentScale,
-    alignment = alignment,
-    shape = shape,
-)
+) =
+    ImageArgs(
+        request = ImageRequest.Network(url = url, thumbnailUrl = thumbnailUrl),
+        contentDescription = contentDescription,
+        contentScale = contentScale,
+        alignment = alignment,
+        shape = shape,
+    )
 
 fun ImageArgs(
     item: RestrictedFile.Media.Photo,
@@ -220,38 +199,29 @@ fun ImageArgs(
     contentScale: ContentScale,
     alignment: Alignment = Alignment.Center,
     shape: RoundedPolygonShape,
-) = ImageArgs(
-    request = ImageRequest.Local(
-        file = item.uiDisplayModel,
-    ),
-    contentDescription = contentDescription,
-    contentScale = contentScale,
-    alignment = alignment,
-    shape = shape,
-)
+) =
+    ImageArgs(
+        request = ImageRequest.Local(file = item.uiDisplayModel),
+        contentDescription = contentDescription,
+        contentScale = contentScale,
+        alignment = alignment,
+        shape = shape,
+    )
 
 @Composable
-fun AsyncImage(
-    args: ImageArgs,
-    modifier: Modifier = Modifier,
-) {
-    AsyncImage(
-        state = rememberUpdatedImageState(args),
-        modifier = modifier,
-    )
+fun AsyncImage(args: ImageArgs, modifier: Modifier = Modifier) {
+    AsyncImage(state = rememberUpdatedImageState(args), modifier = modifier)
 }
 
 @Composable
-fun AsyncImage(
-    state: ImageState,
-    modifier: Modifier = Modifier,
-) {
+fun AsyncImage(state: ImageState, modifier: Modifier = Modifier) {
     val initialState = remember { state }
     check(state == initialState) {
         """
-            ImageState must not change throughout the composition of AsyncImage, rather its
-            mutable properties should be updated.
-        """.trimIndent()
+        ImageState must not change throughout the composition of AsyncImage, rather its
+        mutable properties should be updated.
+        """
+            .trimIndent()
     }
 
     val contentDescription = state.args.contentDescription
@@ -259,11 +229,7 @@ fun AsyncImage(
     val alignment = state.args.alignment.animate()
     val shape = state.args.shape.animate()
 
-    Box(
-        modifier = modifier
-            .layout(state::layoutImage)
-            .clip(shape),
-    ) {
+    Box(modifier = modifier.layout(state::layoutImage).clip(shape)) {
         val painter = remember {
             ImagePainter(
                 currentImage = state::image,
@@ -273,8 +239,7 @@ fun AsyncImage(
         }
 
         Image(
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             painter = painter,
             contentDescription = contentDescription,
             alignment = alignment,
@@ -284,13 +249,9 @@ fun AsyncImage(
         state.image?.AnimationEffect()
     }
 
-    val scope = rememberCoroutineScope(
-        Dispatchers.Main::immediate,
-    )
+    val scope = rememberCoroutineScope(Dispatchers.Main::immediate)
     DisposableEffect(scope) {
-        val job = scope.launch {
-            state.loadImagesForLayoutSize()
-        }
+        val job = scope.launch { state.loadImagesForLayoutSize() }
         onDispose(job::cancel)
     }
 }
@@ -303,9 +264,10 @@ internal fun Image.AnimationEffect() {
 }
 
 private val IntSize.isUsable: Boolean
-    get() = width > IntSize.Zero.width &&
-        width < Int.MAX_VALUE &&
-        height > IntSize.Zero.height &&
-        height < Int.MAX_VALUE
+    get() =
+        width > IntSize.Zero.width &&
+            width < Int.MAX_VALUE &&
+            height > IntSize.Zero.height &&
+            height < Int.MAX_VALUE
 
 private const val ImageLayoutSizeRefetchDebounce = 100

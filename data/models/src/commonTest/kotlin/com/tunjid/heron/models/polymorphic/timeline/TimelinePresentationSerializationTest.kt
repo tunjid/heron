@@ -9,24 +9,24 @@ import kotlin.test.assertEquals
 
 @Burst
 class TimelinePresentationSerializationTest(
-    val format: SerializationTestHelper.Format = burstValues(
-        SerializationTestHelper.Format.CBOR,
-        SerializationTestHelper.Format.PROTOBUF,
-    ),
-    val original: Timeline.Presentation = burstValues(
-        Timeline.Presentation.Text.WithEmbed,
-        Timeline.Presentation.Media.Expanded,
-        Timeline.Presentation.Media.Condensed,
-        Timeline.Presentation.Media.Grid,
-    ),
+    val format: SerializationTestHelper.Format =
+        burstValues(SerializationTestHelper.Format.CBOR, SerializationTestHelper.Format.PROTOBUF),
+    val original: Timeline.Presentation =
+        burstValues(
+            Timeline.Presentation.Text.WithEmbed,
+            Timeline.Presentation.Media.Expanded,
+            Timeline.Presentation.Media.Condensed,
+            Timeline.Presentation.Media.Grid,
+        ),
 ) {
     @Test
     fun roundTrip() {
-        val decoded = SerializationTestHelper.roundTrip(
-            format = format,
-            value = original,
-            serializer = Timeline.Presentation.serializer(),
-        )
+        val decoded =
+            SerializationTestHelper.roundTrip(
+                format = format,
+                value = original,
+                serializer = Timeline.Presentation.serializer(),
+            )
         assertEquals(original, decoded)
     }
 }

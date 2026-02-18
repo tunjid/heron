@@ -34,44 +34,29 @@ interface LabelDao {
         """
             SELECT * FROM labelers
             WHERE uri IN (:uris)
-        """,
+        """
     )
-    fun labelers(
-        uris: Collection<LabelerUri>,
-    ): Flow<List<PopulatedLabelerEntity>>
+    fun labelers(uris: Collection<LabelerUri>): Flow<List<PopulatedLabelerEntity>>
 
     @Query(
         """
             SELECT * FROM labelers
             WHERE creatorId IN (:creatorIds)
-        """,
+        """
     )
-    fun labelersByCreators(
-        creatorIds: Collection<ProfileId>,
-    ): Flow<List<PopulatedLabelerEntity>>
+    fun labelersByCreators(creatorIds: Collection<ProfileId>): Flow<List<PopulatedLabelerEntity>>
 
-    @Upsert
-    suspend fun upsertLabels(
-        entities: List<LabelEntity>,
-    )
+    @Upsert suspend fun upsertLabels(entities: List<LabelEntity>)
 
-    @Upsert
-    suspend fun upsertLabelValueDefinitions(
-        entities: List<LabelDefinitionEntity>,
-    )
+    @Upsert suspend fun upsertLabelValueDefinitions(entities: List<LabelDefinitionEntity>)
 
-    @Upsert
-    suspend fun upsertLabelers(
-        entities: List<LabelerEntity>,
-    )
+    @Upsert suspend fun upsertLabelers(entities: List<LabelerEntity>)
 
     @Query(
         """
             DELETE FROM labelers
             WHERE uri = :uri
-        """,
+        """
     )
-    suspend fun deleteLabeler(
-        uri: LabelerUri,
-    )
+    suspend fun deleteLabeler(uri: LabelerUri)
 }

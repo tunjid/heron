@@ -35,106 +35,98 @@ private const val CurrentVersion = 5
  * Defines a method of versioning the proto based saved state.
  *
  * Migrations are done in place with the implementations of this sealed interface, where each
- * implementation represents a snapshot of what the [VersionedSavedState] class looked like
- * at the time.
+ * implementation represents a snapshot of what the [VersionedSavedState] class looked like at the
+ * time.
  *
- * The snapshots are then converted to the latest version iteration of [VersionedSavedState]
- * and saved lazily when data is eventually written.
+ * The snapshots are then converted to the latest version iteration of [VersionedSavedState] and
+ * saved lazily when data is eventually written.
  */
 internal sealed interface SavedStateVersion {
 
-    fun toVersionedSavedState(
-        currentVersion: Int,
-    ): VersionedSavedState
+    fun toVersionedSavedState(currentVersion: Int): VersionedSavedState
 }
 
-/**
- * An implementation of [SavedState] that tracks its version.
- */
+/** An implementation of [SavedState] that tracks its version. */
 @Serializable
 internal data class VersionedSavedState(
-    @ProtoNumber(1)
-    val version: Int,
+    @ProtoNumber(1) val version: Int,
     // @ProtoNumber(2) is deliberately not used, its deprecated.
     // It used to be auth: SavedState.AuthTokens?
-    @ProtoNumber(3)
-    override val navigation: Navigation,
-    @ProtoNumber(4)
-    val profileData: Map<ProfileId, ProfileData>,
-    @ProtoNumber(5)
-    val activeProfileId: ProfileId?,
+    @ProtoNumber(3) override val navigation: Navigation,
+    @ProtoNumber(4) val profileData: Map<ProfileId, ProfileData>,
+    @ProtoNumber(5) val activeProfileId: ProfileId?,
 ) : SavedState() {
 
     override val signedInProfileData: ProfileData?
-        get() = when (val profileId = activeProfileId) {
-            null,
-            Constants.unknownAuthorId,
-            Constants.pendingProfileId,
-            Constants.guestProfileId,
-            -> null
-            else -> profileData[profileId]
-        }
+        get() =
+            when (val profileId = activeProfileId) {
+                null,
+                Constants.unknownAuthorId,
+                Constants.pendingProfileId,
+                Constants.guestProfileId -> null
+                else -> profileData[profileId]
+            }
+
     override val pastSessions: List<SessionSummary>
-        get() = profileData.values
-            .mapNotNull { it.sessionSummary }
-            .sortedByDescending { it.lastSeen }
+        get() =
+            profileData.values.mapNotNull { it.sessionSummary }.sortedByDescending { it.lastSeen }
 
     override val auth: AuthTokens?
-        get() = activeProfileId
-            ?.let(profileData::get)
-            ?.auth
+        get() = activeProfileId?.let(profileData::get)?.auth
 
-    override fun profileData(
-        profileId: ProfileId,
-    ): ProfileData? = profileData[profileId]
+    override fun profileData(profileId: ProfileId): ProfileData? = profileData[profileId]
 
     companion object {
-        internal val Initial: VersionedSavedState = VersionedSavedState(
-            version = CurrentVersion,
-            activeProfileId = null,
-            navigation = Navigation(activeNav = -1),
-            profileData = emptyMap(),
-        )
+        internal val Initial: VersionedSavedState =
+            VersionedSavedState(
+                version = CurrentVersion,
+                activeProfileId = null,
+                navigation = Navigation(activeNav = -1),
+                profileData = emptyMap(),
+            )
 
-        internal val Empty: VersionedSavedState = VersionedSavedState(
-            version = CurrentVersion,
-            activeProfileId = null,
-            navigation = Navigation(activeNav = 0),
-            profileData = emptyMap(),
-        )
+        internal val Empty: VersionedSavedState =
+            VersionedSavedState(
+                version = CurrentVersion,
+                activeProfileId = null,
+                navigation = Navigation(activeNav = 0),
+                profileData = emptyMap(),
+            )
     }
 }
 
-internal class VersionedSavedStateOkioSerializer(
-    private val protoBuf: ProtoBuf,
-) : OkioSerializer<VersionedSavedState> {
+internal class VersionedSavedStateOkioSerializer(private val protoBuf: ProtoBuf) :
+    OkioSerializer<VersionedSavedState> {
     override val defaultValue: VersionedSavedState = VersionedSavedState.Empty
 
-    override suspend fun readFrom(
-        source: BufferedSource,
-    ): VersionedSavedState = with(protoBuf) {
-        val data = source.readByteArray()
+    override suspend fun readFrom(source: BufferedSource): VersionedSavedState =
+        with(protoBuf) {
+            val data = source.readByteArray()
 
-        return if (data.isEmpty()) defaultValue
-        else try {
-            when (data.savedStateVersion()) {
-                SavedStateVersion0.SnapshotVersion -> decodeFromByteArray<SavedStateVersion0>(data)
-                SavedStateVersion1.SnapshotVersion -> decodeFromByteArray<SavedStateVersion1>(data)
-                SavedStateVersion2.SnapshotVersion -> decodeFromByteArray<SavedStateVersion2>(data)
-                SavedStateVersion3.SnapshotVersion -> decodeFromByteArray<SavedStateVersion3>(data)
-                SavedStateVersion4.SnapshotVersion -> decodeFromByteArray<SavedStateVersion4>(data)
-                SavedStateVersion5.SnapshotVersion -> decodeFromByteArray<SavedStateVersion5>(data)
-                else -> throw IllegalArgumentException("Unknown saved state version")
-            }.toVersionedSavedState(CurrentVersion)
-        } catch (e: Exception) {
-            defaultValue
+            return if (data.isEmpty()) defaultValue
+            else
+                try {
+                    when (data.savedStateVersion()) {
+                        SavedStateVersion0.SnapshotVersion ->
+                            decodeFromByteArray<SavedStateVersion0>(data)
+                        SavedStateVersion1.SnapshotVersion ->
+                            decodeFromByteArray<SavedStateVersion1>(data)
+                        SavedStateVersion2.SnapshotVersion ->
+                            decodeFromByteArray<SavedStateVersion2>(data)
+                        SavedStateVersion3.SnapshotVersion ->
+                            decodeFromByteArray<SavedStateVersion3>(data)
+                        SavedStateVersion4.SnapshotVersion ->
+                            decodeFromByteArray<SavedStateVersion4>(data)
+                        SavedStateVersion5.SnapshotVersion ->
+                            decodeFromByteArray<SavedStateVersion5>(data)
+                        else -> throw IllegalArgumentException("Unknown saved state version")
+                    }.toVersionedSavedState(CurrentVersion)
+                } catch (e: Exception) {
+                    defaultValue
+                }
         }
-    }
 
-    override suspend fun writeTo(
-        t: VersionedSavedState,
-        sink: BufferedSink,
-    ) {
+    override suspend fun writeTo(t: VersionedSavedState, sink: BufferedSink) {
         sink.write(protoBuf.encodeToByteArray(value = t))
     }
 }
@@ -150,10 +142,7 @@ private fun ByteArray.savedStateVersion(): Int {
     }
 }
 
-/**
- * Read the encoded saved state version from the first entry in the saved state protobuf.
- *
- */
+/** Read the encoded saved state version from the first entry in the saved state protobuf. */
 private fun ByteArray.encodedSavedStateVersion(): Int {
     var result = 0
     var shift = 0
@@ -161,9 +150,8 @@ private fun ByteArray.encodedSavedStateVersion(): Int {
 
     // A varint can be at most 5 bytes for a 32-bit integer
     for (i in 0..4) {
-        if (currentOffset >= size) throw IndexOutOfBoundsException(
-            "Malformed saved state: Unexpected end of stream",
-        )
+        if (currentOffset >= size)
+            throw IndexOutOfBoundsException("Malformed saved state: Unexpected end of stream")
 
         val byte = this[currentOffset++].toInt() and 0xFF
 

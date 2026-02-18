@@ -58,9 +58,7 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
 
-@DependencyGraph(
-    scope = AppScope::class,
-)
+@DependencyGraph(scope = AppScope::class)
 interface AppGraph {
 
     @DependencyGraph.Factory
@@ -97,8 +95,7 @@ interface AppGraph {
     @SingleIn(AppScope::class)
     @Provides
     fun appState(
-        @AppMainScope
-        appMainScope: CoroutineScope,
+        @AppMainScope appMainScope: CoroutineScope,
         authRepository: AuthRepository,
         userDataRepository: UserDataRepository,
         navigationStateHolder: NavigationStateHolder,
@@ -106,16 +103,17 @@ interface AppGraph {
         imageLoader: ImageLoader,
         videoPlayerController: VideoPlayerController,
         writeQueue: WriteQueue,
-    ): AppState = AppState(
-        entryMap = entryMap,
-        authRepository = authRepository,
-        userDataRepository = userDataRepository,
-        navigationStateHolder = navigationStateHolder,
-        notificationStateHolder = notificationStateHolder,
-        imageLoader = imageLoader,
-        videoPlayerController = videoPlayerController,
-        writeQueue = writeQueue,
-    )
+    ): AppState =
+        AppState(
+            entryMap = entryMap,
+            authRepository = authRepository,
+            userDataRepository = userDataRepository,
+            navigationStateHolder = navigationStateHolder,
+            notificationStateHolder = notificationStateHolder,
+            imageLoader = imageLoader,
+            videoPlayerController = videoPlayerController,
+            writeQueue = writeQueue,
+        )
 
     val appState: AppState
 }

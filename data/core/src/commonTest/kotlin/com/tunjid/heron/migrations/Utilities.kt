@@ -19,15 +19,16 @@ package com.tunjid.heron.migrations
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.datastore.migrations.migrated.PreferencesV0
 
-internal fun Preferences.asV0() = PreferencesV0(
-    timelinePreferences = timelinePreferences,
-    contentLabelPreferences = contentLabelPreferences,
-    lastViewedHomeTimelineUri = local.lastViewedHomeTimelineUri,
-    refreshHomeTimelineOnLaunch = local.refreshHomeTimelineOnLaunch,
-    labelerPreferences = labelerPreferences,
-    allowAdultContent = allowAdultContent,
-    hiddenPostPreferences = hiddenPostPreferences,
-    mutedWordPreferences = mutedWordPreferences,
-    useDynamicTheming = local.useDynamicTheming,
-    useCompactNavigation = local.useCompactNavigation,
-)
+internal fun Preferences.asV0() =
+    PreferencesV0(
+        timelinePreferences = timelinePreferences,
+        contentLabelPreferences = contentLabelPreferences,
+        lastViewedHomeTimelineUri = local.lastViewedHomeTimelineUri,
+        refreshHomeTimelineOnLaunch = local.refreshHomeTimelineOnLaunch,
+        labelerPreferences = labelerPreferences,
+        allowAdultContent = allowAdultContent,
+        hiddenPostPreferences = hiddenPostPreferences,
+        mutedWordPreferences = mutedWordPreferences,
+        useDynamicTheming = local.useDynamicTheming,
+        useCompactNavigation = local.useCompactNavigation,
+    )

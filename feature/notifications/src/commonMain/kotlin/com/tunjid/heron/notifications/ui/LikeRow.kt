@@ -28,7 +28,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -60,9 +59,7 @@ fun LikeRow(
 ) {
     NotificationAggregateScaffold(
         paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-        modifier = modifier.clickable {
-            onPostClicked(notification)
-        },
+        modifier = modifier.clickable { onPostClicked(notification) },
         isRead = isRead,
         notification = notification,
         profiles = aggregatedProfiles,
@@ -71,12 +68,15 @@ fun LikeRow(
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.Favorite),
                 tint = LikeRed,
-                contentDescription = stringResource(
-                    when (notification) {
-                        is Notification.Liked.Post -> CommonStrings.notifications_liked_your_post_description
-                        is Notification.Liked.Repost -> CommonStrings.notifications_liked_your_repost_description
-                    },
-                ),
+                contentDescription =
+                    stringResource(
+                        when (notification) {
+                            is Notification.Liked.Post ->
+                                CommonStrings.notifications_liked_your_post_description
+                            is Notification.Liked.Repost ->
+                                CommonStrings.notifications_liked_your_repost_description
+                        }
+                    ),
             )
         },
         content = {
@@ -84,18 +84,25 @@ fun LikeRow(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
                         modifier = Modifier.alignByBaseline(),
-                        text = notificationText(
-                            notification = notification,
-                            aggregatedSize = aggregatedProfiles.size,
-                            singularResource = when (notification) {
-                                is Notification.Liked.Post -> CommonStrings.notifications_liked_your_post
-                                is Notification.Liked.Repost -> CommonStrings.notifications_liked_your_repost
-                            },
-                            pluralResource = when (notification) {
-                                is Notification.Liked.Post -> CommonStrings.notifications_multiple_liked_your_post
-                                is Notification.Liked.Repost -> CommonStrings.notifications_multiple_liked_your_repost
-                            },
-                        ),
+                        text =
+                            notificationText(
+                                notification = notification,
+                                aggregatedSize = aggregatedProfiles.size,
+                                singularResource =
+                                    when (notification) {
+                                        is Notification.Liked.Post ->
+                                            CommonStrings.notifications_liked_your_post
+                                        is Notification.Liked.Repost ->
+                                            CommonStrings.notifications_liked_your_repost
+                                    },
+                                pluralResource =
+                                    when (notification) {
+                                        is Notification.Liked.Post ->
+                                            CommonStrings.notifications_multiple_liked_your_post
+                                        is Notification.Liked.Repost ->
+                                            CommonStrings.notifications_multiple_liked_your_repost
+                                    },
+                            ),
                     )
 
                     TimeDelta(

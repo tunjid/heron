@@ -11,22 +11,19 @@ import kotlin.test.assertEquals
 
 @Burst
 class MessageUpdateReactionSerializationTest(
-    val format: SerializationTestHelper.Format = burstValues(
-        SerializationTestHelper.Format.CBOR,
-        SerializationTestHelper.Format.PROTOBUF,
-    ),
-    val original: Message.UpdateReaction = burstValues(
-        sampleMessageReactionAdd(),
-        sampleMessageReactionRemove(),
-    ),
+    val format: SerializationTestHelper.Format =
+        burstValues(SerializationTestHelper.Format.CBOR, SerializationTestHelper.Format.PROTOBUF),
+    val original: Message.UpdateReaction =
+        burstValues(sampleMessageReactionAdd(), sampleMessageReactionRemove()),
 ) {
     @Test
     fun roundTrip() {
-        val decoded = SerializationTestHelper.roundTrip(
-            format = format,
-            value = original,
-            serializer = Message.UpdateReaction.serializer(),
-        )
+        val decoded =
+            SerializationTestHelper.roundTrip(
+                format = format,
+                value = original,
+                serializer = Message.UpdateReaction.serializer(),
+            )
         assertEquals(original, decoded)
     }
 }

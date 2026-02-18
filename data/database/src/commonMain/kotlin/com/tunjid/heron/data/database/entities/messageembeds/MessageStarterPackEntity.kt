@@ -26,32 +26,24 @@ import com.tunjid.heron.data.database.entities.StarterPackEntity
 
 @Entity(
     tableName = "messageStarterPacks",
-    primaryKeys = [
-        "messageId",
-        "starterPackUri",
-    ],
-    foreignKeys = [
-        ForeignKey(
-            entity = MessageEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["messageId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = StarterPackEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["starterPackUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["messageId"]),
-        Index(value = ["starterPackUri"]),
-    ],
+    primaryKeys = ["messageId", "starterPackUri"],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = MessageEntity::class,
+                parentColumns = ["id"],
+                childColumns = ["messageId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = StarterPackEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["starterPackUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    indices = [Index(value = ["messageId"]), Index(value = ["starterPackUri"])],
 )
-data class MessageStarterPackEntity(
-    val messageId: MessageId,
-    val starterPackUri: StarterPackUri,
-)
+data class MessageStarterPackEntity(val messageId: MessageId, val starterPackUri: StarterPackUri)

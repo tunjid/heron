@@ -28,42 +28,34 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import kotlin.time.Duration.Companion.milliseconds
 
-@Composable
-expect fun VideoPlayer(
-    modifier: Modifier,
-    state: VideoPlayerState,
-)
+@Composable expect fun VideoPlayer(modifier: Modifier, state: VideoPlayerState)
 
 @Composable
-fun VideoStill(
-    modifier: Modifier,
-    state: VideoPlayerState,
-) {
-    when (
-        val lastBitmap = state.videoStill.takeIf {
-            state.status != PlayerStatus.Idle.Initial
-        }
-    ) {
-        null -> AsyncImage(
-            modifier = modifier,
-            args = remember(state.thumbnailUrl, state.contentScale, state.alignment, state.shape) {
-                ImageArgs(
-                    url = state.thumbnailUrl,
-                    contentDescription = null,
-                    alignment = state.alignment,
-                    contentScale = state.contentScale,
-                    shape = state.shape,
-                )
-            },
-        )
+fun VideoStill(modifier: Modifier, state: VideoPlayerState) {
+    when (val lastBitmap = state.videoStill.takeIf { state.status != PlayerStatus.Idle.Initial }) {
+        null ->
+            AsyncImage(
+                modifier = modifier,
+                args =
+                    remember(state.thumbnailUrl, state.contentScale, state.alignment, state.shape) {
+                        ImageArgs(
+                            url = state.thumbnailUrl,
+                            contentDescription = null,
+                            alignment = state.alignment,
+                            contentScale = state.contentScale,
+                            shape = state.shape,
+                        )
+                    },
+            )
 
-        else -> Image(
-            modifier = modifier,
-            bitmap = lastBitmap,
-            contentDescription = null,
-            alignment = state.alignment.animate(),
-            contentScale = state.contentScale.animate(),
-        )
+        else ->
+            Image(
+                modifier = modifier,
+                bitmap = lastBitmap,
+                contentDescription = null,
+                alignment = state.alignment.animate(),
+                contentScale = state.contentScale.animate(),
+            )
     }
 }
 
@@ -77,18 +69,20 @@ fun VideoPlayerController.rememberUpdatedVideoPlayerState(
     contentScale: ContentScale = ContentScale.Crop,
     alignment: Alignment = Alignment.Center,
     shape: RoundedPolygonShape = RoundedPolygonShape.Rectangle,
-): VideoPlayerState = registerVideo(
-    videoUrl = videoUrl,
-    videoId = videoId,
-    thumbnail = thumbnail,
-    isLooping = isLooping,
-    autoplay = autoplay,
-).also { videoPlayerState ->
-    videoPlayerState.thumbnailUrl = thumbnail
-    videoPlayerState.contentScale = contentScale
-    videoPlayerState.alignment = alignment
-    videoPlayerState.shape = shape
-}
+): VideoPlayerState =
+    registerVideo(
+            videoUrl = videoUrl,
+            videoId = videoId,
+            thumbnail = thumbnail,
+            isLooping = isLooping,
+            autoplay = autoplay,
+        )
+        .also { videoPlayerState ->
+            videoPlayerState.thumbnailUrl = thumbnail
+            videoPlayerState.contentScale = contentScale
+            videoPlayerState.alignment = alignment
+            videoPlayerState.shape = shape
+        }
 
 fun Long.formatVideoDuration() =
     milliseconds.toComponents { h, m, s, _ ->

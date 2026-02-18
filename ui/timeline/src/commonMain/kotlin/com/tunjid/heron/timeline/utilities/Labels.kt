@@ -19,7 +19,6 @@ package com.tunjid.heron.timeline.utilities
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.FlowRowScope
 import androidx.compose.foundation.layout.Row
@@ -28,7 +27,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Report
 import androidx.compose.material.icons.rounded.Warning
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
@@ -43,21 +41,8 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Label
-import com.tunjid.heron.data.core.models.Labeler
-import com.tunjid.heron.ui.NeutralDialogButton
-import com.tunjid.heron.ui.PrimaryDialogButton
-import com.tunjid.heron.ui.SimpleDialog
-import com.tunjid.heron.ui.SimpleDialogText
-import com.tunjid.heron.ui.SimpleDialogTitle
 import com.tunjid.heron.ui.modifiers.ifTrue
-import com.tunjid.heron.ui.text.CommonStrings
-import heron.ui.core.generated.resources.dismiss
-import heron.ui.timeline.generated.resources.Res
-import heron.ui.timeline.generated.resources.label_source
-import heron.ui.timeline.generated.resources.view_labeler
-import org.jetbrains.compose.resources.stringResource
 
 @Composable
 inline fun LabelFlowRow(
@@ -69,9 +54,7 @@ inline fun LabelFlowRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         itemVerticalAlignment = Alignment.CenterVertically,
-        content = {
-            content()
-        },
+        content = { content() },
     )
 }
 
@@ -85,28 +68,24 @@ inline fun Label(
     crossinline onClick: () -> Unit,
 ) {
     Row(
-        modifier = modifier
-            .background(
-                color =
-                if (isElevated) MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
-                else Color.Transparent,
-                shape = CircleShape,
-            )
-            .ifTrue(isElevated) {
-                // Add padding bc of the background
-                padding(
-                    horizontal = 6.dp,
-                    vertical = 2.dp,
+        modifier =
+            modifier
+                .background(
+                    color =
+                        if (isElevated) MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+                        else Color.Transparent,
+                    shape = CircleShape,
                 )
-            }
-            .semantics {
-                this.role = Role.Button
-                this.contentDescription = contentDescription
-            }
-            .clip(CircleShape)
-            .clickable {
-                onClick()
-            },
+                .ifTrue(isElevated) {
+                    // Add padding bc of the background
+                    padding(horizontal = 6.dp, vertical = 2.dp)
+                }
+                .semantics {
+                    this.role = Role.Button
+                    this.contentDescription = contentDescription
+                }
+                .clip(CircleShape)
+                .clickable { onClick() },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
@@ -116,9 +95,7 @@ inline fun Label(
 }
 
 @Composable
-fun LabelText(
-    text: String,
-) {
+fun LabelText(text: String) {
     Text(
         text = text,
         overflow = TextOverflow.Ellipsis,
@@ -128,20 +105,15 @@ fun LabelText(
     )
 }
 
-fun Label.Definition.locale(
-    currentLanguageTag: String,
-) = locales.list
-    .firstOrNull { it.lang == currentLanguageTag }
-    ?: locales.list
-        .firstOrNull()
+fun Label.Definition.locale(currentLanguageTag: String) =
+    locales.list.firstOrNull { it.lang == currentLanguageTag } ?: locales.list.firstOrNull()
 
 internal fun Label.Severity?.icon() =
     when (this) {
         Label.Severity.Alert -> Icons.Rounded.Report
         Label.Severity.Inform -> Icons.Rounded.Warning
         Label.Severity.None,
-        null,
-        -> null
+        null -> null
     }
 
 internal val LabelIconSize = 12.dp

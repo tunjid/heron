@@ -41,12 +41,13 @@ fun EntityFilter(
     ChipFilter(
         modifier = modifier,
         tint = filter.validationTint(),
-        title = stringResource(
-            when (filter) {
-                is Filter.Entity.Excludes -> Res.string.entity_excludes
-                is Filter.Entity.Matches -> Res.string.entity_matches
-            },
-        ),
+        title =
+            stringResource(
+                when (filter) {
+                    is Filter.Entity.Excludes -> Res.string.entity_excludes
+                    is Filter.Entity.Matches -> Res.string.entity_matches
+                }
+            ),
         buttonStringResource = Res.string.add_item,
         onRemove = onRemove,
         items = filter.values,
@@ -55,7 +56,7 @@ fun EntityFilter(
                 when (filter) {
                     is Filter.Entity.Excludes -> filter.copy(values = it)
                     is Filter.Entity.Matches -> filter.copy(values = it)
-                },
+                }
             )
         },
         startContent = {
@@ -69,33 +70,36 @@ fun EntityFilter(
                         when (filter) {
                             is Filter.Entity.Excludes -> filter.copy(entityType = it)
                             is Filter.Entity.Matches -> filter.copy(entityType = it)
-                        },
+                        }
                     )
                 },
             )
         },
         endContent = {
             ComparatorDropdown(
-                selected = when (filter) {
-                    is Filter.Entity.Excludes -> Filter.Comparator.Set.NotIn
-                    is Filter.Entity.Matches -> Filter.Comparator.Set.In
-                },
+                selected =
+                    when (filter) {
+                        is Filter.Entity.Excludes -> Filter.Comparator.Set.NotIn
+                        is Filter.Entity.Matches -> Filter.Comparator.Set.In
+                    },
                 options = Filter.Comparator.Set.entries,
                 onSelect = { comparator ->
                     onUpdate(
                         when (comparator) {
-                            Filter.Comparator.Set.In -> Filter.Entity.Matches(
-                                id = filter.id,
-                                entityType = filter.entityType,
-                                values = filter.values,
-                            )
+                            Filter.Comparator.Set.In ->
+                                Filter.Entity.Matches(
+                                    id = filter.id,
+                                    entityType = filter.entityType,
+                                    values = filter.values,
+                                )
 
-                            Filter.Comparator.Set.NotIn -> Filter.Entity.Excludes(
-                                id = filter.id,
-                                entityType = filter.entityType,
-                                values = filter.values,
-                            )
-                        },
+                            Filter.Comparator.Set.NotIn ->
+                                Filter.Entity.Excludes(
+                                    id = filter.id,
+                                    entityType = filter.entityType,
+                                    values = filter.values,
+                                )
+                        }
                     )
                 },
             )
@@ -104,10 +108,11 @@ fun EntityFilter(
 }
 
 private val Filter.Entity.Type.stringRes
-    get() = when (this) {
-        Filter.Entity.Type.Hashtags -> Res.string.entity_type_hashtag
-        Filter.Entity.Type.Languages -> Res.string.entity_type_language
-        Filter.Entity.Type.Urls -> Res.string.entity_type_url
-        Filter.Entity.Type.Mentions -> Res.string.entity_type_mention
-        Filter.Entity.Type.Domains -> Res.string.entity_type_domain
-    }
+    get() =
+        when (this) {
+            Filter.Entity.Type.Hashtags -> Res.string.entity_type_hashtag
+            Filter.Entity.Type.Languages -> Res.string.entity_type_language
+            Filter.Entity.Type.Urls -> Res.string.entity_type_url
+            Filter.Entity.Type.Mentions -> Res.string.entity_type_mention
+            Filter.Entity.Type.Domains -> Res.string.entity_type_domain
+        }

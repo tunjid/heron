@@ -24,17 +24,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-fun Modifier.profileBioTabBackground(
-    color: () -> Color,
-) = background(
-    color = color(),
-    shape = ProfileBioBackgroundShape,
-)
-    .fillMaxWidth()
-    .height(ProfileBioTabHeight)
+fun Modifier.profileBioTabBackground(color: () -> Color) =
+    background(color = color(), shape = ProfileBioBackgroundShape)
+        .fillMaxWidth()
+        .height(ProfileBioTabHeight)
 
 fun String.withProfileBannerSharedElementPrefix() = "banner-$this"
+
 fun String.withProfileBioTabSharedElementPrefix() = "bio-tab-$this"
+
 fun String.withProfileAvatarHaloSharedElementPrefix() = "avatar-halo-$this"
 
 val ProfileBioTabHeight = 32.dp
@@ -44,7 +42,4 @@ const val AvatarHaloZIndex = 5f
 const val SurfaceZIndex = 4f
 const val BannerZIndex = 3f
 
-private val ProfileBioBackgroundShape = RoundedCornerShape(
-    topStart = 16.dp,
-    topEnd = 16.dp,
-)
+private val ProfileBioBackgroundShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)

@@ -38,43 +38,41 @@ internal fun NotificationsRationaleDialog(
     shouldRequestPermissions: (NotificationDialogRationale, Boolean) -> Unit,
 ) {
     SimpleDialog(
-        onDismissRequest = {
-            shouldRequestPermissions(callingRationale, false)
-        },
+        onDismissRequest = { shouldRequestPermissions(callingRationale, false) },
         title = {
             SimpleDialogTitle(
-                text = stringResource(Res.string.notification_permissions_dialog_title),
+                text = stringResource(Res.string.notification_permissions_dialog_title)
             )
         },
         text = {
             SimpleDialogText(
-                text = stringResource(
-                    when (callingRationale) {
-                        NotificationDialogRationale.GoToSettings -> Res.string.notification_permissions_denied_dialog_text
-                        NotificationDialogRationale.RequestPermissions -> Res.string.notification_permissions_request_dialog_text
-                    },
-                ),
+                text =
+                    stringResource(
+                        when (callingRationale) {
+                            NotificationDialogRationale.GoToSettings ->
+                                Res.string.notification_permissions_denied_dialog_text
+                            NotificationDialogRationale.RequestPermissions ->
+                                Res.string.notification_permissions_request_dialog_text
+                        }
+                    )
             )
         },
         confirmButton = {
             PrimaryDialogButton(
-                text = stringResource(
-                    when (callingRationale) {
-                        NotificationDialogRationale.GoToSettings -> CommonStrings.go_to_settings
-                        NotificationDialogRationale.RequestPermissions -> CommonStrings.yes
-                    },
-                ),
-                onClick = {
-                    shouldRequestPermissions(callingRationale, true)
-                },
+                text =
+                    stringResource(
+                        when (callingRationale) {
+                            NotificationDialogRationale.GoToSettings -> CommonStrings.go_to_settings
+                            NotificationDialogRationale.RequestPermissions -> CommonStrings.yes
+                        }
+                    ),
+                onClick = { shouldRequestPermissions(callingRationale, true) },
             )
         },
         dismissButton = {
             NeutralDialogButton(
                 text = stringResource(CommonStrings.no),
-                onClick = {
-                    shouldRequestPermissions(callingRationale, false)
-                },
+                onClick = { shouldRequestPermissions(callingRationale, false) },
             )
         },
     )
@@ -82,5 +80,6 @@ internal fun NotificationsRationaleDialog(
 
 internal sealed class NotificationDialogRationale {
     data object RequestPermissions : NotificationDialogRationale()
+
     data object GoToSettings : NotificationDialogRationale()
 }

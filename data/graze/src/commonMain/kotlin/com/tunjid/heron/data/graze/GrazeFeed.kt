@@ -35,8 +35,7 @@ sealed interface GrazeFeed {
 
     @Serializable
     data class Pending(
-        @SerialName("rkey")
-        override val recordKey: RecordKey,
+        @SerialName("rkey") override val recordKey: RecordKey,
         override val displayName: String? = null,
         override val description: String? = null,
         override val filter: Filter.Root,
@@ -44,18 +43,14 @@ sealed interface GrazeFeed {
 
     @Serializable
     data class Created(
-        @SerialName("rkey")
-        override val recordKey: RecordKey,
+        @SerialName("rkey") override val recordKey: RecordKey,
         override val displayName: String? = null,
         override val description: String? = null,
         override val filter: Filter.Root,
     ) : Editable
 
     @Serializable
-    data class Deleted(
-        @SerialName("rkey")
-        override val recordKey: RecordKey,
-    ) : GrazeFeed
+    data class Deleted(@SerialName("rkey") override val recordKey: RecordKey) : GrazeFeed
 
     @Serializable
     sealed interface Update {
@@ -67,30 +62,20 @@ sealed interface GrazeFeed {
         }
 
         @Serializable
-        data class Create(
-            override val feed: Pending,
-        ) : Put {
+        data class Create(override val feed: Pending) : Put {
             override val recordKey: RecordKey
                 get() = feed.recordKey
         }
 
         @Serializable
-        data class Edit(
-            override val feed: Created,
-        ) : Put {
+        data class Edit(override val feed: Created) : Put {
             override val recordKey: RecordKey
                 get() = feed.recordKey
         }
 
-        @Serializable
-        data class Get(
-            override val recordKey: RecordKey,
-        ) : Update
+        @Serializable data class Get(override val recordKey: RecordKey) : Update
 
-        @Serializable
-        data class Delete(
-            override val recordKey: RecordKey,
-        ) : Update
+        @Serializable data class Delete(override val recordKey: RecordKey) : Update
     }
 }
 

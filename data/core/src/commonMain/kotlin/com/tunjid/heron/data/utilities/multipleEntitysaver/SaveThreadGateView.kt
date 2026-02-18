@@ -33,9 +33,7 @@ import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.safeDecodeAs
 import sh.christian.ozone.api.Did
 
-internal fun MultipleEntitySaver.add(
-    threadGateView: ThreadgateView,
-) {
+internal fun MultipleEntitySaver.add(threadGateView: ThreadgateView) {
     val threadGateUri = threadGateView.uri?.atUri?.let(::ThreadGateUri) ?: return
     val threadGateId = threadGateView.cid?.cid?.let(::ThreadGateId) ?: return
     val threadGate = threadGateView.record?.safeDecodeAs<Threadgate>() ?: return
@@ -45,17 +43,13 @@ internal fun MultipleEntitySaver.add(
         val allowedListUri = listViewBasic.uri.atUri.let(::ListUri)
         add(
             listView = listViewBasic,
-            creator = {
-                stubProfileEntity(
-                    allowedListUri.profileId().id.let(::Did),
-                )
-            },
+            creator = { stubProfileEntity(allowedListUri.profileId().id.let(::Did)) },
         )
         add(
             ThreadGateAllowedListEntity(
                 threadGateUri = threadGateUri,
                 allowedListUri = allowedListUri,
-            ),
+            )
         )
     }
     add(
@@ -64,50 +58,49 @@ internal fun MultipleEntitySaver.add(
             uri = threadGateUri,
             gatedPostUri = gatedPostUri,
             createdAt = threadGate.createdAt,
-            allowed = when (val allow = threadGate.allow) {
-                // All can reply
-                null -> null
-                // None can reply
-                emptyList<ThreadgateAllowUnion>() -> ThreadGateEntity.Allowed(
-                    allowsFollowing = false,
-                    allowsFollowers = false,
-                    allowsMentioned = false,
-                )
-                else ->
-                    allow
-                        .groupBy { it::class }
-                        .let { grouped ->
-                            // ThreadgateAllowUnion.ListRule is handled with the list views above
-                            ThreadGateEntity.Allowed(
-                                allowsFollowing = ThreadgateAllowUnion.FollowingRule::class in grouped,
-                                allowsFollowers = ThreadgateAllowUnion.FollowerRule::class in grouped,
-                                allowsMentioned = ThreadgateAllowUnion.MentionRule::class in grouped,
-                            )
-                        }
-            },
-        ),
+            allowed =
+                when (val allow = threadGate.allow) {
+                    // All can reply
+                    null -> null
+                    // None can reply
+                    emptyList<ThreadgateAllowUnion>() ->
+                        ThreadGateEntity.Allowed(
+                            allowsFollowing = false,
+                            allowsFollowers = false,
+                            allowsMentioned = false,
+                        )
+                    else ->
+                        allow
+                            .groupBy { it::class }
+                            .let { grouped ->
+                                // ThreadgateAllowUnion.ListRule is handled with the list views
+                                // above
+                                ThreadGateEntity.Allowed(
+                                    allowsFollowing =
+                                        ThreadgateAllowUnion.FollowingRule::class in grouped,
+                                    allowsFollowers =
+                                        ThreadgateAllowUnion.FollowerRule::class in grouped,
+                                    allowsMentioned =
+                                        ThreadgateAllowUnion.MentionRule::class in grouped,
+                                )
+                            }
+                },
+        )
     )
 
     threadGate.hiddenReplies?.forEach { hiddenPostAtUri ->
         val hiddenPostUri = PostUri(hiddenPostAtUri.atUri)
         val hiddenPostAuthorId = hiddenPostUri.profileId()
-        add(
-            stubProfileEntity(
-                hiddenPostAuthorId.id.let(::Did),
-            ),
-        )
+        add(stubProfileEntity(hiddenPostAuthorId.id.let(::Did)))
         add(
             stubPostEntity(
                 id = Collections.stubbedId(::PostId),
                 uri = hiddenPostUri,
                 authorId = hiddenPostAuthorId,
-            ),
+            )
         )
         add(
-            ThreadGateHiddenPostEntity(
-                threadGateUri = threadGateUri,
-                hiddenPostUri = hiddenPostUri,
-            ),
+            ThreadGateHiddenPostEntity(threadGateUri = threadGateUri, hiddenPostUri = hiddenPostUri)
         )
     }
 }

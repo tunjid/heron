@@ -44,9 +44,7 @@ sealed class PlayerStatus {
     }
 }
 
-/**
- * Thin wrapper of essential video information.
- */
+/** Thin wrapper of essential video information. */
 @Stable
 interface VideoPlayerState {
 

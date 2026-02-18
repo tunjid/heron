@@ -19,38 +19,29 @@ package com.tunjid.heron.data.database.entities
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ThreadGateUri
 
 @Entity(
     tableName = "threadGateHiddenPosts",
-    primaryKeys = [
-        "threadGateUri",
-        "hiddenPostUri",
-    ],
-    foreignKeys = [
-        ForeignKey(
-            entity = ThreadGateEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["threadGateUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = PostEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["hiddenPostUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["threadGateUri"]),
-        Index(value = ["hiddenPostUri"]),
-    ],
+    primaryKeys = ["threadGateUri", "hiddenPostUri"],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = ThreadGateEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["threadGateUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = PostEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["hiddenPostUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    indices = [Index(value = ["threadGateUri"]), Index(value = ["hiddenPostUri"])],
 )
-data class ThreadGateHiddenPostEntity(
-    val threadGateUri: ThreadGateUri,
-    val hiddenPostUri: PostUri,
-)
+data class ThreadGateHiddenPostEntity(val threadGateUri: ThreadGateUri, val hiddenPostUri: PostUri)

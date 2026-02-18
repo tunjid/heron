@@ -30,8 +30,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import kotlin.random.Random
 
 /**
- * A composable that applies a jiggling animation to its content.
- * The animation is similar to the iOS app icon rearrangement effect.
+ * A composable that applies a jiggling animation to its content. The animation is similar to the
+ * iOS app icon rearrangement effect.
  *
  * @param modifier The modifier to be applied to the layout.
  * @param isJiggling A boolean to control whether the jiggling animation is active.
@@ -48,31 +48,28 @@ fun JiggleBox(
     // Animate the rotation angle.
     // The angle and duration are randomized slightly for each instance of JiggleBox
     // to create a more natural, less uniform-looking effect.
-    val angle = infiniteTransition.animateFloat(
-        initialValue = -JiggleAngle,
-        targetValue = JiggleAngle,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = JiggleDurationMillis + remember {
-                    Random.nextInt(JiggleVariationDeltaMillis)
-                },
-                easing = LinearEasing,
-            ),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "jiggle_rotation",
-    )
+    val angle =
+        infiniteTransition.animateFloat(
+            initialValue = -JiggleAngle,
+            targetValue = JiggleAngle,
+            animationSpec =
+                infiniteRepeatable(
+                    animation =
+                        tween(
+                            durationMillis =
+                                JiggleDurationMillis +
+                                    remember { Random.nextInt(JiggleVariationDeltaMillis) },
+                            easing = LinearEasing,
+                        ),
+                    repeatMode = RepeatMode.Reverse,
+                ),
+            label = "jiggle_rotation",
+        )
 
     val jiggleModifier =
-        if (isJiggling) Modifier.graphicsLayer { rotationZ = angle.value }
-        else Modifier
+        if (isJiggling) Modifier.graphicsLayer { rotationZ = angle.value } else Modifier
 
-    Box(
-        modifier = modifier
-            .then(jiggleModifier),
-    ) {
-        content()
-    }
+    Box(modifier = modifier.then(jiggleModifier)) { content() }
 }
 
 private const val JiggleAngle = 1.2f

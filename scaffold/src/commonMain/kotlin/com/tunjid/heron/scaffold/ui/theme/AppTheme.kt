@@ -36,10 +36,7 @@ fun AppTheme(
     theme: Theme = Theme.Default,
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = colorScheme(
-        isDark = useDarkTheme,
-        theme = theme,
-    )
+    val colorScheme = colorScheme(isDark = useDarkTheme, theme = theme)
 
     MaterialTheme(
         colorScheme = colorScheme,

@@ -33,8 +33,7 @@ data class State(
     val signedInProfilePreferences: Preferences? = null,
     val openSourceLibraries: Libs? = null,
     val pastSessions: List<SessionSummary> = emptyList(),
-    @Transient
-    val messages: List<Memo> = emptyList(),
+    @Transient val messages: List<Memo> = emptyList(),
 )
 
 enum class AccountSwitchPhase {
@@ -46,45 +45,32 @@ enum class AccountSwitchPhase {
 
 sealed class Action(val key: String) {
 
-    data class SwitchSession(
-        val sessionSummary: SessionSummary,
-    ) : Action(key = "SwitchSession")
+    data class SwitchSession(val sessionSummary: SessionSummary) : Action(key = "SwitchSession")
 
-    data class SetRefreshHomeTimelinesOnLaunch(
-        val refreshHomeTimelinesOnLaunch: Boolean,
-    ) : Action(key = "SetRefreshHomeTimelinesOnLaunch")
+    data class SetRefreshHomeTimelinesOnLaunch(val refreshHomeTimelinesOnLaunch: Boolean) :
+        Action(key = "SetRefreshHomeTimelinesOnLaunch")
 
-    data class SetAutoPlayTimelineVideos(
-        val autoPlayTimelineVideos: Boolean,
-    ) : Action(key = "SetAutoPlayTimelineVideos")
+    data class SetAutoPlayTimelineVideos(val autoPlayTimelineVideos: Boolean) :
+        Action(key = "SetAutoPlayTimelineVideos")
 
-    data class SetDynamicThemingPreference(
-        val dynamicTheming: Boolean,
-    ) : Action(key = "SetDynamicThemingPreference")
+    data class SetDynamicThemingPreference(val dynamicTheming: Boolean) :
+        Action(key = "SetDynamicThemingPreference")
 
-    data class SetCompactNavigation(
-        val compactNavigation: Boolean,
-    ) : Action(key = "SetCompactNavigation")
+    data class SetCompactNavigation(val compactNavigation: Boolean) :
+        Action(key = "SetCompactNavigation")
 
-    data class SetAutoHideBottomNavigation(
-        val autoHideBottomNavigation: Boolean,
-    ) : Action(key = "SetAutoHideBottomNavigation")
+    data class SetAutoHideBottomNavigation(val autoHideBottomNavigation: Boolean) :
+        Action(key = "SetAutoHideBottomNavigation")
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
     data object SignOut : Action(key = "SignOut")
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
         /** Handles navigation to settings child screens */
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(),
-            NavigationAction by delegate
+        data class To(val delegate: NavigationAction.Destination) :
+            Navigate(), NavigationAction by delegate
     }
 }

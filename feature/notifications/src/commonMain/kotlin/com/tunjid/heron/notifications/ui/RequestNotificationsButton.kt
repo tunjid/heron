@@ -36,23 +36,16 @@ import kotlin.math.sin
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-internal fun RequestNotificationsButton(
-    animateIcon: Boolean,
-) {
-    val ringProgressAnimatable = remember {
-        Animatable(initialValue = AnimationStart)
-    }
+internal fun RequestNotificationsButton(animateIcon: Boolean) {
+    val ringProgressAnimatable = remember { Animatable(initialValue = AnimationStart) }
 
     val animationSpec = remember {
-        tween<Float>(
-            durationMillis = AnimationDurationMillis,
-            easing = LinearEasing,
-        )
+        tween<Float>(durationMillis = AnimationDurationMillis, easing = LinearEasing)
     }
 
     AppBarButton(
-        modifier = Modifier
-            .graphicsLayer {
+        modifier =
+            Modifier.graphicsLayer {
                 rotationZ = calculateDampedBellRotation(ringProgressAnimatable.value)
             },
         icon = Icons.Rounded.NotificationsOff,
@@ -61,10 +54,11 @@ internal fun RequestNotificationsButton(
     )
 
     LaunchedEffect(animateIcon) {
-        if (animateIcon) ringProgressAnimatable.animateTo(
-            targetValue = AnimationEnd,
-            animationSpec = animationSpec,
-        )
+        if (animateIcon)
+            ringProgressAnimatable.animateTo(
+                targetValue = AnimationEnd,
+                animationSpec = animationSpec,
+            )
         else ringProgressAnimatable.snapTo(AnimationStart)
     }
 }
@@ -73,7 +67,9 @@ private fun calculateDampedBellRotation(progress: Float): Float {
     if (progress >= 1f) return 0f
 
     // Uses equation of a damped oscillating spring
-    return MaxRotationDegrees * exp(-AnimationDecay * progress) * sin(progress * 2 * PI * AnimationFrequency).toFloat()
+    return MaxRotationDegrees *
+        exp(-AnimationDecay * progress) *
+        sin(progress * 2 * PI * AnimationFrequency).toFloat()
 }
 
 private const val AnimationStart = 0f

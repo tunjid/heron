@@ -31,8 +31,8 @@ import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.UnknownEmbed
-import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.Video as EmbeddedVideo
+import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.ProfileHandle
@@ -60,57 +60,52 @@ data class State(
     val signedInProfileId: ProfileId? = null,
     val canScrollVertically: Boolean = false,
     val cursorData: CursorQuery.Data?,
-    @Transient
-    val preferences: Preferences = Preferences.EmptyPreferences,
-    @Transient
-    val recentConversations: List<Conversation> = emptyList(),
-    @Transient
-    val items: TiledList<CursorQuery, GalleryItem> = emptyTiledList(),
-    @Transient
-    val timelineStateHolder: TimelineStateHolder? = null,
-    @Transient
-    val messages: List<Memo> = emptyList(),
+    @Transient val preferences: Preferences = Preferences.EmptyPreferences,
+    @Transient val recentConversations: List<Conversation> = emptyList(),
+    @Transient val items: TiledList<CursorQuery, GalleryItem> = emptyTiledList(),
+    @Transient val timelineStateHolder: TimelineStateHolder? = null,
+    @Transient val messages: List<Memo> = emptyList(),
 )
 
-fun State(
-    route: Route,
-) = State(
-    viewedProfileId = route.profileId,
-    sharedElementPrefix = route.sharedElementPrefix,
-    cursorData = route.model<CursorQuery.Data>(),
-    items = tiledListOf(
-        DataQuery(
-            data = route.model<CursorQuery.Data>() ?: CursorQuery.defaultStartData(),
-        ) to GalleryItem.Initial(
-            sharedElementPrefix = route.sharedElementPrefix,
-            startIndex = route.startIndex,
-            threadGate = null,
-            viewerState = null,
-            media = route.model<Embed.Media>().toGalleryMedia(),
-            post = Post(
-                cid = Constants.unknownPostId,
-                uri = PostUri(
-                    route.profileId,
-                    route.postRecordKey,
-                ),
-                author = stubProfile(
-                    did = route.profileId,
-                    handle = ProfileHandle(route.profileId.id),
-                ),
-                replyCount = 0,
-                repostCount = 0,
-                likeCount = 0,
-                quoteCount = 0,
-                indexedAt = Instant.DISTANT_PAST,
-                embed = null,
-                record = null,
-                viewerStats = null,
-                labels = emptyList(),
-                embeddedRecord = null,
+fun State(route: Route) =
+    State(
+        viewedProfileId = route.profileId,
+        sharedElementPrefix = route.sharedElementPrefix,
+        cursorData = route.model<CursorQuery.Data>(),
+        items =
+            tiledListOf(
+                DataQuery(
+                    data = route.model<CursorQuery.Data>() ?: CursorQuery.defaultStartData()
+                ) to
+                    GalleryItem.Initial(
+                        sharedElementPrefix = route.sharedElementPrefix,
+                        startIndex = route.startIndex,
+                        threadGate = null,
+                        viewerState = null,
+                        media = route.model<Embed.Media>().toGalleryMedia(),
+                        post =
+                            Post(
+                                cid = Constants.unknownPostId,
+                                uri = PostUri(route.profileId, route.postRecordKey),
+                                author =
+                                    stubProfile(
+                                        did = route.profileId,
+                                        handle = ProfileHandle(route.profileId.id),
+                                    ),
+                                replyCount = 0,
+                                repostCount = 0,
+                                likeCount = 0,
+                                quoteCount = 0,
+                                indexedAt = Instant.DISTANT_PAST,
+                                embed = null,
+                                record = null,
+                                viewerStats = null,
+                                labels = emptyList(),
+                                embeddedRecord = null,
+                            ),
+                    )
             ),
-        ),
-    ),
-)
+    )
 
 val GalleryItem.posterSharedElementPrefix
     get() = "poster-$sharedElementPrefix"
@@ -143,21 +138,18 @@ sealed class GalleryItem {
     ) : GalleryItem()
 
     sealed class Media {
-        data class Photo(
-            val image: EmbeddedImage,
-        ) : Media()
+        data class Photo(val image: EmbeddedImage) : Media()
 
-        data class Video(
-            val video: EmbeddedVideo,
-        ) : Media()
+        data class Video(val video: EmbeddedVideo) : Media()
     }
 }
 
 val GalleryItem.Media.key
-    get() = when (this) {
-        is GalleryItem.Media.Photo -> image.thumb.uri
-        is GalleryItem.Media.Video -> video.playlist.uri
-    }
+    get() =
+        when (this) {
+            is GalleryItem.Media.Photo -> image.thumb.uri
+            is GalleryItem.Media.Video -> video.playlist.uri
+        }
 
 internal fun Embed?.toGalleryMedia(): List<GalleryItem.Media> =
     when (this) {
@@ -165,33 +157,24 @@ internal fun Embed?.toGalleryMedia(): List<GalleryItem.Media> =
         is Video -> listOf(GalleryItem.Media.Video(this))
         is ExternalEmbed,
         UnknownEmbed,
-        null,
-        -> emptyList()
+        null -> emptyList()
     }
 
 sealed class Action(val key: String) {
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
+    data class UpdateMutedWord(val mutedWordPreference: List<MutedWordPreference>) :
+        Action(key = "UpdateMutedWord")
 
-    data class BlockAccount(
-        val signedInProfileId: ProfileId,
-        val profileId: ProfileId,
-    ) : Action(key = "BlockAccount")
+    data class BlockAccount(val signedInProfileId: ProfileId, val profileId: ProfileId) :
+        Action(key = "BlockAccount")
 
-    data class MuteAccount(
-        val signedInProfileId: ProfileId,
-        val profileId: ProfileId,
-    ) : Action(key = "MuteAccount")
+    data class MuteAccount(val signedInProfileId: ProfileId, val profileId: ProfileId) :
+        Action(key = "MuteAccount")
 
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
+    data class SendPostInteraction(val interaction: Post.Interaction) :
+        Action(key = "SendPostInteraction")
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
     data class ToggleViewerState(
         val signedInProfileId: ProfileId,
@@ -200,12 +183,8 @@ sealed class Action(val key: String) {
         val followedBy: FollowUri?,
     ) : Action(key = "ToggleViewerState")
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(),
-            NavigationAction by delegate
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
+        data class To(val delegate: NavigationAction.Destination) :
+            Navigate(), NavigationAction by delegate
     }
 }

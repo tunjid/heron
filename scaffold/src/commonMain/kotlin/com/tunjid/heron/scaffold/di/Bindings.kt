@@ -44,52 +44,39 @@ class ScaffoldBindingArgs(
 )
 
 @BindingContainer
-class ScaffoldBindings(
-    val args: ScaffoldBindingArgs,
-    @Includes val dataBindings: DataBindings,
-) {
+class ScaffoldBindings(val args: ScaffoldBindingArgs, @Includes val dataBindings: DataBindings) {
 
     @SingleIn(AppScope::class)
     @Provides
-    fun navStateStream(
-        navStateHolder: NavigationStateHolder,
-    ): StateFlow<MultiStackNav> = navStateHolder.state
+    fun navStateStream(navStateHolder: NavigationStateHolder): StateFlow<MultiStackNav> =
+        navStateHolder.state
 
     @SingleIn(AppScope::class)
     @Provides
-    fun routeParser(): RouteParser =
-        routeParserFrom(*(args.routeMatchers).toTypedArray())
+    fun routeParser(): RouteParser = routeParserFrom(*(args.routeMatchers).toTypedArray())
+
+    @SingleIn(AppScope::class) @Provides fun imageLoader(): ImageLoader = args.imageLoader
+
+    @SingleIn(AppScope::class) @Provides fun notifier(): Notifier = args.notifier
 
     @SingleIn(AppScope::class)
     @Provides
-    fun imageLoader(): ImageLoader =
-        args.imageLoader
+    fun videoPlayerController(): VideoPlayerController = args.videoPlayerController
 
     @SingleIn(AppScope::class)
     @Provides
-    fun notifier(): Notifier =
-        args.notifier
-
-    @SingleIn(AppScope::class)
-    @Provides
-    fun videoPlayerController(): VideoPlayerController =
-        args.videoPlayerController
-
-    @SingleIn(AppScope::class)
-    @Provides
-    fun navActions(
-        navStateHolder: NavigationStateHolder,
-    ): (NavigationMutation) -> Unit = navStateHolder.accept
+    fun navActions(navStateHolder: NavigationStateHolder): (NavigationMutation) -> Unit =
+        navStateHolder.accept
 
     @SingleIn(AppScope::class)
     @Provides
     fun provideNavigationStateHolder(
-        persistedNavigationStateHolder: PersistedNavigationStateHolder,
+        persistedNavigationStateHolder: PersistedNavigationStateHolder
     ): NavigationStateHolder = persistedNavigationStateHolder
 
     @SingleIn(AppScope::class)
     @Provides
     fun provideNotificationStateHolder(
-        appNotificationStateHolder: AppNotificationStateHolder,
+        appNotificationStateHolder: AppNotificationStateHolder
     ): NotificationStateHolder = appNotificationStateHolder
 }

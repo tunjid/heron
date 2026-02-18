@@ -19,9 +19,8 @@ package com.tunjid.heron.ui.coroutines
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineDispatcher
 
-class UIStateProducerElement(
-    internal val backgroundDispatcher: CoroutineDispatcher,
-) : CoroutineContext.Element {
+class UIStateProducerElement(internal val backgroundDispatcher: CoroutineDispatcher) :
+    CoroutineContext.Element {
 
     override val key: CoroutineContext.Key<*>
         get() = UIStateProducerElement
@@ -29,16 +28,15 @@ class UIStateProducerElement(
     companion object Key : CoroutineContext.Key<UIStateProducerElement>
 }
 
-/**
- * Requires a [CoroutineDispatcher] for doing background work in a
- * UI state producing context.
- */
+/** Requires a [CoroutineDispatcher] for doing background work in a UI state producing context. */
 fun CoroutineContext.requireStateProducingBackgroundDispatcher(): CoroutineDispatcher {
     val context = this
     return requireNotNull(context[UIStateProducerElement]) {
-        """
+            """
             The current coroutine context $context is not a
             context for producing UI states in the UI layer.
-        """.trimIndent()
-    }.backgroundDispatcher
+        """
+                .trimIndent()
+        }
+        .backgroundDispatcher
 }

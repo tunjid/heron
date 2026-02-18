@@ -38,88 +38,78 @@ import kotlin.math.max
 import kotlin.math.min
 
 @Stable
-internal class EditableTimelineState private constructor(
-    val timelines: SnapshotStateList<Timeline.Home>,
-) {
+internal class EditableTimelineState
+private constructor(val timelines: SnapshotStateList<Timeline.Home>) {
     private var hoveredId by mutableStateOf<String?>(null)
     private var draggedId by mutableStateOf<String?>(null)
 
-    var firstUnpinnedIndex by mutableStateOf(
-        when (val index = timelines.indexOfFirst { !it.isPinned }) {
-            -1 -> timelines.size
-            else -> index
-        },
-    )
+    var firstUnpinnedIndex by
+        mutableStateOf(
+            when (val index = timelines.indexOfFirst { !it.isPinned }) {
+                -1 -> timelines.size
+                else -> index
+            }
+        )
         private set
 
     var isHintHovered by mutableStateOf(false)
         private set
 
-    val shouldShowHint get() = firstUnpinnedIndex == timelines.size
+    val shouldShowHint
+        get() = firstUnpinnedIndex == timelines.size
 
     private val tabTargets = mutableStateMapOf<String, TabTarget>()
     private val hintTarget = HintTarget()
 
-    @Stable
-    fun isHoveredId(sourceId: String) = sourceId == hoveredId
+    @Stable fun isHoveredId(sourceId: String) = sourceId == hoveredId
 
-    @Stable
-    fun isDraggedId(sourceId: String) = sourceId == draggedId
+    @Stable fun isDraggedId(sourceId: String) = sourceId == draggedId
 
     fun remove(timeline: Timeline.Home) {
         val index = timelines.indexOfFirst { it.sourceId == timeline.sourceId }
         if (index < 0) return
 
         timelines.removeAt(index)
-        if (index <= firstUnpinnedIndex) firstUnpinnedIndex = max(
-            a = firstUnpinnedIndex - 1,
-            b = 0,
-        )
+        if (index <= firstUnpinnedIndex) firstUnpinnedIndex = max(a = firstUnpinnedIndex - 1, b = 0)
     }
 
-    fun timelinesToSave() = timelines.mapIndexed { index, timeline ->
-        when (timeline) {
-            is Timeline.Home.Feed -> timeline.copy(isPinned = index < firstUnpinnedIndex)
-            is Timeline.Home.Following -> timeline.copy(isPinned = index < firstUnpinnedIndex)
-            is Timeline.Home.List -> timeline.copy(isPinned = index < firstUnpinnedIndex)
+    fun timelinesToSave() =
+        timelines.mapIndexed { index, timeline ->
+            when (timeline) {
+                is Timeline.Home.Feed -> timeline.copy(isPinned = index < firstUnpinnedIndex)
+                is Timeline.Home.Following -> timeline.copy(isPinned = index < firstUnpinnedIndex)
+                is Timeline.Home.List -> timeline.copy(isPinned = index < firstUnpinnedIndex)
+            }
         }
-    }
 
     private fun DragAndDropEvent.draggedIndex() =
-        draggedId()?.let { draggedId ->
-            timelines.indexOfFirst { it.sourceId == draggedId }
-        } ?: -1
+        draggedId()?.let { draggedId -> timelines.indexOfFirst { it.sourceId == draggedId } } ?: -1
 
-    private fun dropItem(
-        acceptedDrop: Boolean,
-        draggedIndex: Int,
-        droppedIndex: Int,
-    ) {
+    private fun dropItem(acceptedDrop: Boolean, draggedIndex: Int, droppedIndex: Int) {
         Snapshot.withMutableSnapshot {
             if (acceptedDrop) {
                 timelines.add(
                     index = min(timelines.lastIndex, droppedIndex),
                     element = timelines.removeAt(draggedIndex),
                 )
-                firstUnpinnedIndex = when {
-                    // Moved last saved item to pinned items
-                    draggedIndex == firstUnpinnedIndex && draggedIndex == timelines.lastIndex -> timelines.size
-                    // Dropped in hint box
-                    droppedIndex >= timelines.size -> timelines.lastIndex
-                    else -> when (firstUnpinnedIndex) {
-                        // Moved out of pinned items
-                        in draggedIndex..droppedIndex -> max(
-                            a = firstUnpinnedIndex - 1,
-                            b = 0,
-                        )
-                        // Moved into pinned items
-                        in droppedIndex..draggedIndex -> min(
-                            a = firstUnpinnedIndex + 1,
-                            b = timelines.lastIndex,
-                        )
-                        else -> firstUnpinnedIndex
+                firstUnpinnedIndex =
+                    when {
+                        // Moved last saved item to pinned items
+                        draggedIndex == firstUnpinnedIndex && draggedIndex == timelines.lastIndex ->
+                            timelines.size
+                        // Dropped in hint box
+                        droppedIndex >= timelines.size -> timelines.lastIndex
+                        else ->
+                            when (firstUnpinnedIndex) {
+                                // Moved out of pinned items
+                                in draggedIndex..droppedIndex ->
+                                    max(a = firstUnpinnedIndex - 1, b = 0)
+                                // Moved into pinned items
+                                in droppedIndex..draggedIndex ->
+                                    min(a = firstUnpinnedIndex + 1, b = timelines.lastIndex)
+                                else -> firstUnpinnedIndex
+                            }
                     }
-                }
             }
             hoveredId = null
             draggedId = null
@@ -127,9 +117,7 @@ internal class EditableTimelineState private constructor(
     }
 
     @Stable
-    private inner class TabTarget(
-        sourceId: String,
-    ) : DragAndDropTarget {
+    private inner class TabTarget(sourceId: String) : DragAndDropTarget {
 
         var sourceId by mutableStateOf(sourceId)
 
@@ -147,9 +135,7 @@ internal class EditableTimelineState private constructor(
 
         override fun onDrop(event: DragAndDropEvent): Boolean {
             val draggedIndex = event.draggedIndex()
-            val droppedIndex = timelines.indexOfFirst {
-                it.sourceId == sourceId
-            }
+            val droppedIndex = timelines.indexOfFirst { it.sourceId == sourceId }
 
             val acceptedDrop =
                 // Make sure at least 1 item is always pinned
@@ -212,40 +198,28 @@ internal class EditableTimelineState private constructor(
     companion object {
 
         @Composable
-        fun rememberEditableTimelineState(
-            timelines: List<Timeline.Home>,
-        ): EditableTimelineState = remember(
-            // Only timeline order should recreate state
-            timelines.joinToString(
-                separator = "-",
-                transform = Timeline.Home::sourceId,
-            ),
-        ) {
-            EditableTimelineState(
-                timelines = timelines.toMutableStateList(),
-            )
-        }
+        fun rememberEditableTimelineState(timelines: List<Timeline.Home>): EditableTimelineState =
+            remember(
+                // Only timeline order should recreate state
+                timelines.joinToString(separator = "-", transform = Timeline.Home::sourceId)
+            ) {
+                EditableTimelineState(timelines = timelines.toMutableStateList())
+            }
 
-        fun Modifier.timelineEditDragAndDrop(
-            state: EditableTimelineState,
-            sourceId: String,
-        ) = timelineEditDragAndDropSource(sourceId)
-            .dragAndDropTarget(
-                shouldStartDragAndDrop = { event ->
-                    event.draggedId() != null
-                },
-                target = state.tabTargets.getOrPut(sourceId) {
-                    state.TabTarget(sourceId)
-                }.also { it.sourceId = sourceId },
-            )
+        fun Modifier.timelineEditDragAndDrop(state: EditableTimelineState, sourceId: String) =
+            timelineEditDragAndDropSource(sourceId)
+                .dragAndDropTarget(
+                    shouldStartDragAndDrop = { event -> event.draggedId() != null },
+                    target =
+                        state.tabTargets
+                            .getOrPut(sourceId) { state.TabTarget(sourceId) }
+                            .also { it.sourceId = sourceId },
+                )
 
-        fun Modifier.timelineEditDropTarget(
-            state: EditableTimelineState,
-        ) = dragAndDropTarget(
-            shouldStartDragAndDrop = { event ->
-                event.draggedId() != null
-            },
-            target = state.hintTarget,
-        )
+        fun Modifier.timelineEditDropTarget(state: EditableTimelineState) =
+            dragAndDropTarget(
+                shouldStartDragAndDrop = { event -> event.draggedId() != null },
+                target = state.hintTarget,
+            )
     }
 }

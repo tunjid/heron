@@ -49,53 +49,51 @@ fun FeedList(
     list: FeedList,
     status: Timeline.Home.Status?,
     onListStatusUpdated: (Update.OfList) -> Unit,
-) = with(movableElementSharedTransitionScope) {
-    RecordLayout(
-        modifier = modifier,
-        movableElementSharedTransitionScope = movableElementSharedTransitionScope,
-        title = list.name,
-        subtitle = stringResource(
-            Res.string.list_by,
-            list.creator.handle.id,
-        ),
-        description = list.description,
-        blurb = null,
-        sharedElementPrefix = sharedElementPrefix,
-        sharedElementType = list.uri,
-        avatar = {
-            val avatar = list.avatar ?: BlueskyClouds
-            PaneStickySharedElement(
-                modifier = Modifier
-                    .size(44.dp),
-                sharedContentState = rememberSharedContentState(
-                    key = list.avatarSharedElementKey(sharedElementPrefix),
-                ),
-            ) {
-                AsyncImage(
-                    modifier = Modifier
-                        .fillParentAxisIfFixedOrWrap(),
-                    args = remember(avatar) {
-                        ImageArgs(
-                            url = avatar.uri,
-                            contentScale = ContentScale.Crop,
-                            contentDescription = null,
-                            shape = ListCollectionShape,
-                        )
-                    },
-                )
-            }
-        },
-        action = {
-            status?.let { currentStatus ->
-                FeedListStatus(
-                    status = currentStatus,
-                    uri = list.uri,
-                    onListStatusUpdated = onListStatusUpdated,
-                )
-            }
-        },
-    )
-}
+) =
+    with(movableElementSharedTransitionScope) {
+        RecordLayout(
+            modifier = modifier,
+            movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+            title = list.name,
+            subtitle = stringResource(Res.string.list_by, list.creator.handle.id),
+            description = list.description,
+            blurb = null,
+            sharedElementPrefix = sharedElementPrefix,
+            sharedElementType = list.uri,
+            avatar = {
+                val avatar = list.avatar ?: BlueskyClouds
+                PaneStickySharedElement(
+                    modifier = Modifier.size(44.dp),
+                    sharedContentState =
+                        rememberSharedContentState(
+                            key = list.avatarSharedElementKey(sharedElementPrefix)
+                        ),
+                ) {
+                    AsyncImage(
+                        modifier = Modifier.fillParentAxisIfFixedOrWrap(),
+                        args =
+                            remember(avatar) {
+                                ImageArgs(
+                                    url = avatar.uri,
+                                    contentScale = ContentScale.Crop,
+                                    contentDescription = null,
+                                    shape = ListCollectionShape,
+                                )
+                            },
+                    )
+                }
+            },
+            action = {
+                status?.let { currentStatus ->
+                    FeedListStatus(
+                        status = currentStatus,
+                        uri = list.uri,
+                        onListStatusUpdated = onListStatusUpdated,
+                    )
+                }
+            },
+        )
+    }
 
 @Composable
 fun StarterPack(
@@ -103,44 +101,42 @@ fun StarterPack(
     movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     sharedElementPrefix: String,
     starterPack: StarterPack,
-) = with(movableElementSharedTransitionScope) {
-    RecordLayout(
-        modifier = modifier,
-        movableElementSharedTransitionScope = movableElementSharedTransitionScope,
-        title = starterPack.name,
-        subtitle = stringResource(
-            Res.string.starter_pack_by,
-            starterPack.creator.handle.id,
-        ),
-        description = starterPack.description,
-        blurb = "",
-        sharedElementPrefix = sharedElementPrefix,
-        sharedElementType = starterPack.uri,
-        avatar = {
-            val avatar = BlueskyClouds
-            PaneStickySharedElement(
-                modifier = Modifier
-                    .size(44.dp),
-                sharedContentState = rememberSharedContentState(
-                    key = starterPack.avatarSharedElementKey(sharedElementPrefix),
-                ),
-            ) {
-                AsyncImage(
-                    modifier = Modifier
-                        .fillParentAxisIfFixedOrWrap(),
-                    args = remember(avatar) {
-                        ImageArgs(
-                            url = avatar.uri,
-                            contentScale = ContentScale.Crop,
-                            contentDescription = null,
-                            shape = StarterPackCollectionShape,
-                        )
-                    },
-                )
-            }
-        },
-    )
-}
+) =
+    with(movableElementSharedTransitionScope) {
+        RecordLayout(
+            modifier = modifier,
+            movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+            title = starterPack.name,
+            subtitle = stringResource(Res.string.starter_pack_by, starterPack.creator.handle.id),
+            description = starterPack.description,
+            blurb = "",
+            sharedElementPrefix = sharedElementPrefix,
+            sharedElementType = starterPack.uri,
+            avatar = {
+                val avatar = BlueskyClouds
+                PaneStickySharedElement(
+                    modifier = Modifier.size(44.dp),
+                    sharedContentState =
+                        rememberSharedContentState(
+                            key = starterPack.avatarSharedElementKey(sharedElementPrefix)
+                        ),
+                ) {
+                    AsyncImage(
+                        modifier = Modifier.fillParentAxisIfFixedOrWrap(),
+                        args =
+                            remember(avatar) {
+                                ImageArgs(
+                                    url = avatar.uri,
+                                    contentScale = ContentScale.Crop,
+                                    contentDescription = null,
+                                    shape = StarterPackCollectionShape,
+                                )
+                            },
+                    )
+                }
+            },
+        )
+    }
 
 @Composable
 fun FeedListStatus(
@@ -151,11 +147,12 @@ fun FeedListStatus(
     TimelineStatusSelection(
         currentStatus = status,
         onStatusSelected = { selectedStatus ->
-            val update = when (selectedStatus) {
-                Timeline.Home.Status.Pinned -> Update.OfList.Pin(uri)
-                Timeline.Home.Status.Saved -> Update.OfList.Save(uri)
-                Timeline.Home.Status.None -> Update.OfList.Remove(uri)
-            }
+            val update =
+                when (selectedStatus) {
+                    Timeline.Home.Status.Pinned -> Update.OfList.Pin(uri)
+                    Timeline.Home.Status.Saved -> Update.OfList.Save(uri)
+                    Timeline.Home.Status.None -> Update.OfList.Remove(uri)
+                }
             onListStatusUpdated(update)
         },
     )

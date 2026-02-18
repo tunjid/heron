@@ -22,15 +22,7 @@ import com.tunjid.heron.data.core.types.RecordUri
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Like(
-    val uri: LikeUri,
-    val cid: GenericId,
-    val post: Post,
-    val via: RecordUri?,
-) : Record {
-    override val reference: Record.Reference =
-        Record.Reference(
-            id = cid,
-            uri = uri,
-        )
+data class Like(val uri: LikeUri, val cid: GenericId, val post: Post, val via: RecordUri?) :
+    Record {
+    override val reference: Record.Reference = Record.Reference(id = cid, uri = uri)
 }

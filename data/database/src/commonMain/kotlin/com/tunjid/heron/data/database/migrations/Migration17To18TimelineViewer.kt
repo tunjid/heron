@@ -25,11 +25,17 @@ internal object Migration17To18TimelineViewer : Migration(17, 18) {
         // Migrate timelineItems
 
         // Add columns
-        connection.execSQL("ALTER TABLE timelineItems ADD COLUMN viewingProfileId TEXT DEFAULT NULL;")
+        connection.execSQL(
+            "ALTER TABLE timelineItems ADD COLUMN viewingProfileId TEXT DEFAULT NULL;"
+        )
 
         // Create indices
-        connection.execSQL("CREATE INDEX `index_timelineItems_viewingProfileId` ON timelineItems (`viewingProfileId`);")
-        connection.execSQL("CREATE INDEX `index_timelineItems_sourceId` ON timelineItems (`sourceId`);")
+        connection.execSQL(
+            "CREATE INDEX `index_timelineItems_viewingProfileId` ON timelineItems (`viewingProfileId`);"
+        )
+        connection.execSQL(
+            "CREATE INDEX `index_timelineItems_sourceId` ON timelineItems (`sourceId`);"
+        )
 
         // Migrate timelinePreferences
         connection.execSQL(
@@ -42,7 +48,8 @@ internal object Migration17To18TimelineViewer : Migration(17, 18) {
                 `id` TEXT NOT NULL,
                 PRIMARY KEY(`id`)
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
 
         // Remove the old table
@@ -52,7 +59,11 @@ internal object Migration17To18TimelineViewer : Migration(17, 18) {
         connection.execSQL("ALTER TABLE timelinePreferences_new RENAME TO timelinePreferences")
 
         // Create indices
-        connection.execSQL("CREATE INDEX `index_timelinePreferences_viewingProfileId` ON timelinePreferences (`viewingProfileId`);")
-        connection.execSQL("CREATE INDEX `index_timelinePreferences_sourceId` ON timelinePreferences (`sourceId`);")
+        connection.execSQL(
+            "CREATE INDEX `index_timelinePreferences_viewingProfileId` ON timelinePreferences (`viewingProfileId`);"
+        )
+        connection.execSQL(
+            "CREATE INDEX `index_timelinePreferences_sourceId` ON timelinePreferences (`sourceId`);"
+        )
     }
 }

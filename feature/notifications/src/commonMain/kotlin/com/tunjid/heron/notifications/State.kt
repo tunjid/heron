@@ -39,105 +39,86 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     val lastRefreshed: Instant? = null,
-    @Transient
-    val preferences: Preferences = Preferences.EmptyPreferences,
-    @Transient
-    val recentConversations: List<Conversation> = emptyList(),
-    @Transient
-    val signedInProfile: Profile? = null,
-    @Transient
-    val canAnimateRequestPermissionsButton: Boolean = false,
-    override val tilingData: TilingState.Data<NotificationsQuery, Notification> = TilingState.Data(
-        currentQuery = NotificationsQuery(
-            data = CursorQuery.Data(
-                page = 0,
-                cursorAnchor = Clock.System.now(),
-                limit = 18,
-            ),
+    @Transient val preferences: Preferences = Preferences.EmptyPreferences,
+    @Transient val recentConversations: List<Conversation> = emptyList(),
+    @Transient val signedInProfile: Profile? = null,
+    @Transient val canAnimateRequestPermissionsButton: Boolean = false,
+    override val tilingData: TilingState.Data<NotificationsQuery, Notification> =
+        TilingState.Data(
+            currentQuery =
+                NotificationsQuery(
+                    data = CursorQuery.Data(page = 0, cursorAnchor = Clock.System.now(), limit = 18)
+                )
         ),
-    ),
-    @Transient
-    val messages: List<Memo> = emptyList(),
+    @Transient val messages: List<Memo> = emptyList(),
 ) : TilingState<NotificationsQuery, Notification>
 
-fun State.aggregateNotifications() = buildTiledList<NotificationsQuery, AggregatedNotification> {
-    tiledItems.forEachIndexed { index, notification ->
-        when {
-            isNotEmpty() && last().canAggregate(notification) -> {
-                val last = remove(lastIndex)
-                add(
-                    query = tiledItems.queryAt(index),
-                    item = last.copy(
-                        isRead = last.isRead && notification.isRead,
-                        aggregatedProfiles = last.aggregatedProfiles + notification.author,
-                    ),
-                )
-            }
+fun State.aggregateNotifications() =
+    buildTiledList<NotificationsQuery, AggregatedNotification> {
+        tiledItems.forEachIndexed { index, notification ->
+            when {
+                isNotEmpty() && last().canAggregate(notification) -> {
+                    val last = remove(lastIndex)
+                    add(
+                        query = tiledItems.queryAt(index),
+                        item =
+                            last.copy(
+                                isRead = last.isRead && notification.isRead,
+                                aggregatedProfiles = last.aggregatedProfiles + notification.author,
+                            ),
+                    )
+                }
 
-            else -> add(
-                query = tiledItems.queryAt(index),
-                item = AggregatedNotification(
-                    isRead = notification.isRead,
-                    notification = notification,
-                    aggregatedProfiles = listOf(notification.author),
-                ),
-            )
+                else ->
+                    add(
+                        query = tiledItems.queryAt(index),
+                        item =
+                            AggregatedNotification(
+                                isRead = notification.isRead,
+                                notification = notification,
+                                aggregatedProfiles = listOf(notification.author),
+                            ),
+                    )
+            }
         }
     }
-}
 
 sealed class Action(val key: String) {
 
-    data class Tile(
-        val tilingAction: TilingState.Action,
-    ) : Action(key = "Tile")
+    data class Tile(val tilingAction: TilingState.Action) : Action(key = "Tile")
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
+    data class UpdateMutedWord(val mutedWordPreference: List<MutedWordPreference>) :
+        Action(key = "UpdateMutedWord")
 
-    data class BlockAccount(
-        val signedInProfileId: ProfileId,
-        val profileId: ProfileId,
-    ) : Action(key = "BlockAccount")
+    data class BlockAccount(val signedInProfileId: ProfileId, val profileId: ProfileId) :
+        Action(key = "BlockAccount")
 
-    data class MuteAccount(
-        val signedInProfileId: ProfileId,
-        val profileId: ProfileId,
-    ) : Action(key = "MuteAccount")
+    data class MuteAccount(val signedInProfileId: ProfileId, val profileId: ProfileId) :
+        Action(key = "MuteAccount")
 
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
+    data class SendPostInteraction(val interaction: Post.Interaction) :
+        Action(key = "SendPostInteraction")
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
-    data class MarkNotificationsRead(
-        val at: Instant,
-    ) : Action(key = "markNotificationsRead")
+    data class MarkNotificationsRead(val at: Instant) : Action(key = "markNotificationsRead")
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
 
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(),
-            NavigationAction by delegate
+        data class To(val delegate: NavigationAction.Destination) :
+            Navigate(), NavigationAction by delegate
     }
 }
 
-private fun AggregatedNotification.canAggregate(
-    other: Notification,
-): Boolean = when {
-    notification::class != other::class -> false
-    notification.associatedPostUri == null && other.associatedPostUri == null -> true
-    else -> notification.associatedPostUri == other.associatedPostUri
-}
+private fun AggregatedNotification.canAggregate(other: Notification): Boolean =
+    when {
+        notification::class != other::class -> false
+        notification.associatedPostUri == null && other.associatedPostUri == null -> true
+        else -> notification.associatedPostUri == other.associatedPostUri
+    }
 
-val AggregatedNotification.id get() = notification.cid.id
+val AggregatedNotification.id
+    get() = notification.cid.id
 
 data class AggregatedNotification(
     val isRead: Boolean,

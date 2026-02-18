@@ -44,86 +44,68 @@ data class State(
     val creator: Profile? = null,
     val sharedElementPrefix: String? = null,
     val scrollToTopRequestId: String? = null,
-    @Transient
-    val preferences: Preferences = Preferences.EmptyPreferences,
-    @Transient
-    val feedStatus: Timeline.Home.Status = Timeline.Home.Status.None,
-    @Transient
-    val signedInProfileId: ProfileId? = null,
-    @Transient
-    val recentConversations: List<Conversation> = emptyList(),
-    @Transient
-    val recentLists: List<FeedList> = emptyList(),
-    @Transient
-    val timelineState: TimelineState? = null,
-    @Transient
-    val timelineStateHolder: TimelineStateHolder? = null,
-    @Transient
-    val messages: List<Memo> = emptyList(),
+    @Transient val preferences: Preferences = Preferences.EmptyPreferences,
+    @Transient val feedStatus: Timeline.Home.Status = Timeline.Home.Status.None,
+    @Transient val signedInProfileId: ProfileId? = null,
+    @Transient val recentConversations: List<Conversation> = emptyList(),
+    @Transient val recentLists: List<FeedList> = emptyList(),
+    @Transient val timelineState: TimelineState? = null,
+    @Transient val timelineStateHolder: TimelineStateHolder? = null,
+    @Transient val messages: List<Memo> = emptyList(),
 )
 
-fun State(
-    route: Route,
-) = State(
-    sharedElementPrefix = route.sharedElementPrefix,
-    timelineState = route.model<FeedGenerator>()?.let { model ->
-        val timeline = Timeline.Home.Feed.stub(feedGenerator = model)
-        TimelineState(
-            timeline = timeline,
-            hasUpdates = false,
-            tilingData = TilingState.Data(
-                currentQuery = TimelineQuery(
-                    data = CursorQuery.Data(
-                        page = 0,
-                        cursorAnchor = Clock.System.now(),
-                    ),
-                    source = timeline.source,
-                ),
-            ),
-        )
-    },
-)
+fun State(route: Route) =
+    State(
+        sharedElementPrefix = route.sharedElementPrefix,
+        timelineState =
+            route.model<FeedGenerator>()?.let { model ->
+                val timeline = Timeline.Home.Feed.stub(feedGenerator = model)
+                TimelineState(
+                    timeline = timeline,
+                    hasUpdates = false,
+                    tilingData =
+                        TilingState.Data(
+                            currentQuery =
+                                TimelineQuery(
+                                    data =
+                                        CursorQuery.Data(
+                                            page = 0,
+                                            cursorAnchor = Clock.System.now(),
+                                        ),
+                                    source = timeline.source,
+                                )
+                        ),
+                )
+            },
+    )
 
 sealed class Action(val key: String) {
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
+    data class UpdateMutedWord(val mutedWordPreference: List<MutedWordPreference>) :
+        Action(key = "UpdateMutedWord")
 
-    data class BlockAccount(
-        val signedInProfileId: ProfileId,
-        val profileId: ProfileId,
-    ) : Action(key = "BlockAccount")
+    data class BlockAccount(val signedInProfileId: ProfileId, val profileId: ProfileId) :
+        Action(key = "BlockAccount")
 
-    data class MuteAccount(
-        val signedInProfileId: ProfileId,
-        val profileId: ProfileId,
-    ) : Action(key = "MuteAccount")
+    data class MuteAccount(val signedInProfileId: ProfileId, val profileId: ProfileId) :
+        Action(key = "MuteAccount")
 
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
+    data class SendPostInteraction(val interaction: Post.Interaction) :
+        Action(key = "SendPostInteraction")
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
-    data class UpdateFeedGeneratorStatus(
-        val update: Timeline.Update,
-    ) : Action(key = "UpdateFeedGeneratorStatus")
+    data class UpdateFeedGeneratorStatus(val update: Timeline.Update) :
+        Action(key = "UpdateFeedGeneratorStatus")
 
     data object ScrollToTop : Action(key = "ScrollToTop")
 
     data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(),
-            NavigationAction by delegate
+        data class To(val delegate: NavigationAction.Destination) :
+            Navigate(), NavigationAction by delegate
     }
 }

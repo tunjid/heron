@@ -20,5 +20,4 @@ plugins {
     id("dev.zacsweers.metro")
 }
 
-metro {
-}
+metro {}

@@ -39,18 +39,11 @@ import heron.feature.settings.generated.resources.sign_out_confirmation
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun SignOutItem(
-    modifier: Modifier = Modifier,
-    onSignOutClicked: () -> Unit,
-) {
+fun SignOutItem(modifier: Modifier = Modifier, onSignOutClicked: () -> Unit) {
     var showSignOutDialog by rememberSaveable { mutableStateOf(false) }
 
     SettingsItemRow(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable {
-                showSignOutDialog = true
-            },
+        modifier = modifier.fillMaxWidth().clickable { showSignOutDialog = true },
         title = stringResource(Res.string.sign_out),
         titleColor = MaterialTheme.colorScheme.error,
         icon = Icons.AutoMirrored.Rounded.DirectionsWalk,
@@ -67,25 +60,13 @@ fun SignOutItem(
 }
 
 @Composable
-fun SignOutDialog(
-    showSignOutDialog: Boolean,
-    onDismiss: () -> Unit,
-    onConfirmSignOut: () -> Unit,
-) {
+fun SignOutDialog(showSignOutDialog: Boolean, onDismiss: () -> Unit, onConfirmSignOut: () -> Unit) {
     if (!showSignOutDialog) return
 
     SimpleDialog(
         onDismissRequest = onDismiss,
-        title = {
-            SimpleDialogTitle(
-                text = stringResource(Res.string.sign_out),
-            )
-        },
-        text = {
-            SimpleDialogText(
-                text = stringResource(Res.string.sign_out_confirmation),
-            )
-        },
+        title = { SimpleDialogTitle(text = stringResource(Res.string.sign_out)) },
+        text = { SimpleDialogText(text = stringResource(Res.string.sign_out_confirmation)) },
         confirmButton = {
             DestructiveDialogButton(
                 text = stringResource(Res.string.sign_out),
@@ -93,10 +74,7 @@ fun SignOutDialog(
             )
         },
         dismissButton = {
-            NeutralDialogButton(
-                text = stringResource(Res.string.cancel),
-                onClick = onDismiss,
-            )
+            NeutralDialogButton(text = stringResource(Res.string.cancel), onClick = onDismiss)
         },
     )
 }

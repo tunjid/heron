@@ -29,16 +29,11 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 internal data class OAuthAuthorizationServer(
-    @SerialName("scopes_supported")
-    val scopesSupported: List<String>,
-    @SerialName("code_challenge_methods_supported")
-    val codeChallengeMethodsSupported: List<String>,
-    @SerialName("authorization_endpoint")
-    val authorizationEndpoint: String,
-    @SerialName("token_endpoint")
-    val tokenEndpoint: String,
-    @SerialName("revocation_endpoint")
-    val revocationEndpoint: String?,
+    @SerialName("scopes_supported") val scopesSupported: List<String>,
+    @SerialName("code_challenge_methods_supported") val codeChallengeMethodsSupported: List<String>,
+    @SerialName("authorization_endpoint") val authorizationEndpoint: String,
+    @SerialName("token_endpoint") val tokenEndpoint: String,
+    @SerialName("revocation_endpoint") val revocationEndpoint: String?,
     @SerialName("pushed_authorization_request_endpoint")
     val pushedAuthorizationRequestEndpoint: String,
 )

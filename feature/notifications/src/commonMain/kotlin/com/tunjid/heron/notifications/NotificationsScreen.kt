@@ -92,84 +92,83 @@ internal fun NotificationsScreen(
     actions: (Action) -> Unit,
 ) {
     val listState = rememberLazyListState()
-    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
-        isSignedIn = paneScaffoldState.isSignedIn,
-        onSignInClicked = {
-            actions(Action.Navigate.To(signInDestination()))
-        },
-        onInteractionConfirmed = {
-            actions(Action.SendPostInteraction(it))
-        },
-        onQuotePostClicked = { repost ->
-            actions(
-                Action.Navigate.To(
-                    composePostDestination(
-                        type = Post.Create.Quote(repost),
-                        sharedElementPrefix = null,
-                    ),
-                ),
-            )
-        },
-    )
-    val mutedWordsSheetState = rememberUpdatedMutedWordsSheetState(
-        mutedWordPreferences = state.preferences.mutedWordPreferences,
-        onSave = {
-            actions(Action.UpdateMutedWord(it))
-        },
-        onShown = {},
-    )
-    val profileRestrictionDialogState = rememberProfileRestrictionDialogState(
-        onProfileRestricted = { profileRestriction ->
-            when (profileRestriction) {
-                is PostOption.Moderation.BlockAccount ->
-                    actions(
-                        Action.BlockAccount(
-                            signedInProfileId = profileRestriction.signedInProfileId,
-                            profileId = profileRestriction.post.author.did,
-                        ),
+    val postInteractionSheetState =
+        rememberUpdatedPostInteractionsSheetState(
+            isSignedIn = paneScaffoldState.isSignedIn,
+            onSignInClicked = { actions(Action.Navigate.To(signInDestination())) },
+            onInteractionConfirmed = { actions(Action.SendPostInteraction(it)) },
+            onQuotePostClicked = { repost ->
+                actions(
+                    Action.Navigate.To(
+                        composePostDestination(
+                            type = Post.Create.Quote(repost),
+                            sharedElementPrefix = null,
+                        )
                     )
+                )
+            },
+        )
+    val mutedWordsSheetState =
+        rememberUpdatedMutedWordsSheetState(
+            mutedWordPreferences = state.preferences.mutedWordPreferences,
+            onSave = { actions(Action.UpdateMutedWord(it)) },
+            onShown = {},
+        )
+    val profileRestrictionDialogState =
+        rememberProfileRestrictionDialogState(
+            onProfileRestricted = { profileRestriction ->
+                when (profileRestriction) {
+                    is PostOption.Moderation.BlockAccount ->
+                        actions(
+                            Action.BlockAccount(
+                                signedInProfileId = profileRestriction.signedInProfileId,
+                                profileId = profileRestriction.post.author.did,
+                            )
+                        )
 
-                is PostOption.Moderation.MuteAccount ->
-                    actions(
-                        Action.MuteAccount(
-                            signedInProfileId = profileRestriction.signedInProfileId,
-                            profileId = profileRestriction.post.author.did,
-                        ),
-                    )
+                    is PostOption.Moderation.MuteAccount ->
+                        actions(
+                            Action.MuteAccount(
+                                signedInProfileId = profileRestriction.signedInProfileId,
+                                profileId = profileRestriction.post.author.did,
+                            )
+                        )
+                }
             }
-        },
-    )
-    val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
-        signedInProfileId = state.signedInProfile?.did,
-        recentConversations = state.recentConversations,
-        onOptionClicked = { option ->
-            when (option) {
-                is PostOption.ShareInConversation ->
-                    actions(
-                        Action.Navigate.To(
-                            conversationDestination(
-                                id = option.conversation.id,
-                                members = option.conversation.members,
-                                sharedElementPrefix = option.conversation.id.id,
-                                sharedUri = option.post.uri.asGenericUri(),
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                            ),
-                        ),
-                    )
+        )
+    val postOptionsSheetState =
+        rememberUpdatedPostOptionsSheetState(
+            signedInProfileId = state.signedInProfile?.did,
+            recentConversations = state.recentConversations,
+            onOptionClicked = { option ->
+                when (option) {
+                    is PostOption.ShareInConversation ->
+                        actions(
+                            Action.Navigate.To(
+                                conversationDestination(
+                                    id = option.conversation.id,
+                                    members = option.conversation.members,
+                                    sharedElementPrefix = option.conversation.id.id,
+                                    sharedUri = option.post.uri.asGenericUri(),
+                                    referringRouteOption =
+                                        NavigationAction.ReferringRouteOption.Current,
+                                )
+                            )
+                        )
 
-                // Notifications UI does not present thread gate options
-                is PostOption.ThreadGate -> Unit
+                    // Notifications UI does not present thread gate options
+                    is PostOption.ThreadGate -> Unit
 
-                is PostOption.Moderation.BlockAccount ->
-                    profileRestrictionDialogState.show(option)
+                    is PostOption.Moderation.BlockAccount ->
+                        profileRestrictionDialogState.show(option)
 
-                is PostOption.Moderation.MuteAccount ->
-                    profileRestrictionDialogState.show(option)
+                    is PostOption.Moderation.MuteAccount ->
+                        profileRestrictionDialogState.show(option)
 
-                is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
-            }
-        },
-    )
+                    is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
+                }
+            },
+        )
 
     val items by rememberUpdatedState(state.aggregateNotifications())
     val now = remember { Clock.System.now() }
@@ -178,24 +177,27 @@ internal fun NotificationsScreen(
             actions(
                 Action.Navigate.To(
                     profileDestination(
-                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        referringRouteOption =
+                            NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         profile = profile,
                         avatarSharedElementKey = notification.avatarSharedElementKey(profile),
-                    ),
-                ),
+                    )
+                )
             )
         }
     }
     val onLinkTargetClicked: (Notification.PostAssociated, LinkTarget) -> Unit = remember {
         { _, linkTarget ->
-            if (linkTarget is LinkTarget.Navigable) actions(
-                Action.Navigate.To(
-                    pathDestination(
-                        path = linkTarget.path,
-                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                    ),
-                ),
-            )
+            if (linkTarget is LinkTarget.Navigable)
+                actions(
+                    Action.Navigate.To(
+                        pathDestination(
+                            path = linkTarget.path,
+                            referringRouteOption =
+                                NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        )
+                    )
+                )
         }
     }
     val onProfileClicked: (Notification.PostAssociated, Profile) -> Unit = remember {
@@ -203,13 +205,15 @@ internal fun NotificationsScreen(
             actions(
                 Action.Navigate.To(
                     profileDestination(
-                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        referringRouteOption =
+                            NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         profile = profile,
-                        avatarSharedElementKey = notification.associatedPost.avatarSharedElementKey(
-                            notification.sharedElementPrefix(),
-                        ),
-                    ),
-                ),
+                        avatarSharedElementKey =
+                            notification.associatedPost.avatarSharedElementKey(
+                                notification.sharedElementPrefix()
+                            ),
+                    )
+                )
             )
         }
     }
@@ -218,11 +222,12 @@ internal fun NotificationsScreen(
             actions(
                 Action.Navigate.To(
                     recordDestination(
-                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                        referringRouteOption =
+                            NavigationAction.ReferringRouteOption.ParentOrCurrent,
                         sharedElementPrefix = notification.sharedElementPrefix(),
                         record = notification.associatedPost,
-                    ),
-                ),
+                    )
+                )
             )
         }
     }
@@ -232,17 +237,17 @@ internal fun NotificationsScreen(
                 is PostAction.OfInteraction -> postInteractionSheetState.onInteraction(options)
                 is PostAction.OfMetadata -> Unit
                 is PostAction.OfMore -> postOptionsSheetState.showOptions(options.post)
-                is PostAction.OfReply -> actions(
-                    Action.Navigate.To(
-                        if (paneScaffoldState.isSignedOut) signInDestination()
-                        else composePostDestination(
-                            type = Post.Create.Reply(
-                                parent = notification.associatedPost,
-                            ),
-                            sharedElementPrefix = notification.sharedElementPrefix(),
-                        ),
-                    ),
-                )
+                is PostAction.OfReply ->
+                    actions(
+                        Action.Navigate.To(
+                            if (paneScaffoldState.isSignedOut) signInDestination()
+                            else
+                                composePostDestination(
+                                    type = Post.Create.Reply(parent = notification.associatedPost),
+                                    sharedElementPrefix = notification.sharedElementPrefix(),
+                                )
+                        )
+                    )
             }
         }
     }
@@ -250,20 +255,14 @@ internal fun NotificationsScreen(
     val pullToRefreshState = rememberPullToRefreshState()
 
     PullToRefreshBox(
-        modifier = modifier
-            .fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         state = pullToRefreshState,
         isRefreshing = state.isRefreshing,
-        onRefresh = {
-            actions(
-                Action.Tile(TilingState.Action.Refresh),
-            )
-        },
+        onRefresh = { actions(Action.Tile(TilingState.Action.Refresh)) },
         indicator = {
             PullToRefreshDefaults.LoadingIndicator(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .offset {
+                modifier =
+                    Modifier.align(Alignment.TopCenter).offset {
                         IntOffset(x = 0, y = listState.layoutInfo.beforeContentPadding)
                     },
                 state = pullToRefreshState,
@@ -272,14 +271,13 @@ internal fun NotificationsScreen(
         },
     ) {
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .paneClip(),
+            modifier = Modifier.fillMaxSize().paneClip(),
             state = listState,
-            contentPadding = bottomNavAndInsetPaddingValues(
-                top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
-                isCompact = paneScaffoldState.prefersCompactBottomNav,
-            ),
+            contentPadding =
+                bottomNavAndInsetPaddingValues(
+                    top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+                    isCompact = paneScaffoldState.prefersCompactBottomNav,
+                ),
             userScrollEnabled = !paneScaffoldState.isTransitionActive,
         ) {
             items(
@@ -287,131 +285,139 @@ internal fun NotificationsScreen(
                 key = AggregatedNotification::id,
                 itemContent = { item ->
                     Box(
-                        modifier = Modifier
-                            .background(
-                                MaterialTheme.colorScheme.surfaceColorAtElevation(
-                                    if (item.isRead) 0.dp else 2.dp,
-                                ),
-                            )
-                            .padding(vertical = 8.dp)
-                            .fillMaxWidth(),
+                        modifier =
+                            Modifier.background(
+                                    MaterialTheme.colorScheme.surfaceColorAtElevation(
+                                        if (item.isRead) 0.dp else 2.dp
+                                    )
+                                )
+                                .padding(vertical = 8.dp)
+                                .fillMaxWidth()
                     ) {
-                        val itemModifier = Modifier
-                            .padding(horizontal = 8.dp)
-                            .animateBounds(
-                                lookaheadScope = paneScaffoldState,
-                            )
-                            .animateItem()
+                        val itemModifier =
+                            Modifier.padding(horizontal = 8.dp)
+                                .animateBounds(lookaheadScope = paneScaffoldState)
+                                .animateItem()
 
                         when (val notification = item.notification) {
-                            is Notification.Followed -> FollowRow(
-                                modifier = itemModifier,
-                                paneMovableElementSharedTransitionScope = paneScaffoldState,
-                                now = now,
-                                isRead = item.isRead,
-                                notification = notification,
-                                aggregatedProfiles = item.aggregatedProfiles,
-                                onProfileClicked = onAggregatedProfileClicked,
-                            )
+                            is Notification.Followed ->
+                                FollowRow(
+                                    modifier = itemModifier,
+                                    paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                    now = now,
+                                    isRead = item.isRead,
+                                    notification = notification,
+                                    aggregatedProfiles = item.aggregatedProfiles,
+                                    onProfileClicked = onAggregatedProfileClicked,
+                                )
 
-                            is Notification.JoinedStarterPack -> JoinedStarterPackRow(
-                                modifier = itemModifier,
-                                paneMovableElementSharedTransitionScope = paneScaffoldState,
-                                now = now,
-                                isRead = item.isRead,
-                                notification = notification,
-                                aggregatedProfiles = item.aggregatedProfiles,
-                                onProfileClicked = onAggregatedProfileClicked,
-                            )
+                            is Notification.JoinedStarterPack ->
+                                JoinedStarterPackRow(
+                                    modifier = itemModifier,
+                                    paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                    now = now,
+                                    isRead = item.isRead,
+                                    notification = notification,
+                                    aggregatedProfiles = item.aggregatedProfiles,
+                                    onProfileClicked = onAggregatedProfileClicked,
+                                )
 
-                            is Notification.Liked -> LikeRow(
-                                modifier = itemModifier,
-                                paneMovableElementSharedTransitionScope = paneScaffoldState,
-                                now = now,
-                                isRead = item.isRead,
-                                notification = notification,
-                                aggregatedProfiles = item.aggregatedProfiles,
-                                onProfileClicked = onAggregatedProfileClicked,
-                                onPostClicked = onPostClicked,
-                            )
+                            is Notification.Liked ->
+                                LikeRow(
+                                    modifier = itemModifier,
+                                    paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                    now = now,
+                                    isRead = item.isRead,
+                                    notification = notification,
+                                    aggregatedProfiles = item.aggregatedProfiles,
+                                    onProfileClicked = onAggregatedProfileClicked,
+                                    onPostClicked = onPostClicked,
+                                )
 
-                            is Notification.Mentioned -> MentionRow(
-                                modifier = itemModifier,
-                                paneMovableElementSharedTransitionScope = paneScaffoldState,
-                                now = now,
-                                isRead = item.isRead,
-                                notification = notification,
-                                onLinkTargetClicked = onLinkTargetClicked,
-                                onProfileClicked = onProfileClicked,
-                                onPostClicked = onPostClicked,
-                                onPostInteraction = onPostInteraction,
-                            )
+                            is Notification.Mentioned ->
+                                MentionRow(
+                                    modifier = itemModifier,
+                                    paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                    now = now,
+                                    isRead = item.isRead,
+                                    notification = notification,
+                                    onLinkTargetClicked = onLinkTargetClicked,
+                                    onProfileClicked = onProfileClicked,
+                                    onPostClicked = onPostClicked,
+                                    onPostInteraction = onPostInteraction,
+                                )
 
-                            is Notification.Quoted -> QuoteRow(
-                                modifier = itemModifier,
-                                paneMovableElementSharedTransitionScope = paneScaffoldState,
-                                now = now,
-                                isRead = item.isRead,
-                                notification = notification,
-                                onLinkTargetClicked = onLinkTargetClicked,
-                                onProfileClicked = onProfileClicked,
-                                onPostClicked = onPostClicked,
-                                onPostInteraction = onPostInteraction,
-                            )
+                            is Notification.Quoted ->
+                                QuoteRow(
+                                    modifier = itemModifier,
+                                    paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                    now = now,
+                                    isRead = item.isRead,
+                                    notification = notification,
+                                    onLinkTargetClicked = onLinkTargetClicked,
+                                    onProfileClicked = onProfileClicked,
+                                    onPostClicked = onPostClicked,
+                                    onPostInteraction = onPostInteraction,
+                                )
 
-                            is Notification.RepliedTo -> ReplyRow(
-                                modifier = itemModifier,
-                                paneMovableElementSharedTransitionScope = paneScaffoldState,
-                                now = now,
-                                isRead = item.isRead,
-                                notification = notification,
-                                onLinkTargetClicked = onLinkTargetClicked,
-                                onProfileClicked = onProfileClicked,
-                                onPostClicked = onPostClicked,
-                                onPostInteraction = onPostInteraction,
-                            )
+                            is Notification.RepliedTo ->
+                                ReplyRow(
+                                    modifier = itemModifier,
+                                    paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                    now = now,
+                                    isRead = item.isRead,
+                                    notification = notification,
+                                    onLinkTargetClicked = onLinkTargetClicked,
+                                    onProfileClicked = onProfileClicked,
+                                    onPostClicked = onPostClicked,
+                                    onPostInteraction = onPostInteraction,
+                                )
 
-                            is Notification.Reposted -> RepostRow(
-                                modifier = itemModifier,
-                                paneMovableElementSharedTransitionScope = paneScaffoldState,
-                                now = now,
-                                isRead = item.isRead,
-                                notification = notification,
-                                aggregatedProfiles = item.aggregatedProfiles,
-                                onProfileClicked = onAggregatedProfileClicked,
-                                onPostClicked = onPostClicked,
-                            )
+                            is Notification.Reposted ->
+                                RepostRow(
+                                    modifier = itemModifier,
+                                    paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                    now = now,
+                                    isRead = item.isRead,
+                                    notification = notification,
+                                    aggregatedProfiles = item.aggregatedProfiles,
+                                    onProfileClicked = onAggregatedProfileClicked,
+                                    onPostClicked = onPostClicked,
+                                )
 
                             is Notification.Unknown -> Unit
-                            is Notification.Unverified -> ProfileVerificationRow(
-                                modifier = itemModifier,
-                                paneMovableElementSharedTransitionScope = paneScaffoldState,
-                                now = now,
-                                isRead = item.isRead,
-                                isVerified = false,
-                                notification = notification,
-                                onProfileClicked = onAggregatedProfileClicked,
-                            )
+                            is Notification.Unverified ->
+                                ProfileVerificationRow(
+                                    modifier = itemModifier,
+                                    paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                    now = now,
+                                    isRead = item.isRead,
+                                    isVerified = false,
+                                    notification = notification,
+                                    onProfileClicked = onAggregatedProfileClicked,
+                                )
 
-                            is Notification.Verified -> ProfileVerificationRow(
-                                modifier = itemModifier,
-                                paneMovableElementSharedTransitionScope = paneScaffoldState,
-                                now = now,
-                                isRead = item.isRead,
-                                isVerified = true,
-                                notification = notification,
-                                onProfileClicked = onAggregatedProfileClicked,
-                            )
-                            is Notification.SubscribedPost -> SubscribedRow(
-                                modifier = itemModifier,
-                                paneMovableElementSharedTransitionScope = paneScaffoldState,
-                                now = now,
-                                isRead = item.isRead,
-                                notification = notification,
-                                aggregatedProfiles = item.aggregatedProfiles,
-                                onProfileClicked = onAggregatedProfileClicked,
-                                onPostClicked = onPostClicked,
-                            )
+                            is Notification.Verified ->
+                                ProfileVerificationRow(
+                                    modifier = itemModifier,
+                                    paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                    now = now,
+                                    isRead = item.isRead,
+                                    isVerified = true,
+                                    notification = notification,
+                                    onProfileClicked = onAggregatedProfileClicked,
+                                )
+                            is Notification.SubscribedPost ->
+                                SubscribedRow(
+                                    modifier = itemModifier,
+                                    paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                    now = now,
+                                    isRead = item.isRead,
+                                    notification = notification,
+                                    aggregatedProfiles = item.aggregatedProfiles,
+                                    onProfileClicked = onAggregatedProfileClicked,
+                                    onPostClicked = onPostClicked,
+                                )
                         }
                     }
                 },
@@ -424,26 +430,22 @@ internal fun NotificationsScreen(
         onQueryChanged = { query ->
             actions(
                 Action.Tile(
-                    tilingAction = TilingState.Action.LoadAround(
-                        query ?: state.tilingData.currentQuery,
-                    ),
-                ),
+                    tilingAction =
+                        TilingState.Action.LoadAround(query ?: state.tilingData.currentQuery)
+                )
             )
         },
     )
 
     LaunchedEffect(listState) {
         snapshotFlow {
-            if (listState.lastScrolledForward) return@snapshotFlow null
+                if (listState.lastScrolledForward) return@snapshotFlow null
 
-            val firstVisibleNotification = items.getOrNull(
-                listState.firstVisibleItemIndex,
-            ) ?: return@snapshotFlow null
-            firstVisibleNotification.notification.indexedAt
-        }
-            .filterNotNull()
-            .collect {
-                actions(Action.MarkNotificationsRead(it))
+                val firstVisibleNotification =
+                    items.getOrNull(listState.firstVisibleItemIndex) ?: return@snapshotFlow null
+                firstVisibleNotification.notification.indexedAt
             }
+            .filterNotNull()
+            .collect { actions(Action.MarkNotificationsRead(it)) }
     }
 }

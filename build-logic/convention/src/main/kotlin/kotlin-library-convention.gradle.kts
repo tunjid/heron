@@ -19,6 +19,4 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
-kotlin {
-    configureKotlinMultiplatform(this)
-}
+kotlin { configureKotlinMultiplatform(this) }

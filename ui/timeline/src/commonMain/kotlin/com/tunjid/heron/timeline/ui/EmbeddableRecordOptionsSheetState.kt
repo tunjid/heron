@@ -46,7 +46,8 @@ import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetState
 
 @Stable
-class EmbeddableRecordOptionsSheetState private constructor(
+class EmbeddableRecordOptionsSheetState
+private constructor(
     signedInProfileId: ProfileId?,
     recentConversations: List<Conversation>,
     scope: BottomSheetScope,
@@ -57,7 +58,8 @@ class EmbeddableRecordOptionsSheetState private constructor(
 
     internal var currentRecordUri: EmbeddableRecordUri? by mutableStateOf(null)
 
-    internal val isSignedIn get() = signedInProfileId != null
+    internal val isSignedIn
+        get() = signedInProfileId != null
 
     override fun onHidden() {
         currentRecordUri = null
@@ -78,16 +80,18 @@ class EmbeddableRecordOptionsSheetState private constructor(
             onShareInConversationClicked: (EmbeddableRecordUri, Conversation) -> Unit,
             onShareInPostClicked: (EmbeddableRecordUri) -> Unit,
         ): EmbeddableRecordOptionsSheetState {
-            val state = rememberBottomSheetState {
-                EmbeddableRecordOptionsSheetState(
-                    signedInProfileId = signedInProfileId,
-                    recentConversations = recentConversations,
-                    scope = it,
-                )
-            }.also {
-                it.signedInProfileId = signedInProfileId
-                it.recentConversations = recentConversations
-            }
+            val state =
+                rememberBottomSheetState {
+                        EmbeddableRecordOptionsSheetState(
+                            signedInProfileId = signedInProfileId,
+                            recentConversations = recentConversations,
+                            scope = it,
+                        )
+                    }
+                    .also {
+                        it.signedInProfileId = signedInProfileId
+                        it.recentConversations = recentConversations
+                    }
 
             EmbeddableRecordOptionsBottomSheet(
                 state = state,
@@ -112,50 +116,43 @@ private fun EmbeddableRecordOptionsBottomSheet(
 ) {
     val signedInProfileId = state.signedInProfileId
 
-    if (signedInProfileId != null) state.ModalBottomSheet {
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            SendDirectMessageCard(
-                signedInProfileId = signedInProfileId,
-                recentConversations = state.recentConversations,
-                onConversationClicked = { conversation ->
-                    state.currentRecordUri?.let { uri ->
-                        onShareInConversationClicked(uri, conversation)
-                    }
-                    state.hide()
-                },
-            )
-            if (editTitle != null) {
-                BottomSheetItemCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        state.currentRecordUri
-                            ?.let(onEditClicked)
+    if (signedInProfileId != null)
+        state.ModalBottomSheet {
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                SendDirectMessageCard(
+                    signedInProfileId = signedInProfileId,
+                    recentConversations = state.recentConversations,
+                    onConversationClicked = { conversation ->
+                        state.currentRecordUri?.let { uri ->
+                            onShareInConversationClicked(uri, conversation)
+                        }
                         state.hide()
                     },
-                ) {
-                    BottomSheetItemCardRow(
-                        modifier = Modifier
-                            .semantics {
-                                contentDescription = editTitle
-                            },
-                        icon = Icons.Rounded.Edit,
-                        text = editTitle,
-                    )
+                )
+                if (editTitle != null) {
+                    BottomSheetItemCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            state.currentRecordUri?.let(onEditClicked)
+                            state.hide()
+                        },
+                    ) {
+                        BottomSheetItemCardRow(
+                            modifier = Modifier.semantics { contentDescription = editTitle },
+                            icon = Icons.Rounded.Edit,
+                            text = editTitle,
+                        )
+                    }
                 }
-            }
-            ShareInPostCard {
-                state.currentRecordUri?.let { uri ->
-                    onShareInPostClicked(uri)
+                ShareInPostCard {
+                    state.currentRecordUri?.let { uri -> onShareInPostClicked(uri) }
+                    state.hide()
                 }
-                state.hide()
-            }
 
-            state.currentRecordUri?.let { uri ->
-                CopyToClipboardCard(uri.shareUri())
+                state.currentRecordUri?.let { uri -> CopyToClipboardCard(uri.shareUri()) }
             }
         }
-    }
 }

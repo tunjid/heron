@@ -66,69 +66,56 @@ internal fun ProfileLabels(
     onLabelerSummaryClicked: (AppliedLabels.LabelerSummary) -> Unit,
 ) {
     val languageTag = Locale.current.toLanguageTag()
-    var selectedLabel by remember {
-        mutableStateOf<Label?>(null)
-    }
-    val appliedLabels = remember(
-        adultContentEnabled,
-        labels,
-        labelers,
-        contentLabelPreferences,
-    ) {
-        AppliedLabels(
-            adultContentEnabled = adultContentEnabled,
-            labels = labels,
-            labelers = labelers,
-            contentLabelPreferences = contentLabelPreferences,
-        )
-    }
-    LabelFlowRow(
-        modifier = modifier,
-    ) {
-        if (viewerState.isBlocked) IconLabel(
-            icon = Icons.Rounded.Block,
-            contentDescription = stringResource(CommonStrings.viewer_state_blocked),
-            onClick = {},
-        )
-        if (viewerState.isMuted) IconLabel(
-            icon = Icons.AutoMirrored.Rounded.VolumeOff,
-            contentDescription = stringResource(CommonStrings.viewer_state_muted),
-            onClick = { },
-        )
-
-        appliedLabels.forEach(
-            languageTag = languageTag,
-            labels = labels,
-        ) { label, labelerSummary, localeInfo ->
-            val authorLabelContentDescription = stringResource(
-                CommonStrings.post_author_label,
-                localeInfo.description,
+    var selectedLabel by remember { mutableStateOf<Label?>(null) }
+    val appliedLabels =
+        remember(adultContentEnabled, labels, labelers, contentLabelPreferences) {
+            AppliedLabels(
+                adultContentEnabled = adultContentEnabled,
+                labels = labels,
+                labelers = labelers,
+                contentLabelPreferences = contentLabelPreferences,
             )
+        }
+    LabelFlowRow(modifier = modifier) {
+        if (viewerState.isBlocked)
+            IconLabel(
+                icon = Icons.Rounded.Block,
+                contentDescription = stringResource(CommonStrings.viewer_state_blocked),
+                onClick = {},
+            )
+        if (viewerState.isMuted)
+            IconLabel(
+                icon = Icons.AutoMirrored.Rounded.VolumeOff,
+                contentDescription = stringResource(CommonStrings.viewer_state_muted),
+                onClick = {},
+            )
+
+        appliedLabels.forEach(languageTag = languageTag, labels = labels) {
+            label,
+            labelerSummary,
+            localeInfo ->
+            val authorLabelContentDescription =
+                stringResource(CommonStrings.post_author_label, localeInfo.description)
             Label(
                 isElevated = true,
-                modifier = Modifier
-                    .padding(2.dp),
+                modifier = Modifier.padding(2.dp),
                 contentDescription = authorLabelContentDescription,
                 icon = {
                     AsyncImage(
-                        args = remember(labelerSummary.creatorAvatar) {
-                            ImageArgs(
-                                url = labelerSummary.creatorAvatar?.uri,
-                                contentScale = ContentScale.Crop,
-                                contentDescription = null,
-                                shape = RoundedPolygonShape.Circle,
-                            )
-                        },
-                        modifier = Modifier
-                            .size(ProfileLabelIconSize),
+                        args =
+                            remember(labelerSummary.creatorAvatar) {
+                                ImageArgs(
+                                    url = labelerSummary.creatorAvatar?.uri,
+                                    contentScale = ContentScale.Crop,
+                                    contentDescription = null,
+                                    shape = RoundedPolygonShape.Circle,
+                                )
+                            },
+                        modifier = Modifier.size(ProfileLabelIconSize),
                     )
                 },
-                description = {
-                    LabelText(localeInfo.name)
-                },
-                onClick = {
-                    selectedLabel = label
-                },
+                description = { LabelText(localeInfo.name) },
+                onClick = { selectedLabel = label },
             )
         }
         selectedLabel?.let { label ->
@@ -136,9 +123,7 @@ internal fun ProfileLabels(
                 label = label,
                 languageTag = languageTag,
                 appliedLabels = appliedLabels,
-                onDismiss = {
-                    selectedLabel = null
-                },
+                onDismiss = { selectedLabel = null },
                 onLabelerSummaryClicked = { labeler ->
                     selectedLabel = null
                     onLabelerSummaryClicked(labeler)
@@ -149,29 +134,20 @@ internal fun ProfileLabels(
 }
 
 @Composable
-private fun IconLabel(
-    icon: ImageVector?,
-    contentDescription: String,
-    onClick: () -> Unit,
-) {
+private fun IconLabel(icon: ImageVector?, contentDescription: String, onClick: () -> Unit) {
     Label(
         isElevated = true,
         contentDescription = contentDescription,
         icon = {
-            if (icon != null) Icon(
-                modifier = Modifier
-                    .size(ProfileLabelIconSize),
-                imageVector = icon,
-                contentDescription = null,
-            )
+            if (icon != null)
+                Icon(
+                    modifier = Modifier.size(ProfileLabelIconSize),
+                    imageVector = icon,
+                    contentDescription = null,
+                )
         },
         description = {
-            Box(
-                modifier = Modifier
-                    .clearAndSetSemantics {},
-            ) {
-                LabelText(contentDescription)
-            }
+            Box(modifier = Modifier.clearAndSetSemantics {}) { LabelText(contentDescription) }
         },
         onClick = onClick,
     )

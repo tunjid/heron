@@ -20,5 +20,4 @@ import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 
 val MovableElementSharedTransitionScope.isPrimaryOrActive
-    get() =
-        paneState.pane == ThreePane.Primary || isActive
+    get() = paneState.pane == ThreePane.Primary || isActive

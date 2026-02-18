@@ -80,45 +80,30 @@ import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
 
-@Serializable
-data class ConversationQuery(
-    override val data: CursorQuery.Data,
-) : CursorQuery
+@Serializable data class ConversationQuery(override val data: CursorQuery.Data) : CursorQuery
 
 @Serializable
-data class MessageQuery(
-    val conversationId: ConversationId,
-    override val data: CursorQuery.Data,
-) : CursorQuery
+data class MessageQuery(val conversationId: ConversationId, override val data: CursorQuery.Data) :
+    CursorQuery
 
 interface MessageRepository {
 
-    fun conversations(
-        query: ConversationQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<Conversation>>
+    fun conversations(query: ConversationQuery, cursor: Cursor): Flow<CursorList<Conversation>>
 
-    fun messages(
-        query: MessageQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<Message>>
+    fun messages(query: MessageQuery, cursor: Cursor): Flow<CursorList<Message>>
 
     suspend fun monitorConversationLogs()
 
-    suspend fun resolveConversation(
-        with: ProfileId,
-    ): Result<ConversationId>
+    suspend fun resolveConversation(with: ProfileId): Result<ConversationId>
 
-    suspend fun sendMessage(
-        message: Message.Create,
-    ): Outcome
+    suspend fun sendMessage(message: Message.Create): Outcome
 
-    suspend fun updateReaction(
-        reaction: Message.UpdateReaction,
-    ): Outcome
+    suspend fun updateReaction(reaction: Message.UpdateReaction): Outcome
 }
 
-internal class OfflineMessageRepository @Inject constructor(
+internal class OfflineMessageRepository
+@Inject
+constructor(
     private val messageDao: MessageDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
@@ -133,111 +118,117 @@ internal class OfflineMessageRepository @Inject constructor(
     ): Flow<CursorList<Conversation>> =
         savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
             combine(
-                messageDao.conversations(
-                    ownerId = signedInProfileId.id,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
-                    .map { populatedConversationEntities ->
-                        populatedConversationEntities.map(PopulatedConversationEntity::asExternalModel)
-                    },
-                networkService.nextCursorFlow(
-                    currentCursor = cursor,
-                    currentRequestWithNextCursor = {
-                        listConvos(
-                            params = ListConvosQueryParams(
-                                limit = query.data.limit,
-                                cursor = cursor.value,
-                            ),
+                    messageDao
+                        .conversations(
+                            ownerId = signedInProfileId.id,
+                            offset = query.data.offset,
+                            limit = query.data.limit,
                         )
-                    },
-                    nextCursor = ListConvosResponse::cursor,
-                    onResponse = {
-                        multipleEntitySaverProvider.saveInTransaction {
-                            convos.forEach {
-                                add(
-                                    viewingProfileId = signedInProfileId,
-                                    convoView = it,
-                                )
+                        .map { populatedConversationEntities ->
+                            populatedConversationEntities.map(
+                                PopulatedConversationEntity::asExternalModel
+                            )
+                        },
+                    networkService.nextCursorFlow(
+                        currentCursor = cursor,
+                        currentRequestWithNextCursor = {
+                            listConvos(
+                                params =
+                                    ListConvosQueryParams(
+                                        limit = query.data.limit,
+                                        cursor = cursor.value,
+                                    )
+                            )
+                        },
+                        nextCursor = ListConvosResponse::cursor,
+                        onResponse = {
+                            multipleEntitySaverProvider.saveInTransaction {
+                                convos.forEach {
+                                    add(viewingProfileId = signedInProfileId, convoView = it)
+                                }
                             }
-                        }
-                    },
-                ),
-                ::CursorList,
-            )
+                        },
+                    ),
+                    ::CursorList,
+                )
                 .distinctUntilChanged()
         }
 
-    override fun messages(
-        query: MessageQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<Message>> =
+    override fun messages(query: MessageQuery, cursor: Cursor): Flow<CursorList<Message>> =
         savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
             combine(
-                messageDao.messages(
-                    conversationId = query.conversationId.id,
-                    conversationOwnerId = signedInProfileId.id,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
-                    .distinctUntilChanged()
-                    .flatMapLatest { populatedMessageEntities ->
-                        val embeddedRecordUris = populatedMessageEntities.mapNotNullTo(
-                            destination = mutableSetOf(),
-                            transform = PopulatedMessageEntity::embeddedRecordUri,
+                    messageDao
+                        .messages(
+                            conversationId = query.conversationId.id,
+                            conversationOwnerId = signedInProfileId.id,
+                            offset = query.data.offset,
+                            limit = query.data.limit,
                         )
-                        recordResolver.embeddableRecords(
-                            uris = embeddedRecordUris,
-                            viewingProfileId = signedInProfileId,
-                        ).map { embeddedRecords ->
-                            val recordUrisToEmbeddedRecords = embeddedRecords.associateBy {
-                                it.reference.uri
-                            }
-
-                            populatedMessageEntities.map { populatedMessageEntity ->
-                                populatedMessageEntity.asExternalModel(
-                                    embeddedRecord = populatedMessageEntity.embeddedRecordUri()
-                                        ?.let(recordUrisToEmbeddedRecords::get),
+                        .distinctUntilChanged()
+                        .flatMapLatest { populatedMessageEntities ->
+                            val embeddedRecordUris =
+                                populatedMessageEntities.mapNotNullTo(
+                                    destination = mutableSetOf(),
+                                    transform = PopulatedMessageEntity::embeddedRecordUri,
                                 )
-                            }
-                        }
-                    },
-                networkService.nextCursorFlow(
-                    currentCursor = cursor,
-                    currentRequestWithNextCursor = {
-                        getMessages(
-                            params = GetMessagesQueryParams(
-                                convoId = query.conversationId.id,
-                                limit = query.data.limit,
-                                cursor = cursor.value,
-                            ),
-                        )
-                    },
-                    nextCursor = GetMessagesResponse::cursor,
-                    onResponse = {
-                        multipleEntitySaverProvider.saveInTransaction {
-                            messages.forEach {
-                                when (it) {
-                                    is GetMessagesResponseMessageUnion.DeletedMessageView -> add(
-                                        conversationId = query.conversationId,
-                                        viewingProfileId = signedInProfileId,
-                                        deletedMessageView = it.value,
-                                    )
+                            recordResolver
+                                .embeddableRecords(
+                                    uris = embeddedRecordUris,
+                                    viewingProfileId = signedInProfileId,
+                                )
+                                .map { embeddedRecords ->
+                                    val recordUrisToEmbeddedRecords =
+                                        embeddedRecords.associateBy { it.reference.uri }
 
-                                    is GetMessagesResponseMessageUnion.MessageView -> add(
-                                        viewingProfileId = signedInProfileId,
-                                        conversationId = query.conversationId,
-                                        messageView = it.value,
+                                    populatedMessageEntities.map { populatedMessageEntity ->
+                                        populatedMessageEntity.asExternalModel(
+                                            embeddedRecord =
+                                                populatedMessageEntity
+                                                    .embeddedRecordUri()
+                                                    ?.let(recordUrisToEmbeddedRecords::get)
+                                        )
+                                    }
+                                }
+                        },
+                    networkService.nextCursorFlow(
+                        currentCursor = cursor,
+                        currentRequestWithNextCursor = {
+                            getMessages(
+                                params =
+                                    GetMessagesQueryParams(
+                                        convoId = query.conversationId.id,
+                                        limit = query.data.limit,
+                                        cursor = cursor.value,
                                     )
+                            )
+                        },
+                        nextCursor = GetMessagesResponse::cursor,
+                        onResponse = {
+                            multipleEntitySaverProvider.saveInTransaction {
+                                messages.forEach {
+                                    when (it) {
+                                        is GetMessagesResponseMessageUnion.DeletedMessageView ->
+                                            add(
+                                                conversationId = query.conversationId,
+                                                viewingProfileId = signedInProfileId,
+                                                deletedMessageView = it.value,
+                                            )
 
-                                    is GetMessagesResponseMessageUnion.Unknown -> Unit
+                                        is GetMessagesResponseMessageUnion.MessageView ->
+                                            add(
+                                                viewingProfileId = signedInProfileId,
+                                                conversationId = query.conversationId,
+                                                messageView = it.value,
+                                            )
+
+                                        is GetMessagesResponseMessageUnion.Unknown -> Unit
+                                    }
                                 }
                             }
-                        }
-                    },
-                ),
-                ::CursorList,
-            )
+                        },
+                    ),
+                    ::CursorList,
+                )
                 .distinctUntilChanged()
         }
 
@@ -245,17 +236,18 @@ internal class OfflineMessageRepository @Inject constructor(
         savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
             if (signedInProfileId == null) return@inCurrentProfileSession
             flow {
-                while (true) {
-                    emit(Unit)
-                    delay(4.seconds)
-                }
-            }
-                .scan<Unit, String?>(null) { latestCursor, _ ->
-                    val response = networkService.runCatchingWithMonitoredNetworkRetry {
-                        getLog(GetLogQueryParams(latestCursor))
+                    while (true) {
+                        emit(Unit)
+                        delay(4.seconds)
                     }
-                        .getOrNull()
-                        ?: return@scan latestCursor
+                }
+                .scan<Unit, String?>(null) { latestCursor, _ ->
+                    val response =
+                        networkService
+                            .runCatchingWithMonitoredNetworkRetry {
+                                getLog(GetLogQueryParams(latestCursor))
+                            }
+                            .getOrNull() ?: return@scan latestCursor
 
                     if (latestCursor == null) {
                         // First run. Api sets the cursor
@@ -267,33 +259,26 @@ internal class OfflineMessageRepository @Inject constructor(
                     val messages = LazyList<Pair<ConversationId, MessageView>>()
                     val deletedMessages = LazyList<Pair<ConversationId, DeletedMessageView>>()
 
-                    val currentCursor = logs.fold(latestCursor) { cursor, union ->
-                        when (union) {
-                            is Log.AcceptConvo -> maxOf(cursor, union.value.rev)
-                            is Log.AddReaction -> union.maxCursor(deletedMessages, messages, cursor)
-                            is Log.BeginConvo -> maxOf(cursor, union.value.rev)
-                            is Log.CreateMessage -> union.maxCursor(
-                                deletedMessages,
-                                messages,
-                                cursor,
-                            )
-                            is Log.DeleteMessage -> union.maxCursor(
-                                deletedMessages,
-                                messages,
-                                cursor,
-                            )
-                            is Log.LeaveConvo -> maxOf(cursor, union.value.rev)
-                            is Log.MuteConvo -> maxOf(cursor, union.value.rev)
-                            is Log.ReadMessage -> maxOf(cursor, union.value.rev)
-                            is Log.RemoveReaction -> union.maxCursor(
-                                deletedMessages,
-                                messages,
-                                cursor,
-                            )
-                            is Log.Unknown -> cursor
-                            is Log.UnmuteConvo -> maxOf(cursor, union.value.rev)
+                    val currentCursor =
+                        logs.fold(latestCursor) { cursor, union ->
+                            when (union) {
+                                is Log.AcceptConvo -> maxOf(cursor, union.value.rev)
+                                is Log.AddReaction ->
+                                    union.maxCursor(deletedMessages, messages, cursor)
+                                is Log.BeginConvo -> maxOf(cursor, union.value.rev)
+                                is Log.CreateMessage ->
+                                    union.maxCursor(deletedMessages, messages, cursor)
+                                is Log.DeleteMessage ->
+                                    union.maxCursor(deletedMessages, messages, cursor)
+                                is Log.LeaveConvo -> maxOf(cursor, union.value.rev)
+                                is Log.MuteConvo -> maxOf(cursor, union.value.rev)
+                                is Log.ReadMessage -> maxOf(cursor, union.value.rev)
+                                is Log.RemoveReaction ->
+                                    union.maxCursor(deletedMessages, messages, cursor)
+                                is Log.Unknown -> cursor
+                                is Log.UnmuteConvo -> maxOf(cursor, union.value.rev)
+                            }
                         }
-                    }
 
                     // No changes
                     if (currentCursor <= latestCursor) return@scan latestCursor
@@ -320,113 +305,115 @@ internal class OfflineMessageRepository @Inject constructor(
         }
     }
 
-    override suspend fun resolveConversation(
-        with: ProfileId,
-    ): Result<ConversationId> = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionResult()
-        networkService.runCatchingWithMonitoredNetworkRetry {
-            getConvoForMembers(
-                params = GetConvoForMembersQueryParams(
-                    members = listOf(
-                        with.id.let(::Did),
-                    ),
-                ),
-            )
-        }
-            .onSuccess {
-                multipleEntitySaverProvider.saveInTransaction {
-                    add(
-                        viewingProfileId = signedInProfileId,
-                        convoView = it.convo,
+    override suspend fun resolveConversation(with: ProfileId): Result<ConversationId> =
+        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+            if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionResult()
+            networkService
+                .runCatchingWithMonitoredNetworkRetry {
+                    getConvoForMembers(
+                        params = GetConvoForMembersQueryParams(members = listOf(with.id.let(::Did)))
                     )
                 }
-            }
-            .map {
-                ConversationId(it.convo.id)
-            }
-    } ?: expiredSessionResult()
+                .onSuccess {
+                    multipleEntitySaverProvider.saveInTransaction {
+                        add(viewingProfileId = signedInProfileId, convoView = it.convo)
+                    }
+                }
+                .map { ConversationId(it.convo.id) }
+        } ?: expiredSessionResult()
 
-    override suspend fun sendMessage(
-        message: Message.Create,
-    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+    override suspend fun sendMessage(message: Message.Create): Outcome =
+        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+            if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
 
-        val resolvedLinks: List<Link> = profileLookup.resolveProfileHandleLinks(
-            links = message.links,
-        )
-        networkService.runCatchingWithMonitoredNetworkRetry {
-            sendMessage(
-                SendMessageRequest(
-                    convoId = message.conversationId.id,
-                    message = MessageInput(
-                        text = message.text,
-                        facets = resolvedLinks.facet(),
-                        embed = message.recordReference?.let { ref ->
-                            MessageInputEmbedUnion.AppBskyEmbedRecord(
-                                value = BskyRecord(
-                                    record = StrongRef(
-                                        uri = ref.uri.uri.let(::AtUri),
-                                        cid = ref.id.id.let(::Cid),
-                                    ),
+            val resolvedLinks: List<Link> =
+                profileLookup.resolveProfileHandleLinks(links = message.links)
+            networkService
+                .runCatchingWithMonitoredNetworkRetry {
+                    sendMessage(
+                        SendMessageRequest(
+                            convoId = message.conversationId.id,
+                            message =
+                                MessageInput(
+                                    text = message.text,
+                                    facets = resolvedLinks.facet(),
+                                    embed =
+                                        message.recordReference?.let { ref ->
+                                            MessageInputEmbedUnion.AppBskyEmbedRecord(
+                                                value =
+                                                    BskyRecord(
+                                                        record =
+                                                            StrongRef(
+                                                                uri = ref.uri.uri.let(::AtUri),
+                                                                cid = ref.id.id.let(::Cid),
+                                                            )
+                                                    )
+                                            )
+                                        },
                                 ),
-                            )
-                        },
-                    ),
-                ),
-            )
-        }.toOutcome { sentMessage ->
-            multipleEntitySaverProvider.saveInTransaction {
-                add(
-                    viewingProfileId = signedInProfileId,
-                    conversationId = message.conversationId,
-                    messageView = sentMessage,
-                )
-            }
-        }
-    } ?: expiredSessionOutcome()
+                        )
+                    )
+                }
+                .toOutcome { sentMessage ->
+                    multipleEntitySaverProvider.saveInTransaction {
+                        add(
+                            viewingProfileId = signedInProfileId,
+                            conversationId = message.conversationId,
+                            messageView = sentMessage,
+                        )
+                    }
+                }
+        } ?: expiredSessionOutcome()
 
-    override suspend fun updateReaction(
-        reaction: Message.UpdateReaction,
-    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-        networkService.runCatchingWithMonitoredNetworkRetry {
-            when (reaction) {
-                is Message.UpdateReaction.Add -> addReaction(
-                    AddReactionRequest(
-                        convoId = reaction.convoId.id,
-                        messageId = reaction.messageId.id,
-                        value = reaction.value,
-                    ),
-                ).map(AddReactionResponse::message)
+    override suspend fun updateReaction(reaction: Message.UpdateReaction): Outcome =
+        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+            networkService
+                .runCatchingWithMonitoredNetworkRetry {
+                    when (reaction) {
+                        is Message.UpdateReaction.Add ->
+                            addReaction(
+                                    AddReactionRequest(
+                                        convoId = reaction.convoId.id,
+                                        messageId = reaction.messageId.id,
+                                        value = reaction.value,
+                                    )
+                                )
+                                .map(AddReactionResponse::message)
 
-                is Message.UpdateReaction.Remove -> removeReaction(
-                    RemoveReactionRequest(
-                        convoId = reaction.convoId.id,
-                        messageId = reaction.messageId.id,
-                        value = reaction.value,
-                    ),
-                ).map(RemoveReactionResponse::message)
-            }
-        }.toOutcome { message ->
-            multipleEntitySaverProvider.saveInTransaction {
-                add(
-                    viewingProfileId = signedInProfileId,
-                    conversationId = reaction.convoId,
-                    messageView = message,
-                )
-            }
-        }
-    } ?: expiredSessionOutcome()
+                        is Message.UpdateReaction.Remove ->
+                            removeReaction(
+                                    RemoveReactionRequest(
+                                        convoId = reaction.convoId.id,
+                                        messageId = reaction.messageId.id,
+                                        value = reaction.value,
+                                    )
+                                )
+                                .map(RemoveReactionResponse::message)
+                    }
+                }
+                .toOutcome { message ->
+                    multipleEntitySaverProvider.saveInTransaction {
+                        add(
+                            viewingProfileId = signedInProfileId,
+                            conversationId = reaction.convoId,
+                            messageView = message,
+                        )
+                    }
+                }
+        } ?: expiredSessionOutcome()
 }
 
 fun MessageRepository.recentConversations(): Flow<List<Conversation>> =
     conversations(
-        query = ConversationQuery(
-            data = CursorQuery.Data(
-                cursorAnchor = Clock.System.now(),
-                page = 0,
-                limit = RecentConversationLimit,
+        query =
+            ConversationQuery(
+                data =
+                    CursorQuery.Data(
+                        cursorAnchor = Clock.System.now(),
+                        page = 0,
+                        limit = RecentConversationLimit,
+                    )
             ),
-        ),
         cursor = Cursor.Initial,
     )
 
@@ -501,7 +488,4 @@ private fun Log.RemoveReaction.maxCursor(
 }
 
 private fun PopulatedMessageEntity.embeddedRecordUri() =
-    feed?.feedGeneratorUri
-        ?: list?.listUri
-        ?: starterPack?.starterPackUri
-        ?: post?.postUri
+    feed?.feedGeneratorUri ?: list?.listUri ?: starterPack?.starterPackUri ?: post?.postUri

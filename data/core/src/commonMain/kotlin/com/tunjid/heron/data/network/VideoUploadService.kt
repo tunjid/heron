@@ -58,113 +58,113 @@ import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.model.Blob
 
 interface VideoUploadService {
-    suspend fun uploadVideo(
-        file: File,
-    ): Result<Blob>
+    suspend fun uploadVideo(file: File): Result<Blob>
 }
 
-internal class SuspendingVideoUploadService @Inject constructor(
+internal class SuspendingVideoUploadService
+@Inject
+constructor(
     httpClient: HttpClient,
     private val networkService: NetworkService,
     private val fileManager: FileManager,
     private val savedStateDataSource: SavedStateDataSource,
 ) : VideoUploadService {
 
-    private val videoUploadClient = httpClient.config {
-        install(DefaultRequest) {
-            url.takeFrom(VideoUploadServiceEndpoint)
-        }
-        install(Logging) {
-            level = LogLevel.INFO
-            logger = object : Logger {
-                override fun log(message: String) {
-//                    println("Logger Ktor => $message")
-                }
+    private val videoUploadClient =
+        httpClient.config {
+            install(DefaultRequest) { url.takeFrom(VideoUploadServiceEndpoint) }
+            install(Logging) {
+                level = LogLevel.INFO
+                logger =
+                    object : Logger {
+                        override fun log(message: String) {
+                            //                    println("Logger Ktor => $message")
+                        }
+                    }
             }
+            install(HttpTimeout) { requestTimeoutMillis = 6.minutes.inWholeMilliseconds }
         }
-        install(HttpTimeout) {
-            requestTimeoutMillis = 6.minutes.inWholeMilliseconds
-        }
-    }
 
     // Video upload implementation as recommended in:
     // https://docs.bsky.app/docs/tutorials/video#recommended-method
-    override suspend fun uploadVideo(
-        file: File,
-    ): Result<Blob> = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-        if (signedInProfileId == null) throw IllegalStateException("Not signed in")
+    override suspend fun uploadVideo(file: File): Result<Blob> =
+        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+            if (signedInProfileId == null) throw IllegalStateException("Not signed in")
 
-        val authToken = savedStateDataSource.signedInAuth
-            .filterNotNull()
-            .first()
+            val authToken = savedStateDataSource.signedInAuth.filterNotNull().first()
 
-        val serviceUrl = authToken.serviceUrl ?: throw IllegalStateException("Not signed in")
+            val serviceUrl = authToken.serviceUrl ?: throw IllegalStateException("Not signed in")
 
-        networkService.runCatchingWithMonitoredNetworkRetry {
-            getServiceAuth(
-                GetServiceAuthQueryParams(
-                    aud = serviceUrlDid(serviceUrl),
-                    exp = Clock.System.now().epochSeconds + 30.minutes.inWholeSeconds,
-                    lxm = Nsid(Collections.UploadVideo),
-                ),
-            )
-        }.mapCatchingUnlessCancelled { tokenResponse ->
-            fileManager.source(file).use { source ->
-                videoUploadClient.post(UploadVideoEndpoint) {
-                    url {
-                        parameters.append(
-                            name = DidQueryParam,
-                            value = authToken.authProfileId.id,
+            networkService
+                .runCatchingWithMonitoredNetworkRetry {
+                    getServiceAuth(
+                        GetServiceAuthQueryParams(
+                            aud = serviceUrlDid(serviceUrl),
+                            exp = Clock.System.now().epochSeconds + 30.minutes.inWholeSeconds,
+                            lxm = Nsid(Collections.UploadVideo),
                         )
-                        parameters.append(
-                            name = NameQueryParam,
-                            value = Clock.System.now().toEpochMilliseconds().toString(),
-                        )
-                    }
-                    bearerAuth(tokenResponse.token)
-                    contentType(ContentType.Video.MP4)
-                    setBody(ByteReadChannel(source))
-                    headers[ContentLengthHeaderKey] = fileManager.size(file).toString()
+                    )
                 }
-            }
-                .let { response ->
-                    when {
-                        response.status.isSuccess() -> response.body<VideoUploadResponse>()
-                        response.status == HttpStatusCode.Conflict -> response.body<VideoUploadResponse>()
-                        else -> throw IOException("Video upload failed with status: ${response.status}")
-                    }
+                .mapCatchingUnlessCancelled { tokenResponse ->
+                    fileManager
+                        .source(file)
+                        .use { source ->
+                            videoUploadClient.post(UploadVideoEndpoint) {
+                                url {
+                                    parameters.append(
+                                        name = DidQueryParam,
+                                        value = authToken.authProfileId.id,
+                                    )
+                                    parameters.append(
+                                        name = NameQueryParam,
+                                        value = Clock.System.now().toEpochMilliseconds().toString(),
+                                    )
+                                }
+                                bearerAuth(tokenResponse.token)
+                                contentType(ContentType.Video.MP4)
+                                setBody(ByteReadChannel(source))
+                                headers[ContentLengthHeaderKey] = fileManager.size(file).toString()
+                            }
+                        }
+                        .let { response ->
+                            when {
+                                response.status.isSuccess() -> response.body<VideoUploadResponse>()
+                                response.status == HttpStatusCode.Conflict ->
+                                    response.body<VideoUploadResponse>()
+                                else ->
+                                    throw IOException(
+                                        "Video upload failed with status: ${response.status}"
+                                    )
+                            }
+                        }
                 }
-        }.mapCatchingUnlessCancelled { uploadResponse ->
-            repeat(MaxVideoUploadStatusCheckCount) {
-                runCatchingUnlessCancelled {
-                    videoUploadClient.get(VideoStatusEndpoint) {
-                        parameter(JobIdQueryParam, uploadResponse.jobId)
+                .mapCatchingUnlessCancelled { uploadResponse ->
+                    repeat(MaxVideoUploadStatusCheckCount) {
+                        runCatchingUnlessCancelled {
+                                videoUploadClient
+                                    .get(VideoStatusEndpoint) {
+                                        parameter(JobIdQueryParam, uploadResponse.jobId)
+                                    }
+                                    .body<GetJobStatusResponse>()
+                            }
+                            .getOrNull()
+                            ?.jobStatus
+                            ?.blob
+                            ?.let { processedBlob ->
+                                return@mapCatchingUnlessCancelled processedBlob
+                            }
+                        delay(MaxVideoUploadStatusCheckPollInterval)
                     }
-                        .body<GetJobStatusResponse>()
-                }
-                    .getOrNull()
-                    ?.jobStatus
-                    ?.blob
-                    ?.let { processedBlob ->
-                        return@mapCatchingUnlessCancelled processedBlob
-                    }
-                delay(MaxVideoUploadStatusCheckPollInterval)
-            }
 
-            throw IOException("Video upload timed out")
-        }
-    } ?: Result.failure(IOException("Video upload failed: Invalid user session."))
+                    throw IOException("Video upload timed out")
+                }
+        } ?: Result.failure(IOException("Video upload failed: Invalid user session."))
 }
 
-private fun serviceUrlDid(serviceUrl: String) =
-    Did("did:web:${Url(serviceUrl).host}")
+private fun serviceUrlDid(serviceUrl: String) = Did("did:web:${Url(serviceUrl).host}")
 
 @Serializable
-private data class VideoUploadResponse(
-    val did: String,
-    val jobId: String,
-    val state: String,
-)
+private data class VideoUploadResponse(val did: String, val jobId: String, val state: String)
 
 private const val VideoUploadServiceEndpoint = "https://video.bsky.app"
 private const val UploadVideoEndpoint = "/xrpc/app.bsky.video.uploadVideo"

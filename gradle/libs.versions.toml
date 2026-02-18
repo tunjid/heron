@@ -35,7 +35,6 @@ kotlinx-coroutines = "1.10.2"
 kotlinx-datetime = "0.7.1"
 kotlinx-serialization = "1.10.0"
 ksp = "2.3.4"
-ktlint-cli = "1.8.0"
 ktor = "3.3.3"
 lifecycle-android = "2.10.0"
 lifecycle-multiplatform = "2.10.0-alpha07"
@@ -147,7 +146,8 @@ kotlinx-serialization-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 kotlinx-serialization-cbor = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-cbor", version.ref = "kotlinx-serialization" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-serialization-protobuf = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-protobuf", version.ref = "kotlinx-serialization" }
-ktlint = { group = "com.pinterest.ktlint", name = "ktlint-cli", version.ref = "ktlint-cli" }
+# Dummy to get renovate updates, the version is used in rootProject build.gradle with spotless.
+ktfmt = "com.facebook:ktfmt:0.61"
 ktor-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
 ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
 ktor-client-darwin = { group = "io.ktor", name = "ktor-client-darwin", version.ref = "ktor" }

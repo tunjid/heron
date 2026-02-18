@@ -29,44 +29,36 @@ import com.tunjid.heron.data.database.entities.ProfileEntity
 
 @Entity(
     tableName = "postViewerStatistics",
-    primaryKeys = [
-        "postUri",
-        "viewingProfileId",
-    ],
-    foreignKeys = [
-        ForeignKey(
-            entity = PostEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["postUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["viewingProfileId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["postUri"]),
-        Index(value = ["viewingProfileId"]),
-    ],
+    primaryKeys = ["postUri", "viewingProfileId"],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = PostEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["postUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["viewingProfileId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    indices = [Index(value = ["postUri"]), Index(value = ["viewingProfileId"])],
 )
 data class PostViewerStatisticsEntity(
     val postUri: PostUri,
     val viewingProfileId: ProfileId,
-    @ColumnInfo(defaultValue = "NULL")
-    val likeUri: LikeUri?,
-    @ColumnInfo(defaultValue = "NULL")
-    val repostUri: RepostUri?,
+    @ColumnInfo(defaultValue = "NULL") val likeUri: LikeUri?,
+    @ColumnInfo(defaultValue = "NULL") val repostUri: RepostUri?,
     val threadMuted: Boolean,
     val replyDisabled: Boolean,
     val embeddingDisabled: Boolean,
     val pinned: Boolean,
-    @ColumnInfo(defaultValue = "0")
-    val bookmarked: Boolean,
+    @ColumnInfo(defaultValue = "0") val bookmarked: Boolean,
 ) {
     sealed class Partial {
         abstract val postUri: PostUri
@@ -90,24 +82,27 @@ data class PostViewerStatisticsEntity(
             val bookmarked: Boolean,
         ) : Partial()
 
-        fun asFull() = PostViewerStatisticsEntity(
-            postUri = postUri,
-            viewingProfileId = viewingProfileId,
-            likeUri = when (this) {
-                is Like -> likeUri
-                is Repost -> null
-                is Bookmark -> null
-            },
-            repostUri = when (this) {
-                is Like -> null
-                is Repost -> repostUri
-                is Bookmark -> null
-            },
-            threadMuted = false,
-            replyDisabled = false,
-            embeddingDisabled = false,
-            pinned = false,
-            bookmarked = this is Bookmark && bookmarked,
-        )
+        fun asFull() =
+            PostViewerStatisticsEntity(
+                postUri = postUri,
+                viewingProfileId = viewingProfileId,
+                likeUri =
+                    when (this) {
+                        is Like -> likeUri
+                        is Repost -> null
+                        is Bookmark -> null
+                    },
+                repostUri =
+                    when (this) {
+                        is Like -> null
+                        is Repost -> repostUri
+                        is Bookmark -> null
+                    },
+                threadMuted = false,
+                replyDisabled = false,
+                embeddingDisabled = false,
+                pinned = false,
+                bookmarked = this is Bookmark && bookmarked,
+            )
     }
 }
