@@ -45,7 +45,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -226,6 +230,16 @@ fun GrazeEditorScreen(
                 )
             }
         }
+    }
+
+    val hasList = state.currentFilter
+        .filters
+        .any { it is Filter.Social.ListMember }
+
+    // Using Disposable effect as there's no need for a CoroutineScope
+    DisposableEffect(hasList) {
+        if (hasList) actions(Action.UpdateRecentLists)
+        onDispose { }
     }
 }
 
