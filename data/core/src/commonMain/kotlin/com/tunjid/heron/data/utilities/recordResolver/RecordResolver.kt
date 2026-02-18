@@ -431,7 +431,7 @@ internal class OfflineRecordResolver @Inject constructor(
         logcat(LogPriority.WARN) {
             "Failed to resolve $uri. Cause: ${throwable.loggableText()}"
         }
-        if (isNotFound(throwable).also { println("NOT: $it") }) {
+        if (isNotFound(throwable)) {
             when (uri) {
                 is BlockUri -> profileDao.deleteBlock(uri)
                 is FeedGeneratorUri -> feedGeneratorDao.deleteFeedGenerator(uri)
