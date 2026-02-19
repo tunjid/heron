@@ -16,7 +16,9 @@
 
 package com.tunjid.heron.settings
 
+import androidx.navigationevent.NavigationEventInfo
 import com.mikepenz.aboutlibraries.Libs
+import com.tunjid.heron.data.core.models.FeedPreference
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.types.ProfileId
@@ -28,6 +30,7 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     val activeProfileId: ProfileId? = null,
+    val section: Section = Section.Main,
     val switchPhase: AccountSwitchPhase = AccountSwitchPhase.IDLE,
     val switchingSession: SessionSummary? = null,
     val signedInProfilePreferences: Preferences? = null,
@@ -37,12 +40,38 @@ data class State(
     val messages: List<Memo> = emptyList(),
 )
 
+@Serializable
+sealed class Section {
+
+    abstract val key: Key
+
+    sealed interface Key
+
+    data object Main : Section(), Key {
+        override val key: Key
+            get() = this
+    }
+
+    data class FeedPreferences(
+        val feedPreference: FeedPreference,
+    ) : Section() {
+        override val key: Key
+            get() = FeedPreferences
+
+        companion object : Key
+    }
+}
+
 enum class AccountSwitchPhase {
     IDLE,
     MORPHING,
     SUCCESS,
     LOADING,
 }
+
+data class SectionNavigationEventInfo(
+    val section: Section,
+) : NavigationEventInfo()
 
 sealed class Action(val key: String) {
 
@@ -73,6 +102,14 @@ sealed class Action(val key: String) {
     data class SnackbarDismissed(
         val message: Memo,
     ) : Action(key = "SnackbarDismissed")
+
+    data class UpdateSection(
+        val section: Section,
+    ) : Action(key = "UpdateSection")
+
+    data class UpdateFeedPreference(
+        val feedPreference: FeedPreference,
+    ) : Action(key = "UpdateFeedPreference")
 
     data object SignOut : Action(key = "SignOut")
 
