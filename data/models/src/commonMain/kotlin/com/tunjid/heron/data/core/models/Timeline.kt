@@ -315,6 +315,14 @@ sealed interface Timeline {
         data class OfInteractionSettings(
             val preference: PostInteractionSettingsPreference,
         ) : Update
+
+        @Serializable
+        sealed class OfFeedPreference : Update {
+            @Serializable
+            data class Add(
+                val feedPreference: FeedPreference,
+            ) : OfFeedPreference()
+        }
     }
 
     @Serializable

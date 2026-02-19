@@ -19,6 +19,7 @@ package com.tunjid.heron.data.utilities.preferenceupdater
 import app.bsky.actor.AdultContentPref
 import app.bsky.actor.ContentLabelPref
 import app.bsky.actor.ContentLabelPrefVisibility
+import app.bsky.actor.FeedViewPref
 import app.bsky.actor.LabelerPrefItem
 import app.bsky.actor.LabelersPref
 import app.bsky.actor.MutedWord
@@ -39,6 +40,7 @@ import app.bsky.feed.ThreadgateListRule
 import app.bsky.feed.ThreadgateMentionRule
 import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.DeclaredAgePreference
+import com.tunjid.heron.data.core.models.FeedPreference
 import com.tunjid.heron.data.core.models.HiddenPostPreference
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.LabelerPreference
@@ -93,6 +95,7 @@ internal class ThingPreferenceUpdater @Inject constructor(
             threadViewPreferences = null,
             postInteractionSettings = null,
             verificationPreferences = null,
+            feedPreferences = emptyList(),
         ),
         operation = { foldedPreferences, preferencesUnion ->
             when (preferencesUnion) {
@@ -105,7 +108,9 @@ internal class ThingPreferenceUpdater @Inject constructor(
                         .plus(preferencesUnion.asExternalModel()),
                 )
 
-                is PreferencesUnion.FeedViewPref -> foldedPreferences
+                is PreferencesUnion.FeedViewPref -> foldedPreferences.copy(
+                    feedPreferences = foldedPreferences.feedPreferences + preferencesUnion.asExternalModel(),
+                )
                 is PreferencesUnion.HiddenPostsPref -> foldedPreferences.copy(
                     hiddenPostPreferences = preferencesUnion.value.items.map {
                         HiddenPostPreference(
@@ -471,6 +476,24 @@ internal class ThingPreferenceUpdater @Inject constructor(
         )
     }
 
+    private fun Timeline.Update.OfFeedPreference.updateFeedPreferences(
+        existingPreferences: List<PreferencesUnion.FeedViewPref>,
+    ): List<PreferencesUnion.FeedViewPref> = when (this) {
+        is Timeline.Update.OfFeedPreference.Add -> {
+            existingPreferences.filter { it.value.feed != feedPreference.feed } +
+                PreferencesUnion.FeedViewPref(
+                    value = FeedViewPref(
+                        feed = feedPreference.feed,
+                        hideReplies = feedPreference.hideReplies,
+                        hideRepliesByUnfollowed = feedPreference.hideRepliesByUnfollowed,
+                        hideRepliesByLikeCount = feedPreference.hideRepliesByLikeCount,
+                        hideReposts = feedPreference.hideReposts,
+                        hideQuotePosts = feedPreference.hideQuotePosts,
+                    ),
+                )
+        }
+    }
+
     private suspend fun Timeline.Update.updatePreferences(
         existingPreferences: List<PreferencesUnion>,
     ): List<PreferencesUnion> =
@@ -491,6 +514,9 @@ internal class ThingPreferenceUpdater @Inject constructor(
                 existingPreference = existingPreferences.filterIsInstance<PreferencesUnion.PostInteractionSettingsPref>()
                     .firstOrNull(),
             )
+            is Timeline.Update.OfFeedPreference -> updateFeedPreferences(
+                existingPreferences = existingPreferences.filterIsInstance<PreferencesUnion.FeedViewPref>(),
+            )
         }
 }
 
@@ -502,6 +528,7 @@ private fun Timeline.Update.targetClass() =
         is Timeline.Update.OfLabeler -> PreferencesUnion.LabelersPref::class
         is Timeline.Update.OfMutedWord -> PreferencesUnion.MutedWordsPref::class
         is Timeline.Update.OfInteractionSettings -> PreferencesUnion.PostInteractionSettingsPref::class
+        is Timeline.Update.OfFeedPreference -> PreferencesUnion.FeedViewPref::class
     }
 
 private fun PreferencesUnion.ContentLabelPref.asExternalModel() = ContentLabelPreference(
@@ -509,3 +536,13 @@ private fun PreferencesUnion.ContentLabelPref.asExternalModel() = ContentLabelPr
     label = Label.Value(value = value.label),
     visibility = Label.Visibility(value = value.visibility.value),
 )
+
+private fun PreferencesUnion.FeedViewPref.asExternalModel(): FeedPreference =
+    FeedPreference(
+        feed = value.feed,
+        hideReplies = value.hideReplies,
+        hideRepliesByUnfollowed = value.hideRepliesByUnfollowed,
+        hideRepliesByLikeCount = value.hideRepliesByLikeCount,
+        hideReposts = value.hideReposts,
+        hideQuotePosts = value.hideQuotePosts,
+    )

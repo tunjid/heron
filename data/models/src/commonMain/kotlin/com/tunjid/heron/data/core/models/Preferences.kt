@@ -53,6 +53,8 @@ data class Preferences(
     val postInteractionSettings: PostInteractionSettingsPreference? = null,
     @ProtoNumber(11)
     val verificationPreferences: VerificationPreference? = null,
+    @ProtoNumber(12)
+    val feedPreferences: List<FeedPreference> = emptyList(),
 ) : UrlEncodableModel {
 
     @Serializable
@@ -185,4 +187,14 @@ data class PostInteractionSettingsPreference(
 @Serializable
 data class VerificationPreference(
     val hideBadges: Boolean = false,
+)
+
+@Serializable
+data class FeedPreference(
+    val feed: String,
+    val hideReplies: Boolean? = null,
+    val hideRepliesByUnfollowed: Boolean? = true,
+    val hideRepliesByLikeCount: Long? = null,
+    val hideReposts: Boolean? = null,
+    val hideQuotePosts: Boolean? = null,
 )
