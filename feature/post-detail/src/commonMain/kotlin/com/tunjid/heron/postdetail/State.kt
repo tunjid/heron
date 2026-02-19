@@ -38,22 +38,14 @@ import kotlinx.serialization.Transient
 data class State(
     val anchorPost: Post?,
     val sharedElementPrefix: String,
-    @Transient
-    val source: Timeline.Source? = null,
-    @Transient
-    val timelinePosition: CursorQuery.Data? = null,
-    @Transient
-    val preferences: Preferences = Preferences.EmptyPreferences,
-    @Transient
-    val signedInProfileId: ProfileId? = null,
-    @Transient
-    val recentConversations: List<Conversation> = emptyList(),
-    @Transient
-    val recentLists: List<FeedList> = emptyList(),
-    @Transient
-    val items: List<TimelineItem> = emptyList(),
-    @Transient
-    val messages: List<Memo> = emptyList(),
+    @Transient val source: Timeline.Source? = null,
+    @Transient val timelinePosition: CursorQuery.Data? = null,
+    @Transient val preferences: Preferences = Preferences.EmptyPreferences,
+    @Transient val signedInProfileId: ProfileId? = null,
+    @Transient val recentConversations: List<Conversation> = emptyList(),
+    @Transient val recentLists: List<FeedList> = emptyList(),
+    @Transient val items: List<TimelineItem> = emptyList(),
+    @Transient val messages: List<Memo> = emptyList(),
 )
 
 fun State(route: Route): State {
@@ -63,64 +55,55 @@ fun State(route: Route): State {
         sharedElementPrefix = route.sharedElementPrefix,
         source = route.model(),
         timelinePosition = route.model(),
-        items = when (anchorPost) {
-            null -> TimelineItem.LoadingItems
-            else -> listOf(
-                TimelineItem.Thread(
-                    id = anchorPost.uri.uri,
-                    isMuted = false,
-                    anchorPostIndex = 0,
-                    posts = listOf(anchorPost),
-                    generation = 0,
-                    hasBreak = false,
-                    signedInProfileId = null,
-                    postUrisToThreadGates = emptyMap(),
-                    appliedLabels = route.model()
-                        ?: anchorPost.appliedLabels(
-                            adultContentEnabled = false,
-                            labelers = emptyList(),
-                            labelPreferences = emptyList(),
-                        ),
-                ),
-            )
-        },
+        items =
+            when (anchorPost) {
+                null -> TimelineItem.LoadingItems
+                else ->
+                    listOf(
+                        TimelineItem.Thread(
+                            id = anchorPost.uri.uri,
+                            isMuted = false,
+                            anchorPostIndex = 0,
+                            posts = listOf(anchorPost),
+                            generation = 0,
+                            hasBreak = false,
+                            signedInProfileId = null,
+                            postUrisToThreadGates = emptyMap(),
+                            appliedLabels =
+                                route.model()
+                                    ?: anchorPost.appliedLabels(
+                                        adultContentEnabled = false,
+                                        labelers = emptyList(),
+                                        labelPreferences = emptyList(),
+                                    ),
+                        )
+                    )
+            },
     )
 }
 
 sealed class Action(val key: String) {
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
+    data class UpdateMutedWord(val mutedWordPreference: List<MutedWordPreference>) :
+        Action(key = "UpdateMutedWord")
 
-    data class BlockAccount(
-        val signedInProfileId: ProfileId,
-        val profileId: ProfileId,
-    ) : Action(key = "BlockAccount")
+    data class BlockAccount(val signedInProfileId: ProfileId, val profileId: ProfileId) :
+        Action(key = "BlockAccount")
 
-    data class MuteAccount(
-        val signedInProfileId: ProfileId,
-        val profileId: ProfileId,
-    ) : Action(key = "MuteAccount")
+    data class MuteAccount(val signedInProfileId: ProfileId, val profileId: ProfileId) :
+        Action(key = "MuteAccount")
 
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
+    data class SendPostInteraction(val interaction: Post.Interaction) :
+        Action(key = "SendPostInteraction")
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
     data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(),
-            NavigationAction by delegate
+        data class To(val delegate: NavigationAction.Destination) :
+            Navigate(), NavigationAction by delegate
     }
 }

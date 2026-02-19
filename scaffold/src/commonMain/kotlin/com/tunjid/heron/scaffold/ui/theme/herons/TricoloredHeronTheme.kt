@@ -47,36 +47,38 @@ private val TricoloredHeronOnTertiaryDark = Color(0xFF00363D)
 private val TricoloredHeronTertiaryContainerDark = Color(0xFF004F58)
 private val TricoloredHeronOnTertiaryContainerDark = Color(0xFF97F0FF)
 
-val TricoloredHeronLightScheme = lightColorScheme(
-    primary = TricoloredHeronPrimaryLight,
-    onPrimary = TricoloredHeronOnPrimaryLight,
-    primaryContainer = TricoloredHeronPrimaryContainerLight,
-    onPrimaryContainer = TricoloredHeronOnPrimaryContainerLight,
-    secondary = TricoloredHeronSecondaryLight,
-    onSecondary = TricoloredHeronOnSecondaryLight,
-    secondaryContainer = TricoloredHeronSecondaryContainerLight,
-    onSecondaryContainer = TricoloredHeronOnSecondaryContainerLight,
-    tertiary = TricoloredHeronTertiaryLight,
-    onTertiary = TricoloredHeronOnTertiaryLight,
-    tertiaryContainer = TricoloredHeronTertiaryContainerLight,
-    onTertiaryContainer = TricoloredHeronOnTertiaryContainerLight,
-    surface = Color(0xFFF0F7FF),
-    onSurface = Color(0xFF191C20),
-)
+val TricoloredHeronLightScheme =
+    lightColorScheme(
+        primary = TricoloredHeronPrimaryLight,
+        onPrimary = TricoloredHeronOnPrimaryLight,
+        primaryContainer = TricoloredHeronPrimaryContainerLight,
+        onPrimaryContainer = TricoloredHeronOnPrimaryContainerLight,
+        secondary = TricoloredHeronSecondaryLight,
+        onSecondary = TricoloredHeronOnSecondaryLight,
+        secondaryContainer = TricoloredHeronSecondaryContainerLight,
+        onSecondaryContainer = TricoloredHeronOnSecondaryContainerLight,
+        tertiary = TricoloredHeronTertiaryLight,
+        onTertiary = TricoloredHeronOnTertiaryLight,
+        tertiaryContainer = TricoloredHeronTertiaryContainerLight,
+        onTertiaryContainer = TricoloredHeronOnTertiaryContainerLight,
+        surface = Color(0xFFF0F7FF),
+        onSurface = Color(0xFF191C20),
+    )
 
-val TricoloredHeronDarkScheme = darkColorScheme(
-    primary = TricoloredHeronPrimaryDark,
-    onPrimary = TricoloredHeronOnPrimaryDark,
-    primaryContainer = TricoloredHeronPrimaryContainerDark,
-    onPrimaryContainer = TricoloredHeronOnPrimaryContainerDark,
-    secondary = TricoloredHeronSecondaryDark,
-    onSecondary = TricoloredHeronOnSecondaryDark,
-    secondaryContainer = TricoloredHeronSecondaryContainerDark,
-    onSecondaryContainer = TricoloredHeronOnSecondaryContainerDark,
-    tertiary = TricoloredHeronTertiaryDark,
-    onTertiary = TricoloredHeronOnTertiaryDark,
-    tertiaryContainer = TricoloredHeronTertiaryContainerDark,
-    onTertiaryContainer = TricoloredHeronOnTertiaryContainerDark,
-    surface = Color(0xFF001D32),
-    onSurface = Color(0xFFE1E2E8),
-)
+val TricoloredHeronDarkScheme =
+    darkColorScheme(
+        primary = TricoloredHeronPrimaryDark,
+        onPrimary = TricoloredHeronOnPrimaryDark,
+        primaryContainer = TricoloredHeronPrimaryContainerDark,
+        onPrimaryContainer = TricoloredHeronOnPrimaryContainerDark,
+        secondary = TricoloredHeronSecondaryDark,
+        onSecondary = TricoloredHeronOnSecondaryDark,
+        secondaryContainer = TricoloredHeronSecondaryContainerDark,
+        onSecondaryContainer = TricoloredHeronOnSecondaryContainerDark,
+        tertiary = TricoloredHeronTertiaryDark,
+        onTertiary = TricoloredHeronOnTertiaryDark,
+        tertiaryContainer = TricoloredHeronTertiaryContainerDark,
+        onTertiaryContainer = TricoloredHeronOnTertiaryContainerDark,
+        surface = Color(0xFF001D32),
+        onSurface = Color(0xFFE1E2E8),
+    )

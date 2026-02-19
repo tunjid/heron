@@ -57,10 +57,7 @@ internal typealias ProfilesStateHolder = ActionStateMutator<Action, StateFlow<St
 
 @AssistedFactory
 fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
-        scope: CoroutineScope,
-        route: Route,
-    ): ActualProfilesViewModel
+    override fun invoke(scope: CoroutineScope, route: Route): ActualProfilesViewModel
 }
 
 @AssistedInject
@@ -71,53 +68,41 @@ class ActualProfilesViewModel(
     profileRepository: ProfileRepository,
     recordRepository: RecordRepository,
     writeQueue: WriteQueue,
-    @Assisted
-    scope: CoroutineScope,
-    @Assisted
-    route: Route,
-) : ViewModel(viewModelScope = scope),
+    @Assisted scope: CoroutineScope,
+    @Assisted route: Route,
+) :
+    ViewModel(viewModelScope = scope),
     ProfilesStateHolder by scope.actionStateFlowMutator(
-        initialState = State(
-            route = route,
-        ),
+        initialState = State(route = route),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = listOf(
-            loadSignedInProfileIdMutations(
-                authRepository = authRepository,
-            ),
-        ),
+        inputs = listOf(loadSignedInProfileIdMutations(authRepository = authRepository)),
         actionTransform = transform@{ actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.Tile -> action.flow.profilesLoadMutations(
-                        load = route.load,
-                        stateHolder = this@transform,
-                        postRepository = postRepository,
-                        profileRepository = profileRepository,
-                        recordRepository = recordRepository,
-                    )
+                actions.toMutationStream(keySelector = Action::key) {
+                    when (val action = type()) {
+                        is Action.Tile ->
+                            action.flow.profilesLoadMutations(
+                                load = route.load,
+                                stateHolder = this@transform,
+                                postRepository = postRepository,
+                                profileRepository = profileRepository,
+                                recordRepository = recordRepository,
+                            )
 
-                    is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+                        is Action.ToggleViewerState ->
+                            action.flow.toggleViewerStateMutations(writeQueue = writeQueue)
+                        is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
+                        is Action.Navigate ->
+                            action.flow.consumeNavigationActions(
+                                navigationMutationConsumer = navActions
+                            )
+                    }
                 }
-            }
-        },
+            },
     )
 
-private fun loadSignedInProfileIdMutations(
-    authRepository: AuthRepository,
-): Flow<Mutation<State>> =
-    authRepository.signedInUser.mapToMutation {
-        copy(signedInProfileId = it?.did)
-    }
+private fun loadSignedInProfileIdMutations(authRepository: AuthRepository): Flow<Mutation<State>> =
+    authRepository.signedInUser.mapToMutation { copy(signedInProfileId = it?.did) }
 
 suspend fun Flow<Action.Tile>.profilesLoadMutations(
     load: Load,
@@ -176,37 +161,35 @@ suspend fun Flow<Action.Tile>.profilesLoadMutations(
                     }
                 }
             },
-            onNewItems = { profiles ->
-                profiles.distinctBy { it.profile.did }
-            },
+            onNewItems = { profiles -> profiles.distinctBy { it.profile.did } },
             onTilingDataUpdated = { copy(tilingData = it) },
         )
 
 private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
-    writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        val writable = Writable.Connection(
+    writeQueue: WriteQueue
+): Flow<Mutation<State>> = mapToManyMutations { action ->
+    val writable =
+        Writable.Connection(
             when (val following = action.following) {
-                null -> Profile.Connection.Follow(
-                    signedInProfileId = action.signedInProfileId,
-                    profileId = action.viewedProfileId,
-                    followedBy = action.followedBy,
-                )
+                null ->
+                    Profile.Connection.Follow(
+                        signedInProfileId = action.signedInProfileId,
+                        profileId = action.viewedProfileId,
+                        followedBy = action.followedBy,
+                    )
 
-                else -> Profile.Connection.Unfollow(
-                    signedInProfileId = action.signedInProfileId,
-                    profileId = action.viewedProfileId,
-                    followUri = following,
-                    followedBy = action.followedBy,
-                )
-            },
+                else ->
+                    Profile.Connection.Unfollow(
+                        signedInProfileId = action.signedInProfileId,
+                        profileId = action.viewedProfileId,
+                        followUri = following,
+                        followedBy = action.followedBy,
+                    )
+            }
         )
-        val status = writeQueue.enqueue(writable)
-        writable.writeStatusMessage(status)?.let {
-            emit { copy(messages = messages + it) }
-        }
-    }
+    val status = writeQueue.enqueue(writable)
+    writable.writeStatusMessage(status)?.let { emit { copy(messages = messages + it) } }
+}
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->

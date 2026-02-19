@@ -11,32 +11,24 @@ import kotlin.test.assertEquals
 
 @Burst
 class TimelineUpdateSerializationTest(
-    val format: SerializationTestHelper.Format = burstValues(
-        SerializationTestHelper.Format.CBOR,
-        SerializationTestHelper.Format.PROTOBUF,
-    ),
-    val original: Timeline.Update = burstValues(
-        Timeline.Update.Bulk(
-            timelines = listOf(FakeTimeline.following),
+    val format: SerializationTestHelper.Format =
+        burstValues(SerializationTestHelper.Format.CBOR, SerializationTestHelper.Format.PROTOBUF),
+    val original: Timeline.Update =
+        burstValues(
+            Timeline.Update.Bulk(timelines = listOf(FakeTimeline.following)),
+            Timeline.Update.OfFeedGenerator.Pin(uri = FeedGeneratorUri("at://feed/generator/1")),
+            Timeline.Update.OfFeedGenerator.Save(uri = FeedGeneratorUri("at://feed/generator/2")),
+            Timeline.Update.OfFeedGenerator.Remove(uri = FeedGeneratorUri("at://feed/generator/3")),
         ),
-        Timeline.Update.OfFeedGenerator.Pin(
-            uri = FeedGeneratorUri("at://feed/generator/1"),
-        ),
-        Timeline.Update.OfFeedGenerator.Save(
-            uri = FeedGeneratorUri("at://feed/generator/2"),
-        ),
-        Timeline.Update.OfFeedGenerator.Remove(
-            uri = FeedGeneratorUri("at://feed/generator/3"),
-        ),
-    ),
 ) {
     @Test
     fun roundTrip() {
-        val decoded = SerializationTestHelper.roundTrip(
-            format = format,
-            value = original,
-            serializer = Timeline.Update.serializer(),
-        )
+        val decoded =
+            SerializationTestHelper.roundTrip(
+                format = format,
+                value = original,
+                serializer = Timeline.Update.serializer(),
+            )
         assertEquals(original, decoded)
     }
 }

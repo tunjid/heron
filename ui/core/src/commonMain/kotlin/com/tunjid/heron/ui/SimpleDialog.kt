@@ -50,10 +50,7 @@ fun SimpleDialog(
 }
 
 @Composable
-fun SimpleDialogTitle(
-    modifier: Modifier = Modifier,
-    text: String,
-) {
+fun SimpleDialogTitle(modifier: Modifier = Modifier, text: String) {
     Text(
         modifier = modifier,
         text = text,
@@ -63,10 +60,7 @@ fun SimpleDialogTitle(
 }
 
 @Composable
-fun SimpleDialogText(
-    modifier: Modifier = Modifier,
-    text: String,
-) {
+fun SimpleDialogText(modifier: Modifier = Modifier, text: String) {
     Text(
         modifier = modifier,
         text = text,
@@ -76,57 +70,24 @@ fun SimpleDialogText(
 }
 
 @Composable
-fun DestructiveDialogButton(
-    text: String,
-    onClick: () -> Unit,
-) {
-    StyledDialogButton(
-        text = text,
-        color = MaterialTheme.colorScheme.error,
-        onClick = onClick,
-    )
+fun DestructiveDialogButton(text: String, onClick: () -> Unit) {
+    StyledDialogButton(text = text, color = MaterialTheme.colorScheme.error, onClick = onClick)
 }
 
 @Composable
-fun NeutralDialogButton(
-    text: String,
-    onClick: () -> Unit,
-) {
-    StyledDialogButton(
-        text = text,
-        color = MaterialTheme.colorScheme.outline,
-        onClick = onClick,
-    )
+fun NeutralDialogButton(text: String, onClick: () -> Unit) {
+    StyledDialogButton(text = text, color = MaterialTheme.colorScheme.outline, onClick = onClick)
 }
 
 @Composable
-fun PrimaryDialogButton(
-    text: String,
-    onClick: () -> Unit,
-) {
-    StyledDialogButton(
-        text = text,
-        color = MaterialTheme.colorScheme.primary,
-        onClick = onClick,
-    )
+fun PrimaryDialogButton(text: String, onClick: () -> Unit) {
+    StyledDialogButton(text = text, color = MaterialTheme.colorScheme.primary, onClick = onClick)
 }
 
 @Composable
-private fun StyledDialogButton(
-    text: String,
-    color: Color,
-    onClick: () -> Unit,
-) {
+private fun StyledDialogButton(text: String, color: Color, onClick: () -> Unit) {
     TextButton(
-        onClick = {
-            onClick()
-        },
-        content = {
-            Text(
-                text = text,
-                color = color,
-                style = MaterialTheme.typography.labelLarge,
-            )
-        },
+        onClick = { onClick() },
+        content = { Text(text = text, color = color, style = MaterialTheme.typography.labelLarge) },
     )
 }

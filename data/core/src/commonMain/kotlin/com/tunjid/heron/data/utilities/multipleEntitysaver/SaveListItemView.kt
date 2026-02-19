@@ -24,10 +24,7 @@ import com.tunjid.heron.data.database.entities.ListMemberEntity
 import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.utilities.tidInstant
 
-internal fun MultipleEntitySaver.add(
-    listUri: ListUri,
-    listItemView: ListItemView,
-) {
+internal fun MultipleEntitySaver.add(listUri: ListUri, listItemView: ListItemView) {
     val createdAt = listItemView.uri.tidInstant ?: return
     add(listItemView.subject.profileEntity())
     add(
@@ -36,6 +33,6 @@ internal fun MultipleEntitySaver.add(
             uri = listItemView.uri.atUri.let(::ListMemberUri),
             subjectId = listItemView.subject.did.did.let(::ProfileId),
             createdAt = createdAt,
-        ),
+        )
     )
 }

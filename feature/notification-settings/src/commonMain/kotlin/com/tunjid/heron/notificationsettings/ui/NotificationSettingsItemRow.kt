@@ -86,25 +86,19 @@ internal fun NotificationSettingsRadioButton(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .toggleable(
-                value = selected,
-                onValueChange = { if (!selected) onSelect() },
-                role = Role.RadioButton,
-            )
-            .padding(vertical = 8.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .toggleable(
+                    value = selected,
+                    onValueChange = { if (!selected) onSelect() },
+                    role = Role.RadioButton,
+                )
+                .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        RadioButton(
-            selected = selected,
-            onClick = null,
-            modifier = Modifier.padding(end = 8.dp),
-        )
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyLarge,
-        )
+        RadioButton(selected = selected, onClick = null, modifier = Modifier.padding(end = 8.dp))
+        Text(text = text, style = MaterialTheme.typography.bodyLarge)
     }
 }
 
@@ -120,40 +114,31 @@ internal fun SettingsItemRow(
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = SettingsItemClipModifier
-            .then(
+        modifier =
+            SettingsItemClipModifier.then(
                 modifier
                     .semantics { contentDescription = title }
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 16.dp)
             ),
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = titleColor,
-        )
+        Icon(imageVector = icon, contentDescription = null, tint = titleColor)
 
         Spacer(Modifier.width(16.dp))
 
         Column(
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .heightIn(min = 60.dp)
-                .weight(1f),
+            modifier = Modifier.heightIn(min = 60.dp).weight(1f),
         ) {
             LookaheadScope {
                 Text(
-                    modifier = Modifier
-                        .animateBounds(this),
+                    modifier = Modifier.animateBounds(this),
                     text = title,
                     color = titleColor,
                     style = MaterialTheme.typography.bodyLarge,
                 )
 
-                AnimatedVisibility(
-                    visible = showSecondaryContent,
-                ) {
+                AnimatedVisibility(visible = showSecondaryContent) {
                     Column {
                         Spacer(Modifier.height(2.dp))
                         secondary()
@@ -178,58 +163,52 @@ internal fun ExpandableSettingsItemRow(
     var isExpanded by rememberSaveable { mutableStateOf(false) }
 
     Column(
-        modifier = SettingsItemClipModifier
-            .then(
+        modifier =
+            SettingsItemClipModifier.then(
                 modifier
                     .fillMaxWidth()
                     .toggleable(
                         value = isExpanded,
                         onValueChange = { isExpanded = it },
                         role = Role.Button,
-                    ),
-            ),
+                    )
+            )
     ) {
         SettingsItemRow(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             title = title,
             icon = icon,
             titleColor = titleColor,
             showSecondaryContent = !isExpanded,
             secondary = status,
         ) {
-            val iconRotation = animateFloatAsState(
-                targetValue = if (isExpanded) 0f
-                else 180f,
-                animationSpec = spring(
-                    stiffness = Spring.StiffnessMediumLow,
-                ),
-            )
+            val iconRotation =
+                animateFloatAsState(
+                    targetValue = if (isExpanded) 0f else 180f,
+                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                )
             Icon(
-                modifier = Modifier.graphicsLayer {
-                    rotationX = iconRotation.value
-                },
+                modifier = Modifier.graphicsLayer { rotationX = iconRotation.value },
                 imageVector = Icons.Default.ExpandLess,
-                contentDescription = stringResource(
-                    if (isExpanded) CommonStrings.collapse_icon
-                    else CommonStrings.expand_icon,
-                ),
+                contentDescription =
+                    stringResource(
+                        if (isExpanded) CommonStrings.collapse_icon else CommonStrings.expand_icon
+                    ),
             )
         }
         AnimatedVisibility(
-            modifier = Modifier
-                .padding(horizontal = 24.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.padding(horizontal = 24.dp).fillMaxWidth(),
             visible = isExpanded,
             enter = EnterTransition,
             exit = ExitTransition,
             content = {
                 Column(
-                    modifier = Modifier
-                        // Inset expanded content from the start to disambiguate
-                        // it from other items
-                        .padding(start = 8.dp)
-                        .fillMaxWidth(),
+                    modifier =
+                        Modifier
+                            // Inset expanded content from the start to disambiguate
+                            // it from other items
+                            .padding(start = 8.dp)
+                            .fillMaxWidth()
                 ) {
                     content()
                 }
@@ -251,8 +230,8 @@ fun SettingsToggleItem(
     onCheckedChange: (Boolean) -> Unit,
 ) {
     Row(
-        modifier = SettingsItemClipModifier
-            .then(
+        modifier =
+            SettingsItemClipModifier.then(
                 modifier
                     .toggleable(
                         value = checked,
@@ -260,58 +239,43 @@ fun SettingsToggleItem(
                         enabled = enabled,
                         role = Role.Switch,
                     )
-                    .padding(
-                        horizontal = 8.dp,
-                        vertical = 4.dp,
-                    ),
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
             ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(
-            modifier = Modifier
-                .weight(1f),
-            text = text,
-        )
-        Spacer(
-            modifier = Modifier
-                .width(16.dp),
-        )
-        Switch(
-            enabled = enabled,
-            checked = checked,
-            onCheckedChange = null,
-        )
+        Text(modifier = Modifier.weight(1f), text = text)
+        Spacer(modifier = Modifier.width(16.dp))
+        Switch(enabled = enabled, checked = checked, onCheckedChange = null)
     }
 }
 
 @Composable
-fun NotificationStatusText(
-    preference: NotificationPreferences.Preference.Filterable,
-) {
+fun NotificationStatusText(preference: NotificationPreferences.Preference.Filterable) {
     val off = stringResource(Res.string.off)
     val inApp = stringResource(Res.string.in_app)
     val push = stringResource(Res.string.push)
     val everyone = stringResource(Res.string.everyone)
     val peopleYouFollow = stringResource(Res.string.people_you_follow)
 
-    val statusText = remember(preference) {
-        buildString {
-            if (!preference.list && !preference.push) {
-                append(off)
-            } else {
-                if (preference.list) append(inApp)
-                if (preference.list && preference.push) append(", ")
-                if (preference.push) append(push)
+    val statusText =
+        remember(preference) {
+            buildString {
+                if (!preference.list && !preference.push) {
+                    append(off)
+                } else {
+                    if (preference.list) append(inApp)
+                    if (preference.list && preference.push) append(", ")
+                    if (preference.push) append(push)
 
-                when (preference.include) {
-                    NotificationPreferences.Include.All -> append(" • $everyone")
-                    NotificationPreferences.Include.Follows -> append(" • $peopleYouFollow")
-                    else -> Unit
+                    when (preference.include) {
+                        NotificationPreferences.Include.All -> append(" • $everyone")
+                        NotificationPreferences.Include.Follows -> append(" • $peopleYouFollow")
+                        else -> Unit
+                    }
                 }
             }
         }
-    }
 
     Text(
         text = statusText,
@@ -321,30 +285,29 @@ fun NotificationStatusText(
 }
 
 @Composable
-fun CombinedNotificationStatusText(
-    item: NotificationSettingItem,
-) {
-    val statusRes = when (item) {
-        is NotificationSettingItem.EverythingElse -> {
-            val anyPushEnabled = item.preferences.any { it.value.push }
-            if (anyPushEnabled) Res.string.push else Res.string.off
-        }
-
-        is NotificationSettingItem.ActivityFromOthers -> {
-            val hasInApp = item.preferences.any { it.value.list }
-            val hasPush = item.preferences.any { it.value.push }
-
-            when {
-                !hasInApp && !hasPush -> Res.string.off
-                hasInApp && hasPush -> Res.string.push_and_in_app
-                hasInApp -> Res.string.in_app
-                hasPush -> Res.string.push
-                else -> Res.string.off
+fun CombinedNotificationStatusText(item: NotificationSettingItem) {
+    val statusRes =
+        when (item) {
+            is NotificationSettingItem.EverythingElse -> {
+                val anyPushEnabled = item.preferences.any { it.value.push }
+                if (anyPushEnabled) Res.string.push else Res.string.off
             }
-        }
 
-        is NotificationSettingItem.Filterable -> return
-    }
+            is NotificationSettingItem.ActivityFromOthers -> {
+                val hasInApp = item.preferences.any { it.value.list }
+                val hasPush = item.preferences.any { it.value.push }
+
+                when {
+                    !hasInApp && !hasPush -> Res.string.off
+                    hasInApp && hasPush -> Res.string.push_and_in_app
+                    hasInApp -> Res.string.in_app
+                    hasPush -> Res.string.push
+                    else -> Res.string.off
+                }
+            }
+
+            is NotificationSettingItem.Filterable -> return
+        }
 
     Text(
         text = stringResource(statusRes),
@@ -358,5 +321,4 @@ private val ExitTransition =
     shrinkOut { IntSize(it.width, 0) } + slideOutVertically { -it } + fadeOut()
 
 private val SettingsItemShape = RoundedCornerShape(8.dp)
-private val SettingsItemClipModifier = Modifier
-    .clip(SettingsItemShape)
+private val SettingsItemClipModifier = Modifier.clip(SettingsItemShape)

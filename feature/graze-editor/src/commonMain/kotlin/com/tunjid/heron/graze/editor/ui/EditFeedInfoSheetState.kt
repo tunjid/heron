@@ -43,9 +43,7 @@ import heron.feature.graze_editor.generated.resources.edit_feed_name
 import org.jetbrains.compose.resources.stringResource
 
 @Stable
-class EditFeedInfoSheetState(
-    scope: BottomSheetScope,
-) : BottomSheetState(scope) {
+class EditFeedInfoSheetState(scope: BottomSheetScope) : BottomSheetState(scope) {
     var name by mutableStateOf("")
     var description by mutableStateOf("")
 
@@ -54,10 +52,7 @@ class EditFeedInfoSheetState(
         description = ""
     }
 
-    fun show(
-        currentName: String,
-        currentDescription: String?,
-    ) {
+    fun show(currentName: String, currentDescription: String?) {
         name = currentName
         description = currentDescription ?: ""
         show()
@@ -66,17 +61,10 @@ class EditFeedInfoSheetState(
 
 @Composable
 fun rememberEditFeedInfoSheetState(
-    onInfoConfirmed: (String, String?) -> Unit,
+    onInfoConfirmed: (String, String?) -> Unit
 ): EditFeedInfoSheetState {
-    val state = rememberBottomSheetState { scope ->
-        EditFeedInfoSheetState(
-            scope = scope,
-        )
-    }
-    EditFeedInfoBottomSheet(
-        state = state,
-        onInfoConfirmed = onInfoConfirmed,
-    )
+    val state = rememberBottomSheetState { scope -> EditFeedInfoSheetState(scope = scope) }
+    EditFeedInfoBottomSheet(state = state, onInfoConfirmed = onInfoConfirmed)
     return state
 }
 
@@ -87,11 +75,11 @@ private fun EditFeedInfoBottomSheet(
 ) {
     state.ModalBottomSheet {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.8f)
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
+            modifier =
+                Modifier.fillMaxWidth()
+                    .fillMaxHeight(0.8f)
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(

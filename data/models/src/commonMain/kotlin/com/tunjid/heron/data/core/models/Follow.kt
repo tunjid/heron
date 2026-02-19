@@ -21,13 +21,6 @@ import com.tunjid.heron.data.core.types.GenericId
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Follow(
-    val uri: FollowUri,
-    val cid: GenericId,
-) : Record {
-    override val reference: Record.Reference =
-        Record.Reference(
-            id = cid,
-            uri = uri,
-        )
+data class Follow(val uri: FollowUri, val cid: GenericId) : Record {
+    override val reference: Record.Reference = Record.Reference(id = cid, uri = uri)
 }

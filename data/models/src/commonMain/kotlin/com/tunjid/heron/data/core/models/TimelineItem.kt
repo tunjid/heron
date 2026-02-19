@@ -25,29 +25,32 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 val Source.id
-    get() = when (this) {
-        Source.Following -> Constants.timelineFeed.uri
-        is Source.Profile -> type.sourceId(profileId)
-        is Source.Record.Feed -> uri.uri
-        is Source.Record.List -> uri.uri
-    }
+    get() =
+        when (this) {
+            Source.Following -> Constants.timelineFeed.uri
+            is Source.Profile -> type.sourceId(profileId)
+            is Source.Record.Feed -> uri.uri
+            is Source.Record.List -> uri.uri
+        }
 
 val Timeline.sourceId: String
     get() = source.id
 
 val Timeline.Home.uri: Uri
-    get() = when (val source = source) {
-        Source.Following -> Constants.timelineFeed
-        is Source.Record.Feed -> source.uri
-        is Source.Record.List -> source.uri
-    }
+    get() =
+        when (val source = source) {
+            Source.Following -> Constants.timelineFeed
+            is Source.Record.Feed -> source.uri
+            is Source.Record.List -> source.uri
+        }
 
 val Timeline.uri: Uri?
-    get() = when (this) {
-        is Timeline.Home -> uri
-        is Timeline.Profile -> null
-        is Timeline.StarterPack -> listTimeline.uri
-    }
+    get() =
+        when (this) {
+            is Timeline.Home -> uri
+            is Timeline.Profile -> null
+            is Timeline.StarterPack -> listTimeline.uri
+        }
 
 sealed class TimelineItem {
 
@@ -59,15 +62,15 @@ sealed class TimelineItem {
     abstract val signedInProfileId: ProfileId?
 
     val indexedAt
-        get() = when (this) {
-            is Pinned,
-            is Thread,
-            is Single,
-            is Placeholder,
-            -> post.indexedAt
+        get() =
+            when (this) {
+                is Pinned,
+                is Thread,
+                is Single,
+                is Placeholder -> post.indexedAt
 
-            is Repost -> at
-        }
+                is Repost -> at
+            }
 
     data class Pinned(
         override val id: String,
@@ -102,6 +105,7 @@ sealed class TimelineItem {
     ) : TimelineItem() {
         override val post: Post
             get() = posts[anchorPostIndex]
+
         override val threadGate: ThreadGate?
             get() = postUrisToThreadGates[post.uri]
     }
@@ -125,45 +129,46 @@ sealed class TimelineItem {
         override val signedInProfileId: ProfileId? = null
     }
 
-    data class Loading @OptIn(ExperimentalUuidApi::class) constructor(
-        override val id: String = Uuid.random().toString(),
-    ) : Placeholder()
+    data class Loading
+    @OptIn(ExperimentalUuidApi::class)
+    constructor(override val id: String = Uuid.random().toString()) : Placeholder()
 
-    data class Empty(
-        val timeline: Timeline,
-    ) : Placeholder() {
+    data class Empty(val timeline: Timeline) : Placeholder() {
         override val id: String = timeline.sourceId
     }
 
     companion object {
 
-        private val LoadingPost = Post(
-            cid = Constants.blockedPostId,
-            uri = Constants.unknownPostUri,
-            author = stubProfile(
-                did = Constants.unknownAuthorId,
-                handle = Constants.unknownAuthorHandle,
-            ),
-            replyCount = 0,
-            repostCount = 0,
-            likeCount = 0,
-            quoteCount = 0,
-            bookmarkCount = 0,
-            indexedAt = Instant.DISTANT_PAST,
-            embed = null,
-            record = null,
-            viewerStats = null,
-            labels = emptyList(),
-            embeddedRecord = null,
-            viewerState = null,
-        )
+        private val LoadingPost =
+            Post(
+                cid = Constants.blockedPostId,
+                uri = Constants.unknownPostUri,
+                author =
+                    stubProfile(
+                        did = Constants.unknownAuthorId,
+                        handle = Constants.unknownAuthorHandle,
+                    ),
+                replyCount = 0,
+                repostCount = 0,
+                likeCount = 0,
+                quoteCount = 0,
+                bookmarkCount = 0,
+                indexedAt = Instant.DISTANT_PAST,
+                embed = null,
+                record = null,
+                viewerStats = null,
+                labels = emptyList(),
+                embeddedRecord = null,
+                viewerState = null,
+            )
 
-        private val LoadingAppliedLabels = AppliedLabels(
-            adultContentEnabled = false,
-            labels = emptyList(),
-            labelers = emptyList(),
-            preferenceLabelsVisibilityMap = emptyMap(),
-        )
+        private val LoadingAppliedLabels =
+            AppliedLabels(
+                adultContentEnabled = false,
+                labels = emptyList(),
+                labelers = emptyList(),
+                preferenceLabelsVisibilityMap = emptyMap(),
+            )
 
         val LoadingItems = (0..16).map { Loading() }
     }

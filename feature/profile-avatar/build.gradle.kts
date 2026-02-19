@@ -20,9 +20,8 @@ plugins {
     id("ui-module-convention")
     id("ksp-convention")
 }
-android {
-    namespace = "com.tunjid.heron.feature.profile.avatar"
-}
+
+android { namespace = "com.tunjid.heron.feature.profile.avatar" }
 
 kotlin {
     sourceSets {
@@ -34,10 +33,6 @@ kotlin {
                 implementation(libs.tunjid.composables)
             }
         }
-        commonTest {
-            dependencies {
-                implementation(kotlin("test"))
-            }
-        }
+        commonTest { dependencies { implementation(kotlin("test")) } }
     }
 }

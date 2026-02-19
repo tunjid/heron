@@ -28,9 +28,7 @@ import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.utilities.tidInstant
 import kotlin.time.Instant
 
-internal fun MultipleEntitySaver.add(
-    listView: ListView,
-) {
+internal fun MultipleEntitySaver.add(listView: ListView) {
     listView.creator.profileEntity().let(::add)
     listView.labels?.forEach(::add)
     add(
@@ -45,14 +43,11 @@ internal fun MultipleEntitySaver.add(
             purpose = listView.purpose.value,
             indexedAt = listView.indexedAt,
             createdAt = listView.uri.tidInstant ?: listView.indexedAt,
-        ),
+        )
     )
 }
 
-internal inline fun MultipleEntitySaver.add(
-    listView: ListViewBasic,
-    creator: () -> ProfileEntity,
-) {
+internal inline fun MultipleEntitySaver.add(listView: ListViewBasic, creator: () -> ProfileEntity) {
     val profileEntity = creator()
     add(profileEntity)
     add(
@@ -67,6 +62,6 @@ internal inline fun MultipleEntitySaver.add(
             purpose = listView.purpose.value,
             indexedAt = listView.indexedAt ?: Instant.DISTANT_PAST,
             createdAt = listView.uri.tidInstant ?: listView.indexedAt ?: Instant.DISTANT_PAST,
-        ),
+        )
     )
 }

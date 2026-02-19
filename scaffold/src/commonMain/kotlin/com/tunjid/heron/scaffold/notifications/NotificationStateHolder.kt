@@ -48,7 +48,8 @@ import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withTimeoutOrNull
 
-interface NotificationStateHolder : ActionStateMutator<NotificationAction, StateFlow<NotificationState>>
+interface NotificationStateHolder :
+    ActionStateMutator<NotificationAction, StateFlow<NotificationState>>
 
 data class NotificationState(
     val unreadCount: Long = 0L,
@@ -57,44 +58,35 @@ data class NotificationState(
     val processedNotificationRecordUris: Set<RecordUri> = emptySet(),
 )
 
-sealed class NotificationAction(
-    val key: String,
-) {
-    data class UpdatePermissions(
-        val hasNotificationPermissions: Boolean,
-    ) : NotificationAction(key = "UpdatePermissions")
+sealed class NotificationAction(val key: String) {
+    data class UpdatePermissions(val hasNotificationPermissions: Boolean) :
+        NotificationAction(key = "UpdatePermissions")
 
-    data class RegisterToken(
-        val token: String,
-    ) : NotificationAction(key = "RegisterToken")
+    data class RegisterToken(val token: String) : NotificationAction(key = "RegisterToken")
 
-    data class HandleNotification(
-        val payload: Map<String, String>,
-    ) : NotificationAction(key = "HandleNotification") {
-        val senderDid = payload[NotificationAtProtoSenderDid]
-            ?.let(::ProfileId)
+    data class HandleNotification(val payload: Map<String, String>) :
+        NotificationAction(key = "HandleNotification") {
+        val senderDid = payload[NotificationAtProtoSenderDid]?.let(::ProfileId)
 
-        val recordUri: RecordUri? = payload[NotificationAtProtoRecordUri]
-            ?.let { "${Uri.Host.AtProto.prefix}$it" }
-            ?.asRecordUriOrNull()
+        val recordUri: RecordUri? =
+            payload[NotificationAtProtoRecordUri]
+                ?.let { "${Uri.Host.AtProto.prefix}$it" }
+                ?.asRecordUriOrNull()
 
-        val reason: Notification.Reason? = payload[NotificationAtProtoReason]
-            ?.let { reasonString ->
+        val reason: Notification.Reason? =
+            payload[NotificationAtProtoReason]?.let { reasonString ->
                 Notification.Reason.entries.find { it.name.equals(reasonString, ignoreCase = true) }
             }
     }
 
-    data class NotificationProcessedOrDropped(
-        val recordUri: RecordUri,
-    ) : NotificationAction(key = "NotificationProcessedOrDropped")
+    data class NotificationProcessedOrDropped(val recordUri: RecordUri) :
+        NotificationAction(key = "NotificationProcessedOrDropped")
 
-    data class NotificationDismissed(
-        val dismissedAt: Instant,
-    ) : NotificationAction(key = "NotificationDismissed")
+    data class NotificationDismissed(val dismissedAt: Instant) :
+        NotificationAction(key = "NotificationDismissed")
 
-    data class ToggleUnreadNotificationsMonitor(
-        val monitor: Boolean,
-    ) : NotificationAction(key = "ToggleUnreadNotificationsMonitor")
+    data class ToggleUnreadNotificationsMonitor(val monitor: Boolean) :
+        NotificationAction(key = "ToggleUnreadNotificationsMonitor")
 
     data object RequestedNotificationPermission :
         NotificationAction(key = "RequestedNotificationPermission")
@@ -102,152 +94,143 @@ sealed class NotificationAction(
 
 @Inject
 class AppNotificationStateHolder(
-    @AppMainScope
-    appMainScope: CoroutineScope,
+    @AppMainScope appMainScope: CoroutineScope,
     notifier: Notifier,
     notificationsRepository: NotificationsRepository,
-) : NotificationStateHolder,
-    ActionStateMutator<NotificationAction, StateFlow<NotificationState>> by appMainScope.actionStateFlowMutator(
-        initialState = NotificationState(),
-        started = SharingStarted.Eagerly,
-        actionTransform = { actions ->
-            actions.toMutationStream(
-                keySelector = NotificationAction::key,
-            ) {
-                when (val action = type()) {
-                    is NotificationAction.UpdatePermissions -> action.flow.updateNotificationPermissions()
-                    is NotificationAction.HandleNotification -> action.flow.handleNotificationMutations(
-                        notifier = notifier,
-                        notificationsRepository = notificationsRepository,
-                    )
-                    is NotificationAction.RegisterToken -> action.flow.registerTokenMutations(
-                        currentState = { state() },
-                        notificationsRepository = notificationsRepository,
-                    )
-                    is NotificationAction.NotificationDismissed -> action.flow.notificationDismissalMutations(
-                        notificationsRepository = notificationsRepository,
-                    )
-                    is NotificationAction.NotificationProcessedOrDropped -> action.flow.notificationProcessedOrDroppedMutations()
-                    is NotificationAction.RequestedNotificationPermission -> action.flow.markNotificationPermissionRequestedMutations(
-                        notificationsRepository = notificationsRepository,
-                    )
-                    is NotificationAction.ToggleUnreadNotificationsMonitor -> action.flow.monitorUnreadCountMutations(
-                        notificationsRepository = notificationsRepository,
-                    )
+) :
+    NotificationStateHolder,
+    ActionStateMutator<NotificationAction, StateFlow<NotificationState>> by appMainScope
+        .actionStateFlowMutator(
+            initialState = NotificationState(),
+            started = SharingStarted.Eagerly,
+            actionTransform = { actions ->
+                actions.toMutationStream(keySelector = NotificationAction::key) {
+                    when (val action = type()) {
+                        is NotificationAction.UpdatePermissions ->
+                            action.flow.updateNotificationPermissions()
+                        is NotificationAction.HandleNotification ->
+                            action.flow.handleNotificationMutations(
+                                notifier = notifier,
+                                notificationsRepository = notificationsRepository,
+                            )
+                        is NotificationAction.RegisterToken ->
+                            action.flow.registerTokenMutations(
+                                currentState = { state() },
+                                notificationsRepository = notificationsRepository,
+                            )
+                        is NotificationAction.NotificationDismissed ->
+                            action.flow.notificationDismissalMutations(
+                                notificationsRepository = notificationsRepository
+                            )
+                        is NotificationAction.NotificationProcessedOrDropped ->
+                            action.flow.notificationProcessedOrDroppedMutations()
+                        is NotificationAction.RequestedNotificationPermission ->
+                            action.flow.markNotificationPermissionRequestedMutations(
+                                notificationsRepository = notificationsRepository
+                            )
+                        is NotificationAction.ToggleUnreadNotificationsMonitor ->
+                            action.flow.monitorUnreadCountMutations(
+                                notificationsRepository = notificationsRepository
+                            )
+                    }
                 }
-            }
-        },
-    )
+            },
+        )
 
 private fun Flow<NotificationAction.ToggleUnreadNotificationsMonitor>.monitorUnreadCountMutations(
-    notificationsRepository: NotificationsRepository,
+    notificationsRepository: NotificationsRepository
 ): Flow<Mutation<NotificationState>> =
-    distinctUntilChanged()
-        .mapLatestToManyMutations { action ->
-            if (action.monitor) emitAll(
-                notificationsRepository.unreadCount
-                    .mapToMutation { copy(unreadCount = it) },
-            )
-        }
-
-private fun Flow<NotificationAction.UpdatePermissions>.updateNotificationPermissions(): Flow<Mutation<NotificationState>> =
-    mapToMutation {
-        copy(hasNotificationPermissions = it.hasNotificationPermissions)
+    distinctUntilChanged().mapLatestToManyMutations { action ->
+        if (action.monitor)
+            emitAll(notificationsRepository.unreadCount.mapToMutation { copy(unreadCount = it) })
     }
+
+private fun Flow<NotificationAction.UpdatePermissions>.updateNotificationPermissions():
+    Flow<Mutation<NotificationState>> = mapToMutation {
+    copy(hasNotificationPermissions = it.hasNotificationPermissions)
+}
 
 private fun Flow<NotificationAction.RegisterToken>.registerTokenMutations(
     currentState: suspend () -> NotificationState,
     notificationsRepository: NotificationsRepository,
-): Flow<Mutation<NotificationState>> =
-    mapLatestToManyMutations { action ->
-        // TODO: This should be enqueued, but the write queue does not currently
-        //  support updating a queued write to something else. For now, just write
-        //  using the app scope and fix in a follow up PR.
-        val state = currentState()
-        if (state.hasNotificationPermissions && action.token != state.notificationToken) {
-            val tokenRegistrationOutcome = notificationsRepository.registerPushNotificationToken(
-                action.token,
-            )
-            when (tokenRegistrationOutcome) {
-                is Outcome.Failure -> Unit
-                Outcome.Success -> emit { copy(notificationToken = action.token) }
-            }
-            logcat(LogPriority.INFO) {
-                "Push notification token registration outcome: $tokenRegistrationOutcome"
-            }
+): Flow<Mutation<NotificationState>> = mapLatestToManyMutations { action ->
+    // TODO: This should be enqueued, but the write queue does not currently
+    //  support updating a queued write to something else. For now, just write
+    //  using the app scope and fix in a follow up PR.
+    val state = currentState()
+    if (state.hasNotificationPermissions && action.token != state.notificationToken) {
+        val tokenRegistrationOutcome =
+            notificationsRepository.registerPushNotificationToken(action.token)
+        when (tokenRegistrationOutcome) {
+            is Outcome.Failure -> Unit
+            Outcome.Success -> emit { copy(notificationToken = action.token) }
+        }
+        logcat(LogPriority.INFO) {
+            "Push notification token registration outcome: $tokenRegistrationOutcome"
         }
     }
+}
 
 private fun Flow<NotificationAction.HandleNotification>.handleNotificationMutations(
     notifier: Notifier,
     notificationsRepository: NotificationsRepository,
 ): Flow<Mutation<NotificationState>> =
-    buffer(NotificationProcessingBufferSize)
-        .flatMapMerge(NotificationProcessingMaxConcurrencyLimit) { action ->
+    buffer(NotificationProcessingBufferSize).flatMapMerge(
+        NotificationProcessingMaxConcurrencyLimit
+    ) { action ->
+        val senderId = action.senderDid ?: return@flatMapMerge emptyFlow()
+        val recordUri = action.recordUri ?: return@flatMapMerge emptyFlow()
+        val reason = action.reason ?: return@flatMapMerge emptyFlow()
 
-            val senderId = action.senderDid ?: return@flatMapMerge emptyFlow()
-            val recordUri = action.recordUri ?: return@flatMapMerge emptyFlow()
-            val reason = action.reason ?: return@flatMapMerge emptyFlow()
-
-            flow {
-                val result = withTimeoutOrNull(
-                    AppState.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS,
-                ) {
+        flow {
+            val result =
+                withTimeoutOrNull(AppState.NOTIFICATION_PROCESSING_TIMEOUT_SECONDS) {
                     notificationsRepository.resolvePushNotification(
                         NotificationsQuery.Push(
                             senderId = senderId,
                             recordUri = recordUri,
                             reason = reason,
-                        ),
-                    )
-                }
-
-                when {
-                    result == null ->
-                        logcat(LogPriority.WARN) {
-                            "Notification processing timed out for $recordUri"
-                        }
-
-                    result.isFailure ->
-                        logcat(LogPriority.DEBUG) {
-                            "Notification dropped: ${result.exceptionOrNull()?.message}"
-                        }
-
-                    result.isSuccess ->
-                        notifier.displayNotifications(
-                            notifications = listOf(result.getOrThrow()),
                         )
-                }
-
-                emit {
-                    copy(
-                        processedNotificationRecordUris =
-                        processedNotificationRecordUris + recordUri,
                     )
                 }
+
+            when {
+                result == null ->
+                    logcat(LogPriority.WARN) { "Notification processing timed out for $recordUri" }
+
+                result.isFailure ->
+                    logcat(LogPriority.DEBUG) {
+                        "Notification dropped: ${result.exceptionOrNull()?.message}"
+                    }
+
+                result.isSuccess ->
+                    notifier.displayNotifications(notifications = listOf(result.getOrThrow()))
+            }
+
+            emit {
+                copy(processedNotificationRecordUris = processedNotificationRecordUris + recordUri)
             }
         }
+    }
 
 private fun Flow<NotificationAction.NotificationDismissed>.notificationDismissalMutations(
-    notificationsRepository: NotificationsRepository,
-): Flow<Mutation<NotificationState>> =
-    mapLatestToManyMutations {
-        notificationsRepository.markRead(it.dismissedAt)
-    }
+    notificationsRepository: NotificationsRepository
+): Flow<Mutation<NotificationState>> = mapLatestToManyMutations {
+    notificationsRepository.markRead(it.dismissedAt)
+}
 
-private fun Flow<NotificationAction.NotificationProcessedOrDropped>.notificationProcessedOrDroppedMutations(): Flow<Mutation<NotificationState>> =
+private fun Flow<NotificationAction.NotificationProcessedOrDropped>
+    .notificationProcessedOrDroppedMutations(): Flow<Mutation<NotificationState>> =
     mapToMutation { action ->
-        copy(
-            processedNotificationRecordUris = processedNotificationRecordUris - action.recordUri,
-        )
+        copy(processedNotificationRecordUris = processedNotificationRecordUris - action.recordUri)
     }
 
-private fun Flow<NotificationAction.RequestedNotificationPermission>.markNotificationPermissionRequestedMutations(
-    notificationsRepository: NotificationsRepository,
-): Flow<Mutation<NotificationState>> =
-    mapLatestToManyMutations {
-        notificationsRepository.markNotificationPermissionsRequested()
-    }
+private fun Flow<NotificationAction.RequestedNotificationPermission>
+    .markNotificationPermissionRequestedMutations(
+    notificationsRepository: NotificationsRepository
+): Flow<Mutation<NotificationState>> = mapLatestToManyMutations {
+    notificationsRepository.markNotificationPermissionsRequested()
+}
 
 private const val NotificationAtProtoSenderDid = "senderDid"
 private const val NotificationAtProtoRecordUri = "recordUri"

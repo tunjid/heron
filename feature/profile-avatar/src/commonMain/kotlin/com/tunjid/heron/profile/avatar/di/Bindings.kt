@@ -65,24 +65,15 @@ import dev.zacsweers.metro.StringKey
 
 private const val RoutePattern = "/profile/{profileHandleOrId}/avatar"
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-    children = listOfNotNull(
-        routeParams.decodeReferringRoute(),
-    ),
-)
+private fun createRoute(routeParams: RouteParams) =
+    routeOf(params = routeParams, children = listOfNotNull(routeParams.decodeReferringRoute()))
 
-internal val Route.profileHandleOrId by mappedRoutePath(
-    mapper = ::ProfileHandleOrId,
-)
+internal val Route.profileHandleOrId by mappedRoutePath(mapper = ::ProfileHandleOrId)
 
 internal val Route.avatarSharedElementKey by optionalRouteQuery()
 
-internal val Route.profile: Profile? by optionalMappedRouteQuery(
-    mapper = String::fromBase64EncodedUrl,
-)
+internal val Route.profile: Profile? by
+    optionalMappedRouteQuery(mapper = String::fromBase64EncodedUrl)
 
 @BindingContainer
 object ProfileAvatarNavigationBindings {
@@ -91,10 +82,7 @@ object ProfileAvatarNavigationBindings {
     @IntoMap
     @StringKey(RoutePattern)
     fun provideRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RoutePattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = RoutePattern, routeMapper = ::createRoute)
 }
 
 @BindingContainer
@@ -109,67 +97,63 @@ class ProfileAvatarBindings(
     fun providePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(routeParser = routeParser, viewModelInitializer = viewModelInitializer)
 
     private fun routePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = threePaneEntry<Route>(
-        contentTransform = predictiveBackContentTransformProvider(),
-        paneMapping = { route ->
-            mapOf(
-                ThreePane.Primary to route,
-                ThreePane.Secondary to route.children.firstOrNull() as? Route,
-            )
-        },
-        render = { route ->
-            val viewModel = viewModel<ActualProfileAvatarViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = routeParser.hydrate(route),
+    ) =
+        threePaneEntry<Route>(
+            contentTransform = predictiveBackContentTransformProvider(),
+            paneMapping = { route ->
+                mapOf(
+                    ThreePane.Primary to route,
+                    ThreePane.Secondary to route.children.firstOrNull() as? Route,
                 )
-            }
-            val state by viewModel.state.collectAsStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
+            },
+            render = { route ->
+                val viewModel =
+                    viewModel<ActualProfileAvatarViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = routeParser.hydrate(route),
+                        )
+                    }
+                val state by viewModel.state.collectAsStateWithLifecycle()
+                val paneScaffoldState = rememberPaneScaffoldState()
 
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                )
+                val bottomNavigationNestedScrollConnection =
+                    bottomNavigationNestedScrollConnection(
+                        isCompact = paneScaffoldState.prefersCompactBottomNav
+                    )
 
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
+                paneScaffoldState.PaneScaffold(
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+                            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                                nestedScroll(bottomNavigationNestedScrollConnection)
+                            },
+                    containerColor = Color.Transparent,
+                    showNavigation = true,
+                    topBar = {
+                        PoppableDestinationTopAppBar(
+                            transparencyFactor = ::fullAppbarTransparency,
+                            onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        )
                     },
-                containerColor = Color.Transparent,
-                showNavigation = true,
-                topBar = {
-                    PoppableDestinationTopAppBar(
-                        transparencyFactor = ::fullAppbarTransparency,
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
-                    )
-                },
-                navigationRail = {
-                    PaneNavigationRail()
-                },
-                onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
-                },
-                content = {
-                    AvatarScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = viewModel.accept,
-                    )
-                    SecondaryPaneCloseBackHandler()
-                },
-            )
-        },
-    )
+                    navigationRail = { PaneNavigationRail() },
+                    onSnackBarMessageConsumed = { viewModel.accept(Action.SnackbarDismissed(it)) },
+                    content = {
+                        AvatarScreen(
+                            paneScaffoldState = this,
+                            state = state,
+                            actions = viewModel.accept,
+                        )
+                        SecondaryPaneCloseBackHandler()
+                    },
+                )
+            },
+        )
 }

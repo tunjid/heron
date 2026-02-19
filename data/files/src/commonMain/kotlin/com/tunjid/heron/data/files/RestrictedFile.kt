@@ -19,9 +19,7 @@ package com.tunjid.heron.data.files
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.path
 
-/**
- * A class representing limited access to a file on the OS.
- */
+/** A class representing limited access to a file on the OS. */
 sealed class RestrictedFile {
     abstract val path: String?
 
@@ -36,10 +34,11 @@ sealed class RestrictedFile {
             get() = file.path
 
         val hasSize
-            get() = when (this) {
-                is Photo -> width != 0 && height != 0
-                is Video -> width != 0 && height != 0
-            }
+            get() =
+                when (this) {
+                    is Photo -> width != 0 && height != 0
+                    is Video -> width != 0 && height != 0
+                }
 
         sealed class Photo : Media() {
             abstract val altText: String?
@@ -63,58 +62,35 @@ sealed class RestrictedFile {
             ) : Video()
         }
 
-        fun withSize(
-            width: Int,
-            height: Int,
-        ) = when (this) {
-            is Photo.File -> Photo.File(
-                file = file,
-                width = width,
-                height = height,
-                altText = altText,
-            )
+        fun withSize(width: Int, height: Int) =
+            when (this) {
+                is Photo.File ->
+                    Photo.File(file = file, width = width, height = height, altText = altText)
 
-            is Video.File -> Video.File(
-                file = file,
-                width = width,
-                height = height,
-                altText = altText,
-            )
-        }
+                is Video.File ->
+                    Video.File(file = file, width = width, height = height, altText = altText)
+            }
 
-        fun withAltText(
-            altText: String?,
-        ) = when (this) {
-            is Photo.File -> Photo.File(
-                file = file,
-                width = width,
-                height = height,
-                altText = altText,
-            )
+        fun withAltText(altText: String?) =
+            when (this) {
+                is Photo.File ->
+                    Photo.File(file = file, width = width, height = height, altText = altText)
 
-            is Video.File -> Video.File(
-                file = file,
-                width = width,
-                height = height,
-                altText = altText,
-            )
-        }
+                is Video.File ->
+                    Video.File(file = file, width = width, height = height, altText = altText)
+            }
     }
 
     companion object {
-        fun photo(
-            file: PlatformFile,
-        ): Media.Photo = Media.Photo.File(file)
+        fun photo(file: PlatformFile): Media.Photo = Media.Photo.File(file)
 
-        fun video(
-            file: PlatformFile,
-        ): Media.Video = Media.Video.File(file)
+        fun video(file: PlatformFile): Media.Video = Media.Video.File(file)
     }
 }
 
 /**
- * A model used for displaying this photo in the UI.
- * The return type is deliberately [Any] not to leak the backing API
+ * A model used for displaying this photo in the UI. The return type is deliberately [Any] not to
+ * leak the backing API
  */
 val RestrictedFile.Media.Photo.uiDisplayModel: Any
     get() = file

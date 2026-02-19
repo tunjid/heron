@@ -89,36 +89,30 @@ internal fun EditProfileScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val avatarPicker = rememberMediaPicker(
-        mediaType = MediaType.Photo,
-        maxItems = 1,
-    ) { mediaItems ->
-        mediaItems
-            .filterIsInstance<RestrictedFile.Media.Photo>()
-            .firstOrNull()
-            ?.let { actions(Action.AvatarPicked(it)) }
-    }
+    val avatarPicker =
+        rememberMediaPicker(mediaType = MediaType.Photo, maxItems = 1) { mediaItems ->
+            mediaItems.filterIsInstance<RestrictedFile.Media.Photo>().firstOrNull()?.let {
+                actions(Action.AvatarPicked(it))
+            }
+        }
 
-    val bannerPicker = rememberMediaPicker(
-        mediaType = MediaType.Photo,
-        maxItems = 1,
-    ) { mediaItems ->
-        mediaItems
-            .filterIsInstance<RestrictedFile.Media.Photo>()
-            .firstOrNull()
-            ?.let { actions(Action.BannerPicked(it)) }
-    }
+    val bannerPicker =
+        rememberMediaPicker(mediaType = MediaType.Photo, maxItems = 1) { mediaItems ->
+            mediaItems.filterIsInstance<RestrictedFile.Media.Photo>().firstOrNull()?.let {
+                actions(Action.BannerPicked(it))
+            }
+        }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .imePadding()
-            .windowInsetsPadding(WindowInsets.navigationBars)
-            .verticalScroll(rememberScrollState()),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .imePadding()
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .verticalScroll(rememberScrollState())
     ) {
         EditProfileHeader(
-            modifier = Modifier
-                .zIndex(1f),
+            modifier = Modifier.zIndex(1f),
             paneScaffoldState = paneScaffoldState,
             avatarSharedElementKey = state.avatarSharedElementKey,
             profile = state.profile,
@@ -128,57 +122,45 @@ internal fun EditProfileScreen(
             bannerFile = state.updatedBanner,
         )
         val surfaceColor = MaterialTheme.colorScheme.surface
-        val bioTabColorState = animateColorAsState(
-            if (paneScaffoldState.inPredictiveBack) Color.Transparent
-            else surfaceColor,
-        )
+        val bioTabColorState =
+            animateColorAsState(
+                if (paneScaffoldState.inPredictiveBack) Color.Transparent else surfaceColor
+            )
         val focusManager = LocalFocusManager.current
         with(paneScaffoldState) {
             PaneStickySharedElement(
-                sharedContentState = rememberSharedContentState(
-                    key = state.avatarSharedElementKey.withProfileBioTabSharedElementPrefix(),
-                ),
+                sharedContentState =
+                    rememberSharedContentState(
+                        key = state.avatarSharedElementKey.withProfileBioTabSharedElementPrefix()
+                    ),
                 zIndexInOverlay = SurfaceZIndex,
             ) {
                 Box(
-                    Modifier
-                        .zIndex(0f)
+                    Modifier.zIndex(0f)
                         .profileBioTabBackground(bioTabColorState::value)
-                        .fillParentAxisIfFixedOrWrap(),
+                        .fillParentAxisIfFixedOrWrap()
                 )
             }
         }
         Column(
-            modifier = Modifier
-                .padding(
-                    horizontal = 16.dp,
-                ),
+            modifier = Modifier.padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             Spacer(Modifier.height(24.dp))
             state.fields.forEach { field ->
                 key(field.id) {
                     FormField(
-                        modifier = Modifier
-                            .fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         field = field,
                         onValueChange = { field, newValue ->
-                            actions(
-                                Action.FieldChanged(
-                                    id = field.id,
-                                    text = newValue,
-                                ),
-                            )
+                            actions(Action.FieldChanged(id = field.id, text = newValue))
                         },
                         keyboardActions = {
                             when (it.id) {
-                                DisplayName -> focusManager.moveFocus(
-                                    focusDirection = FocusDirection.Next,
-                                )
+                                DisplayName ->
+                                    focusManager.moveFocus(focusDirection = FocusDirection.Next)
 
-                                Description -> actions(
-                                    state.saveProfileAction(),
-                                )
+                                Description -> actions(state.saveProfileAction())
                             }
                         },
                     )
@@ -199,16 +181,10 @@ fun EditProfileHeader(
     onAvatarEditClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .wrapContentHeight(),
-    ) {
+    Box(modifier = modifier.fillMaxWidth().wrapContentHeight()) {
         ProfileBannerEditableImage(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(BannerAspectRatio)
-                .align(Alignment.TopCenter),
+            modifier =
+                Modifier.fillMaxWidth().aspectRatio(BannerAspectRatio).align(Alignment.TopCenter),
             paneScaffoldState = paneScaffoldState,
             avatarSharedElementKey = avatarSharedElementKey,
             profile = profile,
@@ -217,10 +193,8 @@ fun EditProfileHeader(
         )
 
         ProfileAvatarEditableImage(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .offset(x = 16.dp, y = 40.dp)
-                .zIndex(2f),
+            modifier =
+                Modifier.align(Alignment.BottomStart).offset(x = 16.dp, y = 40.dp).zIndex(2f),
             paneScaffoldState = paneScaffoldState,
             avatarSharedElementKey = avatarSharedElementKey,
             profile = profile,
@@ -242,70 +216,64 @@ fun ProfileAvatarEditableImage(
     size: Dp,
     modifier: Modifier = Modifier,
     onEditClick: () -> Unit,
-) = with(paneScaffoldState) {
-    Box(
-        modifier = modifier
-            .size(size),
-        contentAlignment = Alignment.BottomEnd,
-    ) {
-        PaneStickySharedElement(
-            modifier = Modifier
-                .matchParentSize(),
-            sharedContentState = rememberSharedContentState(
-                key = avatarSharedElementKey.withProfileAvatarHaloSharedElementPrefix(),
-            ),
-            zIndexInOverlay = AvatarHaloZIndex,
-        ) {
-            Box(
-                Modifier
-                    .background(
-                        color = MaterialTheme.colorScheme.surface,
-                        shape = CircleShape,
-                    )
-                    .fillParentAxisIfFixedOrWrap(),
-            )
-        }
-        paneScaffoldState.UpdatedMovableStickySharedElementOf(
-            sharedContentState = with(paneScaffoldState) {
-                rememberSharedContentState(
-                    key = avatarSharedElementKey,
+) =
+    with(paneScaffoldState) {
+        Box(modifier = modifier.size(size), contentAlignment = Alignment.BottomEnd) {
+            PaneStickySharedElement(
+                modifier = Modifier.matchParentSize(),
+                sharedContentState =
+                    rememberSharedContentState(
+                        key = avatarSharedElementKey.withProfileAvatarHaloSharedElementPrefix()
+                    ),
+                zIndexInOverlay = AvatarHaloZIndex,
+            ) {
+                Box(
+                    Modifier.background(
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = CircleShape,
+                        )
+                        .fillParentAxisIfFixedOrWrap()
                 )
-            },
-            zIndexInOverlay = AvatarZIndex,
-            modifier = Modifier
-                .padding(4.dp)
-                .matchParentSize()
-                .clip(shape)
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-            state = rememberEditableImageArgs(
-                profile = profile,
-                localFile = localFile,
-                remoteUri = profile.avatar?.uri,
-                shape = RoundedPolygonShape.Circle,
-            ),
-            sharedElement = { state, modifier ->
-                AsyncImage(state, modifier)
-            },
-        )
-
-        IconButton(
-            onClick = onEditClick,
-            modifier = Modifier
-                .offset(x = (-4).dp, y = (-4).dp)
-                .shadow(elevation = 4.dp, shape = CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceBright, CircleShape)
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
-                .size(28.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Edit,
-                contentDescription = stringResource(Res.string.edit_avatar_icon),
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(18.dp),
+            }
+            paneScaffoldState.UpdatedMovableStickySharedElementOf(
+                sharedContentState =
+                    with(paneScaffoldState) {
+                        rememberSharedContentState(key = avatarSharedElementKey)
+                    },
+                zIndexInOverlay = AvatarZIndex,
+                modifier =
+                    Modifier.padding(4.dp)
+                        .matchParentSize()
+                        .clip(shape)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                state =
+                    rememberEditableImageArgs(
+                        profile = profile,
+                        localFile = localFile,
+                        remoteUri = profile.avatar?.uri,
+                        shape = RoundedPolygonShape.Circle,
+                    ),
+                sharedElement = { state, modifier -> AsyncImage(state, modifier) },
             )
+
+            IconButton(
+                onClick = onEditClick,
+                modifier =
+                    Modifier.offset(x = (-4).dp, y = (-4).dp)
+                        .shadow(elevation = 4.dp, shape = CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceBright, CircleShape)
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+                        .size(28.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Edit,
+                    contentDescription = stringResource(Res.string.edit_avatar_icon),
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
         }
     }
-}
 
 @Composable
 fun ProfileBannerEditableImage(
@@ -316,39 +284,34 @@ fun ProfileBannerEditableImage(
     onEditClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.BottomEnd,
-    ) {
+    Box(modifier = modifier, contentAlignment = Alignment.BottomEnd) {
         paneScaffoldState.UpdatedMovableStickySharedElementOf(
-            sharedContentState = with(paneScaffoldState) {
-                rememberSharedContentState(
-                    key = avatarSharedElementKey.withProfileBannerSharedElementPrefix(),
-                )
-            },
+            sharedContentState =
+                with(paneScaffoldState) {
+                    rememberSharedContentState(
+                        key = avatarSharedElementKey.withProfileBannerSharedElementPrefix()
+                    )
+                },
             zIndexInOverlay = BannerZIndex,
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceVariant),
-            state = rememberEditableImageArgs(
-                profile = profile,
-                localFile = localFile,
-                remoteUri = profile.banner?.uri,
-                shape = RoundedPolygonShape.Rectangle,
-            ),
-            sharedElement = { state, modifier ->
-                AsyncImage(state, modifier)
-            },
+            modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant),
+            state =
+                rememberEditableImageArgs(
+                    profile = profile,
+                    localFile = localFile,
+                    remoteUri = profile.banner?.uri,
+                    shape = RoundedPolygonShape.Rectangle,
+                ),
+            sharedElement = { state, modifier -> AsyncImage(state, modifier) },
         )
 
         IconButton(
             onClick = onEditClick,
-            modifier = Modifier
-                .padding(8.dp)
-                .shadow(elevation = 4.dp, shape = CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceBright, CircleShape)
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
-                .size(30.dp),
+            modifier =
+                Modifier.padding(8.dp)
+                    .shadow(elevation = 4.dp, shape = CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceBright, CircleShape)
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+                    .size(30.dp),
         ) {
             Icon(
                 imageVector = Icons.Rounded.Edit,

@@ -19,36 +19,26 @@ package com.tunjid.heron.data.core.types
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.ProfileViewerState
 
-class UnresolvableProfileException(
-    profileId: Id.Profile,
-) : IllegalArgumentException("The profile with $profileId is not resolvable")
+class UnresolvableProfileException(profileId: Id.Profile) :
+    IllegalArgumentException("The profile with $profileId is not resolvable")
 
-class UnresolvableRecordException(
-    uri: RecordUri,
-) : IllegalArgumentException("The record URI $uri is not resolvable")
+class UnresolvableRecordException(uri: RecordUri) :
+    IllegalArgumentException("The record URI $uri is not resolvable")
 
-class RestrictedProfileException(
-    profileId: ProfileId,
-    profileViewerState: ProfileViewerState,
-) : IllegalArgumentException("The profile with did $profileId is restricted $profileViewerState")
+class RestrictedProfileException(profileId: ProfileId, profileViewerState: ProfileViewerState) :
+    IllegalArgumentException("The profile with did $profileId is restricted $profileViewerState")
 
-class UnknownNotificationException(
-    uri: RecordUri,
-) : IllegalArgumentException("The record URI $uri does not have a known notification")
+class UnknownNotificationException(uri: RecordUri) :
+    IllegalArgumentException("The record URI $uri does not have a known notification")
 
-class NotificationFilteredOutException(
-    val reason: Notification.Reason,
-) : IllegalArgumentException("Notification filtered out by user preferences: $reason")
+class NotificationFilteredOutException(val reason: Notification.Reason) :
+    IllegalArgumentException("Notification filtered out by user preferences: $reason")
 
-class MutedThreadException(
-    postUri: PostUri,
-) : IllegalArgumentException("The post with URI $postUri has been muted")
+class MutedThreadException(postUri: PostUri) :
+    IllegalArgumentException("The post with URI $postUri has been muted")
 
-class RecordCreationException(
-    profileId: ProfileId,
-    collection: String,
-) : IllegalArgumentException("Record creation for $profileId in collection $collection failed")
+class RecordCreationException(profileId: ProfileId, collection: String) :
+    IllegalArgumentException("Record creation for $profileId in collection $collection failed")
 
-class SessionSwitchException(
-    profileId: Id.Profile,
-) : Exception("Unable to switch sessions to $profileId")
+class SessionSwitchException(profileId: Id.Profile) :
+    Exception("Unable to switch sessions to $profileId")

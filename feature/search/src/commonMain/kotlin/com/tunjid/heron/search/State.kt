@@ -47,21 +47,16 @@ enum class ScreenLayout {
     GeneralSearchResults,
 }
 
-internal typealias SearchResultStateHolder = ActionStateMutator<SearchState.Tile, out StateFlow<SearchState>>
+internal typealias SearchResultStateHolder =
+    ActionStateMutator<SearchState.Tile, out StateFlow<SearchState>>
 
 sealed interface SearchResult {
 
-    data class OfProfile(
-        val profileWithViewerState: ProfileWithViewerState,
-    ) : SearchResult
+    data class OfProfile(val profileWithViewerState: ProfileWithViewerState) : SearchResult
 
-    data class OfFeedGenerator(
-        val feedGenerator: FeedGenerator,
-    ) : SearchResult
+    data class OfFeedGenerator(val feedGenerator: FeedGenerator) : SearchResult
 
-    data class OfPost(
-        val timelineItem: TimelineItem,
-    ) : SearchResult
+    data class OfPost(val timelineItem: TimelineItem) : SearchResult
 }
 
 val SearchResult.OfPost.id: String
@@ -72,34 +67,32 @@ val SearchResult.OfPost.canAutoPlayVideo: Boolean
 
 sealed class SearchState {
     data class OfPosts(
-        override val tilingData: TilingState.Data<SearchQuery.OfPosts, SearchResult.OfPost>,
-    ) : SearchState(),
-        TilingState<SearchQuery.OfPosts, SearchResult.OfPost>
+        override val tilingData: TilingState.Data<SearchQuery.OfPosts, SearchResult.OfPost>
+    ) : SearchState(), TilingState<SearchQuery.OfPosts, SearchResult.OfPost>
 
     data class OfProfiles(
-        override val tilingData: TilingState.Data<SearchQuery.OfProfiles, SearchResult.OfProfile>,
-    ) : SearchState(),
-        TilingState<SearchQuery.OfProfiles, SearchResult.OfProfile>
+        override val tilingData: TilingState.Data<SearchQuery.OfProfiles, SearchResult.OfProfile>
+    ) : SearchState(), TilingState<SearchQuery.OfProfiles, SearchResult.OfProfile>
 
     data class OfFeedGenerators(
-        override val tilingData: TilingState.Data<SearchQuery.OfFeedGenerators, SearchResult.OfFeedGenerator>,
-    ) : SearchState(),
-        TilingState<SearchQuery.OfFeedGenerators, SearchResult.OfFeedGenerator>
+        override val tilingData:
+            TilingState.Data<SearchQuery.OfFeedGenerators, SearchResult.OfFeedGenerator>
+    ) : SearchState(), TilingState<SearchQuery.OfFeedGenerators, SearchResult.OfFeedGenerator>
 
-    data class Tile(
-        val tilingAction: TilingState.Action,
-    )
+    data class Tile(val tilingAction: TilingState.Action)
 }
 
 val SearchState.key
-    get() = when (this) {
-        is SearchState.OfFeedGenerators -> "feed-generators"
-        is SearchState.OfPosts -> when (tilingData.currentQuery) {
-            is OfPosts.Latest -> "latest-posts"
-            is OfPosts.Top -> "top-posts"
+    get() =
+        when (this) {
+            is SearchState.OfFeedGenerators -> "feed-generators"
+            is SearchState.OfPosts ->
+                when (tilingData.currentQuery) {
+                    is OfPosts.Latest -> "latest-posts"
+                    is OfPosts.Top -> "top-posts"
+                }
+            is SearchState.OfProfiles -> "profiles"
         }
-        is SearchState.OfProfiles -> "profiles"
-    }
 
 val SearchState.sharedElementPrefix
     get() = key
@@ -113,63 +106,42 @@ data class State(
     val suggestedProfileCategory: String? = null,
     val isQueryEditable: Boolean = true,
     val timelineRecordUrisToPinnedStatus: Map<RecordUri?, Boolean> = emptyMap(),
-    @Transient
-    val preferences: Preferences = Preferences.EmptyPreferences,
+    @Transient val preferences: Preferences = Preferences.EmptyPreferences,
     @Transient
     val categoriesToSuggestedProfiles: Map<String?, List<ProfileWithViewerState>> = emptyMap(),
-    @Transient
-    val recentConversations: List<Conversation> = emptyList(),
-    @Transient
-    val recentLists: List<FeedList> = emptyList(),
-    @Transient
-    val starterPacksWithMembers: List<SuggestedStarterPack> = emptyList(),
-    @Transient
-    val feedGenerators: List<FeedGenerator> = emptyList(),
-    @Transient
-    val searchStateHolders: List<SearchResultStateHolder> = emptyList(),
-    @Transient
-    val autoCompletedProfiles: List<SearchResult.OfProfile> = emptyList(),
-    @Transient
-    val messages: List<Memo> = emptyList(),
+    @Transient val recentConversations: List<Conversation> = emptyList(),
+    @Transient val recentLists: List<FeedList> = emptyList(),
+    @Transient val starterPacksWithMembers: List<SuggestedStarterPack> = emptyList(),
+    @Transient val feedGenerators: List<FeedGenerator> = emptyList(),
+    @Transient val searchStateHolders: List<SearchResultStateHolder> = emptyList(),
+    @Transient val autoCompletedProfiles: List<SearchResult.OfProfile> = emptyList(),
+    @Transient val messages: List<Memo> = emptyList(),
 )
 
 sealed class Action(val key: String) {
 
     sealed class Search : Action(key = "Search") {
-        data class OnSearchQueryChanged(
-            val query: String,
-        ) : Search()
+        data class OnSearchQueryChanged(val query: String) : Search()
 
-        data class OnSearchQueryConfirmed(
-            val isLocalOnly: Boolean,
-        ) : Search()
+        data class OnSearchQueryConfirmed(val isLocalOnly: Boolean) : Search()
     }
 
-    data class FetchSuggestedProfiles(
-        val category: String? = null,
-    ) : Action(key = "FetchSuggestedProfiles")
+    data class FetchSuggestedProfiles(val category: String? = null) :
+        Action(key = "FetchSuggestedProfiles")
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
+    data class UpdateMutedWord(val mutedWordPreference: List<MutedWordPreference>) :
+        Action(key = "UpdateMutedWord")
 
-    data class BlockAccount(
-        val signedInProfileId: ProfileId,
-        val profileId: ProfileId,
-    ) : Action(key = "BlockAccount")
+    data class BlockAccount(val signedInProfileId: ProfileId, val profileId: ProfileId) :
+        Action(key = "BlockAccount")
 
-    data class MuteAccount(
-        val signedInProfileId: ProfileId,
-        val profileId: ProfileId,
-    ) : Action(key = "MuteAccount")
+    data class MuteAccount(val signedInProfileId: ProfileId, val profileId: ProfileId) :
+        Action(key = "MuteAccount")
 
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
+    data class SendPostInteraction(val interaction: Post.Interaction) :
+        Action(key = "SendPostInteraction")
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
     data class ToggleViewerState(
         val signedInProfileId: ProfileId,
@@ -178,21 +150,16 @@ sealed class Action(val key: String) {
         val followedBy: FollowUri?,
     ) : Action(key = "ToggleViewerState")
 
-    data class UpdateFeedGeneratorStatus(
-        val update: Timeline.Update,
-    ) : Action(key = "UpdateFeedGeneratorStatus")
+    data class UpdateFeedGeneratorStatus(val update: Timeline.Update) :
+        Action(key = "UpdateFeedGeneratorStatus")
 
     data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
 
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(),
-            NavigationAction by delegate
+        data class To(val delegate: NavigationAction.Destination) :
+            Navigate(), NavigationAction by delegate
     }
 }

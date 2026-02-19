@@ -20,7 +20,7 @@ import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 fun Project.configureKotlinMultiplatform(
-    kotlinMultiplatformExtension: KotlinMultiplatformExtension,
+    kotlinMultiplatformExtension: KotlinMultiplatformExtension
 ) {
     kotlinMultiplatformExtension.apply {
         androidTarget()
@@ -45,9 +45,7 @@ fun Project.configureKotlinMultiplatform(
             }
 
             named("commonMain") {
-                dependencies {
-                    implementation(libs.compose.multiplatform.runtime)
-                }
+                dependencies { implementation(libs.compose.multiplatform.runtime) }
             }
         }
         configureKotlinJvm()

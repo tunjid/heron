@@ -33,40 +33,39 @@ import kotlin.time.Instant
 
 @Entity(
     tableName = "notifications",
-    primaryKeys = [
-        "uri",
-        "ownerId",
-    ],
-    foreignKeys = [
-        ForeignKey(
-            entity = PostEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["associatedPostUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["authorId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["ownerId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["uri"]),
-        Index(value = ["cid"]),
-        Index(value = ["authorId"]),
-        Index(value = ["ownerId"]),
-        Index(value = ["indexedAt"]),
-    ],
+    primaryKeys = ["uri", "ownerId"],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = PostEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["associatedPostUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["authorId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["ownerId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    indices =
+        [
+            Index(value = ["uri"]),
+            Index(value = ["cid"]),
+            Index(value = ["authorId"]),
+            Index(value = ["ownerId"]),
+            Index(value = ["indexedAt"]),
+        ],
 )
 data class NotificationEntity(
     val cid: GenericId,
@@ -81,166 +80,171 @@ data class NotificationEntity(
 )
 
 data class PopulatedNotificationEntity(
-    @Embedded
-    val entity: NotificationEntity,
-    @Embedded
-    val viewerState: ProfileViewerStateEntity?,
-    @Relation(
-        parentColumn = "authorId",
-        entityColumn = "did",
-    )
-    val author: ProfileEntity,
+    @Embedded val entity: NotificationEntity,
+    @Embedded val viewerState: ProfileViewerStateEntity?,
+    @Relation(parentColumn = "authorId", entityColumn = "did") val author: ProfileEntity,
 )
 
-fun PopulatedNotificationEntity.asExternalModel(
-    associatedPost: Post?,
-) = when (entity.reason) {
-    Notification.Reason.Unknown -> unknown()
+fun PopulatedNotificationEntity.asExternalModel(associatedPost: Post?) =
+    when (entity.reason) {
+        Notification.Reason.Unknown -> unknown()
 
-    Notification.Reason.Like ->
-        if (associatedPost == null) unknown()
-        else Notification.Liked.Post(
-            cid = entity.cid,
-            uri = entity.uri,
-            indexedAt = entity.indexedAt,
-            author = author.asExternalModel(),
-            reasonSubject = entity.reasonSubject,
-            isRead = entity.isRead,
-            associatedPost = associatedPost,
-            viewerState = viewerState?.asExternalModel(),
-        )
+        Notification.Reason.Like ->
+            if (associatedPost == null) unknown()
+            else
+                Notification.Liked.Post(
+                    cid = entity.cid,
+                    uri = entity.uri,
+                    indexedAt = entity.indexedAt,
+                    author = author.asExternalModel(),
+                    reasonSubject = entity.reasonSubject,
+                    isRead = entity.isRead,
+                    associatedPost = associatedPost,
+                    viewerState = viewerState?.asExternalModel(),
+                )
 
-    Notification.Reason.LikeViaRepost ->
-        if (associatedPost == null) unknown()
-        else Notification.Liked.Repost(
-            cid = entity.cid,
-            uri = entity.uri,
-            indexedAt = entity.indexedAt,
-            author = author.asExternalModel(),
-            reasonSubject = entity.reasonSubject,
-            isRead = entity.isRead,
-            associatedPost = associatedPost,
-            viewerState = viewerState?.asExternalModel(),
-        )
+        Notification.Reason.LikeViaRepost ->
+            if (associatedPost == null) unknown()
+            else
+                Notification.Liked.Repost(
+                    cid = entity.cid,
+                    uri = entity.uri,
+                    indexedAt = entity.indexedAt,
+                    author = author.asExternalModel(),
+                    reasonSubject = entity.reasonSubject,
+                    isRead = entity.isRead,
+                    associatedPost = associatedPost,
+                    viewerState = viewerState?.asExternalModel(),
+                )
 
-    Notification.Reason.Repost ->
-        if (associatedPost == null) unknown()
-        else Notification.Reposted.Post(
-            cid = entity.cid,
-            uri = entity.uri,
-            indexedAt = entity.indexedAt,
-            author = author.asExternalModel(),
-            reasonSubject = entity.reasonSubject,
-            isRead = entity.isRead,
-            associatedPost = associatedPost,
-            viewerState = viewerState?.asExternalModel(),
-        )
+        Notification.Reason.Repost ->
+            if (associatedPost == null) unknown()
+            else
+                Notification.Reposted.Post(
+                    cid = entity.cid,
+                    uri = entity.uri,
+                    indexedAt = entity.indexedAt,
+                    author = author.asExternalModel(),
+                    reasonSubject = entity.reasonSubject,
+                    isRead = entity.isRead,
+                    associatedPost = associatedPost,
+                    viewerState = viewerState?.asExternalModel(),
+                )
 
-    Notification.Reason.RepostViaRepost ->
-        if (associatedPost == null) unknown()
-        else Notification.Reposted.Repost(
-            cid = entity.cid,
-            uri = entity.uri,
-            indexedAt = entity.indexedAt,
-            author = author.asExternalModel(),
-            reasonSubject = entity.reasonSubject,
-            isRead = entity.isRead,
-            associatedPost = associatedPost,
-            viewerState = viewerState?.asExternalModel(),
-        )
+        Notification.Reason.RepostViaRepost ->
+            if (associatedPost == null) unknown()
+            else
+                Notification.Reposted.Repost(
+                    cid = entity.cid,
+                    uri = entity.uri,
+                    indexedAt = entity.indexedAt,
+                    author = author.asExternalModel(),
+                    reasonSubject = entity.reasonSubject,
+                    isRead = entity.isRead,
+                    associatedPost = associatedPost,
+                    viewerState = viewerState?.asExternalModel(),
+                )
 
-    Notification.Reason.Follow -> Notification.Followed(
-        cid = entity.cid,
-        uri = entity.uri,
-        indexedAt = entity.indexedAt,
-        author = author.asExternalModel(),
-        reasonSubject = entity.reasonSubject,
-        isRead = entity.isRead,
-        viewerState = viewerState?.asExternalModel(),
-    )
+        Notification.Reason.Follow ->
+            Notification.Followed(
+                cid = entity.cid,
+                uri = entity.uri,
+                indexedAt = entity.indexedAt,
+                author = author.asExternalModel(),
+                reasonSubject = entity.reasonSubject,
+                isRead = entity.isRead,
+                viewerState = viewerState?.asExternalModel(),
+            )
 
-    Notification.Reason.Mention ->
-        if (associatedPost == null) unknown()
-        else Notification.Mentioned(
-            cid = entity.cid,
-            uri = entity.uri,
-            indexedAt = entity.indexedAt,
-            author = author.asExternalModel(),
-            reasonSubject = entity.reasonSubject,
-            isRead = entity.isRead,
-            associatedPost = associatedPost,
-            viewerState = viewerState?.asExternalModel(),
-        )
+        Notification.Reason.Mention ->
+            if (associatedPost == null) unknown()
+            else
+                Notification.Mentioned(
+                    cid = entity.cid,
+                    uri = entity.uri,
+                    indexedAt = entity.indexedAt,
+                    author = author.asExternalModel(),
+                    reasonSubject = entity.reasonSubject,
+                    isRead = entity.isRead,
+                    associatedPost = associatedPost,
+                    viewerState = viewerState?.asExternalModel(),
+                )
 
-    Notification.Reason.Reply ->
-        if (associatedPost == null) unknown()
-        else Notification.RepliedTo(
-            cid = entity.cid,
-            uri = entity.uri,
-            indexedAt = entity.indexedAt,
-            author = author.asExternalModel(),
-            reasonSubject = entity.reasonSubject,
-            isRead = entity.isRead,
-            associatedPost = associatedPost,
-            viewerState = viewerState?.asExternalModel(),
-        )
+        Notification.Reason.Reply ->
+            if (associatedPost == null) unknown()
+            else
+                Notification.RepliedTo(
+                    cid = entity.cid,
+                    uri = entity.uri,
+                    indexedAt = entity.indexedAt,
+                    author = author.asExternalModel(),
+                    reasonSubject = entity.reasonSubject,
+                    isRead = entity.isRead,
+                    associatedPost = associatedPost,
+                    viewerState = viewerState?.asExternalModel(),
+                )
 
-    Notification.Reason.Quote ->
-        if (associatedPost == null) unknown()
-        else Notification.Quoted(
-            cid = entity.cid,
-            uri = entity.uri,
-            indexedAt = entity.indexedAt,
-            author = author.asExternalModel(),
-            reasonSubject = entity.reasonSubject,
-            isRead = entity.isRead,
-            associatedPost = associatedPost,
-            viewerState = viewerState?.asExternalModel(),
-        )
+        Notification.Reason.Quote ->
+            if (associatedPost == null) unknown()
+            else
+                Notification.Quoted(
+                    cid = entity.cid,
+                    uri = entity.uri,
+                    indexedAt = entity.indexedAt,
+                    author = author.asExternalModel(),
+                    reasonSubject = entity.reasonSubject,
+                    isRead = entity.isRead,
+                    associatedPost = associatedPost,
+                    viewerState = viewerState?.asExternalModel(),
+                )
 
-    Notification.Reason.JoinedStarterPack -> Notification.JoinedStarterPack(
-        cid = entity.cid,
-        uri = entity.uri,
-        indexedAt = entity.indexedAt,
-        author = author.asExternalModel(),
-        reasonSubject = entity.reasonSubject,
-        isRead = entity.isRead,
-        viewerState = viewerState?.asExternalModel(),
-    )
+        Notification.Reason.JoinedStarterPack ->
+            Notification.JoinedStarterPack(
+                cid = entity.cid,
+                uri = entity.uri,
+                indexedAt = entity.indexedAt,
+                author = author.asExternalModel(),
+                reasonSubject = entity.reasonSubject,
+                isRead = entity.isRead,
+                viewerState = viewerState?.asExternalModel(),
+            )
 
-    Notification.Reason.SubscribedPost ->
-        if (associatedPost == null) unknown()
-        else Notification.SubscribedPost(
-            cid = entity.cid,
-            uri = entity.uri,
-            indexedAt = entity.indexedAt,
-            author = author.asExternalModel(),
-            reasonSubject = entity.reasonSubject,
-            isRead = entity.isRead,
-            associatedPost = associatedPost,
-            viewerState = viewerState?.asExternalModel(),
-        )
+        Notification.Reason.SubscribedPost ->
+            if (associatedPost == null) unknown()
+            else
+                Notification.SubscribedPost(
+                    cid = entity.cid,
+                    uri = entity.uri,
+                    indexedAt = entity.indexedAt,
+                    author = author.asExternalModel(),
+                    reasonSubject = entity.reasonSubject,
+                    isRead = entity.isRead,
+                    associatedPost = associatedPost,
+                    viewerState = viewerState?.asExternalModel(),
+                )
 
-    Notification.Reason.Verified -> Notification.Verified(
-        cid = entity.cid,
-        uri = entity.uri,
-        indexedAt = entity.indexedAt,
-        author = author.asExternalModel(),
-        reasonSubject = entity.reasonSubject,
-        isRead = entity.isRead,
-        viewerState = viewerState?.asExternalModel(),
-    )
+        Notification.Reason.Verified ->
+            Notification.Verified(
+                cid = entity.cid,
+                uri = entity.uri,
+                indexedAt = entity.indexedAt,
+                author = author.asExternalModel(),
+                reasonSubject = entity.reasonSubject,
+                isRead = entity.isRead,
+                viewerState = viewerState?.asExternalModel(),
+            )
 
-    Notification.Reason.Unverified -> Notification.Unverified(
-        cid = entity.cid,
-        uri = entity.uri,
-        indexedAt = entity.indexedAt,
-        author = author.asExternalModel(),
-        reasonSubject = entity.reasonSubject,
-        isRead = entity.isRead,
-        viewerState = viewerState?.asExternalModel(),
-    )
-}
+        Notification.Reason.Unverified ->
+            Notification.Unverified(
+                cid = entity.cid,
+                uri = entity.uri,
+                indexedAt = entity.indexedAt,
+                author = author.asExternalModel(),
+                reasonSubject = entity.reasonSubject,
+                isRead = entity.isRead,
+                viewerState = viewerState?.asExternalModel(),
+            )
+    }
 
 private fun PopulatedNotificationEntity.unknown() =
     Notification.Unknown(

@@ -18,7 +18,6 @@ package com.tunjid.heron.data.files
 
 import io.github.vinceglb.filekit.FileKit
 
-internal actual fun initializeFileKit() =
-    FileKit.init(AppId)
+internal actual fun initializeFileKit() = FileKit.init(AppId)
 
 private const val AppId = "com.tunjid.heron"

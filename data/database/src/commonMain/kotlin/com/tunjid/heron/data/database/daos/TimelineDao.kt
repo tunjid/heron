@@ -36,16 +36,11 @@ interface TimelineDao {
         """
         DELETE FROM timelineItems
         WHERE sourceId = :sourceId
-    """,
+    """
     )
-    suspend fun deleteAllFeedsFor(
-        sourceId: String,
-    )
+    suspend fun deleteAllFeedsFor(sourceId: String)
 
-    @Upsert
-    suspend fun upsertTimelineItems(
-        entities: List<TimelineItemEntity>,
-    )
+    @Upsert suspend fun upsertTimelineItems(entities: List<TimelineItemEntity>)
 
     @Query(
         """
@@ -60,7 +55,7 @@ interface TimelineDao {
             DESC
             LIMIT :limit
             OFFSET :offset
-        """,
+        """
     )
     fun feedItems(
         viewingProfileId: String?,
@@ -78,12 +73,9 @@ interface TimelineDao {
             THEN viewingProfileId = :viewingProfileId
             ELSE viewingProfileId IS NULL
         END
-    """,
+    """
     )
-    fun count(
-        viewingProfileId: String?,
-        sourceId: String,
-    ): Flow<Long>
+    fun count(viewingProfileId: String?, sourceId: String): Flow<Long>
 
     @Query(
         """
@@ -94,38 +86,36 @@ interface TimelineDao {
                 ELSE viewingProfileId IS NULL
             END
             LIMIT 1
-        """,
+        """
     )
-    fun lastFetchKey(
-        viewingProfileId: String?,
-        sourceId: String,
-    ): Flow<TimelinePreferencesEntity?>
+    fun lastFetchKey(viewingProfileId: String?, sourceId: String): Flow<TimelinePreferencesEntity?>
 
     @Transaction
     suspend fun insertOrPartiallyUpdateTimelineFetchedAt(
-        entities: List<TimelinePreferencesEntity>,
-    ) = partialUpsert(
-        items = entities,
-        partialMapper = TimelinePreferencesEntity::fetchedAtPartial,
-        insertEntities = ::insertOrIgnoreTimelinePreferences,
-        updatePartials = ::updatePartialTimelinePreferencesFetchedAt,
-    )
+        entities: List<TimelinePreferencesEntity>
+    ) =
+        partialUpsert(
+            items = entities,
+            partialMapper = TimelinePreferencesEntity::fetchedAtPartial,
+            insertEntities = ::insertOrIgnoreTimelinePreferences,
+            updatePartials = ::updatePartialTimelinePreferencesFetchedAt,
+        )
 
     @Transaction
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertOrIgnoreTimelinePreferences(
-        entities: List<TimelinePreferencesEntity>,
+        entities: List<TimelinePreferencesEntity>
     ): List<Long>
 
     @Transaction
     @Update(entity = TimelinePreferencesEntity::class)
     suspend fun updatePartialTimelinePreferencesFetchedAt(
-        entities: List<TimelinePreferencesEntity.Partial.FetchedAt>,
+        entities: List<TimelinePreferencesEntity.Partial.FetchedAt>
     )
 
     @Transaction
     @Update(entity = TimelinePreferencesEntity::class)
     suspend fun updatePreferredTimelinePresentation(
-        partial: TimelinePreferencesEntity.Partial.PreferredPresentation,
+        partial: TimelinePreferencesEntity.Partial.PreferredPresentation
     )
 }

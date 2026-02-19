@@ -33,43 +33,21 @@ sealed class SessionRequest {
     ) : SessionRequest()
 
     @Serializable
-    data class Oauth(
-        val callbackUri: GenericUri,
-        override val server: Server,
-    ) : SessionRequest()
+    data class Oauth(val callbackUri: GenericUri, override val server: Server) : SessionRequest()
 
-    @Serializable
-    data class Guest(
-        override val server: Server,
-    ) : SessionRequest()
+    @Serializable data class Guest(override val server: Server) : SessionRequest()
 }
 
-@Serializable
-data class OauthUriRequest(
-    val handle: ProfileHandle,
-    val server: Server,
-)
+@Serializable data class OauthUriRequest(val handle: ProfileHandle, val server: Server)
 
 @Serializable
-data class Server(
-    val endpoint: String,
-    val supportsOauth: Boolean,
-) {
+data class Server(val endpoint: String, val supportsOauth: Boolean) {
 
     companion object {
-        val BlueSky = Server(
-            endpoint = "https://bsky.social",
-            supportsOauth = true,
-        )
+        val BlueSky = Server(endpoint = "https://bsky.social", supportsOauth = true)
 
-        val BlackSky = Server(
-            endpoint = "https://blacksky.app",
-            supportsOauth = true,
-        )
+        val BlackSky = Server(endpoint = "https://blacksky.app", supportsOauth = true)
 
-        val KnownServers = setOf(
-            BlueSky,
-            BlackSky,
-        )
+        val KnownServers = setOf(BlueSky, BlackSky)
     }
 }

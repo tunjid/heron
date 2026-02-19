@@ -28,59 +28,52 @@ import kotlinx.serialization.protobuf.ProtoNumber
 
 @Serializable
 internal class SavedStateVersion1(
-    @Suppress("unused")
-    @ProtoNumber(1)
-    private val version: Int,
-    @ProtoNumber(2)
-    private val auth: AuthTokensV1?,
-    @ProtoNumber(3)
-    private val navigation: SavedState.Navigation,
-    @ProtoNumber(4)
-    private val profileData: Map<ProfileId, ProfileDataV0>,
+    @Suppress("unused") @ProtoNumber(1) private val version: Int,
+    @ProtoNumber(2) private val auth: AuthTokensV1?,
+    @ProtoNumber(3) private val navigation: SavedState.Navigation,
+    @ProtoNumber(4) private val profileData: Map<ProfileId, ProfileDataV0>,
 ) : SavedStateVersion {
 
-    override fun toVersionedSavedState(
-        currentVersion: Int,
-    ): VersionedSavedState {
-        val convertedProfileData = profileData.mapValues { (_, preferencesV0) ->
-            preferencesV0.asProfileData(auth = null)
-        }
+    override fun toVersionedSavedState(currentVersion: Int): VersionedSavedState {
+        val convertedProfileData =
+            profileData.mapValues { (_, preferencesV0) -> preferencesV0.asProfileData(auth = null) }
         return VersionedSavedState(
             version = currentVersion,
-            profileData = when (val currentAuth = auth) {
-                null -> convertedProfileData
-                else -> convertedProfileData.updateOrPutValue(
-                    key = currentAuth.authProfileId,
-                    update = {
-                        copy(
-                            auth = when (currentAuth.authProfileId) {
-                                Constants.unknownAuthorId -> SavedState.AuthTokens.Guest(
-                                    server = Server.BlueSky,
+            profileData =
+                when (val currentAuth = auth) {
+                    null -> convertedProfileData
+                    else ->
+                        convertedProfileData.updateOrPutValue(
+                            key = currentAuth.authProfileId,
+                            update = {
+                                copy(
+                                    auth =
+                                        when (currentAuth.authProfileId) {
+                                            Constants.unknownAuthorId ->
+                                                SavedState.AuthTokens.Guest(server = Server.BlueSky)
+                                            else -> currentAuth.asBearerToken()
+                                        }
                                 )
-                                else -> currentAuth.asBearerToken()
+                            },
+                            put = {
+                                when (currentAuth.authProfileId) {
+                                    // No op on unknown users
+                                    Constants.unknownAuthorId -> null
+                                    else ->
+                                        SavedState.ProfileData.fromTokens(
+                                            auth = currentAuth.asBearerToken()
+                                        )
+                                }
                             },
                         )
-                    },
-                    put = {
-                        when (currentAuth.authProfileId) {
-                            // No op on unknown users
-                            Constants.unknownAuthorId -> null
-                            else -> SavedState.ProfileData.fromTokens(
-                                auth = currentAuth.asBearerToken(),
-                            )
-                        }
-                    },
-                )
-            } + Pair(
-                Constants.guestProfileId,
-                SavedState.ProfileData.defaultGuestData,
-            ),
+                } + Pair(Constants.guestProfileId, SavedState.ProfileData.defaultGuestData),
             navigation = navigation,
-            activeProfileId = when (val authProfileId = auth?.authProfileId) {
-                null -> null
-                Constants.unknownAuthorId -> Constants.guestProfileId
-                else -> authProfileId
-            },
+            activeProfileId =
+                when (val authProfileId = auth?.authProfileId) {
+                    null -> null
+                    Constants.unknownAuthorId -> Constants.guestProfileId
+                    else -> authProfileId
+                },
         )
     }
 

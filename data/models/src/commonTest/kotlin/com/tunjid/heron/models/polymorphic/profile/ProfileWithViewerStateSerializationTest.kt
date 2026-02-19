@@ -15,41 +15,47 @@ import kotlin.test.assertEquals
 
 @Burst
 class ProfileWithViewerStateSerializationTest(
-    val format: SerializationTestHelper.Format = burstValues(
-        SerializationTestHelper.Format.CBOR,
-        SerializationTestHelper.Format.PROTOBUF,
-    ),
-    val original: ProfileWithViewerState = burstValues(
-        ProfileWithViewerState(
-            profile = sampleProfile(),
-            viewerState = null, // no viewer state
-        ),
-        ProfileWithViewerState(
-            profile = stubProfile(
-                did = ProfileId("did:example:stub2"),
-                handle = ProfileHandle("vieweruser"),
-                displayName = "Viewer User",
+    val format: SerializationTestHelper.Format =
+        burstValues(SerializationTestHelper.Format.CBOR, SerializationTestHelper.Format.PROTOBUF),
+    val original: ProfileWithViewerState =
+        burstValues(
+            ProfileWithViewerState(
+                profile = sampleProfile(),
+                viewerState = null, // no viewer state
             ),
-            viewerState = ProfileViewerState(
-                muted = false,
-                mutedByList = null,
-                blockedBy = false,
-                blocking = null,
-                blockingByList = null,
-                following = FollowUri("at://did:example:me/${FollowUri.NAMESPACE}/2222222222222"),
-                followedBy = FollowUri("at://did:example:stub2/${FollowUri.NAMESPACE}/2222222222223"),
-                commonFollowersCount = 60L,
+            ProfileWithViewerState(
+                profile =
+                    stubProfile(
+                        did = ProfileId("did:example:stub2"),
+                        handle = ProfileHandle("vieweruser"),
+                        displayName = "Viewer User",
+                    ),
+                viewerState =
+                    ProfileViewerState(
+                        muted = false,
+                        mutedByList = null,
+                        blockedBy = false,
+                        blocking = null,
+                        blockingByList = null,
+                        following =
+                            FollowUri("at://did:example:me/${FollowUri.NAMESPACE}/2222222222222"),
+                        followedBy =
+                            FollowUri(
+                                "at://did:example:stub2/${FollowUri.NAMESPACE}/2222222222223"
+                            ),
+                        commonFollowersCount = 60L,
+                    ),
             ),
         ),
-    ),
 ) {
     @Test
     fun roundTrip() {
-        val decoded = SerializationTestHelper.roundTrip(
-            format = format,
-            value = original,
-            serializer = ProfileWithViewerState.serializer(),
-        )
+        val decoded =
+            SerializationTestHelper.roundTrip(
+                format = format,
+                value = original,
+                serializer = ProfileWithViewerState.serializer(),
+            )
         assertEquals(original, decoded)
     }
 }

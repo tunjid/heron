@@ -35,29 +35,21 @@ scmVersion {
         // Use an empty string for prefix
         prefix.set("")
     }
-    repository {
-        pushTagsOnly.set(true)
-    }
-    providers.gradleProperty("heron.releaseBranch")
-        .orNull
-        ?.let { releaseBranch ->
-            when {
-                releaseBranch.contains("bugfix/") -> versionIncrementer("incrementPatch")
-                releaseBranch.contains("feature/") -> versionIncrementer("incrementMinor")
-                releaseBranch.contains("release/") -> versionIncrementer("incrementMajor")
-                else -> throw IllegalArgumentException("Unknown release type")
-            }
+    repository { pushTagsOnly.set(true) }
+    providers.gradleProperty("heron.releaseBranch").orNull?.let { releaseBranch ->
+        when {
+            releaseBranch.contains("bugfix/") -> versionIncrementer("incrementPatch")
+            releaseBranch.contains("feature/") -> versionIncrementer("incrementMinor")
+            releaseBranch.contains("release/") -> versionIncrementer("incrementMajor")
+            else -> throw IllegalArgumentException("Unknown release type")
         }
+    }
 }
 
 kotlin {
     androidTarget()
 
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64(),
-    ).forEach { iosTarget ->
+    listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { iosTarget ->
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
@@ -130,9 +122,7 @@ kotlin {
             implementation(libs.connectivity.http)
             implementation(libs.kotlinx.coroutines.swing)
         }
-        iosMain.dependencies {
-            implementation(libs.connectivity.device)
-        }
+        iosMain.dependencies { implementation(libs.connectivity.device) }
     }
 }
 
@@ -141,38 +131,28 @@ android {
 
     defaultConfig {
         applicationId = "com.tunjid.heron"
-        versionCode = providers.gradleProperty("heron.versionCode")
-            .get()
-            .toInt()
+        versionCode = providers.gradleProperty("heron.versionCode").get().toInt()
         versionName = scmVersion.version
     }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+    packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
+    val releaseSigning =
+        when {
+            // Do not sign the build output, it will be signed on CI
+            providers.gradleProperty("heron.isPlayStore").orNull.toBoolean() -> null
+            file("debugKeystore.properties").exists() ->
+                signingConfigs.create("release") {
+                    val props = Properties()
+                    file("debugKeystore.properties").inputStream().use(props::load)
+                    storeFile = file(props.getProperty("keystore"))
+                    storePassword = props.getProperty("keystore.password")
+                    keyAlias = props.getProperty("keyAlias")
+                    keyPassword = props.getProperty("keyPassword")
+                }
+            else -> signingConfigs["debug"]
         }
-    }
-    val releaseSigning = when {
-        // Do not sign the build output, it will be signed on CI
-        providers.gradleProperty("heron.isPlayStore").orNull.toBoolean() -> null
-        file("debugKeystore.properties").exists() -> signingConfigs.create("release") {
-            val props = Properties()
-            file("debugKeystore.properties")
-                .inputStream()
-                .use(props::load)
-            storeFile = file(props.getProperty("keystore"))
-            storePassword = props.getProperty("keystore.password")
-            keyAlias = props.getProperty("keyAlias")
-            keyPassword = props.getProperty("keyPassword")
-        }
-        else -> signingConfigs["debug"]
-    }
     buildTypes {
-        all {
-            signingConfig = releaseSigning
-        }
-        debug {
-            applicationIdSuffix = ".debug"
-        }
+        all { signingConfig = releaseSigning }
+        debug { applicationIdSuffix = ".debug" }
         release {
             isMinifyEnabled = true
             proguardFiles(
@@ -183,9 +163,7 @@ android {
     }
 }
 
-dependencies {
-    debugImplementation(libs.compose.multiplatform.ui.tooling.preview)
-}
+dependencies { debugImplementation(libs.compose.multiplatform.ui.tooling.preview) }
 
 compose.desktop {
     application {
@@ -201,8 +179,6 @@ compose.desktop {
 }
 
 configurations {
-    getByName("desktopMainApi").exclude(
-        group = "org.jetbrains.kotlinx",
-        module = "kotlinx-coroutines-android",
-    )
+    getByName("desktopMainApi")
+        .exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-android")
 }

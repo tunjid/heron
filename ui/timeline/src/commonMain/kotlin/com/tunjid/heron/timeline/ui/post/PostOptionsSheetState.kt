@@ -41,7 +41,8 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Stable
-class PostOptionsSheetState private constructor(
+class PostOptionsSheetState
+private constructor(
     signedInProfileId: ProfileId?,
     recentConversations: List<Conversation>,
     scope: BottomSheetScope,
@@ -72,21 +73,20 @@ class PostOptionsSheetState private constructor(
             recentConversations: List<Conversation>,
             onOptionClicked: (PostOption) -> Unit,
         ): PostOptionsSheetState {
-            val state = rememberBottomSheetState {
-                PostOptionsSheetState(
-                    signedInProfileId = signedInProfileId,
-                    recentConversations = recentConversations,
-                    scope = it,
-                )
-            }.also {
-                it.signedInProfileId = signedInProfileId
-                it.recentConversations = recentConversations
-            }
+            val state =
+                rememberBottomSheetState {
+                        PostOptionsSheetState(
+                            signedInProfileId = signedInProfileId,
+                            recentConversations = recentConversations,
+                            scope = it,
+                        )
+                    }
+                    .also {
+                        it.signedInProfileId = signedInProfileId
+                        it.recentConversations = recentConversations
+                    }
 
-            PostOptionsBottomSheet(
-                state = state,
-                onOptionClicked = onOptionClicked,
-            )
+            PostOptionsBottomSheet(state = state, onOptionClicked = onOptionClicked)
 
             return state
         }
@@ -99,68 +99,62 @@ private fun PostOptionsBottomSheet(
     onOptionClicked: (PostOption) -> Unit,
 ) {
     val signedInProfileId = state.signedInProfileId
-    if (signedInProfileId != null) state.ModalBottomSheet {
-        Column(
-            modifier = Modifier
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            SendDirectMessageCard(
-                signedInProfileId = signedInProfileId,
-                recentConversations = state.recentConversations,
-                onConversationClicked = { conversation ->
-                    val currentPost = state.currentPost
-                    if (currentPost != null) {
-                        onOptionClicked(
-                            PostOption.ShareInConversation(
-                                post = currentPost,
-                                conversation = conversation,
-                            ),
-                        )
-                    }
-                    state.hide()
-                },
-            )
-            state.currentPost?.let {
-                val isOwnPost = it.author.did == signedInProfileId
-                if (isOwnPost) BottomSheetItemCard(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    onClick = {
-                        onOptionClicked(PostOption.ThreadGate(it.uri))
-                    },
-                    content = {
-                        BottomSheetItemCardRow(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            icon = Icons.Rounded.EditAttributes,
-                            text = stringResource(Res.string.thread_gate_post_reply_settings),
-                        )
-                    },
-                )
-                CopyToClipboardCard(it.uri.shareUri())
-                if (!isOwnPost) PostModerationMenuSection(
+    if (signedInProfileId != null)
+        state.ModalBottomSheet {
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                SendDirectMessageCard(
                     signedInProfileId = signedInProfileId,
-                    post = it,
-                    onOptionClicked = { option ->
+                    recentConversations = state.recentConversations,
+                    onConversationClicked = { conversation ->
+                        val currentPost = state.currentPost
+                        if (currentPost != null) {
+                            onOptionClicked(
+                                PostOption.ShareInConversation(
+                                    post = currentPost,
+                                    conversation = conversation,
+                                )
+                            )
+                        }
                         state.hide()
-                        onOptionClicked(option)
                     },
                 )
+                state.currentPost?.let {
+                    val isOwnPost = it.author.did == signedInProfileId
+                    if (isOwnPost)
+                        BottomSheetItemCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = { onOptionClicked(PostOption.ThreadGate(it.uri)) },
+                            content = {
+                                BottomSheetItemCardRow(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    icon = Icons.Rounded.EditAttributes,
+                                    text =
+                                        stringResource(Res.string.thread_gate_post_reply_settings),
+                                )
+                            },
+                        )
+                    CopyToClipboardCard(it.uri.shareUri())
+                    if (!isOwnPost)
+                        PostModerationMenuSection(
+                            signedInProfileId = signedInProfileId,
+                            post = it,
+                            onOptionClicked = { option ->
+                                state.hide()
+                                onOptionClicked(option)
+                            },
+                        )
+                }
             }
         }
-    }
 }
 
 sealed class PostOption {
-    data class ShareInConversation(
-        val post: Post,
-        val conversation: Conversation,
-    ) : PostOption()
+    data class ShareInConversation(val post: Post, val conversation: Conversation) : PostOption()
 
-    data class ThreadGate(
-        val postUri: PostUri,
-    ) : PostOption()
+    data class ThreadGate(val postUri: PostUri) : PostOption()
 
     sealed class Moderation : PostOption() {
 
@@ -168,28 +162,16 @@ sealed class PostOption {
 
         sealed interface ProfileRestriction
 
-        data class BlockAccount(
-            val signedInProfileId: ProfileId,
-            val post: Post,
-        ) : Moderation(),
-            ProfileRestriction
+        data class BlockAccount(val signedInProfileId: ProfileId, val post: Post) :
+            Moderation(), ProfileRestriction
 
-        data class MuteAccount(
-            val signedInProfileId: ProfileId,
-            val post: Post,
-        ) : Moderation(),
-            ProfileRestriction
+        data class MuteAccount(val signedInProfileId: ProfileId, val post: Post) :
+            Moderation(), ProfileRestriction
     }
 }
 
-enum class PostModerationTools(
-    val stringRes: StringResource,
-    val icon: ImageVector,
-) {
-    MuteWords(
-        stringRes = Res.string.mute_words_tags,
-        icon = Icons.Rounded.FilterAlt,
-    ),
+enum class PostModerationTools(val stringRes: StringResource, val icon: ImageVector) {
+    MuteWords(stringRes = Res.string.mute_words_tags, icon = Icons.Rounded.FilterAlt),
     BlockAccount(
         stringRes = CommonStrings.viewer_state_block_account,
         icon = Icons.Rounded.PersonOff,

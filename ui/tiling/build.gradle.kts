@@ -19,9 +19,8 @@ plugins {
     id("kotlin-library-convention")
     kotlin("plugin.serialization")
 }
-android {
-    namespace = "com.tunjid.heron.ui.tiling"
-}
+
+android { namespace = "com.tunjid.heron.ui.tiling" }
 
 kotlin {
     sourceSets {

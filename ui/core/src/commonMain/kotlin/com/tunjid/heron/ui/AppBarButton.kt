@@ -36,21 +36,13 @@ fun AppBarButton(
     tint: Color = MaterialTheme.colorScheme.primary,
     onClick: () -> Unit,
 ) {
-    ElevatedCard(
-        modifier = modifier,
-        shape = CircleShape,
-    ) {
+    ElevatedCard(modifier = modifier, shape = CircleShape) {
         IconButton(
             enabled = enabled,
             onClick = onClick,
-            modifier = Modifier
-                .size(UiTokens.appBarButtonSize),
+            modifier = Modifier.size(UiTokens.appBarButtonSize),
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = iconDescription,
-                tint = tint,
-            )
+            Icon(imageVector = icon, contentDescription = iconDescription, tint = tint)
         }
     }
 }

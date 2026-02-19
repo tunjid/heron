@@ -32,27 +32,28 @@ import kotlin.time.Instant
 
 @Entity(
     tableName = "starterPacks",
-    foreignKeys = [
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["creatorId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["uri"]),
-        Index(value = ["cid"]),
-        Index(value = ["creatorId"]),
-        Index(value = ["indexedAt"]),
-        Index(value = ["createdAt"]),
-    ],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["creatorId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            )
+        ],
+    indices =
+        [
+            Index(value = ["uri"]),
+            Index(value = ["cid"]),
+            Index(value = ["creatorId"]),
+            Index(value = ["indexedAt"]),
+            Index(value = ["createdAt"]),
+        ],
 )
 data class StarterPackEntity(
     val cid: StarterPackId,
-    @PrimaryKey
-    val uri: StarterPackUri,
+    @PrimaryKey val uri: StarterPackUri,
     val creatorId: ProfileId,
     val listUri: ListUri?,
     val name: String,
@@ -64,23 +65,10 @@ data class StarterPackEntity(
 )
 
 data class PopulatedStarterPackEntity(
-    @Embedded
-    val entity: StarterPackEntity,
-    @Relation(
-        parentColumn = "creatorId",
-        entityColumn = "did",
-    )
-    val creator: ProfileEntity?,
-    @Relation(
-        parentColumn = "listUri",
-        entityColumn = "uri",
-    )
-    val list: ListEntity?,
-    @Relation(
-        parentColumn = "uri",
-        entityColumn = "uri",
-    )
-    val labelEntities: List<LabelEntity>,
+    @Embedded val entity: StarterPackEntity,
+    @Relation(parentColumn = "creatorId", entityColumn = "did") val creator: ProfileEntity?,
+    @Relation(parentColumn = "listUri", entityColumn = "uri") val list: ListEntity?,
+    @Relation(parentColumn = "uri", entityColumn = "uri") val labelEntities: List<LabelEntity>,
 ) : PopulatedRecordEntity {
     override val recordUri: EmbeddableRecordUri
         get() = entity.uri
@@ -93,12 +81,13 @@ fun PopulatedStarterPackEntity.asExternalModel() =
         name = entity.name,
         description = entity.description,
         creator = creator.asExternalModel(),
-        list = creator?.let { profileEntity ->
-            list?.asExternalModel(
-                creator = profileEntity.asExternalModel(),
-                labels = emptyList(),
-            )
-        },
+        list =
+            creator?.let { profileEntity ->
+                list?.asExternalModel(
+                    creator = profileEntity.asExternalModel(),
+                    labels = emptyList(),
+                )
+            },
         joinedWeekCount = entity.joinedWeekCount,
         joinedAllTimeCount = entity.joinedAllTimeCount,
         indexedAt = entity.indexedAt,

@@ -22,18 +22,10 @@ import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import platform.UIKit.UIDragItem
 
-actual fun timelineEditDragAndDropTransferData(
-    title: String,
-): DragAndDropTransferData =
-    DragAndDropTransferData(
-        items = listOf(UIDragItem().apply { localObject = title }),
-    )
+actual fun timelineEditDragAndDropTransferData(title: String): DragAndDropTransferData =
+    DragAndDropTransferData(items = listOf(UIDragItem().apply { localObject = title }))
 
-actual fun DragAndDropEvent.draggedId(): String? =
-    items.firstOrNull()?.localObject as? String
+actual fun DragAndDropEvent.draggedId(): String? = items.firstOrNull()?.localObject as? String
 
-actual fun Modifier.timelineEditDragAndDropSource(
-    sourceId: String,
-): Modifier = this.dragAndDropSource {
-    timelineEditDragAndDropTransferData(sourceId)
-}
+actual fun Modifier.timelineEditDragAndDropSource(sourceId: String): Modifier =
+    this.dragAndDropSource { timelineEditDragAndDropTransferData(sourceId) }

@@ -32,44 +32,36 @@ import kotlin.time.Instant
 
 @Entity(
     tableName = "listMembers",
-    foreignKeys = [
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["subjectId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = ListEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["listUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["createdAt"]),
-    ],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["subjectId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = ListEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["listUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    indices = [Index(value = ["createdAt"])],
 )
 data class ListMemberEntity(
-    @PrimaryKey
-    val uri: ListMemberUri,
+    @PrimaryKey val uri: ListMemberUri,
     val listUri: ListUri,
     val subjectId: ProfileId,
     val createdAt: Instant,
 )
 
 data class PopulatedListMemberEntity(
-    @Embedded
-    val entity: ListMemberEntity,
-    @Embedded
-    val viewerStateEntity: ProfileViewerStateEntity?,
-    @Relation(
-        parentColumn = "subjectId",
-        entityColumn = "did",
-    )
-    val subject: ProfileEntity?,
+    @Embedded val entity: ListMemberEntity,
+    @Embedded val viewerStateEntity: ProfileViewerStateEntity?,
+    @Relation(parentColumn = "subjectId", entityColumn = "did") val subject: ProfileEntity?,
 )
 
 fun PopulatedListMemberEntity.asExternalModel() =

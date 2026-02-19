@@ -44,10 +44,7 @@ internal typealias NotificationSettingsStateHolder = ActionStateMutator<Action, 
 
 @AssistedFactory
 fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
-        scope: CoroutineScope,
-        route: Route,
-    ): ActualNotificationSettingsViewModel
+    override fun invoke(scope: CoroutineScope, route: Route): ActualNotificationSettingsViewModel
 }
 
 @AssistedInject
@@ -55,64 +52,53 @@ class ActualNotificationSettingsViewModel(
     userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
-    @Assisted
-    scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
-    @Assisted route: Route,
-) : ViewModel(viewModelScope = scope),
+    @Assisted scope: CoroutineScope,
+    @Suppress("UNUSED_PARAMETER") @Assisted route: Route,
+) :
+    ViewModel(viewModelScope = scope),
     NotificationSettingsStateHolder by scope.actionStateFlowMutator(
         initialState = State(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = listOf(
-            loadNotificationPreferencesMutations(
-                userDataRepository = userDataRepository,
-            ),
-        ),
+        inputs =
+            listOf(loadNotificationPreferencesMutations(userDataRepository = userDataRepository)),
         actionTransform = transform@{ actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
-                    is Action.CacheNotificationPreferenceUpdate -> action.flow.cacheUpdateMutations()
-                    is Action.UpdateNotificationPreferences -> action.flow.updateNotificationPreferencesMutations(
-                        writeQueue = writeQueue,
-                    )
+                actions.toMutationStream(keySelector = Action::key) {
+                    when (val action = type()) {
+                        is Action.Navigate ->
+                            action.flow.consumeNavigationActions(
+                                navigationMutationConsumer = navActions
+                            )
+                        is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+                        is Action.CacheNotificationPreferenceUpdate ->
+                            action.flow.cacheUpdateMutations()
+                        is Action.UpdateNotificationPreferences ->
+                            action.flow.updateNotificationPreferencesMutations(
+                                writeQueue = writeQueue
+                            )
+                    }
                 }
-            }
-        },
+            },
     )
 
 private fun loadNotificationPreferencesMutations(
-    userDataRepository: UserDataRepository,
+    userDataRepository: UserDataRepository
 ): Flow<Mutation<State>> =
-    userDataRepository.notificationPreferences
-        .mapToMutation { notificationPreferences ->
-            copy(notificationPreferences = notificationPreferences)
-        }
-
-private fun Flow<Action.CacheNotificationPreferenceUpdate>.cacheUpdateMutations(): Flow<Mutation<State>> =
-    mapToMutation { action ->
-        copy(
-            pendingUpdates = pendingUpdates + (action.update.reason to action.update),
-        )
+    userDataRepository.notificationPreferences.mapToMutation { notificationPreferences ->
+        copy(notificationPreferences = notificationPreferences)
     }
+
+private fun Flow<Action.CacheNotificationPreferenceUpdate>.cacheUpdateMutations():
+    Flow<Mutation<State>> = mapToMutation { action ->
+    copy(pendingUpdates = pendingUpdates + (action.update.reason to action.update))
+}
 
 private fun Flow<Action.UpdateNotificationPreferences>.updateNotificationPreferencesMutations(
-    writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        val writable = Writable.NotificationUpdate(
-            updates = action.updates,
-        )
-        val status = writeQueue.enqueue(writable)
-        writable.writeStatusMessage(status)?.let {
-            emit { copy(messages = messages + it) }
-        }
-    }
+    writeQueue: WriteQueue
+): Flow<Mutation<State>> = mapToManyMutations { action ->
+    val writable = Writable.NotificationUpdate(updates = action.updates)
+    val status = writeQueue.enqueue(writable)
+    writable.writeStatusMessage(status)?.let { emit { copy(messages = messages + it) } }
+}
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->

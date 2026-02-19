@@ -35,27 +35,28 @@ import kotlin.time.Instant
 
 @Entity(
     tableName = "lists",
-    foreignKeys = [
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["creatorId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["uri"]),
-        Index(value = ["cid"]),
-        Index(value = ["creatorId"]),
-        Index(value = ["indexedAt"]),
-        Index(value = ["createdAt"]),
-    ],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["creatorId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            )
+        ],
+    indices =
+        [
+            Index(value = ["uri"]),
+            Index(value = ["cid"]),
+            Index(value = ["creatorId"]),
+            Index(value = ["indexedAt"]),
+            Index(value = ["createdAt"]),
+        ],
 )
 data class ListEntity(
     val cid: ListId,
-    @PrimaryKey
-    val uri: ListUri,
+    @PrimaryKey val uri: ListUri,
     val creatorId: ProfileId,
     val name: String,
     val description: String?,
@@ -77,18 +78,9 @@ data class ListEntity(
 }
 
 data class PopulatedListEntity(
-    @Embedded
-    val entity: ListEntity,
-    @Relation(
-        parentColumn = "creatorId",
-        entityColumn = "did",
-    )
-    val creator: ProfileEntity,
-    @Relation(
-        parentColumn = "uri",
-        entityColumn = "uri",
-    )
-    val labelEntities: List<LabelEntity>,
+    @Embedded val entity: ListEntity,
+    @Relation(parentColumn = "creatorId", entityColumn = "did") val creator: ProfileEntity,
+    @Relation(parentColumn = "uri", entityColumn = "uri") val labelEntities: List<LabelEntity>,
 ) : PopulatedRecordEntity {
     override val recordUri: EmbeddableRecordUri
         get() = entity.uri
@@ -105,13 +97,8 @@ fun ListEntity.partial() =
         purpose = purpose,
     )
 
-fun ListEntity.asExternalModel(
-    creator: Profile,
-    labels: List<Label>,
-): FeedList {
-    check(creator.did == creatorId) {
-        "passed in creator does not match creator Id"
-    }
+fun ListEntity.asExternalModel(creator: Profile, labels: List<Label>): FeedList {
+    check(creator.did == creatorId) { "passed in creator does not match creator Id" }
     return FeedList(
         cid = cid,
         uri = uri,

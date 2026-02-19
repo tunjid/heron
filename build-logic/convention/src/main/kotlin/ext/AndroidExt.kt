@@ -20,26 +20,23 @@ import ext.configureKotlinJvm
 import ext.libs
 import org.gradle.kotlin.dsl.dependencies
 
-/**
- * Sets common values for Android Applications and Libraries
- */
-fun org.gradle.api.Project.commonConfiguration(
-    extension: CommonExtension<*, *, *, *, *, *>,
-) = extension.apply {
-    compileSdk = 36
+/** Sets common values for Android Applications and Libraries */
+fun org.gradle.api.Project.commonConfiguration(extension: CommonExtension<*, *, *, *, *, *>) =
+    extension.apply {
+        compileSdk = 36
 
-    defaultConfig {
-        // The app uses Modifier.blur Which is Android 12 and up
-        minSdk = 31
-    }
+        defaultConfig {
+            // The app uses Modifier.blur Which is Android 12 and up
+            minSdk = 31
+        }
 
-    compileOptions {
-        isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = ProjectJavaVersion
-        targetCompatibility = ProjectJavaVersion
+        compileOptions {
+            isCoreLibraryDesugaringEnabled = true
+            sourceCompatibility = ProjectJavaVersion
+            targetCompatibility = ProjectJavaVersion
+        }
+        configureKotlinJvm()
     }
-    configureKotlinJvm()
-}
 
 fun org.gradle.api.Project.addDesugarDependencies() {
     dependencies {

@@ -100,11 +100,7 @@ internal fun ComposeScreen(
     actions: (Action) -> Unit,
 ) {
     val scrollState = rememberScrollState()
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState),
-    ) {
+    Column(modifier = modifier.fillMaxSize().verticalScroll(scrollState)) {
         val postText = state.postText
         ReplyingTo(
             paneMovableElementSharedTransitionScope = paneScaffoldState,
@@ -117,12 +113,8 @@ internal fun ComposeScreen(
             embeddedRecord = state.embeddedRecord,
             paneMovableElementSharedTransitionScope = paneScaffoldState,
             onPostTextChanged = { actions(Action.PostTextChanged(it)) },
-            onMentionDetected = {
-                actions(Action.SearchProfiles(it))
-            },
-            onRemoveEmbeddedRecordClicked = {
-                actions(Action.RemoveEmbeddedRecord)
-            },
+            onMentionDetected = { actions(Action.SearchProfiles(it)) },
+            onRemoveEmbeddedRecordClicked = { actions(Action.RemoveEmbeddedRecord) },
         )
         if (state.suggestedProfiles.isNotEmpty()) {
             ProfileSearchResults(
@@ -130,37 +122,24 @@ internal fun ComposeScreen(
                 onProfileClicked = { profile ->
                     // insert handle into text field
                     actions(
-                        Action.PostTextChanged(
-                            insertMention(state.postText, profile.handle.id),
-                        ),
+                        Action.PostTextChanged(insertMention(state.postText, profile.handle.id))
                     )
                     actions(Action.ClearSuggestions)
                 },
             )
         }
         MediaUploadItems(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth(),
             photos = state.photos,
             video = state.video,
-            removeMediaItem = { item ->
-                actions(Action.EditMedia.RemoveMedia(item))
-            },
-            onMediaItemUpdated = { item ->
-                actions(Action.EditMedia.UpdateMedia(item))
-            },
+            removeMediaItem = { item -> actions(Action.EditMedia.RemoveMedia(item)) },
+            onMediaItemUpdated = { item -> actions(Action.EditMedia.UpdateMedia(item)) },
         )
-        Spacer(
-            modifier = Modifier
-                .height(56.dp),
-        )
+        Spacer(modifier = Modifier.height(56.dp))
 
         LaunchedEffect(Unit) {
             snapshotFlow { state.postText.text.length }
-                .collect {
-                    scrollState.scrollTo(Int.MAX_VALUE)
-                }
+                .collect { scrollState.scrollTo(Int.MAX_VALUE) }
         }
     }
 }
@@ -176,29 +155,26 @@ private fun Post(
     onMentionDetected: (String) -> Unit,
     onRemoveEmbeddedRecordClicked: () -> Unit,
 ) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         AuthorAndPost(
             modifier = modifier,
             avatar = {
                 AsyncImage(
                     modifier = Modifier.size(UiTokens.avatarSize),
-                    args = remember(signedInProfile?.avatar) {
-                        ImageArgs(
-                            url = signedInProfile?.avatar?.uri,
-                            contentDescription = signedInProfile?.contentDescription,
-                            contentScale = ContentScale.Crop,
-                            shape = RoundedPolygonShape.Circle,
-                        )
-                    },
+                    args =
+                        remember(signedInProfile?.avatar) {
+                            ImageArgs(
+                                url = signedInProfile?.avatar?.uri,
+                                contentDescription = signedInProfile?.contentDescription,
+                                contentScale = ContentScale.Crop,
+                                shape = RoundedPolygonShape.Circle,
+                            )
+                        },
                 )
             },
             postContent = {
                 PostComposition(
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     postText = postText,
                     onPostTextChanged = onPostTextChanged,
                     onMentionDetected = onMentionDetected,
@@ -208,38 +184,41 @@ private fun Post(
 
         embeddedRecord?.let {
             Row(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp),
+                modifier = Modifier.padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.Top,
             ) {
                 EmbeddedRecord(
-                    modifier = Modifier
-                        .weight(1f),
+                    modifier = Modifier.weight(1f),
                     record = it,
                     sharedElementPrefix = NeverMatchedSharedElementPrefix,
                     movableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     postActions = PostActions.NoOp,
                 )
-                val contentDescription = when (it) {
-                    is Labeler -> stringResource(
-                        Res.string.remove_shared_record,
-                        stringResource(CommonStrings.record_labeler),
-                    )
-                    is Post -> stringResource(Res.string.remove_quoted_post)
-                    is FeedGenerator -> stringResource(
-                        Res.string.remove_shared_record,
-                        stringResource(CommonStrings.record_feed),
-                    )
-                    is FeedList -> stringResource(
-                        Res.string.remove_shared_record,
-                        stringResource(CommonStrings.record_list),
-                    )
-                    is StarterPack -> stringResource(
-                        Res.string.remove_shared_record,
-                        stringResource(CommonStrings.record_starter_pack),
-                    )
-                }
+                val contentDescription =
+                    when (it) {
+                        is Labeler ->
+                            stringResource(
+                                Res.string.remove_shared_record,
+                                stringResource(CommonStrings.record_labeler),
+                            )
+                        is Post -> stringResource(Res.string.remove_quoted_post)
+                        is FeedGenerator ->
+                            stringResource(
+                                Res.string.remove_shared_record,
+                                stringResource(CommonStrings.record_feed),
+                            )
+                        is FeedList ->
+                            stringResource(
+                                Res.string.remove_shared_record,
+                                stringResource(CommonStrings.record_list),
+                            )
+                        is StarterPack ->
+                            stringResource(
+                                Res.string.remove_shared_record,
+                                stringResource(CommonStrings.record_starter_pack),
+                            )
+                    }
                 FilledTonalIconButton(
                     onClick = onRemoveEmbeddedRecordClicked,
                     content = {
@@ -263,41 +242,39 @@ private fun ReplyingTo(
 ) {
     when (type) {
         is Post.Create.Mention -> Unit
-        is Post.Create.Reply -> AuthorAndPost(
-            modifier = modifier,
-            avatar = {
-                paneMovableElementSharedTransitionScope.UpdatedMovableStickySharedElementOf(
-                    modifier = Modifier
-                        .size(AvatarSize),
-                    sharedContentState = with(paneMovableElementSharedTransitionScope) {
-                        rememberSharedContentState(
-                            key = type.parent.avatarSharedElementKey(sharedElementPrefix),
-                        )
-                    },
-                    state = remember(type.parent.author.avatar) {
-                        ImageArgs(
-                            url = type.parent.author.avatar?.uri,
-                            contentScale = ContentScale.Crop,
-                            contentDescription = type.parent.author.displayName
-                                ?: type.parent.author.handle.id,
-                            shape = RoundedPolygonShape.Circle,
-                        )
-                    },
-                    sharedElement = { state, modifier ->
-                        AsyncImage(state, modifier)
-                    },
-                )
-            },
-            postContent = {
-                Column {
-                    ProfileName(
-                        profile = type.parent.author,
-                        ellipsize = true,
+        is Post.Create.Reply ->
+            AuthorAndPost(
+                modifier = modifier,
+                avatar = {
+                    paneMovableElementSharedTransitionScope.UpdatedMovableStickySharedElementOf(
+                        modifier = Modifier.size(AvatarSize),
+                        sharedContentState =
+                            with(paneMovableElementSharedTransitionScope) {
+                                rememberSharedContentState(
+                                    key = type.parent.avatarSharedElementKey(sharedElementPrefix)
+                                )
+                            },
+                        state =
+                            remember(type.parent.author.avatar) {
+                                ImageArgs(
+                                    url = type.parent.author.avatar?.uri,
+                                    contentScale = ContentScale.Crop,
+                                    contentDescription =
+                                        type.parent.author.displayName
+                                            ?: type.parent.author.handle.id,
+                                    shape = RoundedPolygonShape.Circle,
+                                )
+                            },
+                        sharedElement = { state, modifier -> AsyncImage(state, modifier) },
                     )
-                    Text(text = type.parent.record?.text ?: "")
-                }
-            },
-        )
+                },
+                postContent = {
+                    Column {
+                        ProfileName(profile = type.parent.author, ellipsize = true)
+                        Text(text = type.parent.record?.text ?: "")
+                    }
+                },
+            )
 
         Post.Create.Timeline -> Unit
         else -> Unit
@@ -310,11 +287,7 @@ private inline fun AuthorAndPost(
     avatar: @Composable () -> Unit,
     postContent: @Composable () -> Unit,
 ) {
-    Row(
-        modifier = modifier
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
+    Row(modifier = modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         avatar()
         postContent()
     }
@@ -332,19 +305,15 @@ private fun PostComposition(
     val coroutineScope = rememberCoroutineScope()
 
     BasicTextField(
-        modifier = modifier
-            .focusRequester(textFieldFocusRequester)
-            .bringIntoViewRequester(bringIntoViewRequester),
+        modifier =
+            modifier
+                .focusRequester(textFieldFocusRequester)
+                .bringIntoViewRequester(bringIntoViewRequester),
         value = postText,
         onValueChange = {
             val links = it.annotatedString.links()
-            val annotated = formatTextPost(
-                text = it.text,
-                textLinks = links,
-            )
-            onPostTextChanged(
-                it.copy(annotatedString = annotated),
-            )
+            val annotated = formatTextPost(text = it.text, textLinks = links)
+            onPostTextChanged(it.copy(annotatedString = annotated))
             when (val target = links.detectActiveLink(it.selection)) {
                 is LinkTarget.UserHandleMention -> onMentionDetected(target.handle.id)
                 is LinkTarget.Hashtag -> {
@@ -355,22 +324,14 @@ private fun PostComposition(
         },
         onTextLayout = {
             val cursorRect = it.getCursorRect(postText.selection.start)
-            coroutineScope.launch {
-                bringIntoViewRequester.bringIntoView(cursorRect)
-            }
+            coroutineScope.launch { bringIntoViewRequester.bringIntoView(cursorRect) }
         },
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-        textStyle = MaterialTheme.typography.bodyLarge.copy(
-            color = LocalContentColor.current,
-        ),
-        keyboardOptions = KeyboardOptions(
-            imeAction = ImeAction.Default,
-        ),
+        textStyle = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Default),
     )
 
-    LaunchedEffect(Unit) {
-        textFieldFocusRequester.requestFocus()
-    }
+    LaunchedEffect(Unit) { textFieldFocusRequester.requestFocus() }
 }
 
 @OptIn(ExperimentalUuidApi::class)

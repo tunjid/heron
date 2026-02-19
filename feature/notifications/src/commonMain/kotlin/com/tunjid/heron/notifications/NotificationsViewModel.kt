@@ -59,10 +59,7 @@ internal typealias NotificationsStateHolder = ActionStateMutator<Action, StateFl
 
 @AssistedFactory
 fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
-        scope: CoroutineScope,
-        route: Route,
-    ): ActualNotificationsViewModel
+    override fun invoke(scope: CoroutineScope, route: Route): ActualNotificationsViewModel
 }
 
 @AssistedInject
@@ -73,172 +70,144 @@ class ActualNotificationsViewModel(
     messageRepository: MessageRepository,
     notificationsRepository: NotificationsRepository,
     userDataRepository: UserDataRepository,
-    @Assisted
-    scope: CoroutineScope,
-    @Suppress("UNUSED_PARAMETER")
-    @Assisted
-    route: Route,
-) : ViewModel(viewModelScope = scope),
+    @Assisted scope: CoroutineScope,
+    @Suppress("UNUSED_PARAMETER") @Assisted route: Route,
+) :
+    ViewModel(viewModelScope = scope),
     NotificationsStateHolder by scope.actionStateFlowMutator(
         initialState = State(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = listOf(
-            lastRefreshedMutations(
-                notificationsRepository,
+        inputs =
+            listOf(
+                lastRefreshedMutations(notificationsRepository),
+                loadProfileMutations(authRepository),
+                recentConversationMutations(messageRepository = messageRepository),
+                canShowRequestPermissionsButtonMutations(notificationsRepository),
+                loadPreferencesMutations(userDataRepository = userDataRepository),
             ),
-            loadProfileMutations(
-                authRepository,
-            ),
-            recentConversationMutations(
-                messageRepository = messageRepository,
-            ),
-            canShowRequestPermissionsButtonMutations(
-                notificationsRepository,
-            ),
-            loadPreferencesMutations(
-                userDataRepository = userDataRepository,
-            ),
-        ),
         actionTransform = transform@{ actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.Tile -> action.flow.notificationsMutations(
-                        stateHolder = this@transform,
-                        notificationsRepository = notificationsRepository,
-                    )
+                actions.toMutationStream(keySelector = Action::key) {
+                    when (val action = type()) {
+                        is Action.Tile ->
+                            action.flow.notificationsMutations(
+                                stateHolder = this@transform,
+                                notificationsRepository = notificationsRepository,
+                            )
 
-                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+                        is Action.SendPostInteraction ->
+                            action.flow.postInteractionMutations(writeQueue = writeQueue)
+                        is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 
-                    is Action.MarkNotificationsRead -> action.flow.markNotificationsReadMutations(
-                        notificationsRepository = notificationsRepository,
-                    )
+                        is Action.MarkNotificationsRead ->
+                            action.flow.markNotificationsReadMutations(
+                                notificationsRepository = notificationsRepository
+                            )
 
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
-                    is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.BlockAccount -> action.flow.blockAccountMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.MuteAccount -> action.flow.muteAccountMutations(
-                        writeQueue = writeQueue,
-                    )
+                        is Action.Navigate ->
+                            action.flow.consumeNavigationActions(
+                                navigationMutationConsumer = navActions
+                            )
+                        is Action.UpdateMutedWord ->
+                            action.flow.updateMutedWordMutations(writeQueue = writeQueue)
+                        is Action.BlockAccount ->
+                            action.flow.blockAccountMutations(writeQueue = writeQueue)
+                        is Action.MuteAccount ->
+                            action.flow.muteAccountMutations(writeQueue = writeQueue)
+                    }
                 }
-            }
-        },
+            },
     )
 
-private fun loadProfileMutations(
-    authRepository: AuthRepository,
-): Flow<Mutation<State>> =
-    authRepository.signedInUser.mapToMutation {
-        copy(signedInProfile = it)
+private fun loadProfileMutations(authRepository: AuthRepository): Flow<Mutation<State>> =
+    authRepository.signedInUser.mapToMutation { copy(signedInProfile = it) }
+
+fun recentConversationMutations(messageRepository: MessageRepository): Flow<Mutation<State>> =
+    messageRepository.recentConversations().mapToMutation { conversations ->
+        copy(recentConversations = conversations)
     }
 
-fun recentConversationMutations(
-    messageRepository: MessageRepository,
-): Flow<Mutation<State>> =
-    messageRepository.recentConversations()
-        .mapToMutation { conversations ->
-            copy(recentConversations = conversations)
-        }
-
-fun loadPreferencesMutations(
-    userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    userDataRepository.preferences
-        .mapToMutation {
-            copy(preferences = it)
-        }
+fun loadPreferencesMutations(userDataRepository: UserDataRepository): Flow<Mutation<State>> =
+    userDataRepository.preferences.mapToMutation { copy(preferences = it) }
 
 fun lastRefreshedMutations(
-    notificationsRepository: NotificationsRepository,
+    notificationsRepository: NotificationsRepository
 ): Flow<Mutation<State>> =
     notificationsRepository.lastRefreshed.mapToMutation { refreshedAt ->
         copy(
             lastRefreshed = refreshedAt,
-            tilingData = tilingData.copy(
-                status = when (val currentStatus = tilingData.status) {
-                    is TilingState.Status.Initial -> currentStatus
-                    is TilingState.Status.Refreshed -> currentStatus
-                    is TilingState.Status.Refreshing -> {
-                        if (refreshedAt == null || refreshedAt < tilingData.currentQuery.data.cursorAnchor) currentStatus
-                        else tilingData.refreshedStatus()
-                    }
-                },
-            ),
+            tilingData =
+                tilingData.copy(
+                    status =
+                        when (val currentStatus = tilingData.status) {
+                            is TilingState.Status.Initial -> currentStatus
+                            is TilingState.Status.Refreshed -> currentStatus
+                            is TilingState.Status.Refreshing -> {
+                                if (
+                                    refreshedAt == null ||
+                                        refreshedAt < tilingData.currentQuery.data.cursorAnchor
+                                )
+                                    currentStatus
+                                else tilingData.refreshedStatus()
+                            }
+                        }
+                ),
         )
     }
 
 fun canShowRequestPermissionsButtonMutations(
-    notificationsRepository: NotificationsRepository,
+    notificationsRepository: NotificationsRepository
 ): Flow<Mutation<State>> =
-    notificationsRepository.hasPreviouslyRequestedNotificationPermissions
-        .mapToMutation { hasPreviouslyRequestedNotificationPermissions ->
-            copy(canAnimateRequestPermissionsButton = !hasPreviouslyRequestedNotificationPermissions)
-        }
+    notificationsRepository.hasPreviouslyRequestedNotificationPermissions.mapToMutation {
+        hasPreviouslyRequestedNotificationPermissions ->
+        copy(canAnimateRequestPermissionsButton = !hasPreviouslyRequestedNotificationPermissions)
+    }
 
 private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
-    writeQueue: WriteQueue,
+    writeQueue: WriteQueue
 ): Flow<Mutation<State>> = mapToManyMutations {
-    val writable = Writable.TimelineUpdate(
-        Timeline.Update.OfMutedWord.ReplaceAll(
-            mutedWordPreferences = it.mutedWordPreference,
-        ),
-    )
+    val writable =
+        Writable.TimelineUpdate(
+            Timeline.Update.OfMutedWord.ReplaceAll(mutedWordPreferences = it.mutedWordPreference)
+        )
     val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
+    writable.writeStatusMessage(status)?.let { emit { copy(messages = messages + it) } }
 }
 
 private fun Flow<Action.BlockAccount>.blockAccountMutations(
-    writeQueue: WriteQueue,
+    writeQueue: WriteQueue
 ): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
-    val writable = Writable.Restriction(
-        Profile.Restriction.Block.Add(
-            signedInProfileId = action.signedInProfileId,
-            profileId = action.profileId,
-        ),
-    )
+    val writable =
+        Writable.Restriction(
+            Profile.Restriction.Block.Add(
+                signedInProfileId = action.signedInProfileId,
+                profileId = action.profileId,
+            )
+        )
     val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
+    writable.writeStatusMessage(status)?.let { emit { copy(messages = messages + it) } }
 }
 
 private fun Flow<Action.MuteAccount>.muteAccountMutations(
-    writeQueue: WriteQueue,
+    writeQueue: WriteQueue
 ): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
-    val writable = Writable.Restriction(
-        Profile.Restriction.Mute.Add(
-            signedInProfileId = action.signedInProfileId,
-            profileId = action.profileId,
-        ),
-    )
+    val writable =
+        Writable.Restriction(
+            Profile.Restriction.Mute.Add(
+                signedInProfileId = action.signedInProfileId,
+                profileId = action.profileId,
+            )
+        )
     val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
+    writable.writeStatusMessage(status)?.let { emit { copy(messages = messages + it) } }
 }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
-    writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        val writable = Writable.Interaction(action.interaction)
-        val status = writeQueue.enqueue(writable)
-        writable.writeStatusMessage(status)?.let {
-            emit { copy(messages = messages + it) }
-        }
-    }
+    writeQueue: WriteQueue
+): Flow<Mutation<State>> = mapToManyMutations { action ->
+    val writable = Writable.Interaction(action.interaction)
+    val status = writeQueue.enqueue(writable)
+    writable.writeStatusMessage(status)?.let { emit { copy(messages = messages + it) } }
+}
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
@@ -246,11 +215,8 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
     }
 
 private fun Flow<Action.MarkNotificationsRead>.markNotificationsReadMutations(
-    notificationsRepository: NotificationsRepository,
-): Flow<Mutation<State>> =
-    mapToManyMutations {
-        notificationsRepository.markRead(it.at)
-    }
+    notificationsRepository: NotificationsRepository
+): Flow<Mutation<State>> = mapToManyMutations { notificationsRepository.markRead(it.at) }
 
 suspend fun Flow<Action.Tile>.notificationsMutations(
     stateHolder: SuspendingStateHolder<State>,
@@ -264,10 +230,6 @@ suspend fun Flow<Action.Tile>.notificationsMutations(
             updateQueryData = { copy(data = it) },
             refreshQuery = { copy(data = data.reset()) },
             cursorListLoader = notificationsRepository::notifications,
-            onNewItems = { notifications ->
-                notifications.distinctBy(Notification::cid)
-            },
-            onTilingDataUpdated = {
-                copy(tilingData = it)
-            },
+            onNewItems = { notifications -> notifications.distinctBy(Notification::cid) },
+            onTilingDataUpdated = { copy(tilingData = it) },
         )

@@ -73,19 +73,21 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun Timeline.displayName() = when (this) {
-    is Timeline.Home.Feed -> name
-    is Timeline.Home.Following -> name
-    is Timeline.Home.List -> name
-    is Timeline.StarterPack -> starterPack.name
-    is Timeline.Profile -> when (type) {
-        Timeline.Profile.Type.Media -> stringResource(Res.string.media)
-        Timeline.Profile.Type.Posts -> stringResource(Res.string.posts)
-        Timeline.Profile.Type.Likes -> stringResource(Res.string.likes)
-        Timeline.Profile.Type.Replies -> stringResource(Res.string.replies)
-        Timeline.Profile.Type.Videos -> stringResource(Res.string.videos)
-    }.capitalize(Locale.current)
-}
+fun Timeline.displayName() =
+    when (this) {
+        is Timeline.Home.Feed -> name
+        is Timeline.Home.Following -> name
+        is Timeline.Home.List -> name
+        is Timeline.StarterPack -> starterPack.name
+        is Timeline.Profile ->
+            when (type) {
+                Timeline.Profile.Type.Media -> stringResource(Res.string.media)
+                Timeline.Profile.Type.Posts -> stringResource(Res.string.posts)
+                Timeline.Profile.Type.Likes -> stringResource(Res.string.likes)
+                Timeline.Profile.Type.Replies -> stringResource(Res.string.replies)
+                Timeline.Profile.Type.Videos -> stringResource(Res.string.videos)
+            }.capitalize(Locale.current)
+    }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -96,92 +98,85 @@ fun TimelineTitle(
     sharedElementPrefix: String?,
     hasUpdates: Boolean,
     onPresentationSelected: (Timeline, Timeline.Presentation) -> Unit,
-) = with(movableElementSharedTransitionScope) {
-    if (timeline != null) Row(
-        modifier = modifier
-            .padding(
-                horizontal = 8.dp,
-            ),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        val avatar = timeline.avatar
-        PaneStickySharedElement(
-            modifier = Modifier
-                .size(44.dp),
-            sharedContentState = rememberSharedContentState(
-                key = timeline.avatarSharedElementKey(sharedElementPrefix),
-            ),
-            zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),
-        ) {
-            AsyncImage(
-                modifier = Modifier
-                    .fillParentAxisIfFixedOrWrap(),
-                args = remember(avatar) {
-                    ImageArgs(
-                        url = avatar.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = null,
-                        shape = timeline.shape,
-                    )
-                },
-            )
-        }
-
-        Spacer(Modifier.width(12.dp))
-
-        Box(
-            modifier = Modifier
-                .weight(1f),
-        ) {
-            Column {
+) =
+    with(movableElementSharedTransitionScope) {
+        if (timeline != null)
+            Row(
+                modifier = modifier.padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                val avatar = timeline.avatar
                 PaneStickySharedElement(
-                    modifier = Modifier,
-                    sharedContentState = rememberSharedContentState(
-                        key = timeline.titleSharedElementKey(sharedElementPrefix),
-                    ),
+                    modifier = Modifier.size(44.dp),
+                    sharedContentState =
+                        rememberSharedContentState(
+                            key = timeline.avatarSharedElementKey(sharedElementPrefix)
+                        ),
                     zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),
                 ) {
-                    Text(
-                        modifier = Modifier,
-                        text = timeline.displayName(),
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1,
-                        style = MaterialTheme.typography.titleSmallEmphasized,
+                    AsyncImage(
+                        modifier = Modifier.fillParentAxisIfFixedOrWrap(),
+                        args =
+                            remember(avatar) {
+                                ImageArgs(
+                                    url = avatar.uri,
+                                    contentScale = ContentScale.Crop,
+                                    contentDescription = null,
+                                    shape = timeline.shape,
+                                )
+                            },
                     )
                 }
-                PaneStickySharedElement(
-                    modifier = Modifier,
-                    sharedContentState = rememberSharedContentState(
-                        key = timeline.subtitleSharedElementKey(sharedElementPrefix),
-                    ),
-                    zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),
-                ) {
-                    Text(
-                        modifier = Modifier,
-                        text = timeline.creator(),
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.outline,
-                    )
+
+                Spacer(Modifier.width(12.dp))
+
+                Box(modifier = Modifier.weight(1f)) {
+                    Column {
+                        PaneStickySharedElement(
+                            modifier = Modifier,
+                            sharedContentState =
+                                rememberSharedContentState(
+                                    key = timeline.titleSharedElementKey(sharedElementPrefix)
+                                ),
+                            zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),
+                        ) {
+                            Text(
+                                modifier = Modifier,
+                                text = timeline.displayName(),
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1,
+                                style = MaterialTheme.typography.titleSmallEmphasized,
+                            )
+                        }
+                        PaneStickySharedElement(
+                            modifier = Modifier,
+                            sharedContentState =
+                                rememberSharedContentState(
+                                    key = timeline.subtitleSharedElementKey(sharedElementPrefix)
+                                ),
+                            zIndexInOverlay = UiTokens.higherThanAppBarSharedElementZIndex(),
+                        ) {
+                            Text(
+                                modifier = Modifier,
+                                text = timeline.creator(),
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.outline,
+                            )
+                        }
+                    }
+                    if (hasUpdates) Badge(modifier = Modifier.size(4.dp))
                 }
-            }
-            if (hasUpdates) Badge(
-                modifier = Modifier.size(4.dp),
-            )
-        }
-        TimelinePresentationSelector(
-            selected = timeline.presentation,
-            available = timeline.supportedPresentations,
-            onPresentationSelected = { presentation ->
-                onPresentationSelected(
-                    timeline,
-                    presentation,
+                TimelinePresentationSelector(
+                    selected = timeline.presentation,
+                    available = timeline.supportedPresentations,
+                    onPresentationSelected = { presentation ->
+                        onPresentationSelected(timeline, presentation)
+                    },
                 )
-            },
-        )
+            }
     }
-}
 
 @Composable
 internal fun TimelineStatusSelection(
@@ -199,53 +194,38 @@ internal fun TimelineStatusSelection(
 }
 
 val Timeline.description: String
-    get() = when (this) {
-        is Timeline.Home.Feed -> feedGenerator.description
-        is Timeline.Home.List -> feedList.description
-        is Timeline.StarterPack -> starterPack.description
+    get() =
+        when (this) {
+            is Timeline.Home.Feed -> feedGenerator.description
+            is Timeline.Home.List -> feedList.description
+            is Timeline.StarterPack -> starterPack.description
 
-        is Timeline.Home.Following,
-        is Timeline.Profile,
-        -> null
-    } ?: ""
+            is Timeline.Home.Following,
+            is Timeline.Profile -> null
+        } ?: ""
 
 @Composable
-private fun Timeline.creator(): String = when (this) {
-    is Timeline.Home.Feed -> stringResource(
-        Res.string.feed_by,
-        feedGenerator.creator.handle.id,
-    )
+private fun Timeline.creator(): String =
+    when (this) {
+        is Timeline.Home.Feed -> stringResource(Res.string.feed_by, feedGenerator.creator.handle.id)
 
-    is Timeline.Home.List -> stringResource(
-        Res.string.list_by,
-        feedList.creator.handle.id,
-    )
+        is Timeline.Home.List -> stringResource(Res.string.list_by, feedList.creator.handle.id)
 
-    is Timeline.StarterPack -> stringResource(
-        Res.string.starter_pack_by,
-        starterPack.creator.handle.id,
-    )
+        is Timeline.StarterPack ->
+            stringResource(Res.string.starter_pack_by, starterPack.creator.handle.id)
 
-    is Timeline.Home.Following,
-    is Timeline.Profile,
-    -> null
-} ?: ""
+        is Timeline.Home.Following,
+        is Timeline.Profile -> null
+    } ?: ""
 
-val Timeline.sharedElementPrefix get() = source.id
+val Timeline.sharedElementPrefix
+    get() = source.id
 
-fun Timeline.sharedElementPrefix(
-    quotingPostUri: PostUri?,
-) = source.id.withQuotingPostUriPrefix(
-    quotingPostUri = quotingPostUri,
-)
+fun Timeline.sharedElementPrefix(quotingPostUri: PostUri?) =
+    source.id.withQuotingPostUriPrefix(quotingPostUri = quotingPostUri)
 
-fun LazyStaggeredGridState.pendingOffsetFor(
-    item: TimelineItem,
-) = layoutInfo
-    .visibleItemsInfo
-    .first { it.key == item.id }
-    .offset
-    .y
+fun LazyStaggeredGridState.pendingOffsetFor(item: TimelineItem) =
+    layoutInfo.visibleItemsInfo.first { it.key == item.id }.offset.y
 
 val TimelineItem.canAutoPlayVideo: Boolean
     get() = appliedLabels.canAutoPlayVideo
@@ -258,82 +238,68 @@ private fun Timeline.Home.Status.textResource(): StringResource =
     }
 
 private val Timeline.Home.Status.icon: ImageVector
-    get() = when (this) {
-        Timeline.Home.Status.Pinned -> Icons.Rounded.Star
-        Timeline.Home.Status.Saved -> Icons.Rounded.Bookmark
-        Timeline.Home.Status.None -> Icons.Outlined.BookmarkAdd
-    }
+    get() =
+        when (this) {
+            Timeline.Home.Status.Pinned -> Icons.Rounded.Star
+            Timeline.Home.Status.Saved -> Icons.Rounded.Bookmark
+            Timeline.Home.Status.None -> Icons.Outlined.BookmarkAdd
+        }
 
 private val Timeline.avatar: ImageUri
-    get() = when (this) {
-        is Timeline.Home.Feed -> feedGenerator.avatar
-        is Timeline.Home.List -> feedList.avatar
-        is Timeline.StarterPack -> starterPack.list?.avatar
-        is Timeline.Home.Following,
-        is Timeline.Profile,
-        -> BlueskyClouds
-    } ?: BlueskyClouds
+    get() =
+        when (this) {
+            is Timeline.Home.Feed -> feedGenerator.avatar
+            is Timeline.Home.List -> feedList.avatar
+            is Timeline.StarterPack -> starterPack.list?.avatar
+            is Timeline.Home.Following,
+            is Timeline.Profile -> BlueskyClouds
+        } ?: BlueskyClouds
 
-private fun Timeline.avatarSharedElementKey(
-    sharedElementPrefix: String?,
-): String = when (this) {
-    is Timeline.Home.Feed -> feedGenerator.avatarSharedElementKey(sharedElementPrefix)
-    is Timeline.Home.List -> feedList.avatarSharedElementKey(sharedElementPrefix)
-    is Timeline.StarterPack -> starterPack.avatarSharedElementKey(sharedElementPrefix)
-    is Timeline.Home.Following -> "$sharedElementPrefix-following"
-    is Timeline.Profile -> "$sharedElementPrefix-${profileId.id}"
-}
+private fun Timeline.avatarSharedElementKey(sharedElementPrefix: String?): String =
+    when (this) {
+        is Timeline.Home.Feed -> feedGenerator.avatarSharedElementKey(sharedElementPrefix)
+        is Timeline.Home.List -> feedList.avatarSharedElementKey(sharedElementPrefix)
+        is Timeline.StarterPack -> starterPack.avatarSharedElementKey(sharedElementPrefix)
+        is Timeline.Home.Following -> "$sharedElementPrefix-following"
+        is Timeline.Profile -> "$sharedElementPrefix-${profileId.id}"
+    }
 
-private fun Timeline.titleSharedElementKey(
-    sharedElementPrefix: String?,
-): String = when (this) {
-    is Timeline.Home.Feed -> titleSharedElementKey(
-        prefix = sharedElementPrefix,
-        type = feedGenerator.uri,
-    )
+private fun Timeline.titleSharedElementKey(sharedElementPrefix: String?): String =
+    when (this) {
+        is Timeline.Home.Feed ->
+            titleSharedElementKey(prefix = sharedElementPrefix, type = feedGenerator.uri)
 
-    is Timeline.Home.List -> titleSharedElementKey(
-        prefix = sharedElementPrefix,
-        type = feedList.uri,
-    )
+        is Timeline.Home.List ->
+            titleSharedElementKey(prefix = sharedElementPrefix, type = feedList.uri)
 
-    is Timeline.StarterPack -> titleSharedElementKey(
-        prefix = sharedElementPrefix,
-        type = starterPack.uri,
-    )
+        is Timeline.StarterPack ->
+            titleSharedElementKey(prefix = sharedElementPrefix, type = starterPack.uri)
 
-    is Timeline.Home.Following -> "$sharedElementPrefix-following-title"
-    is Timeline.Profile -> "$sharedElementPrefix-${profileId.id}-title"
-}
+        is Timeline.Home.Following -> "$sharedElementPrefix-following-title"
+        is Timeline.Profile -> "$sharedElementPrefix-${profileId.id}-title"
+    }
 
-private fun Timeline.subtitleSharedElementKey(
-    sharedElementPrefix: String?,
-): String = when (this) {
-    is Timeline.Home.Feed -> subtitleSharedElementKey(
-        prefix = sharedElementPrefix,
-        type = feedGenerator.uri,
-    )
+private fun Timeline.subtitleSharedElementKey(sharedElementPrefix: String?): String =
+    when (this) {
+        is Timeline.Home.Feed ->
+            subtitleSharedElementKey(prefix = sharedElementPrefix, type = feedGenerator.uri)
 
-    is Timeline.Home.List -> subtitleSharedElementKey(
-        prefix = sharedElementPrefix,
-        type = feedList.uri,
-    )
+        is Timeline.Home.List ->
+            subtitleSharedElementKey(prefix = sharedElementPrefix, type = feedList.uri)
 
-    is Timeline.StarterPack -> subtitleSharedElementKey(
-        prefix = sharedElementPrefix,
-        type = starterPack.uri,
-    )
+        is Timeline.StarterPack ->
+            subtitleSharedElementKey(prefix = sharedElementPrefix, type = starterPack.uri)
 
-    is Timeline.Home.Following -> "$sharedElementPrefix-following-subtitle"
-    is Timeline.Profile -> "$sharedElementPrefix-${profileId.id}-subtitle"
-}
+        is Timeline.Home.Following -> "$sharedElementPrefix-following-subtitle"
+        is Timeline.Profile -> "$sharedElementPrefix-${profileId.id}-subtitle"
+    }
 
 private val Timeline.shape: RoundedPolygonShape
-    get() = when (this) {
-        is Timeline.Home.Feed -> FeedGeneratorCollectionShape
-        is Timeline.Home.List -> ListCollectionShape
-        is Timeline.StarterPack -> StarterPackCollectionShape
-        is Timeline.Home.Following,
-        is Timeline.Profile,
-        -> RoundedPolygonShape.Circle
-    }
+    get() =
+        when (this) {
+            is Timeline.Home.Feed -> FeedGeneratorCollectionShape
+            is Timeline.Home.List -> ListCollectionShape
+            is Timeline.StarterPack -> StarterPackCollectionShape
+            is Timeline.Home.Following,
+            is Timeline.Profile -> RoundedPolygonShape.Circle
+        }

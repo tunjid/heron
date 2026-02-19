@@ -58,90 +58,77 @@ internal typealias SignInStateHolder = ActionStateMutator<Action, StateFlow<Stat
 
 @AssistedFactory
 fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
-        scope: CoroutineScope,
-        route: Route,
-    ): ActualSignInViewModel
+    override fun invoke(scope: CoroutineScope, route: Route): ActualSignInViewModel
 }
 
 @AssistedInject
 class ActualSignInViewModel(
     authRepository: AuthRepository,
     navActions: (NavigationMutation) -> Unit,
-    @Assisted
-    scope: CoroutineScope,
-    @Assisted
-    route: Route,
-) : ViewModel(viewModelScope = scope),
+    @Assisted scope: CoroutineScope,
+    @Assisted route: Route,
+) :
+    ViewModel(viewModelScope = scope),
     SignInStateHolder by scope.actionStateFlowMutator(
         initialState = State(),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = listOf(
-            pastSessionMutations(
-                authRepository = authRepository,
+        inputs =
+            listOf(
+                pastSessionMutations(authRepository = authRepository),
+                isSignedInMutations(authRepository = authRepository),
+                authDeeplinkMutations(
+                    route = route,
+                    authRepository = authRepository,
+                    navActions = navActions,
+                ),
             ),
-            isSignedInMutations(
-                authRepository = authRepository,
-            ),
-            authDeeplinkMutations(
-                route = route,
-                authRepository = authRepository,
-                navActions = navActions,
-            ),
-        ),
         actionTransform = { actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
+            actions.toMutationStream(keySelector = Action::key) {
                 when (val action = type()) {
                     is Action.FieldChanged -> action.flow.formEditMutations()
                     is Action.TogglePasswordPreference -> action.flow.passwordPreferenceMutations()
                     is Action.MessageConsumed -> action.flow.messageConsumptionMutations()
-                    is Action.CreateSession -> action.flow.submissionMutations(
-                        authRepository = authRepository,
-                        navActions = navActions,
-                    )
-                    is Action.BeginOauthFlow -> action.flow.beginOauthMutations(
-                        authRepository = authRepository,
-                    )
-                    is Action.OauthFlowResultAvailable -> action.flow.oauthFlowResultMutations(
-                        authRepository = authRepository,
-                        navActions = navActions,
-                    )
-                    is Action.OauthAvailabilityChanged -> action.flow.oauthAvailabilityChangedMutations()
+                    is Action.CreateSession ->
+                        action.flow.submissionMutations(
+                            authRepository = authRepository,
+                            navActions = navActions,
+                        )
+                    is Action.BeginOauthFlow ->
+                        action.flow.beginOauthMutations(authRepository = authRepository)
+                    is Action.OauthFlowResultAvailable ->
+                        action.flow.oauthFlowResultMutations(
+                            authRepository = authRepository,
+                            navActions = navActions,
+                        )
+                    is Action.OauthAvailabilityChanged ->
+                        action.flow.oauthAvailabilityChangedMutations()
                     is Action.SetServer -> action.flow.setServerMutations()
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
+                    is Action.Navigate ->
+                        action.flow.consumeNavigationActions(
+                            navigationMutationConsumer = navActions
+                        )
                 }
             }
         },
     )
 
-private fun isSignedInMutations(
-    authRepository: AuthRepository,
-): Flow<Mutation<State>> =
-    authRepository.isSignedIn
-        .mapToMutation {
-            copy(isSignedIn = it)
-        }
+private fun isSignedInMutations(authRepository: AuthRepository): Flow<Mutation<State>> =
+    authRepository.isSignedIn.mapToMutation { copy(isSignedIn = it) }
 
-private fun pastSessionMutations(
-    authRepository: AuthRepository,
-): Flow<Mutation<State>> =
-    authRepository.pastSessions
-        .mapToMutation { pastSessions ->
-            val mostRecentSession = pastSessions.firstOrNull()
-            copy(
-                pastSessions = pastSessions,
-                fields =
+private fun pastSessionMutations(authRepository: AuthRepository): Flow<Mutation<State>> =
+    authRepository.pastSessions.mapToMutation { pastSessions ->
+        val mostRecentSession = pastSessions.firstOrNull()
+        copy(
+            pastSessions = pastSessions,
+            fields =
                 if (fields != InitialFields || mostRecentSession == null) fields
-                else fields.map { field ->
-                    if (field.id != Username) field
-                    else field.copy(value = mostRecentSession.profileHandle.id)
-                },
-            )
-        }
+                else
+                    fields.map { field ->
+                        if (field.id != Username) field
+                        else field.copy(value = mostRecentSession.profileHandle.id)
+                    },
+        )
+    }
 
 private fun authDeeplinkMutations(
     route: Route,
@@ -154,13 +141,11 @@ private fun authDeeplinkMutations(
     val pathAndQueries = route.routeParams.pathAndQueries
 
     createSessionMutations(
-        request = SessionRequest.Oauth(
-            callbackUri = GenericUri("$PLACEHOLDER_OAUTH_HOST$pathAndQueries"),
-            server = Server(
-                endpoint = oauthTokenIssuer,
-                supportsOauth = true,
+        request =
+            SessionRequest.Oauth(
+                callbackUri = GenericUri("$PLACEHOLDER_OAUTH_HOST$pathAndQueries"),
+                server = Server(endpoint = oauthTokenIssuer, supportsOauth = true),
             ),
-        ),
         authRepository = authRepository,
         navActions = navActions,
     )
@@ -175,103 +160,90 @@ private fun Flow<Action.SetServer>.setServerMutations(): Flow<Mutation<State>> =
     mapToMutation { (server) ->
         copy(
             selectedServer = server,
-            availableServers = when (server) {
-                // Do not accidentally duplicate a custom server with an
-                // endpoint that is the same as a known server
-                in Server.KnownServers -> StartingServers
-                // Add the custom server as the last server
-                else -> Server.KnownServers.toList() + server
-            },
+            availableServers =
+                when (server) {
+                    // Do not accidentally duplicate a custom server with an
+                    // endpoint that is the same as a known server
+                    in Server.KnownServers -> StartingServers
+                    // Add the custom server as the last server
+                    else -> Server.KnownServers.toList() + server
+                },
         )
     }
 
-private fun Flow<Action.OauthAvailabilityChanged>.oauthAvailabilityChangedMutations(): Flow<Mutation<State>> =
-    mapToMutation { (isOauthAvailable) ->
-        copy(isOauthAvailable = isOauthAvailable)
-    }
+private fun Flow<Action.OauthAvailabilityChanged>.oauthAvailabilityChangedMutations():
+    Flow<Mutation<State>> = mapToMutation { (isOauthAvailable) ->
+    copy(isOauthAvailable = isOauthAvailable)
+}
 
 private fun Flow<Action.OauthFlowResultAvailable>.oauthFlowResultMutations(
     authRepository: AuthRepository,
     navActions: (NavigationMutation) -> Unit,
-): Flow<Mutation<State>> =
-    mapLatestToManyMutations { action ->
-        when (val result = action.result) {
-            OauthFlowResult.Failure -> emit {
-                copy(
-                    messages = messages + Memo.Resource(Res.string.oauth_flow_failed),
-                )
-            }
-            is OauthFlowResult.Success -> {
-                createSessionMutations(
-                    request = SessionRequest.Oauth(
+): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
+    when (val result = action.result) {
+        OauthFlowResult.Failure ->
+            emit { copy(messages = messages + Memo.Resource(Res.string.oauth_flow_failed)) }
+        is OauthFlowResult.Success -> {
+            createSessionMutations(
+                request =
+                    SessionRequest.Oauth(
                         callbackUri = result.callbackUri,
-                        server = Server(
-                            endpoint = result.issuer,
-                            supportsOauth = true,
-                        ),
+                        server = Server(endpoint = result.issuer, supportsOauth = true),
                     ),
-                    authRepository = authRepository,
-                    navActions = navActions,
-                )
-            }
+                authRepository = authRepository,
+                navActions = navActions,
+            )
         }
     }
+}
 
 private fun Flow<Action.BeginOauthFlow>.beginOauthMutations(
-    authRepository: AuthRepository,
-): Flow<Mutation<State>> =
-    mapLatestToManyMutations {
-        val result = authRepository.oauthRequestUri(
-            request = OauthUriRequest(
-                handle = it.handle,
-                server = it.server,
-            ),
+    authRepository: AuthRepository
+): Flow<Mutation<State>> = mapLatestToManyMutations {
+    val result =
+        authRepository.oauthRequestUri(
+            request = OauthUriRequest(handle = it.handle, server = it.server)
         )
-        result.fold(
-            onSuccess = {
-                emit { copy(oauthRequestUri = it) }
-            },
-            onFailure = {
-                emit {
-                    copy(messages = messages + Memo.Resource(Res.string.oauth_start_error))
-                }
-            },
-        )
-    }
+    result.fold(
+        onSuccess = { emit { copy(oauthRequestUri = it) } },
+        onFailure = {
+            emit { copy(messages = messages + Memo.Resource(Res.string.oauth_start_error)) }
+        },
+    )
+}
 
-/**
- * Mutations from consuming messages from the message queue
- */
+/** Mutations from consuming messages from the message queue */
 private fun Flow<Action.MessageConsumed>.messageConsumptionMutations(): Flow<Mutation<State>> =
     mapToMutation { (message) ->
         copy(messages = messages - message)
     }
 
-private fun Flow<Action.TogglePasswordPreference>.passwordPreferenceMutations(): Flow<Mutation<State>> =
-    mapToMutation {
-        val preferPassword = !prefersPassword
-        copy(
-            prefersPassword = preferPassword,
-            fields = if (preferPassword) fields else fields.map { field ->
-                // Clear password when using oauth flow
-                if (field.id == Password) field.copy(value = "")
-                else field
-            },
-        )
-    }
+private fun Flow<Action.TogglePasswordPreference>.passwordPreferenceMutations():
+    Flow<Mutation<State>> = mapToMutation {
+    val preferPassword = !prefersPassword
+    copy(
+        prefersPassword = preferPassword,
+        fields =
+            if (preferPassword) fields
+            else
+                fields.map { field ->
+                    // Clear password when using oauth flow
+                    if (field.id == Password) field.copy(value = "") else field
+                },
+    )
+}
 
 private fun Flow<Action.CreateSession>.submissionMutations(
     authRepository: AuthRepository,
     navActions: (NavigationMutation) -> Unit,
 ): Flow<Mutation<State>> =
-    debounce(200)
-        .mapLatestToManyMutations { (sessionRequest) ->
-            createSessionMutations(
-                request = sessionRequest,
-                authRepository = authRepository,
-                navActions = navActions,
-            )
-        }
+    debounce(200).mapLatestToManyMutations { (sessionRequest) ->
+        createSessionMutations(
+            request = sessionRequest,
+            authRepository = authRepository,
+            navActions = navActions,
+        )
+    }
 
 private suspend fun FlowCollector<Mutation<State>>.createSessionMutations(
     request: SessionRequest,
@@ -281,16 +253,18 @@ private suspend fun FlowCollector<Mutation<State>>.createSessionMutations(
     emit { copy(isSubmitting = true) }
     when (val outcome = authRepository.createSession(request)) {
         is Outcome.Success -> navActions(NavigationContext::resetAuthNavigation)
-        is Outcome.Failure -> emit {
-            copy(
-                messages = messages.plus(
-                    outcome.exception.message
-                        ?.let(Memo::Text)
-                        ?: Memo.Resource(Res.string.oauth_flow_failed),
+        is Outcome.Failure ->
+            emit {
+                copy(
+                    messages =
+                        messages
+                            .plus(
+                                outcome.exception.message?.let(Memo::Text)
+                                    ?: Memo.Resource(Res.string.oauth_flow_failed)
+                            )
+                            .distinct()
                 )
-                    .distinct(),
-            )
-        }
+            }
     }
     emit { copy(isSubmitting = false) }
 }

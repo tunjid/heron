@@ -46,7 +46,7 @@ class ProfileRestrictionsDialogState internal constructor() {
     companion object {
         @Composable
         fun rememberProfileRestrictionsDialogState(
-            onApproved: (Action.Moderation) -> Unit,
+            onApproved: (Action.Moderation) -> Unit
         ): ProfileRestrictionsDialogState {
             val state = remember { ProfileRestrictionsDialogState() }
 
@@ -72,47 +72,44 @@ private fun ProfileRestrictionsDialog(
     onDismiss: () -> Unit,
     onApproved: () -> Unit,
 ) {
-    val (title, description, confirmText) = when (moderation) {
-        is Action.Block.Add -> Triple(
-            stringResource(CommonStrings.block_account_dialog_title),
-            stringResource(CommonStrings.block_account_dialog_description),
-            stringResource(CommonStrings.viewer_state_block_account),
-        )
+    val (title, description, confirmText) =
+        when (moderation) {
+            is Action.Block.Add ->
+                Triple(
+                    stringResource(CommonStrings.block_account_dialog_title),
+                    stringResource(CommonStrings.block_account_dialog_description),
+                    stringResource(CommonStrings.viewer_state_block_account),
+                )
 
-        is Action.Block.Remove -> Triple(
-            stringResource(CommonStrings.unblock_account_dialog_title),
-            stringResource(CommonStrings.unblock_account_dialog_description),
-            stringResource(CommonStrings.viewer_state_unblock_account),
-        )
+            is Action.Block.Remove ->
+                Triple(
+                    stringResource(CommonStrings.unblock_account_dialog_title),
+                    stringResource(CommonStrings.unblock_account_dialog_description),
+                    stringResource(CommonStrings.viewer_state_unblock_account),
+                )
 
-        is Action.Mute.Add -> Triple(
-            stringResource(CommonStrings.mute_account_dialog_title),
-            stringResource(CommonStrings.mute_account_dialog_description),
-            stringResource(CommonStrings.viewer_state_mute_account),
-        )
+            is Action.Mute.Add ->
+                Triple(
+                    stringResource(CommonStrings.mute_account_dialog_title),
+                    stringResource(CommonStrings.mute_account_dialog_description),
+                    stringResource(CommonStrings.viewer_state_mute_account),
+                )
 
-        is Action.Mute.Remove -> Triple(
-            stringResource(CommonStrings.unmute_account_dialog_title),
-            stringResource(CommonStrings.unmute_account_dialog_description),
-            stringResource(CommonStrings.viewer_state_unmute_account),
-        )
-    }
+            is Action.Mute.Remove ->
+                Triple(
+                    stringResource(CommonStrings.unmute_account_dialog_title),
+                    stringResource(CommonStrings.unmute_account_dialog_description),
+                    stringResource(CommonStrings.viewer_state_unmute_account),
+                )
+        }
 
     SimpleDialog(
         onDismissRequest = onDismiss,
         title = { SimpleDialogTitle(text = title) },
         text = { SimpleDialogText(text = description) },
-        confirmButton = {
-            DestructiveDialogButton(
-                text = confirmText,
-                onClick = onApproved,
-            )
-        },
+        confirmButton = { DestructiveDialogButton(text = confirmText, onClick = onApproved) },
         dismissButton = {
-            NeutralDialogButton(
-                text = stringResource(Res.string.cancel),
-                onClick = onDismiss,
-            )
+            NeutralDialogButton(text = stringResource(Res.string.cancel), onClick = onDismiss)
         },
     )
 }

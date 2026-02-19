@@ -47,36 +47,38 @@ private val GreenHeronOnTertiaryDark = Color(0xFF003825)
 private val GreenHeronTertiaryContainerDark = Color(0xFF005138)
 private val GreenHeronOnTertiaryContainerDark = Color(0xFF89F8C7)
 
-val GreenHeronLightScheme = lightColorScheme(
-    primary = GreenHeronPrimaryLight,
-    onPrimary = GreenHeronOnPrimaryLight,
-    primaryContainer = GreenHeronPrimaryContainerLight,
-    onPrimaryContainer = GreenHeronOnPrimaryContainerLight,
-    secondary = GreenHeronSecondaryLight,
-    onSecondary = GreenHeronOnSecondaryLight,
-    secondaryContainer = GreenHeronSecondaryContainerLight,
-    onSecondaryContainer = GreenHeronOnSecondaryContainerLight,
-    tertiary = GreenHeronTertiaryLight,
-    onTertiary = GreenHeronOnTertiaryLight,
-    tertiaryContainer = GreenHeronTertiaryContainerLight,
-    onTertiaryContainer = GreenHeronOnTertiaryContainerLight,
-    surface = Color(0xFFF0FDF4),
-    onSurface = Color(0xFF191C20),
-)
+val GreenHeronLightScheme =
+    lightColorScheme(
+        primary = GreenHeronPrimaryLight,
+        onPrimary = GreenHeronOnPrimaryLight,
+        primaryContainer = GreenHeronPrimaryContainerLight,
+        onPrimaryContainer = GreenHeronOnPrimaryContainerLight,
+        secondary = GreenHeronSecondaryLight,
+        onSecondary = GreenHeronOnSecondaryLight,
+        secondaryContainer = GreenHeronSecondaryContainerLight,
+        onSecondaryContainer = GreenHeronOnSecondaryContainerLight,
+        tertiary = GreenHeronTertiaryLight,
+        onTertiary = GreenHeronOnTertiaryLight,
+        tertiaryContainer = GreenHeronTertiaryContainerLight,
+        onTertiaryContainer = GreenHeronOnTertiaryContainerLight,
+        surface = Color(0xFFF0FDF4),
+        onSurface = Color(0xFF191C20),
+    )
 
-val GreenHeronDarkScheme = darkColorScheme(
-    primary = GreenHeronPrimaryDark,
-    onPrimary = GreenHeronOnPrimaryDark,
-    primaryContainer = GreenHeronPrimaryContainerDark,
-    onPrimaryContainer = GreenHeronOnPrimaryContainerDark,
-    secondary = GreenHeronSecondaryDark,
-    onSecondary = GreenHeronOnSecondaryDark,
-    secondaryContainer = GreenHeronSecondaryContainerDark,
-    onSecondaryContainer = GreenHeronOnSecondaryContainerDark,
-    tertiary = GreenHeronTertiaryDark,
-    onTertiary = GreenHeronOnTertiaryDark,
-    tertiaryContainer = GreenHeronTertiaryContainerDark,
-    onTertiaryContainer = GreenHeronOnTertiaryContainerDark,
-    surface = Color(0xFF002109),
-    onSurface = Color(0xFFE1E2E8),
-)
+val GreenHeronDarkScheme =
+    darkColorScheme(
+        primary = GreenHeronPrimaryDark,
+        onPrimary = GreenHeronOnPrimaryDark,
+        primaryContainer = GreenHeronPrimaryContainerDark,
+        onPrimaryContainer = GreenHeronOnPrimaryContainerDark,
+        secondary = GreenHeronSecondaryDark,
+        onSecondary = GreenHeronOnSecondaryDark,
+        secondaryContainer = GreenHeronSecondaryContainerDark,
+        onSecondaryContainer = GreenHeronOnSecondaryContainerDark,
+        tertiary = GreenHeronTertiaryDark,
+        onTertiary = GreenHeronOnTertiaryDark,
+        tertiaryContainer = GreenHeronTertiaryContainerDark,
+        onTertiaryContainer = GreenHeronOnTertiaryContainerDark,
+        surface = Color(0xFF002109),
+        onSurface = Color(0xFFE1E2E8),
+    )

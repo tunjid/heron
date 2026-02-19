@@ -24,38 +24,29 @@ import com.tunjid.heron.data.core.types.PostUri
 
 @Entity(
     tableName = "postThreads",
-    foreignKeys = [
-        ForeignKey(
-            entity = PostEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["parentPostUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = PostEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["postUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    primaryKeys = [
-        "parentPostUri",
-        "postUri",
-    ],
-    indices = [
-        Index(value = ["parentPostUri"]),
-        Index(value = ["postUri"]),
-    ],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = PostEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["parentPostUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = PostEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["postUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    primaryKeys = ["parentPostUri", "postUri"],
+    indices = [Index(value = ["parentPostUri"]), Index(value = ["postUri"])],
 )
-data class PostThreadEntity(
-    val parentPostUri: PostUri,
-    val postUri: PostUri,
-)
+data class PostThreadEntity(val parentPostUri: PostUri, val postUri: PostUri)
 
 data class PostThreadAndGenerationEntity(
-    @Embedded
-    val entity: PostThreadEntity,
+    @Embedded val entity: PostThreadEntity,
     val generation: Long,
 )

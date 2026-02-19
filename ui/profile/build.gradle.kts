@@ -22,9 +22,8 @@ plugins {
     id("org.jetbrains.compose")
     alias(libs.plugins.composeCompiler)
 }
-android {
-    namespace = "com.tunjid.heron.ui.profile"
-}
+
+android { namespace = "com.tunjid.heron.ui.profile" }
 
 kotlin {
     sourceSets {
@@ -66,15 +65,11 @@ kotlin {
                 implementation(libs.coil.gif.android)
             }
         }
-        desktopMain {
-            dependencies {
-                implementation(libs.ktor.client.java)
-            }
-        }
-//        iosMain {
-//            dependencies {
-//                implementation(libs.ktor.client.darwin)
-//            }
-//        }
+        desktopMain { dependencies { implementation(libs.ktor.client.java) } }
+        //        iosMain {
+        //            dependencies {
+        //                implementation(libs.ktor.client.darwin)
+        //            }
+        //        }
     }
 }

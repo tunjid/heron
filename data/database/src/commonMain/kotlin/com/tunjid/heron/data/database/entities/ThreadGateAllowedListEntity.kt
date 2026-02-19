@@ -24,30 +24,25 @@ import com.tunjid.heron.data.core.types.ThreadGateUri
 
 @Entity(
     tableName = "threadGateAllowedLists",
-    primaryKeys = [
-        "threadGateUri",
-        "allowedListUri",
-    ],
-    foreignKeys = [
-        ForeignKey(
-            entity = ThreadGateEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["threadGateUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = ListEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["allowedListUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["threadGateUri"]),
-        Index(value = ["allowedListUri"]),
-    ],
+    primaryKeys = ["threadGateUri", "allowedListUri"],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = ThreadGateEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["threadGateUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = ListEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["allowedListUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    indices = [Index(value = ["threadGateUri"]), Index(value = ["allowedListUri"])],
 )
 data class ThreadGateAllowedListEntity(
     val threadGateUri: ThreadGateUri,

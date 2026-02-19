@@ -52,17 +52,19 @@ fun TimelinePresentationSelector(
 }
 
 private val Timeline.Presentation.textResource: StringResource
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> Res.string.text_and_embeds
-        Timeline.Presentation.Media.Condensed -> Res.string.condensed_media
-        Timeline.Presentation.Media.Expanded -> Res.string.expanded_media
-        Timeline.Presentation.Media.Grid -> Res.string.grid_media
-    }
+    get() =
+        when (this) {
+            Timeline.Presentation.Text.WithEmbed -> Res.string.text_and_embeds
+            Timeline.Presentation.Media.Condensed -> Res.string.condensed_media
+            Timeline.Presentation.Media.Expanded -> Res.string.expanded_media
+            Timeline.Presentation.Media.Grid -> Res.string.grid_media
+        }
 
 private val Timeline.Presentation.icon: ImageVector
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> Icons.AutoMirrored.Rounded.Article
-        Timeline.Presentation.Media.Condensed -> Icons.Rounded.Dashboard
-        Timeline.Presentation.Media.Expanded -> Icons.Rounded.Splitscreen
-        Timeline.Presentation.Media.Grid -> Icons.Rounded.GridOn
-    }
+    get() =
+        when (this) {
+            Timeline.Presentation.Text.WithEmbed -> Icons.AutoMirrored.Rounded.Article
+            Timeline.Presentation.Media.Condensed -> Icons.Rounded.Dashboard
+            Timeline.Presentation.Media.Expanded -> Icons.Rounded.Splitscreen
+            Timeline.Presentation.Media.Grid -> Icons.Rounded.GridOn
+        }

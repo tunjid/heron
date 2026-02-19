@@ -72,35 +72,22 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-internal fun EmptyPost(
-    modifier: Modifier = Modifier,
-    item: TimelineItem.Empty,
-) {
+internal fun EmptyPost(modifier: Modifier = Modifier, item: TimelineItem.Empty) {
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(
-                vertical = 36.dp,
-            ),
+        modifier = modifier.fillMaxSize().padding(vertical = 36.dp),
         contentAlignment = Alignment.Center,
     ) {
-        ElevatedCard(
-            modifier = Modifier
-                .fillMaxHeight(0.6f)
-                .fillMaxWidth(),
-        ) {
+        ElevatedCard(modifier = Modifier.fillMaxHeight(0.6f).fillMaxWidth()) {
             Column(
-                modifier = Modifier
-                    .padding(32.dp)
-                    .fillMaxWidth(),
+                modifier = Modifier.padding(32.dp).fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Box(
-                    modifier = Modifier
-                        .size(72.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    modifier =
+                        Modifier.size(72.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -128,44 +115,50 @@ internal fun EmptyPost(
     }
 }
 
-private fun Timeline.emptyTextRes(): StringResource = when (this) {
-    is Timeline.Home.Following -> Res.string.empty_timeline_generic
-    is Timeline.Home.Feed -> Res.string.empty_timeline_feed
-    is Timeline.Home.List -> Res.string.empty_timeline_list
-    is Timeline.StarterPack -> Res.string.empty_timeline_list
-    is Timeline.Profile -> when (type) {
-        Timeline.Profile.Type.Posts -> Res.string.empty_timeline_posts
-        Timeline.Profile.Type.Replies -> Res.string.empty_timeline_replies
-        Timeline.Profile.Type.Likes -> Res.string.empty_timeline_likes
-        Timeline.Profile.Type.Media -> Res.string.empty_timeline_media
-        Timeline.Profile.Type.Videos -> Res.string.empty_timeline_videos
+private fun Timeline.emptyTextRes(): StringResource =
+    when (this) {
+        is Timeline.Home.Following -> Res.string.empty_timeline_generic
+        is Timeline.Home.Feed -> Res.string.empty_timeline_feed
+        is Timeline.Home.List -> Res.string.empty_timeline_list
+        is Timeline.StarterPack -> Res.string.empty_timeline_list
+        is Timeline.Profile ->
+            when (type) {
+                Timeline.Profile.Type.Posts -> Res.string.empty_timeline_posts
+                Timeline.Profile.Type.Replies -> Res.string.empty_timeline_replies
+                Timeline.Profile.Type.Likes -> Res.string.empty_timeline_likes
+                Timeline.Profile.Type.Media -> Res.string.empty_timeline_media
+                Timeline.Profile.Type.Videos -> Res.string.empty_timeline_videos
+            }
     }
-}
 
-private fun Timeline.emptyDescriptionRes(): StringResource = when (this) {
-    is Timeline.Home.Following -> Res.string.empty_timeline_generic_description
-    is Timeline.Home.Feed -> Res.string.empty_timeline_feed_description
-    is Timeline.Home.List -> Res.string.empty_timeline_list_description
-    is Timeline.StarterPack -> Res.string.empty_timeline_list_description
-    is Timeline.Profile -> when (type) {
-        Timeline.Profile.Type.Posts -> Res.string.empty_timeline_posts_description
-        Timeline.Profile.Type.Replies -> Res.string.empty_timeline_replies_description
-        Timeline.Profile.Type.Likes -> Res.string.empty_timeline_likes_description
-        Timeline.Profile.Type.Media -> Res.string.empty_timeline_media_description
-        Timeline.Profile.Type.Videos -> Res.string.empty_timeline_videos_description
+private fun Timeline.emptyDescriptionRes(): StringResource =
+    when (this) {
+        is Timeline.Home.Following -> Res.string.empty_timeline_generic_description
+        is Timeline.Home.Feed -> Res.string.empty_timeline_feed_description
+        is Timeline.Home.List -> Res.string.empty_timeline_list_description
+        is Timeline.StarterPack -> Res.string.empty_timeline_list_description
+        is Timeline.Profile ->
+            when (type) {
+                Timeline.Profile.Type.Posts -> Res.string.empty_timeline_posts_description
+                Timeline.Profile.Type.Replies -> Res.string.empty_timeline_replies_description
+                Timeline.Profile.Type.Likes -> Res.string.empty_timeline_likes_description
+                Timeline.Profile.Type.Media -> Res.string.empty_timeline_media_description
+                Timeline.Profile.Type.Videos -> Res.string.empty_timeline_videos_description
+            }
     }
-}
 
-private fun Timeline.emptyIcon(): ImageVector = when (this) {
-    is Timeline.Home.Following -> Icons.Rounded.Dashboard
-    is Timeline.Home.Feed -> Icons.Rounded.DynamicFeed
-    is Timeline.Home.List -> Icons.AutoMirrored.Rounded.List
-    is Timeline.StarterPack -> Icons.Rounded.Group
-    is Timeline.Profile -> when (type) {
-        Timeline.Profile.Type.Posts -> Icons.AutoMirrored.Rounded.Article
-        Timeline.Profile.Type.Replies -> Icons.Rounded.Forum
-        Timeline.Profile.Type.Likes -> Icons.Rounded.Favorite
-        Timeline.Profile.Type.Media -> Icons.Rounded.Image
-        Timeline.Profile.Type.Videos -> Icons.Rounded.Videocam
+private fun Timeline.emptyIcon(): ImageVector =
+    when (this) {
+        is Timeline.Home.Following -> Icons.Rounded.Dashboard
+        is Timeline.Home.Feed -> Icons.Rounded.DynamicFeed
+        is Timeline.Home.List -> Icons.AutoMirrored.Rounded.List
+        is Timeline.StarterPack -> Icons.Rounded.Group
+        is Timeline.Profile ->
+            when (type) {
+                Timeline.Profile.Type.Posts -> Icons.AutoMirrored.Rounded.Article
+                Timeline.Profile.Type.Replies -> Icons.Rounded.Forum
+                Timeline.Profile.Type.Likes -> Icons.Rounded.Favorite
+                Timeline.Profile.Type.Media -> Icons.Rounded.Image
+                Timeline.Profile.Type.Videos -> Icons.Rounded.Videocam
+            }
     }
-}

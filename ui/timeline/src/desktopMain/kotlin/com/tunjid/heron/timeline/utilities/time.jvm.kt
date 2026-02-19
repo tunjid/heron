@@ -26,14 +26,12 @@ import kotlin.time.toJavaInstant
 
 @Composable
 actual fun Instant.formatDate(): String {
-    return SimpleDateFormat
-        .getDateInstance(DateFormat.LONG, Locale.getDefault())
+    return SimpleDateFormat.getDateInstance(DateFormat.LONG, Locale.getDefault())
         .format(Date.from(toJavaInstant()))
 }
 
 @Composable
 actual fun Instant.formatTime(): String {
-    return SimpleDateFormat
-        .getTimeInstance(DateFormat.SHORT, Locale.getDefault())
+    return SimpleDateFormat.getTimeInstance(DateFormat.SHORT, Locale.getDefault())
         .format(Date.from(toJavaInstant()))
 }

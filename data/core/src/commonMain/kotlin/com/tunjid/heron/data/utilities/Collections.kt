@@ -42,48 +42,39 @@ internal object Collections {
 
     fun AtUri.requireRecordUri() = requireNotNull(atUri.asRecordUriOrNull())
 
-    inline fun <reified T : Id> stubbedId(
-        constructor: (String) -> T,
-    ) = constructor(StubbedId)
+    inline fun <reified T : Id> stubbedId(constructor: (String) -> T) = constructor(StubbedId)
 }
 
 fun Uri.asGenericUri(): GenericUri = GenericUri(uri)
 
 fun Id.asGenericId(): GenericId = GenericId(id)
 
-/**
- * Attempts to fetch the timestamp from the record key if it is a valid TID.
- */
+/** Attempts to fetch the timestamp from the record key if it is a valid TID. */
 val RecordKey.tidInstant: Instant?
-    get() = try {
-        Instant.fromEpochMilliseconds(tidTimestampFromBase32(value))
-    } catch (e: IllegalArgumentException) {
-        null
-    }
+    get() =
+        try {
+            Instant.fromEpochMilliseconds(tidTimestampFromBase32(value))
+        } catch (e: IllegalArgumentException) {
+            null
+        }
 
-/**
- * Extracts the path component from a given [Uri].
- */
+/** Extracts the path component from a given [Uri]. */
 val Uri.path: String
-    get() = LeadingSlash + uri.split(SchemeSeparator)
-        .last()
-        .split(QueryDelimiter)
-        .first()
+    get() = LeadingSlash + uri.split(SchemeSeparator).last().split(QueryDelimiter).first()
 
-fun String.getAsRawUri(host: Uri.Host): String = host.prefix + split(LeadingSlash)
-    .drop(1)
-    .joinToString(separator = LeadingSlash)
-    .split(QueryDelimiter)
-    .first()
+fun String.getAsRawUri(host: Uri.Host): String =
+    host.prefix +
+        split(LeadingSlash)
+            .drop(1)
+            .joinToString(separator = LeadingSlash)
+            .split(QueryDelimiter)
+            .first()
 
 internal val AtUri.tidInstant: Instant?
     get() = RecordKey(atUri.split("/").last()).tidInstant
 
-internal fun <T> T.asJsonContent(
-    serializer: KSerializer<T>,
-): JsonContent = BlueskyJson.decodeFromString(
-    BlueskyJson.encodeToString(serializer, this),
-)
+internal fun <T> T.asJsonContent(serializer: KSerializer<T>): JsonContent =
+    BlueskyJson.decodeFromString(BlueskyJson.encodeToString(serializer, this))
 
 internal inline fun <reified T : Any> JsonContent.safeDecodeAs(): T? =
     try {
@@ -92,9 +83,7 @@ internal inline fun <reified T : Any> JsonContent.safeDecodeAs(): T? =
         null
     }
 
-/**
- * @see [TID definition](https://atproto.com/specs/tid)
- */
+/** @see [TID definition](https://atproto.com/specs/tid) */
 fun tidTimestampFromBase32(tid: String): Long {
     require(tid.length == 13) { "TID must be 13 characters long" }
 
@@ -110,7 +99,8 @@ fun tidTimestampFromBase32(tid: String): Long {
     // 2. Extract the timestamp
     // The layout is: [0 (1 bit)] [Micros (53 bits)] [ClockID (10 bits)]
     // We strictly need the 53 bits representing microseconds.
-    // Right shifting by 10 discards the ClockID and moves the micros to the least significant position.
+    // Right shifting by 10 discards the ClockID and moves the micros to the least significant
+    // position.
     // The top bit is guaranteed to be 0, so unsigned vs signed shift doesn't matter here,
     // but 'ushr' is semantically safer for bitwise operations.
     val micros = result ushr 10

@@ -23,9 +23,7 @@ plugins {
     id("org.jetbrains.compose")
 }
 
-android {
-    namespace = "com.tunjid.heron.domain.navigation"
-}
+android { namespace = "com.tunjid.heron.domain.navigation" }
 
 kotlin {
     sourceSets {

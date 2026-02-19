@@ -72,29 +72,17 @@ fun SettingsItemRow(
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = SettingsItemClipModifier
-            .then(
+        modifier =
+            SettingsItemClipModifier.then(
                 modifier
-                    .semantics {
-                        contentDescription = title
-                    }
-                    .padding(
-                        horizontal = 24.dp,
-                        vertical = 8.dp,
-                    ),
+                    .semantics { contentDescription = title }
+                    .padding(horizontal = 24.dp, vertical = 8.dp)
             ),
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = titleColor,
-        )
-        Spacer(
-            modifier = Modifier.width(16.dp),
-        )
+        Icon(imageVector = icon, contentDescription = null, tint = titleColor)
+        Spacer(modifier = Modifier.width(16.dp))
         Text(
-            modifier = Modifier
-                .weight(1f),
+            modifier = Modifier.weight(1f),
             text = title,
             color = titleColor,
             style = MaterialTheme.typography.bodyLarge,
@@ -114,16 +102,16 @@ fun ExpandableSettingsItemRow(
     var isExpanded by rememberSaveable { mutableStateOf(false) }
 
     Column(
-        modifier = SettingsItemClipModifier
-            .then(
+        modifier =
+            SettingsItemClipModifier.then(
                 modifier
                     .fillMaxWidth()
                     .toggleable(
                         value = isExpanded,
                         onValueChange = { isExpanded = it },
                         role = Role.Button,
-                    ),
-            ),
+                    )
+            )
     ) {
         SettingsItemRow(
             modifier = Modifier.fillMaxWidth(),
@@ -131,37 +119,33 @@ fun ExpandableSettingsItemRow(
             icon = icon,
             titleColor = titleColor,
         ) {
-            val iconRotation = animateFloatAsState(
-                targetValue = if (isExpanded) 0f else 180f,
-                animationSpec = spring(
-                    stiffness = Spring.StiffnessMediumLow,
-                ),
-            )
+            val iconRotation =
+                animateFloatAsState(
+                    targetValue = if (isExpanded) 0f else 180f,
+                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                )
             Icon(
-                modifier = Modifier.graphicsLayer {
-                    rotationX = iconRotation.value
-                },
+                modifier = Modifier.graphicsLayer { rotationX = iconRotation.value },
                 imageVector = Icons.Default.ExpandLess,
-                contentDescription = stringResource(
-                    if (isExpanded) CommonStrings.collapse_icon
-                    else CommonStrings.expand_icon,
-                ),
+                contentDescription =
+                    stringResource(
+                        if (isExpanded) CommonStrings.collapse_icon else CommonStrings.expand_icon
+                    ),
             )
         }
         androidx.compose.animation.AnimatedVisibility(
-            modifier = Modifier
-                .padding(horizontal = 24.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.padding(horizontal = 24.dp).fillMaxWidth(),
             visible = isExpanded,
             enter = EnterTransition,
             exit = ExitTransition,
             content = {
                 Column(
-                    modifier = Modifier
-                        // Inset expanded content from the start to disambiguate
-                        // it from other items
-                        .padding(start = 8.dp)
-                        .fillMaxWidth(),
+                    modifier =
+                        Modifier
+                            // Inset expanded content from the start to disambiguate
+                            // it from other items
+                            .padding(start = 8.dp)
+                            .fillMaxWidth()
                 ) {
                     content()
                 }
@@ -179,8 +163,8 @@ fun SettingsToggleItem(
     onCheckedChange: (Boolean) -> Unit,
 ) {
     Row(
-        modifier = SettingsItemClipModifier
-            .then(
+        modifier =
+            SettingsItemClipModifier.then(
                 modifier
                     .toggleable(
                         value = checked,
@@ -188,28 +172,14 @@ fun SettingsToggleItem(
                         enabled = enabled,
                         role = Role.Switch,
                     )
-                    .padding(
-                        horizontal = 8.dp,
-                        vertical = 4.dp,
-                    ),
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
             ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(
-            modifier = Modifier
-                .weight(1f),
-            text = text,
-        )
-        Spacer(
-            modifier = Modifier
-                .width(16.dp),
-        )
-        Switch(
-            enabled = enabled,
-            checked = checked,
-            onCheckedChange = null,
-        )
+        Text(modifier = Modifier.weight(1f), text = text)
+        Spacer(modifier = Modifier.width(16.dp))
+        Switch(enabled = enabled, checked = checked, onCheckedChange = null)
     }
 }
 
@@ -218,5 +188,4 @@ private val ExitTransition =
     shrinkOut { IntSize(it.width, 0) } + slideOutVertically { -it } + fadeOut()
 
 private val SettingsItemShape = RoundedCornerShape(8.dp)
-private val SettingsItemClipModifier = Modifier
-    .clip(SettingsItemShape)
+private val SettingsItemClipModifier = Modifier.clip(SettingsItemShape)

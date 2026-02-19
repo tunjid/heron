@@ -17,20 +17,14 @@
 package com.tunjid.heron.settings
 
 import androidx.compose.animation.animateBounds
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.tunjid.composables.ui.animate
 import com.tunjid.heron.scaffold.navigation.moderationDestination
 import com.tunjid.heron.scaffold.navigation.notificationSettingsDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
@@ -52,9 +46,7 @@ internal fun SettingsScreen(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
+        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         state.signedInProfilePreferences?.let { signedInProfilePreferences ->
@@ -64,65 +56,42 @@ internal fun SettingsScreen(
                 switchPhase = state.switchPhase,
                 activeProfileId = state.activeProfileId,
                 switchingSession = state.switchingSession,
-                onAddAccountClick = {
-                    actions(Action.Navigate.To(signInDestination()))
-                },
-                onAccountSelected = { session ->
-                    actions(Action.SwitchSession(session))
-                },
+                onAddAccountClick = { actions(Action.Navigate.To(signInDestination())) },
+                onAccountSelected = { session -> actions(Action.SwitchSession(session)) },
                 paneScaffoldState = paneScaffoldState,
             )
             if (state.switchPhase == AccountSwitchPhase.IDLE) {
                 ContentAndMediaItem(
-                    modifier = Modifier
-                        .animateBounds(paneScaffoldState),
+                    modifier = Modifier.animateBounds(paneScaffoldState),
                     signedInProfilePreferences = signedInProfilePreferences,
                     setRefreshHomeTimelineOnLaunch = {
                         actions(Action.SetRefreshHomeTimelinesOnLaunch(it))
                     },
-                    setAutoplayTimelineVideos = {
-                        actions(Action.SetAutoPlayTimelineVideos(it))
-                    },
+                    setAutoplayTimelineVideos = { actions(Action.SetAutoPlayTimelineVideos(it)) },
                 )
-                ModerationItem(
-                    modifier = Modifier
-                        .animateBounds(paneScaffoldState),
-                ) {
+                ModerationItem(modifier = Modifier.animateBounds(paneScaffoldState)) {
                     actions(Action.Navigate.To(moderationDestination()))
                 }
-                NotificationSettingsItem(
-                    modifier = Modifier
-                        .animateBounds(paneScaffoldState),
-                ) {
+                NotificationSettingsItem(modifier = Modifier.animateBounds(paneScaffoldState)) {
                     actions(Action.Navigate.To(notificationSettingsDestination()))
                 }
                 AppearanceItem(
-                    modifier = Modifier
-                        .animateBounds(paneScaffoldState),
+                    modifier = Modifier.animateBounds(paneScaffoldState),
                     signedInProfilePreferences = signedInProfilePreferences,
                     setDynamicThemingPreference = {
                         actions(Action.SetDynamicThemingPreference(it))
                     },
-                    setCompactNavigation = {
-                        actions(Action.SetCompactNavigation(it))
-                    },
+                    setCompactNavigation = { actions(Action.SetCompactNavigation(it)) },
                     setAutoHideBottomNavigation = {
                         actions(Action.SetAutoHideBottomNavigation(it))
                     },
                 )
-                FeedbackItem(
-                    modifier = Modifier
-                        .animateBounds(paneScaffoldState),
-                )
+                FeedbackItem(modifier = Modifier.animateBounds(paneScaffoldState))
                 OpenSourceLibrariesItem(
-                    modifier = Modifier
-                        .animateBounds(paneScaffoldState),
+                    modifier = Modifier.animateBounds(paneScaffoldState),
                     libraries = state.openSourceLibraries,
                 )
-                SignOutItem(
-                    modifier = Modifier
-                        .animateBounds(paneScaffoldState),
-                ) {
+                SignOutItem(modifier = Modifier.animateBounds(paneScaffoldState)) {
                     actions(Action.SignOut)
                 }
             }

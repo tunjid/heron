@@ -73,11 +73,12 @@ internal fun SignInScreen(
 ) {
     val scrollState = rememberScrollState()
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .widthIn(max = 360.dp)
-            .padding(horizontal = 56.dp)
-            .verticalScroll(state = scrollState),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .widthIn(max = 360.dp)
+                .padding(horizontal = 56.dp)
+                .verticalScroll(state = scrollState),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -92,7 +93,7 @@ internal fun SignInScreen(
                 Action.OauthFlowResultAvailable(
                     handle = currentProfileHandle.value,
                     result = result,
-                ),
+                )
             )
         }
 
@@ -104,33 +105,24 @@ internal fun SignInScreen(
                     exit = ExitTransition,
                 ) {
                     FormField(
-                        modifier = Modifier
-                            .fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         field = field,
                         leadingIcon = {
-                            LoadingIcon(
-                                field = field,
-                                mostRecentSession = state.mostRecentSession,
-                            )
+                            LoadingIcon(field = field, mostRecentSession = state.mostRecentSession)
                         },
                         onValueChange = { field, newValue ->
-                            actions(
-                                Action.FieldChanged(
-                                    id = field.id,
-                                    text = newValue,
-                                ),
-                            )
+                            actions(Action.FieldChanged(id = field.id, text = newValue))
                         },
                         keyboardActions = {
                             when (it.id) {
-                                Username -> focusManager.moveFocus(
-                                    focusDirection = FocusDirection.Next,
-                                )
+                                Username ->
+                                    focusManager.moveFocus(focusDirection = FocusDirection.Next)
 
-                                Password -> if (state.submitButtonEnabled) {
-                                    actions(state.createSessionAction())
-                                    keyboardController?.hide()
-                                }
+                                Password ->
+                                    if (state.submitButtonEnabled) {
+                                        actions(state.createSessionAction())
+                                        keyboardController?.hide()
+                                    }
                             }
                         },
                     )
@@ -138,16 +130,13 @@ internal fun SignInScreen(
             }
         }
 
-        val serverSelectionSheetState = rememberUpdatedServerSelectionState(
-            onServerConfirmed = {
-                actions(Action.SetServer(it))
-            },
-        )
+        val serverSelectionSheetState =
+            rememberUpdatedServerSelectionState(
+                onServerConfirmed = { actions(Action.SetServer(it)) }
+            )
 
         ServerSelection(
-            modifier = Modifier
-                .align(Alignment.End)
-                .animateBounds(paneScaffoldState),
+            modifier = Modifier.align(Alignment.End).animateBounds(paneScaffoldState),
             selectedServer = state.selectedServer,
             availableServers = state.availableServers,
             onServerSelected = serverSelectionSheetState::onServer,
@@ -177,31 +166,31 @@ private fun LoadingIcon(
     field: FormField,
     mostRecentSession: SessionSummary?,
 ) {
-    Box(
-        modifier = modifier,
-    ) {
+    Box(modifier = modifier) {
         // Always show the default leading icon
         // in case the avatar does not load
         field.LeadingIcon()
 
         val sessionAvatar = mostRecentSession?.profileAvatar
 
-        val isAvatarForField = field.id == Username &&
-            sessionAvatar != null &&
-            mostRecentSession.profileHandle.id == field.value
+        val isAvatarForField =
+            field.id == Username &&
+                sessionAvatar != null &&
+                mostRecentSession.profileHandle.id == field.value
 
         if (isAvatarForField) {
             val avatarDescription = stringResource(CommonStrings.profile_avatar)
             AsyncImage(
                 modifier = FormField.LeadingIconSizeModifier,
-                args = remember(sessionAvatar) {
-                    ImageArgs(
-                        url = sessionAvatar.uri,
-                        contentDescription = avatarDescription,
-                        contentScale = ContentScale.Crop,
-                        shape = RoundedPolygonShape.Circle,
-                    )
-                },
+                args =
+                    remember(sessionAvatar) {
+                        ImageArgs(
+                            url = sessionAvatar.uri,
+                            contentDescription = avatarDescription,
+                            contentScale = ContentScale.Crop,
+                            shape = RoundedPolygonShape.Circle,
+                        )
+                    },
             )
         }
     }

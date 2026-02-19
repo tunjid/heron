@@ -37,35 +37,27 @@ import kotlin.time.Instant
 
 @Entity(
     tableName = "messages",
-    foreignKeys = [
-        ForeignKey(
-            entity = ConversationEntity::class,
-            parentColumns = [
-                "id",
-                "ownerId",
-            ],
-            childColumns = [
-                "conversationId",
-                "conversationOwnerId",
-            ],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["senderId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["sentAt"]),
-    ],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = ConversationEntity::class,
+                parentColumns = ["id", "ownerId"],
+                childColumns = ["conversationId", "conversationOwnerId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["senderId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    indices = [Index(value = ["sentAt"])],
 )
 data class MessageEntity(
-    @PrimaryKey
-    val id: MessageId,
+    @PrimaryKey val id: MessageId,
     val rev: String,
     val text: String,
     val senderId: ProfileId,
@@ -73,64 +65,37 @@ data class MessageEntity(
     val conversationOwnerId: ProfileId,
     val isDeleted: Boolean,
     val sentAt: Instant,
-    @ColumnInfo(defaultValue = "NULL")
-    val base64EncodedMetadata: String?,
+    @ColumnInfo(defaultValue = "NULL") val base64EncodedMetadata: String?,
 )
 
 data class PopulatedMessageEntity(
-    @Embedded
-    val entity: MessageEntity,
-    @Relation(
-        parentColumn = "senderId",
-        entityColumn = "did",
-    )
-    val sender: ProfileEntity,
-    @Relation(
-        parentColumn = "id",
-        entityColumn = "messageId",
-    )
+    @Embedded val entity: MessageEntity,
+    @Relation(parentColumn = "senderId", entityColumn = "did") val sender: ProfileEntity,
+    @Relation(parentColumn = "id", entityColumn = "messageId")
     val reactions: List<MessageReactionEntity>,
-    @Relation(
-        parentColumn = "id",
-        entityColumn = "messageId",
-    )
+    @Relation(parentColumn = "id", entityColumn = "messageId")
     val feed: MessageFeedGeneratorEntity?,
-    @Relation(
-        parentColumn = "id",
-        entityColumn = "messageId",
-    )
-    val list: MessageListEntity?,
-    @Relation(
-        parentColumn = "id",
-        entityColumn = "messageId",
-    )
+    @Relation(parentColumn = "id", entityColumn = "messageId") val list: MessageListEntity?,
+    @Relation(parentColumn = "id", entityColumn = "messageId")
     val starterPack: MessageStarterPackEntity?,
-    @Relation(
-        parentColumn = "id",
-        entityColumn = "messageId",
-    )
-    val post: MessagePostEntity?,
+    @Relation(parentColumn = "id", entityColumn = "messageId") val post: MessagePostEntity?,
 )
 
-fun PopulatedMessageEntity.asExternalModel(
-    embeddedRecord: Record.Embeddable? = null,
-) = Message(
-    id = entity.id,
-    conversationId = entity.conversationId,
-    text = entity.text,
-    sentAt = entity.sentAt,
-    isDeleted = entity.isDeleted,
-    sender = sender.asExternalModel(),
-    embeddedRecord = embeddedRecord,
-    reactions = reactions.map {
-        Message.Reaction(
-            value = it.value,
-            senderId = it.senderId,
-            createdAt = it.createdAt,
-        )
-    },
-    metadata = entity.metadata(),
-)
+fun PopulatedMessageEntity.asExternalModel(embeddedRecord: Record.Embeddable? = null) =
+    Message(
+        id = entity.id,
+        conversationId = entity.conversationId,
+        text = entity.text,
+        sentAt = entity.sentAt,
+        isDeleted = entity.isDeleted,
+        sender = sender.asExternalModel(),
+        embeddedRecord = embeddedRecord,
+        reactions =
+            reactions.map {
+                Message.Reaction(value = it.value, senderId = it.senderId, createdAt = it.createdAt)
+            },
+        metadata = entity.metadata(),
+    )
 
 internal fun MessageEntity.metadata() =
     try {

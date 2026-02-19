@@ -48,23 +48,17 @@ import kotlinx.serialization.Transient
 internal val Username = FormField.Id("username")
 internal val Password = FormField.Id("password")
 
-internal val DomainRegex = Regex(
-    pattern = "^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+(?!-)[A-Za-z0-9-]{2,63}(?<!-)\$",
-)
+internal val DomainRegex =
+    Regex(pattern = "^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+(?!-)[A-Za-z0-9-]{2,63}(?<!-)\$")
 
-internal val StartingServers = Server.KnownServers.toList() +
-    Server(
-        endpoint = "https://custom.app",
-        supportsOauth = false,
-    )
+internal val StartingServers =
+    Server.KnownServers.toList() + Server(endpoint = "https://custom.app", supportsOauth = false)
 
 @Serializable
 sealed class AuthMode {
-    @Serializable
-    data object Oauth : AuthMode()
+    @Serializable data object Oauth : AuthMode()
 
-    @Serializable
-    data object Password : AuthMode()
+    @Serializable data object Password : AuthMode()
 }
 
 @Serializable
@@ -78,62 +72,59 @@ data class State(
     val availableServers: List<Server> = StartingServers,
     val showCustomServerPopup: Boolean = false,
     val pastSessions: List<SessionSummary> = emptyList(),
-    @Transient
-    val fields: List<FormField> = InitialFields,
-    @Transient
-    val messages: List<Memo> = emptyList(),
+    @Transient val fields: List<FormField> = InitialFields,
+    @Transient val messages: List<Memo> = emptyList(),
 )
 
 val State.mostRecentSession
     get() = pastSessions.firstOrNull()
 
-internal val InitialFields: List<FormField> = listOf(
-    FormField(
-        id = Username,
-        value = "",
-        maxLines = 1,
-        leadingIcon = Icons.Rounded.AccountCircle,
-        transformation = VisualTransformation.None,
-        contentType = ContentType.Username,
-        keyboardOptions = KeyboardOptions(
-            capitalization = KeyboardCapitalization.None,
-            autoCorrectEnabled = false,
-            keyboardType = KeyboardType.Uri,
-            imeAction = ImeAction.Next,
+internal val InitialFields: List<FormField> =
+    listOf(
+        FormField(
+            id = Username,
+            value = "",
+            maxLines = 1,
+            leadingIcon = Icons.Rounded.AccountCircle,
+            transformation = VisualTransformation.None,
+            contentType = ContentType.Username,
+            keyboardOptions =
+                KeyboardOptions(
+                    capitalization = KeyboardCapitalization.None,
+                    autoCorrectEnabled = false,
+                    keyboardType = KeyboardType.Uri,
+                    imeAction = ImeAction.Next,
+                ),
+            contentDescription = Memo.Resource(Res.string.username),
+            validator =
+                Validator(
+                    String::isNotBlank to
+                        Memo.Resource(Res.string.empty_form, listOf(Res.string.username)),
+                    DomainRegex::matches to Memo.Resource(Res.string.invalid_handle),
+                ),
         ),
-        contentDescription = Memo.Resource(Res.string.username),
-        validator = Validator(
-            String::isNotBlank to Memo.Resource(
-                Res.string.empty_form,
-                listOf(Res.string.username),
-            ),
-            DomainRegex::matches to Memo.Resource(
-                Res.string.invalid_handle,
-            ),
+        FormField(
+            id = Password,
+            value = "",
+            maxLines = 1,
+            leadingIcon = Icons.Rounded.Lock,
+            transformation = PasswordVisualTransformation(),
+            contentType = ContentType.Password,
+            keyboardOptions =
+                KeyboardOptions(
+                    capitalization = KeyboardCapitalization.None,
+                    autoCorrectEnabled = false,
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done,
+                ),
+            contentDescription = Memo.Resource(Res.string.password),
+            validator =
+                Validator(
+                    String::isNotBlank to
+                        Memo.Resource(Res.string.empty_form, listOf(Res.string.password))
+                ),
         ),
-    ),
-    FormField(
-        id = Password,
-        value = "",
-        maxLines = 1,
-        leadingIcon = Icons.Rounded.Lock,
-        transformation = PasswordVisualTransformation(),
-        contentType = ContentType.Password,
-        keyboardOptions = KeyboardOptions(
-            capitalization = KeyboardCapitalization.None,
-            autoCorrectEnabled = false,
-            keyboardType = KeyboardType.Password,
-            imeAction = ImeAction.Done,
-        ),
-        contentDescription = Memo.Resource(Res.string.password),
-        validator = Validator(
-            String::isNotBlank to Memo.Resource(
-                Res.string.empty_form,
-                listOf(Res.string.password),
-            ),
-        ),
-    ),
-)
+    )
 
 val State.submitButtonEnabled: Boolean
     get() = !isSubmitting && (!isSignedIn || canSwitchAccount)
@@ -145,81 +136,60 @@ val State.profileHandle: ProfileHandle
     get() = ProfileHandle(id = fields.valueFor(Username))
 
 val State.canSignInLater: Boolean
-    get() = fields.all { field ->
-        field.value.isBlank()
-    }
+    get() = fields.all { field -> field.value.isBlank() }
 
 val State.hasEnteredPassword: Boolean
-    get() = fields
-        .firstOrNull { it.id == Password }
-        ?.value
-        ?.isNotBlank()
-        ?: false
+    get() = fields.firstOrNull { it.id == Password }?.value?.isNotBlank() ?: false
 
 val State.authMode: AuthMode
-    get() = when {
-        prefersPassword -> AuthMode.Password
-        isOauthAvailable && selectedServer.supportsOauth && !hasEnteredPassword -> AuthMode.Oauth
-        else -> AuthMode.Password
+    get() =
+        when {
+            prefersPassword -> AuthMode.Password
+            isOauthAvailable && selectedServer.supportsOauth && !hasEnteredPassword ->
+                AuthMode.Oauth
+            else -> AuthMode.Password
+        }
+
+fun State.createSessionAction() =
+    when {
+        canSignInLater -> Action.CreateSession(request = SessionRequest.Guest(selectedServer))
+        else ->
+            when (authMode) {
+                AuthMode.Oauth ->
+                    Action.BeginOauthFlow(handle = profileHandle, server = selectedServer)
+                AuthMode.Password ->
+                    Action.CreateSession(
+                        request =
+                            SessionRequest.Credentials(
+                                handle = profileHandle,
+                                password = fields.valueFor(Password),
+                                server = selectedServer,
+                            )
+                    )
+            }
     }
 
-fun State.createSessionAction() = when {
-    canSignInLater -> Action.CreateSession(
-        request = SessionRequest.Guest(selectedServer),
-    )
-    else -> when (authMode) {
-        AuthMode.Oauth -> Action.BeginOauthFlow(
-            handle = profileHandle,
-            server = selectedServer,
-        )
-        AuthMode.Password -> Action.CreateSession(
-            request = SessionRequest.Credentials(
-                handle = profileHandle,
-                password = fields.valueFor(Password),
-                server = selectedServer,
-            ),
-        )
-    }
-}
-
-fun State.isVisible(field: FormField) =
-    field.id != Password || authMode == AuthMode.Password
+fun State.isVisible(field: FormField) = field.id != Password || authMode == AuthMode.Password
 
 sealed class Action(val key: String) {
-    data class FieldChanged(
-        val id: FormField.Id,
-        val text: String,
-    ) : Action("FieldChanged")
+    data class FieldChanged(val id: FormField.Id, val text: String) : Action("FieldChanged")
 
-    data class OauthAvailabilityChanged(
-        val isOauthAvailable: Boolean,
-    ) : Action("OauthAvailabilityChanged")
+    data class OauthAvailabilityChanged(val isOauthAvailable: Boolean) :
+        Action("OauthAvailabilityChanged")
 
-    data class BeginOauthFlow(
-        val handle: ProfileHandle,
-        val server: Server,
-    ) : Action("BeginOauthFlow")
+    data class BeginOauthFlow(val handle: ProfileHandle, val server: Server) :
+        Action("BeginOauthFlow")
 
-    data class OauthFlowResultAvailable(
-        val handle: ProfileHandle,
-        val result: OauthFlowResult,
-    ) : Action("OauthFlowResultAvailable")
+    data class OauthFlowResultAvailable(val handle: ProfileHandle, val result: OauthFlowResult) :
+        Action("OauthFlowResultAvailable")
 
-    data class SetServer(
-        val server: Server,
-    ) : Action("SetServer")
+    data class SetServer(val server: Server) : Action("SetServer")
 
     data object TogglePasswordPreference : Action("TogglePasswordPreference")
 
-    data class CreateSession(
-        val request: SessionRequest,
-    ) : Action("CreateSession")
+    data class CreateSession(val request: SessionRequest) : Action("CreateSession")
 
-    data class MessageConsumed(
-        val message: Memo,
-    ) : Action("MessageConsumed")
+    data class MessageConsumed(val message: Memo) : Action("MessageConsumed")
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction
 }

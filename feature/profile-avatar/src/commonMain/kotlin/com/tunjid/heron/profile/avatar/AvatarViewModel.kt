@@ -47,58 +47,54 @@ internal typealias ProfileStateHolder = ActionStateMutator<Action, StateFlow<Sta
 
 @AssistedFactory
 fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
-        scope: CoroutineScope,
-        route: Route,
-    ): ActualProfileAvatarViewModel
+    override fun invoke(scope: CoroutineScope, route: Route): ActualProfileAvatarViewModel
 }
 
 @AssistedInject
 class ActualProfileAvatarViewModel(
     profileRepository: ProfileRepository,
     navActions: (NavigationMutation) -> Unit,
-    @Assisted
-    scope: CoroutineScope,
-    @Assisted
-    route: Route,
-) : ViewModel(viewModelScope = scope),
+    @Assisted scope: CoroutineScope,
+    @Assisted route: Route,
+) :
+    ViewModel(viewModelScope = scope),
     ProfileStateHolder by scope.actionStateFlowMutator(
-        initialState = State(
-            avatarSharedElementKey = route.avatarSharedElementKey ?: "",
-            profile = route.profile ?: stubProfile(
-                did = ProfileId(route.profileHandleOrId.id),
-                handle = ProfileHandle(route.profileHandleOrId.id),
-                avatar = null,
+        initialState =
+            State(
+                avatarSharedElementKey = route.avatarSharedElementKey ?: "",
+                profile =
+                    route.profile
+                        ?: stubProfile(
+                            did = ProfileId(route.profileHandleOrId.id),
+                            handle = ProfileHandle(route.profileHandleOrId.id),
+                            avatar = null,
+                        ),
             ),
-        ),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = listOf(
-            loadProfileMutations(
-                profileId = route.profileHandleOrId,
-                profileRepository = profileRepository,
+        inputs =
+            listOf(
+                loadProfileMutations(
+                    profileId = route.profileHandleOrId,
+                    profileRepository = profileRepository,
+                )
             ),
-        ),
         actionTransform = transform@{ actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
+                actions.toMutationStream(keySelector = Action::key) {
+                    when (val action = type()) {
+                        is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+                        is Action.Navigate ->
+                            action.flow.consumeNavigationActions(
+                                navigationMutationConsumer = navActions
+                            )
+                    }
                 }
-            }
-        },
+            },
     )
 
 private fun loadProfileMutations(
     profileId: Id.Profile,
     profileRepository: ProfileRepository,
-): Flow<Mutation<State>> =
-    profileRepository.profile(profileId).mapToMutation {
-        copy(profile = it)
-    }
+): Flow<Mutation<State>> = profileRepository.profile(profileId).mapToMutation { copy(profile = it) }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->

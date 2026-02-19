@@ -76,56 +76,38 @@ private const val PostRepostsPattern =
 private const val ProfileFollowersPattern = "/profile/{profileHandleOrId}/followers"
 private const val ProfileFollowingPattern = "/profile/{profileHandleOrId}/follows"
 
-private val LoadTrie = mapOf(
-    PathPattern(BlockedProfilesPattern) to {
-        Load.Moderation.Blocks
-    },
-    PathPattern(MutedProfilesPattern) to {
-        Load.Moderation.Mutes
-    },
-    PathPattern(PostLikesPattern) to { route: Route ->
-        Load.Post.Likes(
-            route.postRecordKey,
-            route.profileHandleOrId,
+private val LoadTrie =
+    mapOf(
+            PathPattern(BlockedProfilesPattern) to { Load.Moderation.Blocks },
+            PathPattern(MutedProfilesPattern) to { Load.Moderation.Mutes },
+            PathPattern(PostLikesPattern) to
+                { route: Route ->
+                    Load.Post.Likes(route.postRecordKey, route.profileHandleOrId)
+                },
+            PathPattern(PostRepostsPattern) to
+                { route: Route ->
+                    Load.Post.Reposts(route.postRecordKey, route.profileHandleOrId)
+                },
+            PathPattern(ProfileFollowersPattern) to
+                { route: Route ->
+                    Load.Profile.Followers(route.profileHandleOrId)
+                },
+            PathPattern(ProfileFollowingPattern) to
+                { route: Route ->
+                    Load.Profile.Following(route.profileHandleOrId)
+                },
         )
-    },
-    PathPattern(PostRepostsPattern) to { route: Route ->
-        Load.Post.Reposts(
-            route.postRecordKey,
-            route.profileHandleOrId,
-        )
-    },
-    PathPattern(ProfileFollowersPattern) to { route: Route ->
-        Load.Profile.Followers(
-            route.profileHandleOrId,
-        )
-    },
-    PathPattern(ProfileFollowingPattern) to { route: Route ->
-        Load.Profile.Following(
-            route.profileHandleOrId,
-        )
-    },
-).toRouteTrie()
+        .toRouteTrie()
 
 internal val Route.load
     get() = LoadTrie[this]?.invoke(this)!!
 
-private val Route.profileHandleOrId by mappedRoutePath(
-    mapper = ::ProfileHandleOrId,
-)
+private val Route.profileHandleOrId by mappedRoutePath(mapper = ::ProfileHandleOrId)
 
-private val Route.postRecordKey by mappedRoutePath(
-    mapper = ::RecordKey,
-)
+private val Route.postRecordKey by mappedRoutePath(mapper = ::RecordKey)
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-    children = listOfNotNull(
-        routeParams.decodeReferringRoute(),
-    ),
-)
+private fun createRoute(routeParams: RouteParams) =
+    routeOf(params = routeParams, children = listOfNotNull(routeParams.decodeReferringRoute()))
 
 @BindingContainer
 object ProfilesNavigationBindings {
@@ -134,55 +116,37 @@ object ProfilesNavigationBindings {
     @IntoMap
     @StringKey(BlockedProfilesPattern)
     fun provideBlocksRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = BlockedProfilesPattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = BlockedProfilesPattern, routeMapper = ::createRoute)
 
     @Provides
     @IntoMap
     @StringKey(MutedProfilesPattern)
     fun provideMutesRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = MutedProfilesPattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = MutedProfilesPattern, routeMapper = ::createRoute)
 
     @Provides
     @IntoMap
     @StringKey(PostLikesPattern)
     fun providePostLikesRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = PostLikesPattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = PostLikesPattern, routeMapper = ::createRoute)
 
     @Provides
     @IntoMap
     @StringKey(PostRepostsPattern)
     fun providePostRepostsRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = PostRepostsPattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = PostRepostsPattern, routeMapper = ::createRoute)
 
     @Provides
     @IntoMap
     @StringKey(ProfileFollowersPattern)
     fun provideProfileFollowersRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = ProfileFollowersPattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = ProfileFollowersPattern, routeMapper = ::createRoute)
 
     @Provides
     @IntoMap
     @StringKey(ProfileFollowingPattern)
     fun provideProfileFollowingRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = ProfileFollowingPattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = ProfileFollowingPattern, routeMapper = ::createRoute)
 }
 
 @BindingContainer
@@ -197,10 +161,8 @@ class ProfilesBindings(
     fun provideBlocksPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(routeParser = routeParser, viewModelInitializer = viewModelInitializer)
 
     @Provides
     @IntoMap
@@ -208,10 +170,8 @@ class ProfilesBindings(
     fun provideMutesPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(routeParser = routeParser, viewModelInitializer = viewModelInitializer)
 
     @Provides
     @IntoMap
@@ -219,10 +179,8 @@ class ProfilesBindings(
     fun providePostLikesPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(routeParser = routeParser, viewModelInitializer = viewModelInitializer)
 
     @Provides
     @IntoMap
@@ -230,10 +188,8 @@ class ProfilesBindings(
     fun providePostRepostsPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(routeParser = routeParser, viewModelInitializer = viewModelInitializer)
 
     @Provides
     @IntoMap
@@ -241,10 +197,8 @@ class ProfilesBindings(
     fun provideProfileFollowersPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(routeParser = routeParser, viewModelInitializer = viewModelInitializer)
 
     @Provides
     @IntoMap
@@ -252,78 +206,72 @@ class ProfilesBindings(
     fun provideProfileFollowingPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(routeParser = routeParser, viewModelInitializer = viewModelInitializer)
 
     private fun routePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = threePaneEntry(
-        contentTransform = predictiveBackContentTransformProvider(),
-        paneMapping = { route ->
-            mapOf(
-                ThreePane.Primary to route,
-                ThreePane.Secondary to route.children.firstOrNull() as? Route,
-            )
-        },
-        render = { route ->
-            val hydratedRoute = routeParser.hydrate(route)
-            val load = hydratedRoute.load
-            val titleRes = load.titleRes()
-
-            val viewModel = viewModel<ActualProfilesViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = routeParser.hydrate(route),
+    ) =
+        threePaneEntry(
+            contentTransform = predictiveBackContentTransformProvider(),
+            paneMapping = { route ->
+                mapOf(
+                    ThreePane.Primary to route,
+                    ThreePane.Secondary to route.children.firstOrNull() as? Route,
                 )
-            }
-            val state by viewModel.state.collectAsStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
+            },
+            render = { route ->
+                val hydratedRoute = routeParser.hydrate(route)
+                val load = hydratedRoute.load
+                val titleRes = load.titleRes()
 
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
-                },
-                topBar = {
-                    PoppableDestinationTopAppBar(
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
-                        title = {
-                            AppBarTitle(
-                                title = stringResource(titleRes),
-                            )
-                        },
-                    )
-                },
-                content = { paddingValues ->
-                    ProfilesScreen(
-                        paneScaffoldState = this,
-                        modifier = Modifier
-                            .padding(
-                                paddingValues = PaddingValues(
-                                    top = paddingValues.calculateTopPadding(),
+                val viewModel =
+                    viewModel<ActualProfilesViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = routeParser.hydrate(route),
+                        )
+                    }
+                val state by viewModel.state.collectAsStateWithLifecycle()
+                val paneScaffoldState = rememberPaneScaffoldState()
+
+                paneScaffoldState.PaneScaffold(
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
+                    showNavigation = true,
+                    snackBarMessages = state.messages,
+                    onSnackBarMessageConsumed = { viewModel.accept(Action.SnackbarDismissed(it)) },
+                    topBar = {
+                        PoppableDestinationTopAppBar(
+                            onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                            title = { AppBarTitle(title = stringResource(titleRes)) },
+                        )
+                    },
+                    content = { paddingValues ->
+                        ProfilesScreen(
+                            paneScaffoldState = this,
+                            modifier =
+                                Modifier.padding(
+                                    paddingValues =
+                                        PaddingValues(top = paddingValues.calculateTopPadding())
                                 ),
-                            ),
-                        state = state,
-                        actions = viewModel.accept,
-                    )
-                },
-            )
-        },
-    )
+                            state = state,
+                            actions = viewModel.accept,
+                        )
+                    },
+                )
+            },
+        )
 }
 
-fun Load.titleRes(): StringResource = when (this) {
-    is Load.Post.Likes -> CommonStrings.likes
-    is Load.Post.Reposts -> CommonStrings.reposts
-    is Load.Profile.Followers -> CommonStrings.followers
-    is Load.Profile.Following -> CommonStrings.following
-    Load.Moderation.Blocks -> CommonStrings.blocked_accounts
-    Load.Moderation.Mutes -> CommonStrings.muted_accounts
-}
+fun Load.titleRes(): StringResource =
+    when (this) {
+        is Load.Post.Likes -> CommonStrings.likes
+        is Load.Post.Reposts -> CommonStrings.reposts
+        is Load.Profile.Followers -> CommonStrings.followers
+        is Load.Profile.Following -> CommonStrings.following
+        Load.Moderation.Blocks -> CommonStrings.blocked_accounts
+        Load.Moderation.Mutes -> CommonStrings.muted_accounts
+    }

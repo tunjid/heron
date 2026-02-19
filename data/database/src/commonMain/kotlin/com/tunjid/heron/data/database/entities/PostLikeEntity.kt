@@ -19,7 +19,6 @@ package com.tunjid.heron.data.database.entities
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import kotlin.time.Instant
@@ -27,28 +26,30 @@ import kotlin.time.Instant
 @Entity(
     tableName = "postLikes",
     primaryKeys = ["postUri", "authorId"],
-    foreignKeys = [
-        ForeignKey(
-            entity = PostEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["postUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["authorId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["postUri"]),
-        Index(value = ["authorId"]),
-        Index(value = ["createdAt"]),
-        Index(value = ["indexedAt"]),
-    ],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = PostEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["postUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["authorId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    indices =
+        [
+            Index(value = ["postUri"]),
+            Index(value = ["authorId"]),
+            Index(value = ["createdAt"]),
+            Index(value = ["indexedAt"]),
+        ],
 )
 data class PostLikeEntity(
     val postUri: PostUri,

@@ -75,27 +75,20 @@ import org.jetbrains.compose.resources.stringResource
 private const val RoutePattern = "/graze/create"
 private const val EditPattern = "/graze/edit/{feedGeneratorRecordKey}"
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-    children = listOfNotNull(
-        routeParams.decodeReferringRoute(),
-    ),
-)
+private fun createRoute(routeParams: RouteParams) =
+    routeOf(params = routeParams, children = listOfNotNull(routeParams.decodeReferringRoute()))
 
-private val Route.feedGeneratorRecordKey by mappedRoutePath(
-    mapper = ::RecordKey,
-)
+private val Route.feedGeneratorRecordKey by mappedRoutePath(mapper = ::RecordKey)
 
-private val RequestTrie = mapOf(
-    PathPattern(RoutePattern) to {
-        null
-    },
-    PathPattern(EditPattern) to { route: Route ->
-        Action.Update.InitialLoad(route.feedGeneratorRecordKey)
-    },
-).toRouteTrie()
+private val RequestTrie =
+    mapOf(
+            PathPattern(RoutePattern) to { null },
+            PathPattern(EditPattern) to
+                { route: Route ->
+                    Action.Update.InitialLoad(route.feedGeneratorRecordKey)
+                },
+        )
+        .toRouteTrie()
 
 internal val Route.initialLoad: Action.Update?
     get() = checkNotNull(RequestTrie[this]).invoke(this)
@@ -107,19 +100,13 @@ object GrazeEditorNavigationBindings {
     @IntoMap
     @StringKey(RoutePattern)
     fun provideRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RoutePattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = RoutePattern, routeMapper = ::createRoute)
 
     @Provides
     @IntoMap
     @StringKey(EditPattern)
     fun provideEditRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = EditPattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = EditPattern, routeMapper = ::createRoute)
 }
 
 @BindingContainer
@@ -134,10 +121,8 @@ class GrazeEditorBindings(
     fun providePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(routeParser = routeParser, viewModelInitializer = viewModelInitializer)
 
     @Provides
     @IntoMap
@@ -145,152 +130,138 @@ class GrazeEditorBindings(
     fun provideEditPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(routeParser = routeParser, viewModelInitializer = viewModelInitializer)
 
     fun routePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = threePaneEntry(
-        contentTransform = predictiveBackContentTransformProvider(),
-        render = { route ->
-            val viewModel = viewModel<ActualGrazeEditorViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = routeParser.hydrate(route),
-                )
-            }
-            val state by viewModel.state.collectAsStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
+    ): PaneEntry<ThreePane, Route> =
+        threePaneEntry(
+            contentTransform = predictiveBackContentTransformProvider(),
+            render = { route ->
+                val viewModel =
+                    viewModel<ActualGrazeEditorViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = routeParser.hydrate(route),
+                        )
+                    }
+                val state by viewModel.state.collectAsStateWithLifecycle()
+                val paneScaffoldState = rememberPaneScaffoldState()
 
-            val addFilterSheetState = rememberAddFilterSheetState { addedFilter ->
-                viewModel.accept(
-                    Action.EditFilter.AddFilter(
-                        path = state.currentPath,
-                        filter = addedFilter,
-                    ),
-                )
-            }
+                val addFilterSheetState = rememberAddFilterSheetState { addedFilter ->
+                    viewModel.accept(
+                        Action.EditFilter.AddFilter(path = state.currentPath, filter = addedFilter)
+                    )
+                }
 
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                },
-                topBar = {
-                    val editFeedInfoSheetState =
-                        rememberEditFeedInfoSheetState { name, description ->
-                            viewModel.accept(
-                                Action.Metadata(
-                                    displayName = name,
-                                    description = description,
-                                ),
-                            )
-                        }
-                    PoppableDestinationTopAppBar(
-                        title = {
-                            Title(
-                                title = remember(
-                                    state.currentPath,
-                                    state.feedGenerator,
-                                    state.grazeFeed,
-                                    state.sharedElementPrefix,
-                                ) {
-                                    when (val feedGenerator = state.feedGenerator) {
-                                        null -> Title.Pending(
-                                            path = state.currentPath,
-                                            recordKey = state.grazeFeed.recordKey,
-                                            displayName = state.grazeFeed.displayName,
+                paneScaffoldState.PaneScaffold(
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
+                    showNavigation = true,
+                    snackBarMessages = state.messages,
+                    onSnackBarMessageConsumed = {},
+                    topBar = {
+                        val editFeedInfoSheetState =
+                            rememberEditFeedInfoSheetState { name, description ->
+                                viewModel.accept(
+                                    Action.Metadata(displayName = name, description = description)
+                                )
+                            }
+                        PoppableDestinationTopAppBar(
+                            title = {
+                                Title(
+                                    title =
+                                        remember(
+                                            state.currentPath,
+                                            state.feedGenerator,
+                                            state.grazeFeed,
+                                            state.sharedElementPrefix,
+                                        ) {
+                                            when (val feedGenerator = state.feedGenerator) {
+                                                null ->
+                                                    Title.Pending(
+                                                        path = state.currentPath,
+                                                        recordKey = state.grazeFeed.recordKey,
+                                                        displayName = state.grazeFeed.displayName,
+                                                    )
+                                                else ->
+                                                    Title.Created(
+                                                        path = state.currentPath,
+                                                        feedGenerator = feedGenerator,
+                                                        sharedElementPrefix =
+                                                            state.sharedElementPrefix,
+                                                    )
+                                            }
+                                        },
+                                    paneScaffoldState = this,
+                                    onTitleClicked = { editFeedInfoSheetState.editFeed(state) },
+                                )
+                            },
+                            actions = {
+                                TopBarActions(
+                                    grazeFeed = state.grazeFeed,
+                                    enabled = !state.isLoading,
+                                    onEditClicked = { editFeedInfoSheetState.editFeed(state) },
+                                    onSaveClicked = {
+                                        viewModel.accept(Action.Update.Save(feed = state.grazeFeed))
+                                    },
+                                    onDeleteClicked = {
+                                        viewModel.accept(
+                                            Action.Update.Delete(state.grazeFeed.recordKey)
                                         )
-                                        else -> Title.Created(
-                                            path = state.currentPath,
-                                            feedGenerator = feedGenerator,
-                                            sharedElementPrefix = state.sharedElementPrefix,
-                                        )
-                                    }
-                                },
-                                paneScaffoldState = this,
-                                onTitleClicked = {
-                                    editFeedInfoSheetState.editFeed(state)
-                                },
-                            )
-                        },
-                        actions = {
-                            TopBarActions(
-                                grazeFeed = state.grazeFeed,
-                                enabled = !state.isLoading,
-                                onEditClicked = {
-                                    editFeedInfoSheetState.editFeed(state)
-                                },
-                                onSaveClicked = {
-                                    viewModel.accept(
-                                        Action.Update.Save(
-                                            feed = state.grazeFeed,
-                                        ),
-                                    )
-                                },
-                                onDeleteClicked = {
-                                    viewModel.accept(
-                                        Action.Update.Delete(state.grazeFeed.recordKey),
-                                    )
-                                },
-                            )
-                        },
-                        onBackPressed = {
-                            viewModel.accept(
-                                if (state.currentPath.isNotEmpty()) Action.EditorNavigation.ExitFilter
-                                else Action.Navigate.Pop,
-                            )
-                        },
-                    )
-                },
-                floatingActionButton = {
-                    PaneFab(
-                        text = stringResource(Res.string.add_filter),
-                        icon = Icons.Rounded.Add,
-                        expanded = true,
-                        enabled = !state.isLoading,
-                        onClick = addFilterSheetState::show,
-                    )
-                },
-                content = { contentPadding ->
-                    GrazeEditorScreen(
-                        modifier = Modifier
-                            .padding(top = contentPadding.calculateTopPadding()),
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = viewModel.accept,
-                    )
-                },
-            )
-
-            NavigationBackHandler(
-                state = rememberNavigationEventState(
-                    currentInfo = remember(state.currentFilter) {
-                        FilterNavigationEventInfo(state.currentFilter)
+                                    },
+                                )
+                            },
+                            onBackPressed = {
+                                viewModel.accept(
+                                    if (state.currentPath.isNotEmpty())
+                                        Action.EditorNavigation.ExitFilter
+                                    else Action.Navigate.Pop
+                                )
+                            },
+                        )
                     },
-                ),
-                isBackEnabled = state.currentPath.isNotEmpty(),
-            ) {
-                viewModel.accept(Action.EditorNavigation.ExitFilter)
-            }
-        },
-    )
+                    floatingActionButton = {
+                        PaneFab(
+                            text = stringResource(Res.string.add_filter),
+                            icon = Icons.Rounded.Add,
+                            expanded = true,
+                            enabled = !state.isLoading,
+                            onClick = addFilterSheetState::show,
+                        )
+                    },
+                    content = { contentPadding ->
+                        GrazeEditorScreen(
+                            modifier = Modifier.padding(top = contentPadding.calculateTopPadding()),
+                            paneScaffoldState = this,
+                            state = state,
+                            actions = viewModel.accept,
+                        )
+                    },
+                )
+
+                NavigationBackHandler(
+                    state =
+                        rememberNavigationEventState(
+                            currentInfo =
+                                remember(state.currentFilter) {
+                                    FilterNavigationEventInfo(state.currentFilter)
+                                }
+                        ),
+                    isBackEnabled = state.currentPath.isNotEmpty(),
+                ) {
+                    viewModel.accept(Action.EditorNavigation.ExitFilter)
+                }
+            },
+        )
 }
 
-private fun EditFeedInfoSheetState.editFeed(
-    state: State,
-) {
+private fun EditFeedInfoSheetState.editFeed(state: State) {
     show(
-        currentName = state.grazeFeed.displayName
-            ?: state.feedGenerator?.displayName
-            ?: "",
-        currentDescription = state.grazeFeed.description
-            ?: state.feedGenerator?.description,
+        currentName = state.grazeFeed.displayName ?: state.feedGenerator?.displayName ?: "",
+        currentDescription = state.grazeFeed.description ?: state.feedGenerator?.description,
     )
 }

@@ -28,52 +28,38 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.database.entities.PostEntity
 
-@Entity(
-    tableName = "externalEmbeds",
-)
+@Entity(tableName = "externalEmbeds")
 data class ExternalEmbedEntity(
-    @PrimaryKey
-    val uri: GenericUri,
+    @PrimaryKey val uri: GenericUri,
     val title: String,
     val description: String,
     val thumb: ImageUri?,
 ) : PostEmbed
 
-/**
- * Cross reference for many to many relationship between [Post] and [ExternalEmbedEntity]
- */
+/** Cross reference for many to many relationship between [Post] and [ExternalEmbedEntity] */
 @Entity(
     tableName = "postExternalEmbeds",
     primaryKeys = ["postUri", "externalEmbedUri"],
-    foreignKeys = [
-        ForeignKey(
-            entity = PostEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["postUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = ExternalEmbedEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["externalEmbedUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["postUri"]),
-        Index(value = ["externalEmbedUri"]),
-    ],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = PostEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["postUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = ExternalEmbedEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["externalEmbedUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    indices = [Index(value = ["postUri"]), Index(value = ["externalEmbedUri"])],
 )
-data class PostExternalEmbedEntity(
-    val postUri: PostUri,
-    val externalEmbedUri: Uri,
-)
+data class PostExternalEmbedEntity(val postUri: PostUri, val externalEmbedUri: Uri)
 
-fun ExternalEmbedEntity.asExternalModel() = ExternalEmbed(
-    uri = uri,
-    title = title,
-    description = description,
-    thumb = thumb,
-)
+fun ExternalEmbedEntity.asExternalModel() =
+    ExternalEmbed(uri = uri, title = title, description = description, thumb = thumb)

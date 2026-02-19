@@ -40,8 +40,7 @@ import kotlinx.serialization.Transient
 
 @Serializable
 data class State(
-    @Transient
-    val signedInProfile: Profile? = null,
+    @Transient val signedInProfile: Profile? = null,
     val sharedElementPrefix: String,
     val id: ConversationId,
     val members: List<Profile> = emptyList(),
@@ -49,156 +48,133 @@ data class State(
     override val tilingData: TilingState.Data<MessageQuery, MessageItem>,
     @Serializable(with = TextFieldValueSerializer::class)
     val inputText: TextFieldValue = TextFieldValue(),
-    @Transient
-    val sharedRecord: SharedRecord = SharedRecord.None,
-    @Transient
-    val messages: List<Memo> = emptyList(),
+    @Transient val sharedRecord: SharedRecord = SharedRecord.None,
+    @Transient val messages: List<Memo> = emptyList(),
 ) : TilingState<MessageQuery, MessageItem>
 
-fun State(
-    route: Route,
-) = State(
-    id = route.conversationId,
-    sharedElementPrefix = route.sharedElementPrefix,
-    members = route.models.filterIsInstance<Profile>(),
-    tilingData = TilingState.Data(
-        currentQuery = MessageQuery(
-            conversationId = route.conversationId,
-            data = CursorQuery.Data(
-                page = 0,
-                cursorAnchor = Clock.System.now(),
-                limit = 15,
+fun State(route: Route) =
+    State(
+        id = route.conversationId,
+        sharedElementPrefix = route.sharedElementPrefix,
+        members = route.models.filterIsInstance<Profile>(),
+        tilingData =
+            TilingState.Data(
+                currentQuery =
+                    MessageQuery(
+                        conversationId = route.conversationId,
+                        data =
+                            CursorQuery.Data(
+                                page = 0,
+                                cursorAnchor = Clock.System.now(),
+                                limit = 15,
+                            ),
+                    )
             ),
-        ),
-    ),
-)
+    )
 
 @Serializable
 sealed class SharedRecord {
-    @Serializable
-    data object None : SharedRecord()
+    @Serializable data object None : SharedRecord()
 
-    @Serializable
-    data class Pending(
-        val record: Record.Embeddable,
-    ) : SharedRecord()
+    @Serializable data class Pending(val record: Record.Embeddable) : SharedRecord()
 
-    @Serializable
-    data object Consumed : SharedRecord()
+    @Serializable data object Consumed : SharedRecord()
 }
 
 val SharedRecord.pendingRecord
-    get() = when (this) {
-        SharedRecord.Consumed -> null
-        SharedRecord.None -> null
-        is SharedRecord.Pending -> record
-    }
+    get() =
+        when (this) {
+            SharedRecord.Consumed -> null
+            SharedRecord.None -> null
+            is SharedRecord.Pending -> record
+        }
 
 @Serializable
 sealed class MessageItem {
-    @Serializable
-    data class Sent(
-        val message: Message,
-    ) : MessageItem()
+    @Serializable data class Sent(val message: Message) : MessageItem()
 
     @Serializable
-    data class Pending(
-        val sender: Profile,
-        val message: Message.Create,
-        val sentAt: Instant,
-    ) : MessageItem()
+    data class Pending(val sender: Profile, val message: Message.Create, val sentAt: Instant) :
+        MessageItem()
 }
 
 val MessageItem.sender
-    get() = when (this) {
-        is MessageItem.Pending -> sender
-        is MessageItem.Sent -> message.sender
-    }
+    get() =
+        when (this) {
+            is MessageItem.Pending -> sender
+            is MessageItem.Sent -> message.sender
+        }
 
 val MessageItem.id
-    get() = when (this) {
-        is MessageItem.Pending -> sentAt.toString()
-        is MessageItem.Sent -> message.id.id
-    }
+    get() =
+        when (this) {
+            is MessageItem.Pending -> sentAt.toString()
+            is MessageItem.Sent -> message.id.id
+        }
 
 val MessageItem.text
-    get() = when (this) {
-        is MessageItem.Pending -> message.text
-        is MessageItem.Sent -> message.text
-    }
+    get() =
+        when (this) {
+            is MessageItem.Pending -> message.text
+            is MessageItem.Sent -> message.text
+        }
 
 val MessageItem.links
-    get() = when (this) {
-        is MessageItem.Pending -> emptyList()
-        is MessageItem.Sent -> message.metadata?.links.orEmpty()
-    }
+    get() =
+        when (this) {
+            is MessageItem.Pending -> emptyList()
+            is MessageItem.Sent -> message.metadata?.links.orEmpty()
+        }
 
 val MessageItem.conversationId
-    get() = when (this) {
-        is MessageItem.Pending -> message.conversationId
-        is MessageItem.Sent -> message.conversationId
-    }
+    get() =
+        when (this) {
+            is MessageItem.Pending -> message.conversationId
+            is MessageItem.Sent -> message.conversationId
+        }
 
 val MessageItem.sentAt
-    get() = when (this) {
-        is MessageItem.Pending -> sentAt
-        is MessageItem.Sent -> message.sentAt
-    }
+    get() =
+        when (this) {
+            is MessageItem.Pending -> sentAt
+            is MessageItem.Sent -> message.sentAt
+        }
 
 val MessageItem.reactions
-    get() = when (this) {
-        is MessageItem.Pending -> emptyList()
-        is MessageItem.Sent -> message.reactions
-    }
+    get() =
+        when (this) {
+            is MessageItem.Pending -> emptyList()
+            is MessageItem.Sent -> message.reactions
+        }
 
-fun Message.hasEmojiReaction(
-    emoji: String,
-): Boolean = reactions.any {
-    it.value == emoji
-}
+fun Message.hasEmojiReaction(emoji: String): Boolean = reactions.any { it.value == emoji }
 
 sealed class Action(val key: String) {
 
-    data class Tile(
-        val tilingAction: TilingState.Action,
-    ) : Action(key = "Tile")
+    data class Tile(val tilingAction: TilingState.Action) : Action(key = "Tile")
 
-    data class SendPostInteraction(
-        val interaction: Post.Interaction,
-    ) : Action(key = "SendPostInteraction")
+    data class SendPostInteraction(val interaction: Post.Interaction) :
+        Action(key = "SendPostInteraction")
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
-    data class SendMessage(
-        val message: Message.Create,
-    ) : Action(key = "SendMessage")
+    data class SendMessage(val message: Message.Create) : Action(key = "SendMessage")
 
-    data class TextChanged(
-        val inputText: TextFieldValue,
-    ) : Action(key = "TextChanged")
+    data class TextChanged(val inputText: TextFieldValue) : Action(key = "TextChanged")
 
-    data class UpdateMessageReaction(
-        val reaction: Message.UpdateReaction,
-    ) : Action(key = "UpdateMessageReaction")
+    data class UpdateMessageReaction(val reaction: Message.UpdateReaction) :
+        Action(key = "UpdateMessageReaction")
 
     sealed class SharedRecord : Action(key = "SharedRecord") {
-        data class Add(
-            val uri: RecordUri,
-        ) : SharedRecord()
+        data class Add(val uri: RecordUri) : SharedRecord()
 
         data object Remove : SharedRecord()
     }
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(),
-            NavigationAction by delegate
+        data class To(val delegate: NavigationAction.Destination) :
+            Navigate(), NavigationAction by delegate
     }
 }

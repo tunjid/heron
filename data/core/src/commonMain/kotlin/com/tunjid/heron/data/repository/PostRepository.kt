@@ -27,13 +27,13 @@ import app.bsky.feed.GetQuotesQueryParams
 import app.bsky.feed.GetQuotesResponse
 import app.bsky.feed.GetRepostedByQueryParams
 import app.bsky.feed.GetRepostedByResponse
-import app.bsky.feed.Like
 import app.bsky.feed.Like as BskyLike
+import app.bsky.feed.Like
 import app.bsky.feed.Post as BskyPost
 import app.bsky.feed.PostReplyRef
 import app.bsky.feed.PostView
-import app.bsky.feed.Repost
 import app.bsky.feed.Repost as BskyRepost
+import app.bsky.feed.Repost
 import com.atproto.repo.ApplyWritesCreate
 import com.atproto.repo.ApplyWritesRequest
 import com.atproto.repo.ApplyWritesRequestWriteUnion
@@ -128,40 +128,24 @@ data class PostDataQuery(
 
 interface PostRepository {
 
-    fun likedBy(
-        query: PostDataQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<ProfileWithViewerState>>
+    fun likedBy(query: PostDataQuery, cursor: Cursor): Flow<CursorList<ProfileWithViewerState>>
 
-    fun repostedBy(
-        query: PostDataQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<ProfileWithViewerState>>
+    fun repostedBy(query: PostDataQuery, cursor: Cursor): Flow<CursorList<ProfileWithViewerState>>
 
-    fun quotes(
-        query: PostDataQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<TimelineItem>>
+    fun quotes(query: PostDataQuery, cursor: Cursor): Flow<CursorList<TimelineItem>>
 
-    fun saved(
-        query: CursorQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<TimelineItem>>
+    fun saved(query: CursorQuery, cursor: Cursor): Flow<CursorList<TimelineItem>>
 
-    fun post(
-        uri: PostUri,
-    ): Flow<Post>
+    fun post(uri: PostUri): Flow<Post>
 
-    suspend fun sendInteraction(
-        interaction: Post.Interaction,
-    ): Outcome
+    suspend fun sendInteraction(interaction: Post.Interaction): Outcome
 
-    suspend fun createPost(
-        request: Post.Create.Request,
-    ): Outcome
+    suspend fun createPost(request: Post.Create.Request): Outcome
 }
 
-internal class OfflinePostRepository @Inject constructor(
+internal class OfflinePostRepository
+@Inject
+constructor(
     private val postDao: PostDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
@@ -185,41 +169,42 @@ internal class OfflinePostRepository @Inject constructor(
                 postRecordKey = query.postRecordKey,
             ) { postUri ->
                 combine(
-                    postDao.likedBy(
-                        postUri = postUri.uri,
-                        viewingProfileId = signedInProfileId?.id,
-                        offset = query.data.offset,
-                        limit = query.data.limit,
-                    )
-                        .distinctUntilChanged()
-                        .map(List<PopulatedProfileEntity>::asExternalModels),
-
-                    networkService.nextCursorFlow(
-                        currentCursor = cursor,
-                        currentRequestWithNextCursor = {
-                            getLikes(
-                                GetLikesQueryParams(
-                                    uri = postUri.uri.let(::AtUri),
-                                    limit = query.data.limit,
-                                    cursor = cursor.value,
-                                ),
+                        postDao
+                            .likedBy(
+                                postUri = postUri.uri,
+                                viewingProfileId = signedInProfileId?.id,
+                                offset = query.data.offset,
+                                limit = query.data.limit,
                             )
-                        },
-                        nextCursor = GetLikesResponse::cursor,
-                        onResponse = {
-                            multipleEntitySaverProvider.saveInTransaction {
-                                likes.forEach {
-                                    add(
-                                        viewingProfileId = signedInProfileId,
-                                        postUri = postUri,
-                                        like = it,
+                            .distinctUntilChanged()
+                            .map(List<PopulatedProfileEntity>::asExternalModels),
+                        networkService.nextCursorFlow(
+                            currentCursor = cursor,
+                            currentRequestWithNextCursor = {
+                                getLikes(
+                                    GetLikesQueryParams(
+                                        uri = postUri.uri.let(::AtUri),
+                                        limit = query.data.limit,
+                                        cursor = cursor.value,
                                     )
+                                )
+                            },
+                            nextCursor = GetLikesResponse::cursor,
+                            onResponse = {
+                                multipleEntitySaverProvider.saveInTransaction {
+                                    likes.forEach {
+                                        add(
+                                            viewingProfileId = signedInProfileId,
+                                            postUri = postUri,
+                                            like = it,
+                                        )
+                                    }
                                 }
-                            }
-                        },
-                    ),
-                    ::CursorList,
-                ).distinctUntilChanged()
+                            },
+                        ),
+                        ::CursorList,
+                    )
+                    .distinctUntilChanged()
             }
         }
 
@@ -234,41 +219,38 @@ internal class OfflinePostRepository @Inject constructor(
                 postRecordKey = query.postRecordKey,
             ) { postUri ->
                 combine(
-                    postDao.repostedBy(
-                        postUri = postUri.uri,
-                        viewingProfileId = signedInProfileId?.id,
-                        offset = query.data.offset,
-                        limit = query.data.limit,
-                    )
-                        .distinctUntilChanged()
-                        .map(List<PopulatedProfileEntity>::asExternalModels),
-
-                    networkService.nextCursorFlow(
-                        currentCursor = cursor,
-                        currentRequestWithNextCursor = {
-                            getRepostedBy(
-                                GetRepostedByQueryParams(
-                                    uri = postUri.uri.let(::AtUri),
-                                    limit = query.data.limit,
-                                    cursor = cursor.value,
-                                ),
+                        postDao
+                            .repostedBy(
+                                postUri = postUri.uri,
+                                viewingProfileId = signedInProfileId?.id,
+                                offset = query.data.offset,
+                                limit = query.data.limit,
                             )
-                        },
-                        nextCursor = GetRepostedByResponse::cursor,
-                        onResponse = {
-                            // TODO: Figure out how to get indexedAt for reposts
-                        },
-                    ),
-                    ::CursorList,
-                )
+                            .distinctUntilChanged()
+                            .map(List<PopulatedProfileEntity>::asExternalModels),
+                        networkService.nextCursorFlow(
+                            currentCursor = cursor,
+                            currentRequestWithNextCursor = {
+                                getRepostedBy(
+                                    GetRepostedByQueryParams(
+                                        uri = postUri.uri.let(::AtUri),
+                                        limit = query.data.limit,
+                                        cursor = cursor.value,
+                                    )
+                                )
+                            },
+                            nextCursor = GetRepostedByResponse::cursor,
+                            onResponse = {
+                                // TODO: Figure out how to get indexedAt for reposts
+                            },
+                        ),
+                        ::CursorList,
+                    )
                     .distinctUntilChanged()
             }
         }
 
-    override fun quotes(
-        query: PostDataQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<TimelineItem>> =
+    override fun quotes(query: PostDataQuery, cursor: Cursor): Flow<CursorList<TimelineItem>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
             withResolvedPostUri(
                 signedInProfileId = signedInProfileId,
@@ -276,32 +258,30 @@ internal class OfflinePostRepository @Inject constructor(
                 postRecordKey = query.postRecordKey,
             ) { postUri ->
                 combine(
-                    postDao.quotedPostUriAndEmbeddedRecordUris(
-                        quotedPostUri = postUri.uri,
-                        offset = query.data.offset,
-                        limit = query.data.limit,
-                    )
+                    postDao
+                        .quotedPostUriAndEmbeddedRecordUris(
+                            quotedPostUri = postUri.uri,
+                            offset = query.data.offset,
+                            limit = query.data.limit,
+                        )
                         .distinctUntilChanged()
                         .flatMapLatest { bookmarkedPostUriAndEmbeddedRecordUris ->
                             recordResolver.timelineItems(
                                 items = bookmarkedPostUriAndEmbeddedRecordUris,
                                 signedInProfileId = signedInProfileId,
                                 postUri = PostEntity.UriWithEmbeddedRecordUri::uri,
-                                associatedRecordUris = {
-                                    listOfNotNull(it.embeddedRecordUri)
-                                },
-                                associatedProfileIds = {
-                                    emptyList()
-                                },
+                                associatedRecordUris = { listOfNotNull(it.embeddedRecordUri) },
+                                associatedProfileIds = { emptyList() },
                                 block = { item ->
-                                    list += TimelineItem.Single(
-                                        id = item.uri.uri,
-                                        post = post,
-                                        isMuted = isMuted(post),
-                                        threadGate = threadGate(item.uri),
-                                        appliedLabels = appliedLabels,
-                                        signedInProfileId = signedInProfileId,
-                                    )
+                                    list +=
+                                        TimelineItem.Single(
+                                            id = item.uri.uri,
+                                            post = post,
+                                            isMuted = isMuted(post),
+                                            threadGate = threadGate(item.uri),
+                                            appliedLabels = appliedLabels,
+                                            signedInProfileId = signedInProfileId,
+                                        )
                                 },
                             )
                         },
@@ -313,17 +293,14 @@ internal class OfflinePostRepository @Inject constructor(
                                     uri = postUri.uri.let(::AtUri),
                                     limit = query.data.limit,
                                     cursor = cursor.value,
-                                ),
+                                )
                             )
                         },
                         nextCursor = GetQuotesResponse::cursor,
                         onResponse = {
                             multipleEntitySaverProvider.saveInTransaction {
                                 posts.forEach { postView ->
-                                    add(
-                                        viewingProfileId = signedInProfileId,
-                                        postView = postView,
-                                    )
+                                    add(viewingProfileId = signedInProfileId, postView = postView)
                                 }
                             }
                         },
@@ -333,42 +310,37 @@ internal class OfflinePostRepository @Inject constructor(
             }
         }
 
-    override fun saved(
-        query: CursorQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<TimelineItem>> =
+    override fun saved(query: CursorQuery, cursor: Cursor): Flow<CursorList<TimelineItem>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
             if (signedInProfileId == null) {
                 return@singleSessionFlow emptyFlow()
             }
 
             combine(
-                postDao.bookmarkedPostUriAndEmbeddedRecordUris(
-                    viewingProfileId = signedInProfileId.id,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
+                postDao
+                    .bookmarkedPostUriAndEmbeddedRecordUris(
+                        viewingProfileId = signedInProfileId.id,
+                        offset = query.data.offset,
+                        limit = query.data.limit,
+                    )
                     .distinctUntilChanged()
                     .flatMapLatest { bookmarkedPostUriAndEmbeddedRecordUris ->
                         recordResolver.timelineItems(
                             items = bookmarkedPostUriAndEmbeddedRecordUris,
                             signedInProfileId = signedInProfileId,
                             postUri = PostEntity.UriWithEmbeddedRecordUri::uri,
-                            associatedRecordUris = {
-                                listOfNotNull(it.embeddedRecordUri)
-                            },
-                            associatedProfileIds = {
-                                emptyList()
-                            },
+                            associatedRecordUris = { listOfNotNull(it.embeddedRecordUri) },
+                            associatedProfileIds = { emptyList() },
                             block = { item ->
-                                list += TimelineItem.Single(
-                                    id = item.uri.uri,
-                                    post = post,
-                                    isMuted = isMuted(post),
-                                    threadGate = threadGate(item.uri),
-                                    appliedLabels = appliedLabels,
-                                    signedInProfileId = signedInProfileId,
-                                )
+                                list +=
+                                    TimelineItem.Single(
+                                        id = item.uri.uri,
+                                        post = post,
+                                        isMuted = isMuted(post),
+                                        threadGate = threadGate(item.uri),
+                                        appliedLabels = appliedLabels,
+                                        signedInProfileId = signedInProfileId,
+                                    )
                             },
                         )
                     },
@@ -376,10 +348,7 @@ internal class OfflinePostRepository @Inject constructor(
                     currentCursor = cursor,
                     currentRequestWithNextCursor = {
                         getBookmarks(
-                            GetBookmarksQueryParams(
-                                limit = query.data.limit,
-                                cursor = cursor.value,
-                            ),
+                            GetBookmarksQueryParams(limit = query.data.limit, cursor = cursor.value)
                         )
                     },
                     nextCursor = GetBookmarksResponse::cursor,
@@ -398,279 +367,302 @@ internal class OfflinePostRepository @Inject constructor(
             )
         }
 
-    override fun post(
-        uri: PostUri,
-    ): Flow<Post> =
+    override fun post(uri: PostUri): Flow<Post> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            postDao.posts(
-                viewingProfileId = signedInProfileId?.id,
-                postUris = setOf(uri),
-            )
+            postDao
+                .posts(viewingProfileId = signedInProfileId?.id, postUris = setOf(uri))
                 .mapNotNullDistinctUntilChanged {
-                    it.firstOrNull()?.asExternalModel(
-                        embeddedRecord = null,
-                    )
+                    it.firstOrNull()?.asExternalModel(embeddedRecord = null)
                 }
         }
 
-    override suspend fun createPost(
-        request: Post.Create.Request,
-    ): Outcome = savedStateDataSource.inCurrentProfileSession currentSession@{ signedInProfileId ->
-        if (signedInProfileId == null) return@currentSession expiredSessionOutcome()
+    override suspend fun createPost(request: Post.Create.Request): Outcome =
+        savedStateDataSource.inCurrentProfileSession currentSession@{ signedInProfileId ->
+            if (signedInProfileId == null) return@currentSession expiredSessionOutcome()
 
-        val writes = mutableListOf<ApplyWritesCreate>()
-        val now = Clock.System.now()
+            val writes = mutableListOf<ApplyWritesCreate>()
+            val now = Clock.System.now()
 
-        val postTid = tidGenerator.generate()
-        val rKey = RKey(postTid)
-        val postUri = PostUri(
-            profileId = request.authorId,
-            postRecordKey = RecordKey(postTid),
-        )
+            val postTid = tidGenerator.generate()
+            val rKey = RKey(postTid)
+            val postUri = PostUri(profileId = request.authorId, postRecordKey = RecordKey(postTid))
 
-        val blobsResult = request.mediaBlobs()
-        val blobs = blobsResult.getOrNull() ?: return@currentSession Outcome.Failure(
-            requireNotNull(blobsResult.exceptionOrNull()),
-        )
+            val blobsResult = request.mediaBlobs()
+            val blobs =
+                blobsResult.getOrNull()
+                    ?: return@currentSession Outcome.Failure(
+                        requireNotNull(blobsResult.exceptionOrNull())
+                    )
 
-        writes.add(
-            ApplyWritesCreate(
-                collection = Nsid(PostUri.NAMESPACE),
-                rkey = rKey,
-                value = request.postNetworkRecord(
-                    blobs = blobs,
-                    createdAt = now,
-                ),
-            ),
-        )
-
-        val threadGateAllowed = request.metadata.allowed
-        if (threadGateAllowed != null) writes.add(
-            ApplyWritesCreate(
-                collection = Nsid(ThreadGateUri.NAMESPACE),
-                rkey = rKey,
-                value = threadGateAllowed.toNetworkRecord(
-                    postUri = postUri,
-                    createdAt = now,
-                ),
-            ),
-        )
-
-        networkService.runCatchingWithMonitoredNetworkRetry {
-            applyWrites(
-                ApplyWritesRequest(
-                    repo = request.authorId.id.let(::Did),
-                    writes = writes.map(ApplyWritesRequestWriteUnion::Create),
-                    validate = true,
-                ),
+            writes.add(
+                ApplyWritesCreate(
+                    collection = Nsid(PostUri.NAMESPACE),
+                    rkey = rKey,
+                    value = request.postNetworkRecord(blobs = blobs, createdAt = now),
+                )
             )
-        }.toOutcome()
-    } ?: expiredSessionOutcome()
 
-    override suspend fun sendInteraction(
-        interaction: Post.Interaction,
-    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
-
-        when (interaction) {
-            is Post.Interaction.Create -> networkService.runCatchingWithMonitoredNetworkRetry {
-                when (interaction) {
-                    is Post.Interaction.Create.Bookmark -> createBookmark(
-                        CreateBookmarkRequest(
-                            uri = interaction.postUri.uri.let(::AtUri),
-                            cid = interaction.postId.id.let(::Cid),
-                        ),
-                    ).map { true to interaction.postId.id }
-
-                    is Post.Interaction.Create.Like -> createRecord(
-                        CreateRecordRequest(
-                            repo = signedInProfileId.id.let(::Did),
-                            collection = Nsid(LikeUri.NAMESPACE),
-                            record = BskyLike(
-                                subject = StrongRef(
-                                    cid = interaction.postId.id.let(::Cid),
-                                    uri = interaction.postUri.uri.let(::AtUri),
-                                ),
-                                createdAt = Clock.System.now(),
-                            ).asJsonContent(Like.serializer()),
-                        ),
-                    ).map(CreateRecordResponse::successWithUri)
-
-                    is Post.Interaction.Create.Repost -> createRecord(
-                        CreateRecordRequest(
-                            repo = signedInProfileId.id.let(::Did),
-                            collection = Nsid(RepostUri.NAMESPACE),
-                            record = BskyRepost(
-                                subject = StrongRef(
-                                    cid = interaction.postId.id.let(::Cid),
-                                    uri = interaction.postUri.uri.let(::AtUri),
-                                ),
-                                createdAt = Clock.System.now(),
-                            ).asJsonContent(Repost.serializer()),
-                        ),
-                    ).map(CreateRecordResponse::successWithUri)
-                }
-            }.toOutcome { (succeeded, uriOrCidString) ->
-                if (!succeeded) throw Exception("Record creation failed validation")
-                transactionWriter.inTransaction {
-                    when (interaction) {
-                        is Post.Interaction.Create.Like -> {
-                            upsertInteraction(
-                                partial = PostViewerStatisticsEntity.Partial.Like(
-                                    likeUri = uriOrCidString.let(::LikeUri),
-                                    postUri = interaction.postUri,
-                                    viewingProfileId = signedInProfileId,
-                                ),
-                            )
-                            postDao.updateLikeCount(
-                                postUri = interaction.postUri.uri,
-                                isIncrement = true,
-                            )
-                        }
-                        is Post.Interaction.Create.Repost -> {
-                            upsertInteraction(
-                                partial = PostViewerStatisticsEntity.Partial.Repost(
-                                    repostUri = uriOrCidString.let(::RepostUri),
-                                    postUri = interaction.postUri,
-                                    viewingProfileId = signedInProfileId,
-                                ),
-                            )
-                            postDao.updateRepostCount(
-                                postUri = interaction.postUri.uri,
-                                isIncrement = true,
-                            )
-                        }
-                        is Post.Interaction.Create.Bookmark -> {
-                            upsertInteraction(
-                                partial = PostViewerStatisticsEntity.Partial.Bookmark(
-                                    bookmarked = true,
-                                    postUri = interaction.postUri,
-                                    viewingProfileId = signedInProfileId,
-                                ),
-                            )
-                        }
-                    }
-                }
-            }
-
-            is Post.Interaction.Delete -> networkService.runCatchingWithMonitoredNetworkRetry {
-                when (interaction) {
-                    is Post.Interaction.Delete.RemoveBookmark -> deleteBookmark(
-                        DeleteBookmarkRequest(interaction.postUri.uri.let(::AtUri)),
+            val threadGateAllowed = request.metadata.allowed
+            if (threadGateAllowed != null)
+                writes.add(
+                    ApplyWritesCreate(
+                        collection = Nsid(ThreadGateUri.NAMESPACE),
+                        rkey = rKey,
+                        value =
+                            threadGateAllowed.toNetworkRecord(postUri = postUri, createdAt = now),
                     )
-                    is Post.Interaction.Delete.RemoveRepost -> deleteRecord(
-                        DeleteRecordRequest(
-                            repo = signedInProfileId.id.let(::Did),
-                            collection = Nsid(RepostUri.NAMESPACE),
-                            rkey = interaction.repostUri.recordKey.value.let(::RKey),
-                        ),
-                    )
-                    is Post.Interaction.Delete.Unlike -> deleteRecord(
-                        DeleteRecordRequest(
-                            repo = signedInProfileId.id.let(::Did),
-                            collection = Nsid(LikeUri.NAMESPACE),
-                            rkey = interaction.likeUri.recordKey.value.let(::RKey),
-                        ),
+                )
+
+            networkService
+                .runCatchingWithMonitoredNetworkRetry {
+                    applyWrites(
+                        ApplyWritesRequest(
+                            repo = request.authorId.id.let(::Did),
+                            writes = writes.map(ApplyWritesRequestWriteUnion::Create),
+                            validate = true,
+                        )
                     )
                 }
-            }.toOutcome {
-                transactionWriter.inTransaction {
-                    when (interaction) {
-                        is Post.Interaction.Delete.Unlike -> {
-                            upsertInteraction(
-                                partial = PostViewerStatisticsEntity.Partial.Like(
-                                    likeUri = null,
-                                    postUri = interaction.postUri,
-                                    viewingProfileId = signedInProfileId,
-                                ),
-                            )
-                            postDao.updateLikeCount(interaction.postUri.uri, false)
-                        }
-                        is Post.Interaction.Delete.RemoveRepost -> {
-                            upsertInteraction(
-                                partial = PostViewerStatisticsEntity.Partial.Repost(
-                                    repostUri = null,
-                                    postUri = interaction.postUri,
-                                    viewingProfileId = signedInProfileId,
-                                ),
-                            )
-                            postDao.updateRepostCount(interaction.postUri.uri, false)
-                        }
-                        is Post.Interaction.Delete.RemoveBookmark -> {
-                            upsertInteraction(
-                                partial = PostViewerStatisticsEntity.Partial.Bookmark(
-                                    bookmarked = false,
-                                    postUri = interaction.postUri,
-                                    viewingProfileId = signedInProfileId,
-                                ),
-                            )
-                        }
-                    }
-                }
-            }
-            is Post.Interaction.Upsert.Gate -> {
-                val repo = signedInProfileId.id.let(::Did)
-                val collection = Nsid(ThreadGateUri.NAMESPACE)
-                val record = interaction.toNetworkRecord()
-                val recordKey = interaction.postUri
-                    .recordKey
-                    .value
-                    .let(::RKey)
+                .toOutcome()
+        } ?: expiredSessionOutcome()
 
-                networkService.runCatchingWithMonitoredNetworkRetry {
-                    putRecord(
-                        PutRecordRequest(
-                            repo = repo,
-                            collection = collection,
-                            record = record,
-                            rkey = recordKey,
-                        ),
-                    )
-                }
-                    .mapCatchingUnlessCancelled { response ->
-                        // Initialize with starting record cid
-                        val updatedRecordId = response.cid
-                        var updatedPostView: PostView? = null
+    override suspend fun sendInteraction(interaction: Post.Interaction): Outcome =
+        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+            if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
 
-                        for (i in 0 until MaxThreadGateUpdateAttempts) {
-                            val fetchedPostView =
-                                networkService.runCatchingWithMonitoredNetworkRetry {
-                                    getPosts(
-                                        GetPostsQueryParams(
-                                            listOf(interaction.postUri.uri.let(::AtUri)),
-                                        ),
-                                    )
-                                }
-                                    .getOrNull()
-                                    ?.posts
-                                    ?.firstOrNull()
+            when (interaction) {
+                is Post.Interaction.Create ->
+                    networkService
+                        .runCatchingWithMonitoredNetworkRetry {
+                            when (interaction) {
+                                is Post.Interaction.Create.Bookmark ->
+                                    createBookmark(
+                                            CreateBookmarkRequest(
+                                                uri = interaction.postUri.uri.let(::AtUri),
+                                                cid = interaction.postId.id.let(::Cid),
+                                            )
+                                        )
+                                        .map { true to interaction.postId.id }
 
-                            if (fetchedPostView != null && updatedRecordId == fetchedPostView.threadgate?.cid) {
-                                updatedPostView = fetchedPostView
-                                break
+                                is Post.Interaction.Create.Like ->
+                                    createRecord(
+                                            CreateRecordRequest(
+                                                repo = signedInProfileId.id.let(::Did),
+                                                collection = Nsid(LikeUri.NAMESPACE),
+                                                record =
+                                                    BskyLike(
+                                                            subject =
+                                                                StrongRef(
+                                                                    cid =
+                                                                        interaction.postId.id.let(
+                                                                            ::Cid
+                                                                        ),
+                                                                    uri =
+                                                                        interaction.postUri.uri.let(
+                                                                            ::AtUri
+                                                                        ),
+                                                                ),
+                                                            createdAt = Clock.System.now(),
+                                                        )
+                                                        .asJsonContent(Like.serializer()),
+                                            )
+                                        )
+                                        .map(CreateRecordResponse::successWithUri)
+
+                                is Post.Interaction.Create.Repost ->
+                                    createRecord(
+                                            CreateRecordRequest(
+                                                repo = signedInProfileId.id.let(::Did),
+                                                collection = Nsid(RepostUri.NAMESPACE),
+                                                record =
+                                                    BskyRepost(
+                                                            subject =
+                                                                StrongRef(
+                                                                    cid =
+                                                                        interaction.postId.id.let(
+                                                                            ::Cid
+                                                                        ),
+                                                                    uri =
+                                                                        interaction.postUri.uri.let(
+                                                                            ::AtUri
+                                                                        ),
+                                                                ),
+                                                            createdAt = Clock.System.now(),
+                                                        )
+                                                        .asJsonContent(Repost.serializer()),
+                                            )
+                                        )
+                                        .map(CreateRecordResponse::successWithUri)
                             }
-                            delay(ThreadGateUpsertPollDelay)
+                        }
+                        .toOutcome { (succeeded, uriOrCidString) ->
+                            if (!succeeded) throw Exception("Record creation failed validation")
+                            transactionWriter.inTransaction {
+                                when (interaction) {
+                                    is Post.Interaction.Create.Like -> {
+                                        upsertInteraction(
+                                            partial =
+                                                PostViewerStatisticsEntity.Partial.Like(
+                                                    likeUri = uriOrCidString.let(::LikeUri),
+                                                    postUri = interaction.postUri,
+                                                    viewingProfileId = signedInProfileId,
+                                                )
+                                        )
+                                        postDao.updateLikeCount(
+                                            postUri = interaction.postUri.uri,
+                                            isIncrement = true,
+                                        )
+                                    }
+                                    is Post.Interaction.Create.Repost -> {
+                                        upsertInteraction(
+                                            partial =
+                                                PostViewerStatisticsEntity.Partial.Repost(
+                                                    repostUri = uriOrCidString.let(::RepostUri),
+                                                    postUri = interaction.postUri,
+                                                    viewingProfileId = signedInProfileId,
+                                                )
+                                        )
+                                        postDao.updateRepostCount(
+                                            postUri = interaction.postUri.uri,
+                                            isIncrement = true,
+                                        )
+                                    }
+                                    is Post.Interaction.Create.Bookmark -> {
+                                        upsertInteraction(
+                                            partial =
+                                                PostViewerStatisticsEntity.Partial.Bookmark(
+                                                    bookmarked = true,
+                                                    postUri = interaction.postUri,
+                                                    viewingProfileId = signedInProfileId,
+                                                )
+                                        )
+                                    }
+                                }
+                            }
                         }
 
-                        requireNotNull(updatedPostView) {
-                            "Failed to update thread gate"
+                is Post.Interaction.Delete ->
+                    networkService
+                        .runCatchingWithMonitoredNetworkRetry {
+                            when (interaction) {
+                                is Post.Interaction.Delete.RemoveBookmark ->
+                                    deleteBookmark(
+                                        DeleteBookmarkRequest(interaction.postUri.uri.let(::AtUri))
+                                    )
+                                is Post.Interaction.Delete.RemoveRepost ->
+                                    deleteRecord(
+                                        DeleteRecordRequest(
+                                            repo = signedInProfileId.id.let(::Did),
+                                            collection = Nsid(RepostUri.NAMESPACE),
+                                            rkey = interaction.repostUri.recordKey.value.let(::RKey),
+                                        )
+                                    )
+                                is Post.Interaction.Delete.Unlike ->
+                                    deleteRecord(
+                                        DeleteRecordRequest(
+                                            repo = signedInProfileId.id.let(::Did),
+                                            collection = Nsid(LikeUri.NAMESPACE),
+                                            rkey = interaction.likeUri.recordKey.value.let(::RKey),
+                                        )
+                                    )
+                            }
                         }
-                    }
-                    .toOutcome { postView ->
-                        multipleEntitySaverProvider.saveInTransaction {
-                            add(
-                                viewingProfileId = signedInProfileId,
-                                postView = postView,
+                        .toOutcome {
+                            transactionWriter.inTransaction {
+                                when (interaction) {
+                                    is Post.Interaction.Delete.Unlike -> {
+                                        upsertInteraction(
+                                            partial =
+                                                PostViewerStatisticsEntity.Partial.Like(
+                                                    likeUri = null,
+                                                    postUri = interaction.postUri,
+                                                    viewingProfileId = signedInProfileId,
+                                                )
+                                        )
+                                        postDao.updateLikeCount(interaction.postUri.uri, false)
+                                    }
+                                    is Post.Interaction.Delete.RemoveRepost -> {
+                                        upsertInteraction(
+                                            partial =
+                                                PostViewerStatisticsEntity.Partial.Repost(
+                                                    repostUri = null,
+                                                    postUri = interaction.postUri,
+                                                    viewingProfileId = signedInProfileId,
+                                                )
+                                        )
+                                        postDao.updateRepostCount(interaction.postUri.uri, false)
+                                    }
+                                    is Post.Interaction.Delete.RemoveBookmark -> {
+                                        upsertInteraction(
+                                            partial =
+                                                PostViewerStatisticsEntity.Partial.Bookmark(
+                                                    bookmarked = false,
+                                                    postUri = interaction.postUri,
+                                                    viewingProfileId = signedInProfileId,
+                                                )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                is Post.Interaction.Upsert.Gate -> {
+                    val repo = signedInProfileId.id.let(::Did)
+                    val collection = Nsid(ThreadGateUri.NAMESPACE)
+                    val record = interaction.toNetworkRecord()
+                    val recordKey = interaction.postUri.recordKey.value.let(::RKey)
+
+                    networkService
+                        .runCatchingWithMonitoredNetworkRetry {
+                            putRecord(
+                                PutRecordRequest(
+                                    repo = repo,
+                                    collection = collection,
+                                    record = record,
+                                    rkey = recordKey,
+                                )
                             )
                         }
-                    }
-            }
-        }
-    } ?: expiredSessionOutcome()
+                        .mapCatchingUnlessCancelled { response ->
+                            // Initialize with starting record cid
+                            val updatedRecordId = response.cid
+                            var updatedPostView: PostView? = null
 
-    private suspend fun upsertInteraction(
-        partial: PostViewerStatisticsEntity.Partial,
-    ) {
+                            for (i in 0 until MaxThreadGateUpdateAttempts) {
+                                val fetchedPostView =
+                                    networkService
+                                        .runCatchingWithMonitoredNetworkRetry {
+                                            getPosts(
+                                                GetPostsQueryParams(
+                                                    listOf(interaction.postUri.uri.let(::AtUri))
+                                                )
+                                            )
+                                        }
+                                        .getOrNull()
+                                        ?.posts
+                                        ?.firstOrNull()
+
+                                if (
+                                    fetchedPostView != null &&
+                                        updatedRecordId == fetchedPostView.threadgate?.cid
+                                ) {
+                                    updatedPostView = fetchedPostView
+                                    break
+                                }
+                                delay(ThreadGateUpsertPollDelay)
+                            }
+
+                            requireNotNull(updatedPostView) { "Failed to update thread gate" }
+                        }
+                        .toOutcome { postView ->
+                            multipleEntitySaverProvider.saveInTransaction {
+                                add(viewingProfileId = signedInProfileId, postView = postView)
+                            }
+                        }
+                }
+            }
+        } ?: expiredSessionOutcome()
+
+    private suspend fun upsertInteraction(partial: PostViewerStatisticsEntity.Partial) {
         partialUpsert(
             items = listOf(partial.asFull()),
             partialMapper = { listOf(partial) },
@@ -696,24 +688,18 @@ internal class OfflinePostRepository @Inject constructor(
         postRecordKey: RecordKey,
         block: (PostUri) -> Flow<T>,
     ): Flow<T> = flow {
-        val profileDid = profileLookup.lookupProfileDid(
-            profileId = profileId,
-        ) ?: return@flow
+        val profileDid = profileLookup.lookupProfileDid(profileId = profileId) ?: return@flow
 
         val resolvedId = ProfileId(profileDid.did)
-        val postUri = PostUri(
-            profileId = resolvedId,
-            postRecordKey = postRecordKey,
-        )
+        val postUri = PostUri(profileId = resolvedId, postRecordKey = postRecordKey)
 
         emitAll(
-            block(postUri)
-                .withRefresh {
-                    profileLookup.refreshProfile(
-                        signedInProfileId = signedInProfileId,
-                        profileId = resolvedId,
-                    )
-                },
+            block(postUri).withRefresh {
+                profileLookup.refreshProfile(
+                    signedInProfileId = signedInProfileId,
+                    profileId = resolvedId,
+                )
+            }
         )
     }
 
@@ -721,60 +707,58 @@ internal class OfflinePostRepository @Inject constructor(
         blobs: List<MediaBlob>,
         createdAt: Instant,
     ): JsonContent {
-        val resolvedLinks: List<Link> = profileLookup.resolveProfileHandleLinks(
-            links = links,
-        )
-        val reply = metadata.reply?.parent?.let { parent ->
-            val parentRef = StrongRef(
-                uri = parent.uri.uri.let(::AtUri),
-                cid = parent.cid.id.let(::Cid),
-            )
-            when (val ref = parent.record?.replyRef) {
-                // Starting a new thread
-                null -> PostReplyRef(
-                    root = parentRef,
-                    parent = parentRef,
-                )
-                // Continuing a thread
-                else -> PostReplyRef(
-                    root = StrongRef(
-                        uri = ref.rootUri.uri.let(::AtUri),
-                        cid = ref.rootCid.id.let(::Cid),
-                    ),
-                    parent = parentRef,
-                )
+        val resolvedLinks: List<Link> = profileLookup.resolveProfileHandleLinks(links = links)
+        val reply =
+            metadata.reply?.parent?.let { parent ->
+                val parentRef =
+                    StrongRef(uri = parent.uri.uri.let(::AtUri), cid = parent.cid.id.let(::Cid))
+                when (val ref = parent.record?.replyRef) {
+                    // Starting a new thread
+                    null -> PostReplyRef(root = parentRef, parent = parentRef)
+                    // Continuing a thread
+                    else ->
+                        PostReplyRef(
+                            root =
+                                StrongRef(
+                                    uri = ref.rootUri.uri.let(::AtUri),
+                                    cid = ref.rootCid.id.let(::Cid),
+                                ),
+                            parent = parentRef,
+                        )
+                }
             }
-        }
         return BskyPost(
-            text = text,
-            reply = reply,
-            embed = postEmbedUnion(
-                embeddedRecordReference = metadata.embeddedRecordReference,
-                mediaBlobs = blobs,
-            ),
-            facets = resolvedLinks.facet(),
-            createdAt = createdAt,
-        )
+                text = text,
+                reply = reply,
+                embed =
+                    postEmbedUnion(
+                        embeddedRecordReference = metadata.embeddedRecordReference,
+                        mediaBlobs = blobs,
+                    ),
+                facets = resolvedLinks.facet(),
+                createdAt = createdAt,
+            )
             .asJsonContent(BskyPost.serializer())
     }
 
     private suspend fun Post.Create.Request.mediaBlobs(): Result<List<MediaBlob>> =
         runCatchingUnlessCancelled {
             val blobs = coroutineScope {
-                metadata.embeddedMedia.map { file ->
-                    async {
-                        when (file) {
-                            is File.Media.Photo -> fileManager.source(file).use {
-                                networkService.uploadImageBlob(data = it)
-                            }
-                            is File.Media.Video -> videoUploadService.uploadVideo(
-                                file = file,
-                            )
+                metadata.embeddedMedia
+                    .map { file ->
+                        async {
+                            when (file) {
+                                    is File.Media.Photo ->
+                                        fileManager.source(file).use {
+                                            networkService.uploadImageBlob(data = it)
+                                        }
+                                    is File.Media.Video ->
+                                        videoUploadService.uploadVideo(file = file)
+                                }
+                                .map(file::with)
+                                .onSuccess { fileManager.delete(file) }
                         }
-                            .map(file::with)
-                            .onSuccess { fileManager.delete(file) }
                     }
-                }
                     .awaitAll()
                     .mapNotNull(Result<MediaBlob?>::getOrNull)
             }
@@ -795,12 +779,10 @@ private fun List<PopulatedProfileEntity>.asExternalModels() =
 private fun CreateRecordResponse.successWithUri(): Pair<Boolean, String> =
     Pair(validationStatus is CreateRecordValidationStatus.Valid, uri.atUri)
 
-private suspend fun NetworkService.uploadImageBlob(
-    data: Source,
-): Result<Blob> = runCatchingWithMonitoredNetworkRetry {
-    uploadBlob(ByteReadChannel(data))
-        .map(UploadBlobResponse::blob)
-}
+private suspend fun NetworkService.uploadImageBlob(data: Source): Result<Blob> =
+    runCatchingWithMonitoredNetworkRetry {
+        uploadBlob(ByteReadChannel(data)).map(UploadBlobResponse::blob)
+    }
 
 private val ThreadGateUpsertPollDelay = 2.seconds
 private const val MaxThreadGateUpdateAttempts = 4

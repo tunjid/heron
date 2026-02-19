@@ -24,10 +24,7 @@ import com.tunjid.heron.timeline.ui.post.PostFeatureTextContent
 
 @Composable
 internal fun UnknownPostPost(onClick: (() -> Unit)?) {
-    FeatureContainer(
-        modifier = Modifier.padding(16.dp),
-        onClick = onClick,
-    ) {
+    FeatureContainer(modifier = Modifier.padding(16.dp), onClick = onClick) {
         PostFeatureTextContent(
             title = "Unknown post",
             description = "This post cannot be viewed.",

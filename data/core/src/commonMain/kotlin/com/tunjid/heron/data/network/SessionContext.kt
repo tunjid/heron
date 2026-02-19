@@ -25,5 +25,4 @@ internal sealed class SessionContext : CoroutineContext.Element {
     companion object Key : CoroutineContext.Key<SessionContext>
 }
 
-internal suspend fun currentSessionContext() =
-    currentCoroutineContext()[SessionContext.Key]
+internal suspend fun currentSessionContext() = currentCoroutineContext()[SessionContext.Key]

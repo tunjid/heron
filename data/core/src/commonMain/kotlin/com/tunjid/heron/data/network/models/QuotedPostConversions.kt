@@ -67,8 +67,7 @@ private fun RecordViewRecordUnion.profileView() =
         is RecordViewRecordUnion.Unknown,
         is RecordViewRecordUnion.ViewBlocked,
         is RecordViewRecordUnion.ViewDetached,
-        is RecordViewRecordUnion.ViewNotFound,
-        -> null
+        is RecordViewRecordUnion.ViewNotFound -> null
 
         is RecordViewRecordUnion.ViewRecord -> value.author
     }
@@ -77,20 +76,11 @@ internal fun PostView.quotedPostEmbedEntities(): List<PostEmbed> =
     when (val embed = embed) {
         is PostViewEmbedUnion.ExternalView -> emptyList()
         is PostViewEmbedUnion.ImagesView -> emptyList()
-        is PostViewEmbedUnion.RecordWithMediaView ->
-            embed
-                .value
-                .record
-                .record
-                .embedEntities()
+        is PostViewEmbedUnion.RecordWithMediaView -> embed.value.record.record.embedEntities()
 
         is PostViewEmbedUnion.Unknown -> emptyList()
         is PostViewEmbedUnion.VideoView -> emptyList()
-        is PostViewEmbedUnion.RecordView ->
-            embed
-                .value
-                .record
-                .embedEntities()
+        is PostViewEmbedUnion.RecordView -> embed.value.record.embedEntities()
 
         null -> emptyList()
     }
@@ -104,44 +94,46 @@ private fun RecordViewRecordUnion.embedEntities() =
         is RecordViewRecordUnion.Unknown,
         is RecordViewRecordUnion.ViewDetached,
         is RecordViewRecordUnion.ViewBlocked,
-        is RecordViewRecordUnion.ViewNotFound,
-        -> emptyList()
+        is RecordViewRecordUnion.ViewNotFound -> emptyList()
 
         is RecordViewRecordUnion.ViewRecord ->
             value.embeds?.map<RecordViewRecordEmbedUnion, List<PostEmbed>> { innerRecord ->
                 when (innerRecord) {
-                    is RecordViewRecordEmbedUnion.ExternalView -> listOf(
-                        ExternalEmbedEntity(
-                            uri = GenericUri(innerRecord.value.external.uri.uri),
-                            title = innerRecord.value.external.title,
-                            description = innerRecord.value.external.description,
-                            thumb = innerRecord.value.external.thumb?.uri?.let(::ImageUri),
-                        ),
-                    )
-
-                    is RecordViewRecordEmbedUnion.ImagesView -> innerRecord.value.images.map {
-                        ImageEntity(
-                            fullSize = ImageUri(it.fullsize.uri),
-                            thumb = ImageUri(it.thumb.uri),
-                            alt = it.alt,
-                            width = it.aspectRatio?.width,
-                            height = it.aspectRatio?.height,
+                    is RecordViewRecordEmbedUnion.ExternalView ->
+                        listOf(
+                            ExternalEmbedEntity(
+                                uri = GenericUri(innerRecord.value.external.uri.uri),
+                                title = innerRecord.value.external.title,
+                                description = innerRecord.value.external.description,
+                                thumb = innerRecord.value.external.thumb?.uri?.let(::ImageUri),
+                            )
                         )
-                    }
+
+                    is RecordViewRecordEmbedUnion.ImagesView ->
+                        innerRecord.value.images.map {
+                            ImageEntity(
+                                fullSize = ImageUri(it.fullsize.uri),
+                                thumb = ImageUri(it.thumb.uri),
+                                alt = it.alt,
+                                width = it.aspectRatio?.width,
+                                height = it.aspectRatio?.height,
+                            )
+                        }
 
                     is RecordViewRecordEmbedUnion.RecordView -> emptyList()
                     is RecordViewRecordEmbedUnion.RecordWithMediaView -> emptyList()
                     is RecordViewRecordEmbedUnion.Unknown -> emptyList()
-                    is RecordViewRecordEmbedUnion.VideoView -> listOf(
-                        VideoEntity(
-                            cid = GenericId(innerRecord.value.cid.cid),
-                            playlist = GenericUri(innerRecord.value.playlist.uri),
-                            thumbnail = innerRecord.value.thumbnail?.uri?.let(::ImageUri),
-                            alt = innerRecord.value.alt,
-                            width = innerRecord.value.aspectRatio?.width,
-                            height = innerRecord.value.aspectRatio?.height,
-                        ),
-                    )
+                    is RecordViewRecordEmbedUnion.VideoView ->
+                        listOf(
+                            VideoEntity(
+                                cid = GenericId(innerRecord.value.cid.cid),
+                                playlist = GenericUri(innerRecord.value.playlist.uri),
+                                thumbnail = innerRecord.value.thumbnail?.uri?.let(::ImageUri),
+                                alt = innerRecord.value.alt,
+                                width = innerRecord.value.aspectRatio?.width,
+                                height = innerRecord.value.aspectRatio?.height,
+                            )
+                        )
                 }
             } ?: emptyList()
     }.flatten()
@@ -155,8 +147,7 @@ private fun RecordViewRecordUnion.postEntity() =
         is RecordViewRecordUnion.Unknown,
         is RecordViewRecordUnion.ViewDetached,
         is RecordViewRecordUnion.ViewBlocked,
-        is RecordViewRecordUnion.ViewNotFound,
-        -> null
+        is RecordViewRecordUnion.ViewNotFound -> null
 
         is RecordViewRecordUnion.ViewRecord ->
             PostEntity(

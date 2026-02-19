@@ -32,7 +32,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`externalEmbedUri`) REFERENCES `externalEmbeds`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -44,12 +45,17 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `postUri`,
                 `externalEmbedUri`
             FROM postExternalEmbeds
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE postExternalEmbeds")
         connection.execSQL("ALTER TABLE postExternalEmbeds_new RENAME TO postExternalEmbeds")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_postExternalEmbeds_postUri` ON `postExternalEmbeds` (`postUri`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_postExternalEmbeds_externalEmbedUri` ON `postExternalEmbeds` (`externalEmbedUri`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_postExternalEmbeds_postUri` ON `postExternalEmbeds` (`postUri`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_postExternalEmbeds_externalEmbedUri` ON `postExternalEmbeds` (`externalEmbedUri`)"
+        )
 
         // postImages
         connection.execSQL(
@@ -61,7 +67,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`imageUri`) REFERENCES `images`(`fullSize`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -73,12 +80,17 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `postUri`,
                 `imageUri`
             FROM postImages
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE postImages")
         connection.execSQL("ALTER TABLE postImages_new RENAME TO postImages")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_postImages_postUri` ON `postImages` (`postUri`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_postImages_imageUri` ON `postImages` (`imageUri`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_postImages_postUri` ON `postImages` (`postUri`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_postImages_imageUri` ON `postImages` (`imageUri`)"
+        )
 
         // postVideos
         connection.execSQL(
@@ -90,7 +102,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`videoId`) REFERENCES `videos`(`cid`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -102,12 +115,17 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `postUri`,
                 `videoId`
             FROM postVideos
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE postVideos")
         connection.execSQL("ALTER TABLE postVideos_new RENAME TO postVideos")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_postVideos_postUri` ON `postVideos` (`postUri`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_postVideos_videoId` ON `postVideos` (`videoId`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_postVideos_postUri` ON `postVideos` (`postUri`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_postVideos_videoId` ON `postVideos` (`videoId`)"
+        )
 
         // postPosts
         connection.execSQL(
@@ -119,7 +137,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`embeddedPostUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -131,12 +150,17 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `postUri`,
                 `embeddedPostUri`
             FROM postPosts
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE postPosts")
         connection.execSQL("ALTER TABLE postPosts_new RENAME TO postPosts")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_postPosts_postUri` ON `postPosts` (`postUri`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_postPosts_embeddedPostUri` ON `postPosts` (`embeddedPostUri`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_postPosts_postUri` ON `postPosts` (`postUri`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_postPosts_embeddedPostUri` ON `postPosts` (`embeddedPostUri`)"
+        )
 
         // posts
         connection.execSQL(
@@ -158,7 +182,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 PRIMARY KEY(`uri`),
                 FOREIGN KEY(`authorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -192,13 +217,16 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `embeddedRecordUri`,
                 `createdAt`
             FROM posts
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE posts")
         connection.execSQL("ALTER TABLE posts_new RENAME TO posts")
         connection.execSQL("CREATE INDEX IF NOT EXISTS `index_posts_uri` ON `posts` (`uri`)")
         connection.execSQL("CREATE INDEX IF NOT EXISTS `index_posts_cid` ON `posts` (`cid`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_posts_authorId` ON `posts` (`authorId`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_posts_authorId` ON `posts` (`authorId`)"
+        )
 
         // postAuthors
         connection.execSQL(
@@ -210,7 +238,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`authorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -222,12 +251,17 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `postUri`,
                 `authorId`
             FROM postAuthors
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE postAuthors")
         connection.execSQL("ALTER TABLE postAuthors_new RENAME TO postAuthors")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_postAuthors_postUri` ON `postAuthors` (`postUri`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_postAuthors_authorId` ON `postAuthors` (`authorId`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_postAuthors_postUri` ON `postAuthors` (`postUri`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_postAuthors_authorId` ON `postAuthors` (`authorId`)"
+        )
 
         // postThreads
         connection.execSQL(
@@ -239,7 +273,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`parentPostUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -251,12 +286,17 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `parentPostUri`,
                 `postUri`
             FROM postThreads
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE postThreads")
         connection.execSQL("ALTER TABLE postThreads_new RENAME TO postThreads")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_postThreads_parentPostUri` ON `postThreads` (`parentPostUri`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_postThreads_postUri` ON `postThreads` (`postUri`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_postThreads_parentPostUri` ON `postThreads` (`parentPostUri`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_postThreads_postUri` ON `postThreads` (`postUri`)"
+        )
 
         // postViewerStatistics
         connection.execSQL(
@@ -275,7 +315,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`viewingProfileId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -301,12 +342,17 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `pinned`,
                 `bookmarked`
             FROM postViewerStatistics
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE postViewerStatistics")
         connection.execSQL("ALTER TABLE postViewerStatistics_new RENAME TO postViewerStatistics")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_postViewerStatistics_postUri` ON `postViewerStatistics` (`postUri`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_postViewerStatistics_viewingProfileId` ON `postViewerStatistics` (`viewingProfileId`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_postViewerStatistics_postUri` ON `postViewerStatistics` (`postUri`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_postViewerStatistics_viewingProfileId` ON `postViewerStatistics` (`viewingProfileId`)"
+        )
 
         // profileViewerStates
         connection.execSQL(
@@ -326,7 +372,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`profileId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`otherProfileId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -354,7 +401,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `followedBy`,
                 `commonFollowersCount`
             FROM profileViewerStates
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE profileViewerStates")
         connection.execSQL("ALTER TABLE profileViewerStates_new RENAME TO profileViewerStates")
@@ -371,7 +419,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`authorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -387,14 +436,23 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `createdAt`,
                 `indexedAt`
             FROM postLikes
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE postLikes")
         connection.execSQL("ALTER TABLE postLikes_new RENAME TO postLikes")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_postLikes_postUri` ON `postLikes` (`postUri`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_postLikes_authorId` ON `postLikes` (`authorId`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_postLikes_createdAt` ON `postLikes` (`createdAt`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_postLikes_indexedAt` ON `postLikes` (`indexedAt`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_postLikes_postUri` ON `postLikes` (`postUri`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_postLikes_authorId` ON `postLikes` (`authorId`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_postLikes_createdAt` ON `postLikes` (`createdAt`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_postLikes_indexedAt` ON `postLikes` (`indexedAt`)"
+        )
 
         // postReposts
         connection.execSQL(
@@ -408,7 +466,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`authorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -424,13 +483,20 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `createdAt`,
                 `indexedAt`
             FROM postReposts
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE postReposts")
         connection.execSQL("ALTER TABLE postReposts_new RENAME TO postReposts")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_postReposts_postUri` ON `postReposts` (`postUri`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_postReposts_authorId` ON `postReposts` (`authorId`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_postReposts_indexedAt` ON `postReposts` (`indexedAt`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_postReposts_postUri` ON `postReposts` (`postUri`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_postReposts_authorId` ON `postReposts` (`authorId`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_postReposts_indexedAt` ON `postReposts` (`indexedAt`)"
+        )
 
         // labels
         connection.execSQL(
@@ -445,7 +511,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 PRIMARY KEY(`uri`, `value`),
                 FOREIGN KEY(`creatorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -465,13 +532,18 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `version`,
                 `createdAt`
             FROM labels
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE labels")
         connection.execSQL("ALTER TABLE labels_new RENAME TO labels")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_labels_createdAt` ON `labels` (`createdAt`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_labels_createdAt` ON `labels` (`createdAt`)"
+        )
         connection.execSQL("CREATE INDEX IF NOT EXISTS `index_labels_uri` ON `labels` (`uri`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_labels_creatorId` ON `labels` (`creatorId`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_labels_creatorId` ON `labels` (`creatorId`)"
+        )
         connection.execSQL("CREATE INDEX IF NOT EXISTS `index_labels_value` ON `labels` (`value`)")
 
         // labelers
@@ -485,7 +557,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 PRIMARY KEY(`uri`),
                 FOREIGN KEY(`creatorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -501,12 +574,15 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `creatorId`,
                 `likeCount`
             FROM labelers
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE labelers")
         connection.execSQL("ALTER TABLE labelers_new RENAME TO labelers")
         connection.execSQL("CREATE INDEX IF NOT EXISTS `index_labelers_uri` ON `labelers` (`uri`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_labelers_creatorId` ON `labelers` (`creatorId`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_labelers_creatorId` ON `labelers` (`creatorId`)"
+        )
 
         // labelDefinitions
         connection.execSQL(
@@ -522,7 +598,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 PRIMARY KEY(`creatorId`, `identifier`),
                 FOREIGN KEY(`creatorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -544,12 +621,17 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `severity`,
                 `localeInfoCbor`
             FROM labelDefinitions
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE labelDefinitions")
         connection.execSQL("ALTER TABLE labelDefinitions_new RENAME TO labelDefinitions")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_labelDefinitions_creatorId` ON `labelDefinitions` (`creatorId`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_labelDefinitions_identifier` ON `labelDefinitions` (`identifier`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_labelDefinitions_creatorId` ON `labelDefinitions` (`creatorId`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_labelDefinitions_identifier` ON `labelDefinitions` (`identifier`)"
+        )
 
         // lists
         connection.execSQL(
@@ -568,7 +650,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 PRIMARY KEY(`uri`),
                 FOREIGN KEY(`creatorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -596,15 +679,22 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `indexedAt`,
                 `createdAt`
             FROM lists
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE lists")
         connection.execSQL("ALTER TABLE lists_new RENAME TO lists")
         connection.execSQL("CREATE INDEX IF NOT EXISTS `index_lists_uri` ON `lists` (`uri`)")
         connection.execSQL("CREATE INDEX IF NOT EXISTS `index_lists_cid` ON `lists` (`cid`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_lists_creatorId` ON `lists` (`creatorId`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_lists_indexedAt` ON `lists` (`indexedAt`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_lists_createdAt` ON `lists` (`createdAt`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_lists_creatorId` ON `lists` (`creatorId`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_lists_indexedAt` ON `lists` (`indexedAt`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_lists_createdAt` ON `lists` (`createdAt`)"
+        )
 
         // listMembers
         connection.execSQL(
@@ -618,7 +708,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`subjectId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`listUri`) REFERENCES `lists`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -634,11 +725,14 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `subjectId`,
                 `createdAt`
             FROM listMembers
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE listMembers")
         connection.execSQL("ALTER TABLE listMembers_new RENAME TO listMembers")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_listMembers_createdAt` ON `listMembers` (`createdAt`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_listMembers_createdAt` ON `listMembers` (`createdAt`)"
+        )
 
         // feedGenerators
         connection.execSQL(
@@ -659,7 +753,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 PRIMARY KEY(`uri`),
                 FOREIGN KEY(`creatorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -691,15 +786,26 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `indexedAt`,
                 `createdAt`
             FROM feedGenerators
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE feedGenerators")
         connection.execSQL("ALTER TABLE feedGenerators_new RENAME TO feedGenerators")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_feedGenerators_uri` ON `feedGenerators` (`uri`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_feedGenerators_cid` ON `feedGenerators` (`cid`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_feedGenerators_creatorId` ON `feedGenerators` (`creatorId`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_feedGenerators_indexedAt` ON `feedGenerators` (`indexedAt`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_feedGenerators_createdAt` ON `feedGenerators` (`createdAt`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_feedGenerators_uri` ON `feedGenerators` (`uri`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_feedGenerators_cid` ON `feedGenerators` (`cid`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_feedGenerators_creatorId` ON `feedGenerators` (`creatorId`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_feedGenerators_indexedAt` ON `feedGenerators` (`indexedAt`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_feedGenerators_createdAt` ON `feedGenerators` (`createdAt`)"
+        )
 
         // notifications
         connection.execSQL(
@@ -719,7 +825,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`authorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`ownerId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -745,15 +852,26 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `isRead`,
                 `indexedAt`
             FROM notifications
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE notifications")
         connection.execSQL("ALTER TABLE notifications_new RENAME TO notifications")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_uri` ON `notifications` (`uri`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_cid` ON `notifications` (`cid`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_authorId` ON `notifications` (`authorId`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_ownerId` ON `notifications` (`ownerId`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_indexedAt` ON `notifications` (`indexedAt`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_notifications_uri` ON `notifications` (`uri`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_notifications_cid` ON `notifications` (`cid`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_notifications_authorId` ON `notifications` (`authorId`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_notifications_ownerId` ON `notifications` (`ownerId`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_notifications_indexedAt` ON `notifications` (`indexedAt`)"
+        )
 
         // timelineItems
         connection.execSQL(
@@ -780,7 +898,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`parentPostUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`grandParentPostAuthorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -818,18 +937,35 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `parentPostEmbeddedRecordUri`,
                 `grandParentPostAuthorId`
             FROM timelineItems
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE timelineItems")
         connection.execSQL("ALTER TABLE timelineItems_new RENAME TO timelineItems")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_timelineItems_postUri` ON `timelineItems` (`postUri`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_timelineItems_indexedAt` ON `timelineItems` (`indexedAt`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_timelineItems_viewingProfileId` ON `timelineItems` (`viewingProfileId`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_timelineItems_sourceId` ON `timelineItems` (`sourceId`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_timelineItems_rootPostUri` ON `timelineItems` (`rootPostUri`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_timelineItems_parentPostUri` ON `timelineItems` (`parentPostUri`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_timelineItems_grandParentPostAuthorId` ON `timelineItems` (`grandParentPostAuthorId`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_timelineItems_itemSort` ON `timelineItems` (`itemSort`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_timelineItems_postUri` ON `timelineItems` (`postUri`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_timelineItems_indexedAt` ON `timelineItems` (`indexedAt`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_timelineItems_viewingProfileId` ON `timelineItems` (`viewingProfileId`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_timelineItems_sourceId` ON `timelineItems` (`sourceId`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_timelineItems_rootPostUri` ON `timelineItems` (`rootPostUri`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_timelineItems_parentPostUri` ON `timelineItems` (`parentPostUri`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_timelineItems_grandParentPostAuthorId` ON `timelineItems` (`grandParentPostAuthorId`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_timelineItems_itemSort` ON `timelineItems` (`itemSort`)"
+        )
 
         // starterPacks
         connection.execSQL(
@@ -848,7 +984,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 PRIMARY KEY(`uri`),
                 FOREIGN KEY(`creatorId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -876,15 +1013,26 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `indexedAt`,
                 `createdAt`
             FROM starterPacks
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE starterPacks")
         connection.execSQL("ALTER TABLE starterPacks_new RENAME TO starterPacks")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_starterPacks_uri` ON `starterPacks` (`uri`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_starterPacks_cid` ON `starterPacks` (`cid`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_starterPacks_creatorId` ON `starterPacks` (`creatorId`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_starterPacks_indexedAt` ON `starterPacks` (`indexedAt`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_starterPacks_createdAt` ON `starterPacks` (`createdAt`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_starterPacks_uri` ON `starterPacks` (`uri`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_starterPacks_cid` ON `starterPacks` (`cid`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_starterPacks_creatorId` ON `starterPacks` (`creatorId`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_starterPacks_indexedAt` ON `starterPacks` (`indexedAt`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_starterPacks_createdAt` ON `starterPacks` (`createdAt`)"
+        )
 
         // conversations
         connection.execSQL(
@@ -901,7 +1049,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 PRIMARY KEY(`id`, `ownerId`),
                 FOREIGN KEY(`ownerId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -925,12 +1074,17 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `status`,
                 `unreadCount`
             FROM conversations
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE conversations")
         connection.execSQL("ALTER TABLE conversations_new RENAME TO conversations")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_conversations_id` ON `conversations` (`id`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_conversations_ownerId` ON `conversations` (`ownerId`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_conversations_id` ON `conversations` (`id`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_conversations_ownerId` ON `conversations` (`ownerId`)"
+        )
 
         // conversationMembers
         connection.execSQL(
@@ -943,7 +1097,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`conversationId`, `conversationOwnerId`) REFERENCES `conversations`(`id`, `ownerId`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`memberId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -957,7 +1112,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `conversationOwnerId`,
                 `memberId`
             FROM conversationMembers
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE conversationMembers")
         connection.execSQL("ALTER TABLE conversationMembers_new RENAME TO conversationMembers")
@@ -979,7 +1135,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`conversationId`, `conversationOwnerId`) REFERENCES `conversations`(`id`, `ownerId`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`senderId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -1005,11 +1162,14 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `sentAt`,
                 `base64EncodedMetadata`
             FROM messages
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE messages")
         connection.execSQL("ALTER TABLE messages_new RENAME TO messages")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_messages_sentAt` ON `messages` (`sentAt`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_messages_sentAt` ON `messages` (`sentAt`)"
+        )
 
         // messageFeedGenerators
         connection.execSQL(
@@ -1021,7 +1181,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`messageId`) REFERENCES `messages`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`feedGeneratorUri`) REFERENCES `feedGenerators`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -1033,12 +1194,17 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `messageId`,
                 `feedGeneratorUri`
             FROM messageFeedGenerators
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE messageFeedGenerators")
         connection.execSQL("ALTER TABLE messageFeedGenerators_new RENAME TO messageFeedGenerators")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_messageFeedGenerators_messageId` ON `messageFeedGenerators` (`messageId`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_messageFeedGenerators_feedGeneratorUri` ON `messageFeedGenerators` (`feedGeneratorUri`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_messageFeedGenerators_messageId` ON `messageFeedGenerators` (`messageId`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_messageFeedGenerators_feedGeneratorUri` ON `messageFeedGenerators` (`feedGeneratorUri`)"
+        )
 
         // messageLists
         connection.execSQL(
@@ -1050,7 +1216,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`messageId`) REFERENCES `messages`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`listUri`) REFERENCES `lists`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -1062,12 +1229,17 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `messageId`,
                 `listUri`
             FROM messageLists
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE messageLists")
         connection.execSQL("ALTER TABLE messageLists_new RENAME TO messageLists")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_messageLists_messageId` ON `messageLists` (`messageId`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_messageLists_listUri` ON `messageLists` (`listUri`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_messageLists_messageId` ON `messageLists` (`messageId`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_messageLists_listUri` ON `messageLists` (`listUri`)"
+        )
 
         // messagePosts
         connection.execSQL(
@@ -1079,7 +1251,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`messageId`) REFERENCES `messages`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`postUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -1091,12 +1264,17 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `messageId`,
                 `postUri`
             FROM messagePosts
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE messagePosts")
         connection.execSQL("ALTER TABLE messagePosts_new RENAME TO messagePosts")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_messagePosts_messageId` ON `messagePosts` (`messageId`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_messagePosts_postUri` ON `messagePosts` (`postUri`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_messagePosts_messageId` ON `messagePosts` (`messageId`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_messagePosts_postUri` ON `messagePosts` (`postUri`)"
+        )
 
         // messageReactions
         connection.execSQL(
@@ -1110,7 +1288,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`messageId`) REFERENCES `messages`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`senderId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -1126,11 +1305,14 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `senderId`,
                 `createdAt`
             FROM messageReactions
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE messageReactions")
         connection.execSQL("ALTER TABLE messageReactions_new RENAME TO messageReactions")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_messageReactions_createdAt` ON `messageReactions` (`createdAt`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_messageReactions_createdAt` ON `messageReactions` (`createdAt`)"
+        )
 
         // messageStarterPacks
         connection.execSQL(
@@ -1142,7 +1324,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`messageId`) REFERENCES `messages`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`starterPackUri`) REFERENCES `starterPacks`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -1154,12 +1337,17 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `messageId`,
                 `starterPackUri`
             FROM messageStarterPacks
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE messageStarterPacks")
         connection.execSQL("ALTER TABLE messageStarterPacks_new RENAME TO messageStarterPacks")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_messageStarterPacks_messageId` ON `messageStarterPacks` (`messageId`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_messageStarterPacks_starterPackUri` ON `messageStarterPacks` (`starterPackUri`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_messageStarterPacks_messageId` ON `messageStarterPacks` (`messageId`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_messageStarterPacks_starterPackUri` ON `messageStarterPacks` (`starterPackUri`)"
+        )
 
         // threadGates
         connection.execSQL(
@@ -1175,7 +1363,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 PRIMARY KEY(`uri`),
                 FOREIGN KEY(`gatedPostUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -1197,13 +1386,20 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `allowsFollowers`,
                 `allowsMentioned`
             FROM threadGates
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE threadGates")
         connection.execSQL("ALTER TABLE threadGates_new RENAME TO threadGates")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_threadGates_uri` ON `threadGates` (`uri`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_threadGates_cid` ON `threadGates` (`cid`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_threadGates_gatedPostUri` ON `threadGates` (`gatedPostUri`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_threadGates_uri` ON `threadGates` (`uri`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_threadGates_cid` ON `threadGates` (`cid`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_threadGates_gatedPostUri` ON `threadGates` (`gatedPostUri`)"
+        )
 
         // threadGateAllowedLists
         connection.execSQL(
@@ -1215,7 +1411,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`threadGateUri`) REFERENCES `threadGates`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`allowedListUri`) REFERENCES `lists`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -1227,12 +1424,19 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `threadGateUri`,
                 `allowedListUri`
             FROM threadGateAllowedLists
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE threadGateAllowedLists")
-        connection.execSQL("ALTER TABLE threadGateAllowedLists_new RENAME TO threadGateAllowedLists")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_threadGateAllowedLists_threadGateUri` ON `threadGateAllowedLists` (`threadGateUri`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_threadGateAllowedLists_allowedListUri` ON `threadGateAllowedLists` (`allowedListUri`)")
+        connection.execSQL(
+            "ALTER TABLE threadGateAllowedLists_new RENAME TO threadGateAllowedLists"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_threadGateAllowedLists_threadGateUri` ON `threadGateAllowedLists` (`threadGateUri`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_threadGateAllowedLists_allowedListUri` ON `threadGateAllowedLists` (`allowedListUri`)"
+        )
 
         // threadGateHiddenPosts
         connection.execSQL(
@@ -1244,7 +1448,8 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 FOREIGN KEY(`threadGateUri`) REFERENCES `threadGates`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE,
                 FOREIGN KEY(`hiddenPostUri`) REFERENCES `posts`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE
             )
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL(
             """
@@ -1256,11 +1461,16 @@ internal object Migration33To34OnUpdateForeignKey : Migration(33, 34) {
                 `threadGateUri`,
                 `hiddenPostUri`
             FROM threadGateHiddenPosts
-            """.trimIndent(),
+            """
+                .trimIndent()
         )
         connection.execSQL("DROP TABLE threadGateHiddenPosts")
         connection.execSQL("ALTER TABLE threadGateHiddenPosts_new RENAME TO threadGateHiddenPosts")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_threadGateHiddenPosts_threadGateUri` ON `threadGateHiddenPosts` (`threadGateUri`)")
-        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_threadGateHiddenPosts_hiddenPostUri` ON `threadGateHiddenPosts` (`hiddenPostUri`)")
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_threadGateHiddenPosts_threadGateUri` ON `threadGateHiddenPosts` (`threadGateUri`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_threadGateHiddenPosts_hiddenPostUri` ON `threadGateHiddenPosts` (`hiddenPostUri`)"
+        )
     }
 }

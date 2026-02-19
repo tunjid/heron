@@ -53,7 +53,8 @@ import com.tunjid.treenav.compose.threepane.rememberThreePaneMovableElementShare
 import com.tunjid.treenav.strings.Route
 import kotlinx.coroutines.flow.filterNotNull
 
-class PaneScaffoldState internal constructor(
+class PaneScaffoldState
+internal constructor(
     internal val appState: AppState,
     internal val splitPaneState: SplitPaneState,
     paneMovableElementSharedTransitionScope: ThreePaneMovableElementSharedTransitionScope<Route>,
@@ -86,33 +87,34 @@ class PaneScaffoldState internal constructor(
         get() = isActive && canShowNavigationBar
 
     internal val canShowNavigationRail: Boolean
-        get() = splitPaneState.filteredPaneOrder.firstOrNull() == paneState.pane &&
-            isMediumScreenWidthOrWider
+        get() =
+            splitPaneState.filteredPaneOrder.firstOrNull() == paneState.pane &&
+                isMediumScreenWidthOrWider
 
     internal val canUseMovableNavigationRail: Boolean
         get() = isActive && canShowNavigationRail
 
     internal val canShowFab
-        get() = when (paneState.pane) {
-            ThreePane.Primary -> true
-            ThreePane.Secondary -> false
-            ThreePane.Tertiary -> false
-            ThreePane.Overlay -> false
-            null -> false
-        }
+        get() =
+            when (paneState.pane) {
+                ThreePane.Primary -> true
+                ThreePane.Secondary -> false
+                ThreePane.Tertiary -> false
+                ThreePane.Overlay -> false
+                null -> false
+            }
 
     internal val hasSiblings
         get() = splitPaneState.filteredPaneOrder.size > 1
 
     internal val defaultContainerColor: Color
-        @Composable get() {
-            val elevation by animateDpAsState(
-                if (paneState.pane == ThreePane.Primary &&
-                    isActive &&
-                    inPredictiveBack
-                ) 4.dp
-                else 0.dp,
-            )
+        @Composable
+        get() {
+            val elevation by
+                animateDpAsState(
+                    if (paneState.pane == ThreePane.Primary && isActive && inPredictiveBack) 4.dp
+                    else 0.dp
+                )
 
             return MaterialTheme.colorScheme.surfaceColorAtElevation(elevation)
         }
@@ -124,11 +126,7 @@ fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(): PaneScaffoldState {
     val splitPaneState = LocalSplitPaneState.current
     val paneMovableElementSharedTransitionScope =
         rememberThreePaneMovableElementSharedTransitionScope()
-    return remember(
-        appState,
-        splitPaneState,
-        paneMovableElementSharedTransitionScope,
-    ) {
+    return remember(appState, splitPaneState, paneMovableElementSharedTransitionScope) {
         PaneScaffoldState(
             appState = appState,
             splitPaneState = splitPaneState,
@@ -152,45 +150,31 @@ fun PaneScaffoldState.PaneScaffold(
     content: @Composable PaneScaffoldState.(PaddingValues) -> Unit,
 ) {
     PaneNavigationRailScaffold(
-        modifier = modifier
-            .constrainedSizePlacement(
+        modifier =
+            modifier.constrainedSizePlacement(
                 orientation = Orientation.Horizontal,
                 minSize = splitPaneState.minPaneWidth,
                 atStart = paneState.pane == ThreePane.Secondary,
             ),
-        navigationRail = {
-            navigationRail()
-        },
+        navigationRail = { navigationRail() },
         content = {
             Scaffold(
-                modifier = if (splitPaneState.paneAnchorState.hasInteractions) Modifier
-                else when (dismissBehavior) {
-                    AppState.DismissBehavior.None,
-                    AppState.DismissBehavior.Gesture.DragToPop,
-                    -> Modifier.animateBounds(lookaheadScope = this)
-                    AppState.DismissBehavior.Gesture.SlideToPop,
-                    AppState.DismissBehavior.Gesture.ScaleToPop,
-                    -> Modifier
-                }
-                    .padding(
-                        horizontal = if (hasSiblings) 8.dp else 0.dp,
-                    ),
+                modifier =
+                    if (splitPaneState.paneAnchorState.hasInteractions) Modifier
+                    else
+                        when (dismissBehavior) {
+                            AppState.DismissBehavior.None,
+                            AppState.DismissBehavior.Gesture.DragToPop ->
+                                Modifier.animateBounds(lookaheadScope = this)
+                            AppState.DismissBehavior.Gesture.SlideToPop,
+                            AppState.DismissBehavior.Gesture.ScaleToPop -> Modifier
+                        }.padding(horizontal = if (hasSiblings) 8.dp else 0.dp),
                 containerColor = containerColor,
-                topBar = {
-                    topBar()
-                },
-                floatingActionButton = {
-                    floatingActionButton()
-                },
-                bottomBar = {
-                    navigationBar()
-                },
-                snackbarHost = {
-                    snackBarHost()
-                },
-                content = { paddingValues ->
-                    content(paddingValues)
-                },
+                topBar = { topBar() },
+                floatingActionButton = { floatingActionButton() },
+                bottomBar = { navigationBar() },
+                snackbarHost = { snackBarHost() },
+                content = { paddingValues -> content(paddingValues) },
             )
         },
     )
@@ -200,24 +184,18 @@ fun PaneScaffoldState.PaneScaffold(
             .filterNotNull()
             .collect { message ->
                 val text = message.message()
-                snackbarHostState.showSnackbar(
-                    message = text,
-                )
+                snackbarHostState.showSnackbar(message = text)
                 onSnackBarMessageConsumed(message)
             }
     }
 
     if (paneState.pane == ThreePane.Primary) {
-        LaunchedEffect(showNavigation) {
-            appState.showNavigation = showNavigation
-        }
+        LaunchedEffect(showNavigation) { appState.showNavigation = showNavigation }
     }
 }
 
 @Composable
-fun PaneScaffoldState.PaneSnackbarHost(
-    modifier: Modifier = Modifier,
-) {
+fun PaneScaffoldState.PaneSnackbarHost(modifier: Modifier = Modifier) {
     SnackbarHost(
         modifier = modifier,
         hostState = snackbarHostState,
@@ -240,32 +218,13 @@ private inline fun PaneNavigationRailScaffold(
     Row(
         modifier = modifier,
         content = {
-            Box(
-                modifier = Modifier
-                    .widthIn(max = 80.dp)
-                    .zIndex(2f),
-                content = {
-                    navigationRail()
-                },
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(1f),
-                content = {
-                    content()
-                },
-            )
+            Box(modifier = Modifier.widthIn(max = 80.dp).zIndex(2f), content = { navigationRail() })
+            Box(modifier = Modifier.fillMaxSize().zIndex(1f), content = { content() })
         },
     )
 }
 
-fun Modifier.paneClip() =
-    then(PaneClipModifier)
+fun Modifier.paneClip() = then(PaneClipModifier)
 
-private val PaneClipModifier = Modifier.clip(
-    shape = RoundedCornerShape(
-        topStart = 16.dp,
-        topEnd = 16.dp,
-    ),
-)
+private val PaneClipModifier =
+    Modifier.clip(shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))

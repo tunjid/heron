@@ -66,7 +66,8 @@ import kotlinx.coroutines.launch
  * gesture inputs, animations, and navigation events.
  */
 @Stable
-class DragToPopState private constructor(
+class DragToPopState
+private constructor(
     private val scope: CoroutineScope,
     private val input: DirectNavigationEventInput,
     private val dismissThresholdSquared: () -> Float,
@@ -74,15 +75,13 @@ class DragToPopState private constructor(
 ) {
 
     /**
-     * An identifier for a given drag gesture. It stays the same from the first pointer down
-     * till all pointers are up.
+     * An identifier for a given drag gesture. It stays the same from the first pointer down till
+     * all pointers are up.
      */
     var gestureId by mutableIntStateOf(0)
         private set
 
-    /**
-     * Whether a drag-to-pop gesture is currently in progress.
-     */
+    /** Whether a drag-to-pop gesture is currently in progress. */
     var isDraggingToPop by mutableStateOf(false)
         private set
 
@@ -93,14 +92,13 @@ class DragToPopState private constructor(
 
     private val scrollable2DState = Scrollable2DState(::dispatchDelta)
 
-    private val flingBehavior = object : FlingBehavior {
-        override suspend fun ScrollScope.performFling(
-            initialVelocity: Float,
-        ): Float {
-            onDragStopped()
-            return 0f
+    private val flingBehavior =
+        object : FlingBehavior {
+            override suspend fun ScrollScope.performFling(initialVelocity: Float): Float {
+                onDragStopped()
+                return 0f
+            }
         }
-    }
 
     private fun dispatchDelta(delta: Offset): Offset {
         if (!shouldDragToPop(delta)) return Offset.Zero
@@ -126,19 +124,17 @@ class DragToPopState private constructor(
         } else {
             channel.trySend(NavigationEventStatus.Completed.Cancelled)
 
-            resetAnimationJob = scope.launch {
-                Animatable(
-                    initialValue = dismissOffset,
-                    typeConverter = Offset.VectorConverter,
-                ).animateTo(Offset.Zero) {
-                    dismissOffset = value
+            resetAnimationJob =
+                scope.launch {
+                    Animatable(initialValue = dismissOffset, typeConverter = Offset.VectorConverter)
+                        .animateTo(Offset.Zero) { dismissOffset = value }
                 }
-            }
         }
     }
 
     private suspend fun awaitEvents() {
-        channel.consumeAsFlow()
+        channel
+            .consumeAsFlow()
             .transformWhile { status ->
                 emit(status)
                 status != NavigationEventStatus.Completed.Commited
@@ -160,10 +156,12 @@ class DragToPopState private constructor(
                             input.backProgressed(
                                 navigationEvent(
                                     min(
-                                        a = currentOffset.getDistanceSquared() / dismissThresholdSquared(),
+                                        a =
+                                            currentOffset.getDistanceSquared() /
+                                                dismissThresholdSquared(),
                                         b = 1f,
-                                    ),
-                                ),
+                                    )
+                                )
                             )
                         }
                     }
@@ -171,63 +169,57 @@ class DragToPopState private constructor(
             }
     }
 
-    private fun navigationEvent(
-        progress: Float,
-    ) = NavigationEvent(
-        touchX = dismissOffset.x,
-        touchY = dismissOffset.y,
-        progress = progress,
-        swipeEdge = NavigationEvent.EDGE_NONE,
-    )
+    private fun navigationEvent(progress: Float) =
+        NavigationEvent(
+            touchX = dismissOffset.x,
+            touchY = dismissOffset.y,
+            progress = progress,
+            swipeEdge = NavigationEvent.EDGE_NONE,
+        )
 
     companion object {
         /**
          * Modifier that adds drag-to-pop behavior to a component.
          *
          * This modifier uses the provided [DragToPopState] to listen for drag gestures and
-         * translate the content accordingly. It works by monitoring pointer input and updating
-         * the state's offset.
+         * translate the content accordingly. It works by monitoring pointer input and updating the
+         * state's offset.
          *
          * @param state The [DragToPopState] that manages the drag gesture and navigation events.
          */
-        fun Modifier.dragToPop(
-            state: DragToPopState,
-        ): Modifier = scrollable2D(
-            state = state.scrollable2DState,
-            flingBehavior = state.flingBehavior,
-        )
-            // Observe the pointer independently of the
-            // scroll gesture without consuming it
-            // bc the nested scroll child may lock scroll in one axis.
-            .pointerInput(Unit) {
-                awaitEachGesture {
-                    val down = awaitFirstDown(
-                        requireUnconsumed = false,
-                        pass = PointerEventPass.Initial,
-                    )
-                    val pointerId = down.id
-                    state.gestureId++
+        fun Modifier.dragToPop(state: DragToPopState): Modifier =
+            scrollable2D(state = state.scrollable2DState, flingBehavior = state.flingBehavior)
+                // Observe the pointer independently of the
+                // scroll gesture without consuming it
+                // bc the nested scroll child may lock scroll in one axis.
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        val down =
+                            awaitFirstDown(
+                                requireUnconsumed = false,
+                                pass = PointerEventPass.Initial,
+                            )
+                        val pointerId = down.id
+                        state.gestureId++
 
-                    while (true) {
-                        val event = awaitPointerEvent(pass = PointerEventPass.Initial)
-                        val change = event.changes.fastFirstOrNull { it.id == pointerId }
+                        while (true) {
+                            val event = awaitPointerEvent(pass = PointerEventPass.Initial)
+                            val change = event.changes.fastFirstOrNull { it.id == pointerId }
 
-                        if (change == null || !change.pressed) break
+                            if (change == null || !change.pressed) break
 
-                        val delta = change.position - change.previousPosition
+                            val delta = change.position - change.previousPosition
 
-                        if (delta != Offset.Zero && state.isDraggingToPop) {
-                            state.dismissOffset += delta
+                            if (delta != Offset.Zero && state.isDraggingToPop) {
+                                state.dismissOffset += delta
+                            }
                         }
-                    }
 
-                    // Pointer up, gesture cancelled
-                    state.onDragStopped()
+                        // Pointer up, gesture cancelled
+                        state.onDragStopped()
+                    }
                 }
-            }
-            .offset {
-                state.dismissOffset.round()
-            }
+                .offset { state.dismissOffset.round() }
 
         /**
          * Creates and remembers a [DragToPopState].
@@ -235,11 +227,12 @@ class DragToPopState private constructor(
          * This function initializes the state required for drag-to-pop functionality. It hooks into
          * the [LocalNavigationEventDispatcherOwner] to report navigation events.
          *
-         * @param dismissThreshold The distance (in Dp) the user must drag to trigger the pop action.
-         * @param shouldDragToPop A lambda that determines if a drag gesture should initiate the pop action.
-         * It receives the drag delta as an [Offset] and returns a Boolean.
-         * This lambda is a receiver of [DragToPopState], allowing access to state properties
-         * like [DragToPopState.isDraggingToPop] for more sophisticated gesture processing.
+         * @param dismissThreshold The distance (in Dp) the user must drag to trigger the pop
+         *   action.
+         * @param shouldDragToPop A lambda that determines if a drag gesture should initiate the pop
+         *   action. It receives the drag delta as an [Offset] and returns a Boolean. This lambda is
+         *   a receiver of [DragToPopState], allowing access to state properties like
+         *   [DragToPopState.isDraggingToPop] for more sophisticated gesture processing.
          */
         @Composable
         fun rememberDragToPopState(
@@ -247,45 +240,32 @@ class DragToPopState private constructor(
             shouldDragToPop: DragToPopState.(Offset) -> Boolean,
         ): DragToPopState {
             val updatedDragToPop = rememberUpdatedState(shouldDragToPop)
-            val floatDismissThreshold = rememberUpdatedState(
-                with(LocalDensity.current) {
-                    dismissThreshold.toPx().let { it * it }
-                },
-            )
+            val floatDismissThreshold =
+                rememberUpdatedState(
+                    with(LocalDensity.current) { dismissThreshold.toPx().let { it * it } }
+                )
 
-            val dispatcher = checkNotNull(
-                LocalNavigationEventDispatcherOwner.current
-                    ?.navigationEventDispatcher,
-            )
+            val dispatcher =
+                checkNotNull(LocalNavigationEventDispatcherOwner.current?.navigationEventDispatcher)
             val scope = rememberCoroutineScope()
-            val input = remember(dispatcher) {
-                DirectNavigationEventInput()
-            }
+            val input = remember(dispatcher) { DirectNavigationEventInput() }
 
             DisposableEffect(dispatcher) {
                 dispatcher.addInput(input)
-                onDispose {
-                    dispatcher.removeInput(input)
+                onDispose { dispatcher.removeInput(input) }
+            }
+
+            val dragToPopState =
+                remember(key1 = input, key2 = scope) {
+                    DragToPopState(
+                        scope = scope,
+                        input = input,
+                        dismissThresholdSquared = floatDismissThreshold::value,
+                        shouldDragToPop = { delta -> updatedDragToPop.value(this, delta) },
+                    )
                 }
-            }
 
-            val dragToPopState = remember(
-                key1 = input,
-                key2 = scope,
-            ) {
-                DragToPopState(
-                    scope = scope,
-                    input = input,
-                    dismissThresholdSquared = floatDismissThreshold::value,
-                    shouldDragToPop = { delta ->
-                        updatedDragToPop.value(this, delta)
-                    },
-                )
-            }
-
-            LaunchedEffect(dragToPopState) {
-                dragToPopState.awaitEvents()
-            }
+            LaunchedEffect(dragToPopState) { dragToPopState.awaitEvents() }
 
             return dragToPopState
         }

@@ -28,50 +28,45 @@ import kotlinx.serialization.protobuf.ProtoNumber
 
 @Serializable
 internal class SavedStateVersion2(
-    @Suppress("unused")
-    @ProtoNumber(1)
-    private val version: Int,
-    @ProtoNumber(2)
-    private val auth: AuthTokensV2?,
-    @ProtoNumber(3)
-    private val navigation: SavedState.Navigation,
-    @ProtoNumber(4)
-    private val profileData: Map<ProfileId, ProfileDataV0>,
+    @Suppress("unused") @ProtoNumber(1) private val version: Int,
+    @ProtoNumber(2) private val auth: AuthTokensV2?,
+    @ProtoNumber(3) private val navigation: SavedState.Navigation,
+    @ProtoNumber(4) private val profileData: Map<ProfileId, ProfileDataV0>,
 ) : SavedStateVersion {
 
-    override fun toVersionedSavedState(
-        currentVersion: Int,
-    ): VersionedSavedState {
-        val convertedProfileData = profileData.mapValues {
-            it.value.asProfileData(auth = null)
-        }
+    override fun toVersionedSavedState(currentVersion: Int): VersionedSavedState {
+        val convertedProfileData = profileData.mapValues { it.value.asProfileData(auth = null) }
         return VersionedSavedState(
             version = currentVersion,
             navigation = navigation,
-            profileData = when (val currentAuth = auth) {
-                is AuthTokensV2.Authenticated.Bearer -> convertedProfileData.updateOrPutValue(
-                    key = currentAuth.authProfileId,
-                    update = { copy(auth = currentAuth.asAuthTokens()) },
-                    put = { SavedState.ProfileData.fromTokens(auth = currentAuth.asAuthTokens()) },
-                )
-                is AuthTokensV2.Authenticated.DPoP -> convertedProfileData.updateOrPutValue(
-                    key = currentAuth.authProfileId,
-                    update = { copy(auth = currentAuth.asAuthTokens()) },
-                    put = { SavedState.ProfileData.fromTokens(auth = currentAuth.asAuthTokens()) },
-                )
-                AuthTokensV2.Guest,
-                null,
-                -> convertedProfileData
-            } + Pair(
-                Constants.guestProfileId,
-                SavedState.ProfileData.defaultGuestData,
-            ),
-            activeProfileId = when (val currentAuth = auth) {
-                is AuthTokensV2.Authenticated.Bearer -> currentAuth.authProfileId
-                is AuthTokensV2.Authenticated.DPoP -> currentAuth.authProfileId
-                AuthTokensV2.Guest -> Constants.guestProfileId
-                null -> null
-            },
+            profileData =
+                when (val currentAuth = auth) {
+                    is AuthTokensV2.Authenticated.Bearer ->
+                        convertedProfileData.updateOrPutValue(
+                            key = currentAuth.authProfileId,
+                            update = { copy(auth = currentAuth.asAuthTokens()) },
+                            put = {
+                                SavedState.ProfileData.fromTokens(auth = currentAuth.asAuthTokens())
+                            },
+                        )
+                    is AuthTokensV2.Authenticated.DPoP ->
+                        convertedProfileData.updateOrPutValue(
+                            key = currentAuth.authProfileId,
+                            update = { copy(auth = currentAuth.asAuthTokens()) },
+                            put = {
+                                SavedState.ProfileData.fromTokens(auth = currentAuth.asAuthTokens())
+                            },
+                        )
+                    AuthTokensV2.Guest,
+                    null -> convertedProfileData
+                } + Pair(Constants.guestProfileId, SavedState.ProfileData.defaultGuestData),
+            activeProfileId =
+                when (val currentAuth = auth) {
+                    is AuthTokensV2.Authenticated.Bearer -> currentAuth.authProfileId
+                    is AuthTokensV2.Authenticated.DPoP -> currentAuth.authProfileId
+                    AuthTokensV2.Guest -> Constants.guestProfileId
+                    null -> null
+                },
         )
     }
 
@@ -88,7 +83,9 @@ internal class SavedStateVersion2(
         sealed class Authenticated : AuthTokensV2() {
 
             @Serializable
-            @SerialName("com.tunjid.heron.data.repository.SavedState.AuthTokens.Authenticated.Bearer")
+            @SerialName(
+                "com.tunjid.heron.data.repository.SavedState.AuthTokens.Authenticated.Bearer"
+            )
             data class Bearer(
                 val authProfileId: ProfileId,
                 val auth: String,
@@ -113,27 +110,28 @@ internal class SavedStateVersion2(
     companion object {
         const val SnapshotVersion = 2
 
-        private fun AuthTokensV2.asAuthTokens() = when (this) {
-            is AuthTokensV2.Authenticated.Bearer -> SavedState.AuthTokens.Authenticated.Bearer(
-                authProfileId = authProfileId,
-                auth = auth,
-                refresh = refresh,
-                didDoc = didDoc,
-                authEndpoint = Server.BlueSky.endpoint,
-            )
-            is AuthTokensV2.Authenticated.DPoP -> SavedState.AuthTokens.Authenticated.DPoP(
-                authProfileId = authProfileId,
-                auth = auth,
-                refresh = refresh,
-                pdsUrl = pdsUrl,
-                clientId = clientId,
-                nonce = nonce,
-                keyPair = keyPair,
-                issuerEndpoint = Server.BlueSky.endpoint,
-            )
-            AuthTokensV2.Guest -> SavedState.AuthTokens.Guest(
-                server = Server.BlueSky,
-            )
-        }
+        private fun AuthTokensV2.asAuthTokens() =
+            when (this) {
+                is AuthTokensV2.Authenticated.Bearer ->
+                    SavedState.AuthTokens.Authenticated.Bearer(
+                        authProfileId = authProfileId,
+                        auth = auth,
+                        refresh = refresh,
+                        didDoc = didDoc,
+                        authEndpoint = Server.BlueSky.endpoint,
+                    )
+                is AuthTokensV2.Authenticated.DPoP ->
+                    SavedState.AuthTokens.Authenticated.DPoP(
+                        authProfileId = authProfileId,
+                        auth = auth,
+                        refresh = refresh,
+                        pdsUrl = pdsUrl,
+                        clientId = clientId,
+                        nonce = nonce,
+                        keyPair = keyPair,
+                        issuerEndpoint = Server.BlueSky.endpoint,
+                    )
+                AuthTokensV2.Guest -> SavedState.AuthTokens.Guest(server = Server.BlueSky)
+            }
     }
 }

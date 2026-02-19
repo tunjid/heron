@@ -42,9 +42,7 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.DependencyGraph
 import dev.zacsweers.metro.Includes
 
-@DependencyGraph(
-    scope = AppScope::class,
-)
+@DependencyGraph(scope = AppScope::class)
 interface AppNavigationGraph {
 
     @DependencyGraph.Factory
@@ -62,7 +60,8 @@ interface AppNavigationGraph {
             @Includes messagesNavigationBindings: MessagesNavigationBindings,
             @Includes moderationNavigationBindings: ModerationNavigationBindings,
             @Includes notificationsNavigationBindings: NotificationsNavigationBindings,
-            @Includes notificationSettingsNavigationBindings: NotificationSettingsNavigationBindings,
+            @Includes
+            notificationSettingsNavigationBindings: NotificationSettingsNavigationBindings,
             @Includes postDetailNavigationBindings: PostDetailNavigationBindings,
             @Includes postsNavigationBindings: PostsNavigationBindings,
             @Includes profileNavigationBindings: ProfileNavigationBindings,
@@ -78,17 +77,19 @@ interface AppNavigationGraph {
 }
 
 val AppNavigationGraph.allRouteMatchers
-    get() = routeMatcherMap
-        .toList()
-        .sortedWith(routeMatchingComparator())
-        .map(Pair<String, RouteMatcher>::second)
+    get() =
+        routeMatcherMap
+            .toList()
+            .sortedWith(routeMatchingComparator())
+            .map(Pair<String, RouteMatcher>::second)
 
 private fun routeMatchingComparator() =
     compareBy<Pair<String, RouteMatcher>>(
-        // Order by number of path segments firs
-        { (key) -> key.split("/").size },
-        // Match more specific segments first, route params should be matched later
-        { (key) -> -key.split("/").filter { it.startsWith("{") }.size },
-        // Finally sort alphabetically
-        { (key) -> key },
-    ).reversed()
+            // Order by number of path segments firs
+            { (key) -> key.split("/").size },
+            // Match more specific segments first, route params should be matched later
+            { (key) -> -key.split("/").filter { it.startsWith("{") }.size },
+            // Finally sort alphabetically
+            { (key) -> key },
+        )
+        .reversed()

@@ -20,9 +20,8 @@ plugins {
     id("ui-module-convention")
     id("ksp-convention")
 }
-android {
-    namespace = "com.tunjid.heron.feature.splash"
-}
+
+android { namespace = "com.tunjid.heron.feature.splash" }
 
 kotlin {
     sourceSets {

@@ -28,79 +28,78 @@ import com.tunjid.heron.data.database.entities.ConversationMembersEntity
 import com.tunjid.heron.data.database.entities.MessageReactionEntity
 import kotlin.time.Instant
 
-internal fun MultipleEntitySaver.add(
-    viewingProfileId: ProfileId?,
-    convoView: ConvoView,
-) {
+internal fun MultipleEntitySaver.add(viewingProfileId: ProfileId?, convoView: ConvoView) {
     viewingProfileId ?: return
     convoView.members.forEach { member ->
         add(
             viewingProfileId = viewingProfileId,
-            profileView = ProfileViewBasic(
-                did = member.did,
-                handle = member.handle,
-                displayName = member.displayName,
-                avatar = member.avatar,
-                associated = member.associated,
-                viewer = member.viewer,
-                labels = member.labels,
-                createdAt = Instant.DISTANT_PAST,
-                verification = member.verification,
-            ),
+            profileView =
+                ProfileViewBasic(
+                    did = member.did,
+                    handle = member.handle,
+                    displayName = member.displayName,
+                    avatar = member.avatar,
+                    associated = member.associated,
+                    viewer = member.viewer,
+                    labels = member.labels,
+                    createdAt = Instant.DISTANT_PAST,
+                    verification = member.verification,
+                ),
         )
         add(
-            entity = ConversationMembersEntity(
-                conversationId = convoView.id.let(::ConversationId),
-                conversationOwnerId = viewingProfileId,
-                memberId = member.did.did.let(::ProfileId),
-            ),
+            entity =
+                ConversationMembersEntity(
+                    conversationId = convoView.id.let(::ConversationId),
+                    conversationOwnerId = viewingProfileId,
+                    memberId = member.did.did.let(::ProfileId),
+                )
         )
     }
-    val lastMessageId = when (val lastMessage = convoView.lastMessage) {
-        is ConvoViewLastMessageUnion.Unknown,
-        null,
-        -> null
-        is ConvoViewLastMessageUnion.DeletedMessageView -> {
-            add(
-                conversationId = convoView.id.let(::ConversationId),
-                viewingProfileId = viewingProfileId,
-                deletedMessageView = lastMessage.value,
-            )
-            lastMessage.value.id.let(::MessageId)
+    val lastMessageId =
+        when (val lastMessage = convoView.lastMessage) {
+            is ConvoViewLastMessageUnion.Unknown,
+            null -> null
+            is ConvoViewLastMessageUnion.DeletedMessageView -> {
+                add(
+                    conversationId = convoView.id.let(::ConversationId),
+                    viewingProfileId = viewingProfileId,
+                    deletedMessageView = lastMessage.value,
+                )
+                lastMessage.value.id.let(::MessageId)
+            }
+
+            is ConvoViewLastMessageUnion.MessageView -> {
+                add(
+                    viewingProfileId = viewingProfileId,
+                    conversationId = convoView.id.let(::ConversationId),
+                    messageView = lastMessage.value,
+                )
+                lastMessage.value.id.let(::MessageId)
+            }
         }
 
-        is ConvoViewLastMessageUnion.MessageView -> {
-            add(
-                viewingProfileId = viewingProfileId,
-                conversationId = convoView.id.let(::ConversationId),
-                messageView = lastMessage.value,
-            )
-            lastMessage.value.id.let(::MessageId)
-        }
-    }
+    val lastReactedToMessageId =
+        when (val lastReaction = convoView.lastReaction) {
+            is ConvoViewLastReactionUnion.Unknown,
+            null -> null
 
-    val lastReactedToMessageId = when (val lastReaction = convoView.lastReaction) {
-        is ConvoViewLastReactionUnion.Unknown,
-        null,
-        -> null
-
-        is ConvoViewLastReactionUnion.MessageAndReactionView -> {
-            add(
-                viewingProfileId = viewingProfileId,
-                conversationId = convoView.id.let(::ConversationId),
-                messageView = lastReaction.value.message,
-            )
-            add(
-                MessageReactionEntity(
-                    value = lastReaction.value.reaction.value,
-                    messageId = lastReaction.value.message.id.let(::MessageId),
-                    senderId = lastReaction.value.reaction.sender.did.did.let(::ProfileId),
-                    createdAt = lastReaction.value.reaction.createdAt,
-                ),
-            )
-            lastReaction.value.message.id.let(::MessageId)
+            is ConvoViewLastReactionUnion.MessageAndReactionView -> {
+                add(
+                    viewingProfileId = viewingProfileId,
+                    conversationId = convoView.id.let(::ConversationId),
+                    messageView = lastReaction.value.message,
+                )
+                add(
+                    MessageReactionEntity(
+                        value = lastReaction.value.reaction.value,
+                        messageId = lastReaction.value.message.id.let(::MessageId),
+                        senderId = lastReaction.value.reaction.sender.did.did.let(::ProfileId),
+                        createdAt = lastReaction.value.reaction.createdAt,
+                    )
+                )
+                lastReaction.value.message.id.let(::MessageId)
+            }
         }
-    }
 
     add(
         ConversationEntity(
@@ -112,6 +111,6 @@ internal fun MultipleEntitySaver.add(
             muted = convoView.muted,
             status = convoView.status?.value,
             unreadCount = convoView.unreadCount,
-        ),
+        )
     )
 }

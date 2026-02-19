@@ -59,8 +59,8 @@ fun PaneScaffoldState.PaneNavigationBar(
     onNavItemReselected: () -> Boolean = { false },
 ) {
     AnimatedVisibility(
-        modifier = modifier
-            .sharedElement(
+        modifier =
+            modifier.sharedElement(
                 sharedContentState = rememberSharedContentState(NavigationBarSharedElementKey),
                 animatedVisibilityScope = this,
                 zIndexInOverlay = UiTokens.navigationBarSharedElementZIndex,
@@ -69,14 +69,13 @@ fun PaneScaffoldState.PaneNavigationBar(
         enter = enterTransition,
         exit = exitTransition,
         content = {
-            if (canUseMovableNavigationBar) appState.movableNavigationBar(
-                Modifier,
-                onNavItemReselected,
-            )
-            else appState.PaneNavigationBar(
-                modifier = Modifier,
-                onNavItemReselected = onNavItemReselected,
-            )
+            if (canUseMovableNavigationBar)
+                appState.movableNavigationBar(Modifier, onNavItemReselected)
+            else
+                appState.PaneNavigationBar(
+                    modifier = Modifier,
+                    onNavItemReselected = onNavItemReselected,
+                )
         },
     )
 }
@@ -89,28 +88,30 @@ fun PaneScaffoldState.PaneNavigationRail(
     onNavItemReselected: () -> Boolean = { false },
 ) {
     AnimatedVisibility(
-        modifier = modifier
-            .sharedElement(
+        modifier =
+            modifier.sharedElement(
                 sharedContentState = rememberSharedContentState(NavigationRailSharedElementKey),
                 animatedVisibilityScope = this,
                 zIndexInOverlay = UiTokens.navigationBarSharedElementZIndex,
                 boundsTransform = NavigationRailBoundsTransform,
             ),
         visible = canShowNavigationRail,
-        enter = if (
-            canShowNavigationRail &&
-            paneState.adaptations.none { it is Adaptation.Swap<*> || it is Adaptation.Same }
-        ) enterTransition else EnterTransition.None,
+        enter =
+            if (
+                canShowNavigationRail &&
+                    paneState.adaptations.none { it is Adaptation.Swap<*> || it is Adaptation.Same }
+            )
+                enterTransition
+            else EnterTransition.None,
         exit = exitTransition,
         content = {
-            if (canUseMovableNavigationRail) appState.movableNavigationRail(
-                Modifier,
-                onNavItemReselected,
-            )
-            else appState.PaneNavigationRail(
-                modifier = Modifier,
-                onNavItemReselected = onNavItemReselected,
-            )
+            if (canUseMovableNavigationRail)
+                appState.movableNavigationRail(Modifier, onNavItemReselected)
+            else
+                appState.PaneNavigationRail(
+                    modifier = Modifier,
+                    onNavItemReselected = onNavItemReselected,
+                )
         },
     )
 }
@@ -122,28 +123,23 @@ internal fun AppState.PaneNavigationBar(
 ) {
     LookaheadScope {
         Surface(
-            modifier = modifier
-                .fillMaxWidth()
-                .animateBounds(lookaheadScope = this@LookaheadScope),
+            modifier = modifier.fillMaxWidth().animateBounds(lookaheadScope = this@LookaheadScope),
             color = BottomAppBarDefaults.containerColor,
             contentColor = contentColorFor(BottomAppBarDefaults.containerColor),
         ) {
             Row(
-                modifier = Modifier
-                    .navigationBarsPadding()
-                    .fillMaxWidth()
-                    .height(UiTokens.bottomNavHeight(isCompact = prefersCompactBottomNav)),
+                modifier =
+                    Modifier.navigationBarsPadding()
+                        .fillMaxWidth()
+                        .height(UiTokens.bottomNavHeight(isCompact = prefersCompactBottomNav)),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 navItems.forEach { item ->
                     NavigationBarItem(
-                        modifier = Modifier
-                            .weight(1f),
+                        modifier = Modifier.weight(1f),
                         icon = {
                             BadgedBox(
-                                badge = {
-                                    Badge(item.badgeCount)
-                                },
+                                badge = { Badge(item.badgeCount) },
                                 content = {
                                     Icon(
                                         imageVector = item.stack.icon,
@@ -169,17 +165,13 @@ internal fun AppState.PaneNavigationRail(
     modifier: Modifier = Modifier,
     onNavItemReselected: () -> Boolean,
 ) {
-    NavigationRail(
-        modifier = modifier,
-    ) {
+    NavigationRail(modifier = modifier) {
         navItems.forEach { item ->
             NavigationRailItem(
                 selected = item.selected,
                 icon = {
                     BadgedBox(
-                        badge = {
-                            Badge(item.badgeCount)
-                        },
+                        badge = { Badge(item.badgeCount) },
                         content = {
                             Icon(
                                 imageVector = item.stack.icon,
@@ -198,9 +190,7 @@ internal fun AppState.PaneNavigationRail(
 }
 
 @Composable
-private fun Badge(
-    count: Long,
-) {
+private fun Badge(count: Long) {
     when (count) {
         in 1..<MaxBadgeCount -> Badge { Text("$count") }
         in MaxBadgeCount..Long.MAX_VALUE -> Badge(Modifier.size(4.dp))
@@ -208,24 +198,27 @@ private fun Badge(
 }
 
 @Composable
-fun Modifier.bottomNavigationSharedBounds(
-    paneScaffoldState: PaneScaffoldState,
-): Modifier = with(paneScaffoldState) {
-    when (paneState.pane) {
-        ThreePane.Primary -> if (inPredictiveBack) this@bottomNavigationSharedBounds else sharedBounds(
-            sharedContentState = rememberSharedContentState(NavigationBarSharedElementKey),
-            animatedVisibilityScope = this,
-        )
+fun Modifier.bottomNavigationSharedBounds(paneScaffoldState: PaneScaffoldState): Modifier =
+    with(paneScaffoldState) {
+        when (paneState.pane) {
+            ThreePane.Primary ->
+                if (inPredictiveBack) this@bottomNavigationSharedBounds
+                else
+                    sharedBounds(
+                        sharedContentState =
+                            rememberSharedContentState(NavigationBarSharedElementKey),
+                        animatedVisibilityScope = this,
+                    )
 
-        ThreePane.Secondary,
-        ThreePane.Tertiary,
-        ThreePane.Overlay,
-        null,
-        -> this@bottomNavigationSharedBounds
+            ThreePane.Secondary,
+            ThreePane.Tertiary,
+            ThreePane.Overlay,
+            null -> this@bottomNavigationSharedBounds
+        }
     }
-}
 
 private data object NavigationBarSharedElementKey
+
 private data object NavigationRailSharedElementKey
 
 private const val MaxBadgeCount = 100L

@@ -37,26 +37,16 @@ data class Label(
     val version: Long?,
     val createdAt: Instant,
 ) {
-    @JvmInline
-    @Serializable
-    value class Value(
-        val value: String,
-    )
+    @JvmInline @Serializable value class Value(val value: String)
 
     @Serializable
-    data class Visibility(
-        val value: String,
-    ) {
+    data class Visibility(val value: String) {
         companion object {
             val Hide = Visibility("hide")
             val Warn = Visibility("warn") // Also show badge
             val Ignore = Visibility("ignore")
 
-            val all = listOf(
-                Ignore,
-                Warn,
-                Hide,
-            )
+            val all = listOf(Ignore, Warn, Hide)
         }
     }
 
@@ -82,36 +72,22 @@ data class Label(
         None,
     }
 
-    enum class Adult(
-        val defaultVisibility: Visibility,
-        val labelValues: List<Value>,
-    ) {
+    enum class Adult(val defaultVisibility: Visibility, val labelValues: List<Value>) {
         AdultContent(
             defaultVisibility = Visibility.Hide,
-            labelValues = listOf(
-                Value("porn"),
-                Value("nsfw"),
-            ),
+            labelValues = listOf(Value("porn"), Value("nsfw")),
         ),
         SexuallySuggestive(
             defaultVisibility = Visibility.Warn,
-            labelValues = listOf(
-                Value("sexual"),
-                Value("suggestive"),
-            ),
+            labelValues = listOf(Value("sexual"), Value("suggestive")),
         ),
         GraphicMedia(
             defaultVisibility = Visibility.Warn,
-            labelValues = listOf(
-                Value("graphic-media"),
-                Value("gore"),
-            ),
+            labelValues = listOf(Value("graphic-media"), Value("gore")),
         ),
         NonSexualNudity(
             defaultVisibility = Visibility.Ignore,
-            labelValues = listOf(
-                Value("nudity"),
-            ),
+            labelValues = listOf(Value("nudity")),
         ),
     }
 
@@ -132,36 +108,23 @@ data class Labeler(
     val likeCount: Long?,
     val definitions: List<Label.Definition>,
     val values: List<Label.Value>,
-) : Record,
-    Record.Embeddable {
+) : Record, Record.Embeddable {
 
-    override val reference: Record.Reference =
-        Record.Reference(
-            id = cid,
-            uri = uri,
-        )
+    override val reference: Record.Reference = Record.Reference(id = cid, uri = uri)
 
     override val embeddableRecordUri: EmbeddableRecordUri
         get() = uri
 
     @Serializable
-    data class LocaleInfo(
-        val lang: String,
-        val name: String,
-        val description: String,
-    ) : UrlEncodableModel
+    data class LocaleInfo(val lang: String, val name: String, val description: String) :
+        UrlEncodableModel
 
-    @Serializable
-    data class LocaleInfoList(
-        val list: List<LocaleInfo>,
-    ) : UrlEncodableModel
+    @Serializable data class LocaleInfoList(val list: List<LocaleInfo>) : UrlEncodableModel
 }
 
 typealias Labelers = List<Labeler>
 
-/**
- * A class holding metadata about a profile's preferences for labels.
- */
+/** A class holding metadata about a profile's preferences for labels. */
 sealed interface AppliedLabels {
     val labels: Collection<Label>
     val shouldHide: Boolean
@@ -170,7 +133,9 @@ sealed interface AppliedLabels {
     val canAutoPlayVideo: Boolean
 
     fun visibility(label: Label.Value): Label.Visibility
+
     fun definition(label: Label): Label.Definition?
+
     fun labelerSummary(label: Label): LabelerSummary?
 
     @Serializable
@@ -181,11 +146,12 @@ sealed interface AppliedLabels {
     )
 
     /**
-     * A subset of applied labels matching a [Label.Visibility].
-     * This is useful for serializing to preserve visual context.
+     * A subset of applied labels matching a [Label.Visibility]. This is useful for serializing to
+     * preserve visual context.
      */
     @Serializable
-    class Filtered internal constructor(
+    class Filtered
+    internal constructor(
         override val shouldHide: Boolean,
         override val shouldBlurMedia: Boolean,
         override val canAutoPlayVideo: Boolean,
@@ -193,21 +159,14 @@ sealed interface AppliedLabels {
         override val labels: Collection<Label>,
         private val visibleSummaries: List<LabelerSummary>,
         private val visibleDefinitions: List<Label.Definition>,
-    ) : AppliedLabels,
-        UrlEncodableModel {
+    ) : AppliedLabels, UrlEncodableModel {
 
-        override fun visibility(
-            label: Label.Value,
-        ): Label.Visibility = Label.Visibility.Warn
+        override fun visibility(label: Label.Value): Label.Visibility = Label.Visibility.Warn
 
-        override fun definition(
-            label: Label,
-        ): Label.Definition? =
+        override fun definition(label: Label): Label.Definition? =
             visibleDefinitions.firstOrNull { it.identifier == label.value }
 
-        override fun labelerSummary(
-            label: Label,
-        ): LabelerSummary? =
+        override fun labelerSummary(label: Label): LabelerSummary? =
             visibleSummaries.firstOrNull { it.creatorId == label.creatorId }
     }
 
@@ -217,27 +176,30 @@ sealed interface AppliedLabels {
             labels: Collection<Label>,
             labelers: Labelers,
             preferenceLabelsVisibilityMap: Map<Label.Value, Label.Visibility>,
-        ): AppliedLabels = AppliedLabelsImpl(
-            adultContentEnabled = adultContentEnabled,
-            labels = labels,
-            labelers = labelers,
-            preferenceLabelsVisibilityMap = preferenceLabelsVisibilityMap,
-        )
+        ): AppliedLabels =
+            AppliedLabelsImpl(
+                adultContentEnabled = adultContentEnabled,
+                labels = labels,
+                labelers = labelers,
+                preferenceLabelsVisibilityMap = preferenceLabelsVisibilityMap,
+            )
 
         operator fun invoke(
             adultContentEnabled: Boolean,
             labels: Collection<Label>,
             labelers: Labelers,
             contentLabelPreferences: ContentLabelPreferences,
-        ): AppliedLabels = AppliedLabelsImpl(
-            adultContentEnabled = adultContentEnabled,
-            labels = labels,
-            labelers = labelers,
-            preferenceLabelsVisibilityMap = contentLabelPreferences.associateBy(
-                keySelector = ContentLabelPreference::label,
-                valueTransform = ContentLabelPreference::visibility,
-            ),
-        )
+        ): AppliedLabels =
+            AppliedLabelsImpl(
+                adultContentEnabled = adultContentEnabled,
+                labels = labels,
+                labelers = labelers,
+                preferenceLabelsVisibilityMap =
+                    contentLabelPreferences.associateBy(
+                        keySelector = ContentLabelPreference::label,
+                        valueTransform = ContentLabelPreference::visibility,
+                    ),
+            )
 
         fun AppliedLabels.warned(): Filtered {
             val visibleDefinitions = mutableListOf<Label.Definition>()
@@ -282,39 +244,48 @@ private data class AppliedLabelsImpl(
 
     private val postLabels =
         if (labels.isEmpty()) emptySet()
-        else labels.mapNotNullTo(mutableSetOf()) {
-            val isPostUri = it.uri.uri.asRecordUriOrNull() is PostUri
-            if (isPostUri) it.value else null
-        }
+        else
+            labels.mapNotNullTo(mutableSetOf()) {
+                val isPostUri = it.uri.uri.asRecordUriOrNull() is PostUri
+                if (isPostUri) it.value else null
+            }
 
     override val shouldHide: Boolean
-        get() = lazyShouldHide ?: postLabels.any { labelValue ->
-            if (labelValue == Label.Hidden) return@any true
-            visibility(labelValue) == Label.Visibility.Hide
-        }
-            .also { lazyShouldHide = it }
+        get() =
+            lazyShouldHide
+                ?: postLabels
+                    .any { labelValue ->
+                        if (labelValue == Label.Hidden) return@any true
+                        visibility(labelValue) == Label.Visibility.Hide
+                    }
+                    .also { lazyShouldHide = it }
 
     override val shouldBlurMedia: Boolean
-        get() = lazyShouldBlur ?: postLabels.any { labelValue ->
-            if (labelValue == Label.Warn) return@any true
+        get() =
+            lazyShouldBlur
+                ?: postLabels
+                    .any { labelValue ->
+                        if (labelValue == Label.Warn) return@any true
 
-            val isBlurTarget = Label.AdultLabels.contains(labelValue) ||
-                findDefinition(labelValue)?.blurs == Label.BlurTarget.Media
+                        val isBlurTarget =
+                            Label.AdultLabels.contains(labelValue) ||
+                                findDefinition(labelValue)?.blurs == Label.BlurTarget.Media
 
-            isBlurTarget && visibility(labelValue) == Label.Visibility.Warn
-        }
-            .also { lazyShouldBlur = it }
+                        isBlurTarget && visibility(labelValue) == Label.Visibility.Warn
+                    }
+                    .also { lazyShouldBlur = it }
 
     override val blurredMediaSeverity: Label.Severity
         get() {
             var severity = lazyBlurredMediaSeverity
             if (severity != null) return severity
 
-            severity = postLabels.firstNotNullOfOrNull { labelValue ->
-                findDefinition(labelValue)
-                    ?.takeIf { it.blurs == Label.BlurTarget.Media || it.adultOnly }
-                    ?.severity
-            } ?: Label.Severity.Inform
+            severity =
+                postLabels.firstNotNullOfOrNull { labelValue ->
+                    findDefinition(labelValue)
+                        ?.takeIf { it.blurs == Label.BlurTarget.Media || it.adultOnly }
+                        ?.severity
+                } ?: Label.Severity.Inform
 
             lazyBlurredMediaSeverity = severity
 
@@ -323,9 +294,7 @@ private data class AppliedLabelsImpl(
 
     override val canAutoPlayVideo: Boolean = !shouldBlurMedia
 
-    override fun visibility(
-        label: Label.Value,
-    ): Label.Visibility {
+    override fun visibility(label: Label.Value): Label.Visibility {
         // Check in custom labelers first
         val definition = findDefinition(label)
         if (definition != null) {
@@ -342,27 +311,24 @@ private data class AppliedLabelsImpl(
         return Label.Visibility.Ignore
     }
 
-    override fun definition(
-        label: Label,
-    ): Label.Definition? =
-        labelers.find { it.creator.did == label.creatorId }
+    override fun definition(label: Label): Label.Definition? =
+        labelers
+            .find { it.creator.did == label.creatorId }
             ?.definitions
             ?.find { it.identifier == label.value }
 
-    override fun labelerSummary(
-        label: Label,
-    ): AppliedLabels.LabelerSummary? =
-        labelers.find { it.creator.did == label.creatorId }?.let { labeler ->
-            AppliedLabels.LabelerSummary(
-                creatorId = labeler.creator.did,
-                creatorHandle = labeler.creator.handle,
-                creatorAvatar = labeler.creator.avatar,
-            )
-        }
+    override fun labelerSummary(label: Label): AppliedLabels.LabelerSummary? =
+        labelers
+            .find { it.creator.did == label.creatorId }
+            ?.let { labeler ->
+                AppliedLabels.LabelerSummary(
+                    creatorId = labeler.creator.did,
+                    creatorHandle = labeler.creator.handle,
+                    creatorAvatar = labeler.creator.avatar,
+                )
+            }
 
-    private fun findDefinition(
-        label: Label.Value,
-    ): Label.Definition? {
+    private fun findDefinition(label: Label.Value): Label.Definition? {
         for (i in labelers.lastIndex downTo 0) {
             val labeler = labelers[i]
             val def = labeler.definitions.find { it.identifier == label }

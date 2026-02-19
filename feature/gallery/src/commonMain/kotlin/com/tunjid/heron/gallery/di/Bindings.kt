@@ -53,24 +53,13 @@ import dev.zacsweers.metro.StringKey
 
 private const val RoutePattern = "/profile/{profileId}/post/{postRecordKey}/gallery"
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-)
+private fun createRoute(routeParams: RouteParams) = routeOf(params = routeParams)
 
-internal val Route.postRecordKey by mappedRoutePath(
-    mapper = ::RecordKey,
-)
+internal val Route.postRecordKey by mappedRoutePath(mapper = ::RecordKey)
 
-internal val Route.profileId by mappedRoutePath(
-    mapper = ::ProfileId,
-)
+internal val Route.profileId by mappedRoutePath(mapper = ::ProfileId)
 
-internal val Route.startIndex by mappedRouteQuery(
-    default = 0,
-    mapper = String::toInt,
-)
+internal val Route.startIndex by mappedRouteQuery(default = 0, mapper = String::toInt)
 
 @BindingContainer
 object GalleryNavigationBindings {
@@ -79,10 +68,7 @@ object GalleryNavigationBindings {
     @IntoMap
     @StringKey(RoutePattern)
     fun provideRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RoutePattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = RoutePattern, routeMapper = ::createRoute)
 }
 
 @BindingContainer
@@ -95,43 +81,39 @@ class GalleryBindings(
     @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
-    )
+        viewModelInitializer: RouteViewModelInitializer
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(viewModelInitializer = viewModelInitializer)
 
-    private fun routePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
-    ) = threePaneEntry(
-        contentTransform = predictiveBackContentTransformProvider(),
-        render = { route ->
-            val viewModel = viewModel<ActualGalleryViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = route,
+    private fun routePaneEntry(viewModelInitializer: RouteViewModelInitializer) =
+        threePaneEntry(
+            contentTransform = predictiveBackContentTransformProvider(),
+            render = { route ->
+                val viewModel =
+                    viewModel<ActualGalleryViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = route,
+                        )
+                    }
+                val state by viewModel.state.collectAsStateWithLifecycle()
+                val paneScaffoldState = rememberPaneScaffoldState()
+
+                paneScaffoldState.PaneScaffold(
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
+                    showNavigation = false,
+                    containerColor = Color.Transparent,
+                    snackBarMessages = state.messages,
+                    onSnackBarMessageConsumed = { viewModel.accept(Action.SnackbarDismissed(it)) },
+                    content = {
+                        GalleryScreen(
+                            paneScaffoldState = this,
+                            state = state,
+                            actions = viewModel.accept,
+                        )
+                    },
                 )
-            }
-            val state by viewModel.state.collectAsStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
-
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
-                showNavigation = false,
-                containerColor = Color.Transparent,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
-                },
-                content = {
-                    GalleryScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = viewModel.accept,
-                    )
-                },
-            )
-        },
-    )
+            },
+        )
 }

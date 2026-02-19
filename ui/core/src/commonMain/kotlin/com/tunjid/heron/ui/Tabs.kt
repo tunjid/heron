@@ -61,14 +61,11 @@ import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
-data class Tab(
-    val title: String,
-    val id: String = title,
-    val hasUpdate: Boolean,
-)
+data class Tab(val title: String, val id: String = title, val hasUpdate: Boolean)
 
 @Stable
-class TabsState private constructor(
+class TabsState
+private constructor(
     tabs: List<Tab>,
     isCollapsed: Boolean,
     val selectedTabIndex: () -> Float,
@@ -76,26 +73,26 @@ class TabsState private constructor(
     val onTabReselected: (Int) -> Unit,
 ) {
 
-    val tabList: List<Tab> get() = tabs
+    val tabList: List<Tab>
+        get() = tabs
+
     var isCollapsed by mutableStateOf(isCollapsed)
         internal set
 
-    private val derivedTabIndex by derivedStateOf {
-        selectedTabIndex().roundToInt()
-    }
+    private val derivedTabIndex by derivedStateOf { selectedTabIndex().roundToInt() }
 
     internal val tabs = mutableStateListOf(*(tabs.toTypedArray()))
 
     internal val visibleTabs
-        get() = when {
-            derivedTabIndex !in tabs.indices -> emptyList()
-            isCollapsed -> listOf(tabs[derivedTabIndex])
-            else -> tabs.toList()
-        }
+        get() =
+            when {
+                derivedTabIndex !in tabs.indices -> emptyList()
+                isCollapsed -> listOf(tabs[derivedTabIndex])
+                else -> tabs.toList()
+            }
 
     internal val tabIndicatorIndex
-        get() = if (isCollapsed) 0f
-        else selectedTabIndex()
+        get() = if (isCollapsed) 0f else selectedTabIndex()
 
     companion object {
         @Composable
@@ -105,21 +102,23 @@ class TabsState private constructor(
             selectedTabIndex: () -> Float,
             onTabSelected: (Int) -> Unit,
             onTabReselected: (Int) -> Unit,
-        ) = remember {
-            TabsState(
-                selectedTabIndex = selectedTabIndex,
-                isCollapsed = isCollapsed,
-                tabs = tabs,
-                onTabSelected = onTabSelected,
-                onTabReselected = onTabReselected,
-            )
-        }.also {
-            if (it.tabs != tabs) {
-                it.tabs.clear()
-                it.tabs.addAll(tabs)
-            }
-            it.isCollapsed = isCollapsed
-        }
+        ) =
+            remember {
+                    TabsState(
+                        selectedTabIndex = selectedTabIndex,
+                        isCollapsed = isCollapsed,
+                        tabs = tabs,
+                        onTabSelected = onTabSelected,
+                        onTabReselected = onTabReselected,
+                    )
+                }
+                .also {
+                    if (it.tabs != tabs) {
+                        it.tabs.clear()
+                        it.tabs.addAll(tabs)
+                    }
+                    it.isCollapsed = isCollapsed
+                }
 
         val TabBackgroundColor
             @Composable get() = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
@@ -131,145 +130,122 @@ fun Tabs(
     modifier: Modifier = Modifier,
     tabsState: TabsState,
     tabContent: @Composable TabsState.(Tab) -> Unit = { Tab(tab = it) },
-) = with(tabsState) {
-    Box(modifier = modifier) {
-        val lazyListState = rememberLazyListState()
-        LazyRow(
-            modifier = Modifier,
-            state = lazyListState,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            items(
-                items = visibleTabs,
-                key = Tab::id,
-                itemContent = { tab ->
-                    Box(
-                        modifier = Modifier
-                            .animateItem(),
-                        content = {
-                            if (tab.hasUpdate) Badge(
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .offset(y = 2.dp),
-                            )
-                            tabContent(tab)
-                        },
-                    )
-                },
-            )
+) =
+    with(tabsState) {
+        Box(modifier = modifier) {
+            val lazyListState = rememberLazyListState()
+            LazyRow(
+                modifier = Modifier,
+                state = lazyListState,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                items(
+                    items = visibleTabs,
+                    key = Tab::id,
+                    itemContent = { tab ->
+                        Box(
+                            modifier = Modifier.animateItem(),
+                            content = {
+                                if (tab.hasUpdate)
+                                    Badge(
+                                        modifier = Modifier.align(Alignment.TopEnd).offset(y = 2.dp)
+                                    )
+                                tabContent(tab)
+                            },
+                        )
+                    },
+                )
+            }
+            Indicator(lazyListState, ::tabIndicatorIndex)
         }
-        Indicator(lazyListState, ::tabIndicatorIndex)
     }
-}
 
 @Composable
-fun TabsState.Tab(
-    modifier: Modifier = Modifier,
-    tab: Tab,
-) {
+fun TabsState.Tab(modifier: Modifier = Modifier, tab: Tab) {
     FilterChip(
         modifier = modifier,
         shape = TabShape,
         border = null,
         selected = false,
         onClick = click@{
-            val index = tabs.indexOf(tab)
-            if (index < 0) return@click
+                val index = tabs.indexOf(tab)
+                if (index < 0) return@click
 
-            if (index != selectedTabIndex().roundToInt()) onTabSelected(index)
-            else onTabReselected(index)
-        },
-        label = {
-            Text(tab.title)
-        },
+                if (index != selectedTabIndex().roundToInt()) onTabSelected(index)
+                else onTabReselected(index)
+            },
+        label = { Text(tab.title) },
     )
 }
 
 @Composable
-private fun BoxScope.Indicator(
-    lazyListState: LazyListState,
-    selectedTabIndex: () -> Float,
-) {
+private fun BoxScope.Indicator(lazyListState: LazyListState, selectedTabIndex: () -> Float) {
     var packedSizeAndPosition by remember {
-        mutableLongStateOf(
-            TabSizeAndPosition(
-                size = 0,
-                position = 0,
-            ).packed,
-        )
+        mutableLongStateOf(TabSizeAndPosition(size = 0, position = 0).packed)
     }
     val sizeAndPosition = TabSizeAndPosition(packedSizeAndPosition)
 
     // Keep selected tab on screen
     LaunchedEffect(lazyListState) {
         snapshotFlow {
-            val roundedIndex = selectedTabIndex().fastRoundToInt()
+                val roundedIndex = selectedTabIndex().fastRoundToInt()
 
-            val layoutInfo = lazyListState.layoutInfo
-            val visibleItemsInfo = layoutInfo.visibleItemsInfo
+                val layoutInfo = lazyListState.layoutInfo
+                val visibleItemsInfo = layoutInfo.visibleItemsInfo
 
-            val visibleIndex = visibleItemsInfo.binarySearch { it.index - roundedIndex }
-            if (visibleIndex < 0) return@snapshotFlow roundedIndex
+                val visibleIndex = visibleItemsInfo.binarySearch { it.index - roundedIndex }
+                if (visibleIndex < 0) return@snapshotFlow roundedIndex
 
-            val item = visibleItemsInfo[visibleIndex]
+                val item = visibleItemsInfo[visibleIndex]
 
-            val isFullyVisible = item.offset >= 0 &&
-                (item.offset + item.size) <= layoutInfo.viewportEndOffset
+                val isFullyVisible =
+                    item.offset >= 0 && (item.offset + item.size) <= layoutInfo.viewportEndOffset
 
-            if (isFullyVisible) null else roundedIndex
-        }
-            .collect { index ->
-                if (index != null) lazyListState.animateScrollToItem(index)
+                if (isFullyVisible) null else roundedIndex
             }
+            .collect { index -> if (index != null) lazyListState.animateScrollToItem(index) }
     }
 
     // Interpolated highlighted tab position
     LaunchedEffect(lazyListState) {
         snapshotFlow {
-            val currentIndex = selectedTabIndex()
-            val flooredIndex = floor(currentIndex).fastRoundToInt()
-            val roundedIndex = ceil(currentIndex).fastRoundToInt()
-            val fraction = currentIndex - flooredIndex
+                val currentIndex = selectedTabIndex()
+                val flooredIndex = floor(currentIndex).fastRoundToInt()
+                val roundedIndex = ceil(currentIndex).fastRoundToInt()
+                val fraction = currentIndex - flooredIndex
 
-            val visibleItemsInfo = lazyListState.layoutInfo.visibleItemsInfo
+                val visibleItemsInfo = lazyListState.layoutInfo.visibleItemsInfo
 
-            val flooredPosition = visibleItemsInfo.binarySearch {
-                it.index - flooredIndex
+                val flooredPosition = visibleItemsInfo.binarySearch { it.index - flooredIndex }
+                if (flooredPosition < 0)
+                    return@snapshotFlow visibleItemsInfo.firstOrNull().tabSizeAndPosition()
+
+                val roundedPosition =
+                    lazyListState.layoutInfo.visibleItemsInfo.binarySearch {
+                        it.index - roundedIndex
+                    }
+                if (roundedPosition < 0)
+                    return@snapshotFlow visibleItemsInfo.firstOrNull().tabSizeAndPosition()
+
+                val floored = lazyListState.layoutInfo.visibleItemsInfo[flooredPosition]
+                val rounded = lazyListState.layoutInfo.visibleItemsInfo[roundedPosition]
+
+                TabSizeAndPosition(
+                    size = lerp(floored.size, rounded.size, fraction),
+                    position = lerp(floored.offset, rounded.offset, fraction),
+                )
             }
-            if (flooredPosition < 0) return@snapshotFlow visibleItemsInfo.firstOrNull()
-                .tabSizeAndPosition()
-
-            val roundedPosition = lazyListState.layoutInfo.visibleItemsInfo.binarySearch {
-                it.index - roundedIndex
-            }
-            if (roundedPosition < 0) return@snapshotFlow visibleItemsInfo.firstOrNull()
-                .tabSizeAndPosition()
-
-            val floored = lazyListState.layoutInfo.visibleItemsInfo[flooredPosition]
-            val rounded = lazyListState.layoutInfo.visibleItemsInfo[roundedPosition]
-
-            TabSizeAndPosition(
-                size = lerp(floored.size, rounded.size, fraction),
-                position = lerp(floored.offset, rounded.offset, fraction),
-            )
-        }
-            .collect {
-                packedSizeAndPosition = it.packed
-            }
+            .collect { packedSizeAndPosition = it.packed }
     }
 
     val density = LocalDensity.current
     Box(
-        Modifier
-            .align(Alignment.CenterStart)
+        Modifier.align(Alignment.CenterStart)
             .offset { IntOffset(x = sizeAndPosition.position, y = 0) }
             .height(32.dp)
             .matchParentSize()
             .width(with(density) { sizeAndPosition.size.toDp() })
-            .background(
-                color = TabBackgroundColor,
-                shape = TabShape,
-            ),
+            .background(color = TabBackgroundColor, shape = TabShape)
     )
 }
 
@@ -278,20 +254,17 @@ private fun LazyListItemInfo?.tabSizeAndPosition() =
     else TabSizeAndPosition(0, 0)
 
 @JvmInline
-value class TabSizeAndPosition(
-    val packed: Long,
-) {
-    constructor(
-        size: Int,
-        position: Int,
-    ) : this(
-        packInts(size, position),
-    )
+value class TabSizeAndPosition(val packed: Long) {
+    constructor(size: Int, position: Int) : this(packInts(size, position))
 
-    val size: Int get() = unpackInt1(packed)
-    val position: Int get() = unpackInt2(packed)
+    val size: Int
+        get() = unpackInt1(packed)
+
+    val position: Int
+        get() = unpackInt2(packed)
 }
 
 private val TabShape = RoundedCornerShape(16.dp)
 
-val PagerState.tabIndex get() = currentPage + currentPageOffsetFraction
+val PagerState.tabIndex
+    get() = currentPage + currentPageOffsetFraction

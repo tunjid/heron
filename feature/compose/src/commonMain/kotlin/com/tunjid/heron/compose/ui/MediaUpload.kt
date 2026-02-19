@@ -73,44 +73,38 @@ internal fun MediaUploadItems(
     removeMediaItem: (RestrictedFile.Media) -> Unit,
     onMediaItemUpdated: (RestrictedFile.Media) -> Unit,
 ) = LookaheadScope {
-    val altTextSheetState = rememberMediaAltTextSheetState(
-        onMediaItemUpdated = onMediaItemUpdated,
-    )
+    val altTextSheetState = rememberMediaAltTextSheetState(onMediaItemUpdated = onMediaItemUpdated)
     Box(modifier = modifier) {
         val itemSum = photos.size + if (video == null) 0 else 1
-        if (video != null) VideoUpload(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f),
-            video = video,
-            removeMediaItem = removeMediaItem,
-            onAltClicked = { altTextSheetState.editAltText(video) },
-            onMediaItemUpdated = onMediaItemUpdated,
-        )
-        else Row(
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .fillMaxWidth(if (itemSum < 2) 0.6f else 1f),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            photos.forEach {
-                key(it.path) {
-                    ImageUpload(
-                        modifier = Modifier
-                            .animateBounds(this@LookaheadScope)
-                            .weight(1f)
-                            .aspectRatio(
-                                ratio = 1f,
-                                matchHeightConstraintsFirst = true,
-                            ),
-                        photo = it,
-                        removeMediaItem = removeMediaItem,
-                        onAltClicked = { altTextSheetState.editAltText(it) },
-                        onMediaItemUpdated = onMediaItemUpdated,
-                    )
+        if (video != null)
+            VideoUpload(
+                modifier = Modifier.fillMaxWidth().aspectRatio(1f),
+                video = video,
+                removeMediaItem = removeMediaItem,
+                onAltClicked = { altTextSheetState.editAltText(video) },
+                onMediaItemUpdated = onMediaItemUpdated,
+            )
+        else
+            Row(
+                modifier =
+                    Modifier.align(Alignment.TopStart).fillMaxWidth(if (itemSum < 2) 0.6f else 1f),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                photos.forEach {
+                    key(it.path) {
+                        ImageUpload(
+                            modifier =
+                                Modifier.animateBounds(this@LookaheadScope)
+                                    .weight(1f)
+                                    .aspectRatio(ratio = 1f, matchHeightConstraintsFirst = true),
+                            photo = it,
+                            removeMediaItem = removeMediaItem,
+                            onAltClicked = { altTextSheetState.editAltText(it) },
+                            onMediaItemUpdated = onMediaItemUpdated,
+                        )
+                    }
                 }
             }
-        }
     }
 }
 
@@ -128,28 +122,21 @@ private fun ImageUpload(
         removeMediaItem = removeMediaItem,
         onAltClicked = onAltClicked,
         content = {
-            val state = rememberUpdatedImageState(
-                args = ImageArgs(
-                    item = photo,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    shape = MediaUploadItemShape,
-                ),
-            )
-            AsyncImage(
-                modifier = Modifier
-                    .matchParentSize(),
-                state = state,
-            )
+            val state =
+                rememberUpdatedImageState(
+                    args =
+                        ImageArgs(
+                            item = photo,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            shape = MediaUploadItemShape,
+                        )
+                )
+            AsyncImage(modifier = Modifier.matchParentSize(), state = state)
             LaunchedEffect(state) {
                 snapshotFlow { state.imageSize }
                     .collect { size ->
-                        onMediaItemUpdated(
-                            photo.withSize(
-                                width = size.width,
-                                height = size.height,
-                            ),
-                        )
+                        onMediaItemUpdated(photo.withSize(width = size.width, height = size.height))
                     }
             }
         },
@@ -172,30 +159,25 @@ private fun VideoUpload(
         content = {
             video.path?.let { videoPath ->
                 val videoPlayerController = LocalVideoPlayerController.current
-                val videoPlayerState = videoPlayerController.rememberUpdatedVideoPlayerState(
-                    videoUrl = videoPath,
-                    thumbnail = null,
-                    shape = MediaUploadItemShape,
-                )
+                val videoPlayerState =
+                    videoPlayerController.rememberUpdatedVideoPlayerState(
+                        videoUrl = videoPath,
+                        thumbnail = null,
+                        shape = MediaUploadItemShape,
+                    )
                 VideoPlayer(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f),
+                    modifier = Modifier.fillMaxWidth().aspectRatio(1f),
                     state = videoPlayerState,
                 )
                 LaunchedEffect(video) {
                     videoPlayerController.play(videoPath)
-                    snapshotFlow { videoPlayerState.hasRenderedFirstFrame }
-                        .first(true::equals)
+                    snapshotFlow { videoPlayerState.hasRenderedFirstFrame }.first(true::equals)
                     videoPlayerController.pauseActiveVideo()
 
                     snapshotFlow { videoPlayerState.videoSize }
                         .collect { size ->
                             onMediaItemUpdated(
-                                video.withSize(
-                                    width = size.width,
-                                    height = size.height,
-                                ),
+                                video.withSize(width = size.width, height = size.height)
                             )
                         }
                 }
@@ -212,44 +194,35 @@ private fun MediaUpload(
     onAltClicked: () -> Unit,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    Box(
-        modifier = modifier,
-    ) {
+    Box(modifier = modifier) {
         content()
         Icon(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .offset(x = (-8).dp, y = 8.dp)
-                .background(
-                    color = Color.Black.copy(alpha = 0.6f),
-                    shape = CircleShape,
-                )
-                .size(32.dp)
-                .clip(CircleShape)
-                .clickable { removeMediaItem(media) },
+            modifier =
+                Modifier.align(Alignment.TopEnd)
+                    .offset(x = (-8).dp, y = 8.dp)
+                    .background(color = Color.Black.copy(alpha = 0.6f), shape = CircleShape)
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .clickable { removeMediaItem(media) },
             imageVector = Icons.Rounded.DoNotDisturbOn,
             contentDescription = stringResource(Res.string.remove_media),
         )
         val addAltTextContentDescription = stringResource(Res.string.alt_text_add)
         Row(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .offset(x = (-8).dp, y = (-8).dp)
-                .background(
-                    color = Color.Black.copy(alpha = 0.6f),
-                    shape = CircleShape,
-                )
-                .padding(horizontal = 8.dp)
-                .height(32.dp)
-                .clip(CircleShape)
-                .semantics { contentDescription = addAltTextContentDescription }
-                .clickable { onAltClicked() },
+            modifier =
+                Modifier.align(Alignment.BottomEnd)
+                    .offset(x = (-8).dp, y = (-8).dp)
+                    .background(color = Color.Black.copy(alpha = 0.6f), shape = CircleShape)
+                    .padding(horizontal = 8.dp)
+                    .height(32.dp)
+                    .clip(CircleShape)
+                    .semantics { contentDescription = addAltTextContentDescription }
+                    .clickable { onAltClicked() },
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(1.dp),
         ) {
             Icon(
-                modifier = Modifier
-                    .size(16.dp),
+                modifier = Modifier.size(16.dp),
                 imageVector = Icons.Rounded.Add,
                 contentDescription = null,
             )

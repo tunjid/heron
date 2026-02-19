@@ -41,89 +41,69 @@ import heron.ui.core.generated.resources.notifications_unknown
 import org.jetbrains.compose.resources.getString
 
 interface Notifier {
-    suspend fun displayNotifications(
-        notifications: List<Notification>,
-    )
+    suspend fun displayNotifications(notifications: List<Notification>)
 }
 
 object NoOpNotifier : Notifier {
-    override suspend fun displayNotifications(
-        notifications: List<Notification>,
-    ) = Unit
+    override suspend fun displayNotifications(notifications: List<Notification>) = Unit
 }
 
-@Composable
-expect fun hasNotificationPermissions(): Boolean
+@Composable expect fun hasNotificationPermissions(): Boolean
 
 @Composable
-expect fun notificationPermissionsLauncher(
-    onPermissionResult: (Boolean) -> Unit = {},
-): () -> Unit
+expect fun notificationPermissionsLauncher(onPermissionResult: (Boolean) -> Unit = {}): () -> Unit
 
 internal fun Notification.deepLinkPath(): String {
     return when (this) {
         is Notification.PostAssociated -> associatedPost.uri.path
         is Notification.Followed -> LinkTarget.UserDidMention(author.did).path
-        is Notification.JoinedStarterPack -> reasonSubject?.asRecordUriOrNull()?.path
-            ?: AppStack.Home.rootRoute.id
+        is Notification.JoinedStarterPack ->
+            reasonSubject?.asRecordUriOrNull()?.path ?: AppStack.Home.rootRoute.id
         is Notification.Unknown,
         is Notification.Unverified,
-        is Notification.Verified,
-        -> AppStack.Home.rootRoute.id
+        is Notification.Verified -> AppStack.Home.rootRoute.id
     }
 }
 
-internal suspend fun Notification.title(): String = when (this) {
-    is Notification.Liked.Post -> getString(
-        CommonStrings.notifications_liked_your_post,
-        author.nameOrHandle,
-    )
-    is Notification.Liked.Repost -> getString(
-        CommonStrings.notifications_liked_your_repost,
-        author.nameOrHandle,
-    )
-    is Notification.Reposted.Post -> getString(
-        CommonStrings.notifications_reposted_your_post,
-        author.nameOrHandle,
-    )
-    is Notification.Reposted.Repost -> getString(
-        CommonStrings.notifications_reposted_your_repost,
-        author.nameOrHandle,
-    )
-    is Notification.Followed -> getString(
-        CommonStrings.notifications_followed_you,
-        author.nameOrHandle,
-    )
-    is Notification.Mentioned -> getString(
-        CommonStrings.notifications_mentioned_you,
-        author.nameOrHandle,
-    )
-    is Notification.RepliedTo -> getString(
-        CommonStrings.notifications_replied_to_you,
-        author.nameOrHandle,
-    )
-    is Notification.Quoted -> getString(
-        CommonStrings.notifications_quoted_you,
-        author.nameOrHandle,
-    )
-    is Notification.JoinedStarterPack -> getString(
-        CommonStrings.notifications_joined_from_your_starter_pack,
-        author.nameOrHandle,
-    )
-    is Notification.SubscribedPost -> getString(CommonStrings.notifications_post_subscription_description)
-    is Notification.Verified -> getString(CommonStrings.notifications_account_verified)
-    is Notification.Unverified -> getString(CommonStrings.notifications_account_unverified)
-    is Notification.Unknown -> getString(CommonStrings.notifications_unknown)
-}
+internal suspend fun Notification.title(): String =
+    when (this) {
+        is Notification.Liked.Post ->
+            getString(CommonStrings.notifications_liked_your_post, author.nameOrHandle)
+        is Notification.Liked.Repost ->
+            getString(CommonStrings.notifications_liked_your_repost, author.nameOrHandle)
+        is Notification.Reposted.Post ->
+            getString(CommonStrings.notifications_reposted_your_post, author.nameOrHandle)
+        is Notification.Reposted.Repost ->
+            getString(CommonStrings.notifications_reposted_your_repost, author.nameOrHandle)
+        is Notification.Followed ->
+            getString(CommonStrings.notifications_followed_you, author.nameOrHandle)
+        is Notification.Mentioned ->
+            getString(CommonStrings.notifications_mentioned_you, author.nameOrHandle)
+        is Notification.RepliedTo ->
+            getString(CommonStrings.notifications_replied_to_you, author.nameOrHandle)
+        is Notification.Quoted ->
+            getString(CommonStrings.notifications_quoted_you, author.nameOrHandle)
+        is Notification.JoinedStarterPack ->
+            getString(
+                CommonStrings.notifications_joined_from_your_starter_pack,
+                author.nameOrHandle,
+            )
+        is Notification.SubscribedPost ->
+            getString(CommonStrings.notifications_post_subscription_description)
+        is Notification.Verified -> getString(CommonStrings.notifications_account_verified)
+        is Notification.Unverified -> getString(CommonStrings.notifications_account_unverified)
+        is Notification.Unknown -> getString(CommonStrings.notifications_unknown)
+    }
 
-internal fun Notification.body(): String? = when (this) {
-    is Notification.Followed -> null
-    is Notification.JoinedStarterPack -> null
-    is Notification.PostAssociated -> associatedPost.record?.text
-    is Notification.Unknown -> null
-    is Notification.Verified -> null
-    is Notification.Unverified -> null
-}
+internal fun Notification.body(): String? =
+    when (this) {
+        is Notification.Followed -> null
+        is Notification.JoinedStarterPack -> null
+        is Notification.PostAssociated -> associatedPost.record?.text
+        is Notification.Unknown -> null
+        is Notification.Verified -> null
+        is Notification.Unverified -> null
+    }
 
 private val Profile.nameOrHandle
     get() = displayName ?: handle.id

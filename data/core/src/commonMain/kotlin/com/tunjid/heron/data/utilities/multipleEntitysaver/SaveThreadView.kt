@@ -19,45 +19,36 @@ package com.tunjid.heron.data.utilities.multipleEntitysaver
 import app.bsky.feed.ThreadViewPost
 import app.bsky.feed.ThreadViewPostParentUnion
 import app.bsky.feed.ThreadViewPostReplieUnion
-import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 
-internal fun MultipleEntitySaver.add(
-    viewingProfileId: ProfileId?,
-    threadViewPost: ThreadViewPost,
-) {
-    add(
-        viewingProfileId = viewingProfileId,
-        postView = threadViewPost.post,
-    )
+internal fun MultipleEntitySaver.add(viewingProfileId: ProfileId?, threadViewPost: ThreadViewPost) {
+    add(viewingProfileId = viewingProfileId, postView = threadViewPost.post)
     generateSequence(threadViewPost) {
-        when (val parent = it.parent) {
-            is ThreadViewPostParentUnion.ThreadViewPost -> parent.value
-            // TODO: Deal with deleted, blocked or removed posts
-            is ThreadViewPostParentUnion.BlockedPost,
-            is ThreadViewPostParentUnion.NotFoundPost,
-            is ThreadViewPostParentUnion.Unknown,
-            null,
-            -> null
+            when (val parent = it.parent) {
+                is ThreadViewPostParentUnion.ThreadViewPost -> parent.value
+                // TODO: Deal with deleted, blocked or removed posts
+                is ThreadViewPostParentUnion.BlockedPost,
+                is ThreadViewPostParentUnion.NotFoundPost,
+                is ThreadViewPostParentUnion.Unknown,
+                null -> null
+            }
         }
-    }
-        .windowed(
-            size = 2,
-            step = 1,
-        )
+        .windowed(size = 2, step = 1)
         .forEach { window ->
-            if (window.size == 1) addThreadParent(
-                viewingProfileId = viewingProfileId,
-                childPost = null,
-                parentPost = window[0],
-            )
-            else addThreadParent(
-                viewingProfileId = viewingProfileId,
-                childPost = window[0],
-                parentPost = window[1],
-            )
+            if (window.size == 1)
+                addThreadParent(
+                    viewingProfileId = viewingProfileId,
+                    childPost = null,
+                    parentPost = window[0],
+                )
+            else
+                addThreadParent(
+                    viewingProfileId = viewingProfileId,
+                    childPost = window[0],
+                    parentPost = window[1],
+                )
         }
 
     threadViewPost.replies
@@ -77,16 +68,14 @@ private fun MultipleEntitySaver.addThreadParent(
     parentPost: ThreadViewPost,
     childPost: ThreadViewPost?,
 ) {
-    add(
-        viewingProfileId = viewingProfileId,
-        postView = parentPost.post,
-    )
-    if (childPost is ThreadViewPost) add(
-        PostThreadEntity(
-            postUri = childPost.post.uri.atUri.let(::PostUri),
-            parentPostUri = parentPost.post.uri.atUri.let(::PostUri),
-        ),
-    )
+    add(viewingProfileId = viewingProfileId, postView = parentPost.post)
+    if (childPost is ThreadViewPost)
+        add(
+            PostThreadEntity(
+                postUri = childPost.post.uri.atUri.let(::PostUri),
+                parentPostUri = parentPost.post.uri.atUri.let(::PostUri),
+            )
+        )
     parentPost.replies
         // TODO: Deal with deleted, blocked or removed posts
         ?.filterIsInstance<ThreadViewPostReplieUnion.ThreadViewPost>()
@@ -104,24 +93,17 @@ private fun MultipleEntitySaver.addThreadReply(
     reply: ThreadViewPost,
     parent: ThreadViewPost,
 ) {
-    add(
-        viewingProfileId = viewingProfileId,
-        postView = reply.post,
-    )
+    add(viewingProfileId = viewingProfileId, postView = reply.post)
     add(
         PostThreadEntity(
             postUri = reply.post.uri.atUri.let(::PostUri),
             parentPostUri = parent.post.uri.atUri.let(::PostUri),
-        ),
+        )
     )
     reply.replies
         // TODO: Deal with deleted, blocked or removed posts
         ?.filterIsInstance<ThreadViewPostReplieUnion.ThreadViewPost>()
         ?.forEach {
-            addThreadReply(
-                viewingProfileId = viewingProfileId,
-                parent = reply,
-                reply = it.value,
-            )
+            addThreadReply(viewingProfileId = viewingProfileId, parent = reply, reply = it.value)
         }
 }

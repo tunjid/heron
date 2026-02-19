@@ -25,13 +25,12 @@ import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
 
 /**
- * A declaration for compile time known Model type that can be serialized as bytes and encoded
- * in a url as a base 64 string
+ * A declaration for compile time known Model type that can be serialized as bytes and encoded in a
+ * url as a base 64 string
  *
  * Currently does this using CBOR; Protobufs were evaluated but they're too terse.
  */
-@Serializable
-sealed interface UrlEncodableModel
+@Serializable sealed interface UrlEncodableModel
 
 inline fun <reified T : UrlEncodableModel> T.toCborCompatibleBytes(): ByteArray =
     ModelSerializerFormat.encodeToByteArray(value = this)
@@ -42,10 +41,6 @@ inline fun <reified T : UrlEncodableModel> String.fromBase64EncodedUrl(): T =
 inline fun <reified T : UrlEncodableModel> T.toUrlEncodedBase64(): String =
     ModelUrlSafeBase64.encode(toCborCompatibleBytes())
 
-val ModelSerializerFormat: BinaryFormat = Cbor {
-    ignoreUnknownKeys = true
-}
+val ModelSerializerFormat: BinaryFormat = Cbor { ignoreUnknownKeys = true }
 
-val ModelUrlSafeBase64 = Base64.UrlSafe.withPadding(
-    option = PaddingOption.ABSENT,
-)
+val ModelUrlSafeBase64 = Base64.UrlSafe.withPadding(option = PaddingOption.ABSENT)

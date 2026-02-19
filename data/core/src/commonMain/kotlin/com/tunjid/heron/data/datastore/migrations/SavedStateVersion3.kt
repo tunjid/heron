@@ -26,52 +26,43 @@ import kotlinx.serialization.protobuf.ProtoNumber
 
 @Serializable
 internal class SavedStateVersion3(
-    @Suppress("unused")
-    @ProtoNumber(1)
-    private val version: Int,
-    @ProtoNumber(2)
-    private val auth: SavedState.AuthTokens?,
-    @ProtoNumber(3)
-    private val navigation: SavedState.Navigation,
-    @ProtoNumber(4)
-    private val profileData: Map<ProfileId, ProfileDataV0>,
+    @Suppress("unused") @ProtoNumber(1) private val version: Int,
+    @ProtoNumber(2) private val auth: SavedState.AuthTokens?,
+    @ProtoNumber(3) private val navigation: SavedState.Navigation,
+    @ProtoNumber(4) private val profileData: Map<ProfileId, ProfileDataV0>,
 ) : SavedStateVersion {
 
-    override fun toVersionedSavedState(
-        currentVersion: Int,
-    ): VersionedSavedState {
-        val convertedProfileData = profileData.mapValues {
-            it.value.asProfileData(auth = null)
-        }
+    override fun toVersionedSavedState(currentVersion: Int): VersionedSavedState {
+        val convertedProfileData = profileData.mapValues { it.value.asProfileData(auth = null) }
         return VersionedSavedState(
             version = currentVersion,
             navigation = navigation,
-            profileData = when (val currentAuth = auth) {
-                is SavedState.AuthTokens.Authenticated.Bearer -> convertedProfileData.updateOrPutValue(
-                    key = currentAuth.authProfileId,
-                    update = { copy(auth = currentAuth) },
-                    put = { SavedState.ProfileData.fromTokens(auth = currentAuth) },
-                )
-                is SavedState.AuthTokens.Authenticated.DPoP -> convertedProfileData.updateOrPutValue(
-                    key = currentAuth.authProfileId,
-                    update = { copy(auth = currentAuth) },
-                    put = { SavedState.ProfileData.fromTokens(auth = currentAuth) },
-                )
-                is SavedState.AuthTokens.Pending.DPoP -> convertedProfileData
-                is SavedState.AuthTokens.Guest,
-                null,
-                -> convertedProfileData
-            } + Pair(
-                Constants.guestProfileId,
-                SavedState.ProfileData.defaultGuestData,
-            ),
-            activeProfileId = when (val currentAuth = auth) {
-                is SavedState.AuthTokens.Authenticated.Bearer -> currentAuth.authProfileId
-                is SavedState.AuthTokens.Authenticated.DPoP -> currentAuth.authProfileId
-                is SavedState.AuthTokens.Guest -> Constants.guestProfileId
-                is SavedState.AuthTokens.Pending.DPoP -> null
-                null -> null
-            },
+            profileData =
+                when (val currentAuth = auth) {
+                    is SavedState.AuthTokens.Authenticated.Bearer ->
+                        convertedProfileData.updateOrPutValue(
+                            key = currentAuth.authProfileId,
+                            update = { copy(auth = currentAuth) },
+                            put = { SavedState.ProfileData.fromTokens(auth = currentAuth) },
+                        )
+                    is SavedState.AuthTokens.Authenticated.DPoP ->
+                        convertedProfileData.updateOrPutValue(
+                            key = currentAuth.authProfileId,
+                            update = { copy(auth = currentAuth) },
+                            put = { SavedState.ProfileData.fromTokens(auth = currentAuth) },
+                        )
+                    is SavedState.AuthTokens.Pending.DPoP -> convertedProfileData
+                    is SavedState.AuthTokens.Guest,
+                    null -> convertedProfileData
+                } + Pair(Constants.guestProfileId, SavedState.ProfileData.defaultGuestData),
+            activeProfileId =
+                when (val currentAuth = auth) {
+                    is SavedState.AuthTokens.Authenticated.Bearer -> currentAuth.authProfileId
+                    is SavedState.AuthTokens.Authenticated.DPoP -> currentAuth.authProfileId
+                    is SavedState.AuthTokens.Guest -> Constants.guestProfileId
+                    is SavedState.AuthTokens.Pending.DPoP -> null
+                    null -> null
+                },
         )
     }
 

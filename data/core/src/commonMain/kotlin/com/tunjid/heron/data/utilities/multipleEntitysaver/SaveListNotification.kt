@@ -38,66 +38,73 @@ internal fun MultipleEntitySaver.add(
     viewingProfileId ?: return
     val postUris = mutableSetOf<PostUri>()
     associatedPosts.forEach { postView ->
-        add(
-            viewingProfileId = viewingProfileId,
-            postView = postView,
-        )
+        add(viewingProfileId = viewingProfileId, postView = postView)
         postUris.add(postView.uri.atUri.let(::PostUri))
     }
 
     listNotificationsNotification.forEach { notification ->
-        add(
-            viewingProfileId = viewingProfileId,
-            profileView = notification.author,
-        )
+        add(viewingProfileId = viewingProfileId, profileView = notification.author)
         add(
             NotificationEntity(
                 uri = notification.uri.atUri.let(::GenericUri),
                 cid = notification.cid.cid.let(::GenericId),
                 authorId = notification.author.did.did.let(::ProfileId),
                 ownerId = viewingProfileId,
-                reason = when (notification.reason) {
-                    ListNotificationsNotificationReason.Follow -> Notification.Reason.Follow
-                    ListNotificationsNotificationReason.Like -> Notification.Reason.Like
-                    ListNotificationsNotificationReason.Mention -> Notification.Reason.Mention
-                    ListNotificationsNotificationReason.Quote -> Notification.Reason.Quote
-                    ListNotificationsNotificationReason.Reply -> Notification.Reason.Reply
-                    ListNotificationsNotificationReason.Repost -> Notification.Reason.Repost
-                    ListNotificationsNotificationReason.StarterpackJoined -> Notification.Reason.JoinedStarterPack
-                    is ListNotificationsNotificationReason.Unknown -> Notification.Reason.Unknown
-                    ListNotificationsNotificationReason.Verified -> Notification.Reason.Verified
-                    ListNotificationsNotificationReason.Unverified -> Notification.Reason.Unverified
-                    ListNotificationsNotificationReason.LikeViaRepost -> Notification.Reason.LikeViaRepost
-                    ListNotificationsNotificationReason.RepostViaRepost -> Notification.Reason.RepostViaRepost
-                    ListNotificationsNotificationReason.SubscribedPost -> Notification.Reason.SubscribedPost
-                    // This feature isn't supported
-                    ListNotificationsNotificationReason.ContactMatch -> Notification.Reason.Unknown
-                },
+                reason =
+                    when (notification.reason) {
+                        ListNotificationsNotificationReason.Follow -> Notification.Reason.Follow
+                        ListNotificationsNotificationReason.Like -> Notification.Reason.Like
+                        ListNotificationsNotificationReason.Mention -> Notification.Reason.Mention
+                        ListNotificationsNotificationReason.Quote -> Notification.Reason.Quote
+                        ListNotificationsNotificationReason.Reply -> Notification.Reason.Reply
+                        ListNotificationsNotificationReason.Repost -> Notification.Reason.Repost
+                        ListNotificationsNotificationReason.StarterpackJoined ->
+                            Notification.Reason.JoinedStarterPack
+                        is ListNotificationsNotificationReason.Unknown ->
+                            Notification.Reason.Unknown
+                        ListNotificationsNotificationReason.Verified -> Notification.Reason.Verified
+                        ListNotificationsNotificationReason.Unverified ->
+                            Notification.Reason.Unverified
+                        ListNotificationsNotificationReason.LikeViaRepost ->
+                            Notification.Reason.LikeViaRepost
+                        ListNotificationsNotificationReason.RepostViaRepost ->
+                            Notification.Reason.RepostViaRepost
+                        ListNotificationsNotificationReason.SubscribedPost ->
+                            Notification.Reason.SubscribedPost
+                        // This feature isn't supported
+                        ListNotificationsNotificationReason.ContactMatch ->
+                            Notification.Reason.Unknown
+                    },
                 reasonSubject = notification.reasonSubject?.atUri?.let(::GenericUri),
-                associatedPostUri = notification.associatedPostUri()
-                    ?.atUri
-                    ?.let(::PostUri)
-                    ?.takeIf(postUris::contains),
+                associatedPostUri =
+                    notification
+                        .associatedPostUri()
+                        ?.atUri
+                        ?.let(::PostUri)
+                        ?.takeIf(postUris::contains),
                 isRead = notification.isRead,
                 indexedAt = notification.indexedAt,
-            ),
+            )
         )
     }
 }
 
-internal fun ListNotificationsNotification.associatedPostUri(): AtUri? = when (reason) {
-    is ListNotificationsNotificationReason.Unknown -> null
-    is ListNotificationsNotificationReason.Like -> reasonSubject
-    is ListNotificationsNotificationReason.Repost -> reasonSubject
-    is ListNotificationsNotificationReason.Mention -> uri
-    is ListNotificationsNotificationReason.Reply -> uri
-    is ListNotificationsNotificationReason.Quote -> uri
-    is ListNotificationsNotificationReason.Follow -> null
-    is ListNotificationsNotificationReason.StarterpackJoined -> null
-    ListNotificationsNotificationReason.Unverified -> null
-    ListNotificationsNotificationReason.Verified -> null
-    ListNotificationsNotificationReason.LikeViaRepost -> record.safeDecodeAs<Like>()?.subject?.uri
-    ListNotificationsNotificationReason.RepostViaRepost -> record.safeDecodeAs<Repost>()?.subject?.uri
-    ListNotificationsNotificationReason.SubscribedPost -> reasonSubject
-    ListNotificationsNotificationReason.ContactMatch -> null
-}
+internal fun ListNotificationsNotification.associatedPostUri(): AtUri? =
+    when (reason) {
+        is ListNotificationsNotificationReason.Unknown -> null
+        is ListNotificationsNotificationReason.Like -> reasonSubject
+        is ListNotificationsNotificationReason.Repost -> reasonSubject
+        is ListNotificationsNotificationReason.Mention -> uri
+        is ListNotificationsNotificationReason.Reply -> uri
+        is ListNotificationsNotificationReason.Quote -> uri
+        is ListNotificationsNotificationReason.Follow -> null
+        is ListNotificationsNotificationReason.StarterpackJoined -> null
+        ListNotificationsNotificationReason.Unverified -> null
+        ListNotificationsNotificationReason.Verified -> null
+        ListNotificationsNotificationReason.LikeViaRepost ->
+            record.safeDecodeAs<Like>()?.subject?.uri
+        ListNotificationsNotificationReason.RepostViaRepost ->
+            record.safeDecodeAs<Repost>()?.subject?.uri
+        ListNotificationsNotificationReason.SubscribedPost -> reasonSubject
+        ListNotificationsNotificationReason.ContactMatch -> null
+    }

@@ -26,41 +26,43 @@ internal object Migration27To28LabelEntityPrimaryKeys : Migration(27, 28) {
         // Migrate labels
         connection.execSQL(
             """
-                CREATE TABLE IF NOT EXISTS `labels_new` (
-                `cid` TEXT,
-                `uri` TEXT NOT NULL,
-                `creatorId` TEXT NOT NULL,
-                `value` TEXT NOT NULL,
-                `version` INTEGER,
-                `createdAt` INTEGER NOT NULL,
-                PRIMARY KEY(`uri`, `value`),
-                FOREIGN KEY(`creatorId`)
-                    REFERENCES `profiles`(`did`)
-                    ON UPDATE NO ACTION
-                    ON DELETE CASCADE
-                )
-            """.trimIndent(),
+            CREATE TABLE IF NOT EXISTS `labels_new` (
+            `cid` TEXT,
+            `uri` TEXT NOT NULL,
+            `creatorId` TEXT NOT NULL,
+            `value` TEXT NOT NULL,
+            `version` INTEGER,
+            `createdAt` INTEGER NOT NULL,
+            PRIMARY KEY(`uri`, `value`),
+            FOREIGN KEY(`creatorId`)
+                REFERENCES `profiles`(`did`)
+                ON UPDATE NO ACTION
+                ON DELETE CASCADE
+            )
+            """
+                .trimIndent()
         )
 
         connection.execSQL(
             """
-                INSERT INTO labels_new (
-                    cid,
-                    uri,
-                    creatorId,
-                    value,
-                    version,
-                    createdAt
-                )
-                SELECT
-                    cid,
-                    uri,
-                    creatorId,
-                    value,
-                    version,
-                    createdAt
-                FROM labels
-            """.trimIndent(),
+            INSERT INTO labels_new (
+                cid,
+                uri,
+                creatorId,
+                value,
+                version,
+                createdAt
+            )
+            SELECT
+                cid,
+                uri,
+                creatorId,
+                value,
+                version,
+                createdAt
+            FROM labels
+            """
+                .trimIndent()
         )
 
         connection.execSQL("DROP TABLE labels")

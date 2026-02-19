@@ -63,85 +63,81 @@ internal fun ConversationSearchResults(
     paneScaffoldState: PaneScaffoldState,
     autoCompletedProfiles: List<ProfileWithViewerState>,
     onProfileClicked: (Profile) -> Unit,
-) = with(paneScaffoldState) {
-    val topClearance = UiTokens.statusBarHeight + UiTokens.toolbarHeight + 8.dp
-    val tabsOffsetNestedScrollConnection = rememberAccumulatedOffsetNestedScrollConnection(
-        maxOffset = { Offset.Zero },
-        minOffset = { Offset(x = 0f, y = -UiTokens.toolbarHeight.toPx()) },
-    )
+) =
+    with(paneScaffoldState) {
+        val topClearance = UiTokens.statusBarHeight + UiTokens.toolbarHeight + 8.dp
+        val tabsOffsetNestedScrollConnection =
+            rememberAccumulatedOffsetNestedScrollConnection(
+                maxOffset = { Offset.Zero },
+                minOffset = { Offset(x = 0f, y = -UiTokens.toolbarHeight.toPx()) },
+            )
 
-    ElevatedCard(
-        modifier = modifier
-            .nestedScroll(tabsOffsetNestedScrollConnection)
-            .offset {
-                IntOffset(
-                    x = 0,
-                    y = topClearance.roundToPx(),
-                ) + tabsOffsetNestedScrollConnection.offset.round()
-            },
-    ) {
-        LazyColumn {
-            items(autoCompletedProfiles) { profileWithViewerState ->
-                val profile = profileWithViewerState.profile
-                val canMessage = profileWithViewerState.canBeMessaged()
-                AttributionLayout(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .alpha(if (canMessage) 1f else 0.6f)
-                        .clickable(enabled = canMessage) {
-                            onProfileClicked(profile)
-                        }
-                        .padding(16.dp),
-                    avatar = {
-                        PaneStickySharedElement(
-                            modifier = Modifier
-                                .size(36.dp),
-                            sharedContentState = rememberSharedContentState(
-                                key = profile.avatarSharedElementKey(ConversationSearchResult),
-                            ),
-                        ) {
-                            AsyncImage(
-                                modifier = Modifier
-                                    .fillParentAxisIfFixedOrWrap(),
-                                args = remember(profile.avatar) {
-                                    ImageArgs(
-                                        url = profile.avatar?.uri,
-                                        contentDescription = profile.displayName,
-                                        contentScale = ContentScale.Crop,
-                                        shape = RoundedPolygonShape.Circle,
-                                    )
-                                },
-                            )
-                        }
-                    },
-                    label = {
-                        Column {
-                            ProfileName(profile = profile)
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
+        ElevatedCard(
+            modifier =
+                modifier.nestedScroll(tabsOffsetNestedScrollConnection).offset {
+                    IntOffset(x = 0, y = topClearance.roundToPx()) +
+                        tabsOffsetNestedScrollConnection.offset.round()
+                }
+        ) {
+            LazyColumn {
+                items(autoCompletedProfiles) { profileWithViewerState ->
+                    val profile = profileWithViewerState.profile
+                    val canMessage = profileWithViewerState.canBeMessaged()
+                    AttributionLayout(
+                        modifier =
+                            Modifier.fillMaxWidth()
+                                .alpha(if (canMessage) 1f else 0.6f)
+                                .clickable(enabled = canMessage) { onProfileClicked(profile) }
+                                .padding(16.dp),
+                        avatar = {
+                            PaneStickySharedElement(
+                                modifier = Modifier.size(36.dp),
+                                sharedContentState =
+                                    rememberSharedContentState(
+                                        key =
+                                            profile.avatarSharedElementKey(ConversationSearchResult)
+                                    ),
                             ) {
-                                ProfileHandle(profile = profile)
-                                if (!canMessage) {
-                                    Text(
-                                        modifier = Modifier
-                                            .padding(horizontal = 2.dp),
-                                        text = Bullet,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.outline,
-                                    )
-                                    Text(
-                                        text = stringResource(Res.string.error_cannot_be_messaged),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.outline,
-                                    )
+                                AsyncImage(
+                                    modifier = Modifier.fillParentAxisIfFixedOrWrap(),
+                                    args =
+                                        remember(profile.avatar) {
+                                            ImageArgs(
+                                                url = profile.avatar?.uri,
+                                                contentDescription = profile.displayName,
+                                                contentScale = ContentScale.Crop,
+                                                shape = RoundedPolygonShape.Circle,
+                                            )
+                                        },
+                                )
+                            }
+                        },
+                        label = {
+                            Column {
+                                ProfileName(profile = profile)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    ProfileHandle(profile = profile)
+                                    if (!canMessage) {
+                                        Text(
+                                            modifier = Modifier.padding(horizontal = 2.dp),
+                                            text = Bullet,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.outline,
+                                        )
+                                        Text(
+                                            text =
+                                                stringResource(Res.string.error_cannot_be_messaged),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.outline,
+                                        )
+                                    }
                                 }
                             }
-                        }
-                    },
-                )
+                        },
+                    )
+                }
             }
         }
     }
-}
 
 private const val Bullet = "•"

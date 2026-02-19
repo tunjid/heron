@@ -23,8 +23,5 @@ import androidx.room.RoomDatabase
 fun getDatabaseBuilder(context: Context): RoomDatabase.Builder<AppDatabase> {
     val appContext = context.applicationContext
     val dbFile = appContext.getDatabasePath("heron_room.db")
-    return Room.databaseBuilder<AppDatabase>(
-        context = appContext,
-        name = dbFile.absolutePath,
-    )
+    return Room.databaseBuilder<AppDatabase>(context = appContext, name = dbFile.absolutePath)
 }

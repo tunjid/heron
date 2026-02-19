@@ -93,135 +93,135 @@ import kotlinx.coroutines.IO
 
 @Database(
     version = 34,
-    entities = [
-        BookmarkEntity::class,
-        ExternalEmbedEntity::class,
-        ImageEntity::class,
-        VideoEntity::class,
-        PostExternalEmbedEntity::class,
-        PostImageEntity::class,
-        PostVideoEntity::class,
-        PostPostEntity::class,
-        PostEntity::class,
-        PostAuthorsEntity::class,
-        PostThreadEntity::class,
-        PostViewerStatisticsEntity::class,
-        ProfileViewerStateEntity::class,
-        ProfileEntity::class,
-        PostLikeEntity::class,
-        PostRepostEntity::class,
-        LabelEntity::class,
-        LabelerEntity::class,
-        LabelDefinitionEntity::class,
-        ListEntity::class,
-        ListMemberEntity::class,
-        FeedGeneratorEntity::class,
-        NotificationEntity::class,
-        TimelineItemEntity::class,
-        TimelinePreferencesEntity::class,
-        StarterPackEntity::class,
-        ConversationEntity::class,
-        ConversationMembersEntity::class,
-        MessageEntity::class,
-        MessageFeedGeneratorEntity::class,
-        MessageListEntity::class,
-        MessagePostEntity::class,
-        MessageReactionEntity::class,
-        MessageStarterPackEntity::class,
-        ThreadGateEntity::class,
-        ThreadGateAllowedListEntity::class,
-        ThreadGateHiddenPostEntity::class,
-    ],
-    autoMigrations = [
-        // firstMigration
-        AutoMigration(from = 1, to = 2),
-        // listsAndFeedGeneratorsMigration
-        AutoMigration(from = 2, to = 3),
-        // notificationMigration
-        AutoMigration(from = 3, to = 4),
-        // serializedPostRecordMigration
-        AutoMigration(from = 4, to = 5),
-        AutoMigration(
-            from = 6,
-            to = 7,
-            spec = Migration6To7PostViewerStatisticsAutoMigration::class,
-        ),
-        // Migration 5 - 6 is a manual migration
-        // postLikes and postReposts
-        AutoMigration(from = 7, to = 8),
-        // profile profile relationships, follows, mutes, blocks, etc
-        AutoMigration(
-            from = 8,
-            to = 9,
-            spec = Migration8To9ProfileViewersAutoMigration::class,
-        ),
-        // TimelineFetchKeyEntity to TimelinePreferencesEntity
-        AutoMigration(
-            from = 9,
-            to = 10,
-            spec = Migration9To10TimelineItemEntityAutoMigration::class,
-        ),
-        // Add StarterPackEntity and ListItemEntity
-        AutoMigration(from = 10, to = 11),
-        // Add commonFollowersCount to ProfileViewerStateEntity
-        AutoMigration(from = 11, to = 12),
-        // Migration 12 - 13 is a manual migration
-        // Add Profile.Associated as embedded field to ProfileEntity
-        AutoMigration(from = 13, to = 14),
-        // Add description to StarterPackEntity
-        AutoMigration(from = 14, to = 15),
-        // Add ConversationEntity, MessagesEntity and other messaging related entities
-        AutoMigration(from = 15, to = 16),
-        // Add LabelEntity and index uris for many entities
-        AutoMigration(from = 16, to = 17),
-        // Migration 17 - 18 is a manual migration
-        // Migration 18 - 19 is a manual migration
-        // Migration 19 - 20 is a manual migration
-        // Add post bookmarks
-        AutoMigration(from = 20, to = 21),
-        // Migration 21 - 22 is a manual migration
-        // Migration 22 - 23 is a manual migration
-        // Migration 23 - 24 is a manual migration
-        // add support of embedded records in post
-        AutoMigration(from = 24, to = 25),
-        // Add LabelerEntity and LabelDefinitionEntity
-        AutoMigration(from = 25, to = 26),
-        // Add indices to ProfileEntity and LabelEntity for did and uri
-        AutoMigration(from = 26, to = 27),
-        // Migration 27 - 28 is a manual migration
-        // Add message metadata to message
-        AutoMigration(from = 28, to = 29),
-        // Migration 29 - 30 is a manual migration
-        // Remove bookmarkCount from posts and and add PostGate models
-        AutoMigration(
-            from = 30,
-            to = 31,
-            spec = Migration30To31ThreadGateAutoMigration::class,
-        ),
-        // Add embedded record uris to root and parent posts for TimelineItemEntity
-        AutoMigration(from = 31, to = 32),
-        // Migration 32 - 33 is a manual migration
-        // Migration 33 - 34 is a manual migration
-    ],
+    entities =
+        [
+            BookmarkEntity::class,
+            ExternalEmbedEntity::class,
+            ImageEntity::class,
+            VideoEntity::class,
+            PostExternalEmbedEntity::class,
+            PostImageEntity::class,
+            PostVideoEntity::class,
+            PostPostEntity::class,
+            PostEntity::class,
+            PostAuthorsEntity::class,
+            PostThreadEntity::class,
+            PostViewerStatisticsEntity::class,
+            ProfileViewerStateEntity::class,
+            ProfileEntity::class,
+            PostLikeEntity::class,
+            PostRepostEntity::class,
+            LabelEntity::class,
+            LabelerEntity::class,
+            LabelDefinitionEntity::class,
+            ListEntity::class,
+            ListMemberEntity::class,
+            FeedGeneratorEntity::class,
+            NotificationEntity::class,
+            TimelineItemEntity::class,
+            TimelinePreferencesEntity::class,
+            StarterPackEntity::class,
+            ConversationEntity::class,
+            ConversationMembersEntity::class,
+            MessageEntity::class,
+            MessageFeedGeneratorEntity::class,
+            MessageListEntity::class,
+            MessagePostEntity::class,
+            MessageReactionEntity::class,
+            MessageStarterPackEntity::class,
+            ThreadGateEntity::class,
+            ThreadGateAllowedListEntity::class,
+            ThreadGateHiddenPostEntity::class,
+        ],
+    autoMigrations =
+        [
+            // firstMigration
+            AutoMigration(from = 1, to = 2),
+            // listsAndFeedGeneratorsMigration
+            AutoMigration(from = 2, to = 3),
+            // notificationMigration
+            AutoMigration(from = 3, to = 4),
+            // serializedPostRecordMigration
+            AutoMigration(from = 4, to = 5),
+            AutoMigration(
+                from = 6,
+                to = 7,
+                spec = Migration6To7PostViewerStatisticsAutoMigration::class,
+            ),
+            // Migration 5 - 6 is a manual migration
+            // postLikes and postReposts
+            AutoMigration(from = 7, to = 8),
+            // profile profile relationships, follows, mutes, blocks, etc
+            AutoMigration(from = 8, to = 9, spec = Migration8To9ProfileViewersAutoMigration::class),
+            // TimelineFetchKeyEntity to TimelinePreferencesEntity
+            AutoMigration(
+                from = 9,
+                to = 10,
+                spec = Migration9To10TimelineItemEntityAutoMigration::class,
+            ),
+            // Add StarterPackEntity and ListItemEntity
+            AutoMigration(from = 10, to = 11),
+            // Add commonFollowersCount to ProfileViewerStateEntity
+            AutoMigration(from = 11, to = 12),
+            // Migration 12 - 13 is a manual migration
+            // Add Profile.Associated as embedded field to ProfileEntity
+            AutoMigration(from = 13, to = 14),
+            // Add description to StarterPackEntity
+            AutoMigration(from = 14, to = 15),
+            // Add ConversationEntity, MessagesEntity and other messaging related entities
+            AutoMigration(from = 15, to = 16),
+            // Add LabelEntity and index uris for many entities
+            AutoMigration(from = 16, to = 17),
+            // Migration 17 - 18 is a manual migration
+            // Migration 18 - 19 is a manual migration
+            // Migration 19 - 20 is a manual migration
+            // Add post bookmarks
+            AutoMigration(from = 20, to = 21),
+            // Migration 21 - 22 is a manual migration
+            // Migration 22 - 23 is a manual migration
+            // Migration 23 - 24 is a manual migration
+            // add support of embedded records in post
+            AutoMigration(from = 24, to = 25),
+            // Add LabelerEntity and LabelDefinitionEntity
+            AutoMigration(from = 25, to = 26),
+            // Add indices to ProfileEntity and LabelEntity for did and uri
+            AutoMigration(from = 26, to = 27),
+            // Migration 27 - 28 is a manual migration
+            // Add message metadata to message
+            AutoMigration(from = 28, to = 29),
+            // Migration 29 - 30 is a manual migration
+            // Remove bookmarkCount from posts and and add PostGate models
+            AutoMigration(from = 30, to = 31, spec = Migration30To31ThreadGateAutoMigration::class),
+            // Add embedded record uris to root and parent posts for TimelineItemEntity
+            AutoMigration(from = 31, to = 32),
+            // Migration 32 - 33 is a manual migration
+            // Migration 33 - 34 is a manual migration
+        ],
     exportSchema = true,
 )
-@TypeConverters(
-    DateConverters::class,
-    UriConverters::class,
-    IdConverters::class,
-)
+@TypeConverters(DateConverters::class, UriConverters::class, IdConverters::class)
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun profileDao(): ProfileDao
+
     abstract fun listDao(): ListDao
+
     abstract fun postDao(): PostDao
+
     abstract fun embedDao(): EmbedDao
+
     abstract fun labelDao(): LabelDao
+
     abstract fun timelineDao(): TimelineDao
+
     abstract fun feedGeneratorDao(): FeedGeneratorDao
+
     abstract fun notificationsDao(): NotificationsDao
+
     abstract fun starterPackDao(): StarterPackDao
+
     abstract fun messagesDao(): MessageDao
+
     abstract fun threadGateDao(): ThreadGateDao
 }
 
@@ -236,9 +236,7 @@ fun interface TransactionWriter {
 }
 
 fun RoomDatabase.Builder<AppDatabase>.configureAndBuild() =
-    fallbackToDestructiveMigrationOnDowngrade(
-        dropAllTables = true,
-    )
+    fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
         .addMigrations(
             Migration5To6NonNullPostUriAndAuthor,
             Migration12To13FeedAndListsCreatedAt,

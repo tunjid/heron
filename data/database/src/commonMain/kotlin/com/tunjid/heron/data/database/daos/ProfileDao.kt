@@ -44,7 +44,7 @@ interface ProfileDao {
                 AND profiles.did = profileViewerStates.otherProfileId
             WHERE did IN (:ids)
             OR handle IN (:ids)
-        """,
+        """
     )
     fun profiles(
         signedInProfiledId: String?,
@@ -60,7 +60,7 @@ interface ProfileDao {
                 AND otherProfileId IN (:otherProfileIds)
             OR handle = :profileId
                 AND otherProfileId IN (:otherProfileIds)
-        """,
+        """
     )
     fun viewerState(
         profileId: String,
@@ -81,7 +81,7 @@ interface ProfileDao {
             )
             ORDER BY followersCount
             LIMIT :limit
-        """,
+        """
     )
     fun commonFollowers(
         profileId: String,
@@ -89,85 +89,61 @@ interface ProfileDao {
         limit: Long,
     ): Flow<List<PopulatedProfileEntity>>
 
-    @Upsert
-    suspend fun upsertProfiles(
-        entities: List<ProfileEntity>,
-    )
+    @Upsert suspend fun upsertProfiles(entities: List<ProfileEntity>)
 
     @Transaction
-    suspend fun insertOrPartiallyUpdateProfiles(
-        entities: List<ProfileEntity>,
-    ) = partialUpsert(
-        items = entities,
-        partialMapper = ProfileEntity::partial,
-        insertEntities = ::insertOrIgnoreProfiles,
-        updatePartials = ::updatePartialProfiles,
-    )
+    suspend fun insertOrPartiallyUpdateProfiles(entities: List<ProfileEntity>) =
+        partialUpsert(
+            items = entities,
+            partialMapper = ProfileEntity::partial,
+            insertEntities = ::insertOrIgnoreProfiles,
+            updatePartials = ::updatePartialProfiles,
+        )
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertOrIgnoreProfiles(
-        entities: List<ProfileEntity>,
-    ): List<Long>
+    suspend fun insertOrIgnoreProfiles(entities: List<ProfileEntity>): List<Long>
 
     @Update(entity = ProfileEntity::class)
-    suspend fun updatePartialProfiles(
-        entities: List<ProfileEntity.Partial>,
-    )
+    suspend fun updatePartialProfiles(entities: List<ProfileEntity.Partial>)
 
-    @Upsert
-    suspend fun upsertProfileViewers(
-        entities: List<ProfileViewerStateEntity>,
-    )
+    @Upsert suspend fun upsertProfileViewers(entities: List<ProfileViewerStateEntity>)
 
     @Transaction
-    suspend fun insertOrPartiallyUpdateProfileViewers(
-        entities: List<ProfileViewerStateEntity>,
-    ) = partialUpsert(
-        items = entities,
-        partialMapper = ProfileViewerStateEntity::partial,
-        insertEntities = ::insertOrIgnoreProfileViewers,
-        updatePartials = ::updatePartialProfileViewers,
-    )
+    suspend fun insertOrPartiallyUpdateProfileViewers(entities: List<ProfileViewerStateEntity>) =
+        partialUpsert(
+            items = entities,
+            partialMapper = ProfileViewerStateEntity::partial,
+            insertEntities = ::insertOrIgnoreProfileViewers,
+            updatePartials = ::updatePartialProfileViewers,
+        )
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertOrIgnoreProfileViewers(
-        entities: List<ProfileViewerStateEntity>,
-    ): List<Long>
+    suspend fun insertOrIgnoreProfileViewers(entities: List<ProfileViewerStateEntity>): List<Long>
 
     @Update(entity = ProfileViewerStateEntity::class)
-    suspend fun updatePartialProfileViewers(
-        entities: List<ProfileViewerStateEntity.Partial>,
-    )
+    suspend fun updatePartialProfileViewers(entities: List<ProfileViewerStateEntity.Partial>)
 
     @Update(entity = ProfileViewerStateEntity::class)
-    suspend fun updatePartialProfileViewer(
-        partial: ProfileViewerStateEntity.BlockPartial,
-    )
+    suspend fun updatePartialProfileViewer(partial: ProfileViewerStateEntity.BlockPartial)
 
     @Update(entity = ProfileViewerStateEntity::class)
-    suspend fun updatePartialProfileViewer(
-        partial: ProfileViewerStateEntity.MutedPartial,
-    )
+    suspend fun updatePartialProfileViewer(partial: ProfileViewerStateEntity.MutedPartial)
 
     @Query(
         """
         UPDATE profileViewerStates
         SET `following` = NULL
         WHERE `following` = :uri
-    """,
+    """
     )
-    suspend fun deleteFollow(
-        uri: FollowUri,
-    )
+    suspend fun deleteFollow(uri: FollowUri)
 
     @Query(
         """
         UPDATE profileViewerStates
         SET blocking = NULL
         WHERE blocking = :uri
-    """,
+    """
     )
-    suspend fun deleteBlock(
-        uri: BlockUri,
-    )
+    suspend fun deleteBlock(uri: BlockUri)
 }

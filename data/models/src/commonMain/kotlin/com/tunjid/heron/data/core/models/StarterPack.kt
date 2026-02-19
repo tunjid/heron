@@ -34,14 +34,9 @@ data class StarterPack(
     val joinedAllTimeCount: Long?,
     val indexedAt: Instant,
     val labels: List<Label>,
-) : UrlEncodableModel,
-    Record.Embeddable {
+) : UrlEncodableModel, Record.Embeddable {
 
-    override val reference: Record.Reference =
-        Record.Reference(
-            id = cid,
-            uri = uri,
-        )
+    override val reference: Record.Reference = Record.Reference(id = cid, uri = uri)
 
     override val embeddableRecordUri: EmbeddableRecordUri
         get() = uri

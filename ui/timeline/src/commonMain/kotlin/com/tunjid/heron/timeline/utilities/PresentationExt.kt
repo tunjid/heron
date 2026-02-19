@@ -21,33 +21,37 @@ import com.tunjid.heron.data.core.models.Timeline
 
 // Public extensions
 val Timeline.Presentation.cardSize
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 340.dp
-        Timeline.Presentation.Media.Condensed -> 160.dp
-        Timeline.Presentation.Media.Expanded -> 340.dp
-        Timeline.Presentation.Media.Grid -> 120.dp
-    }
+    get() =
+        when (this) {
+            Timeline.Presentation.Text.WithEmbed -> 340.dp
+            Timeline.Presentation.Media.Condensed -> 160.dp
+            Timeline.Presentation.Media.Expanded -> 340.dp
+            Timeline.Presentation.Media.Grid -> 120.dp
+        }
 
 val Timeline.Presentation.timelineHorizontalPadding
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 8.dp
-        Timeline.Presentation.Media.Condensed -> 8.dp
-        Timeline.Presentation.Media.Expanded -> 0.dp
-        Timeline.Presentation.Media.Grid -> 2.dp
-    }
+    get() =
+        when (this) {
+            Timeline.Presentation.Text.WithEmbed -> 8.dp
+            Timeline.Presentation.Media.Condensed -> 8.dp
+            Timeline.Presentation.Media.Expanded -> 0.dp
+            Timeline.Presentation.Media.Grid -> 2.dp
+        }
 
 val Timeline.Presentation.lazyGridHorizontalItemSpacing
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 8.dp
-        Timeline.Presentation.Media.Condensed -> 4.dp
-        Timeline.Presentation.Media.Expanded -> 8.dp
-        Timeline.Presentation.Media.Grid -> 2.dp
-    }
+    get() =
+        when (this) {
+            Timeline.Presentation.Text.WithEmbed -> 8.dp
+            Timeline.Presentation.Media.Condensed -> 4.dp
+            Timeline.Presentation.Media.Expanded -> 8.dp
+            Timeline.Presentation.Media.Grid -> 2.dp
+        }
 
 val Timeline.Presentation.lazyGridVerticalItemSpacing
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 8.dp
-        Timeline.Presentation.Media.Condensed -> 4.dp
-        Timeline.Presentation.Media.Expanded -> 8.dp
-        Timeline.Presentation.Media.Grid -> 2.dp
-    }
+    get() =
+        when (this) {
+            Timeline.Presentation.Text.WithEmbed -> 8.dp
+            Timeline.Presentation.Media.Condensed -> 4.dp
+            Timeline.Presentation.Media.Expanded -> 8.dp
+            Timeline.Presentation.Media.Grid -> 2.dp
+        }

@@ -21,9 +21,7 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.LabelEntity
 
-internal fun MultipleEntitySaver.add(
-    label: Label,
-) {
+internal fun MultipleEntitySaver.add(label: Label) {
     stubProfileEntity(label.src).let(::add)
     add(
         LabelEntity(
@@ -33,6 +31,6 @@ internal fun MultipleEntitySaver.add(
             value = label.`val`,
             version = label.ver,
             createdAt = label.cts,
-        ),
+        )
     )
 }

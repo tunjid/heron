@@ -13,29 +13,30 @@ import kotlin.test.assertEquals
 
 @Burst
 class EmbeddableCreateSerializationTest(
-    val format: SerializationTestHelper.Format = burstValues(
-        SerializationTestHelper.Format.CBOR,
-        SerializationTestHelper.Format.PROTOBUF,
-    ),
-    val original: Post.Create = burstValues(
-        Post.Create.Reply(parent = samplePost()),
-        Post.Create.Mention(profile = sampleProfile()),
-        Post.Create.Quote(
-            interaction = Post.Interaction.Create.Repost(
-                postId = PostId("pid-1"),
-                postUri = PostUri("at://post/xyz"),
+    val format: SerializationTestHelper.Format =
+        burstValues(SerializationTestHelper.Format.CBOR, SerializationTestHelper.Format.PROTOBUF),
+    val original: Post.Create =
+        burstValues(
+            Post.Create.Reply(parent = samplePost()),
+            Post.Create.Mention(profile = sampleProfile()),
+            Post.Create.Quote(
+                interaction =
+                    Post.Interaction.Create.Repost(
+                        postId = PostId("pid-1"),
+                        postUri = PostUri("at://post/xyz"),
+                    )
             ),
+            Post.Create.Timeline,
         ),
-        Post.Create.Timeline,
-    ),
 ) {
     @Test
     fun roundTrip() {
-        val decoded = SerializationTestHelper.roundTrip(
-            format = format,
-            value = original,
-            serializer = Post.Create.serializer(),
-        )
+        val decoded =
+            SerializationTestHelper.roundTrip(
+                format = format,
+                value = original,
+                serializer = Post.Create.serializer(),
+            )
         assertEquals(original, decoded)
     }
 }

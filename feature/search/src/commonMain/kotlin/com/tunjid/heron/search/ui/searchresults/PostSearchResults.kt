@@ -90,11 +90,13 @@ internal fun PostSearchResults(
     videoStates: ThreadedVideoPositionStates<SearchResult.OfPost>,
     paneScaffoldState: PaneScaffoldState,
     onLinkTargetClicked: (LinkTarget) -> Unit,
-    onPostSearchResultProfileClicked: (profile: Profile, post: Post, sharedElementPrefix: String) -> Unit,
+    onPostSearchResultProfileClicked:
+        (profile: Profile, post: Post, sharedElementPrefix: String) -> Unit,
     onPostSearchResultClicked: (post: Post, sharedElementPrefix: String) -> Unit,
     onReplyToPost: (post: Post, sharedElementPrefix: String) -> Unit,
     onPostRecordClicked: (record: Record, sharedElementPrefix: String) -> Unit,
-    onMediaClicked: (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
+    onMediaClicked:
+        (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
     onNavigate: (NavigationAction.Destination) -> Unit,
     onSendPostInteraction: (Post.Interaction) -> Unit,
     onSave: (mutedWordPreferences: List<MutedWordPreference>) -> Unit,
@@ -105,148 +107,150 @@ internal fun PostSearchResults(
     val now = remember { Clock.System.now() }
     val results by rememberUpdatedState(state.tiledItems)
     val sharedElementPrefix = state.sharedElementPrefix
-    val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
-        isSignedIn = paneScaffoldState.isSignedIn,
-        onSignInClicked = {
-            onNavigate(signInDestination())
-        },
-        onInteractionConfirmed = onSendPostInteraction,
-        onQuotePostClicked = { repost ->
-            onNavigate(
-                composePostDestination(
-                    type = Post.Create.Quote(repost),
-                    sharedElementPrefix = null,
-                ),
-            )
-        },
-    )
-    val threadGateSheetState = rememberUpdatedThreadGateSheetState(
-        onThreadGateUpdated = onSendPostInteraction,
-    )
-    val mutedWordsSheetState = rememberUpdatedMutedWordsSheetState(
-        mutedWordPreferences = mutedWordPreferences,
-        onSave = onSave,
-        onShown = {},
-    )
-    val profileRestrictionDialogState = rememberProfileRestrictionDialogState(
-        onProfileRestricted = { profileRestriction ->
-            when (profileRestriction) {
-                is PostOption.Moderation.BlockAccount ->
-                    onBlockAccountClicked(
-                        profileRestriction.signedInProfileId,
-                        profileRestriction.post.author.did,
+    val postInteractionSheetState =
+        rememberUpdatedPostInteractionsSheetState(
+            isSignedIn = paneScaffoldState.isSignedIn,
+            onSignInClicked = { onNavigate(signInDestination()) },
+            onInteractionConfirmed = onSendPostInteraction,
+            onQuotePostClicked = { repost ->
+                onNavigate(
+                    composePostDestination(
+                        type = Post.Create.Quote(repost),
+                        sharedElementPrefix = null,
                     )
+                )
+            },
+        )
+    val threadGateSheetState =
+        rememberUpdatedThreadGateSheetState(onThreadGateUpdated = onSendPostInteraction)
+    val mutedWordsSheetState =
+        rememberUpdatedMutedWordsSheetState(
+            mutedWordPreferences = mutedWordPreferences,
+            onSave = onSave,
+            onShown = {},
+        )
+    val profileRestrictionDialogState =
+        rememberProfileRestrictionDialogState(
+            onProfileRestricted = { profileRestriction ->
+                when (profileRestriction) {
+                    is PostOption.Moderation.BlockAccount ->
+                        onBlockAccountClicked(
+                            profileRestriction.signedInProfileId,
+                            profileRestriction.post.author.did,
+                        )
 
-                is PostOption.Moderation.MuteAccount ->
-                    onMuteAccountClicked(
-                        profileRestriction.signedInProfileId,
-                        profileRestriction.post.author.did,
-                    )
+                    is PostOption.Moderation.MuteAccount ->
+                        onMuteAccountClicked(
+                            profileRestriction.signedInProfileId,
+                            profileRestriction.post.author.did,
+                        )
+                }
             }
-        },
-    )
-    val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
-        signedInProfileId = signedInProfileId,
-        recentConversations = recentConversations,
-        onOptionClicked = { option ->
-            when (option) {
-                is PostOption.ShareInConversation ->
-                    onNavigate(
-                        conversationDestination(
-                            id = option.conversation.id,
-                            members = option.conversation.members,
-                            sharedElementPrefix = option.conversation.id.id,
-                            sharedUri = option.post.uri.asGenericUri(),
-                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                        ),
-                    )
+        )
+    val postOptionsSheetState =
+        rememberUpdatedPostOptionsSheetState(
+            signedInProfileId = signedInProfileId,
+            recentConversations = recentConversations,
+            onOptionClicked = { option ->
+                when (option) {
+                    is PostOption.ShareInConversation ->
+                        onNavigate(
+                            conversationDestination(
+                                id = option.conversation.id,
+                                members = option.conversation.members,
+                                sharedElementPrefix = option.conversation.id.id,
+                                sharedUri = option.post.uri.asGenericUri(),
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                            )
+                        )
 
-                is PostOption.ThreadGate ->
-                    results.firstOrNull { it.timelineItem.post.uri == option.postUri }
-                        ?.timelineItem
-                        ?.let(threadGateSheetState::show)
+                    is PostOption.ThreadGate ->
+                        results
+                            .firstOrNull { it.timelineItem.post.uri == option.postUri }
+                            ?.timelineItem
+                            ?.let(threadGateSheetState::show)
 
-                is PostOption.Moderation.BlockAccount ->
-                    profileRestrictionDialogState.show(option)
+                    is PostOption.Moderation.BlockAccount ->
+                        profileRestrictionDialogState.show(option)
 
-                is PostOption.Moderation.MuteAccount ->
-                    profileRestrictionDialogState.show(option)
+                    is PostOption.Moderation.MuteAccount ->
+                        profileRestrictionDialogState.show(option)
 
-                is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
-            }
-        },
-    )
-    val postActions = remember(
-        sharedElementPrefix,
-        onLinkTargetClicked,
-        onPostSearchResultClicked,
-        onPostSearchResultProfileClicked,
-        onPostRecordClicked,
-        onMediaClicked,
-        onReplyToPost,
-    ) {
-        PostActions { action ->
-            when (action) {
-                is PostAction.OfLinkTarget -> onLinkTargetClicked(action.linkTarget)
+                    is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
+                }
+            },
+        )
+    val postActions =
+        remember(
+            sharedElementPrefix,
+            onLinkTargetClicked,
+            onPostSearchResultClicked,
+            onPostSearchResultProfileClicked,
+            onPostRecordClicked,
+            onMediaClicked,
+            onReplyToPost,
+        ) {
+            PostActions { action ->
+                when (action) {
+                    is PostAction.OfLinkTarget -> onLinkTargetClicked(action.linkTarget)
 
-                is PostAction.OfPost -> onPostSearchResultClicked(
-                    action.post,
-                    sharedElementPrefix,
-                )
+                    is PostAction.OfPost ->
+                        onPostSearchResultClicked(action.post, sharedElementPrefix)
 
-                is PostAction.OfProfile -> onPostSearchResultProfileClicked(
-                    action.profile,
-                    action.post,
-                    sharedElementPrefix.withQuotingPostUriPrefix(action.quotingPostUri),
-                )
+                    is PostAction.OfProfile ->
+                        onPostSearchResultProfileClicked(
+                            action.profile,
+                            action.post,
+                            sharedElementPrefix.withQuotingPostUriPrefix(action.quotingPostUri),
+                        )
 
-                is PostAction.OfRecord -> onPostRecordClicked(
-                    action.record,
-                    sharedElementPrefix.withQuotingPostUriPrefix(action.owningPostUri),
-                )
+                    is PostAction.OfRecord ->
+                        onPostRecordClicked(
+                            action.record,
+                            sharedElementPrefix.withQuotingPostUriPrefix(action.owningPostUri),
+                        )
 
-                is PostAction.OfMedia -> onMediaClicked(
-                    action.media,
-                    action.index,
-                    action.post,
-                    sharedElementPrefix.withQuotingPostUriPrefix(action.quotingPostUri),
-                )
+                    is PostAction.OfMedia ->
+                        onMediaClicked(
+                            action.media,
+                            action.index,
+                            action.post,
+                            sharedElementPrefix.withQuotingPostUriPrefix(action.quotingPostUri),
+                        )
 
-                is PostAction.OfReply -> onReplyToPost(action.post, sharedElementPrefix)
+                    is PostAction.OfReply -> onReplyToPost(action.post, sharedElementPrefix)
 
-                is PostAction.OfInteraction -> postInteractionSheetState.onInteraction(action)
+                    is PostAction.OfInteraction -> postInteractionSheetState.onInteraction(action)
 
-                is PostAction.OfMore -> postOptionsSheetState.showOptions(action.post)
+                    is PostAction.OfMore -> postOptionsSheetState.showOptions(action.post)
 
-                else -> Unit
+                    else -> Unit
+                }
             }
         }
-    }
     LazyVerticalStaggeredGrid(
         modifier = modifier,
         state = gridState,
-        columns = StaggeredGridCells.Adaptive(
-            Timeline.Presentation.Text.WithEmbed.cardSize,
-        ),
+        columns = StaggeredGridCells.Adaptive(Timeline.Presentation.Text.WithEmbed.cardSize),
         verticalItemSpacing = 16.dp,
-        contentPadding = bottomNavAndInsetPaddingValues(
-            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
-            isCompact = paneScaffoldState.prefersCompactBottomNav,
-        ),
-        horizontalArrangement = Arrangement.spacedBy(
-            Timeline.Presentation.Text.WithEmbed.lazyGridHorizontalItemSpacing,
-        ),
+        contentPadding =
+            bottomNavAndInsetPaddingValues(
+                top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
+                isCompact = paneScaffoldState.prefersCompactBottomNav,
+            ),
+        horizontalArrangement =
+            Arrangement.spacedBy(Timeline.Presentation.Text.WithEmbed.lazyGridHorizontalItemSpacing),
     ) {
         items(
             items = results,
             key = { it.id },
             itemContent = { result ->
                 PostSearchResult(
-                    modifier = Modifier
-                        .threadedVideoPosition(
-                            state = videoStates.getOrCreateStateFor(result),
-                        )
-                        .animateItem(),
+                    modifier =
+                        Modifier.threadedVideoPosition(
+                                state = videoStates.getOrCreateStateFor(result)
+                            )
+                            .animateItem(),
                     paneMovableElementSharedTransitionScope = paneScaffoldState,
                     now = now,
                     result = result,
@@ -258,18 +262,16 @@ internal fun PostSearchResults(
     }
     if (paneScaffoldState.paneState.pane == ThreePane.Primary && autoPlayTimelineVideos) {
         val videoPlayerController = LocalVideoPlayerController.current
-        gridState.interpolatedVisibleIndexEffect(
-            denominator = 10,
-            itemsAvailable = results.size,
-        ) { interpolatedIndex ->
+        gridState.interpolatedVisibleIndexEffect(denominator = 10, itemsAvailable = results.size) {
+            interpolatedIndex ->
             val flooredIndex = floor(interpolatedIndex).toInt()
             val fraction = interpolatedIndex - flooredIndex
-            results.getOrNull(flooredIndex)
+            results
+                .getOrNull(flooredIndex)
                 ?.takeIf(SearchResult.OfPost::canAutoPlayVideo)
                 ?.let(videoStates::retrieveStateFor)
                 ?.videoIdAt(fraction)
-                ?.let(videoPlayerController::play)
-                ?: videoPlayerController.pauseActiveVideo()
+                ?.let(videoPlayerController::play) ?: videoPlayerController.pauseActiveVideo()
         }
     }
     gridState.PivotedTilingEffect(
@@ -277,10 +279,9 @@ internal fun PostSearchResults(
         onQueryChanged = { query ->
             searchResultActions(
                 SearchState.Tile(
-                    tilingAction = TilingState.Action.LoadAround(
-                        query ?: state.tilingData.currentQuery,
-                    ),
-                ),
+                    tilingAction =
+                        TilingState.Action.LoadAround(query ?: state.tilingData.currentQuery)
+                )
             )
         },
     )
@@ -303,17 +304,12 @@ private fun PostSearchResult(
                     post = result.timelineItem.post,
                     isMainPost = true,
                     warnedAppliedLabels = result.timelineItem.appliedLabels.warned(),
-                ),
+                )
             )
         },
         content = {
             TimelineItem(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        top = 16.dp,
-                        bottom = 8.dp,
-                    ),
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp),
                 paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                 presentationLookaheadScope = paneMovableElementSharedTransitionScope,
                 now = now,

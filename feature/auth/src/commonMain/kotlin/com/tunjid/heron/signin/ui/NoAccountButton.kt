@@ -48,9 +48,7 @@ import heron.feature.auth.generated.resources.okay
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun NoAccountButton(
-    modifier: Modifier = Modifier,
-) {
+fun NoAccountButton(modifier: Modifier = Modifier) {
     var showNoAccountDialog by remember { mutableStateOf(false) }
 
     TextButton(
@@ -59,56 +57,37 @@ fun NoAccountButton(
         content = {
             val contentDescription = stringResource(Res.string.no_account_help_content_description)
             Row(
-                modifier = Modifier.semantics {
-                    this.role = Role.Button
-                    this.contentDescription = contentDescription
-                },
+                modifier =
+                    Modifier.semantics {
+                        this.role = Role.Button
+                        this.contentDescription = contentDescription
+                    },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Icon(
-                    imageVector = Help,
-                    contentDescription = null,
-                )
+                Icon(imageVector = Help, contentDescription = null)
                 Text(stringResource(Res.string.no_account_help_button))
             }
         },
     )
-    if (showNoAccountDialog) NoAccountDialog {
-        showNoAccountDialog = false
-    }
+    if (showNoAccountDialog) NoAccountDialog { showNoAccountDialog = false }
 }
 
 @Composable
-private fun NoAccountDialog(
-    onDismiss: () -> Unit,
-) {
+private fun NoAccountDialog(onDismiss: () -> Unit) {
     SimpleDialog(
         onDismissRequest = onDismiss,
-        title = {
-            SimpleDialogTitle(
-                text = stringResource(Res.string.no_account_dialog_title),
-            )
-        },
-        text = {
-            SimpleDialogText(
-                text = stringResource(Res.string.no_account_dialog_details),
-            )
-        },
+        title = { SimpleDialogTitle(text = stringResource(Res.string.no_account_dialog_title)) },
+        text = { SimpleDialogText(text = stringResource(Res.string.no_account_dialog_details)) },
         dismissButton = {
             val uriHandler = LocalUriHandler.current
             PrimaryDialogButton(
                 text = stringResource(Res.string.learn_more),
-                onClick = {
-                    runCatching { uriHandler.openUri(AtProtoWebsiteUrl) }
-                },
+                onClick = { runCatching { uriHandler.openUri(AtProtoWebsiteUrl) } },
             )
         },
         confirmButton = {
-            PrimaryDialogButton(
-                text = stringResource(Res.string.okay),
-                onClick = onDismiss,
-            )
+            PrimaryDialogButton(text = stringResource(Res.string.okay), onClick = onDismiss)
         },
     )
 }

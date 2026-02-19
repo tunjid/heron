@@ -56,23 +56,24 @@ object UiTokens {
     const val navigationIconZIndex = 16f
 
     @Stable
-    fun higherThanAppBarSharedElementZIndex(
-        index: Int = 0,
-    ) = appBarSharedElementZIndex + ((index + 1) * ZIndexIncrement)
+    fun higherThanAppBarSharedElementZIndex(index: Int = 0) =
+        appBarSharedElementZIndex + ((index + 1) * ZIndexIncrement)
 
     val statusBarHeight: Dp
-        @Composable get() = WindowInsets.statusBars.asPaddingValues().run {
-            calculateTopPadding() + calculateBottomPadding()
-        }
+        @Composable
+        get() =
+            WindowInsets.statusBars.asPaddingValues().run {
+                calculateTopPadding() + calculateBottomPadding()
+            }
 
     val navigationBarHeight: Dp
-        @Composable get() = WindowInsets.navigationBars.asPaddingValues().run {
-            calculateTopPadding() + calculateBottomPadding()
-        }
+        @Composable
+        get() =
+            WindowInsets.navigationBars.asPaddingValues().run {
+                calculateTopPadding() + calculateBottomPadding()
+            }
 
-    fun bottomNavHeight(
-        isCompact: Boolean,
-    ): Dp = if (isCompact) 48.dp else 80.dp
+    fun bottomNavHeight(isCompact: Boolean): Dp = if (isCompact) 48.dp else 80.dp
 
     @Composable
     fun bottomNavAndInsetPaddingValues(
@@ -92,9 +93,7 @@ object UiTokens {
         }
     }
 
-    fun Color.withDim(
-        dimmed: Boolean,
-    ) = if (dimmed) copy(alpha = 0.6f) else this
+    fun Color.withDim(dimmed: Boolean) = if (dimmed) copy(alpha = 0.6f) else this
 }
 
 private const val ZIndexIncrement = 0.01f

@@ -70,59 +70,58 @@ fun Title(
     onTitleClicked: () -> Unit,
 ) {
     AnimatedContent(
-        modifier = modifier
-            .clip(CircleShape)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(bounded = false),
-                onClick = onTitleClicked,
-            ),
+        modifier =
+            modifier
+                .clip(CircleShape)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = ripple(bounded = false),
+                    onClick = onTitleClicked,
+                ),
         targetState = title,
-        transitionSpec = {
-            TitleTransitionSpec
-        },
-        contentKey = { currentTitle ->
-            currentTitle.transitionKey()
-        },
+        transitionSpec = { TitleTransitionSpec },
+        contentKey = { currentTitle -> currentTitle.transitionKey() },
     ) { currentTitle ->
         when (currentTitle) {
-            is Title.Created -> TimelineTitle(
-                modifier = Modifier,
-                movableElementSharedTransitionScope = paneScaffoldState,
-                timeline = remember(currentTitle.feedGenerator) {
-                    Timeline.Home.Feed.stub(currentTitle.feedGenerator)
-                },
-                sharedElementPrefix = currentTitle.sharedElementPrefix,
-                hasUpdates = false,
-                onPresentationSelected = { _, _ -> },
-            )
-            is Title.Pending -> Column(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp),
-            ) {
-                Text(
+            is Title.Created ->
+                TimelineTitle(
                     modifier = Modifier,
-                    text = stringResource(Res.string.graze_editor),
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1,
-                    style = MaterialTheme.typography.titleSmallEmphasized,
+                    movableElementSharedTransitionScope = paneScaffoldState,
+                    timeline =
+                        remember(currentTitle.feedGenerator) {
+                            Timeline.Home.Feed.stub(currentTitle.feedGenerator)
+                        },
+                    sharedElementPrefix = currentTitle.sharedElementPrefix,
+                    hasUpdates = false,
+                    onPresentationSelected = { _, _ -> },
                 )
-                Text(
-                    modifier = Modifier,
-                    text = currentTitle.displayName ?: stringResource(Res.string.no_display_name),
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline,
-                )
-            }
+            is Title.Pending ->
+                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    Text(
+                        modifier = Modifier,
+                        text = stringResource(Res.string.graze_editor),
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                        style = MaterialTheme.typography.titleSmallEmphasized,
+                    )
+                    Text(
+                        modifier = Modifier,
+                        text =
+                            currentTitle.displayName ?: stringResource(Res.string.no_display_name),
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline,
+                    )
+                }
         }
     }
 }
 
-private fun Title.transitionKey(): String = when (this) {
-    is Title.Created -> "${feedGenerator.displayName}-${path.joinToString("created")}"
-    is Title.Pending -> "${recordKey.value}-${path.joinToString("pending")}"
-}
+private fun Title.transitionKey(): String =
+    when (this) {
+        is Title.Created -> "${feedGenerator.displayName}-${path.joinToString("created")}"
+        is Title.Pending -> "${recordKey.value}-${path.joinToString("pending")}"
+    }
 
 private val TitleTransitionSpec = fadeIn() togetherWith fadeOut()

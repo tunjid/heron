@@ -35,32 +35,33 @@ object LeafSerializer : KSerializer<Filter.Leaf> {
 
     private val serializersBySerialName: Map<String, KSerializer<out Filter.Leaf>> by lazy {
         listOf(
-            Filter.Attribute.Compare.serializer(),
-            Filter.Attribute.Embed.serializer(),
-            Filter.Entity.Matches.serializer(),
-            Filter.Entity.Excludes.serializer(),
-            Filter.Regex.Matches.serializer(),
-            Filter.Regex.Negation.serializer(),
-            Filter.Regex.Any.serializer(),
-            Filter.Regex.None.serializer(),
-            Filter.Social.Graph.serializer(),
-            Filter.Social.UserList.serializer(),
-            Filter.Social.StarterPack.serializer(),
-            Filter.Social.ListMember.serializer(),
-            Filter.Social.MagicAudience.serializer(),
-            Filter.ML.Similarity.serializer(),
-            Filter.ML.Probability.serializer(),
-            Filter.ML.Moderation.serializer(),
-            Filter.Analysis.Language.serializer(),
-            Filter.Analysis.Sentiment.serializer(),
-            Filter.Analysis.FinancialSentiment.serializer(),
-            Filter.Analysis.Emotion.serializer(),
-            Filter.Analysis.Toxicity.serializer(),
-            Filter.Analysis.Topic.serializer(),
-            Filter.Analysis.TextArbitrary.serializer(),
-            Filter.Analysis.ImageNsfw.serializer(),
-            Filter.Analysis.ImageArbitrary.serializer(),
-        ).associateBy { it.descriptor.serialName }
+                Filter.Attribute.Compare.serializer(),
+                Filter.Attribute.Embed.serializer(),
+                Filter.Entity.Matches.serializer(),
+                Filter.Entity.Excludes.serializer(),
+                Filter.Regex.Matches.serializer(),
+                Filter.Regex.Negation.serializer(),
+                Filter.Regex.Any.serializer(),
+                Filter.Regex.None.serializer(),
+                Filter.Social.Graph.serializer(),
+                Filter.Social.UserList.serializer(),
+                Filter.Social.StarterPack.serializer(),
+                Filter.Social.ListMember.serializer(),
+                Filter.Social.MagicAudience.serializer(),
+                Filter.ML.Similarity.serializer(),
+                Filter.ML.Probability.serializer(),
+                Filter.ML.Moderation.serializer(),
+                Filter.Analysis.Language.serializer(),
+                Filter.Analysis.Sentiment.serializer(),
+                Filter.Analysis.FinancialSentiment.serializer(),
+                Filter.Analysis.Emotion.serializer(),
+                Filter.Analysis.Toxicity.serializer(),
+                Filter.Analysis.Topic.serializer(),
+                Filter.Analysis.TextArbitrary.serializer(),
+                Filter.Analysis.ImageNsfw.serializer(),
+                Filter.Analysis.ImageArbitrary.serializer(),
+            )
+            .associateBy { it.descriptor.serialName }
     }
 
     override fun serialize(encoder: Encoder, value: Filter.Leaf) {
@@ -70,36 +71,37 @@ object LeafSerializer : KSerializer<Filter.Leaf> {
             return
         }
 
-        val strategy: KSerializer<out Filter.Leaf> = when (value) {
-            is Filter.Attribute.Compare -> Filter.Attribute.Compare.serializer()
-            is Filter.Attribute.Embed -> Filter.Attribute.Embed.serializer()
-            is Filter.Entity.Matches -> Filter.Entity.Matches.serializer()
-            is Filter.Entity.Excludes -> Filter.Entity.Excludes.serializer()
-            is Filter.Regex.Matches -> Filter.Regex.Matches.serializer()
-            is Filter.Regex.Negation -> Filter.Regex.Negation.serializer()
-            is Filter.Regex.Any -> Filter.Regex.Any.serializer()
-            is Filter.Regex.None -> Filter.Regex.None.serializer()
-            is Filter.Social.Graph -> Filter.Social.Graph.serializer()
-            is Filter.Social.UserList -> Filter.Social.UserList.serializer()
-            is Filter.Social.StarterPack -> Filter.Social.StarterPack.serializer()
-            is Filter.Social.ListMember -> Filter.Social.ListMember.serializer()
-            is Filter.Social.MagicAudience -> Filter.Social.MagicAudience.serializer()
-            is Filter.ML.Similarity -> Filter.ML.Similarity.serializer()
-            is Filter.ML.Probability -> Filter.ML.Probability.serializer()
-            is Filter.ML.Moderation -> Filter.ML.Moderation.serializer()
-            is Filter.Analysis.Language -> Filter.Analysis.Language.serializer()
-            is Filter.Analysis.Sentiment -> Filter.Analysis.Sentiment.serializer()
-            is Filter.Analysis.FinancialSentiment -> Filter.Analysis.FinancialSentiment.serializer()
-            is Filter.Analysis.Emotion -> Filter.Analysis.Emotion.serializer()
-            is Filter.Analysis.Toxicity -> Filter.Analysis.Toxicity.serializer()
-            is Filter.Analysis.Topic -> Filter.Analysis.Topic.serializer()
-            is Filter.Analysis.TextArbitrary -> Filter.Analysis.TextArbitrary.serializer()
-            is Filter.Analysis.ImageNsfw -> Filter.Analysis.ImageNsfw.serializer()
-            is Filter.Analysis.ImageArbitrary -> Filter.Analysis.ImageArbitrary.serializer()
-        }
+        val strategy: KSerializer<out Filter.Leaf> =
+            when (value) {
+                is Filter.Attribute.Compare -> Filter.Attribute.Compare.serializer()
+                is Filter.Attribute.Embed -> Filter.Attribute.Embed.serializer()
+                is Filter.Entity.Matches -> Filter.Entity.Matches.serializer()
+                is Filter.Entity.Excludes -> Filter.Entity.Excludes.serializer()
+                is Filter.Regex.Matches -> Filter.Regex.Matches.serializer()
+                is Filter.Regex.Negation -> Filter.Regex.Negation.serializer()
+                is Filter.Regex.Any -> Filter.Regex.Any.serializer()
+                is Filter.Regex.None -> Filter.Regex.None.serializer()
+                is Filter.Social.Graph -> Filter.Social.Graph.serializer()
+                is Filter.Social.UserList -> Filter.Social.UserList.serializer()
+                is Filter.Social.StarterPack -> Filter.Social.StarterPack.serializer()
+                is Filter.Social.ListMember -> Filter.Social.ListMember.serializer()
+                is Filter.Social.MagicAudience -> Filter.Social.MagicAudience.serializer()
+                is Filter.ML.Similarity -> Filter.ML.Similarity.serializer()
+                is Filter.ML.Probability -> Filter.ML.Probability.serializer()
+                is Filter.ML.Moderation -> Filter.ML.Moderation.serializer()
+                is Filter.Analysis.Language -> Filter.Analysis.Language.serializer()
+                is Filter.Analysis.Sentiment -> Filter.Analysis.Sentiment.serializer()
+                is Filter.Analysis.FinancialSentiment ->
+                    Filter.Analysis.FinancialSentiment.serializer()
+                is Filter.Analysis.Emotion -> Filter.Analysis.Emotion.serializer()
+                is Filter.Analysis.Toxicity -> Filter.Analysis.Toxicity.serializer()
+                is Filter.Analysis.Topic -> Filter.Analysis.Topic.serializer()
+                is Filter.Analysis.TextArbitrary -> Filter.Analysis.TextArbitrary.serializer()
+                is Filter.Analysis.ImageNsfw -> Filter.Analysis.ImageNsfw.serializer()
+                is Filter.Analysis.ImageArbitrary -> Filter.Analysis.ImageArbitrary.serializer()
+            }
 
-        @Suppress("UNCHECKED_CAST")
-        val castStrategy = strategy as KSerializer<Filter.Leaf>
+        @Suppress("UNCHECKED_CAST") val castStrategy = strategy as KSerializer<Filter.Leaf>
 
         // Serialize to a JSON Object (default behavior of generated serializer)
         val jsonObject = output.json.encodeToJsonElement(castStrategy, value).jsonObject
@@ -118,9 +120,7 @@ object LeafSerializer : KSerializer<Filter.Leaf> {
 
         // Wrap in the final structure: { "serial_name": [ ... ] }
         val serialName = castStrategy.descriptor.serialName
-        val finalJson = buildJsonObject {
-            put(serialName, jsonArray)
-        }
+        val finalJson = buildJsonObject { put(serialName, jsonArray) }
 
         output.encodeJsonElement(finalJson)
     }
@@ -130,16 +130,18 @@ object LeafSerializer : KSerializer<Filter.Leaf> {
 
         val tree = input.decodeJsonElement().jsonObject
         // The structure should be { "serial_name": [ ... ] }
-        val serialName = tree.keys.firstOrNull()
-            ?: throw IllegalStateException("Empty JSON object for Leaf filter")
-        val valuesArray = tree[serialName]?.jsonArray
-            ?: throw IllegalStateException("Expected JSON Array for key '$serialName'")
+        val serialName =
+            tree.keys.firstOrNull()
+                ?: throw IllegalStateException("Empty JSON object for Leaf filter")
+        val valuesArray =
+            tree[serialName]?.jsonArray
+                ?: throw IllegalStateException("Expected JSON Array for key '$serialName'")
 
-        val strategy = serializersBySerialName[serialName]
-            ?: throw IllegalStateException("No serializer found for serial name '$serialName'")
+        val strategy =
+            serializersBySerialName[serialName]
+                ?: throw IllegalStateException("No serializer found for serial name '$serialName'")
 
-        @Suppress("UNCHECKED_CAST")
-        val castStrategy = strategy as KSerializer<Filter.Leaf>
+        @Suppress("UNCHECKED_CAST") val castStrategy = strategy as KSerializer<Filter.Leaf>
 
         // Transform the Array back to a keyed Object expected by the generated serializer
         val descriptor = castStrategy.descriptor

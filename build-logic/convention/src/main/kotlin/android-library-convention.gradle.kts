@@ -14,16 +14,12 @@
  *    limitations under the License.
  */
 
-plugins {
-    id("com.android.library")
-}
+plugins { id("com.android.library") }
 
 android {
     commonConfiguration(this)
 
-    defaultConfig {
-        lint.targetSdk = 35
-    }
+    defaultConfig { lint.targetSdk = 35 }
     buildTypes {
         create("staging") {
             initWith(getByName("release"))

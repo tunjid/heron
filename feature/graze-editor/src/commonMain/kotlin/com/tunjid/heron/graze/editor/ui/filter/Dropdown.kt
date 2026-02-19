@@ -54,10 +54,7 @@ inline fun <T : Any> Dropdown(
             label = { Text(text = label) },
             modifier = Modifier.menuAnchor(),
         )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { option ->
                 DropdownMenuItem(
                     text = { Text(text = stringResource(stringRes(option))) },

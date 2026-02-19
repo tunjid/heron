@@ -55,7 +55,7 @@ class ProfileRestrictionDialogState internal constructor() {
     companion object Companion {
         @Composable
         fun rememberProfileRestrictionDialogState(
-            onProfileRestricted: (PostOption.Moderation.ProfileRestriction) -> Unit,
+            onProfileRestricted: (PostOption.Moderation.ProfileRestriction) -> Unit
         ): ProfileRestrictionDialogState {
             val state = remember { ProfileRestrictionDialogState() }
 
@@ -81,34 +81,29 @@ private fun ProfileRestrictionDialog(
     onDismiss: () -> Unit,
     onApproved: () -> Unit,
 ) {
-    val (title, description, confirmText) = when (moderation) {
-        is PostOption.Moderation.BlockAccount -> Triple(
-            stringResource(CommonStrings.block_account_dialog_title),
-            stringResource(CommonStrings.block_account_dialog_description),
-            stringResource(CommonStrings.viewer_state_block_account),
-        )
-        is PostOption.Moderation.MuteAccount -> Triple(
-            stringResource(CommonStrings.mute_account_dialog_title),
-            stringResource(CommonStrings.mute_account_dialog_description),
-            stringResource(CommonStrings.viewer_state_mute_account),
-        )
-    }
+    val (title, description, confirmText) =
+        when (moderation) {
+            is PostOption.Moderation.BlockAccount ->
+                Triple(
+                    stringResource(CommonStrings.block_account_dialog_title),
+                    stringResource(CommonStrings.block_account_dialog_description),
+                    stringResource(CommonStrings.viewer_state_block_account),
+                )
+            is PostOption.Moderation.MuteAccount ->
+                Triple(
+                    stringResource(CommonStrings.mute_account_dialog_title),
+                    stringResource(CommonStrings.mute_account_dialog_description),
+                    stringResource(CommonStrings.viewer_state_mute_account),
+                )
+        }
 
     SimpleDialog(
         onDismissRequest = onDismiss,
         title = { SimpleDialogTitle(text = title) },
         text = { SimpleDialogText(text = description) },
-        confirmButton = {
-            DestructiveDialogButton(
-                text = confirmText,
-                onClick = onApproved,
-            )
-        },
+        confirmButton = { DestructiveDialogButton(text = confirmText, onClick = onApproved) },
         dismissButton = {
-            NeutralDialogButton(
-                text = stringResource(CommonStrings.cancel),
-                onClick = onDismiss,
-            )
+            NeutralDialogButton(text = stringResource(CommonStrings.cancel), onClick = onDismiss)
         },
     )
 }

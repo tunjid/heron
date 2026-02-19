@@ -22,13 +22,10 @@ plugins {
     kotlin("plugin.serialization")
 }
 
-android {
-    namespace = "com.tunjid.heron.data.graze"
-}
+android { namespace = "com.tunjid.heron.data.graze" }
 
 kotlin {
     sourceSets {
-
         commonMain {
             dependencies {
                 implementation(project(":data:models"))

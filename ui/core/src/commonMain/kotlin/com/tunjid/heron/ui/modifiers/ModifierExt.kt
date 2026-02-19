@@ -29,8 +29,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Dp
 
 /**
- * A blur [Modifier] with lambda arguments to prevent relayouts and recomposition.
- * Lambda arguments that update should be backed with compose state
+ * A blur [Modifier] with lambda arguments to prevent relayouts and recomposition. Lambda arguments
+ * that update should be backed with compose state
  */
 fun Modifier.blur(
     shape: Shape,
@@ -48,11 +48,12 @@ fun Modifier.blur(
     // Only non-zero blur radii are valid BlurEffect parameters
     if (horizontalBlurPixels <= 0f || verticalBlurPixels <= 0f) return@graphicsLayer
 
-    this.renderEffect = BlurEffect(
-        radiusX = horizontalBlurPixels,
-        radiusY = verticalBlurPixels,
-        edgeTreatment = TileMode.Clamp,
-    )
+    this.renderEffect =
+        BlurEffect(
+            radiusX = horizontalBlurPixels,
+            radiusY = verticalBlurPixels,
+            edgeTreatment = TileMode.Clamp,
+        )
 
     this.shape = shape
     this.clip = clip()
@@ -67,7 +68,5 @@ fun Modifier.blockClickEvents() =
         }
     }
 
-inline fun Modifier.ifTrue(
-    predicate: Boolean,
-    block: Modifier.() -> Modifier,
-) = if (predicate) block() else this
+inline fun Modifier.ifTrue(predicate: Boolean, block: Modifier.() -> Modifier) =
+    if (predicate) block() else this

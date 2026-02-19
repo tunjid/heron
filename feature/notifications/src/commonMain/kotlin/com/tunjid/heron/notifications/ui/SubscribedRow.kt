@@ -28,7 +28,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -57,9 +56,7 @@ fun SubscribedRow(
 ) {
     NotificationAggregateScaffold(
         paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-        modifier = modifier.clickable {
-            onPostClicked(notification)
-        },
+        modifier = modifier.clickable { onPostClicked(notification) },
         isRead = isRead,
         notification = notification,
         profiles = aggregatedProfiles,
@@ -68,7 +65,8 @@ fun SubscribedRow(
             Icon(
                 painter = rememberVectorPainter(Icons.Rounded.FiberNew),
                 tint = BookmarkBlue,
-                contentDescription = stringResource(CommonStrings.notifications_post_subscription_description),
+                contentDescription =
+                    stringResource(CommonStrings.notifications_post_subscription_description),
             )
         },
         content = {
@@ -76,12 +74,14 @@ fun SubscribedRow(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
                         modifier = Modifier.alignByBaseline(),
-                        text = notificationText(
-                            notification = notification,
-                            aggregatedSize = aggregatedProfiles.size,
-                            singularResource = CommonStrings.notifications_post_subscription,
-                            pluralResource = CommonStrings.notifications_multiple_post_subscription,
-                        ),
+                        text =
+                            notificationText(
+                                notification = notification,
+                                aggregatedSize = aggregatedProfiles.size,
+                                singularResource = CommonStrings.notifications_post_subscription,
+                                pluralResource =
+                                    CommonStrings.notifications_multiple_post_subscription,
+                            ),
                     )
 
                     TimeDelta(

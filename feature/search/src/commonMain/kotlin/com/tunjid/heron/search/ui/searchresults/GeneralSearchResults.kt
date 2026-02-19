@@ -94,11 +94,13 @@ internal fun GeneralSearchResults(
     onProfileClicked: (Profile, String) -> Unit,
     onViewerStateClicked: (ProfileWithViewerState) -> Unit,
     onLinkTargetClicked: (LinkTarget) -> Unit,
-    onPostSearchResultProfileClicked: (profile: Profile, post: Post, sharedElementPrefix: String) -> Unit,
+    onPostSearchResultProfileClicked:
+        (profile: Profile, post: Post, sharedElementPrefix: String) -> Unit,
     onPostSearchResultClicked: (post: Post, sharedElementPrefix: String) -> Unit,
     onReplyToPost: (post: Post, sharedElementPrefix: String) -> Unit,
     onPostRecordClicked: (record: Record, sharedElementPrefix: String) -> Unit,
-    onMediaClicked: (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
+    onMediaClicked:
+        (media: Embed.Media, index: Int, post: Post, sharedElementPrefix: String) -> Unit,
     onNavigate: (NavigationAction.Destination) -> Unit,
     onSendPostInteraction: (Post.Interaction) -> Unit,
     onFeedGeneratorClicked: (FeedGenerator, String) -> Unit,
@@ -107,83 +109,67 @@ internal fun GeneralSearchResults(
     onMuteAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
     onBlockAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
 ) {
-    Box(
-        modifier = modifier,
-    ) {
-        val updatedSearchStateHolders by rememberUpdatedState(
-            state.searchStateHolders,
-        )
+    Box(modifier = modifier) {
+        val updatedSearchStateHolders by rememberUpdatedState(state.searchStateHolders)
         val scope = rememberCoroutineScope()
         val topClearance = UiTokens.statusBarHeight + UiTokens.toolbarHeight
-        var tabsCollapsed by rememberSaveable {
-            mutableStateOf(false)
-        }
+        var tabsCollapsed by rememberSaveable { mutableStateOf(false) }
         val tabsBackgroundColor = MaterialTheme.colorScheme.surface
         val tabsBackgroundProgress = animateFloatAsState(if (tabsCollapsed) 0f else 1f)
-        val tabsOffsetNestedScrollConnection = rememberAccumulatedOffsetNestedScrollConnection(
-            maxOffset = { Offset.Zero },
-            minOffset = { Offset(x = 0f, y = -UiTokens.toolbarHeight.toPx()) },
-        )
+        val tabsOffsetNestedScrollConnection =
+            rememberAccumulatedOffsetNestedScrollConnection(
+                maxOffset = { Offset.Zero },
+                minOffset = { Offset(x = 0f, y = -UiTokens.toolbarHeight.toPx()) },
+            )
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .zIndex(1f)
-                .offset {
-                    IntOffset(
-                        x = 0,
-                        y = topClearance.roundToPx(),
-                    ) + tabsOffsetNestedScrollConnection.offset.round()
-                }
-                .drawBehind {
-                    drawRect(
-                        color = tabsBackgroundColor,
-                        size = size.copy(width = size.width * tabsBackgroundProgress.value),
-                    )
-                },
-        ) {
-            Tabs(
-                modifier = Modifier
+            modifier =
+                Modifier.fillMaxWidth()
+                    .zIndex(1f)
+                    .offset {
+                        IntOffset(x = 0, y = topClearance.roundToPx()) +
+                            tabsOffsetNestedScrollConnection.offset.round()
+                    }
                     .drawBehind {
-                        val chipHeight = 32.dp.toPx()
-                        drawRoundRect(
+                        drawRect(
                             color = tabsBackgroundColor,
-                            topLeft = Offset(x = 0f, y = (size.height - chipHeight) / 2),
-                            size = size.copy(height = chipHeight),
-                            cornerRadius = CornerRadius(size.maxDimension, size.maxDimension),
+                            size = size.copy(width = size.width * tabsBackgroundProgress.value),
                         )
                     }
-                    .wrapContentWidth()
-                    .animateContentSize(),
-                tabsState = rememberTabsState(
-                    tabs = searchTabs(
-                        isSignedIn = state.signedInProfile != null,
-                        isQueryEditable = state.isQueryEditable,
-                    ),
-                    isCollapsed = tabsCollapsed,
-                    selectedTabIndex = pagerState::tabIndex,
-                    onTabSelected = {
-                        scope.launch {
-                            pagerState.animateScrollToPage(it)
+        ) {
+            Tabs(
+                modifier =
+                    Modifier.drawBehind {
+                            val chipHeight = 32.dp.toPx()
+                            drawRoundRect(
+                                color = tabsBackgroundColor,
+                                topLeft = Offset(x = 0f, y = (size.height - chipHeight) / 2),
+                                size = size.copy(height = chipHeight),
+                                cornerRadius = CornerRadius(size.maxDimension, size.maxDimension),
+                            )
                         }
-                    },
-                    onTabReselected = { },
-                ),
+                        .wrapContentWidth()
+                        .animateContentSize(),
+                tabsState =
+                    rememberTabsState(
+                        tabs =
+                            searchTabs(
+                                isSignedIn = state.signedInProfile != null,
+                                isQueryEditable = state.isQueryEditable,
+                            ),
+                        isCollapsed = tabsCollapsed,
+                        selectedTabIndex = pagerState::tabIndex,
+                        onTabSelected = { scope.launch { pagerState.animateScrollToPage(it) } },
+                        onTabReselected = {},
+                    ),
             )
         }
         HorizontalPager(
-            modifier = Modifier
-                .zIndex(0f)
-                .nestedScroll(tabsOffsetNestedScrollConnection)
-                .clip(
-                    RoundedCornerShape(
-                        topStart = 16.dp,
-                        topEnd = 16.dp,
-                    ),
-                ),
+            modifier =
+                Modifier.zIndex(0f)
+                    .nestedScroll(tabsOffsetNestedScrollConnection)
+                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
             state = pagerState,
-            key = { page ->
-                updatedSearchStateHolders[page].state.value.key
-            },
+            key = { page -> updatedSearchStateHolders[page].state.value.key },
             pageContent = { page ->
                 val searchResultStateHolder = remember { updatedSearchStateHolders[page] }
                 val searchResultState by searchResultStateHolder.state.collectAsStateWithLifecycle()
@@ -251,7 +237,8 @@ internal fun GeneralSearchResults(
                             listState = listState,
                             modifier = modifier,
                             paneScaffoldState = paneScaffoldState,
-                            timelineRecordUrisToPinnedStatus = state.timelineRecordUrisToPinnedStatus,
+                            timelineRecordUrisToPinnedStatus =
+                                state.timelineRecordUrisToPinnedStatus,
                             onFeedGeneratorClicked = onFeedGeneratorClicked,
                             onTimelineUpdateClicked = onTimelineUpdateClicked,
                             searchResultActions = searchResultStateHolder.accept,
@@ -268,25 +255,19 @@ internal fun GeneralSearchResults(
         )
 
         LaunchedEffect(tabsOffsetNestedScrollConnection) {
-            snapshotFlow {
-                tabsOffsetNestedScrollConnection.verticalOffsetProgress() > 0.5f
-            }
+            snapshotFlow { tabsOffsetNestedScrollConnection.verticalOffsetProgress() > 0.5f }
                 .distinctUntilChanged()
-                .collect { isCollapsed ->
-                    tabsCollapsed = isCollapsed
-                }
+                .collect { isCollapsed -> tabsCollapsed = isCollapsed }
         }
     }
 }
 
 @Composable
-private fun searchTabs(
-    isSignedIn: Boolean,
-    isQueryEditable: Boolean,
-): List<Tab> = buildList {
-    if (isSignedIn) add(stringResource(resource = Res.string.top))
-    if (isSignedIn) add(stringResource(resource = Res.string.latest))
-    if (isQueryEditable) add(stringResource(resource = Res.string.people))
-    if (isQueryEditable) add(stringResource(resource = Res.string.feeds))
-}
-    .map { Tab(title = it, hasUpdate = false) }
+private fun searchTabs(isSignedIn: Boolean, isQueryEditable: Boolean): List<Tab> =
+    buildList {
+            if (isSignedIn) add(stringResource(resource = Res.string.top))
+            if (isSignedIn) add(stringResource(resource = Res.string.latest))
+            if (isQueryEditable) add(stringResource(resource = Res.string.people))
+            if (isQueryEditable) add(stringResource(resource = Res.string.feeds))
+        }
+        .map { Tab(title = it, hasUpdate = false) }

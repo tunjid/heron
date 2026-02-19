@@ -47,9 +47,7 @@ internal fun MultipleEntitySaver.add(
     messageView: MessageView,
 ) {
     viewingProfileId ?: return
-    add(
-        entity = stubProfileEntity(messageView.sender.did),
-    )
+    add(entity = stubProfileEntity(messageView.sender.did))
 
     add(
         MessageEntity(
@@ -62,7 +60,7 @@ internal fun MultipleEntitySaver.add(
             isDeleted = false,
             sentAt = messageView.sentAt,
             base64EncodedMetadata = messageView.metadata().toUrlEncodedBase64(),
-        ),
+        )
     )
     messageView.reactions?.forEach { reactionView ->
         add(
@@ -71,66 +69,63 @@ internal fun MultipleEntitySaver.add(
                 messageId = messageView.id.let(::MessageId),
                 senderId = reactionView.sender.did.did.let(::ProfileId),
                 createdAt = reactionView.createdAt,
-            ),
+            )
         )
     }
 
     when (val embed = messageView.embed) {
         is MessageViewEmbedUnion.Unknown -> Unit
-        is MessageViewEmbedUnion.View -> when (val record = embed.value.record) {
-            is RecordViewRecordUnion.FeedGeneratorView -> {
-                add(
-                    feedGeneratorView = record.value,
-                )
-                add(
-                    entity = MessageFeedGeneratorEntity(
+        is MessageViewEmbedUnion.View ->
+            when (val record = embed.value.record) {
+                is RecordViewRecordUnion.FeedGeneratorView -> {
+                    add(feedGeneratorView = record.value)
+                    add(
+                        entity =
+                            MessageFeedGeneratorEntity(
+                                messageId = messageView.id.let(::MessageId),
+                                feedGeneratorUri = record.value.uri.atUri.let(::FeedGeneratorUri),
+                            )
+                    )
+                }
+
+                is RecordViewRecordUnion.GraphListView -> {
+                    add(listView = record.value)
+                    add(
+                        entity =
+                            MessageListEntity(
+                                messageId = messageView.id.let(::MessageId),
+                                listUri = record.value.uri.atUri.let(::ListUri),
+                            )
+                    )
+                }
+
+                is RecordViewRecordUnion.GraphStarterPackViewBasic -> {
+                    add(starterPackView = record.value)
+                    add(
+                        entity =
+                            MessageStarterPackEntity(
+                                messageId = messageView.id.let(::MessageId),
+                                starterPackUri = record.value.uri.atUri.let(::StarterPackUri),
+                            )
+                    )
+                }
+
+                is RecordViewRecordUnion.LabelerLabelerView,
+                is RecordViewRecordUnion.Unknown,
+                is RecordViewRecordUnion.ViewBlocked,
+                is RecordViewRecordUnion.ViewDetached,
+                is RecordViewRecordUnion.ViewNotFound -> {
+                    Unit
+                }
+
+                is RecordViewRecordUnion.ViewRecord -> {
+                    add(
+                        viewingProfileId = viewingProfileId,
                         messageId = messageView.id.let(::MessageId),
-                        feedGeneratorUri = record.value.uri.atUri.let(::FeedGeneratorUri),
-                    ),
-                )
+                        record = record,
+                    )
+                }
             }
-
-            is RecordViewRecordUnion.GraphListView -> {
-                add(
-                    listView = record.value,
-                )
-                add(
-                    entity = MessageListEntity(
-                        messageId = messageView.id.let(::MessageId),
-                        listUri = record.value.uri.atUri.let(::ListUri),
-                    ),
-                )
-            }
-
-            is RecordViewRecordUnion.GraphStarterPackViewBasic -> {
-                add(
-                    starterPackView = record.value,
-                )
-                add(
-                    entity = MessageStarterPackEntity(
-                        messageId = messageView.id.let(::MessageId),
-                        starterPackUri = record.value.uri.atUri.let(::StarterPackUri),
-                    ),
-                )
-            }
-
-            is RecordViewRecordUnion.LabelerLabelerView,
-            is RecordViewRecordUnion.Unknown,
-            is RecordViewRecordUnion.ViewBlocked,
-            is RecordViewRecordUnion.ViewDetached,
-            is RecordViewRecordUnion.ViewNotFound,
-            -> {
-                Unit
-            }
-
-            is RecordViewRecordUnion.ViewRecord -> {
-                add(
-                    viewingProfileId = viewingProfileId,
-                    messageId = messageView.id.let(::MessageId),
-                    record = record,
-                )
-            }
-        }
 
         null -> Unit
     }
@@ -145,39 +140,37 @@ private fun MultipleEntitySaver.add(
     // Here, the first (and only) embed present is actually written.
     val embed = record.value.embeds?.firstOrNull()
 
-    val postView = PostView(
-        uri = record.value.uri,
-        cid = record.value.cid,
-        author = record.value.author,
-        record = record.value.value,
-        embed = when (embed) {
-            is MessagePost.ExternalView -> TimelinePost.ExternalView(embed.value)
-            is MessagePost.ImagesView -> TimelinePost.ImagesView(embed.value)
-            is MessagePost.RecordView -> TimelinePost.RecordView(embed.value)
-            is MessagePost.RecordWithMediaView -> TimelinePost.RecordWithMediaView(embed.value)
-            is MessagePost.Unknown -> TimelinePost.Unknown(embed.value)
-            is MessagePost.VideoView -> TimelinePost.VideoView(embed.value)
-            null -> null
-        },
-        replyCount = record.value.replyCount,
-        repostCount = record.value.repostCount,
-        likeCount = record.value.likeCount,
-        quoteCount = record.value.quoteCount,
-        indexedAt = record.value.indexedAt,
-        viewer = null,
-        labels = record.value.labels,
-        threadgate = null,
-    )
+    val postView =
+        PostView(
+            uri = record.value.uri,
+            cid = record.value.cid,
+            author = record.value.author,
+            record = record.value.value,
+            embed =
+                when (embed) {
+                    is MessagePost.ExternalView -> TimelinePost.ExternalView(embed.value)
+                    is MessagePost.ImagesView -> TimelinePost.ImagesView(embed.value)
+                    is MessagePost.RecordView -> TimelinePost.RecordView(embed.value)
+                    is MessagePost.RecordWithMediaView ->
+                        TimelinePost.RecordWithMediaView(embed.value)
+                    is MessagePost.Unknown -> TimelinePost.Unknown(embed.value)
+                    is MessagePost.VideoView -> TimelinePost.VideoView(embed.value)
+                    null -> null
+                },
+            replyCount = record.value.replyCount,
+            repostCount = record.value.repostCount,
+            likeCount = record.value.likeCount,
+            quoteCount = record.value.quoteCount,
+            indexedAt = record.value.indexedAt,
+            viewer = null,
+            labels = record.value.labels,
+            threadgate = null,
+        )
 
+    add(viewingProfileId = viewingProfileId, postView = postView)
     add(
-        viewingProfileId = viewingProfileId,
-        postView = postView,
-    )
-    add(
-        entity = MessagePostEntity(
-            messageId = messageId,
-            postUri = postView.uri.atUri.let(::PostUri),
-        ),
+        entity =
+            MessagePostEntity(messageId = messageId, postUri = postView.uri.atUri.let(::PostUri))
     )
 }
 
@@ -188,9 +181,7 @@ internal fun MultipleEntitySaver.add(
 ) {
     viewingProfileId ?: return
 
-    add(
-        entity = stubProfileEntity(deletedMessageView.sender.did),
-    )
+    add(entity = stubProfileEntity(deletedMessageView.sender.did))
 
     add(
         MessageEntity(
@@ -203,11 +194,9 @@ internal fun MultipleEntitySaver.add(
             conversationOwnerId = viewingProfileId,
             sentAt = deletedMessageView.sentAt,
             base64EncodedMetadata = null,
-        ),
+        )
     )
 }
 
 private fun MessageView.metadata(): Message.Metadata =
-    Message.Metadata(
-        links = facets?.mapNotNull(Facet::toLinkOrNull) ?: emptyList(),
-    )
+    Message.Metadata(links = facets?.mapNotNull(Facet::toLinkOrNull) ?: emptyList())

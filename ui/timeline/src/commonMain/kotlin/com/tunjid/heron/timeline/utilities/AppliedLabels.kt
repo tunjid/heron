@@ -43,27 +43,17 @@ fun AppliedLabelDialog(
     onDismiss: () -> Unit,
     onLabelerSummaryClicked: (AppliedLabels.LabelerSummary) -> Unit,
 ) {
-    appliedLabels.withPreferredLabelerAndLocaleInfo(
-        languageTag = languageTag,
-        label = label,
-    ) { summary, localeInfo ->
+    appliedLabels.withPreferredLabelerAndLocaleInfo(languageTag = languageTag, label = label) {
+        summary,
+        localeInfo ->
         SimpleDialog(
             onDismissRequest = onDismiss,
-            title = {
-                SimpleDialogTitle(text = localeInfo.name)
-            },
+            title = { SimpleDialogTitle(text = localeInfo.name) },
             text = {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    SimpleDialogText(text = localeInfo.description)
                     SimpleDialogText(
-                        text = localeInfo.description,
-                    )
-                    SimpleDialogText(
-                        text = stringResource(
-                            Res.string.label_source,
-                            summary.creatorHandle.id,
-                        ),
+                        text = stringResource(Res.string.label_source, summary.creatorHandle.id)
                     )
                 }
             },
@@ -76,9 +66,7 @@ fun AppliedLabelDialog(
             confirmButton = {
                 PrimaryDialogButton(
                     text = stringResource(Res.string.view_labeler),
-                    onClick = {
-                        onLabelerSummaryClicked(summary)
-                    },
+                    onClick = { onLabelerSummaryClicked(summary) },
                 )
             },
         )
@@ -94,9 +82,7 @@ inline fun AppliedLabels.forEach(
         withPreferredLabelerAndLocaleInfo(
             languageTag = languageTag,
             label = label,
-            block = { summary, localeInfo ->
-                block(label, summary, localeInfo)
-            },
+            block = { summary, localeInfo -> block(label, summary, localeInfo) },
         )
     }
 }
@@ -112,7 +98,5 @@ inline fun AppliedLabels.withPreferredLabelerAndLocaleInfo(
     val definition = definition(label) ?: return
     val summary = labelerSummary(label) ?: return
 
-    definition.locale(languageTag)?.let { localeInfo ->
-        block(summary, localeInfo)
-    }
+    definition.locale(languageTag)?.let { localeInfo -> block(summary, localeInfo) }
 }

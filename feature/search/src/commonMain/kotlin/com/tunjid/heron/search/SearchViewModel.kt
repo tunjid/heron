@@ -78,10 +78,7 @@ internal typealias SearchStateHolder = ActionStateMutator<Action, StateFlow<Stat
 
 @AssistedFactory
 fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
-        scope: CoroutineScope,
-        route: Route,
-    ): SearchViewModel
+    override fun invoke(scope: CoroutineScope, route: Route): SearchViewModel
 }
 
 @AssistedInject
@@ -95,376 +92,340 @@ class SearchViewModel(
     timelineRepository: TimelineRepository,
     userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
-    @Assisted
-    scope: CoroutineScope,
-    @Assisted
-    route: Route,
-) : ViewModel(viewModelScope = scope),
+    @Assisted scope: CoroutineScope,
+    @Assisted route: Route,
+) :
+    ViewModel(viewModelScope = scope),
     SearchStateHolder by scope.actionStateFlowMutator(
-        initialState = State(
-            currentQuery = route.query,
-            isQueryEditable = route.query.isBlank(),
-            layout = when {
-                route.query.isBlank() -> ScreenLayout.Suggested
-                else -> ScreenLayout.GeneralSearchResults
-            },
-            searchStateHolders = scope.searchStateHolders(
-                initialQuery = route.query,
-                searchRepository = searchRepository,
+        initialState =
+            State(
+                currentQuery = route.query,
+                isQueryEditable = route.query.isBlank(),
+                layout =
+                    when {
+                        route.query.isBlank() -> ScreenLayout.Suggested
+                        else -> ScreenLayout.GeneralSearchResults
+                    },
+                searchStateHolders =
+                    scope.searchStateHolders(
+                        initialQuery = route.query,
+                        searchRepository = searchRepository,
+                    ),
             ),
-        ),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        inputs = listOf(
-            loadProfileMutations(authRepository),
-            trendsMutations(searchRepository),
-            suggestedStarterPackMutations(
-                searchRepository = searchRepository,
-                profileRepository = profileRepository,
+        inputs =
+            listOf(
+                loadProfileMutations(authRepository),
+                trendsMutations(searchRepository),
+                suggestedStarterPackMutations(
+                    searchRepository = searchRepository,
+                    profileRepository = profileRepository,
+                ),
+                suggestedFeedGeneratorMutations(searchRepository = searchRepository),
+                feedGeneratorUrisToStatusMutations(timelineRepository = timelineRepository),
+                recentConversationMutations(messageRepository = messageRepository),
+                loadPreferencesMutations(userDataRepository = userDataRepository),
             ),
-            suggestedFeedGeneratorMutations(
-                searchRepository = searchRepository,
-            ),
-            feedGeneratorUrisToStatusMutations(
-                timelineRepository = timelineRepository,
-            ),
-            recentConversationMutations(
-                messageRepository = messageRepository,
-            ),
-            loadPreferencesMutations(
-                userDataRepository = userDataRepository,
-            ),
-        ),
         actionTransform = transform@{ actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.Search -> action.flow.searchQueryMutations(
-                        coroutineScope = scope,
-                        searchRepository = searchRepository,
-                    )
+                actions.toMutationStream(keySelector = Action::key) {
+                    when (val action = type()) {
+                        is Action.Search ->
+                            action.flow.searchQueryMutations(
+                                coroutineScope = scope,
+                                searchRepository = searchRepository,
+                            )
 
-                    is Action.FetchSuggestedProfiles -> action.flow.suggestedProfilesMutations(
-                        searchRepository = searchRepository,
-                    )
+                        is Action.FetchSuggestedProfiles ->
+                            action.flow.suggestedProfilesMutations(
+                                searchRepository = searchRepository
+                            )
 
-                    is Action.SendPostInteraction -> action.flow.postInteractionMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+                        is Action.SendPostInteraction ->
+                            action.flow.postInteractionMutations(writeQueue = writeQueue)
+                        is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
 
-                    is Action.ToggleViewerState -> action.flow.toggleViewerStateMutations(
-                        writeQueue = writeQueue,
-                    )
+                        is Action.ToggleViewerState ->
+                            action.flow.toggleViewerStateMutations(writeQueue = writeQueue)
 
-                    is Action.UpdateFeedGeneratorStatus -> action.flow.feedGeneratorStatusMutations(
-                        writeQueue = writeQueue,
-                    )
+                        is Action.UpdateFeedGeneratorStatus ->
+                            action.flow.feedGeneratorStatusMutations(writeQueue = writeQueue)
 
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
-                    is Action.UpdateMutedWord -> action.flow.updateMutedWordMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.BlockAccount -> action.flow.blockAccountMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.MuteAccount -> action.flow.muteAccountMutations(
-                        writeQueue = writeQueue,
-                    )
-                    is Action.UpdateRecentLists -> action.flow.recentListsMutations(
-                        recordRepository = recordRepository,
-                    )
+                        is Action.Navigate ->
+                            action.flow.consumeNavigationActions(
+                                navigationMutationConsumer = navActions
+                            )
+                        is Action.UpdateMutedWord ->
+                            action.flow.updateMutedWordMutations(writeQueue = writeQueue)
+                        is Action.BlockAccount ->
+                            action.flow.blockAccountMutations(writeQueue = writeQueue)
+                        is Action.MuteAccount ->
+                            action.flow.muteAccountMutations(writeQueue = writeQueue)
+                        is Action.UpdateRecentLists ->
+                            action.flow.recentListsMutations(recordRepository = recordRepository)
+                    }
                 }
-            }
-        },
+            },
     )
 
-private fun loadProfileMutations(
-    authRepository: AuthRepository,
-): Flow<Mutation<State>> =
+private fun loadProfileMutations(authRepository: AuthRepository): Flow<Mutation<State>> =
     authRepository.signedInUser.mapToMutation { signedInProfile ->
         val isSignedIn = signedInProfile != null
         copy(
             signedInProfile = signedInProfile,
-            searchStateHolders = searchStateHolders.filter { mutator ->
-                when (mutator.state.value) {
-                    is SearchState.OfFeedGenerators -> true
-                    is SearchState.OfPosts -> isSignedIn
-                    is SearchState.OfProfiles -> true
-                }
-            },
+            searchStateHolders =
+                searchStateHolders.filter { mutator ->
+                    when (mutator.state.value) {
+                        is SearchState.OfFeedGenerators -> true
+                        is SearchState.OfPosts -> isSignedIn
+                        is SearchState.OfProfiles -> true
+                    }
+                },
         )
     }
 
-fun recentConversationMutations(
-    messageRepository: MessageRepository,
-): Flow<Mutation<State>> =
-    messageRepository.recentConversations()
-        .mapToMutation { conversations ->
-            copy(recentConversations = conversations)
-        }
+fun recentConversationMutations(messageRepository: MessageRepository): Flow<Mutation<State>> =
+    messageRepository.recentConversations().mapToMutation { conversations ->
+        copy(recentConversations = conversations)
+    }
 
 private fun loadPreferencesMutations(
-    userDataRepository: UserDataRepository,
-): Flow<Mutation<State>> =
-    userDataRepository.preferences
-        .mapToMutation {
-            copy(preferences = it)
-        }
+    userDataRepository: UserDataRepository
+): Flow<Mutation<State>> = userDataRepository.preferences.mapToMutation { copy(preferences = it) }
 
-private fun trendsMutations(
-    searchRepository: SearchRepository,
-): Flow<Mutation<State>> =
-    searchRepository.trends().mapToMutation {
-        copy(trends = it)
-    }
+private fun trendsMutations(searchRepository: SearchRepository): Flow<Mutation<State>> =
+    searchRepository.trends().mapToMutation { copy(trends = it) }
 
 private fun suggestedStarterPackMutations(
     searchRepository: SearchRepository,
     profileRepository: ProfileRepository,
 ): Flow<Mutation<State>> =
-    searchRepository.suggestedStarterPacks()
-        .flatMapLatest { starterPacks ->
-            val starterPackListUris = starterPacks.mapNotNull { it.list?.uri }
-            val listMembersFlow = starterPackListUris.map { listUri ->
+    searchRepository.suggestedStarterPacks().flatMapLatest { starterPacks ->
+        val starterPackListUris = starterPacks.mapNotNull { it.list?.uri }
+        val listMembersFlow =
+            starterPackListUris.map { listUri ->
                 profileRepository.listMembers(
-                    query = ListMemberQuery(
-                        listUri = listUri,
-                        data = CursorQuery.Data(
-                            page = 0,
-                            cursorAnchor = Clock.System.now(),
-                            limit = 10,
+                    query =
+                        ListMemberQuery(
+                            listUri = listUri,
+                            data =
+                                CursorQuery.Data(
+                                    page = 0,
+                                    cursorAnchor = Clock.System.now(),
+                                    limit = 10,
+                                ),
                         ),
-                    ),
                     cursor = Cursor.Initial,
                 )
             }
 
-            val starterPackWithMembersList = starterPacks.map { starterPack ->
-                SuggestedStarterPack(
-                    starterPack = starterPack,
-                    members = emptyList(),
-                )
+        val starterPackWithMembersList =
+            starterPacks.map { starterPack ->
+                SuggestedStarterPack(starterPack = starterPack, members = emptyList())
             }
 
-            listMembersFlow
-                .merge()
-                .scan(starterPackWithMembersList) { list, fetchedMembers ->
-                    val listUri = fetchedMembers.firstOrNull()?.listUri ?: return@scan list
-                    list.map { packWithMembers ->
-                        if (packWithMembers.starterPack.list?.uri == listUri) packWithMembers.copy(
-                            members = fetchedMembers,
-                        )
-                        else packWithMembers
-                    }
+        listMembersFlow
+            .merge()
+            .scan(starterPackWithMembersList) { list, fetchedMembers ->
+                val listUri = fetchedMembers.firstOrNull()?.listUri ?: return@scan list
+                list.map { packWithMembers ->
+                    if (packWithMembers.starterPack.list?.uri == listUri)
+                        packWithMembers.copy(members = fetchedMembers)
+                    else packWithMembers
                 }
-                .mapToMutation { copy(starterPacksWithMembers = it) }
-        }
+            }
+            .mapToMutation { copy(starterPacksWithMembers = it) }
+    }
 
 private fun suggestedFeedGeneratorMutations(
-    searchRepository: SearchRepository,
+    searchRepository: SearchRepository
 ): Flow<Mutation<State>> =
-    searchRepository.suggestedFeeds()
-        .mapToMutation { copy(feedGenerators = it) }
+    searchRepository.suggestedFeeds().mapToMutation { copy(feedGenerators = it) }
 
 private fun feedGeneratorUrisToStatusMutations(
-    timelineRepository: TimelineRepository,
+    timelineRepository: TimelineRepository
 ): Flow<Mutation<State>> =
     timelineRepository.preferences
         .distinctUntilChangedBy { it.timelinePreferences }
         .mapToMutation { preferences ->
             copy(
-                timelineRecordUrisToPinnedStatus = preferences.timelinePreferences
-                    .associateBy(
+                timelineRecordUrisToPinnedStatus =
+                    preferences.timelinePreferences.associateBy(
                         keySelector = TimelinePreference::timelineRecordUri,
                         valueTransform = TimelinePreference::pinned,
-                    ),
+                    )
             )
         }
 
 private fun Flow<Action.FetchSuggestedProfiles>.suggestedProfilesMutations(
-    searchRepository: SearchRepository,
-): Flow<Mutation<State>> =
-    flatMapLatest { action ->
-        searchRepository.suggestedProfiles(
-            category = action.category,
-        )
-            .mapLatest { suggestedProfiles ->
-                action.category to suggestedProfiles
-            }
-            .mapToMutation { categoryToProfiles ->
-                copy(
-                    categoriesToSuggestedProfiles = categoriesToSuggestedProfiles + categoryToProfiles,
-                )
-            }
-    }
+    searchRepository: SearchRepository
+): Flow<Mutation<State>> = flatMapLatest { action ->
+    searchRepository
+        .suggestedProfiles(category = action.category)
+        .mapLatest { suggestedProfiles -> action.category to suggestedProfiles }
+        .mapToMutation { categoryToProfiles ->
+            copy(categoriesToSuggestedProfiles = categoriesToSuggestedProfiles + categoryToProfiles)
+        }
+}
 
 private fun Flow<Action.Search>.searchQueryMutations(
     coroutineScope: CoroutineScope,
     searchRepository: SearchRepository,
 ): Flow<Mutation<State>> {
-    val shared = shareIn(
-        scope = coroutineScope,
-        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
-        replay = 1,
-    )
+    val shared =
+        shareIn(
+            scope = coroutineScope,
+            started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+            replay = 1,
+        )
     return merge(
-        shared
-            .mapToMutation { action ->
-                when (action) {
-                    is Action.Search.OnSearchQueryChanged -> copy(
+        shared.mapToMutation { action ->
+            when (action) {
+                is Action.Search.OnSearchQueryChanged ->
+                    copy(
                         currentQuery = action.query,
                         layout =
-                        if (action.query.isNotBlank()) ScreenLayout.AutoCompleteProfiles
-                        else ScreenLayout.Suggested,
+                            if (action.query.isNotBlank()) ScreenLayout.AutoCompleteProfiles
+                            else ScreenLayout.Suggested,
                     )
 
-                    is Action.Search.OnSearchQueryConfirmed -> {
-                        searchStateHolders.forEach {
-                            val confirmedQuery = when (val searchState = it.state.value) {
-                                is SearchState.OfPosts -> when (searchState.tilingData.currentQuery) {
-                                    is SearchQuery.OfPosts.Latest -> SearchQuery.OfPosts.Latest(
+                is Action.Search.OnSearchQueryConfirmed -> {
+                    searchStateHolders.forEach {
+                        val confirmedQuery =
+                            when (val searchState = it.state.value) {
+                                is SearchState.OfPosts ->
+                                    when (searchState.tilingData.currentQuery) {
+                                        is SearchQuery.OfPosts.Latest ->
+                                            SearchQuery.OfPosts.Latest(
+                                                query = currentQuery,
+                                                isLocalOnly = action.isLocalOnly,
+                                                data = defaultSearchQueryData(),
+                                            )
+
+                                        is SearchQuery.OfPosts.Top ->
+                                            SearchQuery.OfPosts.Top(
+                                                query = currentQuery,
+                                                isLocalOnly = action.isLocalOnly,
+                                                data = defaultSearchQueryData(),
+                                            )
+                                    }
+
+                                is SearchState.OfProfiles ->
+                                    SearchQuery.OfProfiles(
                                         query = currentQuery,
                                         isLocalOnly = action.isLocalOnly,
                                         data = defaultSearchQueryData(),
                                     )
 
-                                    is SearchQuery.OfPosts.Top -> SearchQuery.OfPosts.Top(
+                                is SearchState.OfFeedGenerators ->
+                                    SearchQuery.OfFeedGenerators(
                                         query = currentQuery,
                                         isLocalOnly = action.isLocalOnly,
                                         data = defaultSearchQueryData(),
                                     )
-                                }
-
-                                is SearchState.OfProfiles -> SearchQuery.OfProfiles(
-                                    query = currentQuery,
-                                    isLocalOnly = action.isLocalOnly,
-                                    data = defaultSearchQueryData(),
-                                )
-
-                                is SearchState.OfFeedGenerators -> SearchQuery.OfFeedGenerators(
-                                    query = currentQuery,
-                                    isLocalOnly = action.isLocalOnly,
-                                    data = defaultSearchQueryData(),
-                                )
                             }
 
-                            it.accept(
-                                SearchState.Tile(
-                                    tilingAction = TilingState.Action.LoadAround(confirmedQuery),
-                                ),
+                        it.accept(
+                            SearchState.Tile(
+                                tilingAction = TilingState.Action.LoadAround(confirmedQuery)
                             )
-                        }
-                        copy(
-                            layout = ScreenLayout.GeneralSearchResults,
                         )
                     }
+                    copy(layout = ScreenLayout.GeneralSearchResults)
                 }
-            },
+            }
+        },
         shared
             .filterIsInstance<Action.Search.OnSearchQueryChanged>()
             .debounce(300.milliseconds.inWholeMilliseconds)
             .flatMapLatest {
                 searchRepository.autoCompleteProfileSearch(
-                    query = SearchQuery.OfProfiles(
-                        query = it.query,
-                        isLocalOnly = false,
-                        data = defaultSearchQueryData(),
-                    ),
+                    query =
+                        SearchQuery.OfProfiles(
+                            query = it.query,
+                            isLocalOnly = false,
+                            data = defaultSearchQueryData(),
+                        ),
                     cursor = Cursor.Initial,
                 )
             }
             .mapToMutation { profileWithViewerStates ->
-                copy(
-                    autoCompletedProfiles = profileWithViewerStates
-                        .map(SearchResult::OfProfile),
-                )
+                copy(autoCompletedProfiles = profileWithViewerStates.map(SearchResult::OfProfile))
             },
     )
 }
 
 private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
-    writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        val writable = Writable.Connection(
+    writeQueue: WriteQueue
+): Flow<Mutation<State>> = mapToManyMutations { action ->
+    val writable =
+        Writable.Connection(
             when (val following = action.following) {
-                null -> Profile.Connection.Follow(
-                    signedInProfileId = action.signedInProfileId,
-                    profileId = action.viewedProfileId,
-                    followedBy = action.followedBy,
-                )
+                null ->
+                    Profile.Connection.Follow(
+                        signedInProfileId = action.signedInProfileId,
+                        profileId = action.viewedProfileId,
+                        followedBy = action.followedBy,
+                    )
 
-                else -> Profile.Connection.Unfollow(
-                    signedInProfileId = action.signedInProfileId,
-                    profileId = action.viewedProfileId,
-                    followUri = following,
-                    followedBy = action.followedBy,
-                )
-            },
+                else ->
+                    Profile.Connection.Unfollow(
+                        signedInProfileId = action.signedInProfileId,
+                        profileId = action.viewedProfileId,
+                        followUri = following,
+                        followedBy = action.followedBy,
+                    )
+            }
         )
-        val status = writeQueue.enqueue(writable)
-        writable.writeStatusMessage(status)?.let {
-            emit { copy(messages = messages + it) }
-        }
-    }
+    val status = writeQueue.enqueue(writable)
+    writable.writeStatusMessage(status)?.let { emit { copy(messages = messages + it) } }
+}
 
 private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
-    writeQueue: WriteQueue,
+    writeQueue: WriteQueue
 ): Flow<Mutation<State>> = mapToManyMutations {
-    val writable = Writable.TimelineUpdate(
-        Timeline.Update.OfMutedWord.ReplaceAll(
-            mutedWordPreferences = it.mutedWordPreference,
-        ),
-    )
+    val writable =
+        Writable.TimelineUpdate(
+            Timeline.Update.OfMutedWord.ReplaceAll(mutedWordPreferences = it.mutedWordPreference)
+        )
     val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
+    writable.writeStatusMessage(status)?.let { emit { copy(messages = messages + it) } }
 }
 
 private fun Flow<Action.BlockAccount>.blockAccountMutations(
-    writeQueue: WriteQueue,
+    writeQueue: WriteQueue
 ): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
-    val writable = Writable.Restriction(
-        Profile.Restriction.Block.Add(
-            signedInProfileId = action.signedInProfileId,
-            profileId = action.profileId,
-        ),
-    )
+    val writable =
+        Writable.Restriction(
+            Profile.Restriction.Block.Add(
+                signedInProfileId = action.signedInProfileId,
+                profileId = action.profileId,
+            )
+        )
     val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
+    writable.writeStatusMessage(status)?.let { emit { copy(messages = messages + it) } }
 }
 
 private fun Flow<Action.MuteAccount>.muteAccountMutations(
-    writeQueue: WriteQueue,
+    writeQueue: WriteQueue
 ): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
-    val writable = Writable.Restriction(
-        Profile.Restriction.Mute.Add(
-            signedInProfileId = action.signedInProfileId,
-            profileId = action.profileId,
-        ),
-    )
+    val writable =
+        Writable.Restriction(
+            Profile.Restriction.Mute.Add(
+                signedInProfileId = action.signedInProfileId,
+                profileId = action.profileId,
+            )
+        )
     val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
+    writable.writeStatusMessage(status)?.let { emit { copy(messages = messages + it) } }
 }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
-    writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        val writable = Writable.Interaction(action.interaction)
-        val status = writeQueue.enqueue(writable)
-        writable.writeStatusMessage(status)?.let {
-            emit { copy(messages = messages + it) }
-        }
-    }
+    writeQueue: WriteQueue
+): Flow<Mutation<State>> = mapToManyMutations { action ->
+    val writable = Writable.Interaction(action.interaction)
+    val status = writeQueue.enqueue(writable)
+    writable.writeStatusMessage(status)?.let { emit { copy(messages = messages + it) } }
+}
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
@@ -472,164 +433,177 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
     }
 
 private fun Flow<Action.UpdateFeedGeneratorStatus>.feedGeneratorStatusMutations(
-    writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        val writable = Writable.TimelineUpdate(action.update)
-        val status = writeQueue.enqueue(writable)
-        writable.writeStatusMessage(status)?.let {
-            emit { copy(messages = messages + it) }
-        }
-    }
+    writeQueue: WriteQueue
+): Flow<Mutation<State>> = mapToManyMutations { action ->
+    val writable = Writable.TimelineUpdate(action.update)
+    val status = writeQueue.enqueue(writable)
+    writable.writeStatusMessage(status)?.let { emit { copy(messages = messages + it) } }
+}
 
 fun Flow<Action.UpdateRecentLists>.recentListsMutations(
-    recordRepository: RecordRepository,
-): Flow<Mutation<State>> =
-    flatMapLatest {
-        recordRepository.recentLists
-            .mapToMutation { lists ->
-                copy(recentLists = lists)
-            }
-    }
+    recordRepository: RecordRepository
+): Flow<Mutation<State>> = flatMapLatest {
+    recordRepository.recentLists.mapToMutation { lists -> copy(recentLists = lists) }
+}
 
 private fun CoroutineScope.searchStateHolders(
     initialQuery: String,
     searchRepository: SearchRepository,
-): List<SearchResultStateHolder> = buildList {
-    add(
-        SearchState.OfPosts(
-            tilingData = TilingState.Data(
-                currentQuery = SearchQuery.OfPosts.Top(
-                    query = initialQuery,
-                    isLocalOnly = false,
-                    data = defaultSearchQueryData(),
-                ),
-            ),
-        ),
-    )
-    add(
-        SearchState.OfPosts(
-            tilingData = TilingState.Data(
-                currentQuery = SearchQuery.OfPosts.Latest(
-                    query = initialQuery,
-                    isLocalOnly = false,
-                    data = defaultSearchQueryData(),
-                ),
-            ),
-        ),
-    )
-    if (initialQuery.isBlank()) add(
-        SearchState.OfProfiles(
-            tilingData = TilingState.Data(
-                currentQuery = SearchQuery.OfProfiles(
-                    query = initialQuery,
-                    isLocalOnly = false,
-                    data = defaultSearchQueryData(),
-                ),
-            ),
-        ),
-    )
-    if (initialQuery.isBlank()) add(
-        SearchState.OfFeedGenerators(
-            tilingData = TilingState.Data(
-                currentQuery = SearchQuery.OfFeedGenerators(
-                    query = initialQuery,
-                    isLocalOnly = false,
-                    data = defaultSearchQueryData(),
-                ),
-            ),
-        ),
-    )
-}.map { searchState: SearchState ->
-    when (searchState) {
-        is SearchState.OfPosts -> actionStateFlowMutator(
-            initialState = searchState,
-            actionTransform = transform@{ actions ->
-                actions.toMutationStream {
-                    type().flow.map { it.tilingAction }
-                        .tilingMutations(
-                            currentState = { this@transform.state() },
-                            updateQueryData = {
-                                when (this) {
-                                    is SearchQuery.OfPosts.Latest -> copy(data = it)
-                                    is SearchQuery.OfPosts.Top -> copy(data = it)
-                                }
-                            },
-                            refreshQuery = {
-                                when (this) {
-                                    is SearchQuery.OfPosts.Latest -> copy(data = data.reset())
-                                    is SearchQuery.OfPosts.Top -> copy(data = data.reset())
-                                }
-                            },
-                            cursorListLoader = { query, cursor ->
-                                searchRepository::postSearch.mapCursorList { post ->
-                                    SearchResult.OfPost(
-                                        timelineItem = post,
+): List<SearchResultStateHolder> =
+    buildList {
+            add(
+                SearchState.OfPosts(
+                    tilingData =
+                        TilingState.Data(
+                            currentQuery =
+                                SearchQuery.OfPosts.Top(
+                                    query = initialQuery,
+                                    isLocalOnly = false,
+                                    data = defaultSearchQueryData(),
+                                )
+                        )
+                )
+            )
+            add(
+                SearchState.OfPosts(
+                    tilingData =
+                        TilingState.Data(
+                            currentQuery =
+                                SearchQuery.OfPosts.Latest(
+                                    query = initialQuery,
+                                    isLocalOnly = false,
+                                    data = defaultSearchQueryData(),
+                                )
+                        )
+                )
+            )
+            if (initialQuery.isBlank())
+                add(
+                    SearchState.OfProfiles(
+                        tilingData =
+                            TilingState.Data(
+                                currentQuery =
+                                    SearchQuery.OfProfiles(
+                                        query = initialQuery,
+                                        isLocalOnly = false,
+                                        data = defaultSearchQueryData(),
                                     )
-                                }.invoke(query, cursor)
+                            )
+                    )
+                )
+            if (initialQuery.isBlank())
+                add(
+                    SearchState.OfFeedGenerators(
+                        tilingData =
+                            TilingState.Data(
+                                currentQuery =
+                                    SearchQuery.OfFeedGenerators(
+                                        query = initialQuery,
+                                        isLocalOnly = false,
+                                        data = defaultSearchQueryData(),
+                                    )
+                            )
+                    )
+                )
+        }
+        .map { searchState: SearchState ->
+            when (searchState) {
+                is SearchState.OfPosts ->
+                    actionStateFlowMutator(
+                        initialState = searchState,
+                        actionTransform = transform@{ actions ->
+                                actions.toMutationStream {
+                                    type()
+                                        .flow
+                                        .map { it.tilingAction }
+                                        .tilingMutations(
+                                            currentState = { this@transform.state() },
+                                            updateQueryData = {
+                                                when (this) {
+                                                    is SearchQuery.OfPosts.Latest -> copy(data = it)
+                                                    is SearchQuery.OfPosts.Top -> copy(data = it)
+                                                }
+                                            },
+                                            refreshQuery = {
+                                                when (this) {
+                                                    is SearchQuery.OfPosts.Latest ->
+                                                        copy(data = data.reset())
+                                                    is SearchQuery.OfPosts.Top ->
+                                                        copy(data = data.reset())
+                                                }
+                                            },
+                                            cursorListLoader = { query, cursor ->
+                                                searchRepository::postSearch
+                                                    .mapCursorList { post ->
+                                                        SearchResult.OfPost(timelineItem = post)
+                                                    }
+                                                    .invoke(query, cursor)
+                                            },
+                                            onNewItems = { items ->
+                                                items.distinctBy { it.timelineItem.id }
+                                            },
+                                            queryRefreshBy = { it.query to it.data.cursorAnchor },
+                                            onTilingDataUpdated = { copy(tilingData = it) },
+                                        )
+                                }
                             },
-                            onNewItems = { items ->
-                                items.distinctBy { it.timelineItem.id }
-                            },
-                            queryRefreshBy = {
-                                it.query to it.data.cursorAnchor
-                            },
-                            onTilingDataUpdated = { copy(tilingData = it) },
-                        )
-                }
-            },
-        )
+                    )
 
-        is SearchState.OfProfiles -> actionStateFlowMutator(
-            initialState = searchState,
-            actionTransform = transform@{ actions ->
-                actions.toMutationStream {
-                    type().flow.map { it.tilingAction }
-                        .tilingMutations(
-                            currentState = { this@transform.state() },
-                            updateQueryData = { copy(data = it) },
-                            refreshQuery = { copy(data = data.reset()) },
-                            cursorListLoader = searchRepository::profileSearch
-                                .mapCursorList(SearchResult::OfProfile),
-                            onNewItems = { items ->
-                                items.distinctBy { it.profileWithViewerState.profile.did }
+                is SearchState.OfProfiles ->
+                    actionStateFlowMutator(
+                        initialState = searchState,
+                        actionTransform = transform@{ actions ->
+                                actions.toMutationStream {
+                                    type()
+                                        .flow
+                                        .map { it.tilingAction }
+                                        .tilingMutations(
+                                            currentState = { this@transform.state() },
+                                            updateQueryData = { copy(data = it) },
+                                            refreshQuery = { copy(data = data.reset()) },
+                                            cursorListLoader =
+                                                searchRepository::profileSearch.mapCursorList(
+                                                    SearchResult::OfProfile
+                                                ),
+                                            onNewItems = { items ->
+                                                items.distinctBy {
+                                                    it.profileWithViewerState.profile.did
+                                                }
+                                            },
+                                            queryRefreshBy = { it.query to it.data.cursorAnchor },
+                                            onTilingDataUpdated = { copy(tilingData = it) },
+                                        )
+                                }
                             },
-                            queryRefreshBy = {
-                                it.query to it.data.cursorAnchor
-                            },
-                            onTilingDataUpdated = { copy(tilingData = it) },
-                        )
-                }
-            },
-        )
+                    )
 
-        is SearchState.OfFeedGenerators -> actionStateFlowMutator(
-            initialState = searchState,
-            actionTransform = transform@{ actions ->
-                actions.toMutationStream {
-                    type().flow.map { it.tilingAction }
-                        .tilingMutations(
-                            currentState = { this@transform.state() },
-                            updateQueryData = { copy(data = it) },
-                            refreshQuery = { copy(data = data.reset()) },
-                            cursorListLoader = searchRepository::feedGeneratorSearch
-                                .mapCursorList(SearchResult::OfFeedGenerator),
-                            onNewItems = { items ->
-                                items.distinctBy { it.feedGenerator.cid }
+                is SearchState.OfFeedGenerators ->
+                    actionStateFlowMutator(
+                        initialState = searchState,
+                        actionTransform = transform@{ actions ->
+                                actions.toMutationStream {
+                                    type()
+                                        .flow
+                                        .map { it.tilingAction }
+                                        .tilingMutations(
+                                            currentState = { this@transform.state() },
+                                            updateQueryData = { copy(data = it) },
+                                            refreshQuery = { copy(data = data.reset()) },
+                                            cursorListLoader =
+                                                searchRepository::feedGeneratorSearch.mapCursorList(
+                                                    SearchResult::OfFeedGenerator
+                                                ),
+                                            onNewItems = { items ->
+                                                items.distinctBy { it.feedGenerator.cid }
+                                            },
+                                            queryRefreshBy = { it.query to it.data.cursorAnchor },
+                                            onTilingDataUpdated = { copy(tilingData = it) },
+                                        )
+                                }
                             },
-                            queryRefreshBy = {
-                                it.query to it.data.cursorAnchor
-                            },
-                            onTilingDataUpdated = { copy(tilingData = it) },
-                        )
-                }
-            },
-        )
-    }
-}
+                    )
+            }
+        }
 
-private fun defaultSearchQueryData() = CursorQuery.Data(
-    page = 0,
-    cursorAnchor = Clock.System.now(),
-    limit = 15,
-)
+private fun defaultSearchQueryData() =
+    CursorQuery.Data(page = 0, cursorAnchor = Clock.System.now(), limit = 15)

@@ -25,6 +25,7 @@ import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 
 sealed interface MediaType {
     data object Photo : MediaType
+
     data object Video : MediaType
 }
 
@@ -34,42 +35,36 @@ fun rememberMediaPicker(
     maxItems: Int?,
     onItemsPicked: (List<RestrictedFile.Media>) -> Unit,
 ): () -> Unit {
-    val fileKitType = when (mediaType) {
-        MediaType.Photo -> FileKitType.Image
-        MediaType.Video -> FileKitType.Video
-    }
-
-    val launcher = when (maxItems) {
-        1 -> rememberFilePickerLauncher(
-            type = fileKitType,
-            mode = FileKitMode.Single,
-        ) { file ->
-            onItemsPicked(
-                when (mediaType) {
-                    MediaType.Photo -> file?.let(RestrictedFile::photo)
-                    MediaType.Video -> file?.let(RestrictedFile::video)
-                }
-                    ?.let(::listOf)
-                    ?: emptyList(),
-            )
+    val fileKitType =
+        when (mediaType) {
+            MediaType.Photo -> FileKitType.Image
+            MediaType.Video -> FileKitType.Video
         }
-        else -> rememberFilePickerLauncher(
-            type = fileKitType,
-            mode = FileKitMode.Multiple(
-                maxItems = maxItems,
-            ),
-        ) { files ->
-            onItemsPicked(
-                when (mediaType) {
-                    MediaType.Photo -> files?.map(RestrictedFile::photo)
-                    MediaType.Video -> files?.map(RestrictedFile::video)
-                }
-                    ?: emptyList(),
-            )
-        }
-    }
 
-    return remember(launcher) {
-        launcher::launch
-    }
+    val launcher =
+        when (maxItems) {
+            1 ->
+                rememberFilePickerLauncher(type = fileKitType, mode = FileKitMode.Single) { file ->
+                    onItemsPicked(
+                        when (mediaType) {
+                            MediaType.Photo -> file?.let(RestrictedFile::photo)
+                            MediaType.Video -> file?.let(RestrictedFile::video)
+                        }?.let(::listOf) ?: emptyList()
+                    )
+                }
+            else ->
+                rememberFilePickerLauncher(
+                    type = fileKitType,
+                    mode = FileKitMode.Multiple(maxItems = maxItems),
+                ) { files ->
+                    onItemsPicked(
+                        when (mediaType) {
+                            MediaType.Photo -> files?.map(RestrictedFile::photo)
+                            MediaType.Video -> files?.map(RestrictedFile::video)
+                        } ?: emptyList()
+                    )
+                }
+        }
+
+    return remember(launcher) { launcher::launch }
 }

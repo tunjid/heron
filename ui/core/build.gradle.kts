@@ -21,13 +21,9 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
-compose.resources {
-    publicResClass = true
-}
+compose.resources { publicResClass = true }
 
-android {
-    namespace = "com.tunjid.heron.ui.core"
-}
+android { namespace = "com.tunjid.heron.ui.core" }
 
 kotlin {
     sourceSets {
@@ -57,20 +53,12 @@ kotlin {
                 implementation(libs.tunjid.treenav.strings)
             }
         }
-        androidMain {
-            dependencies {
-                implementation(libs.ktor.client.android)
-            }
-        }
-        desktopMain {
-            dependencies {
-                implementation(libs.ktor.client.java)
-            }
-        }
-//        iosMain {
-//            dependencies {
-//                implementation(libs.ktor.client.darwin)
-//            }
-//        }
+        androidMain { dependencies { implementation(libs.ktor.client.android) } }
+        desktopMain { dependencies { implementation(libs.ktor.client.java) } }
+        //        iosMain {
+        //            dependencies {
+        //                implementation(libs.ktor.client.darwin)
+        //            }
+        //        }
     }
 }

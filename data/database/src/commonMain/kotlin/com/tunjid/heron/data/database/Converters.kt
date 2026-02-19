@@ -48,127 +48,80 @@ import kotlin.time.Instant
 
 internal class DateConverters {
     @TypeConverter
-    fun fromTimestamp(value: Long?): Instant? =
-        value?.let(Instant.Companion::fromEpochMilliseconds)
+    fun fromTimestamp(value: Long?): Instant? = value?.let(Instant.Companion::fromEpochMilliseconds)
 
-    @TypeConverter
-    fun dateToTimestamp(instant: Instant?): Long? =
-        instant?.toEpochMilliseconds()
+    @TypeConverter fun dateToTimestamp(instant: Instant?): Long? = instant?.toEpochMilliseconds()
 }
 
 internal class UriConverters {
 
-    @TypeConverter
-    fun fromString(value: String?): Uri? =
-        value?.let(::GenericUri)
+    @TypeConverter fun fromString(value: String?): Uri? = value?.let(::GenericUri)
 
-    @TypeConverter
-    fun genericUriFromString(value: String?): GenericUri? =
-        value?.let(::GenericUri)
+    @TypeConverter fun genericUriFromString(value: String?): GenericUri? = value?.let(::GenericUri)
 
-    @TypeConverter
-    fun postUriFromString(value: String?): PostUri? =
-        value?.let(::PostUri)
+    @TypeConverter fun postUriFromString(value: String?): PostUri? = value?.let(::PostUri)
 
-    @TypeConverter
-    fun profileUriFromString(value: String?): ProfileUri? =
-        value?.let(::ProfileUri)
+    @TypeConverter fun profileUriFromString(value: String?): ProfileUri? = value?.let(::ProfileUri)
 
     @TypeConverter
     fun feedGeneratorUriFromString(value: String?): FeedGeneratorUri? =
         value?.let(::FeedGeneratorUri)
 
-    @TypeConverter
-    fun listUriFromString(value: String?): ListUri? =
-        value?.let(::ListUri)
+    @TypeConverter fun listUriFromString(value: String?): ListUri? = value?.let(::ListUri)
 
     @TypeConverter
-    fun starterPackUriFromString(value: String?): StarterPackUri? =
-        value?.let(::StarterPackUri)
+    fun starterPackUriFromString(value: String?): StarterPackUri? = value?.let(::StarterPackUri)
+
+    @TypeConverter fun labelerUriFromString(value: String?): LabelerUri? = value?.let(::LabelerUri)
 
     @TypeConverter
-    fun labelerUriFromString(value: String?): LabelerUri? =
-        value?.let(::LabelerUri)
+    fun listMemberUriFromString(value: String?): ListMemberUri? = value?.let(::ListMemberUri)
 
     @TypeConverter
-    fun listMemberUriFromString(value: String?): ListMemberUri? =
-        value?.let(::ListMemberUri)
+    fun threadGateUriFromString(value: String?): ThreadGateUri? = value?.let(::ThreadGateUri)
 
-    @TypeConverter
-    fun threadGateUriFromString(value: String?): ThreadGateUri? =
-        value?.let(::ThreadGateUri)
+    @TypeConverter fun imageUriFromString(value: String?): ImageUri? = value?.let(::ImageUri)
 
-    @TypeConverter
-    fun imageUriFromString(value: String?): ImageUri? =
-        value?.let(::ImageUri)
-
-    @TypeConverter
-    fun recordUriFromString(value: String?): RecordUri? =
-        value?.asRecordUriOrNull()
+    @TypeConverter fun recordUriFromString(value: String?): RecordUri? = value?.asRecordUriOrNull()
 
     @TypeConverter
     fun embeddableRecordUriFromString(value: String?): EmbeddableRecordUri? =
         value?.asEmbeddableRecordUriOrNull()
 
-    @TypeConverter
-    fun toUriString(uri: Uri?): String? =
-        uri?.uri
+    @TypeConverter fun toUriString(uri: Uri?): String? = uri?.uri
 
-    @TypeConverter
-    fun toUriString(uri: EmbeddableRecordUri?): String? =
-        uri?.uri
+    @TypeConverter fun toUriString(uri: EmbeddableRecordUri?): String? = uri?.uri
 }
 
 internal class IdConverters {
-    @TypeConverter
-    fun fromString(value: String?): Id? =
-        value?.let(::GenericId)
+    @TypeConverter fun fromString(value: String?): Id? = value?.let(::GenericId)
+
+    @TypeConverter fun genericIdFromString(value: String?): GenericId? = value?.let(::GenericId)
+
+    @TypeConverter fun postIdFromString(value: String?): PostId? = value?.let(::PostId)
+
+    @TypeConverter fun profileIdFromString(value: String?): ProfileId? = value?.let(::ProfileId)
 
     @TypeConverter
-    fun genericIdFromString(value: String?): GenericId? =
-        value?.let(::GenericId)
+    fun profileHandleFromString(value: String?): ProfileHandle? = value?.let(::ProfileHandle)
+
+    @TypeConverter fun listIdFromString(value: String?): ListId? = value?.let(::ListId)
 
     @TypeConverter
-    fun postIdFromString(value: String?): PostId? =
-        value?.let(::PostId)
+    fun starterPackIdFromString(value: String?): StarterPackId? = value?.let(::StarterPackId)
+
+    @TypeConverter fun labelerIdFromString(value: String?): LabelerId? = value?.let(::LabelerId)
 
     @TypeConverter
-    fun profileIdFromString(value: String?): ProfileId? =
-        value?.let(::ProfileId)
+    fun feedGeneratorIdFromString(value: String?): FeedGeneratorId? = value?.let(::FeedGeneratorId)
 
     @TypeConverter
-    fun profileHandleFromString(value: String?): ProfileHandle? =
-        value?.let(::ProfileHandle)
+    fun threadGateIdFromString(value: String?): ThreadGateId? = value?.let(::ThreadGateId)
 
     @TypeConverter
-    fun listIdFromString(value: String?): ListId? =
-        value?.let(::ListId)
+    fun conversationIdFromString(value: String?): ConversationId? = value?.let(::ConversationId)
 
-    @TypeConverter
-    fun starterPackIdFromString(value: String?): StarterPackId? =
-        value?.let(::StarterPackId)
+    @TypeConverter fun messageIdFromString(value: String?): MessageId? = value?.let(::MessageId)
 
-    @TypeConverter
-    fun labelerIdFromString(value: String?): LabelerId? =
-        value?.let(::LabelerId)
-
-    @TypeConverter
-    fun feedGeneratorIdFromString(value: String?): FeedGeneratorId? =
-        value?.let(::FeedGeneratorId)
-
-    @TypeConverter
-    fun threadGateIdFromString(value: String?): ThreadGateId? =
-        value?.let(::ThreadGateId)
-
-    @TypeConverter
-    fun conversationIdFromString(value: String?): ConversationId? =
-        value?.let(::ConversationId)
-
-    @TypeConverter
-    fun messageIdFromString(value: String?): MessageId? =
-        value?.let(::MessageId)
-
-    @TypeConverter
-    fun toIdString(id: Id?): String? =
-        id?.id
+    @TypeConverter fun toIdString(id: Id?): String? = id?.id
 }

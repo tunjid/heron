@@ -23,32 +23,24 @@ import com.tunjid.heron.data.core.types.ProfileId
 
 @Entity(
     tableName = "conversationMembers",
-    primaryKeys = [
-        "conversationId",
-        "memberId",
-    ],
-    foreignKeys = [
-        ForeignKey(
-            entity = ConversationEntity::class,
-            parentColumns = [
-                "id",
-                "ownerId",
-            ],
-            childColumns = [
-                "conversationId",
-                "conversationOwnerId",
-            ],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["memberId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
+    primaryKeys = ["conversationId", "memberId"],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = ConversationEntity::class,
+                parentColumns = ["id", "ownerId"],
+                childColumns = ["conversationId", "conversationOwnerId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["memberId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
 )
 data class ConversationMembersEntity(
     val conversationId: ConversationId,

@@ -30,59 +30,58 @@ import kotlin.time.Clock
 import kotlin.time.Instant
 import sh.christian.ozone.api.AtUri
 
-internal fun Post.Interaction.Upsert.Gate.toNetworkRecord() = BskyThreadGate(
-    createdAt = Clock.System.now(),
-    post = postUri.uri.let(::AtUri),
-    allow = when {
-        // Everyone can reply
-        allowedListUris.isEmpty() &&
-            allowsFollowers &&
-            allowsFollowing &&
-            allowsMentioned -> null
-        else -> buildList {
-            if (allowsFollowers) add(
-                ThreadgateAllowUnion.FollowerRule(ThreadgateFollowerRule),
-            )
-            if (allowsFollowing) add(
-                ThreadgateAllowUnion.FollowingRule(ThreadgateFollowingRule),
-            )
-            if (allowsMentioned) add(
-                ThreadgateAllowUnion.MentionRule(ThreadgateMentionRule),
-            )
-            addAll(
-                allowedListUris.map {
-                    ThreadgateAllowUnion.ListRule(
-                        ThreadgateListRule(it.uri.let(::AtUri)),
-                    )
+internal fun Post.Interaction.Upsert.Gate.toNetworkRecord() =
+    BskyThreadGate(
+            createdAt = Clock.System.now(),
+            post = postUri.uri.let(::AtUri),
+            allow =
+                when {
+                    // Everyone can reply
+                    allowedListUris.isEmpty() &&
+                        allowsFollowers &&
+                        allowsFollowing &&
+                        allowsMentioned -> null
+                    else ->
+                        buildList {
+                            if (allowsFollowers)
+                                add(ThreadgateAllowUnion.FollowerRule(ThreadgateFollowerRule))
+                            if (allowsFollowing)
+                                add(ThreadgateAllowUnion.FollowingRule(ThreadgateFollowingRule))
+                            if (allowsMentioned)
+                                add(ThreadgateAllowUnion.MentionRule(ThreadgateMentionRule))
+                            addAll(
+                                allowedListUris.map {
+                                    ThreadgateAllowUnion.ListRule(
+                                        ThreadgateListRule(it.uri.let(::AtUri))
+                                    )
+                                }
+                            )
+                        }
                 },
-            )
-        }
-    },
-    hiddenReplies = emptyList(),
-)
-    .asJsonContent(BskyThreadGate.serializer())
+            hiddenReplies = emptyList(),
+        )
+        .asJsonContent(BskyThreadGate.serializer())
 
-internal fun ThreadGate.Allowed.toNetworkRecord(
-    postUri: PostUri,
-    createdAt: Instant,
-) = BskyThreadGate(
-    post = AtUri(postUri.uri),
-    allow = buildList {
-        if (allowsFollowers) add(
-            ThreadgateAllowUnion.FollowerRule(ThreadgateFollowerRule),
+internal fun ThreadGate.Allowed.toNetworkRecord(postUri: PostUri, createdAt: Instant) =
+    BskyThreadGate(
+            post = AtUri(postUri.uri),
+            allow =
+                buildList {
+                    if (allowsFollowers)
+                        add(ThreadgateAllowUnion.FollowerRule(ThreadgateFollowerRule))
+                    if (allowsFollowing)
+                        add(ThreadgateAllowUnion.FollowingRule(ThreadgateFollowingRule))
+                    if (allowsMentioned)
+                        add(ThreadgateAllowUnion.MentionRule(ThreadgateMentionRule))
+                    if (allowedListUris.isNotEmpty())
+                        addAll(
+                            allowedListUris.map { listUri ->
+                                ThreadgateAllowUnion.ListRule(
+                                    ThreadgateListRule(AtUri(listUri.uri))
+                                )
+                            }
+                        )
+                },
+            createdAt = createdAt,
         )
-        if (allowsFollowing) add(
-            ThreadgateAllowUnion.FollowingRule(ThreadgateFollowingRule),
-        )
-        if (allowsMentioned) add(
-            ThreadgateAllowUnion.MentionRule(ThreadgateMentionRule),
-        )
-        if (allowedListUris.isNotEmpty()) addAll(
-            allowedListUris.map { listUri ->
-                ThreadgateAllowUnion.ListRule(ThreadgateListRule(AtUri(listUri.uri)))
-            },
-        )
-    },
-    createdAt = createdAt,
-)
-    .asJsonContent(BskyThreadGate.serializer())
+        .asJsonContent(BskyThreadGate.serializer())

@@ -22,13 +22,10 @@ plugins {
     kotlin("plugin.serialization")
 }
 
-android {
-    namespace = "com.tunjid.heron.data"
-}
+android { namespace = "com.tunjid.heron.data" }
 
 kotlin {
     sourceSets {
-
         commonMain {
             dependencies {
                 implementation(libs.kotlinx.datetime)

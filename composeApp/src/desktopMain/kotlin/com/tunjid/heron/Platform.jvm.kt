@@ -20,7 +20,6 @@ import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.data.logging.JvmLogger
 import com.tunjid.heron.images.imageLoader
-import com.tunjid.heron.media.video.StubVideoPlayerController
 import com.tunjid.heron.media.video.VlcPlayerController
 import com.tunjid.heron.scaffold.notifications.NoOpNotifier
 import com.tunjid.heron.scaffold.scaffold.AppState
@@ -39,17 +38,9 @@ actual fun getPlatform(): Platform = JVMPlatform()
 fun createAppState(): AppState =
     createAppState(
         imageLoader = ::imageLoader,
-        notifier = {
-            NoOpNotifier
-        },
-        logger = {
-            JvmLogger()
-        },
-        videoPlayerController = { appMainScope ->
-            VlcPlayerController(
-                scope = appMainScope,
-            )
-        },
+        notifier = { NoOpNotifier },
+        logger = { JvmLogger() },
+        videoPlayerController = { appMainScope -> VlcPlayerController(scope = appMainScope) },
         args = { appMainScope ->
             DataBindingArgs(
                 appMainScope = appMainScope,
@@ -61,7 +52,5 @@ fun createAppState(): AppState =
         },
     )
 
-private fun savedStatePath(): Path = File(
-    System.getProperty("java.io.tmpdir"),
-    "tunji-heron-saved-state-21.ser",
-).toOkioPath()
+private fun savedStatePath(): Path =
+    File(System.getProperty("java.io.tmpdir"), "tunji-heron-saved-state-21.ser").toOkioPath()

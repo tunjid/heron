@@ -22,11 +22,7 @@ class IOSLogger : Logger {
     }
 }
 
-actual inline fun Any.logcat(
-    priority: LogPriority,
-    tag: String?,
-    message: () -> String,
-) {
+actual inline fun Any.logcat(priority: LogPriority, tag: String?, message: () -> String) {
     // no-op on iOS till a suitable implementation is found
 }
 

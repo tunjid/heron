@@ -68,38 +68,33 @@ class ExoplayerController(
     context: Context,
     private val scope: CoroutineScope,
     private val diffingDispatcher: CoroutineDispatcher,
-) : VideoPlayerController,
-    Player.Listener {
+) : VideoPlayerController, Player.Listener {
 
     override var isMuted: Boolean by mutableStateOf(true)
 
     /**
-     * A [Job] for diffing the [ExoPlayer] playlist such that changing the active video does not discard buffered
-     * videos.
+     * A [Job] for diffing the [ExoPlayer] playlist such that changing the active video does not
+     * discard buffered videos.
      */
     private var diffingJob: Job? = null
 
     /**
-     * A channel for passing changes to the items in the [ExoPlayer] playlist so they may be diffed without
-     * causing [ExoPlayer] to reload them.
+     * A channel for passing changes to the items in the [ExoPlayer] playlist so they may be diffed
+     * without causing [ExoPlayer] to reload them.
      */
     private val mediaItemMutationsChannel = Channel<(List<MediaItem>) -> List<MediaItem>>()
 
     /**
-     * A map of ids registered in this [VideoPlayerController] and its associated
-     * [ExoPlayerState]s. Note that the presence of an id in this map is _not_ an indication
-     * that the backing media is available to play. For that information, reference [currentPlaylistIds].
+     * A map of ids registered in this [VideoPlayerController] and its associated [ExoPlayerState]s.
+     * Note that the presence of an id in this map is _not_ an indication that the backing media is
+     * available to play. For that information, reference [currentPlaylistIds].
      */
     private val idsToStates = mutableStateMapOf<String, ExoPlayerState>()
 
-    /**
-     * The ids of media available to play in the available [player] instance.
-     */
+    /** The ids of media available to play in the available [player] instance. */
     private var currentPlaylistIds by mutableStateOf(emptySet<String>())
 
-    /**
-     * The [MediaItem] currently in focus in the [player].
-     */
+    /** The [MediaItem] currently in focus in the [player]. */
     private var currentMediaItem by mutableStateOf<MediaItem?>(null)
 
     private var player: ExoPlayer? by mutableStateOf(null)
@@ -108,35 +103,39 @@ class ExoplayerController(
 
     // TODO: Revisit this. The Coroutine should be launched lazily instead of in an init block.
     init {
-        player = exoPlayer(context = context).apply {
-            // The first listener should always be the ExoplayerManager
-            addListener(this@ExoplayerController)
-            // Bind active video to restore its properties and attach its listener
-            val hasActiveVideo = idsToStates[activeVideoId]?.let(::bind) != null
-            // Restore the players playlist if it was previously saved
-            val restoredMediaItems = idsToStates.values.map { it.toMediaItem() }
-            addMediaItems(restoredMediaItems)
-            currentPlaylistIds = restoredMediaItems.map(MediaItem::mediaId).toSet()
-            playWhenReady = getVideoStateById(activeVideoId)?.autoplay == true
-            if (playWhenReady) {
-                prepare()
-                if (playWhenReady && hasActiveVideo) play(activeVideoId)
+        player =
+            exoPlayer(context = context).apply {
+                // The first listener should always be the ExoplayerManager
+                addListener(this@ExoplayerController)
+                // Bind active video to restore its properties and attach its listener
+                val hasActiveVideo = idsToStates[activeVideoId]?.let(::bind) != null
+                // Restore the players playlist if it was previously saved
+                val restoredMediaItems = idsToStates.values.map { it.toMediaItem() }
+                addMediaItems(restoredMediaItems)
+                currentPlaylistIds = restoredMediaItems.map(MediaItem::mediaId).toSet()
+                playWhenReady = getVideoStateById(activeVideoId)?.autoplay == true
+                if (playWhenReady) {
+                    prepare()
+                    if (playWhenReady && hasActiveVideo) play(activeVideoId)
+                }
             }
-        }
         diffingJob?.cancel()
-        // Launch a coroutine that lasts from setup -> teardown that sequentially processes each change to media
-        // items in the ExoPlayer one after the other. The changes are diffed such that the ExoPlayer maintains
+        // Launch a coroutine that lasts from setup -> teardown that sequentially processes each
+        // change to media
+        // items in the ExoPlayer one after the other. The changes are diffed such that the
+        // ExoPlayer maintains
         // a single playlist, and changes in the active video does not clear the playlist.
-        diffingJob = scope.launch {
-            // sequentially process each change to media items one after the other
-            mediaItemMutationsChannel.consumeAsFlow().collect { mutation ->
-                // Await player
-                val player = snapshotFlow { player }.filterNotNull().first()
-                val updatedItems = mutation(player.currentMediaItems)
-                player.update(newMediaItems = updatedItems)
-                currentPlaylistIds = updatedItems.map(MediaItem::mediaId).toSet()
+        diffingJob =
+            scope.launch {
+                // sequentially process each change to media items one after the other
+                mediaItemMutationsChannel.consumeAsFlow().collect { mutation ->
+                    // Await player
+                    val player = snapshotFlow { player }.filterNotNull().first()
+                    val updatedItems = mutation(player.currentMediaItems)
+                    player.update(newMediaItems = updatedItems)
+                    currentPlaylistIds = updatedItems.map(MediaItem::mediaId).toSet()
+                }
             }
-        }
 
         // TODO this should also be governed by coroutine launch semantics
         //  as the one used for list diffing
@@ -147,18 +146,11 @@ class ExoplayerController(
             .onEach { player?.pause() }
             .launchIn(scope + Dispatchers.Main)
 
-        snapshotFlow { isMuted }
-            .onEach { player?.isMuted = it }
-            .launchIn(scope + Dispatchers.Main)
+        snapshotFlow { isMuted }.onEach { player?.isMuted = it }.launchIn(scope + Dispatchers.Main)
     }
 
-    internal fun setAutoplay(
-        videoId: String,
-        autoplay: Boolean,
-    ) {
-        idsToStates[videoId]?.let {
-            it.autoplay = autoplay
-        }
+    internal fun setAutoplay(videoId: String, autoplay: Boolean) {
+        idsToStates[videoId]?.let { it.autoplay = autoplay }
         if (videoId != activeVideoId) return
 
         if (!autoplay) {
@@ -168,10 +160,7 @@ class ExoplayerController(
         }
     }
 
-    override fun play(
-        videoId: String?,
-        seekToMs: Long?,
-    ) {
+    override fun play(videoId: String?, seekToMs: Long?) {
         val playerIdToPlay = videoId ?: activeVideoId
 
         // Video has not been previously registered
@@ -187,9 +176,7 @@ class ExoplayerController(
     }
 
     override fun pauseActiveVideo() {
-        activeVideoId.let(idsToStates::get)?.apply {
-            status = PlayerStatus.Pause.Requested
-        }
+        activeVideoId.let(idsToStates::get)?.apply { status = PlayerStatus.Pause.Requested }
         player?.pause()
     }
 
@@ -208,16 +195,20 @@ class ExoplayerController(
         }
         // NOTE: Play must be called on the manager and not on the exoplayer instance itself.
         when (activeState.status) {
-            is PlayerStatus.Idle -> if (activeState.autoplay) playAsync(
-                playerIdToPlay = videoId,
-                seekToMs = activeState.seekPositionOnPlayMs(seekToMs = null),
-            ) else player?.pause()
+            is PlayerStatus.Idle ->
+                if (activeState.autoplay)
+                    playAsync(
+                        playerIdToPlay = videoId,
+                        seekToMs = activeState.seekPositionOnPlayMs(seekToMs = null),
+                    )
+                else player?.pause()
 
             is PlayerStatus.Pause -> player?.pause()
-            is PlayerStatus.Play -> playAsync(
-                playerIdToPlay = videoId,
-                seekToMs = activeState.seekPositionOnPlayMs(seekToMs = null),
-            )
+            is PlayerStatus.Play ->
+                playAsync(
+                    playerIdToPlay = videoId,
+                    seekToMs = activeState.seekPositionOnPlayMs(seekToMs = null),
+                )
         }
     }
 
@@ -255,22 +246,21 @@ class ExoplayerController(
         isLooping: Boolean,
         autoplay: Boolean,
     ): VideoPlayerState {
-        idsToStates[videoId]?.let { return it }
+        idsToStates[videoId]?.let {
+            return it
+        }
 
         trim()
-        val videoPlayerState = ExoPlayerState(
-            videoUrl = videoUrl,
-            videoId = videoId,
-            thumbnail = thumbnail,
-            autoplay = autoplay,
-            isLooping = isLooping,
-            isMuted = derivedStateOf {
-                isMuted
-            },
-            exoPlayerState = derivedStateOf {
-                player.takeIf { isCurrentMediaItem(videoId) }
-            },
-        )
+        val videoPlayerState =
+            ExoPlayerState(
+                videoUrl = videoUrl,
+                videoId = videoId,
+                thumbnail = thumbnail,
+                autoplay = autoplay,
+                isLooping = isLooping,
+                isMuted = derivedStateOf { isMuted },
+                exoPlayerState = derivedStateOf { player.takeIf { isCurrentMediaItem(videoId) } },
+            )
 
         idsToStates[videoId] = videoPlayerState
         val mediaItem = videoPlayerState.toMediaItem()
@@ -323,13 +313,9 @@ class ExoplayerController(
         player = null
     }
 
-    override fun onPlayerError(error: PlaybackException) {
-    }
+    override fun onPlayerError(error: PlaybackException) {}
 
-    private fun playAsync(
-        playerIdToPlay: String,
-        seekToMs: Long?,
-    ) {
+    private fun playAsync(playerIdToPlay: String, seekToMs: Long?) {
         scope.launch {
             // Do this only while playerId is the activeVideo
             snapshotFlow { activeVideoId == playerIdToPlay }
@@ -340,7 +326,8 @@ class ExoplayerController(
                         // Terminate
                         emptyFlow()
                     }
-                }.first(true::equals)
+                }
+                .first(true::equals)
             getVideoStateById(playerIdToPlay)?.apply state@{
                 this@ExoplayerController.player?.apply {
                     seekTo(
@@ -358,35 +345,32 @@ class ExoplayerController(
 
     private fun trim() {
         val size = idsToStates.size
-        if (size >= MaxVideoStates) idsToStates.keys.filter {
-            val state = idsToStates[it]
-            state?.status is PlayerStatus.Idle.Evicted
-        }
-            .take(size - MaxVideoStates)
-            .forEach(idsToStates::remove)
+        if (size >= MaxVideoStates)
+            idsToStates.keys
+                .filter {
+                    val state = idsToStates[it]
+                    state?.status is PlayerStatus.Idle.Evicted
+                }
+                .take(size - MaxVideoStates)
+                .forEach(idsToStates::remove)
     }
 
     /**
-     * Diffs media items and inserts them in the ExoPlayer playlist.
-     * This ensures that a previously buffered video does not need to re-buffer when it is swapped
-     * from active, to inactive, then back.
+     * Diffs media items and inserts them in the ExoPlayer playlist. This ensures that a previously
+     * buffered video does not need to re-buffer when it is swapped from active, to inactive, then
+     * back.
      */
     private suspend fun Player.update(newMediaItems: List<MediaItem>) {
         val oldMediaItems = currentMediaItems
         // Run this on a CoroutineContext that handles computation well, e.g. Dispatchers.Default
-        val diff = withContext(diffingDispatcher) {
-            differenceOf(
-                original = oldMediaItems,
-                updated = newMediaItems,
-                detectMoves = true,
-            )
-        }
+        val diff =
+            withContext(diffingDispatcher) {
+                differenceOf(original = oldMediaItems, updated = newMediaItems, detectMoves = true)
+            }
 
         diff.applyDiff(
             remove = ::removeMediaItem,
-            insert = { item: MediaItem, index: Int ->
-                addMediaItem(index, item)
-            },
+            insert = { item: MediaItem, index: Int -> addMediaItem(index, item) },
             move = ::moveMediaItem,
         )
     }
@@ -399,51 +383,43 @@ class ExoplayerController(
 }
 
 @OptIn(UnstableApi::class)
-private fun exoPlayer(
-    context: Context,
-): ExoPlayer {
+private fun exoPlayer(context: Context): ExoPlayer {
     val client = OkHttpClient()
-    val cache = SimpleCache(
-        /* cacheDir = */
-        File(context.cacheDir, "homepagesimplecache"),
-        /* evictor = */
-        LeastRecentlyUsedCacheEvictor((10 * 1024 * 1024).toLong()),
-        /* databaseProvider = */
-        StandaloneDatabaseProvider(context),
-    )
+    val cache =
+        SimpleCache(
+            /* cacheDir = */ File(context.cacheDir, "homepagesimplecache"),
+            /* evictor = */ LeastRecentlyUsedCacheEvictor((10 * 1024 * 1024).toLong()),
+            /* databaseProvider = */ StandaloneDatabaseProvider(context),
+        )
 
-    val okHttpDataSourceFactory = OkHttpDataSource.Factory(client).also {
-        it.setUserAgent(Util.getUserAgent(context, "Heron"))
-    }
-
-    val dataSourceFactory = CacheDataSource
-        .Factory()
-        .setCache(cache)
-        .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
-        .setUpstreamDataSourceFactory(okHttpDataSourceFactory)
-        .let {
-            // DefaultDataSource allows support of both http and local streams
-            DefaultDataSource.Factory(context, it)
+    val okHttpDataSourceFactory =
+        OkHttpDataSource.Factory(client).also {
+            it.setUserAgent(Util.getUserAgent(context, "Heron"))
         }
 
-    val audioAttributes = AudioAttributes
-        .Builder()
-        .setUsage(C.USAGE_MEDIA)
-        .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
-        .build()
+    val dataSourceFactory =
+        CacheDataSource.Factory()
+            .setCache(cache)
+            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+            .setUpstreamDataSourceFactory(okHttpDataSourceFactory)
+            .let {
+                // DefaultDataSource allows support of both http and local streams
+                DefaultDataSource.Factory(context, it)
+            }
 
-    return ExoPlayer
-        .Builder(context, DefaultMediaSourceFactory(dataSourceFactory))
+    val audioAttributes =
+        AudioAttributes.Builder()
+            .setUsage(C.USAGE_MEDIA)
+            .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+            .build()
+
+    return ExoPlayer.Builder(context, DefaultMediaSourceFactory(dataSourceFactory))
         .setAudioAttributes(audioAttributes, false)
         .setVideoScalingMode(C.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING)
         .build()
 }
 
 private fun VideoPlayerState.toMediaItem() =
-    MediaItem
-        .Builder()
-        .setUri(videoUrl)
-        .setMediaId(videoId)
-        .build()
+    MediaItem.Builder().setUri(videoUrl).setMediaId(videoId).build()
 
 private const val MaxVideoStates = 30

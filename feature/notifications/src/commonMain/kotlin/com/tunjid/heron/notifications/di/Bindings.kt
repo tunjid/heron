@@ -83,11 +83,7 @@ import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/notifications"
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-)
+private fun createRoute(routeParams: RouteParams) = routeOf(params = routeParams)
 
 @BindingContainer
 object NotificationsNavigationBindings {
@@ -96,10 +92,7 @@ object NotificationsNavigationBindings {
     @IntoMap
     @StringKey(RoutePattern)
     fun provideRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RoutePattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = RoutePattern, routeMapper = ::createRoute)
 }
 
 @BindingContainer
@@ -112,145 +105,141 @@ class NotificationsBindings(
     @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
-    )
+        viewModelInitializer: RouteViewModelInitializer
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(viewModelInitializer = viewModelInitializer)
 
-    private fun routePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
-    ) = threePaneEntry(
-        contentTransform = predictiveBackContentTransformProvider(),
-        render = { route ->
-            val viewModel = viewModel<ActualNotificationsViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = route,
-                )
-            }
-            val state by viewModel.state.collectAsStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
+    private fun routePaneEntry(viewModelInitializer: RouteViewModelInitializer) =
+        threePaneEntry(
+            contentTransform = predictiveBackContentTransformProvider(),
+            render = { route ->
+                val viewModel =
+                    viewModel<ActualNotificationsViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = route,
+                        )
+                    }
+                val state by viewModel.state.collectAsStateWithLifecycle()
+                val paneScaffoldState = rememberPaneScaffoldState()
 
-            val topAppBarNestedScrollConnection =
-                topAppBarNestedScrollConnection()
+                val topAppBarNestedScrollConnection = topAppBarNestedScrollConnection()
 
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                )
+                val bottomNavigationNestedScrollConnection =
+                    bottomNavigationNestedScrollConnection(
+                        isCompact = paneScaffoldState.prefersCompactBottomNav
+                    )
 
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .nestedScroll(topAppBarNestedScrollConnection)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
-                    },
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
-                },
-                topBar = {
-                    RootDestinationTopAppBar(
-                        modifier = Modifier.offset {
-                            topAppBarNestedScrollConnection.offset.round()
-                        },
-                        title = {
-                            AppBarTitle(
-                                title = stringResource(Res.string.title),
-                            )
-                        },
-                        signedInProfile = state.signedInProfile,
-                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        onSignedInProfileClicked = { profile, sharedElementKey ->
-                            viewModel.accept(
-                                Action.Navigate.To(
-                                    profileDestination(
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                        profile = profile,
-                                        avatarSharedElementKey = sharedElementKey,
-                                    ),
-                                ),
-                            )
-                        },
-                        actions = {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                androidx.compose.animation.AnimatedVisibility(
-                                    visible = !hasNotificationPermissions(),
-                                ) {
-                                    RequestNotificationsButton(
-                                        animateIcon = state.canAnimateRequestPermissionsButton,
+                paneScaffoldState.PaneScaffold(
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+                            .nestedScroll(topAppBarNestedScrollConnection)
+                            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                                nestedScroll(bottomNavigationNestedScrollConnection)
+                            },
+                    showNavigation = true,
+                    snackBarMessages = state.messages,
+                    onSnackBarMessageConsumed = { viewModel.accept(Action.SnackbarDismissed(it)) },
+                    topBar = {
+                        RootDestinationTopAppBar(
+                            modifier =
+                                Modifier.offset { topAppBarNestedScrollConnection.offset.round() },
+                            title = { AppBarTitle(title = stringResource(Res.string.title)) },
+                            signedInProfile = state.signedInProfile,
+                            transparencyFactor =
+                                topAppBarNestedScrollConnection::verticalOffsetProgress,
+                            onSignedInProfileClicked = { profile, sharedElementKey ->
+                                viewModel.accept(
+                                    Action.Navigate.To(
+                                        profileDestination(
+                                            referringRouteOption =
+                                                NavigationAction.ReferringRouteOption
+                                                    .ParentOrCurrent,
+                                            profile = profile,
+                                            avatarSharedElementKey = sharedElementKey,
+                                        )
+                                    )
+                                )
+                            },
+                            actions = {
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    androidx.compose.animation.AnimatedVisibility(
+                                        visible = !hasNotificationPermissions()
+                                    ) {
+                                        RequestNotificationsButton(
+                                            animateIcon = state.canAnimateRequestPermissionsButton
+                                        )
+                                    }
+                                    AppBarButton(
+                                        icon = Icons.Rounded.Settings,
+                                        iconDescription =
+                                            stringResource(CommonStrings.notification_settings),
+                                        onClick = {
+                                            viewModel.accept(
+                                                Action.Navigate.To(
+                                                    notificationSettingsDestination()
+                                                )
+                                            )
+                                        },
                                     )
                                 }
-                                AppBarButton(
-                                    icon = Icons.Rounded.Settings,
-                                    iconDescription = stringResource(CommonStrings.notification_settings),
-                                    onClick = {
-                                        viewModel.accept(
-                                            Action.Navigate.To(notificationSettingsDestination()),
+                            },
+                        )
+                    },
+                    floatingActionButton = {
+                        PaneFab(
+                            modifier =
+                                Modifier.offset {
+                                    fabOffset(bottomNavigationNestedScrollConnection.offset)
+                                },
+                            text = stringResource(CommonStrings.notifications_create_post),
+                            icon = Icons.Rounded.Edit,
+                            expanded =
+                                isFabExpanded {
+                                    if (prefersAutoHidingBottomNav)
+                                        bottomNavigationNestedScrollConnection.offset
+                                    else topAppBarNestedScrollConnection.offset * -1f
+                                },
+                            onClick = {
+                                viewModel.accept(
+                                    Action.Navigate.To(
+                                        composePostDestination(
+                                            type = Post.Create.Timeline,
+                                            sharedElementPrefix = null,
                                         )
-                                    },
+                                    )
                                 )
+                            },
+                        )
+                    },
+                    navigationBar = {
+                        PaneNavigationBar(
+                            modifier =
+                                Modifier.offset {
+                                    bottomNavigationNestedScrollConnection.offset.round()
+                                },
+                            onNavItemReselected = {
+                                viewModel.accept(Action.Tile(TilingState.Action.Refresh))
+                                true
+                            },
+                        )
+                    },
+                    navigationRail = {
+                        PaneNavigationRail(
+                            onNavItemReselected = {
+                                viewModel.accept(Action.Tile(TilingState.Action.Refresh))
+                                true
                             }
-                        },
-                    )
-                },
-                floatingActionButton = {
-                    PaneFab(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
-                        text = stringResource(CommonStrings.notifications_create_post),
-                        icon = Icons.Rounded.Edit,
-                        expanded = isFabExpanded {
-                            if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
-                            else topAppBarNestedScrollConnection.offset * -1f
-                        },
-                        onClick = {
-                            viewModel.accept(
-                                Action.Navigate.To(
-                                    composePostDestination(
-                                        type = Post.Create.Timeline,
-                                        sharedElementPrefix = null,
-                                    ),
-                                ),
-                            )
-                        },
-                    )
-                },
-                navigationBar = {
-                    PaneNavigationBar(
-                        modifier = Modifier
-                            .offset {
-                                bottomNavigationNestedScrollConnection.offset.round()
-                            },
-                        onNavItemReselected = {
-                            viewModel.accept(Action.Tile(TilingState.Action.Refresh))
-                            true
-                        },
-                    )
-                },
-                navigationRail = {
-                    PaneNavigationRail(
-                        onNavItemReselected = {
-                            viewModel.accept(Action.Tile(TilingState.Action.Refresh))
-                            true
-                        },
-                    )
-                },
-                content = {
-                    NotificationsScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = viewModel.accept,
-                    )
-                },
-            )
-        },
-    )
+                        )
+                    },
+                    content = {
+                        NotificationsScreen(
+                            paneScaffoldState = this,
+                            state = state,
+                            actions = viewModel.accept,
+                        )
+                    },
+                )
+            },
+        )
 }

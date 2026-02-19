@@ -103,17 +103,11 @@ import kotlinx.serialization.protobuf.ProtoBuf
 import okio.FileSystem
 import okio.Path
 
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
-annotation class AppMainScope
+@Qualifier @Retention(AnnotationRetention.RUNTIME) annotation class AppMainScope
 
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
-internal annotation class IODispatcher
+@Qualifier @Retention(AnnotationRetention.RUNTIME) internal annotation class IODispatcher
 
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
-internal annotation class DefaultDispatcher
+@Qualifier @Retention(AnnotationRetention.RUNTIME) internal annotation class DefaultDispatcher
 
 class DataBindingArgs(
     val appMainScope: CoroutineScope,
@@ -124,9 +118,7 @@ class DataBindingArgs(
 )
 
 @BindingContainer
-class DataBindings(
-    private val args: DataBindingArgs,
-) {
+class DataBindings(private val args: DataBindingArgs) {
 
     @AppMainScope
     @SingleIn(AppScope::class)
@@ -143,13 +135,9 @@ class DataBindings(
     @Provides
     internal fun provideDefaultDispatcher(): CoroutineDispatcher = Dispatchers.Default
 
-    @SingleIn(AppScope::class)
-    @Provides
-    fun provideConnectivity(): Connectivity = args.connectivity
+    @SingleIn(AppScope::class) @Provides fun provideConnectivity(): Connectivity = args.connectivity
 
-    @SingleIn(AppScope::class)
-    @Provides
-    fun provideSavedStatePath(): Path = args.savedStatePath
+    @SingleIn(AppScope::class) @Provides fun provideSavedStatePath(): Path = args.savedStatePath
 
     @SingleIn(AppScope::class)
     @Provides
@@ -172,54 +160,44 @@ class DataBindings(
     internal fun provideSessionManager(
         httpClient: HttpClient,
         savedStateDataSource: SavedStateDataSource,
-    ): SessionManager = PersistedSessionManager(
-        httpClient = httpClient,
-        savedStateDataSource = savedStateDataSource,
-    )
+    ): SessionManager =
+        PersistedSessionManager(
+            httpClient = httpClient,
+            savedStateDataSource = savedStateDataSource,
+        )
 
     @SingleIn(AppScope::class)
     @Provides
-    internal fun providePreferenceUpdater(
-        tidGenerator: TidGenerator,
-    ): PreferenceUpdater = ThingPreferenceUpdater(
-        tidGenerator = tidGenerator,
-    )
+    internal fun providePreferenceUpdater(tidGenerator: TidGenerator): PreferenceUpdater =
+        ThingPreferenceUpdater(tidGenerator = tidGenerator)
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideNotificationPreferenceUpdater(
-        thingNotificationPreferenceUpdater: ThingNotificationPreferenceUpdater,
+        thingNotificationPreferenceUpdater: ThingNotificationPreferenceUpdater
     ): NotificationPreferenceUpdater = thingNotificationPreferenceUpdater
 
     @SingleIn(AppScope::class)
     @Provides
-    internal fun provideProfileLookup(
-        offlineProfileLookup: OfflineProfileLookup,
-    ): ProfileLookup = offlineProfileLookup
+    internal fun provideProfileLookup(offlineProfileLookup: OfflineProfileLookup): ProfileLookup =
+        offlineProfileLookup
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideRecordResolver(
-        offlineRecordResolver: OfflineRecordResolver,
+        offlineRecordResolver: OfflineRecordResolver
     ): RecordResolver = offlineRecordResolver
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideHttpClient(): HttpClient = HttpClient {
         expectSuccess = false
-        install(ContentNegotiation) {
-            json(BlueskyJson)
-        }
-        install(HttpTimeout) {
-            requestTimeoutMillis = 4.seconds.inWholeMilliseconds
-        }
+        install(ContentNegotiation) { json(BlueskyJson) }
+        install(HttpTimeout) { requestTimeoutMillis = 4.seconds.inWholeMilliseconds }
         install(HttpCallValidator) {
             handleResponseExceptionWithRequest { throwable, request ->
                 if (throwable.isNetworkConnectionError()) {
-                    throw NetworkConnectionException(
-                        url = request.url,
-                        cause = throwable,
-                    )
+                    throw NetworkConnectionException(url = request.url, cause = throwable)
                 }
             }
         }
@@ -229,179 +207,149 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideCryptographyProvider(): CryptographyProvider =
-        platformCryptographyProvider()
-            .also { CryptographySystem.registerProvider(lazyOf(it), 0) }
+        platformCryptographyProvider().also { CryptographySystem.registerProvider(lazyOf(it), 0) }
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideNetworkMonitor(
-        connectivityNetworkMonitor: ConnectivityNetworkMonitor,
+        connectivityNetworkMonitor: ConnectivityNetworkMonitor
     ): NetworkMonitor = connectivityNetworkMonitor
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideVideoUploadService(
-        videoUploadService: SuspendingVideoUploadService,
+        videoUploadService: SuspendingVideoUploadService
     ): VideoUploadService = videoUploadService
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideFeedCreationService(
-        feedCreationService: GrazeFeedCreationService,
+        feedCreationService: GrazeFeedCreationService
     ): FeedCreationService = feedCreationService
 
     @SingleIn(AppScope::class)
     @Provides
-    fun providePostDao(
-        database: AppDatabase,
-    ): PostDao = database.postDao()
+    fun providePostDao(database: AppDatabase): PostDao = database.postDao()
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideProfileDao(
-        database: AppDatabase,
-    ): ProfileDao = database.profileDao()
+    fun provideProfileDao(database: AppDatabase): ProfileDao = database.profileDao()
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideLabelDao(
-        database: AppDatabase,
-    ): LabelDao = database.labelDao()
+    fun provideLabelDao(database: AppDatabase): LabelDao = database.labelDao()
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideListDao(
-        database: AppDatabase,
-    ): ListDao = database.listDao()
+    fun provideListDao(database: AppDatabase): ListDao = database.listDao()
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideEmbedDao(
-        database: AppDatabase,
-    ): EmbedDao = database.embedDao()
+    fun provideEmbedDao(database: AppDatabase): EmbedDao = database.embedDao()
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideTimelineDao(
-        database: AppDatabase,
-    ): TimelineDao = database.timelineDao()
+    fun provideTimelineDao(database: AppDatabase): TimelineDao = database.timelineDao()
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideFeedGeneratorDao(
-        database: AppDatabase,
-    ): FeedGeneratorDao = database.feedGeneratorDao()
+    fun provideFeedGeneratorDao(database: AppDatabase): FeedGeneratorDao =
+        database.feedGeneratorDao()
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideNotificationsDao(
-        database: AppDatabase,
-    ): NotificationsDao = database.notificationsDao()
+    fun provideNotificationsDao(database: AppDatabase): NotificationsDao =
+        database.notificationsDao()
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideStarterPackDao(
-        database: AppDatabase,
-    ): StarterPackDao = database.starterPackDao()
+    fun provideStarterPackDao(database: AppDatabase): StarterPackDao = database.starterPackDao()
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideMessageDao(
-        database: AppDatabase,
-    ): MessageDao = database.messagesDao()
+    fun provideMessageDao(database: AppDatabase): MessageDao = database.messagesDao()
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideThreadGateDao(
-        database: AppDatabase,
-    ): ThreadGateDao = database.threadGateDao()
+    fun provideThreadGateDao(database: AppDatabase): ThreadGateDao = database.threadGateDao()
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideTransactionWriter(
-        database: AppDatabase,
-    ): TransactionWriter = TransactionWriter { block ->
-        database.useWriterConnection { transactor ->
-            transactor.immediateTransaction {
-                block()
+    fun provideTransactionWriter(database: AppDatabase): TransactionWriter =
+        TransactionWriter { block ->
+            database.useWriterConnection { transactor ->
+                transactor.immediateTransaction { block() }
             }
         }
-    }
+
+    @SingleIn(AppScope::class) @Provides fun provideAppProtoBuff(): ProtoBuf = ProtoBuf {}
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideAppProtoBuff(): ProtoBuf = ProtoBuf {
-    }
+    internal fun provideKtorNetworkService(ktorNetworkService: KtorNetworkService): NetworkService =
+        ktorNetworkService
 
     @SingleIn(AppScope::class)
     @Provides
-    internal fun provideKtorNetworkService(
-        ktorNetworkService: KtorNetworkService,
-    ): NetworkService = ktorNetworkService
-
-    @SingleIn(AppScope::class)
-    @Provides
-    internal fun provideWriteQueue(
-        writeQueue: PersistedWriteQueue,
-    ): WriteQueue = writeQueue
+    internal fun provideWriteQueue(writeQueue: PersistedWriteQueue): WriteQueue = writeQueue
 
     @SingleIn(AppScope::class)
     @Provides
     private fun provideDataStoreSavedStateRepository(
-        dataStoreSavedStateRepository: DataStoreSavedStateDataSource,
+        dataStoreSavedStateRepository: DataStoreSavedStateDataSource
     ): SavedStateDataSource = dataStoreSavedStateRepository
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideAuthTokenRepository(
-        authTokenRepository: AuthTokenRepository,
+        authTokenRepository: AuthTokenRepository
     ): AuthRepository = authTokenRepository
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideOfflineTimelineRepository(
-        offlineTimelineRepository: OfflineTimelineRepository,
+        offlineTimelineRepository: OfflineTimelineRepository
     ): TimelineRepository = offlineTimelineRepository
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideOfflineProfileRepository(
-        offlineProfileRepository: OfflineProfileRepository,
+        offlineProfileRepository: OfflineProfileRepository
     ): ProfileRepository = offlineProfileRepository
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideOfflineNotificationsRepository(
-        offlineNotificationsRepository: OfflineNotificationsRepository,
+        offlineNotificationsRepository: OfflineNotificationsRepository
     ): NotificationsRepository = offlineNotificationsRepository
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideOfflineSearchRepository(
-        offlineSearchRepository: OfflineSearchRepository,
+        offlineSearchRepository: OfflineSearchRepository
     ): SearchRepository = offlineSearchRepository
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideOfflinePostRepository(
-        offlinePostRepository: OfflinePostRepository,
+        offlinePostRepository: OfflinePostRepository
     ): PostRepository = offlinePostRepository
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideOfflineMessageRepository(
-        offlineMessageRepository: OfflineMessageRepository,
+        offlineMessageRepository: OfflineMessageRepository
     ): MessageRepository = offlineMessageRepository
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideOfflineUserDataRepository(
-        offlineUserDataRepository: OfflineUserDataRepository,
+        offlineUserDataRepository: OfflineUserDataRepository
     ): UserDataRepository = offlineUserDataRepository
 
     @SingleIn(AppScope::class)
     @Provides
     internal fun provideRecordRepository(
-        offlineRecordRepository: OfflineRecordRepository,
+        offlineRecordRepository: OfflineRecordRepository
     ): RecordRepository = offlineRecordRepository
 }

@@ -25,8 +25,5 @@ import androidx.room.migration.AutoMigrationSpec
     fromColumnName = "filterDescription",
     toColumnName = "preferredPresentation",
 )
-@RenameTable(
-    fromTableName = "timelineFetchKeys",
-    toTableName = "timelinePreferences",
-)
+@RenameTable(fromTableName = "timelineFetchKeys", toTableName = "timelinePreferences")
 internal class Migration9To10TimelineItemEntityAutoMigration : AutoMigrationSpec

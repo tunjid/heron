@@ -62,7 +62,7 @@ class NotificationsService : FirebaseMessagingService() {
             }
         } finally {
             appState.onNotificationAction(
-                NotificationAction.NotificationProcessedOrDropped(recordUri),
+                NotificationAction.NotificationProcessedOrDropped(recordUri)
             )
         }
     }
@@ -73,17 +73,14 @@ class NotificationDismissReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != DISMISSAL_ACTION) return
 
-        val dismissedAtEpoch = intent.getLongExtra(
-            /* name = */
-            DISMISSAL_INSTANT_EXTRA,
-            /* defaultValue = */
-            0,
-        )
-        if (dismissedAtEpoch > 0) context.appState.onNotificationAction(
-            NotificationAction.NotificationDismissed(
-                dismissedAt = Instant.fromEpochMilliseconds(dismissedAtEpoch),
-            ),
-        )
+        val dismissedAtEpoch =
+            intent.getLongExtra(/* name= */ DISMISSAL_INSTANT_EXTRA, /* defaultValue= */ 0)
+        if (dismissedAtEpoch > 0)
+            context.appState.onNotificationAction(
+                NotificationAction.NotificationDismissed(
+                    dismissedAt = Instant.fromEpochMilliseconds(dismissedAtEpoch)
+                )
+            )
     }
 }
 

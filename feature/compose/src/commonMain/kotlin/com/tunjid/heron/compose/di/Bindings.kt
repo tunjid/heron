@@ -70,11 +70,7 @@ import dev.zacsweers.metro.StringKey
 
 private const val RoutePattern = "/compose"
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-)
+private fun createRoute(routeParams: RouteParams) = routeOf(params = routeParams)
 
 @BindingContainer
 object ComposeNavigationBindings {
@@ -83,10 +79,7 @@ object ComposeNavigationBindings {
     @IntoMap
     @StringKey(RoutePattern)
     fun provideRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RoutePattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = RoutePattern, routeMapper = ::createRoute)
 }
 
 @BindingContainer
@@ -99,109 +92,102 @@ class ComposeBindings(
     @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
-    )
+        viewModelInitializer: RouteViewModelInitializer
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(viewModelInitializer = viewModelInitializer)
 
-    private fun routePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
-    ) = threePaneEntry(
-        contentTransform = predictiveBackContentTransformProvider(),
-        render = { route ->
-            val viewModel = viewModel<ActualComposeViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = route,
-                )
-            }
-            val state by viewModel.state.collectAsStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
+    private fun routePaneEntry(viewModelInitializer: RouteViewModelInitializer) =
+        threePaneEntry(
+            contentTransform = predictiveBackContentTransformProvider(),
+            render = { route ->
+                val viewModel =
+                    viewModel<ActualComposeViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = route,
+                        )
+                    }
+                val state by viewModel.state.collectAsStateWithLifecycle()
+                val paneScaffoldState = rememberPaneScaffoldState()
 
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
-                },
-                topBar = {
-                    PoppableDestinationTopAppBar(
-                        actions = {
-                            TopAppBarFab(
-                                modifier = Modifier,
-                                state = state,
-                                onCreatePost = viewModel.accept,
-                            )
-                            Spacer(Modifier.width(16.dp))
-                        },
-                        onBackPressed = {
-                            viewModel.accept(Action.Navigate.Pop)
-                        },
-                    )
-                },
-                floatingActionButton = {
-                    ComposePostFabRow(
-                        modifier = Modifier,
-                        state = state,
-                        onAction = viewModel.accept,
-                    )
-                },
-                navigationBar = {
-                    val borderColor = MaterialTheme.colorScheme.outline
-                    val imePadding = WindowInsets.ime.asPaddingValues()
-                    val navBarPadding = WindowInsets.navigationBars.asPaddingValues()
-                    val imeShowing by remember {
-                        derivedStateOf {
-                            imePadding.calculateBottomPadding() > navBarPadding.calculateBottomPadding()
-                        }
-                    }
-                    val hasBlankText by remember {
-                        derivedStateOf { state.postText.text.isBlank() }
-                    }
-                    ComposePostBottomBar(
-                        modifier = Modifier
-                            .drawBehind {
-                                drawLine(
-                                    color = borderColor,
-                                    start = Offset(0f, 0f),
-                                    end = Offset(size.width, 0f),
-                                    strokeWidth = 1f,
+                paneScaffoldState.PaneScaffold(
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
+                    showNavigation = true,
+                    snackBarMessages = state.messages,
+                    onSnackBarMessageConsumed = { viewModel.accept(Action.SnackbarDismissed(it)) },
+                    topBar = {
+                        PoppableDestinationTopAppBar(
+                            actions = {
+                                TopAppBarFab(
+                                    modifier = Modifier,
+                                    state = state,
+                                    onCreatePost = viewModel.accept,
                                 )
+                                Spacer(Modifier.width(16.dp))
+                            },
+                            onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        )
+                    },
+                    floatingActionButton = {
+                        ComposePostFabRow(
+                            modifier = Modifier,
+                            state = state,
+                            onAction = viewModel.accept,
+                        )
+                    },
+                    navigationBar = {
+                        val borderColor = MaterialTheme.colorScheme.outline
+                        val imePadding = WindowInsets.ime.asPaddingValues()
+                        val navBarPadding = WindowInsets.navigationBars.asPaddingValues()
+                        val imeShowing by remember {
+                            derivedStateOf {
+                                imePadding.calculateBottomPadding() >
+                                    navBarPadding.calculateBottomPadding()
                             }
-                            .padding(horizontal = 8.dp)
-                            .imePadding()
-                            .windowInsetsPadding(WindowInsets.navigationBars),
-                        postText = state.postText,
-                        photos = state.photos,
-                        onMediaEdited = viewModel.accept,
-                    )
+                        }
+                        val hasBlankText by remember {
+                            derivedStateOf { state.postText.text.isBlank() }
+                        }
+                        ComposePostBottomBar(
+                            modifier =
+                                Modifier.drawBehind {
+                                        drawLine(
+                                            color = borderColor,
+                                            start = Offset(0f, 0f),
+                                            end = Offset(size.width, 0f),
+                                            strokeWidth = 1f,
+                                        )
+                                    }
+                                    .padding(horizontal = 8.dp)
+                                    .imePadding()
+                                    .windowInsetsPadding(WindowInsets.navigationBars),
+                            postText = state.postText,
+                            photos = state.photos,
+                            onMediaEdited = viewModel.accept,
+                        )
 
-                    DisposableEffect(hasBlankText, imeShowing) {
-                        val fabExpanded = hasBlankText || !imeShowing
-                        viewModel.accept(Action.SetFabExpanded(expanded = fabExpanded))
-                        onDispose { }
-                    }
-                },
-                navigationRail = {
-                    PaneNavigationRail()
-                },
-                content = { paddingValues ->
-                    ComposeScreen(
-                        paneScaffoldState = this,
-                        modifier = Modifier
-                            .padding(paddingValues)
-                            .padding(
-                                // This padding is solely for the post interaction button
-                                bottom = UiTokens.toolbarHeight,
-                            ),
-                        state = state,
-                        actions = viewModel.accept,
-                    )
-                },
-            )
-        },
-    )
+                        DisposableEffect(hasBlankText, imeShowing) {
+                            val fabExpanded = hasBlankText || !imeShowing
+                            viewModel.accept(Action.SetFabExpanded(expanded = fabExpanded))
+                            onDispose {}
+                        }
+                    },
+                    navigationRail = { PaneNavigationRail() },
+                    content = { paddingValues ->
+                        ComposeScreen(
+                            paneScaffoldState = this,
+                            modifier =
+                                Modifier.padding(paddingValues)
+                                    .padding(
+                                        // This padding is solely for the post interaction button
+                                        bottom = UiTokens.toolbarHeight
+                                    ),
+                            state = state,
+                            actions = viewModel.accept,
+                        )
+                    },
+                )
+            },
+        )
 }

@@ -30,40 +30,32 @@ import kotlinx.serialization.protobuf.ProtoNumber
 @Serializable
 @SerialName("com.tunjid.heron.data.core.models.Preferences")
 internal data class PreferencesV0(
-    @ProtoNumber(1)
-    val timelinePreferences: List<TimelinePreference>,
+    @ProtoNumber(1) val timelinePreferences: List<TimelinePreference>,
     // Needs default value for serialization to disk
-    @ProtoNumber(2)
-    val contentLabelPreferences: ContentLabelPreferences = emptyList(),
-    @ProtoNumber(3)
-    val lastViewedHomeTimelineUri: Uri? = null,
-    @ProtoNumber(4)
-    val refreshHomeTimelineOnLaunch: Boolean = false,
-    @ProtoNumber(5)
-    val labelerPreferences: List<LabelerPreference> = emptyList(),
-    @ProtoNumber(6)
-    val allowAdultContent: Boolean = false,
-    @ProtoNumber(7)
-    val hiddenPostPreferences: List<HiddenPostPreference> = emptyList(),
-    @ProtoNumber(8)
-    val mutedWordPreferences: List<MutedWordPreference> = emptyList(),
-    @ProtoNumber(9)
-    val useDynamicTheming: Boolean = false,
-    @ProtoNumber(10)
-    val useCompactNavigation: Boolean = false,
+    @ProtoNumber(2) val contentLabelPreferences: ContentLabelPreferences = emptyList(),
+    @ProtoNumber(3) val lastViewedHomeTimelineUri: Uri? = null,
+    @ProtoNumber(4) val refreshHomeTimelineOnLaunch: Boolean = false,
+    @ProtoNumber(5) val labelerPreferences: List<LabelerPreference> = emptyList(),
+    @ProtoNumber(6) val allowAdultContent: Boolean = false,
+    @ProtoNumber(7) val hiddenPostPreferences: List<HiddenPostPreference> = emptyList(),
+    @ProtoNumber(8) val mutedWordPreferences: List<MutedWordPreference> = emptyList(),
+    @ProtoNumber(9) val useDynamicTheming: Boolean = false,
+    @ProtoNumber(10) val useCompactNavigation: Boolean = false,
 ) {
-    fun asPreferences() = Preferences(
-        timelinePreferences = timelinePreferences,
-        contentLabelPreferences = contentLabelPreferences,
-        labelerPreferences = labelerPreferences,
-        allowAdultContent = allowAdultContent,
-        hiddenPostPreferences = hiddenPostPreferences,
-        mutedWordPreferences = mutedWordPreferences,
-        local = Preferences.Local(
-            lastViewedHomeTimelineUri = lastViewedHomeTimelineUri,
-            refreshHomeTimelineOnLaunch = refreshHomeTimelineOnLaunch,
-            useDynamicTheming = useDynamicTheming,
-            useCompactNavigation = useCompactNavigation,
-        ),
-    )
+    fun asPreferences() =
+        Preferences(
+            timelinePreferences = timelinePreferences,
+            contentLabelPreferences = contentLabelPreferences,
+            labelerPreferences = labelerPreferences,
+            allowAdultContent = allowAdultContent,
+            hiddenPostPreferences = hiddenPostPreferences,
+            mutedWordPreferences = mutedWordPreferences,
+            local =
+                Preferences.Local(
+                    lastViewedHomeTimelineUri = lastViewedHomeTimelineUri,
+                    refreshHomeTimelineOnLaunch = refreshHomeTimelineOnLaunch,
+                    useDynamicTheming = useDynamicTheming,
+                    useCompactNavigation = useCompactNavigation,
+                ),
+        )
 }

@@ -27,62 +27,42 @@ import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.network.models.profileViewerStateEntity
 import sh.christian.ozone.api.Did
 
-internal fun MultipleEntitySaver.add(
-    viewingProfileId: ProfileId?,
-    profileView: ProfileViewBasic,
-) {
+internal fun MultipleEntitySaver.add(viewingProfileId: ProfileId?, profileView: ProfileViewBasic) {
     add(profileView.profileEntity())
     profileView.labels?.forEach(::add)
 
-    if (viewingProfileId != null) profileView.profileViewerStateEntity(
-        viewingProfileId = viewingProfileId,
-    )?.let(::add)
+    if (viewingProfileId != null)
+        profileView.profileViewerStateEntity(viewingProfileId = viewingProfileId)?.let(::add)
 
-    profileView.viewer
-        ?.knownFollowers
-        ?.followers
-        ?.forEach { knownFollowerProfile ->
-            add(
-                viewingProfileId = viewingProfileId,
-                profileView = knownFollowerProfile,
-            )
+    profileView.viewer?.knownFollowers?.followers?.forEach { knownFollowerProfile ->
+        add(viewingProfileId = viewingProfileId, profileView = knownFollowerProfile)
 
-            // Save the common follower relationship with an unknown generic URI
-            add(
-                unknownFollower(
-                    profileId = knownFollowerProfile.did.did.let(::ProfileId),
-                    otherProfileId = profileView.did.did.let(::ProfileId),
-                ),
+        // Save the common follower relationship with an unknown generic URI
+        add(
+            unknownFollower(
+                profileId = knownFollowerProfile.did.did.let(::ProfileId),
+                otherProfileId = profileView.did.did.let(::ProfileId),
             )
-        }
+        )
+    }
 }
 
-internal fun MultipleEntitySaver.add(
-    viewingProfileId: ProfileId?,
-    profileView: ProfileView,
-) {
+internal fun MultipleEntitySaver.add(viewingProfileId: ProfileId?, profileView: ProfileView) {
     add(profileView.profileEntity())
-    if (viewingProfileId != null) profileView.profileViewerStateEntity(
-        viewingProfileId = viewingProfileId,
-    )?.let(::add)
+    if (viewingProfileId != null)
+        profileView.profileViewerStateEntity(viewingProfileId = viewingProfileId)?.let(::add)
 
-    profileView.viewer
-        ?.knownFollowers
-        ?.followers
-        ?.forEach { knownFollowerProfile ->
-            add(
-                viewingProfileId = viewingProfileId,
-                profileView = knownFollowerProfile,
-            )
+    profileView.viewer?.knownFollowers?.followers?.forEach { knownFollowerProfile ->
+        add(viewingProfileId = viewingProfileId, profileView = knownFollowerProfile)
 
-            // Save the common follower relationship with an unknown generic URI
-            add(
-                unknownFollower(
-                    profileId = knownFollowerProfile.did.did.let(::ProfileId),
-                    otherProfileId = profileView.did.did.let(::ProfileId),
-                ),
+        // Save the common follower relationship with an unknown generic URI
+        add(
+            unknownFollower(
+                profileId = knownFollowerProfile.did.did.let(::ProfileId),
+                otherProfileId = profileView.did.did.let(::ProfileId),
             )
-        }
+        )
+    }
 }
 
 internal fun MultipleEntitySaver.add(
@@ -90,65 +70,56 @@ internal fun MultipleEntitySaver.add(
     profileView: ProfileViewDetailed,
 ) {
     add(profileView.profileEntity())
-    if (viewingProfileId != null) profileView.profileViewerStateEntity(
-        viewingProfileId = viewingProfileId,
-    )?.let(::add)
+    if (viewingProfileId != null)
+        profileView.profileViewerStateEntity(viewingProfileId = viewingProfileId)?.let(::add)
 
-    profileView.viewer
-        ?.knownFollowers
-        ?.followers
-        ?.forEach { knownFollowerProfile ->
-            add(
-                viewingProfileId = viewingProfileId,
-                profileView = knownFollowerProfile,
-            )
+    profileView.viewer?.knownFollowers?.followers?.forEach { knownFollowerProfile ->
+        add(viewingProfileId = viewingProfileId, profileView = knownFollowerProfile)
 
-            // Save the common follower relationship with an unknown generic URI
-            add(
-                unknownFollower(
-                    profileId = knownFollowerProfile.did.did.let(::ProfileId),
-                    otherProfileId = profileView.did.did.let(::ProfileId),
-                ),
+        // Save the common follower relationship with an unknown generic URI
+        add(
+            unknownFollower(
+                profileId = knownFollowerProfile.did.did.let(::ProfileId),
+                otherProfileId = profileView.did.did.let(::ProfileId),
             )
-        }
+        )
+    }
 }
 
 // This should only be used in the context of saving entities
 @Suppress("UnusedReceiverParameter")
-internal fun MultipleEntitySaver.stubProfileEntity(
-    did: Did,
-) = ProfileEntity(
-    did = ProfileId(did.did),
-    handle = Constants.unknownAuthorHandle,
-    displayName = null,
-    description = null,
-    avatar = null,
-    banner = null,
-    followersCount = null,
-    followsCount = null,
-    postsCount = null,
-    joinedViaStarterPack = null,
-    indexedAt = null,
-    createdAt = null,
-    associated = ProfileEntity.Associated(
-        createdListCount = 0,
-        createdFeedGeneratorCount = 0,
-        createdStarterPackCount = 0,
-    ),
-)
+internal fun MultipleEntitySaver.stubProfileEntity(did: Did) =
+    ProfileEntity(
+        did = ProfileId(did.did),
+        handle = Constants.unknownAuthorHandle,
+        displayName = null,
+        description = null,
+        avatar = null,
+        banner = null,
+        followersCount = null,
+        followsCount = null,
+        postsCount = null,
+        joinedViaStarterPack = null,
+        indexedAt = null,
+        createdAt = null,
+        associated =
+            ProfileEntity.Associated(
+                createdListCount = 0,
+                createdFeedGeneratorCount = 0,
+                createdStarterPackCount = 0,
+            ),
+    )
 
-private fun unknownFollower(
-    profileId: ProfileId,
-    otherProfileId: ProfileId,
-) = ProfileViewerStateEntity(
-    profileId = profileId,
-    otherProfileId = otherProfileId,
-    muted = null,
-    mutedByList = null,
-    blockedBy = null,
-    blockingByList = null,
-    following = Constants.unknownFollowUri,
-    followedBy = null,
-    blocking = null,
-    commonFollowersCount = null,
-)
+private fun unknownFollower(profileId: ProfileId, otherProfileId: ProfileId) =
+    ProfileViewerStateEntity(
+        profileId = profileId,
+        otherProfileId = otherProfileId,
+        muted = null,
+        mutedByList = null,
+        blockedBy = null,
+        blockingByList = null,
+        following = Constants.unknownFollowUri,
+        followedBy = null,
+        blocking = null,
+        commonFollowersCount = null,
+    )

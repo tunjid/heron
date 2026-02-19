@@ -89,18 +89,10 @@ import org.jetbrains.compose.resources.stringResource
 private const val RoutePattern = "/profile/{profileHandleOrId}"
 private const val LabelerPattern = "/{profileHandleOrId}/${LabelerUri.NAMESPACE}/self"
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-    children = listOfNotNull(
-        routeParams.decodeReferringRoute(),
-    ),
-)
+private fun createRoute(routeParams: RouteParams) =
+    routeOf(params = routeParams, children = listOfNotNull(routeParams.decodeReferringRoute()))
 
-internal val Route.profileHandleOrId by mappedRoutePath(
-    mapper = ::ProfileHandleOrId,
-)
+internal val Route.profileHandleOrId by mappedRoutePath(mapper = ::ProfileHandleOrId)
 
 @BindingContainer
 object ProfileNavigationBindings {
@@ -109,19 +101,13 @@ object ProfileNavigationBindings {
     @IntoMap
     @StringKey(RoutePattern)
     fun provideRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RoutePattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = RoutePattern, routeMapper = ::createRoute)
 
     @Provides
     @IntoMap
     @StringKey(LabelerPattern)
     fun provideLabelerMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = LabelerPattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = LabelerPattern, routeMapper = ::createRoute)
 }
 
 @BindingContainer
@@ -136,10 +122,8 @@ class ProfileBindings(
     fun providePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(routeParser = routeParser, viewModelInitializer = viewModelInitializer)
 
     @Provides
     @IntoMap
@@ -147,138 +131,142 @@ class ProfileBindings(
     fun provideLabelerPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(routeParser = routeParser, viewModelInitializer = viewModelInitializer)
 
     private fun routePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = threePaneEntry(
-        contentTransform = predictiveBackContentTransformProvider(),
-        paneMapping = { route ->
-            mapOf(
-                ThreePane.Primary to route,
-                ThreePane.Secondary to route.children.firstOrNull() as? Route,
-            )
-        },
-        render = { route ->
-            val viewModel = viewModel<ActualProfileViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = routeParser.hydrate(route),
+    ) =
+        threePaneEntry(
+            contentTransform = predictiveBackContentTransformProvider(),
+            paneMapping = { route ->
+                mapOf(
+                    ThreePane.Primary to route,
+                    ThreePane.Secondary to route.children.firstOrNull() as? Route,
                 )
-            }
-            val state by viewModel.state.collectAsStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
+            },
+            render = { route ->
+                val viewModel =
+                    viewModel<ActualProfileViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = routeParser.hydrate(route),
+                        )
+                    }
+                val state by viewModel.state.collectAsStateWithLifecycle()
+                val paneScaffoldState = rememberPaneScaffoldState()
 
-            val topAppBarNestedScrollConnection =
-                topAppBarNestedScrollConnection()
+                val topAppBarNestedScrollConnection = topAppBarNestedScrollConnection()
 
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                )
+                val bottomNavigationNestedScrollConnection =
+                    bottomNavigationNestedScrollConnection(
+                        isCompact = paneScaffoldState.prefersCompactBottomNav
+                    )
 
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .nestedScroll(topAppBarNestedScrollConnection)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
+                paneScaffoldState.PaneScaffold(
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+                            .nestedScroll(topAppBarNestedScrollConnection)
+                            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                                nestedScroll(bottomNavigationNestedScrollConnection)
+                            },
+                    showNavigation = true,
+                    topBar = {
+                        PoppableDestinationTopAppBar(
+                            // Limit width so tabs may be tapped
+                            modifier = Modifier.width(72.dp),
+                            transparencyFactor = ::fullAppbarTransparency,
+                            onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                        )
                     },
-                showNavigation = true,
-                topBar = {
-                    PoppableDestinationTopAppBar(
-                        // Limit width so tabs may be tapped
-                        modifier = Modifier.width(72.dp),
-                        transparencyFactor = ::fullAppbarTransparency,
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
-                    )
-                },
-                snackBarHost = {
-                    PaneSnackbarHost(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
-                    )
-                },
-                floatingActionButton = {
-                    val isSignedInProfile = state.isSignedInProfile
-                    val isFeedTab = state.stateHolders.getOrNull(state.currentPage) is ProfileScreenStateHolders.Records.Feeds
+                    snackBarHost = {
+                        PaneSnackbarHost(
+                            modifier =
+                                Modifier.offset {
+                                    fabOffset(bottomNavigationNestedScrollConnection.offset)
+                                }
+                        )
+                    },
+                    floatingActionButton = {
+                        val isSignedInProfile = state.isSignedInProfile
+                        val isFeedTab =
+                            state.stateHolders.getOrNull(state.currentPage) is
+                                ProfileScreenStateHolders.Records.Feeds
 
-                    PaneFab(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
-                        text = stringResource(
-                            when {
-                                isSignedOut -> CommonStrings.sign_in
-                                isSignedInProfile ->
-                                    if (isFeedTab) CommonStrings.feed_generator_create
-                                    else Res.string.post
-                                else -> Res.string.mention
-                            },
-                        ),
-                        icon = when {
-                            isSignedOut -> Icons.AutoMirrored.Rounded.Login
-                            isSignedInProfile ->
-                                if (isFeedTab) Icons.Rounded.Add
-                                else Icons.Rounded.Edit
-                            else -> Icons.Rounded.AlternateEmail
-                        },
-                        expanded = isFabExpanded {
-                            if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
-                            else topAppBarNestedScrollConnection.offset * -1f
-                        },
-                        onClick = {
-                            viewModel.accept(
-                                Action.Navigate.To(
+                        PaneFab(
+                            modifier =
+                                Modifier.offset {
+                                    fabOffset(bottomNavigationNestedScrollConnection.offset)
+                                },
+                            text =
+                                stringResource(
                                     when {
-                                        isSignedOut -> signInDestination()
-                                        isSignedInProfile && isFeedTab -> grazeEditorDestination()
-                                        isSignedInProfile -> composePostDestination(
-                                            type = Post.Create.Timeline,
-                                            sharedElementPrefix = null,
-                                        )
-                                        else -> composePostDestination(
-                                            type = Post.Create.Mention(state.profile),
-                                            sharedElementPrefix = null,
-                                        )
-                                    },
+                                        isSignedOut -> CommonStrings.sign_in
+                                        isSignedInProfile ->
+                                            if (isFeedTab) CommonStrings.feed_generator_create
+                                            else Res.string.post
+                                        else -> Res.string.mention
+                                    }
                                 ),
-                            )
-                        },
-                    )
-                },
-                navigationBar = {
-                    PaneNavigationBar(
-                        modifier = Modifier.offset {
-                            bottomNavigationNestedScrollConnection.offset.round()
-                        },
-                    )
-                },
-                navigationRail = {
-                    PaneNavigationRail()
-                },
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
-                },
-                content = {
-                    ProfileScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = viewModel.accept,
-                        modifier = Modifier,
-                    )
-                    SecondaryPaneCloseBackHandler()
-                },
-            )
-        },
-    )
+                            icon =
+                                when {
+                                    isSignedOut -> Icons.AutoMirrored.Rounded.Login
+                                    isSignedInProfile ->
+                                        if (isFeedTab) Icons.Rounded.Add else Icons.Rounded.Edit
+                                    else -> Icons.Rounded.AlternateEmail
+                                },
+                            expanded =
+                                isFabExpanded {
+                                    if (prefersAutoHidingBottomNav)
+                                        bottomNavigationNestedScrollConnection.offset
+                                    else topAppBarNestedScrollConnection.offset * -1f
+                                },
+                            onClick = {
+                                viewModel.accept(
+                                    Action.Navigate.To(
+                                        when {
+                                            isSignedOut -> signInDestination()
+                                            isSignedInProfile && isFeedTab ->
+                                                grazeEditorDestination()
+                                            isSignedInProfile ->
+                                                composePostDestination(
+                                                    type = Post.Create.Timeline,
+                                                    sharedElementPrefix = null,
+                                                )
+                                            else ->
+                                                composePostDestination(
+                                                    type = Post.Create.Mention(state.profile),
+                                                    sharedElementPrefix = null,
+                                                )
+                                        }
+                                    )
+                                )
+                            },
+                        )
+                    },
+                    navigationBar = {
+                        PaneNavigationBar(
+                            modifier =
+                                Modifier.offset {
+                                    bottomNavigationNestedScrollConnection.offset.round()
+                                }
+                        )
+                    },
+                    navigationRail = { PaneNavigationRail() },
+                    snackBarMessages = state.messages,
+                    onSnackBarMessageConsumed = { viewModel.accept(Action.SnackbarDismissed(it)) },
+                    content = {
+                        ProfileScreen(
+                            paneScaffoldState = this,
+                            state = state,
+                            actions = viewModel.accept,
+                            modifier = Modifier,
+                        )
+                        SecondaryPaneCloseBackHandler()
+                    },
+                )
+            },
+        )
 }

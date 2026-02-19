@@ -103,16 +103,15 @@ internal fun SuggestedContent(
     LazyColumn(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = bottomNavAndInsetPaddingValues(
-            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
-            isCompact = paneScaffoldState.prefersCompactBottomNav,
-        ),
+        contentPadding =
+            bottomNavAndInsetPaddingValues(
+                top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
+                isCompact = paneScaffoldState.prefersCompactBottomNav,
+            ),
     ) {
         item {
             TrendTitle(
-                modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .animateItem(),
+                modifier = Modifier.padding(horizontal = 8.dp).animateItem(),
                 icon = Icons.AutoMirrored.Rounded.ShowChart,
                 title = stringResource(Res.string.trending_title),
             )
@@ -122,11 +121,11 @@ internal fun SuggestedContent(
             key = { _, trend -> trend.link },
             itemContent = { index, trend ->
                 Trend(
-                    modifier = Modifier
-                        .fillParentMaxWidth()
-                        .clickable { onTrendClicked(trend) }
-                        .padding(horizontal = 16.dp)
-                        .animateItem(),
+                    modifier =
+                        Modifier.fillParentMaxWidth()
+                            .clickable { onTrendClicked(trend) }
+                            .padding(horizontal = 16.dp)
+                            .animateItem(),
                     index = index,
                     now = now,
                     trend = trend,
@@ -134,29 +133,28 @@ internal fun SuggestedContent(
                 )
             },
         )
-        if (suggestedProfiles.isNotEmpty()) item {
-            TrendTitle(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .animateItem(),
-                icon = Icons.Rounded.AccountCircle,
-                title = stringResource(Res.string.suggested_accounts),
-            )
-        }
+        if (suggestedProfiles.isNotEmpty())
+            item {
+                TrendTitle(
+                    modifier = Modifier.padding(horizontal = 16.dp).animateItem(),
+                    icon = Icons.Rounded.AccountCircle,
+                    title = stringResource(Res.string.suggested_accounts),
+                )
+            }
         items(
             items = suggestedProfiles.take(5),
             key = { suggestedProfile -> suggestedProfile.profile.did.id },
             itemContent = { profileWithViewerState ->
                 ProfileWithViewerState(
-                    modifier = Modifier
-                        .clickable {
-                            onProfileClicked(
-                                profileWithViewerState.profile,
-                                SuggestedProfilesSharedElementPrefix,
-                            )
-                        }
-                        .padding(horizontal = 16.dp)
-                        .animateItem(),
+                    modifier =
+                        Modifier.clickable {
+                                onProfileClicked(
+                                    profileWithViewerState.profile,
+                                    SuggestedProfilesSharedElementPrefix,
+                                )
+                            }
+                            .padding(horizontal = 16.dp)
+                            .animateItem(),
                     movableElementSharedTransitionScope = paneScaffoldState,
                     signedInProfileId = null,
                     profile = profileWithViewerState.profile,
@@ -165,87 +163,77 @@ internal fun SuggestedContent(
                         profile.avatarSharedElementKey(SuggestedProfilesSharedElementPrefix)
                     },
                     onProfileClicked = { profile ->
-                        onProfileClicked(
-                            profile,
-                            SuggestedProfilesSharedElementPrefix,
-                        )
+                        onProfileClicked(profile, SuggestedProfilesSharedElementPrefix)
                     },
                     onViewerStateClicked = { onViewerStateClicked(profileWithViewerState) },
                 )
             },
         )
-        if (starterPacksWithMembers.isNotEmpty()) item {
-            TrendTitle(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .animateItem(),
-                icon = Icons.Rounded.JoinFull,
-                title = stringResource(Res.string.starter_packs),
-            )
-        }
+        if (starterPacksWithMembers.isNotEmpty())
+            item {
+                TrendTitle(
+                    modifier = Modifier.padding(horizontal = 16.dp).animateItem(),
+                    icon = Icons.Rounded.JoinFull,
+                    title = stringResource(Res.string.starter_packs),
+                )
+            }
         items(
             items = starterPacksWithMembers.take(5),
             key = { starterPackWithMember -> starterPackWithMember.starterPack.cid.id },
             itemContent = { starterPackWithMember ->
                 SuggestedStarterPack(
-                    modifier = Modifier
-                        .fillParentMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .animateItem(),
+                    modifier =
+                        Modifier.fillParentMaxWidth().padding(horizontal = 16.dp).animateItem(),
                     movableElementSharedTransitionScope = paneScaffoldState,
                     starterPackWithMembers = starterPackWithMember,
                     onListMemberClicked = onListMemberClicked,
                 )
             },
         )
-        if (feedGenerators.isNotEmpty()) item {
-            TrendTitle(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .animateItem(),
-                icon = Icons.Rounded.RssFeed,
-                title = stringResource(Res.string.discover_feeds),
-            )
-        }
+        if (feedGenerators.isNotEmpty())
+            item {
+                TrendTitle(
+                    modifier = Modifier.padding(horizontal = 16.dp).animateItem(),
+                    icon = Icons.Rounded.RssFeed,
+                    title = stringResource(Res.string.discover_feeds),
+                )
+            }
         items(
             items = feedGenerators.take(5),
             key = { feedGenerator -> feedGenerator.cid.id },
             itemContent = { feedGenerator ->
                 FeedGenerator(
-                    modifier = Modifier
-                        .fillParentMaxWidth()
-                        .padding(
-                            vertical = 4.dp,
-                            horizontal = 16.dp,
-                        )
-                        .clickable {
-                            onFeedGeneratorClicked(
-                                feedGenerator,
-                                SuggestedFeedsSharedElementPrefix,
-                            )
-                        }
-                        .animateItem(),
+                    modifier =
+                        Modifier.fillParentMaxWidth()
+                            .padding(vertical = 4.dp, horizontal = 16.dp)
+                            .clickable {
+                                onFeedGeneratorClicked(
+                                    feedGenerator,
+                                    SuggestedFeedsSharedElementPrefix,
+                                )
+                            }
+                            .animateItem(),
                     movableElementSharedTransitionScope = paneScaffoldState,
                     sharedElementPrefix = SuggestedFeedsSharedElementPrefix,
                     feedGenerator = feedGenerator,
-                    status = when (timelineRecordUrisToPinnedStatus[feedGenerator.uri]) {
-                        true -> Timeline.Home.Status.Pinned
-                        false -> Timeline.Home.Status.Saved
-                        null -> Timeline.Home.Status.None
-                    },
+                    status =
+                        when (timelineRecordUrisToPinnedStatus[feedGenerator.uri]) {
+                            true -> Timeline.Home.Status.Pinned
+                            false -> Timeline.Home.Status.Saved
+                            null -> Timeline.Home.Status.None
+                        },
                     onFeedGeneratorStatusUpdated = onUpdateTimelineClicked,
                 )
             },
         )
         item {
             Spacer(
-                Modifier
-                    .padding(WindowInsets.navigationBars.asPaddingValues())
+                Modifier.padding(WindowInsets.navigationBars.asPaddingValues())
                     .height(
                         UiTokens.bottomNavHeight(
-                            isCompact = paneScaffoldState.prefersCompactBottomNav,
-                        ),
-                    ),
+                            isCompact = paneScaffoldState.prefersCompactBottomNav
+                        )
+                    )
             )
         }
     }
@@ -253,31 +241,17 @@ internal fun SuggestedContent(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun TrendTitle(
-    modifier: Modifier = Modifier,
-    icon: ImageVector,
-    title: String,
-) {
-    Column(
-        modifier = modifier.padding(
-            vertical = 8.dp,
-        ),
-    ) {
-        Row(
-            verticalAlignment = Alignment.Bottom,
-        ) {
+private fun TrendTitle(modifier: Modifier = Modifier, icon: ImageVector, title: String) {
+    Column(modifier = modifier.padding(vertical = 8.dp)) {
+        Row(verticalAlignment = Alignment.Bottom) {
             Icon(
-                modifier = Modifier
-                    .size(24.dp),
+                modifier = Modifier.size(24.dp),
                 imageVector = icon,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
             )
             Spacer(Modifier.width(8.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMediumEmphasized,
-            )
+            Text(text = title, style = MaterialTheme.typography.titleMediumEmphasized)
         }
         Spacer(Modifier.height(8.dp))
     }
@@ -291,28 +265,13 @@ internal fun Trend(
     trend: Trend,
     onTrendClicked: (Trend) -> Unit,
 ) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
+    Row(modifier = modifier, horizontalArrangement = Arrangement.SpaceBetween) {
         Column {
-            Text(
-                text = trendTitle(index, trend),
-            )
-            Spacer(
-                modifier = Modifier
-                    .height(8.dp),
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Spacer(
-                    modifier = Modifier
-                        .width(8.dp),
-                )
-                TrendAvatars(
-                    trend = trend,
-                )
+            Text(text = trendTitle(index, trend))
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Spacer(modifier = Modifier.width(8.dp))
+                TrendAvatars(trend = trend)
                 Text(
                     text = trendDetails(trend),
                     style = MaterialTheme.typography.bodySmall,
@@ -320,37 +279,35 @@ internal fun Trend(
                 )
             }
         }
-        Spacer(
-            modifier = Modifier
-                .weight(1f),
-        )
+        Spacer(modifier = Modifier.weight(1f))
         FilterChip(
             selected = false,
             shape = CircleShape,
             onClick = { onTrendClicked(trend) },
             leadingIcon = {
                 when (trend.status) {
-                    Trend.Status.Hot -> Icon(
-                        modifier = Modifier.size(20.dp),
-                        imageVector = Icons.Outlined.LocalFireDepartment,
-                        contentDescription = "",
-                    )
+                    Trend.Status.Hot ->
+                        Icon(
+                            modifier = Modifier.size(20.dp),
+                            imageVector = Icons.Outlined.LocalFireDepartment,
+                            contentDescription = "",
+                        )
 
                     null -> Unit
                 }
             },
             label = {
                 Text(
-                    text = when (trend.status) {
-                        Trend.Status.Hot -> stringResource(Res.string.hot)
-                        null -> stringResource(
-                            Res.string.trend_started,
-                            remember(
-                                now,
-                                trend.startedAt,
-                            ) { now - trend.startedAt }.roundComponent(),
-                        )
-                    },
+                    text =
+                        when (trend.status) {
+                            Trend.Status.Hot -> stringResource(Res.string.hot)
+                            null ->
+                                stringResource(
+                                    Res.string.trend_started,
+                                    remember(now, trend.startedAt) { now - trend.startedAt }
+                                        .roundComponent(),
+                                )
+                        },
                     style = MaterialTheme.typography.bodySmall,
                 )
             },
@@ -360,27 +317,23 @@ internal fun Trend(
 
 @Composable
 private fun TrendAvatars(trend: Trend) {
-    trend.actors
-        .take(MaxTrendAvatars)
-        .forEachIndexed { profileIndex, profile ->
-            AsyncImage(
-                modifier = Modifier
-                    .zIndex((MaxTrendAvatars - profileIndex).toFloat())
-                    .size(20.dp)
-                    .offset {
-                        IntOffset(x = (-8 * profileIndex).dp.roundToPx(), y = 0)
-                    },
-                args = ImageArgs(
+    trend.actors.take(MaxTrendAvatars).forEachIndexed { profileIndex, profile ->
+        AsyncImage(
+            modifier =
+                Modifier.zIndex((MaxTrendAvatars - profileIndex).toFloat()).size(20.dp).offset {
+                    IntOffset(x = (-8 * profileIndex).dp.roundToPx(), y = 0)
+                },
+            args =
+                ImageArgs(
                     url = profile.avatar?.uri,
                     contentScale = ContentScale.Crop,
                     shape = RoundedPolygonShape.Circle,
                 ),
-            )
-        }
+        )
+    }
 }
 
-private fun trendTitle(index: Int, trend: Trend) =
-    "${index + 1}. ${trend.displayName ?: ""}"
+private fun trendTitle(index: Int, trend: Trend) = "${index + 1}. ${trend.displayName ?: ""}"
 
 @Composable
 private fun trendDetails(trend: Trend): String {

@@ -37,9 +37,7 @@ fun AttributionLayout(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         avatar?.invoke()
-        Column(Modifier.weight(1f)) {
-            label()
-        }
+        Column(Modifier.weight(1f)) { label() }
         action?.invoke()
     }
 }

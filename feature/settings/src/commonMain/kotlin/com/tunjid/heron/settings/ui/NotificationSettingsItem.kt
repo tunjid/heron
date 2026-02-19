@@ -16,11 +16,7 @@ fun NotificationSettingsItem(
     onNotificationSettingsClicked: () -> Unit,
 ) {
     SettingsItemRow(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable {
-                onNotificationSettingsClicked()
-            },
+        modifier = modifier.fillMaxWidth().clickable { onNotificationSettingsClicked() },
         title = stringResource(CommonStrings.notification_settings),
         icon = Icons.Rounded.Notifications,
     )

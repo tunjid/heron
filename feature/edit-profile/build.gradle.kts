@@ -20,9 +20,8 @@ plugins {
     id("ui-module-convention")
     id("ksp-convention")
 }
-android {
-    namespace = "com.tunjid.heron.feature.editprofile"
-}
+
+android { namespace = "com.tunjid.heron.feature.editprofile" }
 
 kotlin {
     sourceSets {

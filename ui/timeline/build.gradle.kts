@@ -20,9 +20,8 @@ plugins {
     id("org.jetbrains.compose")
     alias(libs.plugins.composeCompiler)
 }
-android {
-    namespace = "com.tunjid.heron.ui.timeline"
-}
+
+android { namespace = "com.tunjid.heron.ui.timeline" }
 
 kotlin {
     sourceSets {

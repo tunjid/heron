@@ -7,9 +7,7 @@ plugins {
 
 val modulePackageName = "com.tunjid.heron.data.files"
 
-android {
-    namespace = modulePackageName
-}
+android { namespace = modulePackageName }
 
 kotlin {
     sourceSets {

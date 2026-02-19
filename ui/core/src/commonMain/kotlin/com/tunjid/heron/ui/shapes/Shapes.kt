@@ -53,15 +53,12 @@ sealed class RoundedPolygonShape : Shape {
     private var matrix: Matrix = Matrix()
     private var lastSize = Size.Unspecified
     private var workPath: Path? = null
-    private val shapePath: Path by lazy {
-        polygon.toPath()
-    }
+    private val shapePath: Path by lazy { polygon.toPath() }
 
     internal val lastBounds: Rect by lazy {
-        polygon.calculateBounds(
-            bounds = FloatArray(4),
-            approximate = this !is Polygon,
-        ).let { Rect(it[0], it[1], it[2], it[3]) }
+        polygon.calculateBounds(bounds = FloatArray(4), approximate = this !is Polygon).let {
+            Rect(it[0], it[1], it[2], it[3])
+        }
     }
 
     override fun createOutline(
@@ -69,13 +66,12 @@ sealed class RoundedPolygonShape : Shape {
         layoutDirection: LayoutDirection,
         density: Density,
     ): Outline {
-        val path = workPath
-            .takeUnless { size != lastSize }
-            ?.also(Path::rewind)
-            ?: Path().also {
-                lastSize = size
-                workPath = it
-            }
+        val path =
+            workPath.takeUnless { size != lastSize }?.also(Path::rewind)
+                ?: Path().also {
+                    lastSize = size
+                    workPath = it
+                }
 
         path.addPath(shapePath)
 
@@ -83,18 +79,13 @@ sealed class RoundedPolygonShape : Shape {
         val scaleY = size.height / lastBounds.height
         matrix.apply {
             reset()
-            scale(
-                x = scaleX,
-                y = scaleY,
-            )
+            scale(x = scaleX, y = scaleY)
         }
 
         // Scale and translate the path to align its center with the available size
         // center.
         path.transform(matrix)
-        val scaledCenter = lastBounds.center.let {
-            it.copy(x = it.x * scaleX, y = it.y * scaleY)
-        }
+        val scaledCenter = lastBounds.center.let { it.copy(x = it.x * scaleX, y = it.y * scaleY) }
         path.translate(size.center - scaledCenter)
         return Outline.Generic(path)
     }
@@ -119,59 +110,53 @@ sealed class RoundedPolygonShape : Shape {
 
         constructor(percent: Float) : this(percent, percent, percent, percent)
 
-        override val polygon = RoundedPolygon.rectangle(
-            perVertexRounding = listOf(
-                CornerRounding(bottomEndPercent),
-                CornerRounding(bottomStartPercent),
-                CornerRounding(topStartPercent),
-                CornerRounding(topEndPercent),
-            ),
-        )
+        override val polygon =
+            RoundedPolygon.rectangle(
+                perVertexRounding =
+                    listOf(
+                        CornerRounding(bottomEndPercent),
+                        CornerRounding(bottomStartPercent),
+                        CornerRounding(topStartPercent),
+                        CornerRounding(topEndPercent),
+                    )
+            )
     }
 
     @Stable
-    class Polygon(
-        private val cornerSizePercentAtIndex: List<Float>,
-    ) : RoundedPolygonShape() {
-        override val polygon = RoundedPolygon(
-            numVertices = cornerSizePercentAtIndex.size,
-            perVertexRounding = cornerSizePercentAtIndex.indices.map {
-                val radius = cornerSizePercentAtIndex[it]
-                CornerRounding(radius = radius)
-            },
-        )
+    class Polygon(private val cornerSizePercentAtIndex: List<Float>) : RoundedPolygonShape() {
+        override val polygon =
+            RoundedPolygon(
+                numVertices = cornerSizePercentAtIndex.size,
+                perVertexRounding =
+                    cornerSizePercentAtIndex.indices.map {
+                        val radius = cornerSizePercentAtIndex[it]
+                        CornerRounding(radius = radius)
+                    },
+            )
     }
 
-    @Stable
-    class Custom(
-        override val polygon: RoundedPolygon,
-    ) : RoundedPolygonShape()
+    @Stable class Custom(override val polygon: RoundedPolygon) : RoundedPolygonShape()
 }
 
 @Composable
-fun RoundedPolygonShape.animate(
-    animationSpec: FiniteAnimationSpec<Float> = spring(),
-): Shape {
+fun RoundedPolygonShape.animate(animationSpec: FiniteAnimationSpec<Float> = spring()): Shape {
     val updatedAnimationSpec by rememberUpdatedState(animationSpec)
-    var interpolation by remember {
-        mutableFloatStateOf(1f)
-    }
-    var previousShape by remember {
-        mutableStateOf(this)
-    }
+    var interpolation by remember { mutableFloatStateOf(1f) }
+    var previousShape by remember { mutableStateOf(this) }
 
-    val currentShape by remember {
-        mutableStateOf(this)
-    }.apply {
-        if (value != this@animate) {
-            // TODO capture morphs that have not completed
-            previousShape = value
-            // Reset the interpolation
-            interpolation = 0f
-        }
-        // Set the current value, this will also stop any call to lerp above from recomposing
-        value = this@animate
-    }
+    val currentShape by
+        remember { mutableStateOf(this) }
+            .apply {
+                if (value != this@animate) {
+                    // TODO capture morphs that have not completed
+                    previousShape = value
+                    // Reset the interpolation
+                    interpolation = 0f
+                }
+                // Set the current value, this will also stop any call to lerp above from
+                // recomposing
+                value = this@animate
+            }
 
     val morphingShape = remember {
         MorphingShape(
@@ -182,19 +167,20 @@ fun RoundedPolygonShape.animate(
     }
 
     LaunchedEffect(Unit) {
-        snapshotFlow { currentShape }.collect {
-            androidx.compose.animation.core.animate(
-                initialValue = 0f,
-                targetValue = 1f,
-                animationSpec = updatedAnimationSpec,
-                block = { progress, _ ->
-                    interpolation = progress
-                    morphingShape.previousShape = previousShape
-                    morphingShape.currentShape = currentShape
-                    morphingShape.interpolation = progress
-                },
-            )
-        }
+        snapshotFlow { currentShape }
+            .collect {
+                androidx.compose.animation.core.animate(
+                    initialValue = 0f,
+                    targetValue = 1f,
+                    animationSpec = updatedAnimationSpec,
+                    block = { progress, _ ->
+                        interpolation = progress
+                        morphingShape.previousShape = previousShape
+                        morphingShape.currentShape = currentShape
+                        morphingShape.interpolation = progress
+                    },
+                )
+            }
     }
 
     return morphingShape
@@ -219,30 +205,24 @@ private class MorphingShape(
         layoutDirection: LayoutDirection,
         density: Density,
     ): Outline {
-        if (size == Size.Zero) return RectangleShape.createOutline(
-            size = size,
-            layoutDirection = layoutDirection,
-            density = density,
-        )
+        if (size == Size.Zero)
+            return RectangleShape.createOutline(
+                size = size,
+                layoutDirection = layoutDirection,
+                density = density,
+            )
 
         val startPolygon = previousShape.polygon
         val endPolygon = currentShape.polygon
 
-        if (
-            morph == null ||
-            startPolygon != previousPolygon ||
-            endPolygon != currentPolygon
-        ) {
+        if (morph == null || startPolygon != previousPolygon || endPolygon != currentPolygon) {
             previousPolygon = startPolygon
             currentPolygon = endPolygon
             morph = Morph(start = startPolygon, end = endPolygon)
         }
 
         path.rewind()
-        requireNotNull(morph).toPath(
-            progress = interpolation,
-            path = path,
-        )
+        requireNotNull(morph).toPath(progress = interpolation, path = path)
         matrix.reset()
 
         matrix.scale(
@@ -250,10 +230,7 @@ private class MorphingShape(
             y = size.height / currentShape.lastBounds.height,
         )
 
-        matrix.translate(
-            x = -currentShape.lastBounds.left,
-            y = -currentShape.lastBounds.top,
-        )
+        matrix.translate(x = -currentShape.lastBounds.left, y = -currentShape.lastBounds.top)
         path.transform(matrix)
 
         return Outline.Generic(path)
@@ -280,10 +257,7 @@ private fun Morph.toPath(progress: Float, path: Path = Path()): Path {
     return path
 }
 
-private fun pathFromCubics(
-    path: Path,
-    cubics: List<Cubic>,
-) {
+private fun pathFromCubics(path: Path, cubics: List<Cubic>) {
     var first = true
     path.rewind()
     for (element in cubics) {

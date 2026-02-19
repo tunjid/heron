@@ -20,10 +20,11 @@ import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 
-internal fun com.atproto.label.Label.asExternalModel() = Label(
-    uri = uri.uri.let(::GenericUri),
-    creatorId = src.did.let(::ProfileId),
-    value = Label.Value(`val`),
-    version = ver,
-    createdAt = cts,
-)
+internal fun com.atproto.label.Label.asExternalModel() =
+    Label(
+        uri = uri.uri.let(::GenericUri),
+        creatorId = src.did.let(::ProfileId),
+        value = Label.Value(`val`),
+        version = ver,
+        createdAt = cts,
+    )

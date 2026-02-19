@@ -33,9 +33,7 @@ import uk.co.caprica.vlcj.player.base.MediaPlayer
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter
 
 @Stable
-class VlcPlayerController(
-    scope: CoroutineScope,
-) : VideoPlayerController {
+class VlcPlayerController(scope: CoroutineScope) : VideoPlayerController {
 
     override var isMuted: Boolean by mutableStateOf(true)
 
@@ -46,9 +44,7 @@ class VlcPlayerController(
     private val player = factory.mediaPlayers().newEmbeddedMediaPlayer()
 
     init {
-        snapshotFlow { isMuted }
-            .onEach { player.audio().setMute(it) }
-            .launchIn(scope)
+        snapshotFlow { isMuted }.onEach { player.audio().setMute(it) }.launchIn(scope)
 
         snapshotFlow { idsToStates[activeVideoId]?.status }
             .map { it == null || it is PlayerStatus.Idle }
@@ -56,16 +52,18 @@ class VlcPlayerController(
             .onEach { player.controls().pause() }
             .launchIn(scope)
 
-        player.events().addMediaPlayerEventListener(object : MediaPlayerEventAdapter() {
-            override fun finished(mediaPlayer: MediaPlayer?) {
-                val activeState = idsToStates[activeVideoId] ?: return
-                if (activeState.isLooping) {
-                    player.submit {
-                        player.controls().play()
+        player
+            .events()
+            .addMediaPlayerEventListener(
+                object : MediaPlayerEventAdapter() {
+                    override fun finished(mediaPlayer: MediaPlayer?) {
+                        val activeState = idsToStates[activeVideoId] ?: return
+                        if (activeState.isLooping) {
+                            player.submit { player.controls().play() }
+                        }
                     }
                 }
-            }
-        })
+            )
     }
 
     override fun registerVideo(
@@ -75,31 +73,29 @@ class VlcPlayerController(
         isLooping: Boolean,
         autoplay: Boolean,
     ): VideoPlayerState {
-        idsToStates[videoId]?.let { return it }
+        idsToStates[videoId]?.let {
+            return it
+        }
 
         trim()
 
-        val videoPlayerState = VlcPlayerState(
-            factory = factory,
-            videoUrl = videoUrl,
-            videoId = videoId,
-            thumbnail = thumbnail,
-            autoplay = autoplay,
-            isLooping = isLooping,
-            isMuted = derivedStateOf { isMuted },
-            mediaPlayerState = derivedStateOf {
-                player.takeIf { isCurrentMediaItem(videoId) }
-            },
-        )
+        val videoPlayerState =
+            VlcPlayerState(
+                factory = factory,
+                videoUrl = videoUrl,
+                videoId = videoId,
+                thumbnail = thumbnail,
+                autoplay = autoplay,
+                isLooping = isLooping,
+                isMuted = derivedStateOf { isMuted },
+                mediaPlayerState = derivedStateOf { player.takeIf { isCurrentMediaItem(videoId) } },
+            )
 
         idsToStates[videoId] = videoPlayerState
         return videoPlayerState
     }
 
-    override fun play(
-        videoId: String?,
-        seekToMs: Long?,
-    ) {
+    override fun play(videoId: String?, seekToMs: Long?) {
         val playerIdToPlay = videoId ?: activeVideoId
         val stateToPlay = idsToStates[playerIdToPlay] ?: return
 
@@ -108,7 +104,11 @@ class VlcPlayerController(
         val alreadyPlaying = stateToPlay.status is PlayerStatus.Play.Confirmed
 
         // Resume if paused and same video
-        if (stateToPlay.status is PlayerStatus.Pause && seekToMs == null && isCurrentMediaItem(playerIdToPlay)) {
+        if (
+            stateToPlay.status is PlayerStatus.Pause &&
+                seekToMs == null &&
+                isCurrentMediaItem(playerIdToPlay)
+        ) {
             player.controls().play()
             return
         }
@@ -134,9 +134,7 @@ class VlcPlayerController(
     }
 
     override fun pauseActiveVideo() {
-        activeVideoId.let(idsToStates::get)?.apply {
-            status = PlayerStatus.Pause.Requested
-        }
+        activeVideoId.let(idsToStates::get)?.apply { status = PlayerStatus.Pause.Requested }
         player.controls().pause()
     }
 
@@ -184,12 +182,14 @@ class VlcPlayerController(
 
     private fun trim() {
         val size = idsToStates.size
-        if (size >= MaxVideoStates) idsToStates.keys.filter {
-            val state = idsToStates[it]
-            state?.status is PlayerStatus.Idle.Evicted
-        }
-            .take(size - MaxVideoStates)
-            .forEach(idsToStates::remove)
+        if (size >= MaxVideoStates)
+            idsToStates.keys
+                .filter {
+                    val state = idsToStates[it]
+                    state?.status is PlayerStatus.Idle.Evicted
+                }
+                .take(size - MaxVideoStates)
+                .forEach(idsToStates::remove)
     }
 }
 

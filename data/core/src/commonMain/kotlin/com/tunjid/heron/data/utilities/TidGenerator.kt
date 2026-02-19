@@ -37,24 +37,20 @@ import kotlinx.coroutines.sync.withLock
  * - Bits 1-53 (53 bits): Microseconds since the UNIX epoch.
  * - Bits 54-63 (10 bits): A random clock identifier to prevent collisions.
  */
-@OptIn(
-    ExperimentalAtomicApi::class,
-    ExperimentalTime::class,
-)
+@OptIn(ExperimentalAtomicApi::class, ExperimentalTime::class)
 class TidGenerator @Inject constructor() {
 
     private val mutex = Mutex()
 
     /**
-     * The clock identifier is a random 10-bit number (0-1023) generated once per
-     * generator instance to minimize collisions between different processes or machines.
+     * The clock identifier is a random 10-bit number (0-1023) generated once per generator instance
+     * to minimize collisions between different processes or machines.
      */
     private val clockId: Long = Random.nextInt(0, 1024).toLong()
 
     /**
-     * Stores the last generated TID value. Using AtomicLong ensures thread-safe
-     * reads and writes, which is crucial for guaranteeing monotonicity in a
-     * multi-threaded environment.
+     * Stores the last generated TID value. Using AtomicLong ensures thread-safe reads and writes,
+     * which is crucial for guaranteeing monotonicity in a multi-threaded environment.
      */
     private val lastTidValue = AtomicLong(0L)
 
@@ -66,34 +62,36 @@ class TidGenerator @Inject constructor() {
      *
      * @return A 13-character, base32-sortable TID string.
      */
-    suspend fun generate(): String = mutex.withLock {
-        // 1. Get the current time in microseconds since the UNIX epoch.
-        // We use millisecond precision from the system and multiply by 1000.
-        val timeMicros = Clock.System.now().toEpochMilliseconds() * 1000
+    suspend fun generate(): String =
+        mutex.withLock {
+            // 1. Get the current time in microseconds since the UNIX epoch.
+            // We use millisecond precision from the system and multiply by 1000.
+            val timeMicros = Clock.System.now().toEpochMilliseconds() * 1000
 
-        // 2. Get the value of the last TID that was generated.
-        val lastVal = lastTidValue.load()
+            // 2. Get the value of the last TID that was generated.
+            val lastVal = lastTidValue.load()
 
-        // 3. Extract the timestamp portion from the last TID.
-        // We do this by shifting the 64-bit value right by 10 bits.
-        val lastTimeMicros = lastVal ushr 10
+            // 3. Extract the timestamp portion from the last TID.
+            // We do this by shifting the 64-bit value right by 10 bits.
+            val lastTimeMicros = lastVal ushr 10
 
-        // 4. Determine the next TID value to ensure it's always increasing.
-        val nextValue: Long = if (timeMicros > lastTimeMicros) {
-            // If the current time is greater than the last recorded time, we can safely
-            // generate a new TID based on the current time and the clock ID.
-            (timeMicros shl 10) or clockId
-        } else {
-            // If the current time is not greater (e.g., same microsecond or clock skew),
-            // we must increment the last generated value by 1. This ensures the new TID
-            // is still larger than the previous one, maintaining sort order.
-            lastVal + 1
+            // 4. Determine the next TID value to ensure it's always increasing.
+            val nextValue: Long =
+                if (timeMicros > lastTimeMicros) {
+                    // If the current time is greater than the last recorded time, we can safely
+                    // generate a new TID based on the current time and the clock ID.
+                    (timeMicros shl 10) or clockId
+                } else {
+                    // If the current time is not greater (e.g., same microsecond or clock skew),
+                    // we must increment the last generated value by 1. This ensures the new TID
+                    // is still larger than the previous one, maintaining sort order.
+                    lastVal + 1
+                }
+
+            // 5. Atomically set the new value as the last generated TID.
+            lastTidValue.store(nextValue)
+
+            // 6. Encode the 64-bit integer into its final base32-sortable string format.
+            return RecordKey.encode(nextValue)
         }
-
-        // 5. Atomically set the new value as the last generated TID.
-        lastTidValue.store(nextValue)
-
-        // 6. Encode the 64-bit integer into its final base32-sortable string format.
-        return RecordKey.encode(nextValue)
-    }
 }

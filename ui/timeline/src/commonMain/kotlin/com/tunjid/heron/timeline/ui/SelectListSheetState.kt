@@ -41,10 +41,8 @@ import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetState
 
 @Stable
-class SelectListSheetState private constructor(
-    lists: List<FeedList>,
-    scope: BottomSheetScope,
-) : BottomSheetState(scope) {
+class SelectListSheetState private constructor(lists: List<FeedList>, scope: BottomSheetScope) :
+    BottomSheetState(scope) {
     internal var lists by mutableStateOf(lists)
 
     override fun onHidden() {
@@ -57,19 +55,11 @@ class SelectListSheetState private constructor(
             lists: List<FeedList>,
             onListSelected: (FeedList) -> Unit,
         ): SelectListSheetState {
-            val state = rememberBottomSheetState {
-                SelectListSheetState(
-                    lists = lists,
-                    scope = it,
-                )
-            }.also {
-                it.lists = lists
-            }
+            val state =
+                rememberBottomSheetState { SelectListSheetState(lists = lists, scope = it) }
+                    .also { it.lists = lists }
 
-            SelectListBottomSheet(
-                state = state,
-                onListSelected = onListSelected,
-            )
+            SelectListBottomSheet(state = state, onListSelected = onListSelected)
 
             return state
         }
@@ -77,35 +67,24 @@ class SelectListSheetState private constructor(
 }
 
 @Composable
-private fun SelectListBottomSheet(
-    state: SelectListSheetState,
-    onListSelected: (FeedList) -> Unit,
-) {
+private fun SelectListBottomSheet(state: SelectListSheetState, onListSelected: (FeedList) -> Unit) {
     state.ModalBottomSheet {
         LazyColumn(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            items(
-                items = state.lists,
-                key = { it.uri.uri },
-            ) { list ->
+            items(items = state.lists, key = { it.uri.uri }) { list ->
                 BottomSheetItemCard(
                     onClick = {
                         onListSelected(list)
                         state.hide()
-                    },
+                    }
                 ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(
-                            text = list.name,
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
+                        Text(text = list.name, style = MaterialTheme.typography.bodyLarge)
                     }
                 }
             }

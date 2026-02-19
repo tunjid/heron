@@ -53,23 +53,15 @@ fun SearchBar(
     onQueryChanged: (String) -> Unit,
     onQueryConfirmed: () -> Unit,
 ) {
-    Box(
-        modifier = Modifier
-            .padding(
-                horizontal = 8.dp,
-            )
-            .fillMaxWidth(),
-    ) {
+    Box(modifier = Modifier.padding(horizontal = 8.dp).fillMaxWidth()) {
         OutlinedTextField(
-            modifier = when (focusRequester) {
-                null -> Modifier
-                else -> Modifier.focusRequester(focusRequester)
-            }
-                .fillMaxWidth(),
+            modifier =
+                when (focusRequester) {
+                    null -> Modifier
+                    else -> Modifier.focusRequester(focusRequester)
+                }.fillMaxWidth(),
             value = searchQuery,
-            onValueChange = {
-                onQueryChanged(it)
-            },
+            onValueChange = { onQueryChanged(it) },
             suffix = {
                 AnimatedVisibility(
                     modifier = Modifier,
@@ -78,11 +70,7 @@ fun SearchBar(
                     visible = searchQuery.isNotBlank(),
                 ) {
                     Icon(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .clickable {
-                                onQueryChanged("")
-                            },
+                        modifier = Modifier.clip(CircleShape).clickable { onQueryChanged("") },
                         imageVector = Icons.Rounded.Cancel,
                         contentDescription = stringResource(Res.string.clear_search),
                     )
@@ -91,17 +79,11 @@ fun SearchBar(
             textStyle = MaterialTheme.typography.labelLarge,
             singleLine = true,
             shape = SearchBarShape,
-            keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Search,
-            ),
-            keyboardActions = KeyboardActions {
-                onQueryConfirmed()
-            },
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions { onQueryConfirmed() },
         )
         AnimatedVisibility(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .align(Alignment.CenterStart),
+            modifier = Modifier.padding(horizontal = 16.dp).align(Alignment.CenterStart),
             visible = searchQuery.isBlank(),
         ) {
             Text(

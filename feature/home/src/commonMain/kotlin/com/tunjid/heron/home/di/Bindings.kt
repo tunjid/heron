@@ -84,11 +84,7 @@ import org.jetbrains.compose.resources.stringResource
 
 internal const val RoutePattern = "/home"
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-)
+private fun createRoute(routeParams: RouteParams) = routeOf(params = routeParams)
 
 @BindingContainer
 object HomeNavigationBindings {
@@ -97,10 +93,7 @@ object HomeNavigationBindings {
     @IntoMap
     @StringKey(RoutePattern)
     fun provideRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RoutePattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = RoutePattern, routeMapper = ::createRoute)
 }
 
 @BindingContainer
@@ -113,166 +106,167 @@ class HomeBindings(
     @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
-    )
+        viewModelInitializer: RouteViewModelInitializer
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(viewModelInitializer = viewModelInitializer)
 
-    private fun routePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
-    ) = threePaneEntry(
-        contentTransform = predictiveBackContentTransformProvider(),
-        render = { route ->
-            val viewModel = viewModel<ActualHomeViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = route,
-                )
-            }
-            val state by viewModel.state.collectAsStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
+    private fun routePaneEntry(viewModelInitializer: RouteViewModelInitializer) =
+        threePaneEntry(
+            contentTransform = predictiveBackContentTransformProvider(),
+            render = { route ->
+                val viewModel =
+                    viewModel<ActualHomeViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = route,
+                        )
+                    }
+                val state by viewModel.state.collectAsStateWithLifecycle()
+                val paneScaffoldState = rememberPaneScaffoldState()
 
-            val topAppBarNestedScrollConnection =
-                topAppBarNestedScrollConnection()
+                val topAppBarNestedScrollConnection = topAppBarNestedScrollConnection()
 
-            val bottomNavigationNestedScrollConnection =
-                bottomNavigationNestedScrollConnection(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                )
+                val bottomNavigationNestedScrollConnection =
+                    bottomNavigationNestedScrollConnection(
+                        isCompact = paneScaffoldState.prefersCompactBottomNav
+                    )
 
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
-                    .nestedScroll(topAppBarNestedScrollConnection)
-                    .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
-                        nestedScroll(bottomNavigationNestedScrollConnection)
+                paneScaffoldState.PaneScaffold(
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState)
+                            .nestedScroll(topAppBarNestedScrollConnection)
+                            .ifTrue(paneScaffoldState.prefersAutoHidingBottomNav) {
+                                nestedScroll(bottomNavigationNestedScrollConnection)
+                            },
+                    showNavigation = true,
+                    snackBarMessages = state.messages,
+                    onSnackBarMessageConsumed = { viewModel.accept(Action.SnackbarDismissed(it)) },
+                    topBar = {
+                        RootDestinationTopAppBar(
+                            modifier =
+                                Modifier.offset { topAppBarNestedScrollConnection.offset.round() },
+                            transparencyFactor =
+                                topAppBarNestedScrollConnection::verticalOffsetProgress,
+                            signedInProfile = state.signedInProfile,
+                            title = {
+                                TrendsTicker(
+                                    modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth(),
+                                    sharedTransitionScope = paneScaffoldState,
+                                    trends = state.trends,
+                                    onTrendClicked = { trend ->
+                                        viewModel.accept(
+                                            Action.Navigate.To(
+                                                pathDestination(
+                                                    path = trend.link,
+                                                    referringRouteOption =
+                                                        NavigationAction.ReferringRouteOption
+                                                            .ParentOrCurrent,
+                                                )
+                                            )
+                                        )
+                                    },
+                                )
+                            },
+                            onSignedInProfileClicked = { profile, sharedElementKey ->
+                                viewModel.accept(
+                                    Action.Navigate.To(
+                                        profileDestination(
+                                            referringRouteOption =
+                                                NavigationAction.ReferringRouteOption
+                                                    .ParentOrCurrent,
+                                            profile = profile,
+                                            avatarSharedElementKey = sharedElementKey,
+                                        )
+                                    )
+                                )
+                            },
+                        )
                     },
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
-                },
-                topBar = {
-                    RootDestinationTopAppBar(
-                        modifier = Modifier.offset {
-                            topAppBarNestedScrollConnection.offset.round()
-                        },
-                        transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
-                        signedInProfile = state.signedInProfile,
-                        title = {
-                            TrendsTicker(
-                                modifier = Modifier
-                                    .padding(horizontal = 20.dp)
-                                    .fillMaxWidth(),
-                                sharedTransitionScope = paneScaffoldState,
-                                trends = state.trends,
-                                onTrendClicked = { trend ->
-                                    viewModel.accept(
-                                        Action.Navigate.To(
-                                            pathDestination(
-                                                path = trend.link,
-                                                referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                            ),
-                                        ),
-                                    )
+                    snackBarHost = {
+                        PaneSnackbarHost(
+                            modifier =
+                                Modifier.offset {
+                                    fabOffset(bottomNavigationNestedScrollConnection.offset)
+                                }
+                        )
+                    },
+                    floatingActionButton = {
+                        PaneFab(
+                            modifier =
+                                Modifier.offset {
+                                    fabOffset(bottomNavigationNestedScrollConnection.offset)
                                 },
-                            )
-                        },
-                        onSignedInProfileClicked = { profile, sharedElementKey ->
-                            viewModel.accept(
-                                Action.Navigate.To(
-                                    profileDestination(
-                                        referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
-                                        profile = profile,
-                                        avatarSharedElementKey = sharedElementKey,
-                                    ),
+                            text =
+                                stringResource(
+                                    when {
+                                        isSignedOut -> CommonStrings.sign_in
+                                        state.tabLayout is TabLayout.Expanded -> Res.string.save
+                                        else -> Res.string.create_post
+                                    }
                                 ),
-                            )
-                        },
-                    )
-                },
-                snackBarHost = {
-                    PaneSnackbarHost(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
-                    )
-                },
-                floatingActionButton = {
-                    PaneFab(
-                        modifier = Modifier
-                            .offset {
-                                fabOffset(bottomNavigationNestedScrollConnection.offset)
-                            },
-                        text = stringResource(
-                            when {
-                                isSignedOut -> CommonStrings.sign_in
-                                state.tabLayout is TabLayout.Expanded -> Res.string.save
-                                else -> Res.string.create_post
-                            },
-                        ),
-                        icon = when {
-                            isSignedOut -> Icons.AutoMirrored.Rounded.Login
-                            state.tabLayout is TabLayout.Expanded -> Icons.Rounded.Save
-                            else -> Icons.Rounded.Edit
-                        },
-                        expanded = isFabExpanded {
-                            if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
-                            else topAppBarNestedScrollConnection.offset * -1f
-                        },
-                        onClick = {
-                            viewModel.accept(
+                            icon =
                                 when {
-                                    isSignedOut -> Action.Navigate.To(
-                                        signInDestination(),
-                                    )
-
-                                    state.tabLayout is TabLayout.Expanded -> Action.UpdateTimeline.RequestUpdate
-                                    else -> Action.Navigate.To(
-                                        composePostDestination(
-                                            type = Post.Create.Timeline,
-                                            sharedElementPrefix = null,
-                                        ),
-                                    )
+                                    isSignedOut -> Icons.AutoMirrored.Rounded.Login
+                                    state.tabLayout is TabLayout.Expanded -> Icons.Rounded.Save
+                                    else -> Icons.Rounded.Edit
                                 },
-                            )
-                        },
-                    )
-                },
-                navigationBar = {
-                    PaneNavigationBar(
-                        modifier = Modifier
-                            .offset {
-                                bottomNavigationNestedScrollConnection.offset.round()
-                            },
-                        onNavItemReselected = {
-                            viewModel.accept(Action.RefreshCurrentTab)
-                            true
-                        },
-                    )
-                },
-                navigationRail = {
-                    PaneNavigationRail(
-                        onNavItemReselected = {
-                            viewModel.accept(Action.RefreshCurrentTab)
-                            true
-                        },
-                    )
-                },
-                content = {
-                    HomeScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = viewModel.accept,
-                    )
-                },
-            )
+                            expanded =
+                                isFabExpanded {
+                                    if (prefersAutoHidingBottomNav)
+                                        bottomNavigationNestedScrollConnection.offset
+                                    else topAppBarNestedScrollConnection.offset * -1f
+                                },
+                            onClick = {
+                                viewModel.accept(
+                                    when {
+                                        isSignedOut -> Action.Navigate.To(signInDestination())
 
-            topAppBarNestedScrollConnection.TabsExpansionEffect(
-                isExpanded = state.tabLayout is TabLayout.Expanded,
-            )
-        },
-    )
+                                        state.tabLayout is TabLayout.Expanded ->
+                                            Action.UpdateTimeline.RequestUpdate
+                                        else ->
+                                            Action.Navigate.To(
+                                                composePostDestination(
+                                                    type = Post.Create.Timeline,
+                                                    sharedElementPrefix = null,
+                                                )
+                                            )
+                                    }
+                                )
+                            },
+                        )
+                    },
+                    navigationBar = {
+                        PaneNavigationBar(
+                            modifier =
+                                Modifier.offset {
+                                    bottomNavigationNestedScrollConnection.offset.round()
+                                },
+                            onNavItemReselected = {
+                                viewModel.accept(Action.RefreshCurrentTab)
+                                true
+                            },
+                        )
+                    },
+                    navigationRail = {
+                        PaneNavigationRail(
+                            onNavItemReselected = {
+                                viewModel.accept(Action.RefreshCurrentTab)
+                                true
+                            }
+                        )
+                    },
+                    content = {
+                        HomeScreen(
+                            paneScaffoldState = this,
+                            state = state,
+                            actions = viewModel.accept,
+                        )
+                    },
+                )
+
+                topAppBarNestedScrollConnection.TabsExpansionEffect(
+                    isExpanded = state.tabLayout is TabLayout.Expanded
+                )
+            },
+        )
 }

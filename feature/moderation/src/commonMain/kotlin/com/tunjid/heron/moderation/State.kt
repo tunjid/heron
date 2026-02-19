@@ -41,14 +41,10 @@ import org.jetbrains.compose.resources.StringResource
 @Serializable
 data class State(
     val adultContentEnabled: Boolean = false,
-    @Transient
-    val preferences: Preferences = Preferences.EmptyPreferences,
-    @Transient
-    val adultLabelItems: List<AdultLabelItem> = emptyList(),
-    @Transient
-    val subscribedLabelers: List<Labeler> = emptyList(),
-    @Transient
-    val messages: List<Memo> = emptyList(),
+    @Transient val preferences: Preferences = Preferences.EmptyPreferences,
+    @Transient val adultLabelItems: List<AdultLabelItem> = emptyList(),
+    @Transient val subscribedLabelers: List<Labeler> = emptyList(),
+    @Transient val messages: List<Memo> = emptyList(),
 )
 
 data class AdultLabelItem(
@@ -58,43 +54,46 @@ data class AdultLabelItem(
     val descriptionRes: StringResource,
 )
 
-fun adultLabels(
-    contentLabelPreferences: ContentLabelPreferences,
-): List<AdultLabelItem> {
-    val visibilityMap = contentLabelPreferences.associateBy(
-        keySelector = ContentLabelPreference::label,
-        valueTransform = ContentLabelPreference::visibility,
-    )
+fun adultLabels(contentLabelPreferences: ContentLabelPreferences): List<AdultLabelItem> {
+    val visibilityMap =
+        contentLabelPreferences.associateBy(
+            keySelector = ContentLabelPreference::label,
+            valueTransform = ContentLabelPreference::visibility,
+        )
     return Label.Adult.entries.map { adultLabel ->
-        val visibility = adultLabel.labelValues
-            .firstNotNullOfOrNull(visibilityMap::get)
-            ?: adultLabel.defaultVisibility
+        val visibility =
+            adultLabel.labelValues.firstNotNullOfOrNull(visibilityMap::get)
+                ?: adultLabel.defaultVisibility
 
         when (adultLabel) {
-            Label.Adult.AdultContent -> AdultLabelItem(
-                adult = adultLabel,
-                visibility = visibility,
-                nameRes = CommonStrings.porn_label,
-                descriptionRes = CommonStrings.porn_label_description,
-            )
-            Label.Adult.SexuallySuggestive -> AdultLabelItem(
-                adult = adultLabel,
-                visibility = visibility,
-                nameRes = CommonStrings.sexual_label,
-                descriptionRes = CommonStrings.sexual_label_description,
-            )
-            Label.Adult.GraphicMedia -> AdultLabelItem(
-                adult = adultLabel,
-                visibility = visibility,
-                nameRes = CommonStrings.graphic_media_label,
-                descriptionRes = CommonStrings.graphic_media_label_description,
-            )
-            Label.Adult.NonSexualNudity -> AdultLabelItem(
-                adult = adultLabel,
-                visibility = visibility,
-                nameRes = CommonStrings.nudity_label,
-                descriptionRes = CommonStrings.nudity_label_description,
-            )
+            Label.Adult.AdultContent ->
+                AdultLabelItem(
+                    adult = adultLabel,
+                    visibility = visibility,
+                    nameRes = CommonStrings.porn_label,
+                    descriptionRes = CommonStrings.porn_label_description,
+                )
+            Label.Adult.SexuallySuggestive ->
+                AdultLabelItem(
+                    adult = adultLabel,
+                    visibility = visibility,
+                    nameRes = CommonStrings.sexual_label,
+                    descriptionRes = CommonStrings.sexual_label_description,
+                )
+            Label.Adult.GraphicMedia ->
+                AdultLabelItem(
+                    adult = adultLabel,
+                    visibility = visibility,
+                    nameRes = CommonStrings.graphic_media_label,
+                    descriptionRes = CommonStrings.graphic_media_label_description,
+                )
+            Label.Adult.NonSexualNudity ->
+                AdultLabelItem(
+                    adult = adultLabel,
+                    visibility = visibility,
+                    nameRes = CommonStrings.nudity_label,
+                    descriptionRes = CommonStrings.nudity_label_description,
+                )
         }
     }
 }
@@ -106,33 +105,24 @@ sealed class Action(val key: String) {
         val visibility: Label.Visibility,
     ) : Action(key = "UpdateAdultLabelVisibility")
 
-    data class UpdateAdultContentPreferences(
-        val adultContentEnabled: Boolean,
-    ) : Action(key = "UpdateAdultContentPreferences")
+    data class UpdateAdultContentPreferences(val adultContentEnabled: Boolean) :
+        Action(key = "UpdateAdultContentPreferences")
 
-    data class UpdateMutedWord(
-        val mutedWordPreference: List<MutedWordPreference>,
-    ) : Action(key = "UpdateMutedWord")
+    data class UpdateMutedWord(val mutedWordPreference: List<MutedWordPreference>) :
+        Action(key = "UpdateMutedWord")
 
-    data class UpdateThreadGates(
-        val preference: PostInteractionSettingsPreference,
-    ) : Action(key = "UpdateThreadGates")
+    data class UpdateThreadGates(val preference: PostInteractionSettingsPreference) :
+        Action(key = "UpdateThreadGates")
 
-    data class SnackbarDismissed(
-        val message: Memo,
-    ) : Action(key = "SnackbarDismissed")
+    data class SnackbarDismissed(val message: Memo) : Action(key = "SnackbarDismissed")
 
     data object SignOut : Action(key = "SignOut")
 
-    sealed class Navigate :
-        Action(key = "Navigate"),
-        NavigationAction {
+    sealed class Navigate : Action(key = "Navigate"), NavigationAction {
         data object Pop : Navigate(), NavigationAction by NavigationAction.Pop
 
         /** Handles navigation to settings child screens */
-        data class To(
-            val delegate: NavigationAction.Destination,
-        ) : Navigate(),
-            NavigationAction by delegate
+        data class To(val delegate: NavigationAction.Destination) :
+            Navigate(), NavigationAction by delegate
     }
 }

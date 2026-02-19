@@ -72,10 +72,7 @@ internal typealias GrazeEditorStateHolder = ActionStateMutator<Action, StateFlow
 
 @AssistedFactory
 fun interface RouteViewModelInitializer : AssistedViewModelFactory {
-    override fun invoke(
-        scope: CoroutineScope,
-        route: Route,
-    ): ActualGrazeEditorViewModel
+    override fun invoke(scope: CoroutineScope, route: Route): ActualGrazeEditorViewModel
 }
 
 @AssistedInject
@@ -84,134 +81,124 @@ class ActualGrazeEditorViewModel(
     searchRepository: SearchRepository,
     recordRepository: RecordRepository,
     authRepository: AuthRepository,
-    @Assisted
-    scope: CoroutineScope,
-    @Assisted
-    route: Route,
-) : ViewModel(viewModelScope = scope),
+    @Assisted scope: CoroutineScope,
+    @Assisted route: Route,
+) :
+    ViewModel(viewModelScope = scope),
     GrazeEditorStateHolder by scope.actionStateFlowMutator(
         initialState = State(route),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         actionTransform = transform@{ actions ->
-            actions
-                .withInitialLoad(route)
-                .toMutationStream(
-                    keySelector = Action::key,
-                ) {
+                actions.withInitialLoad(route).toMutationStream(keySelector = Action::key) {
                     when (val action = type()) {
-                        is Action.Navigate -> action.flow.consumeNavigationActions(
-                            navigationMutationConsumer = navActions,
-                        )
-                        is Action.SearchProfiles -> action.flow.searchMutations(
-                            searchRepository = searchRepository,
-                        )
-                        is Action.Update -> action.flow.updateMutations(
-                            recordRepository = recordRepository,
-                            authRepository = authRepository,
-                            navActions = navActions,
-                        )
+                        is Action.Navigate ->
+                            action.flow.consumeNavigationActions(
+                                navigationMutationConsumer = navActions
+                            )
+                        is Action.SearchProfiles ->
+                            action.flow.searchMutations(searchRepository = searchRepository)
+                        is Action.Update ->
+                            action.flow.updateMutations(
+                                recordRepository = recordRepository,
+                                authRepository = authRepository,
+                                navActions = navActions,
+                            )
                         is Action.EditorNavigation -> action.flow.editorNavigationMutations()
                         is Action.EditFilter -> action.flow.editFilterFilterMutations()
                         is Action.Metadata -> action.flow.updateMetadataMutations()
-                        is Action.UpdateRecentLists -> action.flow.recentListsMutations(
-                            recordRepository = recordRepository,
-                        )
+                        is Action.UpdateRecentLists ->
+                            action.flow.recentListsMutations(recordRepository = recordRepository)
                     }
                 }
-        },
+            },
     )
 
-private fun Flow<Action>.withInitialLoad(
-    route: Route,
-) = onStart {
+private fun Flow<Action>.withInitialLoad(route: Route) = onStart {
     route.initialLoad?.let { emit(it) }
 }
 
 private fun Flow<Action.SearchProfiles>.searchMutations(
-    searchRepository: SearchRepository,
+    searchRepository: SearchRepository
 ): Flow<Mutation<State>> =
-    debounce(SEARCH_DEBOUNCE_MILLIS)
-        .flatMapLatest { action ->
-            searchRepository.autoCompleteProfileSearch(
-                query = SearchQuery.OfProfiles(
-                    query = action.query,
-                    isLocalOnly = false,
-                    data = CursorQuery.Data(
-                        page = 0,
-                        cursorAnchor = Clock.System.now(),
-                        limit = MAX_SUGGESTED_PROFILES.toLong(),
+    debounce(SEARCH_DEBOUNCE_MILLIS).flatMapLatest { action ->
+        searchRepository
+            .autoCompleteProfileSearch(
+                query =
+                    SearchQuery.OfProfiles(
+                        query = action.query,
+                        isLocalOnly = false,
+                        data =
+                            CursorQuery.Data(
+                                page = 0,
+                                cursorAnchor = Clock.System.now(),
+                                limit = MAX_SUGGESTED_PROFILES.toLong(),
+                            ),
                     ),
-                ),
                 cursor = Cursor.Initial,
-            ).mapToMutation { profiles ->
-                copy(
-                    suggestedProfiles = profiles.map(ProfileWithViewerState::profile),
-                )
+            )
+            .mapToMutation { profiles ->
+                copy(suggestedProfiles = profiles.map(ProfileWithViewerState::profile))
             }
-        }
+    }
 
 private fun Flow<Action.Update>.updateMutations(
     recordRepository: RecordRepository,
     authRepository: AuthRepository,
     navActions: (NavigationMutation) -> Unit,
-): Flow<Mutation<State>> =
-    mapLatestToManyMutations { action ->
-        emit { copy(isLoading = true) }
-        recordRepository.updateGrazeFeed(
-            action.toGrazeFeedUpdate(),
-        )
-            .onSuccess { grazeFeed ->
-                if (grazeFeed !is GrazeFeed.Editable) {
-                    return@onSuccess emitAll(
-                        flowOf(Action.Navigate.PopFeed(action.associatedRecordKey))
-                            .consumeNavigationActions(navActions),
-                    )
-                }
-
-                emit { copy(grazeFeed = grazeFeed, isLoading = false) }
-
-                // Observe the feed
-                emitAll(
-                    authRepository.signedInUser
-                        .mapNotNull { it?.did }
-                        .distinctUntilChanged()
-                        .map {
-                            recordUriOrNull(
-                                profileId = it,
-                                namespace = FeedGeneratorUri.NAMESPACE,
-                                recordKey = grazeFeed.recordKey,
-                            )
-                        }
-                        .filterIsInstance<FeedGeneratorUri>()
-                        .flatMapLatest(recordRepository::embeddableRecord)
-                        .distinctUntilChanged()
-                        .filterIsInstance<FeedGenerator>()
-                        .mapToMutation { copy(feedGenerator = it) },
+): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
+    emit { copy(isLoading = true) }
+    recordRepository
+        .updateGrazeFeed(action.toGrazeFeedUpdate())
+        .onSuccess { grazeFeed ->
+            if (grazeFeed !is GrazeFeed.Editable) {
+                return@onSuccess emitAll(
+                    flowOf(Action.Navigate.PopFeed(action.associatedRecordKey))
+                        .consumeNavigationActions(navActions)
                 )
             }
-            .onFailure { throwable ->
-                emit {
-                    copy(
-                        isLoading = false,
-                        messages = messages + action.toErrorMessage(throwable),
-                    )
-                }
-            }
-    }
+
+            emit { copy(grazeFeed = grazeFeed, isLoading = false) }
+
+            // Observe the feed
+            emitAll(
+                authRepository.signedInUser
+                    .mapNotNull { it?.did }
+                    .distinctUntilChanged()
+                    .map {
+                        recordUriOrNull(
+                            profileId = it,
+                            namespace = FeedGeneratorUri.NAMESPACE,
+                            recordKey = grazeFeed.recordKey,
+                        )
+                    }
+                    .filterIsInstance<FeedGeneratorUri>()
+                    .flatMapLatest(recordRepository::embeddableRecord)
+                    .distinctUntilChanged()
+                    .filterIsInstance<FeedGenerator>()
+                    .mapToMutation { copy(feedGenerator = it) }
+            )
+        }
+        .onFailure { throwable ->
+            emit { copy(isLoading = false, messages = messages + action.toErrorMessage(throwable)) }
+        }
+}
 
 private fun Flow<Action.Metadata>.updateMetadataMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(
-            grazeFeed = when (grazeFeed) {
-                is GrazeFeed.Created -> grazeFeed.copy(
-                    displayName = action.displayName,
-                    description = action.description,
-                )
-                is GrazeFeed.Pending -> grazeFeed.copy(
-                    displayName = action.displayName,
-                    description = action.description,
-                )
-            },
+            grazeFeed =
+                when (grazeFeed) {
+                    is GrazeFeed.Created ->
+                        grazeFeed.copy(
+                            displayName = action.displayName,
+                            description = action.description,
+                        )
+                    is GrazeFeed.Pending ->
+                        grazeFeed.copy(
+                            displayName = action.displayName,
+                            description = action.description,
+                        )
+                }
         )
     }
 
@@ -219,68 +206,54 @@ private fun Flow<Action.EditorNavigation>.editorNavigationMutations(): Flow<Muta
     mapToMutation { action ->
         when (action) {
             is Action.EditorNavigation.EnterFilter ->
-                copy(
-                    suggestedProfiles = emptyList(),
-                    currentPath = currentPath + action.index,
-                )
+                copy(suggestedProfiles = emptyList(), currentPath = currentPath + action.index)
             Action.EditorNavigation.ExitFilter ->
-                if (currentPath.isEmpty()) copy(
-                    suggestedProfiles = emptyList(),
-                )
-                else copy(
-                    suggestedProfiles = emptyList(),
-                    currentPath = currentPath.dropLast(1),
-                )
+                if (currentPath.isEmpty()) copy(suggestedProfiles = emptyList())
+                else copy(suggestedProfiles = emptyList(), currentPath = currentPath.dropLast(1))
         }
     }
 
 private fun Flow<Action.EditFilter>.editFilterFilterMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
-        val editedFilter = grazeFeed.filter.updateAt(action.path) { target ->
-            if (action is Action.EditFilter.FlipRootFilter) when (target) {
-                is Filter.And -> Filter.Or(
-                    id = target.id,
-                    filters = target.filters,
-                )
-                is Filter.Or -> Filter.And(
-                    id = target.id,
-                    filters = target.filters,
-                )
-            }
-            else target.updateFilters { filters ->
-                when (action) {
-                    is Action.EditFilter.AddFilter -> filters + action.filter
-                    is Action.EditFilter.RemoveFilter -> filters.filterIndexed { index, _ ->
-                        index != action.index
+        val editedFilter =
+            grazeFeed.filter.updateAt(action.path) { target ->
+                if (action is Action.EditFilter.FlipRootFilter)
+                    when (target) {
+                        is Filter.And -> Filter.Or(id = target.id, filters = target.filters)
+                        is Filter.Or -> Filter.And(id = target.id, filters = target.filters)
                     }
-                    is Action.EditFilter.UpdateFilter -> filters.mapIndexed { index, filter ->
-                        if (index == action.index) action.filter
-                        else filter
+                else
+                    target.updateFilters { filters ->
+                        when (action) {
+                            is Action.EditFilter.AddFilter -> filters + action.filter
+                            is Action.EditFilter.RemoveFilter ->
+                                filters.filterIndexed { index, _ -> index != action.index }
+                            is Action.EditFilter.UpdateFilter ->
+                                filters.mapIndexed { index, filter ->
+                                    if (index == action.index) action.filter else filter
+                                }
+                            is Action.EditFilter.FlipRootFilter ->
+                                throw IllegalArgumentException(
+                                    "Flip action should not operate on non root filters"
+                                )
+                        }
                     }
-                    is Action.EditFilter.FlipRootFilter -> throw IllegalArgumentException(
-                        "Flip action should not operate on non root filters",
-                    )
-                }
             }
-        }
         copy(
             suggestedProfiles = emptyList(),
-            grazeFeed = when (val currentFeed = grazeFeed) {
-                is GrazeFeed.Created -> currentFeed.copy(filter = editedFilter)
-                is GrazeFeed.Pending -> currentFeed.copy(filter = editedFilter)
-            },
+            grazeFeed =
+                when (val currentFeed = grazeFeed) {
+                    is GrazeFeed.Created -> currentFeed.copy(filter = editedFilter)
+                    is GrazeFeed.Pending -> currentFeed.copy(filter = editedFilter)
+                },
         )
     }
 
 fun Flow<Action.UpdateRecentLists>.recentListsMutations(
-    recordRepository: RecordRepository,
-): Flow<Mutation<State>> =
-    flatMapLatest {
-        recordRepository.recentLists
-            .mapToMutation { lists ->
-                copy(recentLists = lists)
-            }
-    }
+    recordRepository: RecordRepository
+): Flow<Mutation<State>> = flatMapLatest {
+    recordRepository.recentLists.mapToMutation { lists -> copy(recentLists = lists) }
+}
 
 private fun Filter.Root.updateAt(
     path: List<Int>,
@@ -301,9 +274,7 @@ private fun Filter.Root.updateAt(
     }
 }
 
-private inline fun Filter.Root.updateFilters(
-    update: (List<Filter>) -> List<Filter>,
-): Filter.Root {
+private inline fun Filter.Root.updateFilters(update: (List<Filter>) -> List<Filter>): Filter.Root {
     val updatedFilters = update(filters)
     return when (this) {
         is Filter.And -> copy(filters = updatedFilters)
@@ -312,34 +283,40 @@ private inline fun Filter.Root.updateFilters(
 }
 
 private val Action.Update.associatedRecordKey
-    get() = when (this) {
-        is Action.Update.Delete -> recordKey
-        is Action.Update.InitialLoad -> recordKey
-        is Action.Update.Save -> feed.recordKey
+    get() =
+        when (this) {
+            is Action.Update.Delete -> recordKey
+            is Action.Update.InitialLoad -> recordKey
+            is Action.Update.Save -> feed.recordKey
+        }
+
+private fun Action.Update.toGrazeFeedUpdate(): GrazeFeed.Update =
+    when (this) {
+        is Action.Update.InitialLoad -> Get(recordKey = recordKey)
+        is Action.Update.Save ->
+            when (val feed = feed) {
+                is GrazeFeed.Created -> Edit(feed = feed)
+                is GrazeFeed.Pending ->
+                    Create(
+                        feed =
+                            feed.copy(
+                                displayName =
+                                    feed.displayName.takeUnless(String?::isNullOrBlank)
+                                        ?: feed.recordKey.value
+                            )
+                    )
+            }
+        is Action.Update.Delete -> Delete(recordKey = recordKey)
     }
-private fun Action.Update.toGrazeFeedUpdate(): GrazeFeed.Update = when (this) {
-    is Action.Update.InitialLoad -> Get(recordKey = recordKey)
-    is Action.Update.Save -> when (val feed = feed) {
-        is GrazeFeed.Created -> Edit(
-            feed = feed,
-        )
-        is GrazeFeed.Pending -> Create(
-            feed = feed.copy(
-                displayName = feed.displayName.takeUnless(String?::isNullOrBlank)
-                    ?: feed.recordKey.value,
-            ),
-        )
-    }
-    is Action.Update.Delete -> Delete(recordKey = recordKey)
-}
 
 private fun Action.Update.toErrorMessage(throwable: Throwable): Memo.Resource {
     val message = throwable.message ?: ""
-    val stringResource = when (this) {
-        is Action.Update.Delete -> Res.string.error_deleting_graze_feed
-        is Action.Update.InitialLoad -> Res.string.error_fetching_graze_feed
-        is Action.Update.Save -> Res.string.error_saving_graze_feed
-    }
+    val stringResource =
+        when (this) {
+            is Action.Update.Delete -> Res.string.error_deleting_graze_feed
+            is Action.Update.InitialLoad -> Res.string.error_fetching_graze_feed
+            is Action.Update.Save -> Res.string.error_saving_graze_feed
+        }
     return Memo.Resource(stringResource = stringResource, args = listOf(message))
 }
 

@@ -47,45 +47,45 @@ fun ProfileViewerState(
     onClick: () -> Unit,
 ) {
     val follows = viewerState.isFollowing
-    val latchedStatus = rememberLatchedState(
-        if (isSignedInProfile) FollowStatus.Edit
-        else if (follows) FollowStatus.Following
-        else FollowStatus.NotFollowing,
-    )
-    val followStatusText = stringResource(
-        when (latchedStatus.value) {
-            FollowStatus.Edit -> Res.string.edit
-            FollowStatus.Following -> CommonStrings.viewer_state_following
-            FollowStatus.NotFollowing -> CommonStrings.viewer_state_follow
-        },
-    )
-    if (!viewerState.isBlocked && !viewerState.isBlockedBy) FilterChip(
-        modifier = Modifier
-            .animateContentSize(),
-        selected = latchedStatus.value == FollowStatus.Following,
-        onClick = {
-            // Try to show feedback as quickly as possible
-            if (!isSignedInProfile && viewerState != null) latchedStatus.latch(
-                if (follows) FollowStatus.NotFollowing
-                else FollowStatus.Following,
-            )
-            onClick()
-        },
-        shape = FollowChipShape,
-        leadingIcon = {
-            Icon(
-                imageVector = when (latchedStatus.value) {
-                    FollowStatus.Edit -> Icons.Rounded.Edit
-                    FollowStatus.Following -> Icons.Rounded.Check
-                    FollowStatus.NotFollowing -> Icons.Rounded.Add
-                },
-                contentDescription = followStatusText,
-            )
-        },
-        label = {
-            Text(followStatusText)
-        },
-    )
+    val latchedStatus =
+        rememberLatchedState(
+            if (isSignedInProfile) FollowStatus.Edit
+            else if (follows) FollowStatus.Following else FollowStatus.NotFollowing
+        )
+    val followStatusText =
+        stringResource(
+            when (latchedStatus.value) {
+                FollowStatus.Edit -> Res.string.edit
+                FollowStatus.Following -> CommonStrings.viewer_state_following
+                FollowStatus.NotFollowing -> CommonStrings.viewer_state_follow
+            }
+        )
+    if (!viewerState.isBlocked && !viewerState.isBlockedBy)
+        FilterChip(
+            modifier = Modifier.animateContentSize(),
+            selected = latchedStatus.value == FollowStatus.Following,
+            onClick = {
+                // Try to show feedback as quickly as possible
+                if (!isSignedInProfile && viewerState != null)
+                    latchedStatus.latch(
+                        if (follows) FollowStatus.NotFollowing else FollowStatus.Following
+                    )
+                onClick()
+            },
+            shape = FollowChipShape,
+            leadingIcon = {
+                Icon(
+                    imageVector =
+                        when (latchedStatus.value) {
+                            FollowStatus.Edit -> Icons.Rounded.Edit
+                            FollowStatus.Following -> Icons.Rounded.Check
+                            FollowStatus.NotFollowing -> Icons.Rounded.Add
+                        },
+                    contentDescription = followStatusText,
+                )
+            },
+            label = { Text(followStatusText) },
+        )
 }
 
 private enum class FollowStatus {

@@ -21,7 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -39,41 +38,43 @@ fun Labeler(
     movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     sharedElementPrefix: String,
     labeler: Labeler,
-) = with(movableElementSharedTransitionScope) {
-    RecordLayout(
-        modifier = modifier,
-        movableElementSharedTransitionScope = movableElementSharedTransitionScope,
-        title = labeler.creator.displayName ?: "",
-        subtitle = stringResource(
-            heron.ui.timeline.generated.resources.Res.string.labeling_service_by,
-            labeler.creator.handle.id,
-        ),
-        description = labeler.creator.description,
-        blurb = null,
-        sharedElementPrefix = sharedElementPrefix,
-        sharedElementType = labeler.uri,
-        avatar = {
-            val avatar = labeler.creator.avatar.orDefault
-            PaneStickySharedElement(
-                modifier = Modifier
-                    .size(44.dp),
-                sharedContentState = rememberSharedContentState(
-                    key = labeler.avatarSharedElementKey(sharedElementPrefix),
+) =
+    with(movableElementSharedTransitionScope) {
+        RecordLayout(
+            modifier = modifier,
+            movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+            title = labeler.creator.displayName ?: "",
+            subtitle =
+                stringResource(
+                    heron.ui.timeline.generated.resources.Res.string.labeling_service_by,
+                    labeler.creator.handle.id,
                 ),
-            ) {
-                AsyncImage(
-                    modifier = Modifier
-                        .fillParentAxisIfFixedOrWrap(),
-                    args = remember(avatar) {
-                        ImageArgs(
-                            url = avatar.uri,
-                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                            contentDescription = null,
-                            shape = LabelerCollectionShape,
-                        )
-                    },
-                )
-            }
-        },
-    )
-}
+            description = labeler.creator.description,
+            blurb = null,
+            sharedElementPrefix = sharedElementPrefix,
+            sharedElementType = labeler.uri,
+            avatar = {
+                val avatar = labeler.creator.avatar.orDefault
+                PaneStickySharedElement(
+                    modifier = Modifier.size(44.dp),
+                    sharedContentState =
+                        rememberSharedContentState(
+                            key = labeler.avatarSharedElementKey(sharedElementPrefix)
+                        ),
+                ) {
+                    AsyncImage(
+                        modifier = Modifier.fillParentAxisIfFixedOrWrap(),
+                        args =
+                            remember(avatar) {
+                                ImageArgs(
+                                    url = avatar.uri,
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                                    contentDescription = null,
+                                    shape = LabelerCollectionShape,
+                                )
+                            },
+                    )
+                }
+            },
+        )
+    }

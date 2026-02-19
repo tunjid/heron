@@ -27,46 +27,40 @@ internal class DeferredMutex<K, V> {
 
     private val mutex = Mutex()
 
-    @Volatile
-    private var lastDeferred: Pair<K, Deferred<V>>? = null
+    @Volatile private var lastDeferred: Pair<K, Deferred<V>>? = null
 
-    @Volatile
-    private var lastResult: Pair<K, V>? = null
+    @Volatile private var lastResult: Pair<K, V>? = null
 
-    suspend inline fun withSingleAccess(
-        key: K,
-        crossinline block: suspend () -> V,
-    ): V {
+    suspend inline fun withSingleAccess(key: K, crossinline block: suspend () -> V): V {
         checkResult(key)?.let {
             return@withSingleAccess it
         }
 
         return coroutineScope {
-            checkResult(key)?.let {
-                return@coroutineScope async { it }
-            }
-            checkDeferred(key)?.let {
-                return@coroutineScope it
-            }
-
-            mutex.withLock {
                 checkResult(key)?.let {
                     return@coroutineScope async { it }
                 }
                 checkDeferred(key)?.let {
                     return@coroutineScope it
                 }
-                async {
-                    block().also { lastResult = key to it }
-                }.also { lastDeferred = key to it }
+
+                mutex.withLock {
+                    checkResult(key)?.let {
+                        return@coroutineScope async { it }
+                    }
+                    checkDeferred(key)?.let {
+                        return@coroutineScope it
+                    }
+                    async { block().also { lastResult = key to it } }
+                        .also { lastDeferred = key to it }
+                }
             }
-        }.await()
+            .await()
     }
 
     private fun checkResult(key: K): V? {
         val result = lastResult
-        return if (result != null && result.first == key) result.second
-        else null
+        return if (result != null && result.first == key) result.second else null
     }
 
     private fun checkDeferred(key: K): Deferred<V>? {

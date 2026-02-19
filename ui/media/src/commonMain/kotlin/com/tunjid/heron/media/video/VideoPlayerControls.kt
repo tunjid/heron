@@ -83,10 +83,8 @@ private fun PlaybackControls(
     ) {
         controlsState.playerControlStates.forEach { state ->
             Icon(
-                modifier = Modifier
-                    .size(state.size)
-                    .clip(CircleShape)
-                    .clickable {
+                modifier =
+                    Modifier.size(state.size).clip(CircleShape).clickable {
                         controlsState.interactWith(
                             playerControlState = state,
                             videoPlayerState = videoPlayerState,
@@ -106,17 +104,15 @@ fun PlaybackStatus(
     controlsState: PlayerControlsUiState,
     videoPlayerState: VideoPlayerState,
 ) {
-    Column(
-        modifier = modifier,
-    ) {
+    Column(modifier = modifier) {
         var adjustedPosition by remember { mutableFloatStateOf(Float.NaN) }
         Slider(
-            modifier = Modifier
-                .fillMaxWidth(),
-            value = when {
-                adjustedPosition.isNaN() -> videoPlayerState.lastPositionMs.toFloat()
-                else -> adjustedPosition
-            },
+            modifier = Modifier.fillMaxWidth(),
+            value =
+                when {
+                    adjustedPosition.isNaN() -> videoPlayerState.lastPositionMs.toFloat()
+                    else -> adjustedPosition
+                },
             onValueChange = { newValue ->
                 controlsState.onInteracted()
                 adjustedPosition = newValue
@@ -124,10 +120,11 @@ fun PlaybackStatus(
             valueRange = 0f..videoPlayerState.totalDuration.toFloat(),
             interactionSource = controlsState.controlsInteractionSource,
             onValueChangeFinished = {
-                if (!adjustedPosition.isNaN()) controlsState.videoPlayerController.play(
-                    videoId = videoPlayerState.videoId,
-                    seekToMs = adjustedPosition.toLong(),
-                )
+                if (!adjustedPosition.isNaN())
+                    controlsState.videoPlayerController.play(
+                        videoId = videoPlayerState.videoId,
+                        seekToMs = adjustedPosition.toLong(),
+                    )
                 adjustedPosition = Float.NaN
                 controlsState.onInteracted()
             },
@@ -148,56 +145,51 @@ fun PlaybackStatus(
             },
         )
         Row(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(
-                text = videoPlayerState.lastPositionMs.formatVideoDuration(),
-            )
+            Text(text = videoPlayerState.lastPositionMs.formatVideoDuration())
             PlaybackControls(
                 modifier = Modifier,
                 videoPlayerState = videoPlayerState,
                 controlsState = controlsState,
             )
             Text(
-                text = buildAnnotatedString {
-                    withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.outline)) {
-                        append(videoPlayerState.totalDuration.formatVideoDuration())
+                text =
+                    buildAnnotatedString {
+                        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.outline)) {
+                            append(videoPlayerState.totalDuration.formatVideoDuration())
+                        }
                     }
-                },
             )
         }
     }
 }
 
 @Stable
-class PlayerControlsUiState(
-    val videoPlayerController: VideoPlayerController,
-) {
+class PlayerControlsUiState(val videoPlayerController: VideoPlayerController) {
     var playerControlsVisible by mutableStateOf(false)
     val controlsInteractionSource = MutableInteractionSource()
     var interactionCount by mutableLongStateOf(0)
 
-    internal val playerControlStates = mutableStateListOf(
-        PlayerControlState(Icons.Rounded.Replay5, 30.dp),
-        PlayerControlState(Icons.Rounded.PlayCircle, 30.dp),
-        PlayerControlState(Icons.Rounded.Forward5, 30.dp),
-    )
+    internal val playerControlStates =
+        mutableStateListOf(
+            PlayerControlState(Icons.Rounded.Replay5, 30.dp),
+            PlayerControlState(Icons.Rounded.PlayCircle, 30.dp),
+            PlayerControlState(Icons.Rounded.Forward5, 30.dp),
+        )
 
     fun toggleVisibility() {
         playerControlsVisible = !playerControlsVisible
     }
 
-    fun update(
-        status: PlayerStatus,
-    ) {
-        playerControlStates[1].icon = when (status) {
-            is PlayerStatus.Play -> Icons.Rounded.PauseCircle
-            else -> Icons.Rounded.PlayCircle
-        }
+    fun update(status: PlayerStatus) {
+        playerControlStates[1].icon =
+            when (status) {
+                is PlayerStatus.Play -> Icons.Rounded.PauseCircle
+                else -> Icons.Rounded.PlayCircle
+            }
     }
 
     fun onInteracted() {
@@ -211,9 +203,9 @@ fun PlayerControlsUiState.ControlsVisibilityEffect() {
 
     LaunchedEffect(Unit) {
         merge(
-            snapshotFlow { interactionCount },
-            snapshotFlow { playerControlsVisible || sliderDragged.value },
-        )
+                snapshotFlow { interactionCount },
+                snapshotFlow { playerControlsVisible || sliderDragged.value },
+            )
             .collectLatest {
                 playerControlsVisible = playerControlsVisible || sliderDragged.value
                 if (!playerControlsVisible) return@collectLatest
@@ -230,27 +222,27 @@ private fun PlayerControlsUiState.interactWith(
 ) {
     when (playerControlState.icon) {
         Icons.Rounded.PlayCircle,
-        Icons.Rounded.PauseCircle,
-        -> when (videoPlayerState.status) {
-            is PlayerStatus.Play -> videoPlayerController.pauseActiveVideo()
-            else -> videoPlayerController.play(videoPlayerState.videoId)
-        }
+        Icons.Rounded.PauseCircle ->
+            when (videoPlayerState.status) {
+                is PlayerStatus.Play -> videoPlayerController.pauseActiveVideo()
+                else -> videoPlayerController.play(videoPlayerState.videoId)
+            }
 
-        Icons.Rounded.Forward5 -> videoPlayerController.play(
-            videoId = videoPlayerState.videoId,
-            seekToMs = min(
-                a = videoPlayerState.totalDuration,
-                b = videoPlayerState.lastPositionMs + SkipDurationMS,
-            ),
-        )
+        Icons.Rounded.Forward5 ->
+            videoPlayerController.play(
+                videoId = videoPlayerState.videoId,
+                seekToMs =
+                    min(
+                        a = videoPlayerState.totalDuration,
+                        b = videoPlayerState.lastPositionMs + SkipDurationMS,
+                    ),
+            )
 
-        Icons.Rounded.Replay5 -> videoPlayerController.play(
-            videoId = videoPlayerState.videoId,
-            seekToMs = max(
-                a = 0,
-                b = videoPlayerState.lastPositionMs - SkipDurationMS,
-            ),
-        )
+        Icons.Rounded.Replay5 ->
+            videoPlayerController.play(
+                videoId = videoPlayerState.videoId,
+                seekToMs = max(a = 0, b = videoPlayerState.lastPositionMs - SkipDurationMS),
+            )
 
         else -> Unit
     }
@@ -258,21 +250,19 @@ private fun PlayerControlsUiState.interactWith(
 }
 
 @Stable
-internal class PlayerControlState(
-    icon: ImageVector,
-    val size: Dp,
-) {
+internal class PlayerControlState(icon: ImageVector, val size: Dp) {
     var icon by mutableStateOf(icon)
 }
 
 private val PlayerControlState.stringRes
-    get() = when (icon) {
-        Icons.Rounded.PlayCircle -> Res.string.play
-        Icons.Rounded.PauseCircle -> Res.string.pause
-        Icons.Rounded.Forward5 -> Res.string.skip_5
-        Icons.Rounded.Replay5 -> Res.string.rewind_5
-        else -> Res.string.play
-    }
+    get() =
+        when (icon) {
+            Icons.Rounded.PlayCircle -> Res.string.play
+            Icons.Rounded.PauseCircle -> Res.string.pause
+            Icons.Rounded.Forward5 -> Res.string.skip_5
+            Icons.Rounded.Replay5 -> Res.string.rewind_5
+            else -> Res.string.play
+        }
 
 private const val SkipDurationMS = 5000L
 

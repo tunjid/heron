@@ -80,13 +80,8 @@ internal fun PostMetadata(
     onMetadataClicked: (PostMetadata) -> Unit,
 ) {
     val textColor = MaterialTheme.colorScheme.outline
-    val textStyle = MaterialTheme.typography.bodySmall.copy(
-        color = textColor,
-    )
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
+    val textStyle = MaterialTheme.typography.bodySmall.copy(color = textColor)
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -97,51 +92,50 @@ internal fun PostMetadata(
                 style = textStyle,
             )
             PostInteractionStatus(
-                modifier = Modifier
-                    .clickable {
-                        onMetadataClicked(PostMetadata.Gate(postUri))
-                    },
+                modifier = Modifier.clickable { onMetadataClicked(PostMetadata.Gate(postUri)) },
                 iconSize = 16.dp,
                 textColor = textColor,
                 textStyle = textStyle,
                 interactionStatus = interactionStatus,
             )
         }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             PostMetadataText.All.forEach { metadataText ->
                 MetadataText(
-                    modifier = Modifier
-                        .clickable(
+                    modifier =
+                        Modifier.clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = ripple(bounded = false),
                             onClick = {
                                 onMetadataClicked(
                                     when (metadataText) {
-                                        PostMetadataText.Likes -> PostMetadata.Likes(
-                                            profileId = profileId,
-                                            postRecordKey = postUri.recordKey,
-                                        )
+                                        PostMetadataText.Likes ->
+                                            PostMetadata.Likes(
+                                                profileId = profileId,
+                                                postRecordKey = postUri.recordKey,
+                                            )
 
-                                        PostMetadataText.Quotes -> PostMetadata.Quotes(
-                                            profileId = profileId,
-                                            postRecordKey = postUri.recordKey,
-                                        )
+                                        PostMetadataText.Quotes ->
+                                            PostMetadata.Quotes(
+                                                profileId = profileId,
+                                                postRecordKey = postUri.recordKey,
+                                            )
 
-                                        PostMetadataText.Reposts -> PostMetadata.Reposts(
-                                            profileId = profileId,
-                                            postRecordKey = postUri.recordKey,
-                                        )
-                                    },
+                                        PostMetadataText.Reposts ->
+                                            PostMetadata.Reposts(
+                                                profileId = profileId,
+                                                postRecordKey = postUri.recordKey,
+                                            )
+                                    }
                                 )
                             },
                         ),
-                    count = when (metadataText) {
-                        PostMetadataText.Likes -> likes
-                        PostMetadataText.Quotes -> quotes
-                        PostMetadataText.Reposts -> reposts
-                    },
+                    count =
+                        when (metadataText) {
+                            PostMetadataText.Likes -> likes
+                            PostMetadataText.Quotes -> quotes
+                            PostMetadataText.Reposts -> reposts
+                        },
                     singularResource = metadataText.singularStringResource,
                     pluralResource = metadataText.pluralStringResource,
                     textStyle = textStyle,
@@ -159,21 +153,10 @@ internal fun MetadataText(
     pluralResource: StringResource,
     textStyle: TextStyle,
 ) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
+    Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(text = count.toString(), style = textStyle.copy(fontWeight = FontWeight.Bold))
         Text(
-            text = count.toString(),
-            style = textStyle.copy(
-                fontWeight = FontWeight.Bold,
-            ),
-        )
-        Text(
-            text = stringResource(
-                if (count == 1L) singularResource
-                else pluralResource,
-            ),
+            text = stringResource(if (count == 1L) singularResource else pluralResource),
             style = textStyle,
         )
     }
@@ -187,13 +170,10 @@ fun PostInteractionStatus(
     PostInteractionStatus(
         modifier = modifier,
         iconSize = 24.dp,
-        interactionStatus = postInteractionStatus(
-            allowed = preference?.threadGateAllowed,
-        ),
+        interactionStatus = postInteractionStatus(allowed = preference?.threadGateAllowed),
         textColor = MaterialTheme.colorScheme.outline,
-        textStyle = MaterialTheme.typography.bodyMedium.copy(
-            color = MaterialTheme.colorScheme.outline,
-        ),
+        textStyle =
+            MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.outline),
     )
 }
 
@@ -206,8 +186,7 @@ private fun PostInteractionStatus(
     textStyle: TextStyle,
 ) {
     Row(
-        modifier = modifier
-            .clip(CircleShape),
+        modifier = modifier.clip(CircleShape),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -225,16 +204,16 @@ private fun PostInteractionStatus(
     }
 }
 
-internal fun postInteractionStatus(
-    allowed: ThreadGate.Allowed?,
-) = when (allowed) {
-    null -> PostInteractionStatus.All
-    else -> when {
-        allowed.allowsAll -> PostInteractionStatus.All
-        allowed.allowsNone -> PostInteractionStatus.None
-        else -> PostInteractionStatus.Some
+internal fun postInteractionStatus(allowed: ThreadGate.Allowed?) =
+    when (allowed) {
+        null -> PostInteractionStatus.All
+        else ->
+            when {
+                allowed.allowsAll -> PostInteractionStatus.All
+                allowed.allowsNone -> PostInteractionStatus.None
+                else -> PostInteractionStatus.Some
+            }
     }
-}
 
 internal enum class PostInteractionStatus {
     All,
@@ -243,67 +222,58 @@ internal enum class PostInteractionStatus {
 }
 
 private val PostInteractionStatus.stringRes
-    get() = when (this) {
-        PostInteractionStatus.All -> Res.string.post_replies_all
-        PostInteractionStatus.Some -> Res.string.post_replies_some
-        PostInteractionStatus.None -> Res.string.post_replies_none
-    }
+    get() =
+        when (this) {
+            PostInteractionStatus.All -> Res.string.post_replies_all
+            PostInteractionStatus.Some -> Res.string.post_replies_some
+            PostInteractionStatus.None -> Res.string.post_replies_none
+        }
 
 private val PostInteractionStatus.icon
-    get() = when (this) {
-        PostInteractionStatus.All -> Icons.Rounded.Public
-        PostInteractionStatus.Some -> Icons.Rounded.Groups
-        PostInteractionStatus.None -> Icons.Rounded.Block
-    }
+    get() =
+        when (this) {
+            PostInteractionStatus.All -> Icons.Rounded.Public
+            PostInteractionStatus.Some -> Icons.Rounded.Groups
+            PostInteractionStatus.None -> Icons.Rounded.Block
+        }
 
 sealed class PostMetadata {
 
-    data class Likes(
-        val profileId: ProfileId,
-        val postRecordKey: RecordKey,
-    ) : PostMetadata()
+    data class Likes(val profileId: ProfileId, val postRecordKey: RecordKey) : PostMetadata()
 
-    data class Reposts(
-        val profileId: ProfileId,
-        val postRecordKey: RecordKey,
-    ) : PostMetadata()
+    data class Reposts(val profileId: ProfileId, val postRecordKey: RecordKey) : PostMetadata()
 
-    data class Quotes(
-        val profileId: ProfileId,
-        val postRecordKey: RecordKey,
-    ) : PostMetadata()
+    data class Quotes(val profileId: ProfileId, val postRecordKey: RecordKey) : PostMetadata()
 
-    data class Gate(
-        val postUri: PostUri,
-    ) : PostMetadata()
+    data class Gate(val postUri: PostUri) : PostMetadata()
 }
 
 private sealed class PostMetadataText {
 
     data object Reposts : PostMetadataText()
+
     data object Quotes : PostMetadataText()
+
     data object Likes : PostMetadataText()
 
     companion object {
 
         val PostMetadataText.singularStringResource
-            get() = when (this) {
-                Reposts -> Res.string.repost
-                Quotes -> Res.string.quote
-                Likes -> Res.string.like
-            }
+            get() =
+                when (this) {
+                    Reposts -> Res.string.repost
+                    Quotes -> Res.string.quote
+                    Likes -> Res.string.like
+                }
 
         val PostMetadataText.pluralStringResource
-            get() = when (this) {
-                Reposts -> Res.string.reposts
-                Quotes -> Res.string.quotes
-                Likes -> Res.string.likes
-            }
+            get() =
+                when (this) {
+                    Reposts -> Res.string.reposts
+                    Quotes -> Res.string.quotes
+                    Likes -> Res.string.likes
+                }
 
-        val All = listOf(
-            Reposts,
-            Quotes,
-            Likes,
-        )
+        val All = listOf(Reposts, Quotes, Likes)
     }
 }

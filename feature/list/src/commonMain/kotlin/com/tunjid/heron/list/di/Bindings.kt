@@ -84,51 +84,51 @@ private const val StarterPackRoutePattern = "/starter-pack/{profileId}/{starterP
 private const val StarterPackRouteUriPattern =
     "/{starterPackUriPrefix}/app.bsky.graph.starterpack/{starterPackUriSuffix}"
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-    children = listOfNotNull(
-        routeParams.decodeReferringRoute(),
-    ),
-)
+private fun createRoute(routeParams: RouteParams) =
+    routeOf(params = routeParams, children = listOfNotNull(routeParams.decodeReferringRoute()))
 
-private val Route.profileId by mappedRoutePath(
-    mapper = ::ProfileHandleOrId,
-)
+private val Route.profileId by mappedRoutePath(mapper = ::ProfileHandleOrId)
 
 private val Route.listUriSuffix by routePath()
 
 private val Route.starterPackUriSuffix by routePath()
 
-private val RequestTrie = mapOf(
-    PathPattern(ListRoutePattern) to { route: Route ->
-        TimelineRequest.OfList.WithProfile(
-            profileHandleOrDid = route.profileId,
-            listUriSuffix = route.listUriSuffix,
+private val RequestTrie =
+    mapOf(
+            PathPattern(ListRoutePattern) to
+                { route: Route ->
+                    TimelineRequest.OfList.WithProfile(
+                        profileHandleOrDid = route.profileId,
+                        listUriSuffix = route.listUriSuffix,
+                    )
+                },
+            PathPattern(ListRouteUriPattern) to
+                { route: Route ->
+                    TimelineRequest.OfList.WithUri(
+                        uri =
+                            route.routeParams.pathAndQueries
+                                .getAsRawUri(Uri.Host.AtProto)
+                                .let(::ListUri)
+                    )
+                },
+            PathPattern(StarterPackRoutePattern) to
+                { route: Route ->
+                    TimelineRequest.OfStarterPack.WithProfile(
+                        profileHandleOrDid = route.profileId,
+                        starterPackUriSuffix = route.starterPackUriSuffix,
+                    )
+                },
+            PathPattern(StarterPackRouteUriPattern) to
+                { route: Route ->
+                    TimelineRequest.OfStarterPack.WithUri(
+                        uri =
+                            route.routeParams.pathAndQueries
+                                .getAsRawUri(Uri.Host.AtProto)
+                                .let(::StarterPackUri)
+                    )
+                },
         )
-    },
-    PathPattern(ListRouteUriPattern) to { route: Route ->
-        TimelineRequest.OfList.WithUri(
-            uri = route.routeParams.pathAndQueries
-                .getAsRawUri(Uri.Host.AtProto)
-                .let(::ListUri),
-        )
-    },
-    PathPattern(StarterPackRoutePattern) to { route: Route ->
-        TimelineRequest.OfStarterPack.WithProfile(
-            profileHandleOrDid = route.profileId,
-            starterPackUriSuffix = route.starterPackUriSuffix,
-        )
-    },
-    PathPattern(StarterPackRouteUriPattern) to { route: Route ->
-        TimelineRequest.OfStarterPack.WithUri(
-            uri = route.routeParams.pathAndQueries
-                .getAsRawUri(Uri.Host.AtProto)
-                .let(::StarterPackUri),
-        )
-    },
-).toRouteTrie()
+        .toRouteTrie()
 
 internal val Route.timelineRequest: TimelineRequest.OfList
     get() = checkNotNull(RequestTrie[this]).invoke(this)
@@ -140,37 +140,25 @@ object ListNavigationBindings {
     @IntoMap
     @StringKey(ListRoutePattern)
     fun provideRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = ListRoutePattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = ListRoutePattern, routeMapper = ::createRoute)
 
     @Provides
     @IntoMap
     @StringKey(ListRouteUriPattern)
     fun provideRouteUriMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = ListRouteUriPattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = ListRouteUriPattern, routeMapper = ::createRoute)
 
     @Provides
     @IntoMap
     @StringKey(StarterPackRoutePattern)
     fun provideStarterPackRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = StarterPackRoutePattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = StarterPackRoutePattern, routeMapper = ::createRoute)
 
     @Provides
     @IntoMap
     @StringKey(StarterPackRouteUriPattern)
     fun provideRouteStarterPackUriMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = StarterPackRouteUriPattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = StarterPackRouteUriPattern, routeMapper = ::createRoute)
 }
 
 @BindingContainer
@@ -185,10 +173,8 @@ class ListBindings(
     fun providePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(routeParser = routeParser, viewModelInitializer = viewModelInitializer)
 
     @Provides
     @IntoMap
@@ -196,10 +182,8 @@ class ListBindings(
     fun provideUriPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(routeParser = routeParser, viewModelInitializer = viewModelInitializer)
 
     @Provides
     @IntoMap
@@ -207,10 +191,8 @@ class ListBindings(
     fun provideStarterPackRoutePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(routeParser = routeParser, viewModelInitializer = viewModelInitializer)
 
     @Provides
     @IntoMap
@@ -218,100 +200,96 @@ class ListBindings(
     fun provideStarterPackUriPaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        routeParser = routeParser,
-        viewModelInitializer = viewModelInitializer,
-    )
+    ): PaneEntry<ThreePane, Route> =
+        routePaneEntry(routeParser = routeParser, viewModelInitializer = viewModelInitializer)
 
     private fun routePaneEntry(
         routeParser: RouteParser,
         viewModelInitializer: RouteViewModelInitializer,
-    ) = threePaneEntry<Route>(
-        contentTransform = predictiveBackContentTransformProvider(),
-        paneMapping = { route ->
-            mapOf(
-                ThreePane.Primary to route,
-                ThreePane.Secondary to route.children.firstOrNull() as? Route,
-            )
-        },
-        render = { route ->
-            val viewModel = viewModel<ActualListViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = routeParser.hydrate(route),
+    ) =
+        threePaneEntry<Route>(
+            contentTransform = predictiveBackContentTransformProvider(),
+            paneMapping = { route ->
+                mapOf(
+                    ThreePane.Primary to route,
+                    ThreePane.Secondary to route.children.firstOrNull() as? Route,
                 )
-            }
-            val state by viewModel.state.collectAsStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
+            },
+            render = { route ->
+                val viewModel =
+                    viewModel<ActualListViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = routeParser.hydrate(route),
+                        )
+                    }
+                val state by viewModel.state.collectAsStateWithLifecycle()
+                val paneScaffoldState = rememberPaneScaffoldState()
 
-            val recordOptionsSheetState = rememberUpdatedEmbeddableRecordOptionsState(
-                signedInProfileId = state.signedInProfileId,
-                recentConversations = state.recentConversations,
-                editTitle = null,
-                onEditClicked = {},
-                onShareInConversationClicked = { recordUri, conversation ->
-                    viewModel.accept(
-                        Action.Navigate.To(
-                            conversationDestination(
-                                id = conversation.id,
-                                members = conversation.members,
-                                sharedElementPrefix = conversation.id.id,
-                                sharedUri = recordUri.asGenericUri(),
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                            ),
-                        ),
-                    )
-                },
-                onShareInPostClicked = { recordUri ->
-                    viewModel.accept(
-                        Action.Navigate.To(
-                            composePostDestination(
-                                sharedUri = recordUri.asGenericUri(),
-                            ),
-                        ),
-                    )
-                },
-            )
-
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
-                showNavigation = true,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.SnackbarDismissed(it))
-                },
-                topBar = {
-                    PoppableDestinationTopAppBar(
-                        modifier = Modifier
-                            .background(MaterialTheme.colorScheme.surface),
-                        title = {
-                            TimelineTitle(
-                                movableElementSharedTransitionScope = this,
-                                timeline = state.timelineState?.timeline,
-                                sharedElementPrefix = state.sharedElementPrefix,
-                                // Indicated on the tab instead
-                                hasUpdates = false,
-                                onPresentationSelected = { timeline, presentation ->
-                                    state.stateHolders
-                                        .filterIsInstance<ListScreenStateHolders.Timeline>()
-                                        .firstOrNull()
-                                        ?.accept
-                                        ?.invoke(
-                                            TimelineState.Action.UpdatePreferredPresentation(
-                                                timeline = timeline,
-                                                presentation = presentation,
-                                            ),
-                                        )
-                                },
+                val recordOptionsSheetState =
+                    rememberUpdatedEmbeddableRecordOptionsState(
+                        signedInProfileId = state.signedInProfileId,
+                        recentConversations = state.recentConversations,
+                        editTitle = null,
+                        onEditClicked = {},
+                        onShareInConversationClicked = { recordUri, conversation ->
+                            viewModel.accept(
+                                Action.Navigate.To(
+                                    conversationDestination(
+                                        id = conversation.id,
+                                        members = conversation.members,
+                                        sharedElementPrefix = conversation.id.id,
+                                        sharedUri = recordUri.asGenericUri(),
+                                        referringRouteOption =
+                                            NavigationAction.ReferringRouteOption.Current,
+                                    )
+                                )
                             )
                         },
-                        onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
-                        actions = {
-                            state.timelineState
-                                ?.timeline
-                                ?.withListTimelineOrNull { listTimeline ->
+                        onShareInPostClicked = { recordUri ->
+                            viewModel.accept(
+                                Action.Navigate.To(
+                                    composePostDestination(sharedUri = recordUri.asGenericUri())
+                                )
+                            )
+                        },
+                    )
+
+                paneScaffoldState.PaneScaffold(
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
+                    showNavigation = true,
+                    snackBarMessages = state.messages,
+                    onSnackBarMessageConsumed = { viewModel.accept(Action.SnackbarDismissed(it)) },
+                    topBar = {
+                        PoppableDestinationTopAppBar(
+                            modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+                            title = {
+                                TimelineTitle(
+                                    movableElementSharedTransitionScope = this,
+                                    timeline = state.timelineState?.timeline,
+                                    sharedElementPrefix = state.sharedElementPrefix,
+                                    // Indicated on the tab instead
+                                    hasUpdates = false,
+                                    onPresentationSelected = { timeline, presentation ->
+                                        state.stateHolders
+                                            .filterIsInstance<ListScreenStateHolders.Timeline>()
+                                            .firstOrNull()
+                                            ?.accept
+                                            ?.invoke(
+                                                TimelineState.Action.UpdatePreferredPresentation(
+                                                    timeline = timeline,
+                                                    presentation = presentation,
+                                                )
+                                            )
+                                    },
+                                )
+                            },
+                            onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
+                            actions = {
+                                state.timelineState?.timeline?.withListTimelineOrNull { listTimeline
+                                    ->
                                     FeedListStatus(
                                         status = state.listStatus,
                                         uri = listTimeline.feedList.uri,
@@ -320,31 +298,30 @@ class ListBindings(
                                         },
                                     )
                                 }
-                            ShareRecordButton(
-                                onShareClicked = {
-                                    state.timelineState?.timeline?.uri
-                                        ?.asEmbeddableRecordUriOrNull()
-                                        ?.let { recordUri ->
-                                            recordOptionsSheetState.showOptions(recordUri)
-                                        }
-                                },
-                            )
-                        },
-                    )
-                },
-                content = { paddingValues ->
-                    ListScreen(
-                        paneScaffoldState = this,
-                        modifier = Modifier
-                            .padding(
-                                top = paddingValues.calculateTopPadding(),
-                            ),
-                        state = state,
-                        actions = viewModel.accept,
-                    )
-                    SecondaryPaneCloseBackHandler()
-                },
-            )
-        },
-    )
+                                ShareRecordButton(
+                                    onShareClicked = {
+                                        state.timelineState
+                                            ?.timeline
+                                            ?.uri
+                                            ?.asEmbeddableRecordUriOrNull()
+                                            ?.let { recordUri ->
+                                                recordOptionsSheetState.showOptions(recordUri)
+                                            }
+                                    }
+                                )
+                            },
+                        )
+                    },
+                    content = { paddingValues ->
+                        ListScreen(
+                            paneScaffoldState = this,
+                            modifier = Modifier.padding(top = paddingValues.calculateTopPadding()),
+                            state = state,
+                            actions = viewModel.accept,
+                        )
+                        SecondaryPaneCloseBackHandler()
+                    },
+                )
+            },
+        )
 }

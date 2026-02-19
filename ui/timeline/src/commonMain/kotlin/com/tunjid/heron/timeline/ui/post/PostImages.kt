@@ -56,78 +56,74 @@ internal fun PostImages(
 ) {
     val shape = presentation.imageShape
 
-    val itemModifier = if (isBlurred) Modifier.sensitiveContentBlur(shape)
-    else Modifier
+    val itemModifier = if (isBlurred) Modifier.sensitiveContentBlur(shape) else Modifier
 
-    LazyRow(
-        modifier = modifier,
-        horizontalArrangement = spacedBy(8.dp),
-    ) {
+    LazyRow(modifier = modifier, horizontalArrangement = spacedBy(8.dp)) {
         val tallestAspectRatio = feature.images.minOf { it.aspectRatioOrSquare }
         itemsIndexed(
             items = feature.images,
             key = { _, item -> item.thumb.uri },
             itemContent = { index, image ->
                 paneMovableElementSharedTransitionScope.UpdatedMovableStickySharedElementOf(
-                    modifier = when (presentation) {
-                        Timeline.Presentation.Text.WithEmbed -> when (feature.images.size) {
-                            1 ->
-                                itemModifier
-                                    .then(
-                                        if (matchHeightConstraintsFirst) Modifier
-                                        else Modifier.fillParentMaxWidth(),
-                                    )
-                                    .aspectRatio(
-                                        ratio = image.aspectRatioOrSquare,
-                                        matchHeightConstraintsFirst = matchHeightConstraintsFirst,
-                                    )
+                    modifier =
+                        when (presentation) {
+                                Timeline.Presentation.Text.WithEmbed ->
+                                    when (feature.images.size) {
+                                        1 ->
+                                            itemModifier
+                                                .then(
+                                                    if (matchHeightConstraintsFirst) Modifier
+                                                    else Modifier.fillParentMaxWidth()
+                                                )
+                                                .aspectRatio(
+                                                    ratio = image.aspectRatioOrSquare,
+                                                    matchHeightConstraintsFirst =
+                                                        matchHeightConstraintsFirst,
+                                                )
 
-                            else ->
-                                itemModifier
-                                    .height(200.dp)
-                                    .aspectRatio(
-                                        ratio = image.aspectRatioOrSquare,
-                                    )
-                        }
+                                        else ->
+                                            itemModifier
+                                                .height(200.dp)
+                                                .aspectRatio(ratio = image.aspectRatioOrSquare)
+                                    }
 
-                        Timeline.Presentation.Media.Condensed,
-                        Timeline.Presentation.Media.Expanded,
-                        -> itemModifier
-                            .fillParentMaxWidth()
-                            .aspectRatio(tallestAspectRatio)
-                        Timeline.Presentation.Media.Grid ->
-                            itemModifier
-                                .fillParentMaxWidth()
-                                .aspectRatio(1f)
-                    }
-                        .clip(shape)
-                        .clickable { onImageClicked(index) },
-                    sharedContentState = with(paneMovableElementSharedTransitionScope) {
-                        rememberSharedContentState(
-                            key = image.sharedElementKey(
-                                prefix = sharedElementPrefix,
-                                postUri = postUri,
-                            ),
-                        )
-                    },
-                    state = remember(image.thumb.uri, presentation, shape) {
-                        ImageArgs(
-                            url = image.thumb.uri,
-                            contentDescription = image.alt,
-                            contentScale = when (presentation) {
-                                Timeline.Presentation.Media.Expanded -> ContentScale.Crop
-                                Timeline.Presentation.Media.Grid -> ContentScale.Crop
-                                Timeline.Presentation.Media.Condensed -> ContentScale.Crop
-                                Timeline.Presentation.Text.WithEmbed -> ContentScale.Fit
-                            },
-                            shape = shape,
-                        )
-                    },
+                                Timeline.Presentation.Media.Condensed,
+                                Timeline.Presentation.Media.Expanded ->
+                                    itemModifier
+                                        .fillParentMaxWidth()
+                                        .aspectRatio(tallestAspectRatio)
+                                Timeline.Presentation.Media.Grid ->
+                                    itemModifier.fillParentMaxWidth().aspectRatio(1f)
+                            }
+                            .clip(shape)
+                            .clickable { onImageClicked(index) },
+                    sharedContentState =
+                        with(paneMovableElementSharedTransitionScope) {
+                            rememberSharedContentState(
+                                key =
+                                    image.sharedElementKey(
+                                        prefix = sharedElementPrefix,
+                                        postUri = postUri,
+                                    )
+                            )
+                        },
+                    state =
+                        remember(image.thumb.uri, presentation, shape) {
+                            ImageArgs(
+                                url = image.thumb.uri,
+                                contentDescription = image.alt,
+                                contentScale =
+                                    when (presentation) {
+                                        Timeline.Presentation.Media.Expanded -> ContentScale.Crop
+                                        Timeline.Presentation.Media.Grid -> ContentScale.Crop
+                                        Timeline.Presentation.Media.Condensed -> ContentScale.Crop
+                                        Timeline.Presentation.Text.WithEmbed -> ContentScale.Fit
+                                    },
+                                shape = shape,
+                            )
+                        },
                     sharedElement = { state, innerModifier ->
-                        AsyncImage(
-                            modifier = innerModifier,
-                            args = state,
-                        )
+                        AsyncImage(modifier = innerModifier, args = state)
                     },
                 )
             },
@@ -136,17 +132,15 @@ internal fun PostImages(
 }
 
 private val Timeline.Presentation.imageShape
-    get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> TextWithEmbedShape
-        Timeline.Presentation.Media.Condensed -> CondensedShape
-        Timeline.Presentation.Media.Expanded -> ExpandedShape
-        Timeline.Presentation.Media.Grid -> GridShape
-    }
+    get() =
+        when (this) {
+            Timeline.Presentation.Text.WithEmbed -> TextWithEmbedShape
+            Timeline.Presentation.Media.Condensed -> CondensedShape
+            Timeline.Presentation.Media.Expanded -> ExpandedShape
+            Timeline.Presentation.Media.Grid -> GridShape
+        }
 
-fun Image.sharedElementKey(
-    prefix: String,
-    postUri: PostUri,
-) = "$prefix-$postUri-${thumb.uri}"
+fun Image.sharedElementKey(prefix: String, postUri: PostUri) = "$prefix-$postUri-${thumb.uri}"
 
 private val TextWithEmbedShape = RoundedPolygonShape.RoundedRectangle(percent = 0.05f)
 private val CondensedShape = RoundedPolygonShape.RoundedRectangle(percent = 0.0001f)

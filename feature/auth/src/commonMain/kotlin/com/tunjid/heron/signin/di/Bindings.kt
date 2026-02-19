@@ -93,11 +93,7 @@ import org.jetbrains.compose.resources.stringResource
 private const val RoutePattern = "/auth"
 private const val OAuthPattern = "/oauth/callback"
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-)
+private fun createRoute(routeParams: RouteParams) = routeOf(params = routeParams)
 
 // The issuer endpoint for an oauth token
 internal val Route.iss by optionalRouteQuery()
@@ -109,19 +105,13 @@ object SignInNavigationBindings {
     @IntoMap
     @StringKey(RoutePattern)
     fun provideRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RoutePattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = RoutePattern, routeMapper = ::createRoute)
 
     @Provides
     @IntoMap
     @StringKey(OAuthPattern)
     fun provideOAuthRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = OAuthPattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = OAuthPattern, routeMapper = ::createRoute)
 }
 
 @BindingContainer
@@ -134,94 +124,88 @@ class SignInBindings(
     @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
-    )
+        viewModelInitializer: RouteViewModelInitializer
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(viewModelInitializer = viewModelInitializer)
 
     @Provides
     @IntoMap
     @StringKey(OAuthPattern)
     fun provideOAuthPaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
-    )
+        viewModelInitializer: RouteViewModelInitializer
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(viewModelInitializer = viewModelInitializer)
 
     @OptIn(ExperimentalSharedTransitionApi::class)
-    private fun routePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
-    ) = threePaneEntry(
-        contentTransform = predictiveBackContentTransformProvider(),
-        render = { route ->
-            val viewModel = viewModel<ActualSignInViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = route,
-                )
-            }
-            val state by viewModel.state.collectAsStateWithLifecycle()
-            val paneScaffoldState = rememberPaneScaffoldState()
+    private fun routePaneEntry(viewModelInitializer: RouteViewModelInitializer) =
+        threePaneEntry(
+            contentTransform = predictiveBackContentTransformProvider(),
+            render = { route ->
+                val viewModel =
+                    viewModel<ActualSignInViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = route,
+                        )
+                    }
+                val state by viewModel.state.collectAsStateWithLifecycle()
+                val paneScaffoldState = rememberPaneScaffoldState()
 
-            paneScaffoldState.PaneScaffold(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
-                showNavigation = false,
-                snackBarMessages = state.messages,
-                onSnackBarMessageConsumed = {
-                    viewModel.accept(Action.MessageConsumed(it))
-                },
-                topBar = {
-                    TopBar(
-                        authMode = state.authMode,
-                        oauthAvailable = state.isOauthAvailable,
-                        selectedServer = state.selectedServer,
-                        onPasswordPreferenceToggled = {
-                            viewModel.accept(Action.TogglePasswordPreference)
-                        },
-                    )
-                },
-                floatingActionButton = {
-                    PaneFab(
-                        modifier = Modifier
-                            .animateBounds(lookaheadScope = this)
-                            .windowInsetsPadding(WindowInsets.ime),
-                        text = stringResource(
-                            when {
-                                state.isSubmitting -> Res.string.signing_in
-                                state.canSignInLater -> Res.string.sign_in_later
-                                else -> when (state.authMode) {
-                                    AuthMode.Oauth -> Res.string.sign_with_oauth
-                                    AuthMode.Password -> Res.string.sign_with_password
-                                }
+                paneScaffoldState.PaneScaffold(
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
+                    showNavigation = false,
+                    snackBarMessages = state.messages,
+                    onSnackBarMessageConsumed = { viewModel.accept(Action.MessageConsumed(it)) },
+                    topBar = {
+                        TopBar(
+                            authMode = state.authMode,
+                            oauthAvailable = state.isOauthAvailable,
+                            selectedServer = state.selectedServer,
+                            onPasswordPreferenceToggled = {
+                                viewModel.accept(Action.TogglePasswordPreference)
                             },
-                            stringResource(state.selectedServer.stringResource),
-                        ),
-                        icon = when {
-                            state.canSignInLater -> Icons.Rounded.Timer
-                            state.canSwitchAccount -> Icons.Rounded.SwapHoriz
-                            else -> Icons.Rounded.Check
-                        },
-                        enabled = state.submitButtonEnabled,
-                        expanded = true,
-                        onClick = {
-                            viewModel.accept(state.createSessionAction())
-                        },
-                    )
-                },
-                content = { paddingValues ->
-                    SignInScreen(
-                        paneScaffoldState = this,
-                        state = state,
-                        actions = viewModel.accept,
-                        modifier = Modifier
-                            .padding(paddingValues = paddingValues),
-                    )
-                },
-            )
-        },
-    )
+                        )
+                    },
+                    floatingActionButton = {
+                        PaneFab(
+                            modifier =
+                                Modifier.animateBounds(lookaheadScope = this)
+                                    .windowInsetsPadding(WindowInsets.ime),
+                            text =
+                                stringResource(
+                                    when {
+                                        state.isSubmitting -> Res.string.signing_in
+                                        state.canSignInLater -> Res.string.sign_in_later
+                                        else ->
+                                            when (state.authMode) {
+                                                AuthMode.Oauth -> Res.string.sign_with_oauth
+                                                AuthMode.Password -> Res.string.sign_with_password
+                                            }
+                                    },
+                                    stringResource(state.selectedServer.stringResource),
+                                ),
+                            icon =
+                                when {
+                                    state.canSignInLater -> Icons.Rounded.Timer
+                                    state.canSwitchAccount -> Icons.Rounded.SwapHoriz
+                                    else -> Icons.Rounded.Check
+                                },
+                            enabled = state.submitButtonEnabled,
+                            expanded = true,
+                            onClick = { viewModel.accept(state.createSessionAction()) },
+                        )
+                    },
+                    content = { paddingValues ->
+                        SignInScreen(
+                            paneScaffoldState = this,
+                            state = state,
+                            actions = viewModel.accept,
+                            modifier = Modifier.padding(paddingValues = paddingValues),
+                        )
+                    },
+                )
+            },
+        )
 }
 
 @Composable
@@ -234,62 +218,48 @@ private fun PaneScaffoldState.TopBar(
     TopAppBar(
         navigationIcon = {
             AppLogo(
-                modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .size(36.dp),
+                modifier = Modifier.padding(horizontal = 8.dp).size(36.dp),
                 isRootDestination = true,
             )
         },
-        title = {
-            AppBarTitle(
-                title = stringResource(Res.string.sign_in),
-            )
-        },
+        title = { AppBarTitle(title = stringResource(Res.string.sign_in)) },
         actions = {
-            if (oauthAvailable) Box(
-                modifier = Modifier
-                    .padding(8.dp),
-            ) {
-                var expanded by remember {
-                    mutableStateOf(false)
+            if (oauthAvailable)
+                Box(modifier = Modifier.padding(8.dp)) {
+                    var expanded by remember { mutableStateOf(false) }
+                    IconButton(
+                        onClick = { expanded = !expanded },
+                        content = {
+                            Icon(
+                                imageVector = Icons.Rounded.MoreVert,
+                                contentDescription = "More options",
+                            )
+                        },
+                    )
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        content = {
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        stringResource(
+                                            when (authMode) {
+                                                AuthMode.Oauth -> Res.string.sign_with_password
+                                                AuthMode.Password -> Res.string.sign_with_oauth
+                                            },
+                                            stringResource(selectedServer.stringResource),
+                                        )
+                                    )
+                                },
+                                onClick = {
+                                    onPasswordPreferenceToggled()
+                                    expanded = false
+                                },
+                            )
+                        },
+                    )
                 }
-                IconButton(
-                    onClick = {
-                        expanded = !expanded
-                    },
-                    content = {
-                        Icon(
-                            imageVector = Icons.Rounded.MoreVert,
-                            contentDescription = "More options",
-                        )
-                    },
-                )
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = {
-                        expanded = false
-                    },
-                    content = {
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    stringResource(
-                                        when (authMode) {
-                                            AuthMode.Oauth -> Res.string.sign_with_password
-                                            AuthMode.Password -> Res.string.sign_with_oauth
-                                        },
-                                        stringResource(selectedServer.stringResource),
-                                    ),
-                                )
-                            },
-                            onClick = {
-                                onPasswordPreferenceToggled()
-                                expanded = false
-                            },
-                        )
-                    },
-                )
-            }
         },
     )
 }

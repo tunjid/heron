@@ -76,15 +76,18 @@ fun MLModerationFilter(
     )
 }
 
-fun Filter.ML.Moderation.Category.stringRes(): StringResource = when (this) {
-    Filter.ML.Moderation.Category.Sexual -> Res.string.moderation_category_sexual
-    Filter.ML.Moderation.Category.Hate -> Res.string.moderation_category_hate
-    Filter.ML.Moderation.Category.Violence -> Res.string.moderation_category_violence
-    Filter.ML.Moderation.Category.Harassment -> Res.string.moderation_category_harassment
-    Filter.ML.Moderation.Category.SelfHarm -> Res.string.moderation_category_self_harm
-    Filter.ML.Moderation.Category.SexualMinors -> Res.string.moderation_category_sexual_minors
-    Filter.ML.Moderation.Category.HateThreatening -> Res.string.moderation_category_hate_threatening
-    Filter.ML.Moderation.Category.ViolenceGraphic -> Res.string.moderation_category_violence_graphic
-    Filter.ML.Moderation.Category.OK -> Res.string.moderation_category_ok
-    else -> Res.string.moderation_category_unknown
-}
+fun Filter.ML.Moderation.Category.stringRes(): StringResource =
+    when (this) {
+        Filter.ML.Moderation.Category.Sexual -> Res.string.moderation_category_sexual
+        Filter.ML.Moderation.Category.Hate -> Res.string.moderation_category_hate
+        Filter.ML.Moderation.Category.Violence -> Res.string.moderation_category_violence
+        Filter.ML.Moderation.Category.Harassment -> Res.string.moderation_category_harassment
+        Filter.ML.Moderation.Category.SelfHarm -> Res.string.moderation_category_self_harm
+        Filter.ML.Moderation.Category.SexualMinors -> Res.string.moderation_category_sexual_minors
+        Filter.ML.Moderation.Category.HateThreatening ->
+            Res.string.moderation_category_hate_threatening
+        Filter.ML.Moderation.Category.ViolenceGraphic ->
+            Res.string.moderation_category_violence_graphic
+        Filter.ML.Moderation.Category.OK -> Res.string.moderation_category_ok
+        else -> Res.string.moderation_category_unknown
+    }

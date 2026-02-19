@@ -59,9 +59,7 @@ fun TopBarActions(
         var showMenu by remember { mutableStateOf(false) }
         IconButton(
             enabled = enabled,
-            onClick = {
-                showMenu = true
-            },
+            onClick = { showMenu = true },
             content = {
                 Icon(
                     imageVector = Icons.Rounded.MoreVert,
@@ -70,10 +68,7 @@ fun TopBarActions(
             },
         )
 
-        DropdownMenu(
-            expanded = showMenu,
-            onDismissRequest = { showMenu = false },
-        ) {
+        DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
             DropdownMenuItem(
                 text = { Text(stringResource(Res.string.edit_feed)) },
                 onClick = {
@@ -81,13 +76,14 @@ fun TopBarActions(
                     onEditClicked()
                 },
             )
-            if (grazeFeed is GrazeFeed.Created) DropdownMenuItem(
-                text = { Text(stringResource(Res.string.delete_feed)) },
-                onClick = {
-                    showMenu = false
-                    onDeleteClicked()
-                },
-            )
+            if (grazeFeed is GrazeFeed.Created)
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.delete_feed)) },
+                    onClick = {
+                        showMenu = false
+                        onDeleteClicked()
+                    },
+                )
         }
     }
 }

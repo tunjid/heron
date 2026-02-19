@@ -105,10 +105,7 @@ sealed class SearchQuery : CursorQuery {
 }
 
 interface SearchRepository {
-    fun postSearch(
-        query: SearchQuery.OfPosts,
-        cursor: Cursor,
-    ): Flow<CursorList<TimelineItem>>
+    fun postSearch(query: SearchQuery.OfPosts, cursor: Cursor): Flow<CursorList<TimelineItem>>
 
     fun profileSearch(
         query: SearchQuery.OfProfiles,
@@ -127,16 +124,16 @@ interface SearchRepository {
 
     fun trends(): Flow<List<Trend>>
 
-    fun suggestedProfiles(
-        category: String? = null,
-    ): Flow<List<ProfileWithViewerState>>
+    fun suggestedProfiles(category: String? = null): Flow<List<ProfileWithViewerState>>
 
     fun suggestedStarterPacks(): Flow<List<StarterPack>>
 
     fun suggestedFeeds(): Flow<List<FeedGenerator>>
 }
 
-internal class OfflineSearchRepository @Inject constructor(
+internal class OfflineSearchRepository
+@Inject
+constructor(
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateDataSource: SavedStateDataSource,
@@ -154,65 +151,59 @@ internal class OfflineSearchRepository @Inject constructor(
             if (query.query.isBlank()) return@singleSessionFlow emptyFlow()
             if (!cursor.canRequestData) return@singleSessionFlow emptyFlow()
 
-            val response = networkService.runCatchingWithMonitoredNetworkRetry {
-                searchPosts(
-                    params = SearchPostsQueryParams(
-                        q = query.query,
-                        limit = query.data.limit,
-                        sort = when (query) {
-                            is SearchQuery.OfPosts.Latest -> SearchPostsSort.Latest
-                            is SearchQuery.OfPosts.Top -> SearchPostsSort.Top
-                        },
-                        cursor = cursor.value,
-                    ),
-                )
-            }
-                .getOrNull()
-                ?: return@singleSessionFlow emptyFlow()
+            val response =
+                networkService
+                    .runCatchingWithMonitoredNetworkRetry {
+                        searchPosts(
+                            params =
+                                SearchPostsQueryParams(
+                                    q = query.query,
+                                    limit = query.data.limit,
+                                    sort =
+                                        when (query) {
+                                            is SearchQuery.OfPosts.Latest -> SearchPostsSort.Latest
+                                            is SearchQuery.OfPosts.Top -> SearchPostsSort.Top
+                                        },
+                                    cursor = cursor.value,
+                                )
+                        )
+                    }
+                    .getOrNull() ?: return@singleSessionFlow emptyFlow()
 
             multipleEntitySaverProvider.saveInTransaction {
                 response.posts.forEach { postView ->
-                    add(
-                        viewingProfileId = signedInProfileId,
-                        postView = postView,
-                    )
+                    add(viewingProfileId = signedInProfileId, postView = postView)
                 }
             }
 
-            val posts = response.posts.map { postView ->
-                postView.post(signedInProfileId)
-            }
+            val posts = response.posts.map { postView -> postView.post(signedInProfileId) }
             val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Final
 
             // Using the network call as a base, observe the db for user interactions
-            recordResolver.timelineItems(
-                items = posts,
-                signedInProfileId = signedInProfileId,
-                postUri = Post::uri,
-                associatedRecordUris = {
-                    listOfNotNull(it.embeddedRecord?.embeddableRecordUri)
-                },
-                associatedProfileIds = {
-                    emptyList()
-                },
-                block = block@{ item ->
-                    // Muted items should not show upp in search
-                    if (isMuted(post)) return@block
-                    list += TimelineItem.Single(
-                        id = item.uri.uri,
-                        post = post,
-                        isMuted = false,
-                        threadGate = threadGate(item.uri),
-                        appliedLabels = appliedLabels,
-                        signedInProfileId = signedInProfileId,
-                    )
-                },
-            ).map {
-                CursorList(
-                    items = it,
-                    nextCursor = nextCursor,
+            recordResolver
+                .timelineItems(
+                    items = posts,
+                    signedInProfileId = signedInProfileId,
+                    postUri = Post::uri,
+                    associatedRecordUris = {
+                        listOfNotNull(it.embeddedRecord?.embeddableRecordUri)
+                    },
+                    associatedProfileIds = { emptyList() },
+                    block = block@{ item ->
+                            // Muted items should not show upp in search
+                            if (isMuted(post)) return@block
+                            list +=
+                                TimelineItem.Single(
+                                    id = item.uri.uri,
+                                    post = post,
+                                    isMuted = false,
+                                    threadGate = threadGate(item.uri),
+                                    appliedLabels = appliedLabels,
+                                    signedInProfileId = signedInProfileId,
+                                )
+                        },
                 )
-            }
+                .map { CursorList(items = it, nextCursor = nextCursor) }
         }
 
     override fun profileSearch(
@@ -220,23 +211,25 @@ internal class OfflineSearchRepository @Inject constructor(
         cursor: Cursor,
     ): Flow<CursorList<ProfileWithViewerState>> =
         if (query.query.isBlank()) emptyFlow()
-        else savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            profileLookup.profilesWithViewerState(
-                signedInProfileId = signedInProfileId,
-                cursor = cursor,
-                responseFetcher = {
-                    searchActors(
-                        params = SearchActorsQueryParams(
-                            q = query.query,
-                            limit = query.data.limit,
-                            cursor = cursor.value,
-                        ),
-                    )
-                },
-                responseProfileViews = SearchActorsResponse::actors,
-                responseCursor = SearchActorsResponse::cursor,
-            )
-        }
+        else
+            savedStateDataSource.singleSessionFlow { signedInProfileId ->
+                profileLookup.profilesWithViewerState(
+                    signedInProfileId = signedInProfileId,
+                    cursor = cursor,
+                    responseFetcher = {
+                        searchActors(
+                            params =
+                                SearchActorsQueryParams(
+                                    q = query.query,
+                                    limit = query.data.limit,
+                                    cursor = cursor.value,
+                                )
+                        )
+                    },
+                    responseProfileViews = SearchActorsResponse::actors,
+                    responseCursor = SearchActorsResponse::cursor,
+                )
+            }
 
     override fun feedGeneratorSearch(
         query: SearchQuery.OfFeedGenerators,
@@ -244,47 +237,48 @@ internal class OfflineSearchRepository @Inject constructor(
     ): Flow<CursorList<FeedGenerator>> =
         if (query.query.isBlank()) emptyFlow()
         else if (!cursor.canRequestData) emptyFlow()
-        else flow {
-            val response = networkService.runCatchingWithMonitoredNetworkRetry {
-                getPopularFeedGeneratorsUnspecced(
-                    params = GetPopularFeedGeneratorsQueryParams(
-                        query = query.query,
-                        limit = query.data.limit,
-                        cursor = cursor.value,
-                    ),
-                )
-            }
-                .getOrNull()
-                ?: return@flow
+        else
+            flow {
+                val response =
+                    networkService
+                        .runCatchingWithMonitoredNetworkRetry {
+                            getPopularFeedGeneratorsUnspecced(
+                                params =
+                                    GetPopularFeedGeneratorsQueryParams(
+                                        query = query.query,
+                                        limit = query.data.limit,
+                                        cursor = cursor.value,
+                                    )
+                            )
+                        }
+                        .getOrNull() ?: return@flow
 
-            multipleEntitySaverProvider.saveInTransaction {
-                response.feeds
-                    .forEach { generatorView ->
+                multipleEntitySaverProvider.saveInTransaction {
+                    response.feeds.forEach { generatorView ->
                         add(feedGeneratorView = generatorView)
                     }
-            }
+                }
 
-            val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Final
-            val feedUris = response.feeds.map { it.uri.atUri.let(::FeedGeneratorUri) }
+                val nextCursor = response.cursor?.let(Cursor::Next) ?: Cursor.Final
+                val feedUris = response.feeds.map { it.uri.atUri.let(::FeedGeneratorUri) }
 
-            emitAll(
-                feedGeneratorDao.feedGenerators(
-                    feedUris = feedUris,
-                )
-                    .map { populatedFeedGeneratorEntities ->
+                emitAll(
+                    feedGeneratorDao.feedGenerators(feedUris = feedUris).map {
+                        populatedFeedGeneratorEntities ->
                         CursorList(
-                            items = populatedFeedGeneratorEntities
-                                .map(PopulatedFeedGeneratorEntity::asExternalModel)
-                                .sortedWithNetworkList(
-                                    networkList = feedUris,
-                                    databaseId = { it.uri.uri },
-                                    networkId = { it.uri },
-                                ),
+                            items =
+                                populatedFeedGeneratorEntities
+                                    .map(PopulatedFeedGeneratorEntity::asExternalModel)
+                                    .sortedWithNetworkList(
+                                        networkList = feedUris,
+                                        databaseId = { it.uri.uri },
+                                        networkId = { it.uri },
+                                    ),
                             nextCursor = nextCursor,
                         )
-                    },
-            )
-        }
+                    }
+                )
+            }
 
     override fun autoCompleteProfileSearch(
         query: SearchQuery.OfProfiles,
@@ -296,10 +290,11 @@ internal class OfflineSearchRepository @Inject constructor(
                 cursor = cursor,
                 responseFetcher = {
                     searchActorsTypeahead(
-                        params = SearchActorsTypeaheadQueryParams(
-                            q = query.query,
-                            limit = query.data.limit,
-                        ),
+                        params =
+                            SearchActorsTypeaheadQueryParams(
+                                q = query.query,
+                                limit = query.data.limit,
+                            )
                     )
                 },
                 responseProfileViews = {
@@ -327,32 +322,21 @@ internal class OfflineSearchRepository @Inject constructor(
         }
 
     override fun trends(): Flow<List<Trend>> = flow {
-        networkService.runCatchingWithMonitoredNetworkRetry {
-            getTrendsUnspecced(
-                GetTrendsQueryParams(),
-            )
-        }
+        networkService
+            .runCatchingWithMonitoredNetworkRetry { getTrendsUnspecced(GetTrendsQueryParams()) }
             .getOrNull()
             ?.trends
             ?.map(TrendView::trend)
-            ?.let {
-                emit(it)
-            }
+            ?.let { emit(it) }
     }
 
-    override fun suggestedProfiles(
-        category: String?,
-    ): Flow<List<ProfileWithViewerState>> =
+    override fun suggestedProfiles(category: String?): Flow<List<ProfileWithViewerState>> =
         savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
             profileLookup.profilesWithViewerState(
                 signedInProfileId = signedInProfileId,
                 cursor = Cursor.Initial,
                 responseFetcher = {
-                    getSuggestedUsersUnspecced(
-                        GetSuggestedUsersQueryParams(
-                            category = category,
-                        ),
-                    )
+                    getSuggestedUsersUnspecced(GetSuggestedUsersQueryParams(category = category))
                 },
                 responseProfileViews = GetSuggestedUsersResponse::actors,
                 responseCursor = { null },
@@ -361,24 +345,22 @@ internal class OfflineSearchRepository @Inject constructor(
 
     override fun suggestedStarterPacks(): Flow<List<StarterPack>> =
         savedStateDataSource.singleAuthorizedSessionFlow {
-            val starterPackViews = networkService.runCatchingWithMonitoredNetworkRetry {
-                getSuggestedStarterPacksUnspecced(
-                    GetSuggestedStarterPacksQueryParams(),
-                )
-            }
-                .getOrNull()
-                ?.starterPacks
-                ?: return@singleAuthorizedSessionFlow emptyFlow()
+            val starterPackViews =
+                networkService
+                    .runCatchingWithMonitoredNetworkRetry {
+                        getSuggestedStarterPacksUnspecced(GetSuggestedStarterPacksQueryParams())
+                    }
+                    .getOrNull()
+                    ?.starterPacks ?: return@singleAuthorizedSessionFlow emptyFlow()
 
             multipleEntitySaverProvider.saveInTransaction {
-                starterPackViews.forEach { starterPack ->
-                    add(starterPack = starterPack)
-                }
+                starterPackViews.forEach { starterPack -> add(starterPack = starterPack) }
             }
 
-            starterPackDao.starterPacks(
-                starterPackViews.mapTo(mutableSetOf()) { it.uri.atUri.let(::StarterPackUri) },
-            )
+            starterPackDao
+                .starterPacks(
+                    starterPackViews.mapTo(mutableSetOf()) { it.uri.atUri.let(::StarterPackUri) }
+                )
                 .map { populatedStarterPackEntities ->
                     populatedStarterPackEntities
                         .sortedWithNetworkList(
@@ -393,26 +375,26 @@ internal class OfflineSearchRepository @Inject constructor(
 
     override fun suggestedFeeds(): Flow<List<FeedGenerator>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
-            val generatorViews = networkService.runCatchingWithMonitoredNetworkRetry {
-                if (signedInProfileId == null) getPopularFeedGeneratorsUnspecced(
-                    params = GetPopularFeedGeneratorsQueryParams(),
-                ).map(GetPopularFeedGeneratorsResponse::feeds)
-                else getSuggestedFeeds(
-                    params = GetSuggestedFeedsQueryParams(),
-                ).map(GetSuggestedFeedsResponse::feeds)
-            }
-                .getOrNull()
-                ?: return@singleSessionFlow emptyFlow()
+            val generatorViews =
+                networkService
+                    .runCatchingWithMonitoredNetworkRetry {
+                        if (signedInProfileId == null)
+                            getPopularFeedGeneratorsUnspecced(
+                                    params = GetPopularFeedGeneratorsQueryParams()
+                                )
+                                .map(GetPopularFeedGeneratorsResponse::feeds)
+                        else
+                            getSuggestedFeeds(params = GetSuggestedFeedsQueryParams())
+                                .map(GetSuggestedFeedsResponse::feeds)
+                    }
+                    .getOrNull() ?: return@singleSessionFlow emptyFlow()
 
             multipleEntitySaverProvider.saveInTransaction {
-                generatorViews.forEach { generatorView ->
-                    add(feedGeneratorView = generatorView)
-                }
+                generatorViews.forEach { generatorView -> add(feedGeneratorView = generatorView) }
             }
 
-            feedGeneratorDao.feedGenerators(
-                generatorViews.map { it.uri.atUri.let(::FeedGeneratorUri) },
-            )
+            feedGeneratorDao
+                .feedGenerators(generatorViews.map { it.uri.atUri.let(::FeedGeneratorUri) })
                 .map { populatedFeedGeneratorEntities ->
                     populatedFeedGeneratorEntities
                         .sortedWithNetworkList(
@@ -426,18 +408,19 @@ internal class OfflineSearchRepository @Inject constructor(
         }
 }
 
-private fun TrendView.trend() = Trend(
-    topic = topic,
-    status = when (status) {
-        TrendViewStatus.Hot -> Trend.Status.Hot
-        is TrendViewStatus.Unknown,
-        null,
-        -> null
-    },
-    displayName = displayName,
-    link = link,
-    startedAt = startedAt,
-    postCount = postCount,
-    category = category,
-    actors = actors.map(ProfileViewBasic::profile),
-)
+private fun TrendView.trend() =
+    Trend(
+        topic = topic,
+        status =
+            when (status) {
+                TrendViewStatus.Hot -> Trend.Status.Hot
+                is TrendViewStatus.Unknown,
+                null -> null
+            },
+        displayName = displayName,
+        link = link,
+        startedAt = startedAt,
+        postCount = postCount,
+        category = category,
+        actors = actors.map(ProfileViewBasic::profile),
+    )

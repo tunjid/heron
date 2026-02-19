@@ -55,36 +55,22 @@ import heron.feature.settings.generated.resources.view_website
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun OpenSourceLibrariesItem(
-    modifier: Modifier = Modifier,
-    libraries: Libs?,
-) {
+fun OpenSourceLibrariesItem(modifier: Modifier = Modifier, libraries: Libs?) {
     ExpandableSettingsItemRow(
-        modifier = modifier
-            .fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         title = stringResource(Res.string.open_source_licenses),
         icon = Icons.Rounded.Copyright,
     ) {
         LibrariesHorizontalGrid(
             libraries = libraries,
-            modifier = Modifier
-                .height(200.dp)
-                .padding(
-                    top = 8.dp,
-                )
-                .fillMaxWidth(),
+            modifier = Modifier.height(200.dp).padding(top = 8.dp).fillMaxWidth(),
         )
     }
 }
 
 @Composable
-private fun LibrariesHorizontalGrid(
-    modifier: Modifier = Modifier,
-    libraries: Libs?,
-) {
-    val libs = remember(libraries) {
-        libraries?.libraries.orEmpty().distinctBy(Library::name)
-    }
+private fun LibrariesHorizontalGrid(modifier: Modifier = Modifier, libraries: Libs?) {
+    val libs = remember(libraries) { libraries?.libraries.orEmpty().distinctBy(Library::name) }
     val selectedLibrary = remember { mutableStateOf<Library?>(null) }
 
     LazyHorizontalGrid(
@@ -95,57 +81,35 @@ private fun LibrariesHorizontalGrid(
         items(
             items = libs,
             itemContent = { library ->
-                Library(
-                    library = library,
-                    onLibraryClicked = selectedLibrary::value::set,
-                )
+                Library(library = library, onLibraryClicked = selectedLibrary::value::set)
             },
         )
     }
 
     val library = selectedLibrary.value
     if (library != null) {
-        LicenseDialog(
-            library = library,
-            onDismiss = {
-                selectedLibrary.value = null
-            },
-        )
+        LicenseDialog(library = library, onDismiss = { selectedLibrary.value = null })
     }
 }
 
 @Composable
-private fun Library(
-    library: Library,
-    onLibraryClicked: (Library) -> Unit,
-) {
+private fun Library(library: Library, onLibraryClicked: (Library) -> Unit) {
     Column(
-        modifier = Modifier
-            .clip(LibraryShape)
-            .clickable {
-                if (library.licenses.none { it.htmlReadyLicenseContent.isNullOrBlank() }) {
-                    onLibraryClicked(library)
+        modifier =
+            Modifier.clip(LibraryShape)
+                .clickable {
+                    if (library.licenses.none { it.htmlReadyLicenseContent.isNullOrBlank() }) {
+                        onLibraryClicked(library)
+                    }
                 }
-            }
-            .padding(horizontal = 8.dp),
+                .padding(horizontal = 8.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
         content = {
-            Text(
-                text = library.name,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            Text(
-                text = library.author,
-                style = MaterialTheme.typography.bodySmall,
-            )
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
+            Text(text = library.name, style = MaterialTheme.typography.bodyMedium)
+            Text(text = library.author, style = MaterialTheme.typography.bodySmall)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 library.licenses.forEach {
-                    Text(
-                        text = it.name,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
+                    Text(text = it.name, style = MaterialTheme.typography.bodySmall)
                 }
             }
         },
@@ -153,10 +117,7 @@ private fun Library(
 }
 
 @Composable
-private fun LicenseDialog(
-    library: Library,
-    onDismiss: () -> Unit,
-) {
+private fun LicenseDialog(library: Library, onDismiss: () -> Unit) {
     val uriHandler = LocalUriHandler.current
 
     SimpleDialog(
@@ -172,17 +133,12 @@ private fun LicenseDialog(
             library.website?.let { website ->
                 PrimaryDialogButton(
                     text = stringResource(Res.string.view_website),
-                    onClick = {
-                        runCatching { uriHandler.openUri(website) }
-                    },
+                    onClick = { runCatching { uriHandler.openUri(website) } },
                 )
             }
         },
         dismissButton = {
-            NeutralDialogButton(
-                stringResource(Res.string.close),
-                onClick = onDismiss,
-            )
+            NeutralDialogButton(stringResource(Res.string.close), onClick = onDismiss)
         },
     )
 }

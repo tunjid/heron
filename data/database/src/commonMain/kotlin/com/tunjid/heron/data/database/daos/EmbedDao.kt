@@ -25,18 +25,9 @@ import com.tunjid.heron.data.database.entities.postembeds.VideoEntity
 @Dao
 interface EmbedDao {
 
-    @Upsert
-    suspend fun upsertExternalEmbeds(
-        entities: List<ExternalEmbedEntity>,
-    )
+    @Upsert suspend fun upsertExternalEmbeds(entities: List<ExternalEmbedEntity>)
 
-    @Upsert
-    suspend fun upsertImages(
-        entities: List<ImageEntity>,
-    )
+    @Upsert suspend fun upsertImages(entities: List<ImageEntity>)
 
-    @Upsert
-    suspend fun upsertVideos(
-        entities: List<VideoEntity>,
-    )
+    @Upsert suspend fun upsertVideos(entities: List<VideoEntity>)
 }

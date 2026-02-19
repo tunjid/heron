@@ -43,8 +43,6 @@ fun <LazyState : ScrollableState> LazyState.TimelineRefreshEffect(
             .filter { (first, second) ->
                 first != null && first != second && second is TilingState.Status.Refreshed
             }
-            .collectLatest {
-                onRefresh()
-            }
+            .collectLatest { onRefresh() }
     }
 }

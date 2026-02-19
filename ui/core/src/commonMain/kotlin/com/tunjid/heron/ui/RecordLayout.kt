@@ -45,76 +45,71 @@ fun RecordLayout(
     sharedElementType: RecordUri,
     avatar: @Composable () -> Unit,
     action: @Composable (() -> Unit)? = null,
-) = with(movableElementSharedTransitionScope) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        AttributionLayout(
-            modifier = Modifier
-                .fillMaxWidth(),
-            avatar = avatar,
-            label = {
-                PaneStickySharedElement(
-                    sharedContentState = rememberSharedContentState(
-                        key = titleSharedElementKey(
-                            prefix = sharedElementPrefix,
-                            type = sharedElementType,
-                        ),
-                    ),
-                ) {
-                    Text(
-                        text = title,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1,
-                        style = LocalTextStyle.current.copy(fontWeight = Bold),
-                    )
-                }
-                PaneStickySharedElement(
-                    sharedContentState = rememberSharedContentState(
-                        key = subtitleSharedElementKey(
-                            prefix = sharedElementPrefix,
-                            type = sharedElementType,
-                        ),
-                    ),
-                ) {
-                    Text(
-                        text = subtitle,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.outline,
-                    )
-                }
-            },
-            action = action,
-        )
-        description.takeUnless(String?::isNullOrEmpty)?.let {
-            Text(
-                text = rememberFormattedTextPost(it),
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis,
+) =
+    with(movableElementSharedTransitionScope) {
+        Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            AttributionLayout(
+                modifier = Modifier.fillMaxWidth(),
+                avatar = avatar,
+                label = {
+                    PaneStickySharedElement(
+                        sharedContentState =
+                            rememberSharedContentState(
+                                key =
+                                    titleSharedElementKey(
+                                        prefix = sharedElementPrefix,
+                                        type = sharedElementType,
+                                    )
+                            )
+                    ) {
+                        Text(
+                            text = title,
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1,
+                            style = LocalTextStyle.current.copy(fontWeight = Bold),
+                        )
+                    }
+                    PaneStickySharedElement(
+                        sharedContentState =
+                            rememberSharedContentState(
+                                key =
+                                    subtitleSharedElementKey(
+                                        prefix = sharedElementPrefix,
+                                        type = sharedElementType,
+                                    )
+                            )
+                    ) {
+                        Text(
+                            text = subtitle,
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.outline,
+                        )
+                    }
+                },
+                action = action,
             )
-        }
-        blurb.takeUnless(String?::isNullOrEmpty)?.let {
-            Text(
-                text = rememberFormattedTextPost(it),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.outline,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+            description.takeUnless(String?::isNullOrEmpty)?.let {
+                Text(
+                    text = rememberFormattedTextPost(it),
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            blurb.takeUnless(String?::isNullOrEmpty)?.let {
+                Text(
+                    text = rememberFormattedTextPost(it),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
-}
 
-fun titleSharedElementKey(
-    prefix: String?,
-    type: RecordUri,
-): String = "$prefix-$type-title"
+fun titleSharedElementKey(prefix: String?, type: RecordUri): String = "$prefix-$type-title"
 
-fun subtitleSharedElementKey(
-    prefix: String?,
-    type: RecordUri,
-): String = "$prefix-$type-subtitle"
+fun subtitleSharedElementKey(prefix: String?, type: RecordUri): String = "$prefix-$type-subtitle"

@@ -21,9 +21,8 @@ plugins {
     kotlin("plugin.serialization")
     id("androidx.room")
 }
-android {
-    namespace = "com.tunjid.heron.data"
-}
+
+android { namespace = "com.tunjid.heron.data" }
 
 kotlin {
     sourceSets {
@@ -41,20 +40,14 @@ kotlin {
                 implementation(libs.okio)
             }
         }
-        commonTest {
-            dependencies {
-                implementation(kotlin("test"))
-            }
-        }
+        commonTest { dependencies { implementation(kotlin("test")) } }
     }
 }
 
-room {
-    schemaDirectory("$projectDir/schemas")
-}
+room { schemaDirectory("$projectDir/schemas") }
 
 dependencies {
-//    kspCommonMainMetadata(libs.androidx.room.compiler)
+    //    kspCommonMainMetadata(libs.androidx.room.compiler)
     kspAndroid(libs.androidx.room.compiler)
     kspDesktop(libs.androidx.room.compiler)
     kspIosSimulatorArm64(libs.androidx.room.compiler)

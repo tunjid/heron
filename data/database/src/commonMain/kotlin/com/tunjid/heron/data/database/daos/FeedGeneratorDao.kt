@@ -33,10 +33,10 @@ interface FeedGeneratorDao {
         """
             SELECT * FROM feedGenerators
             WHERE uri IN (:feedUris)
-        """,
+        """
     )
     fun feedGenerators(
-        feedUris: Collection<FeedGeneratorUri>,
+        feedUris: Collection<FeedGeneratorUri>
     ): Flow<List<PopulatedFeedGeneratorEntity>>
 
     @Transaction
@@ -48,7 +48,7 @@ interface FeedGeneratorDao {
             DESC
             LIMIT :limit
             OFFSET :offset
-        """,
+        """
     )
     fun profileFeedGenerators(
         creatorId: String,
@@ -56,19 +56,13 @@ interface FeedGeneratorDao {
         offset: Long,
     ): Flow<List<PopulatedFeedGeneratorEntity>>
 
-    @Transaction
-    @Upsert
-    suspend fun upsertFeedGenerators(
-        entities: List<FeedGeneratorEntity>,
-    )
+    @Transaction @Upsert suspend fun upsertFeedGenerators(entities: List<FeedGeneratorEntity>)
 
     @Query(
         """
             DELETE FROM feedGenerators
             WHERE uri = :uri
-        """,
+        """
     )
-    suspend fun deleteFeedGenerator(
-        uri: FeedGeneratorUri,
-    )
+    suspend fun deleteFeedGenerator(uri: FeedGeneratorUri)
 }

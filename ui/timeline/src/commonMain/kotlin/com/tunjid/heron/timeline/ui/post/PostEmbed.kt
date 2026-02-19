@@ -87,127 +87,130 @@ internal fun PostEmbed(
         icon = blurIcon,
         onUnblurClicked = onUnblurClicked,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth(),
-        ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             when (embed) {
-                is ExternalEmbed -> PostExternal(
-                    feature = embed,
-                    postUri = postUri,
-                    sharedElementPrefix = sharedElementPrefix,
-                    presentation = presentation,
-                    isBlurred = isBlurred,
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                    onClick = {
-                        uriHandler.openUri(embed.uri.uri)
-                    },
-                )
+                is ExternalEmbed ->
+                    PostExternal(
+                        feature = embed,
+                        postUri = postUri,
+                        sharedElementPrefix = sharedElementPrefix,
+                        presentation = presentation,
+                        isBlurred = isBlurred,
+                        paneMovableElementSharedTransitionScope =
+                            paneMovableElementSharedTransitionScope,
+                        onClick = { uriHandler.openUri(embed.uri.uri) },
+                    )
 
-                is ImageList -> PostImages(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    feature = embed,
-                    postUri = postUri,
-                    sharedElementPrefix = sharedElementPrefix,
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                    presentation = presentation,
-                    isBlurred = isBlurred,
-                    matchHeightConstraintsFirst = false,
-                    onImageClicked = { index ->
-                        onPostMediaClicked(embed, index, null)
-                    },
-                )
+                is ImageList ->
+                    PostImages(
+                        modifier = Modifier.fillMaxWidth(),
+                        feature = embed,
+                        postUri = postUri,
+                        sharedElementPrefix = sharedElementPrefix,
+                        paneMovableElementSharedTransitionScope =
+                            paneMovableElementSharedTransitionScope,
+                        presentation = presentation,
+                        isBlurred = isBlurred,
+                        matchHeightConstraintsFirst = false,
+                        onImageClicked = { index -> onPostMediaClicked(embed, index, null) },
+                    )
 
                 UnknownEmbed -> UnknownPostPost(onClick = {})
-                is Video -> PostVideo(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    video = embed,
-                    postUri = postUri,
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                    sharedElementPrefix = sharedElementPrefix,
-                    isBlurred = isBlurred,
-                    matchHeightConstraintsFirst = false,
-                    presentation = presentation,
-                    onClicked = {
-                        onPostMediaClicked(embed, 0, null)
-                    },
-                )
+                is Video ->
+                    PostVideo(
+                        modifier = Modifier.fillMaxWidth(),
+                        video = embed,
+                        postUri = postUri,
+                        paneMovableElementSharedTransitionScope =
+                            paneMovableElementSharedTransitionScope,
+                        sharedElementPrefix = sharedElementPrefix,
+                        isBlurred = isBlurred,
+                        matchHeightConstraintsFirst = false,
+                        presentation = presentation,
+                        onClicked = { onPostMediaClicked(embed, 0, null) },
+                    )
 
                 null -> Unit
             }
             if (presentation == Timeline.Presentation.Text.WithEmbed) {
                 if (embeddedRecord != null) Spacer(Modifier.height(16.dp))
                 when (embeddedRecord) {
-                    is Post -> when (embeddedRecord.cid) {
-                        Constants.notFoundPostId -> InvisiblePostPost(onClick = null)
-                        Constants.blockedPostId -> BlockedPostPost(onClick = null)
-                        Constants.unknownPostId -> UnknownPostPost(onClick = null)
-                        else -> QuotedPost(
-                            now = now,
-                            quotedPost = embeddedRecord,
-                            sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
-                                quotingPostUri = postUri,
-                            ),
-                            isBlurred = appliedLabels.shouldBlurMedia,
-                            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                            onLinkTargetClicked = onLinkTargetClicked,
-                            onProfileClicked = onQuotedProfileClicked,
-                            onPostMediaClicked = onPostMediaClicked,
-                            onClick = {
-                                onEmbeddedRecordClicked(embeddedRecord)
-                            },
-                        )
-                    }
-                    is FeedGenerator -> FeatureContainer(
-                        onClick = { onEmbeddedRecordClicked(embeddedRecord) },
-                    ) {
-                        FeedGenerator(
+                    is Post ->
+                        when (embeddedRecord.cid) {
+                            Constants.notFoundPostId -> InvisiblePostPost(onClick = null)
+                            Constants.blockedPostId -> BlockedPostPost(onClick = null)
+                            Constants.unknownPostId -> UnknownPostPost(onClick = null)
+                            else ->
+                                QuotedPost(
+                                    now = now,
+                                    quotedPost = embeddedRecord,
+                                    sharedElementPrefix =
+                                        sharedElementPrefix.withQuotingPostUriPrefix(
+                                            quotingPostUri = postUri
+                                        ),
+                                    isBlurred = appliedLabels.shouldBlurMedia,
+                                    paneMovableElementSharedTransitionScope =
+                                        paneMovableElementSharedTransitionScope,
+                                    onLinkTargetClicked = onLinkTargetClicked,
+                                    onProfileClicked = onQuotedProfileClicked,
+                                    onPostMediaClicked = onPostMediaClicked,
+                                    onClick = { onEmbeddedRecordClicked(embeddedRecord) },
+                                )
+                        }
+                    is FeedGenerator ->
+                        FeatureContainer(onClick = { onEmbeddedRecordClicked(embeddedRecord) }) {
+                            FeedGenerator(
+                                modifier = Modifier.padding(12.dp),
+                                movableElementSharedTransitionScope =
+                                    paneMovableElementSharedTransitionScope,
+                                sharedElementPrefix =
+                                    sharedElementPrefix.withQuotingPostUriPrefix(
+                                        quotingPostUri = postUri
+                                    ),
+                                feedGenerator = embeddedRecord,
+                                status = null,
+                                onFeedGeneratorStatusUpdated = {},
+                            )
+                        }
+                    is FeedList ->
+                        FeatureContainer(onClick = { onEmbeddedRecordClicked(embeddedRecord) }) {
+                            FeedList(
+                                modifier = Modifier.padding(12.dp),
+                                movableElementSharedTransitionScope =
+                                    paneMovableElementSharedTransitionScope,
+                                sharedElementPrefix =
+                                    sharedElementPrefix.withQuotingPostUriPrefix(
+                                        quotingPostUri = postUri
+                                    ),
+                                list = embeddedRecord,
+                                status = null,
+                                onListStatusUpdated = {},
+                            )
+                        }
+                    is StarterPack ->
+                        FeatureContainer(onClick = { onEmbeddedRecordClicked(embeddedRecord) }) {
+                            StarterPack(
+                                modifier = Modifier.padding(12.dp),
+                                movableElementSharedTransitionScope =
+                                    paneMovableElementSharedTransitionScope,
+                                sharedElementPrefix =
+                                    sharedElementPrefix.withQuotingPostUriPrefix(
+                                        quotingPostUri = postUri
+                                    ),
+                                starterPack = embeddedRecord,
+                            )
+                        }
+                    is Labeler ->
+                        Labeler(
                             modifier = Modifier.padding(12.dp),
-                            movableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                            sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
-                                quotingPostUri = postUri,
-                            ),
-                            feedGenerator = embeddedRecord,
-                            status = null,
-                            onFeedGeneratorStatusUpdated = {},
+                            movableElementSharedTransitionScope =
+                                paneMovableElementSharedTransitionScope,
+                            sharedElementPrefix =
+                                sharedElementPrefix.withQuotingPostUriPrefix(
+                                    quotingPostUri = postUri
+                                ),
+                            labeler = embeddedRecord,
                         )
-                    }
-                    is FeedList -> FeatureContainer(
-                        onClick = { onEmbeddedRecordClicked(embeddedRecord) },
-                    ) {
-                        FeedList(
-                            modifier = Modifier.padding(12.dp),
-                            movableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                            sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
-                                quotingPostUri = postUri,
-                            ),
-                            list = embeddedRecord,
-                            status = null,
-                            onListStatusUpdated = {},
-                        )
-                    }
-                    is StarterPack -> FeatureContainer(
-                        onClick = { onEmbeddedRecordClicked(embeddedRecord) },
-                    ) {
-                        StarterPack(
-                            modifier = Modifier.padding(12.dp),
-                            movableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                            sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
-                                quotingPostUri = postUri,
-                            ),
-                            starterPack = embeddedRecord,
-                        )
-                    }
-                    is Labeler -> Labeler(
-                        modifier = Modifier.padding(12.dp),
-                        movableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                        sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
-                            quotingPostUri = postUri,
-                        ),
-                        labeler = embeddedRecord,
-                    )
                     null -> Unit
                 }
             }

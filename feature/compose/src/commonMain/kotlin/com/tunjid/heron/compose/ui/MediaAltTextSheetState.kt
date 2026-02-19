@@ -66,18 +66,14 @@ import kotlinx.coroutines.flow.first
 import org.jetbrains.compose.resources.stringResource
 
 @Stable
-class MediaAltTextSheetState(
-    scope: BottomSheetScope,
-) : BottomSheetState(scope) {
+class MediaAltTextSheetState(scope: BottomSheetScope) : BottomSheetState(scope) {
     internal var media by mutableStateOf<RestrictedFile.Media?>(null)
 
     override fun onHidden() {
         media = null
     }
 
-    fun editAltText(
-        media: RestrictedFile.Media,
-    ) {
+    fun editAltText(media: RestrictedFile.Media) {
         this.media = media
         show()
     }
@@ -85,18 +81,11 @@ class MediaAltTextSheetState(
     companion object {
         @Composable
         fun rememberMediaAltTextSheetState(
-            onMediaItemUpdated: (RestrictedFile.Media) -> Unit,
+            onMediaItemUpdated: (RestrictedFile.Media) -> Unit
         ): MediaAltTextSheetState {
-            val state = rememberBottomSheetState {
-                MediaAltTextSheetState(
-                    scope = it,
-                )
-            }
+            val state = rememberBottomSheetState { MediaAltTextSheetState(scope = it) }
 
-            MediaAltTextBottomSheet(
-                state = state,
-                onMediaItemUpdated = onMediaItemUpdated,
-            )
+            MediaAltTextBottomSheet(state = state, onMediaItemUpdated = onMediaItemUpdated)
 
             return state
         }
@@ -109,110 +98,106 @@ private fun MediaAltTextBottomSheet(
     onMediaItemUpdated: (RestrictedFile.Media) -> Unit,
 ) {
     val media = state.media
-    if (media != null) state.ModalBottomSheet {
-        var altText by remember(media) {
-            mutableStateOf(
-                when (media) {
-                    is RestrictedFile.Media.Photo -> media.altText
-                    is RestrictedFile.Media.Video -> media.altText
-                } ?: "",
-            )
-        }
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .imePadding()
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Text(
-                text = stringResource(Res.string.alt_text_add),
-                style = MaterialTheme.typography.titleLarge,
-            )
-
-            when (media) {
-                is RestrictedFile.Media.Photo -> {
-                    AsyncImage(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 200.dp)
-                            .background(MaterialTheme.colorScheme.surfaceContainer),
-                        state = rememberUpdatedImageState(
-                            args = ImageArgs(
-                                item = media,
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                shape = MediaUploadItemShape,
-                            ),
-                        ),
+    if (media != null)
+        state.ModalBottomSheet {
+            var altText by
+                remember(media) {
+                    mutableStateOf(
+                        when (media) {
+                            is RestrictedFile.Media.Photo -> media.altText
+                            is RestrictedFile.Media.Video -> media.altText
+                        } ?: ""
                     )
                 }
-                is RestrictedFile.Media.Video -> {
-                    media.path?.let { videoPath ->
-                        val videoPlayerController = LocalVideoPlayerController.current
-                        val videoPlayerState =
-                            videoPlayerController.rememberUpdatedVideoPlayerState(
-                                videoUrl = videoPath,
-                                thumbnail = null,
-                                shape = MediaUploadItemShape,
-                            )
-                        VideoPlayer(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = 200.dp),
-                            state = videoPlayerState,
+            Column(
+                modifier =
+                    Modifier.padding(16.dp).imePadding().verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Text(
+                    text = stringResource(Res.string.alt_text_add),
+                    style = MaterialTheme.typography.titleLarge,
+                )
+
+                when (media) {
+                    is RestrictedFile.Media.Photo -> {
+                        AsyncImage(
+                            modifier =
+                                Modifier.fillMaxWidth()
+                                    .heightIn(max = 200.dp)
+                                    .background(MaterialTheme.colorScheme.surfaceContainer),
+                            state =
+                                rememberUpdatedImageState(
+                                    args =
+                                        ImageArgs(
+                                            item = media,
+                                            contentDescription = null,
+                                            contentScale = ContentScale.Crop,
+                                            shape = MediaUploadItemShape,
+                                        )
+                                ),
                         )
-                        LaunchedEffect(media) {
-                            videoPlayerController.play(videoPath)
-                            snapshotFlow { videoPlayerState.hasRenderedFirstFrame }
-                                .first(true::equals)
-                            videoPlayerController.pauseActiveVideo()
+                    }
+                    is RestrictedFile.Media.Video -> {
+                        media.path?.let { videoPath ->
+                            val videoPlayerController = LocalVideoPlayerController.current
+                            val videoPlayerState =
+                                videoPlayerController.rememberUpdatedVideoPlayerState(
+                                    videoUrl = videoPath,
+                                    thumbnail = null,
+                                    shape = MediaUploadItemShape,
+                                )
+                            VideoPlayer(
+                                modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp),
+                                state = videoPlayerState,
+                            )
+                            LaunchedEffect(media) {
+                                videoPlayerController.play(videoPath)
+                                snapshotFlow { videoPlayerState.hasRenderedFirstFrame }
+                                    .first(true::equals)
+                                videoPlayerController.pauseActiveVideo()
+                            }
                         }
                     }
                 }
-            }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(Res.string.alt_text_descriptive),
-                    style = MaterialTheme.typography.bodyMedium,
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(Res.string.alt_text_descriptive),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Spacer(Modifier.weight(1f))
+                    // Circular progress or text for char count could be added here
+                    TextCircularProgress(altText.codePointCount(), AltTextCharacterLimit)
+                }
+
+                OutlinedTextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    value = altText,
+                    onValueChange = {
+                        if (it.codePointCount() <= AltTextCharacterLimit) altText = it
+                    },
+                    placeholder = { Text(stringResource(Res.string.alt_text)) },
+                    minLines = 3,
                 )
-                Spacer(Modifier.weight(1f))
-                // Circular progress or text for char count could be added here
-                TextCircularProgress(
-                    altText.codePointCount(),
-                    AltTextCharacterLimit,
-                )
+
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        onMediaItemUpdated(media.withAltText(altText))
+                        state.hide()
+                    },
+                ) {
+                    Text(stringResource(CommonStrings.save))
+                }
+
+                Spacer(Modifier.height(100.dp))
             }
-
-            OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
-                value = altText,
-                onValueChange = {
-                    if (it.codePointCount() <= AltTextCharacterLimit) altText = it
-                },
-                placeholder = { Text(stringResource(Res.string.alt_text)) },
-                minLines = 3,
-            )
-
-            Button(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                onClick = {
-                    onMediaItemUpdated(media.withAltText(altText))
-                    state.hide()
-                },
-            ) {
-                Text(stringResource(CommonStrings.save))
-            }
-
-            Spacer(Modifier.height(100.dp))
         }
-    }
 }
 
 private const val AltTextCharacterLimit = 2000

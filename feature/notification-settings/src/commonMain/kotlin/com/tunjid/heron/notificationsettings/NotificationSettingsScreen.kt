@@ -53,22 +53,20 @@ internal fun NotificationSettingsScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val items = remember(
-        state.notificationPreferences,
-        state.pendingUpdates,
-    ) {
-        state.notificationPreferences?.toNotificationSettingItems(
-            pendingUpdates = state.pendingUpdates,
-        ) ?: emptyList()
-    }
+    val items =
+        remember(state.notificationPreferences, state.pendingUpdates) {
+            state.notificationPreferences?.toNotificationSettingItems(
+                pendingUpdates = state.pendingUpdates
+            ) ?: emptyList()
+        }
 
     LazyColumn(
-        modifier = modifier
-            .fillMaxWidth(),
-        contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-            horizontal = 16.dp,
-            isCompact = paneScaffoldState.prefersCompactBottomNav,
-        ),
+        modifier = modifier.fillMaxWidth(),
+        contentPadding =
+            UiTokens.bottomNavAndInsetPaddingValues(
+                horizontal = 16.dp,
+                isCompact = paneScaffoldState.prefersCompactBottomNav,
+            ),
     ) {
         items(
             items = items,
@@ -81,12 +79,9 @@ internal fun NotificationSettingsScreen(
             },
         ) { item ->
             NotificationSettingRow(
-                modifier = Modifier
-                    .animateItem(),
+                modifier = Modifier.animateItem(),
                 item = item,
-                onUpdate = { update ->
-                    actions(Action.CacheNotificationPreferenceUpdate(update))
-                },
+                onUpdate = { update -> actions(Action.CacheNotificationPreferenceUpdate(update)) },
             )
         }
     }
@@ -99,16 +94,14 @@ fun NotificationSettingRow(
     onUpdate: (NotificationPreferences.Update) -> Unit,
 ) {
     when (item) {
-        is NotificationSettingItem.Filterable -> FilterableNotificationSetting(
-            modifier = modifier,
-            item = item,
-            onUpdate = onUpdate,
-        )
-        is NotificationSettingItem.Combined -> CombinedNotificationSetting(
-            modifier = modifier,
-            combinedItem = item,
-            onUpdate = onUpdate,
-        )
+        is NotificationSettingItem.Filterable ->
+            FilterableNotificationSetting(modifier = modifier, item = item, onUpdate = onUpdate)
+        is NotificationSettingItem.Combined ->
+            CombinedNotificationSetting(
+                modifier = modifier,
+                combinedItem = item,
+                onUpdate = onUpdate,
+            )
     }
 }
 
@@ -122,9 +115,7 @@ private fun FilterableNotificationSetting(
         modifier = modifier,
         title = stringResource(item.title),
         icon = item.icon,
-        status = {
-            NotificationStatusText(item.preference)
-        },
+        status = { NotificationStatusText(item.preference) },
         content = {
             Text(
                 text = stringResource(item.description),
@@ -138,12 +129,13 @@ private fun FilterableNotificationSetting(
                 enabled = true,
                 checked = item.preference.list,
                 onCheckedChange = { checked ->
-                    val update = NotificationPreferences.Update(
-                        reason = item.reason,
-                        list = checked,
-                        push = item.preference.push,
-                        include = item.preference.include,
-                    )
+                    val update =
+                        NotificationPreferences.Update(
+                            reason = item.reason,
+                            list = checked,
+                            push = item.preference.push,
+                            include = item.preference.include,
+                        )
                     onUpdate(update)
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -156,12 +148,13 @@ private fun FilterableNotificationSetting(
                 enabled = true,
                 checked = item.preference.push,
                 onCheckedChange = { checked ->
-                    val update = NotificationPreferences.Update(
-                        reason = item.reason,
-                        list = item.preference.list,
-                        push = checked,
-                        include = item.preference.include,
-                    )
+                    val update =
+                        NotificationPreferences.Update(
+                            reason = item.reason,
+                            list = item.preference.list,
+                            push = checked,
+                            include = item.preference.include,
+                        )
                     onUpdate(update)
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -179,12 +172,13 @@ private fun FilterableNotificationSetting(
                 text = stringResource(Res.string.everyone),
                 selected = item.preference.include == NotificationPreferences.Include.All,
                 onSelect = {
-                    val update = NotificationPreferences.Update(
-                        reason = item.reason,
-                        list = item.preference.list,
-                        push = item.preference.push,
-                        include = NotificationPreferences.Include.All,
-                    )
+                    val update =
+                        NotificationPreferences.Update(
+                            reason = item.reason,
+                            list = item.preference.list,
+                            push = item.preference.push,
+                            include = NotificationPreferences.Include.All,
+                        )
                     onUpdate(update)
                 },
             )
@@ -193,12 +187,13 @@ private fun FilterableNotificationSetting(
                 text = stringResource(Res.string.people_i_follow),
                 selected = item.preference.include == NotificationPreferences.Include.Follows,
                 onSelect = {
-                    val update = NotificationPreferences.Update(
-                        reason = item.reason,
-                        list = item.preference.list,
-                        push = item.preference.push,
-                        include = NotificationPreferences.Include.Follows,
-                    )
+                    val update =
+                        NotificationPreferences.Update(
+                            reason = item.reason,
+                            list = item.preference.list,
+                            push = item.preference.push,
+                            include = NotificationPreferences.Include.Follows,
+                        )
                     onUpdate(update)
                 },
             )
@@ -220,9 +215,7 @@ private fun CombinedNotificationSetting(
         modifier = modifier,
         title = title,
         icon = icon,
-        status = {
-            CombinedNotificationStatusText(item = combinedItem)
-        },
+        status = { CombinedNotificationStatusText(item = combinedItem) },
         content = {
             Text(
                 text = description,
@@ -245,7 +238,7 @@ private fun CombinedNotificationSetting(
                                     list = pref.list,
                                     push = checked,
                                     include = null,
-                                ),
+                                )
                             )
                         }
                     },
@@ -266,7 +259,7 @@ private fun CombinedNotificationSetting(
                                     list = checked,
                                     push = pref.push,
                                     include = null,
-                                ),
+                                )
                             )
                         }
                     },
@@ -287,7 +280,7 @@ private fun CombinedNotificationSetting(
                                     list = pref.list,
                                     push = checked,
                                     include = null,
-                                ),
+                                )
                             )
                         }
                     },

@@ -28,5 +28,4 @@ internal data class NavItem(
 )
 
 internal fun MultiStackNav.navItemSelected(item: NavItem) =
-    if (item.selected) popToRoot(indexToPop = item.index)
-    else switch(toIndex = item.index)
+    if (item.selected) popToRoot(indexToPop = item.index) else switch(toIndex = item.index)

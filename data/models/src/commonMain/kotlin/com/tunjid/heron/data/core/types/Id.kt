@@ -23,102 +23,77 @@ import kotlinx.serialization.Serializable
 sealed interface Id {
     val id: String
 
-    @Serializable
-    sealed interface Profile : Id
+    @Serializable sealed interface Profile : Id
 }
 
 @Serializable
 @JvmInline
-value class PostId(
-    override val id: String,
-) : Id {
+value class PostId(override val id: String) : Id {
     override fun toString(): String = id
 }
 
 @Serializable
 @JvmInline
-value class ProfileId(
-    override val id: String,
-) : Id.Profile {
+value class ProfileId(override val id: String) : Id.Profile {
     override fun toString(): String = id
 }
 
 @Serializable
 @JvmInline
-value class ProfileHandle(
-    override val id: String,
-) : Id.Profile {
+value class ProfileHandle(override val id: String) : Id.Profile {
     override fun toString(): String = id
 }
 
 @Serializable
 @JvmInline
-value class ProfileHandleOrId(
-    override val id: String,
-) : Id.Profile {
+value class ProfileHandleOrId(override val id: String) : Id.Profile {
     override fun toString(): String = id
 }
 
 @Serializable
 @JvmInline
-value class FeedGeneratorId(
-    override val id: String,
-) : Id {
+value class FeedGeneratorId(override val id: String) : Id {
     override fun toString(): String = id
 }
 
 @Serializable
 @JvmInline
-value class ListId(
-    override val id: String,
-) : Id {
+value class ListId(override val id: String) : Id {
     override fun toString(): String = id
 }
 
 @Serializable
 @JvmInline
-value class StarterPackId(
-    override val id: String,
-) : Id {
+value class StarterPackId(override val id: String) : Id {
     override fun toString(): String = id
 }
 
 @Serializable
 @JvmInline
-value class LabelerId(
-    override val id: String,
-) : Id {
+value class LabelerId(override val id: String) : Id {
     override fun toString(): String = id
 }
 
 @Serializable
 @JvmInline
-value class ThreadGateId(
-    override val id: String,
-) : Id {
+value class ThreadGateId(override val id: String) : Id {
     override fun toString(): String = id
 }
 
 @Serializable
 @JvmInline
-value class GenericId(
-    override val id: String,
-) : Id {
+value class GenericId(override val id: String) : Id {
     override fun toString(): String = id
 }
 
 @Serializable
 @JvmInline
-value class ConversationId(
-    override val id: String,
-) : Id {
+value class ConversationId(override val id: String) : Id {
     override fun toString(): String = id
 }
 
 @Serializable
 @JvmInline
-value class MessageId(
-    override val id: String,
-) : Id {
+value class MessageId(override val id: String) : Id {
     override fun toString(): String = id
 }

@@ -42,11 +42,7 @@ import dev.zacsweers.metro.StringKey
 
 private const val RoutePattern = "/splash"
 
-private fun createRoute(
-    routeParams: RouteParams,
-) = routeOf(
-    params = routeParams,
-)
+private fun createRoute(routeParams: RouteParams) = routeOf(params = routeParams)
 
 @BindingContainer
 object SplashNavigationBindings {
@@ -55,10 +51,7 @@ object SplashNavigationBindings {
     @IntoMap
     @StringKey(RoutePattern)
     fun provideRouteMatcher(): RouteMatcher =
-        urlRouteMatcher(
-            routePattern = RoutePattern,
-            routeMapper = ::createRoute,
-        )
+        urlRouteMatcher(routePattern = RoutePattern, routeMapper = ::createRoute)
 }
 
 @BindingContainer
@@ -71,27 +64,26 @@ class SplashBindings(
     @IntoMap
     @StringKey(RoutePattern)
     fun providePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
-    ): PaneEntry<ThreePane, Route> = routePaneEntry(
-        viewModelInitializer = viewModelInitializer,
-    )
+        viewModelInitializer: RouteViewModelInitializer
+    ): PaneEntry<ThreePane, Route> = routePaneEntry(viewModelInitializer = viewModelInitializer)
 
-    private fun routePaneEntry(
-        viewModelInitializer: RouteViewModelInitializer,
-    ) = threePaneEntry(
-        render = { route ->
-            val viewModel = viewModel<ActualSplashViewModel> {
-                viewModelInitializer.invoke(
-                    scope = viewModelCoroutineScope(),
-                    route = route,
+    private fun routePaneEntry(viewModelInitializer: RouteViewModelInitializer) =
+        threePaneEntry(
+            render = { route ->
+                val viewModel =
+                    viewModel<ActualSplashViewModel> {
+                        viewModelInitializer.invoke(
+                            scope = viewModelCoroutineScope(),
+                            route = route,
+                        )
+                    }
+                viewModel.state.collectAsStateWithLifecycle()
+
+                SplashScreen(
+                    paneMovableElementSharedTransitionScope =
+                        rememberThreePaneMovableElementSharedTransitionScope(),
+                    modifier = Modifier,
                 )
             }
-            viewModel.state.collectAsStateWithLifecycle()
-
-            SplashScreen(
-                paneMovableElementSharedTransitionScope = rememberThreePaneMovableElementSharedTransitionScope(),
-                modifier = Modifier,
-            )
-        },
-    )
+        )
 }

@@ -68,9 +68,7 @@ internal fun NotificationPostScaffold(
     onLinkTargetClicked: (Notification.PostAssociated, LinkTarget) -> Unit,
     onPostInteraction: (Notification.PostAssociated, PostAction.Options) -> Unit,
 ) {
-    Column(
-        modifier = modifier,
-    ) {
+    Column(modifier = modifier) {
         PostAttribution(
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
             avatarShape = RoundedPolygonShape.Circle,
@@ -82,56 +80,47 @@ internal fun NotificationPostScaffold(
             createdAt = notification.indexedAt,
         )
         Spacer(Modifier.height(4.dp))
-        Row(
-            horizontalArrangement = spacedBy(14.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .width(UiTokens.avatarSize),
-            ) {
-                if (!isRead) Badge(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(vertical = 8.dp)
-                        .size(4.dp),
-                )
+        Row(horizontalArrangement = spacedBy(14.dp)) {
+            Box(modifier = Modifier.width(UiTokens.avatarSize)) {
+                if (!isRead)
+                    Badge(
+                        modifier =
+                            Modifier.align(Alignment.Center).padding(vertical = 8.dp).size(4.dp)
+                    )
             }
             Column(
-                modifier = Modifier.padding(
-                    bottom = 8.dp,
-                ),
+                modifier = Modifier.padding(bottom = 8.dp),
                 verticalArrangement = spacedBy(8.dp),
             ) {
                 PostText(
                     post = notification.associatedPost,
                     sharedElementPrefix = notification.sharedElementPrefix(),
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    paneMovableElementSharedTransitionScope =
+                        paneMovableElementSharedTransitionScope,
+                    modifier = Modifier.fillMaxWidth(),
                     onClick = { onPostClicked(notification) },
                     onLinkTargetClicked = { _, linkTarget ->
                         onLinkTargetClicked(notification, linkTarget)
                     },
                 )
-//                PostEmbed(
-//                    now = now,
-//                    embed = embed,
-//                    quote = post.quote,
-//                    postId = post.cid,
-//                    sharedElementPrefix = sharedElementPrefix,
-//                    sharedElementScope = sharedElementScope,
-//                    onPostMediaClicked = onPostMediaClicked,
-//                    onPostClicked = onPostClicked,
-//                )
+                //                PostEmbed(
+                //                    now = now,
+                //                    embed = embed,
+                //                    quote = post.quote,
+                //                    postId = post.cid,
+                //                    sharedElementPrefix = sharedElementPrefix,
+                //                    sharedElementScope = sharedElementScope,
+                //                    onPostMediaClicked = onPostMediaClicked,
+                //                    onPostClicked = onPostClicked,
+                //                )
 
                 PostInteractions(
                     post = notification.associatedPost,
                     sharedElementPrefix = notification.sharedElementPrefix(),
                     presentation = Timeline.Presentation.Text.WithEmbed,
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                    onInteraction = { action ->
-                        onPostInteraction(notification, action)
-                    },
+                    paneMovableElementSharedTransitionScope =
+                        paneMovableElementSharedTransitionScope,
+                    onInteraction = { action -> onPostInteraction(notification, action) },
                 )
             }
         }
@@ -148,53 +137,52 @@ private fun PostAttribution(
     sharedElementPrefix: String,
     now: Instant,
     createdAt: Instant,
-) = with(paneMovableElementSharedTransitionScope) {
-    val post = notification.associatedPost
-    AttributionLayout(
-        avatar = {
-            UpdatedMovableStickySharedElementOf(
-                modifier = Modifier
-                    .size(UiTokens.avatarSize)
-                    .clip(avatarShape)
-                    .clickable { onProfileClicked(notification, post.author) },
-                sharedContentState = with(paneMovableElementSharedTransitionScope) {
-                    rememberSharedContentState(
-                        key = post.avatarSharedElementKey(sharedElementPrefix),
-                    )
-                },
-                state = remember(post.author.avatar) {
-                    ImageArgs(
-                        url = post.author.avatar?.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = post.author.displayName ?: post.author.handle.id,
-                        shape = avatarShape,
-                    )
-                },
-                sharedElement = { state, modifier ->
-                    AsyncImage(state, modifier)
-                },
-            )
-        },
-        label = {
-            PostHeadline(
-                now = now,
-                createdAt = createdAt,
-                author = post.author,
-                postId = post.cid,
-                sharedElementPrefix = sharedElementPrefix,
-                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                onPostClicked = {
-                    onPostClicked(notification)
-                },
-                onAuthorClicked = {
-                    onProfileClicked(notification, post.author)
-                },
-            )
-        },
-    )
-//    if (item is TimelineItem.Reply) {
-//                    PostReplyLine(item.parentPost.author, onProfileClicked)
-//                }
-}
+) =
+    with(paneMovableElementSharedTransitionScope) {
+        val post = notification.associatedPost
+        AttributionLayout(
+            avatar = {
+                UpdatedMovableStickySharedElementOf(
+                    modifier =
+                        Modifier.size(UiTokens.avatarSize).clip(avatarShape).clickable {
+                            onProfileClicked(notification, post.author)
+                        },
+                    sharedContentState =
+                        with(paneMovableElementSharedTransitionScope) {
+                            rememberSharedContentState(
+                                key = post.avatarSharedElementKey(sharedElementPrefix)
+                            )
+                        },
+                    state =
+                        remember(post.author.avatar) {
+                            ImageArgs(
+                                url = post.author.avatar?.uri,
+                                contentScale = ContentScale.Crop,
+                                contentDescription =
+                                    post.author.displayName ?: post.author.handle.id,
+                                shape = avatarShape,
+                            )
+                        },
+                    sharedElement = { state, modifier -> AsyncImage(state, modifier) },
+                )
+            },
+            label = {
+                PostHeadline(
+                    now = now,
+                    createdAt = createdAt,
+                    author = post.author,
+                    postId = post.cid,
+                    sharedElementPrefix = sharedElementPrefix,
+                    paneMovableElementSharedTransitionScope =
+                        paneMovableElementSharedTransitionScope,
+                    onPostClicked = { onPostClicked(notification) },
+                    onAuthorClicked = { onProfileClicked(notification, post.author) },
+                )
+            },
+        )
+        //    if (item is TimelineItem.Reply) {
+        //                    PostReplyLine(item.parentPost.author, onProfileClicked)
+        //                }
+    }
 
 fun Notification.PostAssociated.sharedElementPrefix(): String = "notification-${cid.id}"

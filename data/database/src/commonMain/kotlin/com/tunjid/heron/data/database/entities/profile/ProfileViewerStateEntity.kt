@@ -27,26 +27,24 @@ import com.tunjid.heron.data.database.entities.ProfileEntity
 
 @Entity(
     tableName = "profileViewerStates",
-    primaryKeys = [
-        "profileId",
-        "otherProfileId",
-    ],
-    foreignKeys = [
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["profileId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["otherProfileId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
+    primaryKeys = ["profileId", "otherProfileId"],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["profileId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["otherProfileId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
 )
 data class ProfileViewerStateEntity(
     val profileId: ProfileId,

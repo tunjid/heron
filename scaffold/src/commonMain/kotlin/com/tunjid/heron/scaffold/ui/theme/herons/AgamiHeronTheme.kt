@@ -47,36 +47,38 @@ private val AgamiHeronOnTertiaryDark = Color(0xFF00344C)
 private val AgamiHeronTertiaryContainerDark = Color(0xFF004C6D)
 private val AgamiHeronOnTertiaryContainerDark = Color(0xFFC8E6FF)
 
-val AgamiHeronLightScheme = lightColorScheme(
-    primary = AgamiHeronPrimaryLight,
-    onPrimary = AgamiHeronOnPrimaryLight,
-    primaryContainer = AgamiHeronPrimaryContainerLight,
-    onPrimaryContainer = AgamiHeronOnPrimaryContainerLight,
-    secondary = AgamiHeronSecondaryLight,
-    onSecondary = AgamiHeronOnSecondaryLight,
-    secondaryContainer = AgamiHeronSecondaryContainerLight,
-    onSecondaryContainer = AgamiHeronOnSecondaryContainerLight,
-    tertiary = AgamiHeronTertiaryLight,
-    onTertiary = AgamiHeronOnTertiaryLight,
-    tertiaryContainer = AgamiHeronTertiaryContainerLight,
-    onTertiaryContainer = AgamiHeronOnTertiaryContainerLight,
-    surface = Color(0xFFF0FDFB),
-    onSurface = Color(0xFF191C20),
-)
+val AgamiHeronLightScheme =
+    lightColorScheme(
+        primary = AgamiHeronPrimaryLight,
+        onPrimary = AgamiHeronOnPrimaryLight,
+        primaryContainer = AgamiHeronPrimaryContainerLight,
+        onPrimaryContainer = AgamiHeronOnPrimaryContainerLight,
+        secondary = AgamiHeronSecondaryLight,
+        onSecondary = AgamiHeronOnSecondaryLight,
+        secondaryContainer = AgamiHeronSecondaryContainerLight,
+        onSecondaryContainer = AgamiHeronOnSecondaryContainerLight,
+        tertiary = AgamiHeronTertiaryLight,
+        onTertiary = AgamiHeronOnTertiaryLight,
+        tertiaryContainer = AgamiHeronTertiaryContainerLight,
+        onTertiaryContainer = AgamiHeronOnTertiaryContainerLight,
+        surface = Color(0xFFF0FDFB),
+        onSurface = Color(0xFF191C20),
+    )
 
-val AgamiHeronDarkScheme = darkColorScheme(
-    primary = AgamiHeronPrimaryDark,
-    onPrimary = AgamiHeronOnPrimaryDark,
-    primaryContainer = AgamiHeronPrimaryContainerDark,
-    onPrimaryContainer = AgamiHeronOnPrimaryContainerDark,
-    secondary = AgamiHeronSecondaryDark,
-    onSecondary = AgamiHeronOnSecondaryDark,
-    secondaryContainer = AgamiHeronSecondaryContainerDark,
-    onSecondaryContainer = AgamiHeronOnSecondaryContainerDark,
-    tertiary = AgamiHeronTertiaryDark,
-    onTertiary = AgamiHeronOnTertiaryDark,
-    tertiaryContainer = AgamiHeronTertiaryContainerDark,
-    onTertiaryContainer = AgamiHeronOnTertiaryContainerDark,
-    surface = Color(0xFF00201C),
-    onSurface = Color(0xFFE1E2E8),
-)
+val AgamiHeronDarkScheme =
+    darkColorScheme(
+        primary = AgamiHeronPrimaryDark,
+        onPrimary = AgamiHeronOnPrimaryDark,
+        primaryContainer = AgamiHeronPrimaryContainerDark,
+        onPrimaryContainer = AgamiHeronOnPrimaryContainerDark,
+        secondary = AgamiHeronSecondaryDark,
+        onSecondary = AgamiHeronOnSecondaryDark,
+        secondaryContainer = AgamiHeronSecondaryContainerDark,
+        onSecondaryContainer = AgamiHeronOnSecondaryContainerDark,
+        tertiary = AgamiHeronTertiaryDark,
+        onTertiary = AgamiHeronOnTertiaryDark,
+        tertiaryContainer = AgamiHeronTertiaryContainerDark,
+        onTertiaryContainer = AgamiHeronOnTertiaryContainerDark,
+        surface = Color(0xFF00201C),
+        onSurface = Color(0xFFE1E2E8),
+    )

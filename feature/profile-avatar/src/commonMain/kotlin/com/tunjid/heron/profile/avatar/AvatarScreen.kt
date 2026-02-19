@@ -45,60 +45,53 @@ import kotlinx.coroutines.launch
 internal fun AvatarScreen(
     paneScaffoldState: PaneScaffoldState,
     state: State,
-    @Suppress("UNUSED_PARAMETER")
-    actions: (Action) -> Unit,
+    @Suppress("UNUSED_PARAMETER") actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val profile = state.profile
     val avatar = profile?.avatar
 
     val coroutineScope = rememberCoroutineScope()
-    val zoomState = rememberGestureZoomState(
-        zoomScale = DefaultZoomScale,
-        options = remember {
-            Options(
-                scale = Options.Scale.Layout,
-                offset = Options.Offset.Layout,
-            )
-        },
-    )
+    val zoomState =
+        rememberGestureZoomState(
+            zoomScale = DefaultZoomScale,
+            options =
+                remember { Options(scale = Options.Scale.Layout, offset = Options.Offset.Layout) },
+        )
     Box(
-        modifier = modifier
-            .dragToPop(
-                rememberDragToPopState {
-                    !zoomState.enabled || zoomState.zoomScale == DefaultZoomScale
-                },
-            )
-            .fillMaxSize(),
+        modifier =
+            modifier
+                .dragToPop(
+                    rememberDragToPopState {
+                        !zoomState.enabled || zoomState.zoomScale == DefaultZoomScale
+                    }
+                )
+                .fillMaxSize()
     ) {
         paneScaffoldState.UpdatedMovableStickySharedElementOf(
-            sharedContentState = with(paneScaffoldState) {
-                rememberSharedContentState(
-                    key = state.avatarSharedElementKey ?: "",
-                )
-            },
-            modifier = Modifier
-                .align(Alignment.Center)
-                .fillMaxWidth()
-                .aspectRatio(1f)
-                .gestureZoomable(zoomState)
-                .combinedClickable(
-                    onClick = {},
-                    onDoubleClick = {
-                        coroutineScope.launch { zoomState.toggleZoom() }
-                    },
-                ),
-            state = remember(avatar) {
-                ImageArgs(
-                    url = avatar?.uri,
-                    contentScale = ContentScale.Crop,
-                    contentDescription = profile?.displayName ?: profile?.handle?.id,
-                    shape = RoundedPolygonShape.Circle,
-                )
-            },
-            sharedElement = { state, modifier ->
-                AsyncImage(state, modifier)
-            },
+            sharedContentState =
+                with(paneScaffoldState) {
+                    rememberSharedContentState(key = state.avatarSharedElementKey ?: "")
+                },
+            modifier =
+                Modifier.align(Alignment.Center)
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .gestureZoomable(zoomState)
+                    .combinedClickable(
+                        onClick = {},
+                        onDoubleClick = { coroutineScope.launch { zoomState.toggleZoom() } },
+                    ),
+            state =
+                remember(avatar) {
+                    ImageArgs(
+                        url = avatar?.uri,
+                        contentScale = ContentScale.Crop,
+                        contentDescription = profile?.displayName ?: profile?.handle?.id,
+                        shape = RoundedPolygonShape.Circle,
+                    )
+                },
+            sharedElement = { state, modifier -> AsyncImage(state, modifier) },
         )
     }
 }

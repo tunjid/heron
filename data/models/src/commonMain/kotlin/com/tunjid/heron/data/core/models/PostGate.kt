@@ -20,15 +20,8 @@ import com.tunjid.heron.data.core.types.PostGateUri
 import com.tunjid.heron.data.core.types.PostUri
 import kotlinx.serialization.Serializable
 
-data class PostGate(
-    val uri: PostGateUri,
-    val gatedPostUri: PostUri,
-    val allowed: AllowedEmbeds?,
-) {
-    @Serializable
-    data class AllowedEmbeds(
-        val none: Boolean = false,
-    )
+data class PostGate(val uri: PostGateUri, val gatedPostUri: PostUri, val allowed: AllowedEmbeds?) {
+    @Serializable data class AllowedEmbeds(val none: Boolean = false)
 
     companion object {
         val AllowedEmbeds?.embedsDisabled: Boolean

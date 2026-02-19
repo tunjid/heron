@@ -20,10 +20,5 @@ import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteParams
 import com.tunjid.treenav.strings.urlRouteMatcher
 
-fun <T : Route> routePatternAndMatcher(
-    routePattern: String,
-    routeMapper: (RouteParams) -> T,
-) = routePattern to urlRouteMatcher(
-    routePattern = routePattern,
-    routeMapper = routeMapper,
-)
+fun <T : Route> routePatternAndMatcher(routePattern: String, routeMapper: (RouteParams) -> T) =
+    routePattern to urlRouteMatcher(routePattern = routePattern, routeMapper = routeMapper)

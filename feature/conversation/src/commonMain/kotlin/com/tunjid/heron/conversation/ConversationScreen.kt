@@ -111,16 +111,13 @@ internal fun ConversationScreen(
     LazyColumn(
         state = listState,
         reverseLayout = true,
-        contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-            isCompact = paneScaffoldState.prefersCompactBottomNav,
-        ),
-        modifier = modifier
-            .fillMaxSize(),
+        contentPadding =
+            UiTokens.bottomNavAndInsetPaddingValues(
+                isCompact = paneScaffoldState.prefersCompactBottomNav
+            ),
+        modifier = modifier.fillMaxSize(),
     ) {
-        items(
-            count = items.size,
-            key = { items[it].id },
-        ) { index ->
+        items(count = items.size, key = { items[it].id }) { index ->
             val prevAuthor = items.getOrNull(index - 1)?.sender
             val nextAuthor = items.getOrNull(index + 1)?.sender
             val content = items[index]
@@ -128,13 +125,13 @@ internal fun ConversationScreen(
             val isLastMessageByAuthor = nextAuthor != content.sender
 
             Message(
-                modifier = Modifier
-                    .animateItem(),
+                modifier = Modifier.animateItem(),
                 item = content,
-                side = when {
-                    content.sender.did == state.signedInProfile?.did -> Side.Sender
-                    else -> Side.Receiver
-                },
+                side =
+                    when {
+                        content.sender.did == state.signedInProfile?.did -> Side.Sender
+                        else -> Side.Receiver
+                    },
                 isFirstMessageByAuthor = isFirstMessageByAuthor,
                 isLastMessageByAuthor = isLastMessageByAuthor,
                 paneScaffoldState = paneScaffoldState,
@@ -146,14 +143,16 @@ internal fun ConversationScreen(
                     }
                 },
                 onLinkTargetClicked = { linkTarget ->
-                    if (linkTarget is LinkTarget.Navigable) actions(
-                        Action.Navigate.To(
-                            pathDestination(
-                                path = linkTarget.path,
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                            ),
-                        ),
-                    )
+                    if (linkTarget is LinkTarget.Navigable)
+                        actions(
+                            Action.Navigate.To(
+                                pathDestination(
+                                    path = linkTarget.path,
+                                    referringRouteOption =
+                                        NavigationAction.ReferringRouteOption.Current,
+                                )
+                            )
+                        )
                 },
             )
         }
@@ -165,19 +164,21 @@ internal fun ConversationScreen(
             actions(
                 Action.UpdateMessageReaction(
                     when {
-                        message.hasEmojiReaction(emoji) -> Message.UpdateReaction.Remove(
-                            value = emoji,
-                            messageId = message.id,
-                            convoId = message.conversationId,
-                        )
+                        message.hasEmojiReaction(emoji) ->
+                            Message.UpdateReaction.Remove(
+                                value = emoji,
+                                messageId = message.id,
+                                convoId = message.conversationId,
+                            )
 
-                        else -> Message.UpdateReaction.Add(
-                            value = emoji,
-                            messageId = message.id,
-                            convoId = message.conversationId,
-                        )
-                    },
-                ),
+                        else ->
+                            Message.UpdateReaction.Add(
+                                value = emoji,
+                                messageId = message.id,
+                                convoId = message.conversationId,
+                            )
+                    }
+                )
             )
         },
     )
@@ -187,10 +188,11 @@ internal fun ConversationScreen(
         onQueryChanged = { query ->
             actions(
                 Action.Tile(
-                    tilingAction = TilingState.Action.LoadAround(
-                        query = query ?: state.tilingData.currentQuery,
-                    ),
-                ),
+                    tilingAction =
+                        TilingState.Action.LoadAround(
+                            query = query ?: state.tilingData.currentQuery
+                        )
+                )
             )
         },
     )
@@ -221,47 +223,48 @@ private fun Message(
     onMessageLongPressed: (MessageItem) -> Unit,
     onLinkTargetClicked: (LinkTarget) -> Unit,
 ) {
-    val borderColor = when (side) {
-        Side.Sender -> MaterialTheme.colorScheme.primary
-        Side.Receiver -> MaterialTheme.colorScheme.tertiary
-    }
+    val borderColor =
+        when (side) {
+            Side.Sender -> MaterialTheme.colorScheme.primary
+            Side.Receiver -> MaterialTheme.colorScheme.tertiary
+        }
 
     Row(
-        modifier = modifier
-            .padding(
-                top = if (isLastMessageByAuthor) 8.dp else 0.dp,
-                start = 16.dp,
-                end = 16.dp,
-            )
-            .fillMaxWidth(),
+        modifier =
+            modifier
+                .padding(
+                    top = if (isLastMessageByAuthor) 8.dp else 0.dp,
+                    start = 16.dp,
+                    end = 16.dp,
+                )
+                .fillMaxWidth(),
         horizontalArrangement = side,
     ) {
         if (isLastMessageByAuthor) {
             MessageAvatar(
-                modifier = Modifier.size(24.dp)
-                    .border(1.5.dp, borderColor, CircleShape)
-                    .border(3.dp, MaterialTheme.colorScheme.surface, CircleShape)
-                    .clip(CircleShape)
-                    .align(Alignment.Top)
-                    .clickable {
-                        actions(
-                            Action.Navigate.To(
-                                profileDestination(
-                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                    profile = item.sender,
-                                    avatarSharedElementKey = item.avatarSharedElementKey(),
-                                ),
-                            ),
-                        )
-                    },
+                modifier =
+                    Modifier.size(24.dp)
+                        .border(1.5.dp, borderColor, CircleShape)
+                        .border(3.dp, MaterialTheme.colorScheme.surface, CircleShape)
+                        .clip(CircleShape)
+                        .align(Alignment.Top)
+                        .clickable {
+                            actions(
+                                Action.Navigate.To(
+                                    profileDestination(
+                                        referringRouteOption =
+                                            NavigationAction.ReferringRouteOption.Current,
+                                        profile = item.sender,
+                                        avatarSharedElementKey = item.avatarSharedElementKey(),
+                                    )
+                                )
+                            )
+                        },
                 item = item,
                 paneScaffoldState = paneScaffoldState,
             )
         }
-        Spacer(
-            modifier = Modifier
-                .width(if (isLastMessageByAuthor) 16.dp else 34.dp),
-        )
+        Spacer(modifier = Modifier.width(if (isLastMessageByAuthor) 16.dp else 34.dp))
 
         AuthorAndTextMessage(
             item = item,
@@ -276,14 +279,15 @@ private fun Message(
 
         when (item) {
             is MessageItem.Pending -> Unit
-            is MessageItem.Sent -> item.message.embeddedRecord?.let { record ->
-                MessageRecord(
-                    record = record,
-                    item = item,
-                    paneScaffoldState = paneScaffoldState,
-                    actions = actions,
-                )
-            }
+            is MessageItem.Sent ->
+                item.message.embeddedRecord?.let { record ->
+                    MessageRecord(
+                        record = record,
+                        item = item,
+                        paneScaffoldState = paneScaffoldState,
+                        actions = actions,
+                    )
+                }
         }
     }
 }
@@ -294,25 +298,21 @@ private fun MessageAvatar(
     item: MessageItem,
     paneScaffoldState: PaneScaffoldState,
 ) {
-    Box(
-        modifier = modifier,
-    ) {
+    Box(modifier = modifier) {
         paneScaffoldState.UpdatedMovableStickySharedElementOf(
-            sharedContentState = paneScaffoldState.rememberSharedContentState(
-                key = item.avatarSharedElementKey(),
-            ),
-            state = remember(item.sender.avatar) {
-                ImageArgs(
-                    url = item.sender.avatar?.uri,
-                    contentScale = ContentScale.Crop,
-                    contentDescription = null,
-                    shape = RoundedPolygonShape.Circle,
-                )
-            },
+            sharedContentState =
+                paneScaffoldState.rememberSharedContentState(key = item.avatarSharedElementKey()),
+            state =
+                remember(item.sender.avatar) {
+                    ImageArgs(
+                        url = item.sender.avatar?.uri,
+                        contentScale = ContentScale.Crop,
+                        contentDescription = null,
+                        shape = RoundedPolygonShape.Circle,
+                    )
+                },
             modifier = Modifier.matchParentSize(),
-            sharedElement = { args, innerModifier ->
-                AsyncImage(args, innerModifier)
-            },
+            sharedElement = { args, innerModifier -> AsyncImage(args, innerModifier) },
         )
     }
 }
@@ -328,49 +328,41 @@ private fun AuthorAndTextMessage(
     onMessageLongPressed: (MessageItem) -> Unit,
     onLinkTargetClicked: (LinkTarget) -> Unit,
 ) {
-    if (item.text.isNotBlank()) Column(
-        modifier = modifier,
-        horizontalAlignment = side,
-    ) {
-        if (isLastMessageByAuthor) {
-            AuthorNameTimestamp(item)
+    if (item.text.isNotBlank())
+        Column(modifier = modifier, horizontalAlignment = side) {
+            if (isLastMessageByAuthor) {
+                AuthorNameTimestamp(item)
+            }
+            ChatItemBubble(
+                modifier =
+                    Modifier.pointerInput(Unit) {
+                        detectTapGestures(onLongPress = { onMessageLongPressed(item) })
+                    },
+                message = item,
+                side = side,
+                paneScaffoldState = paneScaffoldState,
+                onLinkTargetClicked = onLinkTargetClicked,
+            )
+            if (isFirstMessageByAuthor) {
+                // Last bubble before next author
+                Spacer(modifier = Modifier.height(8.dp))
+            } else {
+                // Between bubbles
+                Spacer(modifier = Modifier.height(4.dp))
+            }
         }
-        ChatItemBubble(
-            modifier = Modifier
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onLongPress = {
-                            onMessageLongPressed(item)
-                        },
-                    )
-                },
-            message = item,
-            side = side,
-            paneScaffoldState = paneScaffoldState,
-            onLinkTargetClicked = onLinkTargetClicked,
-        )
-        if (isFirstMessageByAuthor) {
-            // Last bubble before next author
-            Spacer(modifier = Modifier.height(8.dp))
-        } else {
-            // Between bubbles
-            Spacer(modifier = Modifier.height(4.dp))
-        }
-    }
 }
 
 @Composable
-private fun AuthorNameTimestamp(
-    item: MessageItem,
-) {
+private fun AuthorNameTimestamp(item: MessageItem) {
     // Combine author and timestamp for a11y.
     Row(modifier = Modifier.semantics(mergeDescendants = true) {}) {
         Text(
             text = item.sender.displayName ?: "",
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier
-                .alignBy(LastBaseline)
-                .paddingFrom(LastBaseline, after = 8.dp), // Space to 1st bubble
+            modifier =
+                Modifier.alignBy(LastBaseline)
+                    .paddingFrom(LastBaseline, after = 8.dp), // Space to 1st bubble
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
@@ -390,63 +382,54 @@ private fun ChatItemBubble(
     paneScaffoldState: PaneScaffoldState,
     onLinkTargetClicked: (LinkTarget) -> Unit,
 ) {
-    val backgroundBubbleColor = when (side) {
-        Side.Sender -> MaterialTheme.colorScheme.primary
-        Side.Receiver -> MaterialTheme.colorScheme.surfaceVariant
-    }
-    Column(
-        modifier = modifier,
-        horizontalAlignment = side,
-    ) {
-        Surface(
-            color = backgroundBubbleColor,
-            shape = side.bubbleShape,
-        ) {
+    val backgroundBubbleColor =
+        when (side) {
+            Side.Sender -> MaterialTheme.colorScheme.primary
+            Side.Receiver -> MaterialTheme.colorScheme.surfaceVariant
+        }
+    Column(modifier = modifier, horizontalAlignment = side) {
+        Surface(color = backgroundBubbleColor, shape = side.bubbleShape) {
             Text(
-                text = rememberFormattedTextPost(
-                    text = message.text,
-                    textLinks = message.links,
-                    textLinkStyles = side.rememberTextLinkStyle(),
-                    onLinkTargetClicked = onLinkTargetClicked,
-                ),
+                text =
+                    rememberFormattedTextPost(
+                        text = message.text,
+                        textLinks = message.links,
+                        textLinkStyles = side.rememberTextLinkStyle(),
+                        onLinkTargetClicked = onLinkTargetClicked,
+                    ),
                 style = MaterialTheme.typography.bodyLarge.copy(color = LocalContentColor.current),
-                modifier = Modifier.padding(
-                    vertical = 8.dp,
-                    horizontal = 16.dp,
-                ),
+                modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp),
             )
         }
 
-        if (message.reactions.isNotEmpty()) Row(
-            modifier = Modifier
-                .offset(
-                    x = when (side) {
-                        Side.Receiver -> 16.dp
-                        Side.Sender -> (-16).dp
-                    },
-                    y = (-8).dp,
-                )
-                .background(
-                    color = MaterialTheme.colorScheme.outline,
-                    shape = ReactionsChipShape,
-                )
-                .padding(
-                    horizontal = 4.dp,
-                    vertical = 2.dp,
-                ),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            message.reactions.forEach { reaction ->
-                key(reaction.value) {
-                    Text(
-                        modifier = Modifier
-                            .animateBounds(paneScaffoldState),
-                        text = reaction.value,
-                        fontSize = 12.sp,
-                    )
+        if (message.reactions.isNotEmpty())
+            Row(
+                modifier =
+                    Modifier.offset(
+                            x =
+                                when (side) {
+                                    Side.Receiver -> 16.dp
+                                    Side.Sender -> (-16).dp
+                                },
+                            y = (-8).dp,
+                        )
+                        .background(
+                            color = MaterialTheme.colorScheme.outline,
+                            shape = ReactionsChipShape,
+                        )
+                        .padding(horizontal = 4.dp, vertical = 2.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                message.reactions.forEach { reaction ->
+                    key(reaction.value) {
+                        Text(
+                            modifier = Modifier.animateBounds(paneScaffoldState),
+                            text = reaction.value,
+                            fontSize = 12.sp,
+                        )
+                    }
                 }
             }
-        }
         Spacer(modifier = Modifier.height(4.dp))
     }
 }
@@ -459,89 +442,97 @@ private fun MessageRecord(
     actions: (Action) -> Unit,
 ) {
     EmbeddedRecord(
-        modifier = Modifier
-            .padding(
-                top = 16.dp,
-                bottom = 8.dp,
-                start = 16.dp,
-                end = 16.dp,
-            )
-            .widthIn(max = 200.dp),
+        modifier =
+            Modifier.padding(top = 16.dp, bottom = 8.dp, start = 16.dp, end = 16.dp)
+                .widthIn(max = 200.dp),
         record = record,
         sharedElementPrefix = item.id,
         movableElementSharedTransitionScope = paneScaffoldState,
-        postActions = remember(item.id, actions) {
-            PostActions { action ->
-                when (action) {
-                    is PostAction.OfLinkTarget -> {
-                        val linkTarget = action.linkTarget
-                        if (linkTarget is LinkTarget.Navigable) actions(
-                            Action.Navigate.To(
-                                pathDestination(
-                                    path = linkTarget.path,
-                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                ),
-                            ),
-                        )
+        postActions =
+            remember(item.id, actions) {
+                PostActions { action ->
+                    when (action) {
+                        is PostAction.OfLinkTarget -> {
+                            val linkTarget = action.linkTarget
+                            if (linkTarget is LinkTarget.Navigable)
+                                actions(
+                                    Action.Navigate.To(
+                                        pathDestination(
+                                            path = linkTarget.path,
+                                            referringRouteOption =
+                                                NavigationAction.ReferringRouteOption.Current,
+                                        )
+                                    )
+                                )
+                        }
+
+                        is PostAction.OfPost ->
+                            actions(
+                                Action.Navigate.To(
+                                    recordDestination(
+                                        referringRouteOption =
+                                            NavigationAction.ReferringRouteOption.Current,
+                                        sharedElementPrefix = item.id,
+                                        record = action.post,
+                                        otherModels = listOfNotNull(action.warnedAppliedLabels),
+                                    )
+                                )
+                            )
+
+                        is PostAction.OfProfile ->
+                            actions(
+                                Action.Navigate.To(
+                                    profileDestination(
+                                        referringRouteOption =
+                                            NavigationAction.ReferringRouteOption.Current,
+                                        profile = action.profile,
+                                        avatarSharedElementKey =
+                                            action.post.avatarSharedElementKey(
+                                                prefix =
+                                                    item.id.withQuotingPostUriPrefix(
+                                                        quotingPostUri = action.quotingPostUri
+                                                    ),
+                                                quotingPostUri = action.quotingPostUri,
+                                            ),
+                                    )
+                                )
+                            )
+
+                        is PostAction.OfRecord ->
+                            actions(
+                                Action.Navigate.To(
+                                    recordDestination(
+                                        referringRouteOption =
+                                            NavigationAction.ReferringRouteOption.Current,
+                                        sharedElementPrefix =
+                                            item.id.withQuotingPostUriPrefix(
+                                                quotingPostUri = action.owningPostUri
+                                            ),
+                                        record = action.record,
+                                    )
+                                )
+                            )
+
+                        is PostAction.OfMedia ->
+                            actions(
+                                Action.Navigate.To(
+                                    galleryDestination(
+                                        post = action.post,
+                                        media = action.media,
+                                        startIndex = action.index,
+                                        sharedElementPrefix =
+                                            item.id.withQuotingPostUriPrefix(
+                                                quotingPostUri = action.quotingPostUri
+                                            ),
+                                    )
+                                )
+                            )
+                        is PostAction.OfInteraction ->
+                            actions(Action.SendPostInteraction(action.interaction))
+                        is PostAction.Options -> Unit
                     }
-
-                    is PostAction.OfPost -> actions(
-                        Action.Navigate.To(
-                            recordDestination(
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                sharedElementPrefix = item.id,
-                                record = action.post,
-                                otherModels = listOfNotNull(action.warnedAppliedLabels),
-                            ),
-                        ),
-                    )
-
-                    is PostAction.OfProfile -> actions(
-                        Action.Navigate.To(
-                            profileDestination(
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                profile = action.profile,
-                                avatarSharedElementKey = action.post.avatarSharedElementKey(
-                                    prefix = item.id.withQuotingPostUriPrefix(
-                                        quotingPostUri = action.quotingPostUri,
-                                    ),
-                                    quotingPostUri = action.quotingPostUri,
-                                ),
-                            ),
-                        ),
-                    )
-
-                    is PostAction.OfRecord -> actions(
-                        Action.Navigate.To(
-                            recordDestination(
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                sharedElementPrefix = item.id.withQuotingPostUriPrefix(
-                                    quotingPostUri = action.owningPostUri,
-                                ),
-                                record = action.record,
-                            ),
-                        ),
-                    )
-
-                    is PostAction.OfMedia -> actions(
-                        Action.Navigate.To(
-                            galleryDestination(
-                                post = action.post,
-                                media = action.media,
-                                startIndex = action.index,
-                                sharedElementPrefix = item.id.withQuotingPostUriPrefix(
-                                    quotingPostUri = action.quotingPostUri,
-                                ),
-                            ),
-                        ),
-                    )
-                    is PostAction.OfInteraction -> actions(
-                        Action.SendPostInteraction(action.interaction),
-                    )
-                    is PostAction.Options -> Unit
                 }
-            }
-        },
+            },
     )
 }
 
@@ -558,19 +549,18 @@ private fun Instant.toTimestamp(): String {
     return "${localDateTime.hour}.$minute $amOrPm"
 }
 
-private sealed interface Side :
-    Arrangement.Horizontal,
-    Alignment.Horizontal {
+private sealed interface Side : Arrangement.Horizontal, Alignment.Horizontal {
     val bubbleShape: Shape
 
     data object Sender : Side {
 
-        override val bubbleShape: Shape = RoundedCornerShape(
-            topStart = 20.dp,
-            topEnd = 4.dp,
-            bottomEnd = 20.dp,
-            bottomStart = 20.dp,
-        )
+        override val bubbleShape: Shape =
+            RoundedCornerShape(
+                topStart = 20.dp,
+                topEnd = 4.dp,
+                bottomEnd = 20.dp,
+                bottomStart = 20.dp,
+            )
 
         override fun Density.arrange(
             totalSize: Int,
@@ -582,56 +572,52 @@ private sealed interface Side :
                 arrange(
                     totalSize = totalSize,
                     sizes = sizes,
-                    layoutDirection = when (layoutDirection) {
-                        LayoutDirection.Ltr -> LayoutDirection.Rtl
-                        LayoutDirection.Rtl -> LayoutDirection.Ltr
-                    },
+                    layoutDirection =
+                        when (layoutDirection) {
+                            LayoutDirection.Ltr -> LayoutDirection.Rtl
+                            LayoutDirection.Rtl -> LayoutDirection.Ltr
+                        },
                     outPositions = outPositions,
                 )
             }
         }
 
-        override fun align(
-            size: Int,
-            space: Int,
-            layoutDirection: LayoutDirection,
-        ): Int = Alignment.Start.align(
-            size = size,
-            space = space,
-            layoutDirection = when (layoutDirection) {
-                LayoutDirection.Ltr -> LayoutDirection.Rtl
-                LayoutDirection.Rtl -> LayoutDirection.Ltr
-            },
-        )
+        override fun align(size: Int, space: Int, layoutDirection: LayoutDirection): Int =
+            Alignment.Start.align(
+                size = size,
+                space = space,
+                layoutDirection =
+                    when (layoutDirection) {
+                        LayoutDirection.Ltr -> LayoutDirection.Rtl
+                        LayoutDirection.Rtl -> LayoutDirection.Ltr
+                    },
+            )
     }
 
     data object Receiver :
-        Side,
-        Arrangement.Horizontal by Arrangement.Start,
-        Alignment.Horizontal by Alignment.Start {
-        override val bubbleShape: Shape = RoundedCornerShape(
-            topStart = 4.dp,
-            topEnd = 20.dp,
-            bottomEnd = 20.dp,
-            bottomStart = 20.dp,
-        )
+        Side, Arrangement.Horizontal by Arrangement.Start, Alignment.Horizontal by Alignment.Start {
+        override val bubbleShape: Shape =
+            RoundedCornerShape(
+                topStart = 4.dp,
+                topEnd = 20.dp,
+                bottomEnd = 20.dp,
+                bottomStart = 20.dp,
+            )
     }
 }
 
 @Composable
-private fun Side.rememberTextLinkStyle() = when (this) {
-    Side.Receiver -> null
-    Side.Sender -> {
-        val color = MaterialTheme.colorScheme.onPrimary
-        remember(color) {
-            TextLinkStyles(
-                style = SpanStyle(
-                    color = color,
-                    textDecoration = TextDecoration.Underline,
-                ),
-            )
+private fun Side.rememberTextLinkStyle() =
+    when (this) {
+        Side.Receiver -> null
+        Side.Sender -> {
+            val color = MaterialTheme.colorScheme.onPrimary
+            remember(color) {
+                TextLinkStyles(
+                    style = SpanStyle(color = color, textDecoration = TextDecoration.Underline)
+                )
+            }
         }
     }
-}
 
 private val ReactionsChipShape = RoundedCornerShape(16.dp)

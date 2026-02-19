@@ -24,10 +24,7 @@ import com.tunjid.heron.timeline.ui.post.PostFeatureTextContent
 
 @Composable
 internal fun InvisiblePostPost(onClick: (() -> Unit)?) {
-    FeatureContainer(
-        modifier = Modifier.padding(16.dp),
-        onClick = onClick,
-    ) {
+    FeatureContainer(modifier = Modifier.padding(16.dp), onClick = onClick) {
         PostFeatureTextContent(
             title = "Post not found",
             description = "The post may have been deleted.",

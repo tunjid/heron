@@ -46,67 +46,44 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface PostDao {
 
-    @Transaction
-    @Upsert
-    suspend fun upsertPosts(
-        entities: List<PostEntity>,
-    )
+    @Transaction @Upsert suspend fun upsertPosts(entities: List<PostEntity>)
 
     @Transaction
-    suspend fun insertOrPartiallyUpdatePosts(
-        entities: List<PostEntity>,
-    ) = partialUpsert(
-        items = entities,
-        partialMapper = PostEntity::partial,
-        insertEntities = ::insertOrIgnorePosts,
-        updatePartials = ::updatePartialPosts,
-    )
+    suspend fun insertOrPartiallyUpdatePosts(entities: List<PostEntity>) =
+        partialUpsert(
+            items = entities,
+            partialMapper = PostEntity::partial,
+            insertEntities = ::insertOrIgnorePosts,
+            updatePartials = ::updatePartialPosts,
+        )
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertOrIgnorePosts(
-        entities: List<PostEntity>,
-    ): List<Long>
+    suspend fun insertOrIgnorePosts(entities: List<PostEntity>): List<Long>
 
     @Update(entity = PostEntity::class)
-    suspend fun updatePartialPosts(
-        entities: List<PostEntity.Partial>,
-    )
+    suspend fun updatePartialPosts(entities: List<PostEntity.Partial>)
 
-    @Transaction
-    @Upsert
-    suspend fun upsertPostLikes(
-        entities: List<PostLikeEntity>,
-    )
+    @Transaction @Upsert suspend fun upsertPostLikes(entities: List<PostLikeEntity>)
 
     @Transaction
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertOrIgnoreAuthorCrossRefEntities(
-        crossReferences: List<PostAuthorsEntity>,
-    )
+    suspend fun insertOrIgnoreAuthorCrossRefEntities(crossReferences: List<PostAuthorsEntity>)
 
     @Transaction
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertOrIgnorePostExternalEmbeds(
-        crossReferences: List<PostExternalEmbedEntity>,
-    )
+    suspend fun insertOrIgnorePostExternalEmbeds(crossReferences: List<PostExternalEmbedEntity>)
 
     @Transaction
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertOrIgnorePostImages(
-        crossReferences: List<PostImageEntity>,
-    )
+    suspend fun insertOrIgnorePostImages(crossReferences: List<PostImageEntity>)
 
     @Transaction
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertOrIgnorePostVideos(
-        crossReferences: List<PostVideoEntity>,
-    )
+    suspend fun insertOrIgnorePostVideos(crossReferences: List<PostVideoEntity>)
 
     @Transaction
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertOrIgnorePostPosts(
-        crossReferences: List<PostPostEntity>,
-    )
+    suspend fun insertOrIgnorePostPosts(crossReferences: List<PostPostEntity>)
 
     @Transaction
     @Query(
@@ -119,7 +96,7 @@ interface PostDao {
                 AND posts.authorId = profileViewerStates.otherProfileId
                 AND :viewingProfileId IS NOT NULL
             WHERE uri IN (:postUris)
-        """,
+        """
     )
     fun posts(
         viewingProfileId: String?,
@@ -133,12 +110,9 @@ interface PostDao {
             LEFT JOIN postViewerStatistics
                 ON posts.uri = postViewerStatistics.postUri AND postViewerStatistics.viewingProfileId = :viewingProfileId
 	        WHERE uri IN (:postUris)
-        """,
+        """
     )
-    fun postEntitiesByUri(
-        viewingProfileId: String?,
-        postUris: Set<PostUri>,
-    ): Flow<List<PostEntity>>
+    fun postEntitiesByUri(viewingProfileId: String?, postUris: Set<PostUri>): Flow<List<PostEntity>>
 
     @Transaction
     @Query(
@@ -158,7 +132,7 @@ interface PostDao {
             INNER JOIN postPosts AS postPosts
                 ON posts.uri = postPosts.embeddedPostUri
 	        WHERE postPosts.postUri IN (:postUris)
-        """,
+        """
     )
     fun embeddedPosts(
         viewingProfileId: String?,
@@ -175,7 +149,7 @@ interface PostDao {
         ORDER BY bookmarks.createdAt DESC
         LIMIT :limit
         OFFSET :offset
-        """,
+        """
     )
     fun bookmarkedPostUriAndEmbeddedRecordUris(
         viewingProfileId: String,
@@ -193,7 +167,7 @@ interface PostDao {
             ORDER BY posts.indexedAt DESC
             LIMIT :limit
             OFFSET :offset
-        """,
+        """
     )
     fun quotedPostUriAndEmbeddedRecordUris(
         quotedPostUri: String,
@@ -215,7 +189,7 @@ interface PostDao {
             DESC
             LIMIT :limit
             OFFSET :offset
-        """,
+        """
     )
     fun likedBy(
         postUri: String,
@@ -237,12 +211,9 @@ interface PostDao {
                  END
         END
     WHERE uri = :postUri
-    """,
+    """
     )
-    suspend fun updateLikeCount(
-        postUri: String,
-        isIncrement: Boolean,
-    )
+    suspend fun updateLikeCount(postUri: String, isIncrement: Boolean)
 
     @Transaction
     @Query(
@@ -257,12 +228,9 @@ interface PostDao {
                  END
         END
     WHERE uri = :postUri
-    """,
+    """
     )
-    suspend fun updateRepostCount(
-        postUri: String,
-        isIncrement: Boolean,
-    )
+    suspend fun updateRepostCount(postUri: String, isIncrement: Boolean)
 
     @Transaction
     @Query(
@@ -278,7 +246,7 @@ interface PostDao {
             DESC
             LIMIT :limit
             OFFSET :offset
-        """,
+        """
     )
     fun repostedBy(
         postUri: String,
@@ -287,40 +255,27 @@ interface PostDao {
         offset: Long,
     ): Flow<List<PopulatedProfileEntity>>
 
-    @Upsert
-    suspend fun upsertPostStatistics(
-        entities: List<PostViewerStatisticsEntity>,
-    )
+    @Upsert suspend fun upsertPostStatistics(entities: List<PostViewerStatisticsEntity>)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertOrIgnorePostStatistics(
-        entities: List<PostViewerStatisticsEntity>,
-    ): List<Long>
+    suspend fun insertOrIgnorePostStatistics(entities: List<PostViewerStatisticsEntity>): List<Long>
 
     @Update(entity = PostViewerStatisticsEntity::class)
-    suspend fun updatePostStatisticsLikes(
-        entities: List<PostViewerStatisticsEntity.Partial.Like>,
-    )
+    suspend fun updatePostStatisticsLikes(entities: List<PostViewerStatisticsEntity.Partial.Like>)
 
     @Update(entity = PostViewerStatisticsEntity::class)
     suspend fun updatePostStatisticsReposts(
-        entities: List<PostViewerStatisticsEntity.Partial.Repost>,
+        entities: List<PostViewerStatisticsEntity.Partial.Repost>
     )
 
     @Update(entity = PostViewerStatisticsEntity::class)
     suspend fun updatePostStatisticsBookmarks(
-        entities: List<PostViewerStatisticsEntity.Partial.Bookmark>,
+        entities: List<PostViewerStatisticsEntity.Partial.Bookmark>
     )
 
-    @Upsert
-    suspend fun upsertBookmarks(
-        entities: List<BookmarkEntity>,
-    )
+    @Upsert suspend fun upsertBookmarks(entities: List<BookmarkEntity>)
 
-    @Upsert
-    suspend fun upsertPostThreads(
-        entities: List<PostThreadEntity>,
-    )
+    @Upsert suspend fun upsertPostThreads(entities: List<PostThreadEntity>)
 
     @Transaction
     @Query(
@@ -403,41 +358,33 @@ interface PostDao {
               FullThread ft ON p.uri = ft.uri
             ORDER BY
               ft.ancestorCreated, ft.generation, ft.postCreated; -- sort by the first reply to the op, then the generation, then the post itself
-        """,
+        """
     )
-    fun postThread(
-        postUri: String,
-    ): Flow<List<ThreadedPostEntity>>
+    fun postThread(postUri: String): Flow<List<ThreadedPostEntity>>
 
     @Query(
         """
             DELETE FROM posts
             WHERE uri = :postUri
-        """,
+        """
     )
-    suspend fun deletePost(
-        postUri: PostUri,
-    )
+    suspend fun deletePost(postUri: PostUri)
 
     @Query(
         """
             UPDATE postViewerStatistics
             SET likeUri = NULL
             WHERE likeUri = :likeUri
-        """,
+        """
     )
-    suspend fun deletePostViewerStatisticsLike(
-        likeUri: LikeUri,
-    )
+    suspend fun deletePostViewerStatisticsLike(likeUri: LikeUri)
 
     @Query(
         """
             UPDATE postViewerStatistics
             SET repostUri = NULL
             WHERE repostUri = :repostUri
-        """,
+        """
     )
-    suspend fun deletePostViewerStatisticsRepost(
-        repostUri: RepostUri,
-    )
+    suspend fun deletePostViewerStatisticsRepost(repostUri: RepostUri)
 }

@@ -46,25 +46,21 @@ import kotlin.time.Instant
 
 @Entity(
     tableName = "posts",
-    foreignKeys = [
-        ForeignKey(
-            entity = ProfileEntity::class,
-            parentColumns = ["did"],
-            childColumns = ["authorId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["uri"]),
-        Index(value = ["cid"]),
-        Index(value = ["authorId"]),
-    ],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = ProfileEntity::class,
+                parentColumns = ["did"],
+                childColumns = ["authorId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            )
+        ],
+    indices = [Index(value = ["uri"]), Index(value = ["cid"]), Index(value = ["authorId"])],
 )
 data class PostEntity(
     val cid: PostId,
-    @PrimaryKey
-    val uri: PostUri,
+    @PrimaryKey val uri: PostUri,
     val authorId: ProfileId,
     val replyCount: Long?,
     val repostCount: Long?,
@@ -74,8 +70,7 @@ data class PostEntity(
     // Only its explicit availability indicates whether one exists or not
     val hasThreadGate: Boolean?,
     val indexedAt: Instant,
-    @Embedded
-    val record: RecordData?,
+    @Embedded val record: RecordData?,
 ) {
     data class UriWithEmbeddedRecordUri(
         val uri: PostUri,
@@ -91,8 +86,7 @@ data class PostEntity(
         val likeCount: Long?,
         val quoteCount: Long?,
         val indexedAt: Instant,
-        @Embedded
-        val record: RecordData?,
+        @Embedded val record: RecordData?,
     )
 
     data class RecordData(
@@ -103,90 +97,77 @@ data class PostEntity(
     )
 }
 
-fun PostEntity.partial() = PostEntity.Partial(
-    cid = cid,
-    uri = uri,
-    authorId = authorId,
-    replyCount = replyCount,
-    repostCount = repostCount,
-    likeCount = likeCount,
-    quoteCount = quoteCount,
-    indexedAt = indexedAt,
-    record = record,
-)
+fun PostEntity.partial() =
+    PostEntity.Partial(
+        cid = cid,
+        uri = uri,
+        authorId = authorId,
+        replyCount = replyCount,
+        repostCount = repostCount,
+        likeCount = likeCount,
+        quoteCount = quoteCount,
+        indexedAt = indexedAt,
+        record = record,
+    )
 
-fun stubPostEntity(
-    id: PostId,
-    uri: PostUri,
-    authorId: ProfileId,
-) = PostEntity(
-    cid = id,
-    uri = uri,
-    authorId = authorId,
-    replyCount = null,
-    repostCount = null,
-    likeCount = null,
-    quoteCount = null,
-    indexedAt = Clock.System.now(),
-    hasThreadGate = null,
-    record = null,
-)
+fun stubPostEntity(id: PostId, uri: PostUri, authorId: ProfileId) =
+    PostEntity(
+        cid = id,
+        uri = uri,
+        authorId = authorId,
+        replyCount = null,
+        repostCount = null,
+        likeCount = null,
+        quoteCount = null,
+        indexedAt = Clock.System.now(),
+        hasThreadGate = null,
+        record = null,
+    )
 
 data class PopulatedPostEntity(
-    @Embedded
-    val entity: PostEntity,
-    @Relation(
-        parentColumn = "authorId",
-        entityColumn = "did",
-    )
-    val author: ProfileEntity?,
-    @Embedded
-    val postStatisticsEntity: PostViewerStatisticsEntity?,
-    @Embedded
-    val viewerStateEntity: ProfileViewerStateEntity?,
+    @Embedded val entity: PostEntity,
+    @Relation(parentColumn = "authorId", entityColumn = "did") val author: ProfileEntity?,
+    @Embedded val postStatisticsEntity: PostViewerStatisticsEntity?,
+    @Embedded val viewerStateEntity: ProfileViewerStateEntity?,
     @Relation(
         parentColumn = "uri",
         entityColumn = "fullSize",
-        associateBy = Junction(
-            value = PostImageEntity::class,
-            parentColumn = "postUri",
-            entityColumn = "imageUri",
-        ),
+        associateBy =
+            Junction(
+                value = PostImageEntity::class,
+                parentColumn = "postUri",
+                entityColumn = "imageUri",
+            ),
     )
     val images: List<ImageEntity>,
     @Relation(
         parentColumn = "uri",
         entityColumn = "cid",
-        associateBy = Junction(
-            value = PostVideoEntity::class,
-            parentColumn = "postUri",
-            entityColumn = "videoId",
-        ),
+        associateBy =
+            Junction(
+                value = PostVideoEntity::class,
+                parentColumn = "postUri",
+                entityColumn = "videoId",
+            ),
     )
     val videos: List<VideoEntity>,
     @Relation(
         parentColumn = "uri",
         entityColumn = "uri",
-        associateBy = Junction(
-            value = PostExternalEmbedEntity::class,
-            parentColumn = "postUri",
-            entityColumn = "externalEmbedUri",
-        ),
+        associateBy =
+            Junction(
+                value = PostExternalEmbedEntity::class,
+                parentColumn = "postUri",
+                entityColumn = "externalEmbedUri",
+            ),
     )
     val externalEmbeds: List<ExternalEmbedEntity>,
-    @Relation(
-        parentColumn = "uri",
-        entityColumn = "uri",
-    )
-    val labelEntities: List<LabelEntity>,
+    @Relation(parentColumn = "uri", entityColumn = "uri") val labelEntities: List<LabelEntity>,
     @Relation(
         parentColumn = "authorId",
         entityColumn = "uri",
-        associateBy = Junction(
-            value = ProfileEntity::class,
-            parentColumn = "did",
-            entityColumn = "did",
-        ),
+        associateBy =
+            Junction(value = ProfileEntity::class, parentColumn = "did", entityColumn = "did"),
     )
     val authorLabelEntities: List<LabelEntity>,
 ) : PopulatedRecordEntity {
@@ -195,47 +176,42 @@ data class PopulatedPostEntity(
 }
 
 data class EmbeddedPopulatedPostEntity(
-    @Embedded
-    val entity: PopulatedPostEntity,
+    @Embedded val entity: PopulatedPostEntity,
     val parentPostUri: PostUri,
     val embeddedPostUri: PostUri,
 )
 
 data class ThreadedPostEntity(
-    @Embedded
-    val entity: PostEntity,
+    @Embedded val entity: PostEntity,
     val generation: Long,
     val rootPostUri: PostUri?,
 )
 
-fun PopulatedPostEntity.asExternalModel(
-    embeddedRecord: Record.Embeddable?,
-) = Post(
-    cid = entity.cid,
-    uri = entity.uri,
-    replyCount = entity.replyCount.orZero(),
-    repostCount = entity.repostCount.orZero(),
-    likeCount = entity.likeCount.orZero(),
-    quoteCount = entity.quoteCount.orZero(),
-    indexedAt = entity.indexedAt,
-    author = author.asExternalModel(
-        labels = authorLabelEntities.map(LabelEntity::asExternalModel),
-    ),
-    embed = when {
-        externalEmbeds.isNotEmpty() -> externalEmbeds.first().asExternalModel()
-        videos.isNotEmpty() -> videos.first().asExternalModel()
-        images.isNotEmpty() -> ImageList(
-            images = images.map(ImageEntity::asExternalModel),
-        )
+fun PopulatedPostEntity.asExternalModel(embeddedRecord: Record.Embeddable?) =
+    Post(
+        cid = entity.cid,
+        uri = entity.uri,
+        replyCount = entity.replyCount.orZero(),
+        repostCount = entity.repostCount.orZero(),
+        likeCount = entity.likeCount.orZero(),
+        quoteCount = entity.quoteCount.orZero(),
+        indexedAt = entity.indexedAt,
+        author =
+            author.asExternalModel(labels = authorLabelEntities.map(LabelEntity::asExternalModel)),
+        embed =
+            when {
+                externalEmbeds.isNotEmpty() -> externalEmbeds.first().asExternalModel()
+                videos.isNotEmpty() -> videos.first().asExternalModel()
+                images.isNotEmpty() -> ImageList(images = images.map(ImageEntity::asExternalModel))
 
-        else -> null
-    },
-    record = entity.record?.asExternalModel(),
-    viewerStats = postStatisticsEntity?.asExternalModel(),
-    viewerState = viewerStateEntity?.asExternalModel(),
-    labels = labelEntities.map(LabelEntity::asExternalModel),
-    embeddedRecord = embeddedRecord,
-)
+                else -> null
+            },
+        record = entity.record?.asExternalModel(),
+        viewerStats = postStatisticsEntity?.asExternalModel(),
+        viewerState = viewerStateEntity?.asExternalModel(),
+        labels = labelEntities.map(LabelEntity::asExternalModel),
+        embeddedRecord = embeddedRecord,
+    )
 
 fun PostViewerStatisticsEntity.asExternalModel() =
     Post.ViewerStats(
@@ -249,7 +225,6 @@ fun PostViewerStatisticsEntity.asExternalModel() =
     )
 
 fun PostEntity.RecordData.asExternalModel(): Post.Record? =
-    base64EncodedRecord
-        ?.fromBase64EncodedUrl<Post.Record>()
+    base64EncodedRecord?.fromBase64EncodedUrl<Post.Record>()
 
 private fun Long?.orZero() = this ?: 0L

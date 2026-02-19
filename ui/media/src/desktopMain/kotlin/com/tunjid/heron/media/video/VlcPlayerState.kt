@@ -82,51 +82,48 @@ internal class VlcPlayerState(
     override var status by mutableStateOf<PlayerStatus>(PlayerStatus.Idle.Initial)
         internal set
 
-    override var videoStill by mutableStateOf<ImageBitmap?>(
-        value = null,
-        policy = referentialEqualityPolicy(),
-    )
+    override var videoStill by
+        mutableStateOf<ImageBitmap?>(value = null, policy = referentialEqualityPolicy())
 
     override val shouldReplay: Boolean
-        get() = (totalDuration - lastPositionMs) <= 200 &&
-            totalDuration != 0L &&
-            !isLooping
+        get() = (totalDuration - lastPositionMs) <= 200 && totalDuration != 0L && !isLooping
 
     internal val player by mediaPlayerState
 
-    internal val playerListener = object : MediaPlayerEventAdapter() {
-        override fun playing(mediaPlayer: MediaPlayer?) {
-            status = PlayerStatus.Play.Confirmed
-            updateFromPlayer()
-        }
+    internal val playerListener =
+        object : MediaPlayerEventAdapter() {
+            override fun playing(mediaPlayer: MediaPlayer?) {
+                status = PlayerStatus.Play.Confirmed
+                updateFromPlayer()
+            }
 
-        override fun paused(mediaPlayer: MediaPlayer?) {
-            status = PlayerStatus.Pause.Confirmed
-            updateFromPlayer()
-        }
+            override fun paused(mediaPlayer: MediaPlayer?) {
+                status = PlayerStatus.Pause.Confirmed
+                updateFromPlayer()
+            }
 
-        override fun stopped(mediaPlayer: MediaPlayer?) {
-            status = PlayerStatus.Idle.Initial
-            updateFromPlayer()
-        }
+            override fun stopped(mediaPlayer: MediaPlayer?) {
+                status = PlayerStatus.Idle.Initial
+                updateFromPlayer()
+            }
 
-        override fun finished(mediaPlayer: MediaPlayer?) {
-            // Loop is handled by controller usually
-            updateFromPlayer()
-        }
+            override fun finished(mediaPlayer: MediaPlayer?) {
+                // Loop is handled by controller usually
+                updateFromPlayer()
+            }
 
-        override fun timeChanged(mediaPlayer: MediaPlayer?, newTime: Long) {
-            lastPositionMs = newTime
-        }
+            override fun timeChanged(mediaPlayer: MediaPlayer?, newTime: Long) {
+                lastPositionMs = newTime
+            }
 
-        override fun lengthChanged(mediaPlayer: MediaPlayer?, newLength: Long) {
-            totalDuration = newLength
-        }
+            override fun lengthChanged(mediaPlayer: MediaPlayer?, newLength: Long) {
+                totalDuration = newLength
+            }
 
-        override fun videoOutput(mediaPlayer: MediaPlayer?, newCount: Int) {
-            if (newCount > 0) hasRenderedFirstFrame = true
+            override fun videoOutput(mediaPlayer: MediaPlayer?, newCount: Int) {
+                if (newCount > 0) hasRenderedFirstFrame = true
+            }
         }
-    }
 
     internal fun updateFromPlayer() {
         val player = player ?: return

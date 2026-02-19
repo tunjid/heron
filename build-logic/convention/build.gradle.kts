@@ -14,9 +14,7 @@
  *    limitations under the License.
  */
 
-plugins {
-    `kotlin-dsl`
-}
+plugins { `kotlin-dsl` }
 
 group = "com.tunjid.me.buildlogic"
 

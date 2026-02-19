@@ -60,18 +60,18 @@ import sh.christian.ozone.api.response.StatusCode
 /**
  * Implementation to build a URL that will interact with a hosted OAuth service.
  *
- * @constructor Construct a new OAuth API instance.
- *
  * @param client The HTTP client to use for requests.
  * @param challengeSelector The strategy to select the code challenge method.
  * @param random The random number generator to use for generating state and code challenges.
  * @param clock The clock to use for generating timestamps.
+ * @constructor Construct a new OAuth API instance.
  */
 class OAuthApi(
     private val client: HttpClient,
-    private val challengeSelector: OAuthCodeChallengeMethodSelector = OAuthCodeChallengeMethodSelector {
-        OAuthCodeChallengeMethod.S256
-    },
+    private val challengeSelector: OAuthCodeChallengeMethodSelector =
+        OAuthCodeChallengeMethodSelector {
+            OAuthCodeChallengeMethod.S256
+        },
     private val random: Random = CryptographyRandom,
     private val clock: Clock = Clock.System,
 ) {
@@ -79,11 +79,12 @@ class OAuthApi(
     private var dpopKeyPair: DpopKeyPair? = null
 
     /**
-     * Build an authorization request for the given client and scopes. This URL can be used to redirect the user to
-     * the OAuth server to log into their account.
+     * Build an authorization request for the given client and scopes. This URL can be used to
+     * redirect the user to the OAuth server to log into their account.
      *
      * Keep track of the [OAuthAuthorizationRequest]'s [nonce][OAuthAuthorizationRequest.nonce] and
-     * [codeVerifier][OAuthAuthorizationRequest.codeVerifier] to use later when requesting an access token.
+     * [codeVerifier][OAuthAuthorizationRequest.codeVerifier] to use later when requesting an access
+     * token.
      */
     suspend fun buildAuthorizationRequest(
         oauthClient: OAuthClient,
@@ -99,39 +100,41 @@ class OAuthApi(
                 unsupportedScopes.joinToString(separator = ", ") { it.value }
         }
 
-        val codeChallengeMethod = challengeSelector.selectCodeChallengeMethod(
-            oauthServer.codeChallengeMethodsSupported,
-        )
+        val codeChallengeMethod =
+            challengeSelector.selectCodeChallengeMethod(oauthServer.codeChallengeMethodsSupported)
         val codeVerifier = CharArray(64) { CODE_VERIFIER_CHARS.random(random) }.concatToString()
         val codeChallenge = codeChallengeMethod.provideCodeChallenge(codeVerifier)
 
         val state = random.nextBytes(32).toHexString()
 
-        val request = OAuthParRequest(
-            responseType = "code",
-            codeChallengeMethod = codeChallengeMethod.method,
-            scope = scopes.joinToString(separator = " ") { it.value },
-            clientId = oauthClient.clientId,
-            redirectUri = oauthClient.redirectUri,
-            codeChallenge = codeChallenge,
-            state = state,
-            loginHint = loginHandleHint,
-        )
+        val request =
+            OAuthParRequest(
+                responseType = "code",
+                codeChallengeMethod = codeChallengeMethod.method,
+                scope = scopes.joinToString(separator = " ") { it.value },
+                clientId = oauthClient.clientId,
+                redirectUri = oauthClient.redirectUri,
+                codeChallenge = codeChallenge,
+                state = state,
+                loginHint = loginHandleHint,
+            )
 
-        val callResponse = client.post(Url(oauthServer.pushedAuthorizationRequestEndpoint)) {
-            headers["Content-Type"] = "application/json"
-            setBody(request)
-        }
+        val callResponse =
+            client.post(Url(oauthServer.pushedAuthorizationRequestEndpoint)) {
+                headers["Content-Type"] = "application/json"
+                setBody(request)
+            }
 
-        val response: OAuthParResponse = callResponse.decodeResponse(
-            onSuccess = { it },
-            onNewNonce = { error("Should not happen") },
-            onFailure = {
-                val errorMessage =
-                    it?.toString() ?: StatusCode.fromCode(callResponse.status.value).toString()
-                error("Failed to create PAR request: $errorMessage")
-            },
-        )
+        val response: OAuthParResponse =
+            callResponse.decodeResponse(
+                onSuccess = { it },
+                onNewNonce = { error("Should not happen") },
+                onFailure = {
+                    val errorMessage =
+                        it?.toString() ?: StatusCode.fromCode(callResponse.status.value).toString()
+                    error("Failed to create PAR request: $errorMessage")
+                },
+            )
 
         val nonce = callResponse.responseDpopNonce
 
@@ -151,11 +154,13 @@ class OAuthApi(
     }
 
     /**
-     * Request an access token using the provided OAuth client, nonce, code verifier, and authorization code.
+     * Request an access token using the provided OAuth client, nonce, code verifier, and
+     * authorization code.
      *
-     * You are **highly encouraged** to verify that the state received in the callback matches the state returned by
-     * [buildAuthorizationRequest] before calling this method, to prevent CSRF attacks. You can also pass in an optional
-     * [DPoP key pair][DpopKeyPair] to sign the request with DPoP, otherwise a new key pair will be generated for you.
+     * You are **highly encouraged** to verify that the state received in the callback matches the
+     * state returned by [buildAuthorizationRequest] before calling this method, to prevent CSRF
+     * attacks. You can also pass in an optional [DPoP key pair][DpopKeyPair] to sign the request
+     * with DPoP, otherwise a new key pair will be generated for you.
      */
     suspend fun requestToken(
         oauthClient: OAuthClient,
@@ -164,13 +169,16 @@ class OAuthApi(
         code: String,
         keyPair: DpopKeyPair? = null,
     ): OAuthToken {
-        val requestParameters = ParametersBuilder().apply {
-            append("grant_type", "authorization_code")
-            append("client_id", oauthClient.clientId)
-            append("code", code)
-            append("code_verifier", codeVerifier)
-            append("redirect_uri", oauthClient.redirectUri)
-        }.build()
+        val requestParameters =
+            ParametersBuilder()
+                .apply {
+                    append("grant_type", "authorization_code")
+                    append("client_id", oauthClient.clientId)
+                    append("code", code)
+                    append("code_verifier", codeVerifier)
+                    append("redirect_uri", oauthClient.redirectUri)
+                }
+                .build()
 
         return requestOrRefreshToken(
             requestParameters = requestParameters,
@@ -199,9 +207,9 @@ class OAuthApi(
      *
      * The nonce should be passed in from the previous [requestToken] request, if available.
      *
-     * You can also pass in an optional [DPoP key pair][DpopKeyPair] to sign the request with DPoP, otherwise it will use
-     * the one used for [requestToken]. If no key pair was used for the initial token request by this [OAuthApi] instance,
-     * a new one will be generated for you.
+     * You can also pass in an optional [DPoP key pair][DpopKeyPair] to sign the request with DPoP,
+     * otherwise it will use the one used for [requestToken]. If no key pair was used for the
+     * initial token request by this [OAuthApi] instance, a new one will be generated for you.
      */
     suspend fun refreshToken(
         clientId: String,
@@ -209,11 +217,14 @@ class OAuthApi(
         refreshToken: String,
         keyPair: DpopKeyPair? = null,
     ): OAuthToken {
-        val requestParameters = ParametersBuilder().apply {
-            append("grant_type", "refresh_token")
-            append("client_id", clientId)
-            append("refresh_token", refreshToken)
-        }.build()
+        val requestParameters =
+            ParametersBuilder()
+                .apply {
+                    append("grant_type", "refresh_token")
+                    append("client_id", clientId)
+                    append("refresh_token", refreshToken)
+                }
+                .build()
 
         return requestOrRefreshToken(
             requestParameters = requestParameters,
@@ -232,18 +243,20 @@ class OAuthApi(
 
         val dpopKeyPair = resolveDpopKeyPair(providedKeyPair = keyPair)
 
-        val dpopHeader = createDpopHeaderValue(
-            keyPair = dpopKeyPair,
-            method = "POST",
-            endpoint = tokenRequestUrl.toString(),
-            nonce = nonce,
-            accessToken = null,
-        )
+        val dpopHeader =
+            createDpopHeaderValue(
+                keyPair = dpopKeyPair,
+                method = "POST",
+                endpoint = tokenRequestUrl.toString(),
+                nonce = nonce,
+                accessToken = null,
+            )
 
-        val callResponse = client.post(tokenRequestUrl) {
-            headers["DPoP"] = dpopHeader
-            setBody(FormDataContent(requestParameters))
-        }
+        val callResponse =
+            client.post(tokenRequestUrl) {
+                headers["DPoP"] = dpopHeader
+                setBody(FormDataContent(requestParameters))
+            }
 
         return callResponse.mapResponse<OAuthTokenResponse, OAuthToken>(
             onSuccess = { tokenResponse ->
@@ -258,7 +271,8 @@ class OAuthApi(
                 )
             },
             onNewNonce = { newNonce ->
-                // If the response indicates we need to use a new DPoP nonce, we can retry with the new nonce.
+                // If the response indicates we need to use a new DPoP nonce, we can retry with the
+                // new nonce.
                 requestOrRefreshToken(requestParameters, newNonce, dpopKeyPair)
             },
             onFailure = { description ->
@@ -287,9 +301,9 @@ class OAuthApi(
      *
      * The nonce should be passed in from the previous [requestToken] request, if available.
      *
-     * You can also pass in an optional [DPoP key pair][DpopKeyPair] to sign the request with DPoP, otherwise it will use
-     * the one used for [requestToken]. If no key pair was used for the initial token request by this [OAuthApi] instance,
-     * a new one will be generated for you.
+     * You can also pass in an optional [DPoP key pair][DpopKeyPair] to sign the request with DPoP,
+     * otherwise it will use the one used for [requestToken]. If no key pair was used for the
+     * initial token request by this [OAuthApi] instance, a new one will be generated for you.
      */
     suspend fun revokeToken(
         accessToken: String,
@@ -302,44 +316,40 @@ class OAuthApi(
 
         val dpopKeyPair = resolveDpopKeyPair(providedKeyPair = keyPair)
 
-        val dpopHeader = createDpopHeaderValue(
-            keyPair = dpopKeyPair,
-            method = "POST",
-            endpoint = revokeUrl.toString(),
-            nonce = nonce,
-            accessToken = null,
-        )
-
-        val callResponse = client.post(revokeUrl) {
-            headers["Content-Type"] = "application/x-www-form-urlencoded"
-            headers["Authorization"] = "DPoP $accessToken"
-            headers["DPoP"] = dpopHeader
-
-            setBody(
-                FormDataContent(
-                    Parameters.build {
-                        append("token", accessToken)
-                        append("token_type_hint", "access_token")
-                        append("client_id", clientId)
-                    },
-                ),
+        val dpopHeader =
+            createDpopHeaderValue(
+                keyPair = dpopKeyPair,
+                method = "POST",
+                endpoint = revokeUrl.toString(),
+                nonce = nonce,
+                accessToken = null,
             )
-        }
+
+        val callResponse =
+            client.post(revokeUrl) {
+                headers["Content-Type"] = "application/x-www-form-urlencoded"
+                headers["Authorization"] = "DPoP $accessToken"
+                headers["DPoP"] = dpopHeader
+
+                setBody(
+                    FormDataContent(
+                        Parameters.build {
+                            append("token", accessToken)
+                            append("token_type_hint", "access_token")
+                            append("client_id", clientId)
+                        }
+                    )
+                )
+            }
 
         return callResponse.mapResponse<JsonObject, Unit>(
             onSuccess = { _ -> },
-            onNewNonce = { newNonce ->
-                revokeToken(accessToken, clientId, newNonce, dpopKeyPair)
-            },
-            onFailure = {
-                throw AtpException(StatusCode.fromCode(status.value))
-            },
+            onNewNonce = { newNonce -> revokeToken(accessToken, clientId, newNonce, dpopKeyPair) },
+            onFailure = { throw AtpException(StatusCode.fromCode(status.value)) },
         )
     }
 
-    /**
-     * Create a value for the `DPoP` header to be used in requests to the OAuth server.
-     */
+    /** Create a value for the `DPoP` header to be used in requests to the OAuth server. */
     suspend fun createDpopHeaderValue(
         keyPair: DpopKeyPair,
         method: String,
@@ -372,9 +382,7 @@ class OAuthApi(
             put("jti", JsonPrimitive(random.nextBytes(16).encodeBase64Url()))
             put("htm", JsonPrimitive(method))
             put("htu", JsonPrimitive(endpoint))
-            nonce?.let {
-                put("nonce", JsonPrimitive(it))
-            }
+            nonce?.let { put("nonce", JsonPrimitive(it)) }
             accessToken?.let {
                 put(
                     "ath",
@@ -387,28 +395,31 @@ class OAuthApi(
         val claims = Json.encodeToString(claimsMap).encodeToByteArray().encodeBase64Url()
         val signedData = "$header.$claims"
 
-        val signature = keyPair.keyPair.privateKey
-            .signatureGenerator(digest = SHA256, format = ECDSA.SignatureFormat.RAW)
-            .generateSignature(signedData.encodeToByteArray())
-            .encodeBase64Url()
+        val signature =
+            keyPair.keyPair.privateKey
+                .signatureGenerator(digest = SHA256, format = ECDSA.SignatureFormat.RAW)
+                .generateSignature(signedData.encodeToByteArray())
+                .encodeBase64Url()
 
         return "$signedData.$signature"
     }
 
     private suspend fun resolveOAuthAuthorizationServer(): OAuthAuthorizationServer {
-        return client.get("/.well-known/oauth-authorization-server").decodeResponse(
-            onSuccess = { it },
-            onNewNonce = { error("Should not happen") },
-            onFailure = {
-                throw AtpException(StatusCode.fromCode(status.value))
-            },
-        )
+        return client
+            .get("/.well-known/oauth-authorization-server")
+            .decodeResponse(
+                onSuccess = { it },
+                onNewNonce = { error("Should not happen") },
+                onFailure = { throw AtpException(StatusCode.fromCode(status.value)) },
+            )
     }
 
     private suspend fun resolveDpopKeyPair(providedKeyPair: DpopKeyPair?): DpopKeyPair {
-        // Use a provided DPoP key pair if provided, or the previously-used one if available, or generate a new one.
-        return (providedKeyPair ?: dpopKeyPair ?: DpopKeyPair.generateKeyPair())
-            .also { dpopKeyPair = it }
+        // Use a provided DPoP key pair if provided, or the previously-used one if available, or
+        // generate a new one.
+        return (providedKeyPair ?: dpopKeyPair ?: DpopKeyPair.generateKeyPair()).also {
+            dpopKeyPair = it
+        }
     }
 
     private suspend inline fun <reified T : Any> HttpResponse.decodeResponse(
@@ -428,7 +439,8 @@ class OAuthApi(
         } else {
             val maybeErrorDescription = runCatching { body<AtpErrorDescription>() }.getOrNull()
             if (maybeErrorDescription?.error == "use_dpop_nonce") {
-                // If the error indicates we need to use a DPoP nonce, we can retry with the new nonce.
+                // If the error indicates we need to use a DPoP nonce, we can retry with the new
+                // nonce.
                 return onNewNonce(responseDpopNonce)
             } else {
                 onFailure(maybeErrorDescription)

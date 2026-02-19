@@ -30,31 +30,25 @@ import kotlin.time.Instant
 
 @Entity(
     tableName = "threadGates",
-    primaryKeys = [
-        "uri",
-    ],
-    foreignKeys = [
-        ForeignKey(
-            entity = PostEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["gatedPostUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["uri"]),
-        Index(value = ["cid"]),
-        Index(value = ["gatedPostUri"]),
-    ],
+    primaryKeys = ["uri"],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = PostEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["gatedPostUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            )
+        ],
+    indices = [Index(value = ["uri"]), Index(value = ["cid"]), Index(value = ["gatedPostUri"])],
 )
 data class ThreadGateEntity(
     val cid: ThreadGateId,
     val uri: ThreadGateUri,
     val gatedPostUri: PostUri,
     val createdAt: Instant,
-    @Embedded
-    val allowed: Allowed?,
+    @Embedded val allowed: Allowed?,
 ) {
     data class Allowed(
         val allowsFollowing: Boolean,
@@ -64,40 +58,43 @@ data class ThreadGateEntity(
 }
 
 data class PopulatedThreadGateEntity(
-    @Embedded
-    val entity: ThreadGateEntity,
+    @Embedded val entity: ThreadGateEntity,
     @Relation(
         parentColumn = "uri",
         entityColumn = "uri",
-        associateBy = Junction(
-            value = ThreadGateAllowedListEntity::class,
-            parentColumn = "threadGateUri",
-            entityColumn = "allowedListUri",
-        ),
+        associateBy =
+            Junction(
+                value = ThreadGateAllowedListEntity::class,
+                parentColumn = "threadGateUri",
+                entityColumn = "allowedListUri",
+            ),
     )
     val allowedLists: List<ListEntity>,
     @Relation(
         parentColumn = "uri",
         entityColumn = "uri",
-        associateBy = Junction(
-            value = ThreadGateHiddenPostEntity::class,
-            parentColumn = "threadGateUri",
-            entityColumn = "hiddenPostUri",
-        ),
+        associateBy =
+            Junction(
+                value = ThreadGateHiddenPostEntity::class,
+                parentColumn = "threadGateUri",
+                entityColumn = "hiddenPostUri",
+            ),
     )
     val hiddenPosts: List<PostEntity>,
 )
 
-fun PopulatedThreadGateEntity.asExternalModel() = ThreadGate(
-    uri = entity.uri,
-    gatedPostUri = entity.gatedPostUri,
-    allowed = entity.allowed?.let { allowed ->
-        ThreadGate.Allowed(
-            allowsFollowing = allowed.allowsFollowing,
-            allowsFollowers = allowed.allowsFollowers,
-            allowsMentioned = allowed.allowsMentioned,
-            allowedLists = emptyList(),
-            allowedListUris = allowedLists.map(ListEntity::uri),
-        )
-    },
-)
+fun PopulatedThreadGateEntity.asExternalModel() =
+    ThreadGate(
+        uri = entity.uri,
+        gatedPostUri = entity.gatedPostUri,
+        allowed =
+            entity.allowed?.let { allowed ->
+                ThreadGate.Allowed(
+                    allowsFollowing = allowed.allowsFollowing,
+                    allowsFollowers = allowed.allowsFollowers,
+                    allowsMentioned = allowed.allowsMentioned,
+                    allowedLists = emptyList(),
+                    allowedListUris = allowedLists.map(ListEntity::uri),
+                )
+            },
+    )

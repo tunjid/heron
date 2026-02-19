@@ -22,15 +22,7 @@ import com.tunjid.heron.data.core.types.RepostUri
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Repost(
-    val uri: RepostUri,
-    val cid: GenericId,
-    val post: Post,
-    val via: RecordUri?,
-) : Record {
-    override val reference: Record.Reference =
-        Record.Reference(
-            id = cid,
-            uri = uri,
-        )
+data class Repost(val uri: RepostUri, val cid: GenericId, val post: Post, val via: RecordUri?) :
+    Record {
+    override val reference: Record.Reference = Record.Reference(id = cid, uri = uri)
 }

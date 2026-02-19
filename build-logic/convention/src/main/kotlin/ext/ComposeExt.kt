@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.compose.compiler.gradle.ComposeCompilerGradlePluginE
 fun Project.configureCompose() {
     extensions.configure<ComposeCompilerGradlePluginExtension> {
         stabilityConfigurationFiles.addAll(
-            rootProject.layout.projectDirectory.file("stability_config.conf"),
+            rootProject.layout.projectDirectory.file("stability_config.conf")
         )
     }
 }

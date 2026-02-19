@@ -21,9 +21,8 @@ plugins {
     id("org.jetbrains.compose")
     kotlin("plugin.serialization")
 }
-android {
-    namespace = "com.tunjid.heron.feature.template"
-}
+
+android { namespace = "com.tunjid.heron.feature.template" }
 
 kotlin {
     sourceSets {
@@ -43,10 +42,6 @@ kotlin {
                 api(libs.tunjid.treenav.strings)
             }
         }
-        commonTest {
-            dependencies {
-                implementation(kotlin("test"))
-            }
-        }
+        commonTest { dependencies { implementation(kotlin("test")) } }
     }
 }

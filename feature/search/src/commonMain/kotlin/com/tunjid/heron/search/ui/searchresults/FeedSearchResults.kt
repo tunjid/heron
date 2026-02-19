@@ -58,34 +58,36 @@ internal fun FeedSearchResults(
         modifier = modifier,
         state = listState,
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = bottomNavAndInsetPaddingValues(
-            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
-            isCompact = paneScaffoldState.prefersCompactBottomNav,
-        ),
+        contentPadding =
+            bottomNavAndInsetPaddingValues(
+                top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
+                isCompact = paneScaffoldState.prefersCompactBottomNav,
+            ),
     ) {
         items(
             items = results,
             key = { it.feedGenerator.cid.id },
             itemContent = { result ->
                 FeedGenerator(
-                    modifier = Modifier
-                        .clip(FeedSearchResultShape)
-                        .clickable {
-                            onFeedGeneratorClicked(
-                                result.feedGenerator,
-                                state.sharedElementPrefix,
-                            )
-                        }
-                        .padding(8.dp)
-                        .animateItem(),
+                    modifier =
+                        Modifier.clip(FeedSearchResultShape)
+                            .clickable {
+                                onFeedGeneratorClicked(
+                                    result.feedGenerator,
+                                    state.sharedElementPrefix,
+                                )
+                            }
+                            .padding(8.dp)
+                            .animateItem(),
                     movableElementSharedTransitionScope = paneScaffoldState,
                     sharedElementPrefix = state.sharedElementPrefix,
                     feedGenerator = result.feedGenerator,
-                    status = when (timelineRecordUrisToPinnedStatus[result.feedGenerator.uri]) {
-                        true -> Timeline.Home.Status.Pinned
-                        false -> Timeline.Home.Status.Saved
-                        null -> Timeline.Home.Status.None
-                    },
+                    status =
+                        when (timelineRecordUrisToPinnedStatus[result.feedGenerator.uri]) {
+                            true -> Timeline.Home.Status.Pinned
+                            false -> Timeline.Home.Status.Saved
+                            null -> Timeline.Home.Status.None
+                        },
                     onFeedGeneratorStatusUpdated = onTimelineUpdateClicked,
                 )
             },
@@ -96,10 +98,9 @@ internal fun FeedSearchResults(
         onQueryChanged = { query ->
             searchResultActions(
                 SearchState.Tile(
-                    tilingAction = TilingState.Action.LoadAround(
-                        query ?: state.tilingData.currentQuery,
-                    ),
-                ),
+                    tilingAction =
+                        TilingState.Action.LoadAround(query ?: state.tilingData.currentQuery)
+                )
             )
         },
     )

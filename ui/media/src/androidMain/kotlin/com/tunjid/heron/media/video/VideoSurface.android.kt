@@ -52,35 +52,29 @@ internal fun VideoSurface(
     val updatedPlayer = rememberUpdatedState(exoPlayer)
     var surfaceSize by remember { mutableStateOf(IntSize.Zero) }
     val videoMatrix by remember {
-        mutableStateOf(
-            value = Matrix(),
-            policy = referentialEqualityPolicy(),
-        )
+        mutableStateOf(value = Matrix(), policy = referentialEqualityPolicy())
     }
 
     EmbeddedExternalSurface(
-        modifier = modifier
-            .clip(shape)
-            .onSizeChanged { surfaceSize = it },
+        modifier = modifier.clip(shape).onSizeChanged { surfaceSize = it },
         transform = videoMatrix,
     ) {
         onSurface { createdSurface, initialWidth, initialHeight ->
             surfaceSize = IntSize(initialWidth, initialHeight)
-            createdSurface.onChanged { width, height ->
-                surfaceSize = IntSize(width, height)
-            }
-            createdSurface.onDestroyed {
-                updatedPlayer.value?.setVideoSurface(null)
-            }
+            createdSurface.onChanged { width, height -> surfaceSize = IntSize(width, height) }
+            createdSurface.onDestroyed { updatedPlayer.value?.setVideoSurface(null) }
             snapshotFlow { updatedPlayer.value }
                 .filterNotNull()
-                .collectLatest {
-                    it.setVideoSurface(createdSurface)
-                }
+                .collectLatest { it.setVideoSurface(createdSurface) }
         }
     }
 
-    if (videoSize.height != 0 && videoSize.width != 0 && surfaceSize.height != 0 && surfaceSize.width != 0) {
+    if (
+        videoSize.height != 0 &&
+            videoSize.width != 0 &&
+            surfaceSize.height != 0 &&
+            surfaceSize.width != 0
+    ) {
         // Recalculate the video matrix
         videoMatrix.scaleAndAlignTo(
             srcSize = videoSize,
@@ -91,9 +85,7 @@ internal fun VideoSurface(
     }
 }
 
-/**
- * Scales and aligns a matrix into [destSize] from [srcSize].
- */
+/** Scales and aligns a matrix into [destSize] from [srcSize]. */
 private fun Matrix.scaleAndAlignTo(
     srcSize: IntSize,
     destSize: IntSize,
@@ -103,48 +95,38 @@ private fun Matrix.scaleAndAlignTo(
     // Reset the matrix to identity
     reset()
     // TextureView defaults to Fill bounds, first remove that transform
-    val fillBoundsScaleFactor = ContentScale.FillBounds.computeScaleFactor(
-        srcSize = srcSize.toSize(),
-        dstSize = destSize.toSize(),
-    )
-    scale(
-        x = fillBoundsScaleFactor.scaleX,
-        y = fillBoundsScaleFactor.scaleY,
-    )
+    val fillBoundsScaleFactor =
+        ContentScale.FillBounds.computeScaleFactor(
+            srcSize = srcSize.toSize(),
+            dstSize = destSize.toSize(),
+        )
+    scale(x = fillBoundsScaleFactor.scaleX, y = fillBoundsScaleFactor.scaleY)
     // Remove default fill bounds by inverting the matrix
     invert()
 
     // Next apply the desired contentScale
-    val desiredScaleFactor = contentScale.computeScaleFactor(
-        srcSize = srcSize.toSize(),
-        dstSize = destSize.toSize(),
-    )
-    scale(
-        x = desiredScaleFactor.scaleX,
-        y = desiredScaleFactor.scaleY,
-    )
+    val desiredScaleFactor =
+        contentScale.computeScaleFactor(srcSize = srcSize.toSize(), dstSize = destSize.toSize())
+    scale(x = desiredScaleFactor.scaleX, y = desiredScaleFactor.scaleY)
 
     // Finally apply the desired alignment
     val scaledSrcSize = srcSize.toSize() * desiredScaleFactor
 
-    val alignmentOffset = alignment.align(
-        size = IntSize(
-            width = scaledSrcSize.width.toInt(),
-            height = scaledSrcSize.height.toInt(),
-        ),
-        space = destSize,
-        layoutDirection = LayoutDirection.Ltr,
-    )
+    val alignmentOffset =
+        alignment.align(
+            size =
+                IntSize(width = scaledSrcSize.width.toInt(), height = scaledSrcSize.height.toInt()),
+            space = destSize,
+            layoutDirection = LayoutDirection.Ltr,
+        )
 
     // Translate by the alignment, taking into account the desired scale factor and
     // the implicit fill bounds.
-    val translationOffset = Offset(
-        x = alignmentOffset.x / desiredScaleFactor.scaleX * fillBoundsScaleFactor.scaleX,
-        y = alignmentOffset.y / desiredScaleFactor.scaleY * fillBoundsScaleFactor.scaleY,
-    )
+    val translationOffset =
+        Offset(
+            x = alignmentOffset.x / desiredScaleFactor.scaleX * fillBoundsScaleFactor.scaleX,
+            y = alignmentOffset.y / desiredScaleFactor.scaleY * fillBoundsScaleFactor.scaleY,
+        )
 
-    translate(
-        x = translationOffset.x,
-        y = translationOffset.y,
-    )
+    translate(x = translationOffset.x, y = translationOffset.y)
 }

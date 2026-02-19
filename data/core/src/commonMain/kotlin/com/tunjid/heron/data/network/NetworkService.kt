@@ -26,15 +26,14 @@ import io.ktor.client.HttpClient
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.currentCoroutineContext
 import sh.christian.ozone.api.response.AtpResponse
 
 internal interface NetworkService {
 
     /**
-     * Catches network related exceptions and wraps them in a failure result.
-     * If the [BlueskyApi] indicates an [AtpResponse.Failure], it is also considered a failure
-     * and also returns a failure result.
+     * Catches network related exceptions and wraps them in a failure result. If the [BlueskyApi]
+     * indicates an [AtpResponse.Failure], it is also considered a failure and also returns a
+     * failure result.
      */
     suspend fun <T : Any> runCatchingWithMonitoredNetworkRetry(
         times: Int = 3,
@@ -51,17 +50,11 @@ internal class KtorNetworkService(
     sessionManager: SessionManager,
     private val networkMonitor: NetworkMonitor,
 ) : NetworkService {
-    private val api = XrpcBlueskyApi(
-        httpClient = httpClient.config {
-            sessionManager.manage(config = this)
-        },
-    )
+    private val api =
+        XrpcBlueskyApi(httpClient = httpClient.config { sessionManager.manage(config = this) })
 
-    private val validatingApi = XrpcBlueskyApi(
-        httpClient = httpClient.config {
-            sessionManager.manage(config = this)
-        },
-    )
+    private val validatingApi =
+        XrpcBlueskyApi(httpClient = httpClient.config { sessionManager.manage(config = this) })
 
     override suspend fun <T : Any> runCatchingWithMonitoredNetworkRetry(
         times: Int,
@@ -69,28 +62,32 @@ internal class KtorNetworkService(
         maxDelay: Duration,
         factor: Double,
         block: suspend BlueskyApi.() -> AtpResponse<T>,
-    ): Result<T> = networkMonitor.runCatchingWithNetworkRetry(
-        times,
-        initialDelay,
-        maxDelay,
-        factor,
-        block = {
-            block(
-                when (currentSessionContext()) {
-                    is SessionContext.Previous -> validatingApi
-                    else -> api
+    ): Result<T> =
+        networkMonitor
+            .runCatchingWithNetworkRetry(
+                times,
+                initialDelay,
+                maxDelay,
+                factor,
+                block = {
+                    block(
+                        when (currentSessionContext()) {
+                            is SessionContext.Previous -> validatingApi
+                            else -> api
+                        }
+                    )
                 },
             )
-        },
-    ).mapCatchingUnlessCancelled { atpResponse ->
-        when (atpResponse) {
-            is AtpResponse.Failure -> throw AtProtoException(
-                statusCode = atpResponse.statusCode.code,
-                error = atpResponse.error?.error,
-                message = atpResponse.error?.message,
-            )
+            .mapCatchingUnlessCancelled { atpResponse ->
+                when (atpResponse) {
+                    is AtpResponse.Failure ->
+                        throw AtProtoException(
+                            statusCode = atpResponse.statusCode.code,
+                            error = atpResponse.error?.error,
+                            message = atpResponse.error?.message,
+                        )
 
-            is AtpResponse.Success -> atpResponse.response
-        }
-    }
+                    is AtpResponse.Success -> atpResponse.response
+                }
+            }
 }

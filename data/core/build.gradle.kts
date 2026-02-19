@@ -22,9 +22,8 @@ plugins {
     kotlin("plugin.serialization")
     alias(libs.plugins.buildConfig)
 }
-android {
-    namespace = "com.tunjid.heron.data"
-}
+
+android { namespace = "com.tunjid.heron.data" }
 
 kotlin {
     sourceSets {
@@ -74,11 +73,7 @@ kotlin {
                 implementation(libs.ktor.client.android)
             }
         }
-        iosMain {
-            dependencies {
-                implementation(libs.crypto.apple)
-            }
-        }
+        iosMain { dependencies { implementation(libs.crypto.apple) } }
         desktopMain {
             dependencies {
                 implementation(libs.crypto.jdk)
@@ -97,14 +92,10 @@ kotlin {
 buildConfig {
     packageName("com.tunjid.heron.data")
 
-    useKotlinOutput {
-        internalVisibility = true
-    }
+    useKotlinOutput { internalVisibility = true }
 
     forClass("InternalEndpoints") {
-        val heronEndpoint = providers.gradleProperty("heron.endpoint")
-            .orNull
-            .orEmpty()
+        val heronEndpoint = providers.gradleProperty("heron.endpoint").orNull.orEmpty()
         buildConfigField("String", "HeronEndpoint", "\"${heronEndpoint}\"")
     }
 }

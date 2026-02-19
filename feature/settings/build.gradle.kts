@@ -22,9 +22,7 @@ plugins {
     alias(libs.plugins.aboutLibraries)
 }
 
-android {
-    namespace = "com.tunjid.heron.feature.settings"
-}
+android { namespace = "com.tunjid.heron.feature.settings" }
 
 kotlin {
     sourceSets {
@@ -51,9 +49,10 @@ kotlin {
 
 aboutLibraries {
     export {
-        outputFile = project.layout.projectDirectory
-            .file("src/commonMain/composeResources/files/aboutlibraries.json")
-            .asFile
+        outputFile =
+            project.layout.projectDirectory
+                .file("src/commonMain/composeResources/files/aboutlibraries.json")
+                .asFile
         variant = "release"
     }
 }

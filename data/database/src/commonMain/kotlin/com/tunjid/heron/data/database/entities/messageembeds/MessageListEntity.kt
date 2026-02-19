@@ -26,32 +26,24 @@ import com.tunjid.heron.data.database.entities.MessageEntity
 
 @Entity(
     tableName = "messageLists",
-    primaryKeys = [
-        "messageId",
-        "listUri",
-    ],
-    foreignKeys = [
-        ForeignKey(
-            entity = MessageEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["messageId"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = ListEntity::class,
-            parentColumns = ["uri"],
-            childColumns = ["listUri"],
-            onDelete = ForeignKey.CASCADE,
-            onUpdate = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [
-        Index(value = ["messageId"]),
-        Index(value = ["listUri"]),
-    ],
+    primaryKeys = ["messageId", "listUri"],
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = MessageEntity::class,
+                parentColumns = ["id"],
+                childColumns = ["messageId"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+            ForeignKey(
+                entity = ListEntity::class,
+                parentColumns = ["uri"],
+                childColumns = ["listUri"],
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.CASCADE,
+            ),
+        ],
+    indices = [Index(value = ["messageId"]), Index(value = ["listUri"])],
 )
-data class MessageListEntity(
-    val messageId: MessageId,
-    val listUri: ListUri,
-)
+data class MessageListEntity(val messageId: MessageId, val listUri: ListUri)

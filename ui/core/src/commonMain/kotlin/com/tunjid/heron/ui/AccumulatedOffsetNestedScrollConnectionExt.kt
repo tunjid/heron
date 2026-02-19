@@ -36,27 +36,24 @@ import kotlin.math.roundToInt
 fun topAppBarNestedScrollConnection(): AccumulatedOffsetNestedScrollConnection =
     rememberAccumulatedOffsetNestedScrollConnection(
         maxOffset = { Offset.Zero },
-        minOffset = {
-            Offset(
-                x = 0f,
-                y = -UiTokens.toolbarHeight.toPx(),
-            )
-        },
+        minOffset = { Offset(x = 0f, y = -UiTokens.toolbarHeight.toPx()) },
     )
 
 @Composable
 fun bottomNavigationNestedScrollConnection(
-    isCompact: Boolean,
+    isCompact: Boolean
 ): AccumulatedOffsetNestedScrollConnection {
     val navigationBarHeight by rememberUpdatedState(UiTokens.navigationBarHeight)
     return rememberAccumulatedOffsetNestedScrollConnection(
         invert = true,
         maxOffset = maxOffset@{
-            Offset(
-                x = 0f,
-                y = (navigationBarHeight + UiTokens.bottomNavHeight(isCompact = isCompact)).toPx(),
-            )
-        },
+                Offset(
+                    x = 0f,
+                    y =
+                        (navigationBarHeight + UiTokens.bottomNavHeight(isCompact = isCompact))
+                            .toPx(),
+                )
+            },
         minOffset = { Offset.Zero },
     )
 }
@@ -74,13 +71,13 @@ fun AccumulatedOffsetNestedScrollConnection.PagerTopGapCloseEffect(
 
     LaunchedEffect(pagerState) {
         snapshotFlow {
-            val fraction = pagerState.currentPageOffsetFraction
-            // Find next page
-            when {
-                fraction > 0 -> ceil(pagerState.currentPage + fraction)
-                else -> floor(pagerState.currentPage + fraction)
-            }.roundToInt()
-        }
+                val fraction = pagerState.currentPageOffsetFraction
+                // Find next page
+                when {
+                    fraction > 0 -> ceil(pagerState.currentPage + fraction)
+                    else -> floor(pagerState.currentPage + fraction)
+                }.roundToInt()
+            }
             .collect {
                 // Already scrolled past the first
                 if (updatedFirstVisibleItemIndex() != 0) return@collect
@@ -96,14 +93,8 @@ fun AccumulatedOffsetNestedScrollConnection.PagerTopGapCloseEffect(
 }
 
 fun AccumulatedOffsetNestedScrollConnection.verticalOffsetProgress(): Float {
-    val minDimension = min(
-        a = abs(minOffset.y),
-        b = abs(maxOffset.y),
-    )
-    val maxDimension = max(
-        a = abs(minOffset.y),
-        b = abs(maxOffset.y),
-    )
+    val minDimension = min(a = abs(minOffset.y), b = abs(maxOffset.y))
+    val maxDimension = max(a = abs(minOffset.y), b = abs(maxOffset.y))
     val currentDifference = abs(offset.y) - minDimension
     val maxDifference = maxDimension - minDimension
 

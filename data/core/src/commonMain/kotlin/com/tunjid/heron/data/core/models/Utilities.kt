@@ -21,9 +21,8 @@ import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.Uri
 
 @Suppress("FunctionName")
-fun PostUri(
-    profileId: ProfileId,
-    postRecordKey: RecordKey,
-) = com.tunjid.heron.data.core.types.PostUri(
-    uri = "${Uri.Host.AtProto.prefix}${profileId.id}/${com.tunjid.heron.data.core.types.PostUri.NAMESPACE}/${postRecordKey.value}",
-)
+fun PostUri(profileId: ProfileId, postRecordKey: RecordKey) =
+    com.tunjid.heron.data.core.types.PostUri(
+        uri =
+            "${Uri.Host.AtProto.prefix}${profileId.id}/${com.tunjid.heron.data.core.types.PostUri.NAMESPACE}/${postRecordKey.value}"
+    )

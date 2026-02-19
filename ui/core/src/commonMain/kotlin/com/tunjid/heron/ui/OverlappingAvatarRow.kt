@@ -29,20 +29,15 @@ fun OverlappingAvatarRow(
     maxItems: Int,
     content: @Composable () -> Unit,
 ) {
-    Layout(
-        modifier = modifier,
-        content = content,
-    ) { measurables, constraints ->
-
+    Layout(modifier = modifier, content = content) { measurables, constraints ->
         val overlapOffset = overlap.roundToPx()
         val totalWidth = constraints.maxWidth + (overlapOffset * (maxItems - 1))
         val itemSize = totalWidth / maxItems
 
-        val placeables = measurables.map { measurable ->
-            measurable.measure(
-                Constraints.fixed(itemSize, itemSize),
-            )
-        }
+        val placeables =
+            measurables.map { measurable ->
+                measurable.measure(Constraints.fixed(itemSize, itemSize))
+            }
 
         layout(constraints.maxWidth, itemSize) {
             // Track the x co-ord we have placed children up to
@@ -50,10 +45,7 @@ fun OverlappingAvatarRow(
 
             // Place children in the parent layout
             placeables.forEachIndexed { index, placeable ->
-                placeable.placeRelative(
-                    x = xPosition - (overlapOffset * index),
-                    y = 0,
-                )
+                placeable.placeRelative(x = xPosition - (overlapOffset * index), y = 0)
 
                 xPosition += placeable.width
             }
