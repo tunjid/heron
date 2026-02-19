@@ -20,7 +20,8 @@ fun NotificationSettingsItem(
             .fillMaxWidth()
             .clickable {
                 onNotificationSettingsClicked()
-            },
+            }
+            .settingsItemPaddingAndMinHeight(),
         title = stringResource(CommonStrings.notification_settings),
         icon = Icons.Rounded.Notifications,
     )
