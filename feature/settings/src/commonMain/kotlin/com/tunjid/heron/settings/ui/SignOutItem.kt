@@ -50,7 +50,8 @@ fun SignOutItem(
             .fillMaxWidth()
             .clickable {
                 showSignOutDialog = true
-            },
+            }
+            .settingsItemPaddingAndMinHeight(),
         title = stringResource(Res.string.sign_out),
         titleColor = MaterialTheme.colorScheme.error,
         icon = Icons.AutoMirrored.Rounded.DirectionsWalk,

@@ -38,7 +38,8 @@ fun FeedbackItem(
             .fillMaxWidth()
             .clickable {
                 runCatching { uriHandler.openUri(FeedbackLink) }
-            },
+            }
+            .settingsItemPaddingAndMinHeight(),
         title = stringResource(Res.string.give_feedback),
         icon = Icons.Rounded.Feedback,
     )

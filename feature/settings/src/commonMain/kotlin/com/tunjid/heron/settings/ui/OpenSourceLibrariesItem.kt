@@ -61,6 +61,7 @@ fun OpenSourceLibrariesItem(
 ) {
     ExpandableSettingsItemRow(
         modifier = modifier
+            .settingsItemPaddingAndMinHeight()
             .fillMaxWidth(),
         title = stringResource(Res.string.open_source_licenses),
         icon = Icons.Rounded.Copyright,

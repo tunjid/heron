@@ -31,9 +31,6 @@ import heron.feature.settings.generated.resources.auto_play_timeline_videos
 import heron.feature.settings.generated.resources.content_and_media
 import heron.feature.settings.generated.resources.following_feed_preferences
 import heron.feature.settings.generated.resources.refresh_timelines_on_launch
-import heron.feature.settings.generated.resources.timeline_preferences_quote_reposts
-import heron.feature.settings.generated.resources.timeline_preferences_replies
-import heron.feature.settings.generated.resources.timeline_preferences_reposts
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -46,6 +43,7 @@ fun ContentAndMediaItem(
 ) {
     ExpandableSettingsItemRow(
         modifier = modifier
+            .settingsItemPaddingAndMinHeight()
             .fillMaxWidth(),
         title = stringResource(Res.string.content_and_media),
         icon = Icons.Rounded.Newspaper,

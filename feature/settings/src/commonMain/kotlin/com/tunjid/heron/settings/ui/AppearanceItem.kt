@@ -49,6 +49,7 @@ fun AppearanceItem(
 
     ExpandableSettingsItemRow(
         modifier = modifier
+            .settingsItemPaddingAndMinHeight()
             .fillMaxWidth(),
         title = stringResource(Res.string.appearance),
         icon = Icons.Rounded.Palette,
