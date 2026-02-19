@@ -18,16 +18,22 @@ package com.tunjid.heron.settings
 
 import androidx.lifecycle.ViewModel
 import com.mikepenz.aboutlibraries.Libs
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SessionSummary
+import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.repository.AuthRepository
+import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
+import com.tunjid.heron.data.utilities.writequeue.Writable
+import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationContext
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.navigation.resetAuthNavigation
+import com.tunjid.heron.timeline.utilities.writeStatusMessage
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -42,7 +48,6 @@ import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.switch_account_failed
-import kotlin.collections.plus
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -72,6 +77,7 @@ fun interface RouteViewModelInitializer : AssistedViewModelFactory {
 class ActualSettingsViewModel(
     authRepository: AuthRepository,
     userDataRepository: UserDataRepository,
+    writeQueue: WriteQueue,
     navActions: (NavigationMutation) -> Unit,
     @Assisted
     scope: CoroutineScope,
@@ -99,6 +105,7 @@ class ActualSettingsViewModel(
             ) {
                 when (val action = type()) {
                     is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+                    is Action.UpdateSection -> action.flow.updateSectionMutations()
 
                     is Action.SetRefreshHomeTimelinesOnLaunch -> action.flow.homeTimelineRefreshOnLaunchMutations(
                         userDataRepository = userDataRepository,
@@ -126,6 +133,9 @@ class ActualSettingsViewModel(
                     is Action.SwitchSession -> action.flow.handleSwitchSessionMutations(
                         authRepository = authRepository,
                         navActions = navActions,
+                    )
+                    is Action.UpdateFeedPreference -> action.flow.updateFeedPreferenceMutations(
+                        writeQueue = writeQueue,
                     )
                     Action.SignOut -> action.flow.mapToManyMutations {
                         authRepository.signOut()
@@ -159,6 +169,26 @@ private fun loadSessionSummaryMutations(
         .mapToMutation { sessionSummaries ->
             copy(pastSessions = sessionSummaries)
         }
+
+private fun Flow<Action.UpdateSection>.updateSectionMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(section = action.section)
+    }
+
+private fun Flow<Action.UpdateFeedPreference>.updateFeedPreferenceMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    mapLatestToManyMutations { action ->
+        val writable = Writable.TimelineUpdate(
+            update = Timeline.Update.OfFeedPreference.Add(
+                action.feedPreference,
+            ),
+        )
+        val status = writeQueue.enqueue(writable)
+        writable.writeStatusMessage(status)?.let {
+            emit { copy(messages = messages + it) }
+        }
+    }
 
 private fun Flow<Action.SwitchSession>.handleSwitchSessionMutations(
     authRepository: AuthRepository,

@@ -16,16 +16,24 @@
 
 package com.tunjid.heron.settings.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ConnectWithoutContact
 import androidx.compose.material.icons.rounded.Newspaper
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.tunjid.heron.data.core.models.FeedPreference
+import com.tunjid.heron.data.core.models.FeedPreference.Companion.homeFeedOrDefault
 import com.tunjid.heron.data.core.models.Preferences
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.auto_play_timeline_videos
 import heron.feature.settings.generated.resources.content_and_media
+import heron.feature.settings.generated.resources.following_feed_preferences
 import heron.feature.settings.generated.resources.refresh_timelines_on_launch
+import heron.feature.settings.generated.resources.timeline_preferences_quote_reposts
+import heron.feature.settings.generated.resources.timeline_preferences_replies
+import heron.feature.settings.generated.resources.timeline_preferences_reposts
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -34,6 +42,7 @@ fun ContentAndMediaItem(
     signedInProfilePreferences: Preferences,
     setRefreshHomeTimelineOnLaunch: (Boolean) -> Unit,
     setAutoplayTimelineVideos: (Boolean) -> Unit,
+    onFeedPreferenceSectionSelected: (FeedPreference) -> Unit,
 ) {
     ExpandableSettingsItemRow(
         modifier = modifier
@@ -41,6 +50,17 @@ fun ContentAndMediaItem(
         title = stringResource(Res.string.content_and_media),
         icon = Icons.Rounded.Newspaper,
     ) {
+        SettingsItemRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    onFeedPreferenceSectionSelected(
+                        signedInProfilePreferences.feedPreferences.homeFeedOrDefault(),
+                    )
+                },
+            title = stringResource(Res.string.following_feed_preferences),
+            icon = Icons.Rounded.ConnectWithoutContact,
+        )
         SettingsToggleItem(
             modifier = Modifier
                 .fillMaxWidth(),

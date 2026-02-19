@@ -57,6 +57,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.rememberLatchedState
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.collapse_icon
 import heron.ui.core.generated.resources.expand_icon
@@ -178,13 +179,18 @@ fun SettingsToggleItem(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
+    val latchedCheckedState = rememberLatchedState(checked)
+
     Row(
         modifier = SettingsItemClipModifier
             .then(
                 modifier
                     .toggleable(
-                        value = checked,
-                        onValueChange = onCheckedChange,
+                        value = latchedCheckedState.value,
+                        onValueChange = {
+                            latchedCheckedState.latch(it)
+                            onCheckedChange(it)
+                        },
                         enabled = enabled,
                         role = Role.Switch,
                     )
@@ -207,7 +213,7 @@ fun SettingsToggleItem(
         )
         Switch(
             enabled = enabled,
-            checked = checked,
+            checked = latchedCheckedState.value,
             onCheckedChange = null,
         )
     }

@@ -20,11 +20,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
@@ -43,6 +46,8 @@ import com.tunjid.heron.settings.AccountSwitchPhase
 import com.tunjid.heron.settings.Action
 import com.tunjid.heron.settings.ActualSettingsViewModel
 import com.tunjid.heron.settings.RouteViewModelInitializer
+import com.tunjid.heron.settings.Section
+import com.tunjid.heron.settings.SectionNavigationEventInfo
 import com.tunjid.heron.settings.SettingsScreen
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.modifiers.ifTrue
@@ -152,7 +157,12 @@ class SettingsBindings(
                         },
                         onBackPressed = {
                             if (state.switchPhase == AccountSwitchPhase.IDLE) {
-                                viewModel.accept(Action.Navigate.Pop)
+                                viewModel.accept(
+                                    when (state.section) {
+                                        is Section.FeedPreferences -> Action.UpdateSection(Section.Main)
+                                        Section.Main -> Action.Navigate.Pop
+                                    },
+                                )
                             }
                         },
                     )
@@ -182,6 +192,17 @@ class SettingsBindings(
                     SecondaryPaneCloseBackHandler()
                 },
             )
+
+            NavigationBackHandler(
+                state = rememberNavigationEventState(
+                    currentInfo = remember(state.section.key) {
+                        SectionNavigationEventInfo(state.section)
+                    },
+                ),
+                isBackEnabled = state.section !is Section.Main,
+            ) {
+                viewModel.accept(Action.UpdateSection(Section.Main))
+            }
         },
     )
 }

@@ -197,4 +197,13 @@ data class FeedPreference(
     val hideRepliesByLikeCount: Long? = null,
     val hideReposts: Boolean? = null,
     val hideQuotePosts: Boolean? = null,
-)
+) {
+    companion object {
+        private const val HOME_FEED = "home"
+
+        fun List<FeedPreference>.homeFeedOrDefault(): FeedPreference =
+            firstOrNull { it.feed == HOME_FEED } ?: FeedPreference(
+                feed = HOME_FEED,
+            )
+    }
+}
