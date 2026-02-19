@@ -59,6 +59,7 @@ import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
 import com.tunjid.composables.lazy.rememberLazyScrollableState
 import com.tunjid.heron.data.core.models.Conversation
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
@@ -249,6 +250,7 @@ internal fun ListScreen(
                                 paneScaffoldState = paneScaffoldState,
                                 timelineStateHolder = stateHolder,
                                 actions = actions,
+                                recentLists = state.recentLists,
                                 recentConversations = state.recentConversations,
                                 mutedWordsPreferences = state.preferences.mutedWordPreferences,
                                 autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
@@ -369,6 +371,7 @@ private fun ListTimeline(
     paneScaffoldState: PaneScaffoldState,
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
+    recentLists: List<FeedList>,
     recentConversations: List<Conversation>,
     mutedWordsPreferences: List<MutedWordPreference>,
     autoPlayTimelineVideos: Boolean,
@@ -411,6 +414,10 @@ private fun ListTimeline(
         },
     )
     val threadGateSheetState = rememberUpdatedThreadGateSheetState(
+        recentLists = recentLists,
+        onRequestRecentLists = {
+            actions(Action.UpdateRecentLists)
+        },
         onThreadGateUpdated = {
             actions(Action.SendPostInteraction(it))
         },

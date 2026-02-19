@@ -33,6 +33,8 @@ fun ComposeThreadGate(
     onInteractionSettingsUpdated: (PostInteractionSettingsPreference) -> Unit,
 ) {
     val threadGateSheetState = rememberUpdatedThreadGateSheetState(
+        recentLists = emptyList(),
+        onRequestRecentLists = { },
         onDefaultThreadGateUpdated = onInteractionSettingsUpdated,
     )
 
