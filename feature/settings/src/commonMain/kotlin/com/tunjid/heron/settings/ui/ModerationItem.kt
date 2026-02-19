@@ -31,7 +31,7 @@ fun ModerationItem(
     modifier: Modifier = Modifier,
     onModerationSettingsClicked: () -> Unit,
 ) {
-    SettingsItemRow(
+    SettingsItem(
         modifier = modifier
             .fillMaxWidth()
             .clickable {

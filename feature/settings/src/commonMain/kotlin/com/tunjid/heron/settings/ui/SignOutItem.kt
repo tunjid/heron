@@ -45,7 +45,7 @@ fun SignOutItem(
 ) {
     var showSignOutDialog by rememberSaveable { mutableStateOf(false) }
 
-    SettingsItemRow(
+    SettingsItem(
         modifier = modifier
             .fillMaxWidth()
             .clickable {

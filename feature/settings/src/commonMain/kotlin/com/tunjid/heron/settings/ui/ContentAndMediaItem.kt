@@ -48,16 +48,16 @@ fun ContentAndMediaItem(
         title = stringResource(Res.string.content_and_media),
         icon = Icons.Rounded.Newspaper,
     ) {
-        SettingsItemRow(
+        SettingsItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable {
                     onFeedPreferenceSectionSelected(
                         signedInProfilePreferences.feedPreferences.homeFeedOrDefault(),
                     )
-                },
+                }
+                .settingsItemPaddingAndMinHeight(),
             title = stringResource(Res.string.following_feed_preferences),
-            icon = Icons.Rounded.ConnectWithoutContact,
         )
         SettingsToggleItem(
             modifier = Modifier

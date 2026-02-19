@@ -84,7 +84,7 @@ fun AccountSwitchingItem(
 ) {
     when {
         sessionSummaries.size <= 1 -> {
-            SettingsItemRow(
+            SettingsItem(
                 title = stringResource(Res.string.add_another_account),
                 icon = Icons.Default.PersonAdd,
                 modifier = modifier
@@ -150,7 +150,7 @@ private fun MultiSessionLayout(
     ) {
         val settingsItemRow = remember {
             movableContentOf { modifier: Modifier ->
-                SettingsItemRow(
+                SettingsItem(
                     modifier = modifier
                         .settingsItemMinHeight(),
                     title = stringResource(Res.string.switch_account),
@@ -202,7 +202,7 @@ private fun MultiSessionLayout(
                 .settingsItemChildPadding(),
             visible = accountSwitchState.isExpanded,
         ) {
-            SettingsItemRow(
+            SettingsItem(
                 title = stringResource(Res.string.add_or_reauthenticate_account),
                 icon = Icons.Default.PersonAdd,
                 modifier = Modifier

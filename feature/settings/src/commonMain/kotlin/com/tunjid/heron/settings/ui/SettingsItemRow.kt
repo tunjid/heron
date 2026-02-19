@@ -65,15 +65,30 @@ import heron.ui.core.generated.resources.expand_icon
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun SettingsItemRow(
+fun SettingsItem(
     title: String,
-    icon: ImageVector,
+    icon: ImageVector? = null,
     modifier: Modifier = Modifier,
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
-    content: @Composable RowScope.() -> Unit = {},
+) = SettingsItemRow(
+    title = title,
+    icon = icon,
+    modifier = modifier,
+    titleColor = titleColor,
+    content = {},
+)
+
+@Composable
+private fun SettingsItemRow(
+    title: String,
+    icon: ImageVector?,
+    modifier: Modifier = Modifier,
+    titleColor: Color = MaterialTheme.colorScheme.onSurface,
+    content: @Composable RowScope.() -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
         modifier = SettingsItemClipModifier
             .then(
                 modifier
@@ -82,13 +97,10 @@ fun SettingsItemRow(
                     },
             ),
     ) {
-        Icon(
+        if (icon != null) Icon(
             imageVector = icon,
             contentDescription = null,
             tint = titleColor,
-        )
-        Spacer(
-            modifier = Modifier.width(16.dp),
         )
         Text(
             modifier = Modifier
