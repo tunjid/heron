@@ -67,6 +67,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -111,6 +112,7 @@ import heron.ui.timeline.generated.resources.bookmarked
 import heron.ui.timeline.generated.resources.expand_options
 import heron.ui.timeline.generated.resources.liked
 import heron.ui.timeline.generated.resources.quote
+import heron.ui.timeline.generated.resources.remove_repost
 import heron.ui.timeline.generated.resources.reply
 import heron.ui.timeline.generated.resources.repost
 import org.jetbrains.compose.resources.stringResource
@@ -471,6 +473,9 @@ class PostInteractionsSheetState private constructor(
             isSignedIn: Boolean,
             onSignInClicked: () -> Unit,
             onInteractionConfirmed: (Post.Interaction) -> Unit,
+            // TODO: This should just be an interaction, however the interaction
+            //  is serialized, preventing changing its signature. This should be
+            //  fixed and migrated gracefully when able
             onQuotePostClicked: (Post.Interaction.Create.Repost) -> Unit,
         ): PostInteractionsSheetState {
             val state = rememberBottomSheetState {
@@ -502,9 +507,10 @@ private fun PostInteractionsBottomSheet(
     LaunchedEffect(state.showingAction) {
         when (val interaction = state.showingAction?.interaction) {
             null -> Unit
-            is Post.Interaction.Create.Repost -> state.show()
-            is Post.Interaction.Create.Like,
+            is Post.Interaction.Create.Repost,
             is Post.Interaction.Delete.RemoveRepost,
+            -> state.show()
+            is Post.Interaction.Create.Like,
             is Post.Interaction.Delete.Unlike,
             is Post.Interaction.Create.Bookmark,
             is Post.Interaction.Delete.RemoveBookmark,
@@ -528,62 +534,45 @@ private fun PostInteractionsBottomSheet(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            when (currentInteraction) {
-                is Post.Interaction.Create.Repost -> {
-                    if (state.isSignedIn) repeat(2) { index ->
-                        val isRepost = index == 0
-                        val contentDescription = stringResource(
-                            if (isRepost) Res.string.repost
-                            else Res.string.quote,
-                        ).capitalize(locale = Locale.current)
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(CircleShape)
-                                .then(
-                                    when {
-                                        isRepost -> Modifier.clickable {
-                                            onInteractionConfirmed(currentInteraction)
-                                            state.hide()
-                                        }
-
-                                        action.viewerStats.canQuote -> Modifier.clickable {
-                                            onQuotePostClicked(currentInteraction)
-                                            state.hide()
-                                        }
-
-                                        else -> Modifier.alpha(0.6f)
-                                    },
+            if (state.isSignedIn) {
+                when (currentInteraction) {
+                    is Post.Interaction.Create.Repost,
+                    is Post.Interaction.Delete.RemoveRepost,
+                    -> {
+                        Item(
+                            contentDescription = stringResource(
+                                if (currentInteraction is Post.Interaction.Create.Repost) Res.string.repost
+                                else Res.string.remove_repost,
+                            ),
+                            enabled = true,
+                            icon = Icons.Rounded.Repeat,
+                            onClick = {
+                                onInteractionConfirmed(currentInteraction)
+                                state.hide()
+                            },
+                        )
+                        Item(
+                            contentDescription = stringResource(Res.string.quote),
+                            enabled = action.viewerStats.canQuote,
+                            icon = Icons.Rounded.FormatQuote,
+                            onClick = {
+                                // TODO: Noted in the above, the only valuable part in the
+                                //  interaction is the PostUri weh removing a repost.
+                                //  Stubbing the PostId until a proper migration can be done.
+                                onQuotePostClicked(
+                                    Post.Interaction.Create.Repost(
+                                        postUri = currentInteraction.postUri,
+                                        postId = if (currentInteraction is Post.Interaction.Create.Repost) currentInteraction.postId
+                                        else PostId(""),
+                                    ),
                                 )
-                                .padding(
-                                    horizontal = 8.dp,
-                                    vertical = 8.dp,
-                                )
-                                .semantics {
-                                    this.contentDescription = contentDescription
-                                },
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            content = {
-                                Icon(
-                                    modifier = Modifier
-                                        .size(24.dp),
-                                    imageVector =
-                                    if (isRepost) Icons.Rounded.Repeat
-                                    else Icons.Rounded.FormatQuote,
-                                    contentDescription = null,
-                                )
-                                Text(
-                                    modifier = Modifier,
-                                    text = contentDescription,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                )
+                                state.hide()
                             },
                         )
                     }
-                }
 
-                else -> Unit
+                    else -> Unit
+                }
             }
 
             // Sheet content
@@ -609,6 +598,49 @@ private fun PostInteractionsBottomSheet(
             )
         }
     }
+}
+
+@Composable
+private fun Item(
+    contentDescription: String,
+    enabled: Boolean,
+    icon: ImageVector,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(CircleShape)
+            .then(
+                when {
+                    enabled -> Modifier.clickable(onClick = onClick)
+                    else -> Modifier.alpha(0.6f)
+                },
+            )
+            .padding(
+                horizontal = 8.dp,
+                vertical = 8.dp,
+            )
+            .semantics {
+                this.contentDescription = contentDescription
+            },
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        content = {
+            Icon(
+                modifier = Modifier
+                    .size(24.dp),
+                imageVector = icon,
+                contentDescription = null,
+            )
+            Text(
+                modifier = Modifier,
+                text = contentDescription
+                    .capitalize(locale = Locale.current),
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        },
+    )
 }
 
 private val Timeline.Presentation.postInteractionArrangement: Arrangement.Horizontal
