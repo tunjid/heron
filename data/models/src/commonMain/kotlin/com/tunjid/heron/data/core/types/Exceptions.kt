@@ -68,6 +68,8 @@ class ExpiredSessionException :
     IOException(),
     HeronException
 
+// This is deliberately not an IOException.
+// Otherwise, the retry semantics will kick in.
 class AtProtoException(
     val statusCode: Int,
     val error: String?,
