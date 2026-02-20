@@ -56,6 +56,18 @@ interface TimelineDao {
                 THEN viewingProfileId = :viewingProfileId
                 ELSE viewingProfileId IS NULL
             END
+            AND CASE WHEN :hideReplies = TRUE
+                THEN parentPostUri IS NULL
+                ELSE 1
+            END
+            AND CASE WHEN :hideReposts = TRUE
+                THEN reposter IS NULL
+                ELSE 1
+            END
+            AND CASE WHEN :hideQuotePosts = TRUE
+                THEN embeddedRecordUri IS NULL OR embeddedRecordUri NOT LIKE '%app.bsky.feed.post%'
+                ELSE 1
+            END
             ORDER BY itemSort
             DESC
             LIMIT :limit
@@ -68,6 +80,9 @@ interface TimelineDao {
         before: Instant,
         limit: Long,
         offset: Long,
+        hideReplies: Boolean,
+        hideReposts: Boolean,
+        hideQuotePosts: Boolean,
     ): Flow<List<TimelineItemEntity>>
 
     @Query(

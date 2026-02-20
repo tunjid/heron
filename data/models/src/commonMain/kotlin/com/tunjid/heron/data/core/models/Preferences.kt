@@ -201,9 +201,20 @@ data class FeedPreference(
     companion object {
         private const val HOME_FEED = "home"
 
+        val FeedPreference.shouldHideReplies: Boolean
+            get() = hideReplies.isTrue
+
+        val FeedPreference.shouldHideReposts: Boolean
+            get() = hideReposts.isTrue
+
+        val FeedPreference.shouldHideQuotes: Boolean
+            get() = hideQuotePosts.isTrue
+
         fun List<FeedPreference>.homeFeedOrDefault(): FeedPreference =
             firstOrNull { it.feed == HOME_FEED } ?: FeedPreference(
                 feed = HOME_FEED,
             )
     }
 }
+
+private val Boolean?.isTrue get() = this == true
