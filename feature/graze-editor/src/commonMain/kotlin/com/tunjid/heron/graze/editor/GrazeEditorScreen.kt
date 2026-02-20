@@ -593,7 +593,7 @@ fun FilterLeaf(
 
 private fun Filter.Root.backgroundSharedElementKey(): String = "$id-background"
 
-private class NestedNavigationKey(
+private data class NestedNavigationKey(
     val path: List<Int>,
 ) : PaneScaffoldState.NestedNavigationKey {
     override val isRoot: Boolean
