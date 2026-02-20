@@ -23,6 +23,7 @@ import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.text.Memo
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -43,23 +44,27 @@ data class State(
 @Serializable
 sealed class Section {
 
-    abstract val key: Key
-
-    sealed interface Key
+    sealed interface Key : PaneScaffoldState.NestedNavigationKey
 
     data object Main : Section(), Key {
-        override val key: Key
-            get() = this
+        override val isRoot: Boolean
+            get() = true
     }
 
     data class FeedPreferences(
         val feedPreference: FeedPreference,
     ) : Section() {
-        override val key: Key
-            get() = FeedPreferences
-
-        companion object : Key
+        companion object : Key {
+            override val isRoot: Boolean
+                get() = false
+        }
     }
+
+    val key: PaneScaffoldState.NestedNavigationKey
+        get() = when (this) {
+            is FeedPreferences -> FeedPreferences
+            Main -> Main
+        }
 }
 
 enum class AccountSwitchPhase {

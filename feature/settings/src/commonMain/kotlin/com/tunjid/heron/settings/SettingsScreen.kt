@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.settings
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -26,7 +25,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedPreference
@@ -34,6 +32,7 @@ import com.tunjid.heron.data.core.models.FeedPreference.Companion.homeFeedOrDefa
 import com.tunjid.heron.scaffold.navigation.moderationDestination
 import com.tunjid.heron.scaffold.navigation.notificationSettingsDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
+import com.tunjid.heron.scaffold.scaffold.NestedNavigation
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.settings.ui.AccountSwitchingItem
 import com.tunjid.heron.settings.ui.AppearanceItem
@@ -57,40 +56,35 @@ internal fun SettingsScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val saveableStateHolder = rememberSaveableStateHolder()
-    AnimatedContent(
+    paneScaffoldState.NestedNavigation(
         modifier = modifier
             .fillMaxSize(),
-        targetState = state.section.key,
+        key = state.section.key,
         content = { key ->
-            saveableStateHolder.SaveableStateProvider(
-                key = key.toString(),
+            Column(
+                modifier = Modifier
+                    .padding(
+                        horizontal = 16.dp,
+                    )
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Column(
-                    modifier = Modifier
-                        .padding(
-                            horizontal = 16.dp,
-                        )
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    when (key) {
-                        is Section.Main -> MainSection(
-                            state = state,
-                            actions = actions,
-                            paneScaffoldState = paneScaffoldState,
-                        )
-                        is Section.FeedPreferences.Companion -> FeedPreferencesSection(
-                            feedPreference = state.signedInProfilePreferences
-                                ?.feedPreferences
-                                .orEmpty()
-                                .homeFeedOrDefault(),
-                            onFeedPreferenceUpdated = {
-                                actions(Action.UpdateFeedPreference(it))
-                            },
-                        )
-                    }
+                when (key) {
+                    Section.Main -> MainSection(
+                        state = state,
+                        actions = actions,
+                        paneScaffoldState = paneScaffoldState,
+                    )
+                    Section.FeedPreferences -> FeedPreferencesSection(
+                        feedPreference = state.signedInProfilePreferences
+                            ?.feedPreferences
+                            .orEmpty()
+                            .homeFeedOrDefault(),
+                        onFeedPreferenceUpdated = {
+                            actions(Action.UpdateFeedPreference(it))
+                        },
+                    )
                 }
             }
         },
@@ -214,4 +208,5 @@ private fun FeedPreferencesSection(
         },
     )
 }
+
 private val Boolean?.isTrue get() = this == true

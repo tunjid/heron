@@ -25,17 +25,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigationevent.compose.NavigationBackHandler
-import androidx.navigationevent.compose.rememberNavigationEventState
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.graze.editor.Action
 import com.tunjid.heron.graze.editor.ActualGrazeEditorViewModel
-import com.tunjid.heron.graze.editor.FilterNavigationEventInfo
 import com.tunjid.heron.graze.editor.GrazeEditorScreen
 import com.tunjid.heron.graze.editor.RouteViewModelInitializer
 import com.tunjid.heron.graze.editor.State
-import com.tunjid.heron.graze.editor.currentFilter
 import com.tunjid.heron.graze.editor.ui.EditFeedInfoSheetState
 import com.tunjid.heron.graze.editor.ui.Title
 import com.tunjid.heron.graze.editor.ui.TopBarActions
@@ -44,6 +40,7 @@ import com.tunjid.heron.graze.editor.ui.rememberEditFeedInfoSheetState
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
+import com.tunjid.heron.scaffold.scaffold.NestedNavigationEventHandler
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
@@ -269,14 +266,7 @@ class GrazeEditorBindings(
                 },
             )
 
-            NavigationBackHandler(
-                state = rememberNavigationEventState(
-                    currentInfo = remember(state.currentFilter) {
-                        FilterNavigationEventInfo(state.currentFilter)
-                    },
-                ),
-                isBackEnabled = state.currentPath.isNotEmpty(),
-            ) {
+            paneScaffoldState.NestedNavigationEventHandler {
                 viewModel.accept(Action.EditorNavigation.ExitFilter)
             }
         },
