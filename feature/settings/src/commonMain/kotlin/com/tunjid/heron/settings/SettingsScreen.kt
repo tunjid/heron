@@ -29,6 +29,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedPreference
 import com.tunjid.heron.data.core.models.FeedPreference.Companion.homeFeedOrDefault
+import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideQuotes
+import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideReplies
+import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideReposts
 import com.tunjid.heron.scaffold.navigation.moderationDestination
 import com.tunjid.heron.scaffold.navigation.notificationSettingsDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
@@ -182,7 +185,7 @@ private fun FeedPreferencesSection(
             .fillMaxWidth(),
         text = stringResource(Res.string.timeline_preferences_replies),
         enabled = true,
-        checked = feedPreference.hideReplies.isTrue,
+        checked = feedPreference.shouldHideReplies,
         onCheckedChange = {
             onFeedPreferenceUpdated(feedPreference.copy(hideReplies = it))
         },
@@ -192,7 +195,7 @@ private fun FeedPreferencesSection(
             .fillMaxWidth(),
         text = stringResource(Res.string.timeline_preferences_reposts),
         enabled = true,
-        checked = feedPreference.hideReposts.isTrue,
+        checked = feedPreference.shouldHideReposts,
         onCheckedChange = {
             onFeedPreferenceUpdated(feedPreference.copy(hideReposts = it))
         },
@@ -202,11 +205,9 @@ private fun FeedPreferencesSection(
             .fillMaxWidth(),
         text = stringResource(Res.string.timeline_preferences_quote_reposts),
         enabled = true,
-        checked = feedPreference.hideQuotePosts.isTrue,
+        checked = feedPreference.shouldHideQuotes,
         onCheckedChange = {
             onFeedPreferenceUpdated(feedPreference.copy(hideQuotePosts = it))
         },
     )
 }
-
-private val Boolean?.isTrue get() = this == true
