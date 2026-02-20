@@ -46,6 +46,7 @@ import com.tunjid.heron.data.core.models.isBlocked
 import com.tunjid.heron.data.core.types.AtProtoException
 import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
+import com.tunjid.heron.data.core.types.ExpiredSessionException
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.GenericId
@@ -82,20 +83,21 @@ import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.network.currentSessionContext
 import com.tunjid.heron.data.network.models.asExternalModel
 import com.tunjid.heron.data.network.models.post
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.distinctUntilChangedSignedProfilePreferencesOrDefault
-import com.tunjid.heron.data.repository.expiredSessionResult
-import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.repository.singleSessionFlow
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.Collections.requireRecordUri
 import com.tunjid.heron.data.utilities.LazyList
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.mapToResult
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver.TimelineItemCreationContext
+import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.toDistinctUntilChangedFlowOrEmpty
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
@@ -289,7 +291,11 @@ internal class OfflineRecordResolver @Inject constructor(
 
     override suspend fun resolve(
         uri: RecordUri,
-    ): Result<Record> = savedStateDataSource.inCurrentProfileSession { viewingProfileId ->
+    ): Result<Record> = runCatchingUnlessCancelled {
+        currentSessionContext()?.tokens
+            ?.authProfileId
+            ?: throw ExpiredSessionException()
+    }.mapToResult { viewingProfileId ->
         when (uri) {
             is FeedGeneratorUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
                 getFeedGenerator(
@@ -427,7 +433,7 @@ internal class OfflineRecordResolver @Inject constructor(
                 }
             is UnknownRecordUri -> Result.failure(UnresolvableRecordException(uri))
         }
-    }?.onFailure { throwable ->
+    }.onFailure { throwable ->
         logcat(LogPriority.WARN) {
             "Failed to resolve $uri. Cause: ${throwable.loggableText()}"
         }
@@ -445,7 +451,7 @@ internal class OfflineRecordResolver @Inject constructor(
                 is UnknownRecordUri -> Unit
             }
         }
-    } ?: expiredSessionResult()
+    }
 
     override fun <T> timelineItems(
         items: List<T>,
