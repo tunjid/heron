@@ -336,11 +336,15 @@ private fun ThreadGateBottomSheet(
                                 enabled = enabled,
                                 onClick = {
                                     state.updateAllowed {
+                                        val currentUris = allowedListUrisOrEmpty
                                         val newLists =
-                                            if (checked) allowedListUris - list.uri
-                                            else allowedListUris + list.uri
+                                            if (checked) currentUris - list.uri
+                                            else currentUris + list.uri
 
-                                        copy(allowedListUris = newLists)
+                                        copy(
+                                            allowedLists = emptyList(),
+                                            allowedListUris = newLists,
+                                        )
                                     }
                                 },
                             )
