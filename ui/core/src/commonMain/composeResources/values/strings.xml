@@ -127,4 +127,14 @@
     <string name="error_expired_session">Session expired</string>
     <string name="error_unknown">An unknown error occurred</string>
     <string name="error_generic">Error: %1$s</string>
+
+    <string name="error_invalid_token">Session expired. Please sign in again.</string>
+    <string name="error_atproto_with_error">Server Error: %1$s</string>
+    <string name="error_network_bad_request">Bad request</string>
+    <string name="error_network_unauthorized">Unauthorized access</string>
+    <string name="error_network_forbidden">Access forbidden</string>
+    <string name="error_network_not_found">Resource not found</string>
+    <string name="error_network_too_many_requests">Too many requests. Please try again later.</string>
+    <string name="error_network_server_error">Internal server error</string>
+    <string name="error_network_unknown">Server error (Code %1$d)</string>
 </resources>
