@@ -79,6 +79,10 @@ class PaneScaffoldState internal constructor(
     val prefersAutoHidingBottomNav
         get() = appState.prefersAutoHidingBottomNav
 
+    internal val nestedNavigationState = PaneNestedNavigationState(
+        paneScaffoldState = this,
+    )
+
     internal val canShowNavigationBar: Boolean
         get() = !isMediumScreenWidthOrWider
 
@@ -116,6 +120,10 @@ class PaneScaffoldState internal constructor(
 
             return MaterialTheme.colorScheme.surfaceColorAtElevation(elevation)
         }
+
+    interface NestedNavigationKey {
+        val isRoot: Boolean
+    }
 }
 
 @Composable
