@@ -22,6 +22,8 @@ import com.atproto.server.RefreshSessionResponse
 import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.models.SessionRequest
+import com.tunjid.heron.data.core.types.AtProtoException
+import com.tunjid.heron.data.core.types.InvalidTokenException
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.lexicons.XrpcBlueskyApi
 import com.tunjid.heron.data.lexicons.XrpcSerializersModule
@@ -33,10 +35,8 @@ import com.tunjid.heron.data.network.oauth.OAuthToken
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.signedInAuth
-import com.tunjid.heron.data.utilities.AtProtoException
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.DeferredMutex
-import com.tunjid.heron.data.utilities.InvalidTokenException
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
@@ -62,16 +62,13 @@ import io.ktor.http.encodedPath
 import io.ktor.http.isSuccess
 import io.ktor.http.set
 import io.ktor.http.takeFrom
-import io.ktor.util.collections.ConcurrentMap
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
 import sh.christian.ozone.api.Handle

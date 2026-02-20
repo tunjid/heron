@@ -215,11 +215,3 @@ internal inline fun <T> Result<T>.toOutcome(
         onSuccess = { it },
         onFailure = Outcome::Failure,
     )
-
-internal class InvalidTokenException : Exception("Invalid tokens")
-
-internal data class AtProtoException(
-    val statusCode: Int,
-    val error: String?,
-    override val message: String?,
-) : Exception(message)

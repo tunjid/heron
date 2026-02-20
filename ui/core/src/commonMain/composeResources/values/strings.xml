@@ -115,4 +115,16 @@
     <string name="blocked_accounts">Blocked Accounts</string>
     <string name="muted_accounts">Muted Accounts</string>
     <string name="feed_generator_create">Create feed</string>
+
+    <string name="error_unresolvable_profile">Profile not found</string>
+    <string name="error_unresolvable_record">Record not found</string>
+    <string name="error_restricted_profile">You do not have access to this profile</string>
+    <string name="error_unknown_notification">Unknown notification</string>
+    <string name="error_notification_filtered_out">Notification filtered out</string>
+    <string name="error_muted_thread">Thread muted</string>
+    <string name="error_record_creation">Unable to create record</string>
+    <string name="error_session_switch">Unable to switch sessions</string>
+    <string name="error_expired_session">Session expired</string>
+    <string name="error_unknown">An unknown error occurred</string>
+    <string name="error_generic">Error: %1$s</string>
 </resources>

@@ -43,6 +43,7 @@ import com.tunjid.heron.data.core.models.Repost
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.isBlocked
+import com.tunjid.heron.data.core.types.AtProtoException
 import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
@@ -88,7 +89,6 @@ import com.tunjid.heron.data.repository.distinctUntilChangedSignedProfilePrefere
 import com.tunjid.heron.data.repository.expiredSessionResult
 import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.repository.singleSessionFlow
-import com.tunjid.heron.data.utilities.AtProtoException
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.Collections.requireRecordUri
 import com.tunjid.heron.data.utilities.LazyList
