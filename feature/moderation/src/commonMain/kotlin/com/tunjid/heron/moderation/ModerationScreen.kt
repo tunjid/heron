@@ -83,8 +83,10 @@ internal fun ModerationScreen(
     modifier: Modifier = Modifier,
 ) {
     val threadGateSheetState = rememberUpdatedThreadGateSheetState(
-        recentLists = emptyList(),
-        onRequestRecentLists = { },
+        recentLists = state.recentLists,
+        onRequestRecentLists = {
+            actions(Action.UpdateRecentLists)
+        },
         onDefaultThreadGateUpdated = {
             actions(Action.UpdateThreadGates(it))
         },

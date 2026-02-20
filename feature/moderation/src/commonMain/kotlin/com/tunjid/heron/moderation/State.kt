@@ -18,6 +18,7 @@ package com.tunjid.heron.moderation
 
 import com.tunjid.heron.data.core.models.ContentLabelPreference
 import com.tunjid.heron.data.core.models.ContentLabelPreferences
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.MutedWordPreference
@@ -41,6 +42,8 @@ import org.jetbrains.compose.resources.StringResource
 @Serializable
 data class State(
     val adultContentEnabled: Boolean = false,
+    @Transient
+    val recentLists: List<FeedList> = emptyList(),
     @Transient
     val preferences: Preferences = Preferences.EmptyPreferences,
     @Transient
@@ -123,6 +126,8 @@ sealed class Action(val key: String) {
     ) : Action(key = "SnackbarDismissed")
 
     data object SignOut : Action(key = "SignOut")
+
+    data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
     sealed class Navigate :
         Action(key = "Navigate"),

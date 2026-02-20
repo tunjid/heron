@@ -299,7 +299,7 @@ private fun ThreadGateBottomSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable(enabled = enabled) {
-                            onRequestRecentLists()
+                            if (!listsExpanded) onRequestRecentLists()
                             listsExpanded = !listsExpanded
                         }
                         .padding(16.dp),
