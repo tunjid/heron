@@ -88,7 +88,6 @@ import com.tunjid.heron.data.network.models.asExternalModel
 import com.tunjid.heron.data.network.models.post
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.distinctUntilChangedSignedProfilePreferencesOrDefault
-import com.tunjid.heron.data.repository.expiredSessionResult
 import com.tunjid.heron.data.repository.singleSessionFlow
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.Collections.requireRecordUri
@@ -452,7 +451,7 @@ internal class OfflineRecordResolver @Inject constructor(
                 is UnknownRecordUri -> Unit
             }
         }
-    } ?: expiredSessionResult()
+    }
 
     override fun <T> timelineItems(
         items: List<T>,
