@@ -1233,17 +1233,11 @@ private fun SavedStateDataSource.timelineFeedPreference(
     source: Timeline.Source,
 ): Flow<FeedPreference> =
     // Only the following timeline currently has this setting
-    when (source) {
-        Timeline.Source.Following ->
-            savedState
-                .mapDistinctUntilChanged {
-                    it.signedProfilePreferencesOrDefault().feedPreferences.homeFeedOrDefault()
-                }
-        is Timeline.Source.Profile,
-        is Timeline.Source.Record.Feed,
-        is Timeline.Source.Record.List,
-        -> flowOf(FeedPreference(source.id))
-    }
+    if (source is Timeline.Source.Following) savedState
+        .mapDistinctUntilChanged {
+            it.signedProfilePreferencesOrDefault().feedPreferences.homeFeedOrDefault()
+        }
+    else flowOf(FeedPreference(source.id))
 
 private val TimelineItem.Thread.nextGeneration
     get() = generation?.let { it + posts.size }
