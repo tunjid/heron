@@ -53,6 +53,7 @@ sealed class Section {
     data class FeedPreferences(
         val feedPreference: FeedPreference,
     ) : Section() {
+        // Using the Companion as the key is deliberate.
         companion object : Key {
             override val isRoot: Boolean
                 get() = false

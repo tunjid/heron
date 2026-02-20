@@ -80,7 +80,7 @@ fun PaneScaffoldState.NestedNavigationEventHandler(
                 PaneNestedNavigationState.NestedNavigationEventInfo()
             },
         ),
-        isBackEnabled = nestedNavigationState.key?.isRoot == true,
+        isBackEnabled = nestedNavigationState.key?.isRoot == false,
         onBackCompleted = onBackCompleted,
     )
 }
