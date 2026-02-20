@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.settings
 
-import androidx.navigationevent.NavigationEventInfo
 import com.mikepenz.aboutlibraries.Libs
 import com.tunjid.heron.data.core.models.FeedPreference
 import com.tunjid.heron.data.core.models.Preferences
@@ -73,10 +72,6 @@ enum class AccountSwitchPhase {
     SUCCESS,
     LOADING,
 }
-
-data class SectionNavigationEventInfo(
-    val section: Section,
-) : NavigationEventInfo()
 
 sealed class Action(val key: String) {
 
