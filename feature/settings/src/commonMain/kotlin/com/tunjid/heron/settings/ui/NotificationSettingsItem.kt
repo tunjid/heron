@@ -15,7 +15,7 @@ fun NotificationSettingsItem(
     modifier: Modifier = Modifier,
     onNotificationSettingsClicked: () -> Unit,
 ) {
-    SettingsItemRow(
+    SettingsItem(
         modifier = modifier
             .fillMaxWidth()
             .clickable {

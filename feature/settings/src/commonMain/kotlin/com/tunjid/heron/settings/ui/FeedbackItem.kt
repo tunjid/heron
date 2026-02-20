@@ -33,7 +33,7 @@ fun FeedbackItem(
 ) {
     val uriHandler = LocalUriHandler.current
 
-    SettingsItemRow(
+    SettingsItem(
         modifier = modifier
             .fillMaxWidth()
             .clickable {
