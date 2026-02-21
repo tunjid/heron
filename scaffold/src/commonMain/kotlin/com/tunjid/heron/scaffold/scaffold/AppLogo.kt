@@ -41,10 +41,13 @@ fun MovableElementSharedTransitionScope.AppLogo(
         state = presentation,
         modifier = modifier,
         sharedElement = { currentPresentation, innerModifier ->
+            // Keep this in composition so it transitions
+            // smoothly from the splash animation
+            val backLogoAnimation = rememberBackLogoAnimation(
+                isArrow = currentPresentation is LogoPresentation.Destination.Poppable,
+            )
             val animation = when (currentPresentation) {
-                is LogoPresentation.Destination -> rememberBackLogoAnimation(
-                    isArrow = currentPresentation is LogoPresentation.Destination.Poppable,
-                )
+                is LogoPresentation.Destination -> backLogoAnimation
                 is LogoPresentation.Splash -> rememberSplashLogoAnimation()
             }
             Canvas(
