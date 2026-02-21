@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.EditAttributes
 import androidx.compose.material.icons.rounded.FilterAlt
 import androidx.compose.material.icons.rounded.PersonOff
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -21,21 +23,30 @@ import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.utilities.BottomSheetItemCard
 import com.tunjid.heron.timeline.utilities.BottomSheetItemCardRow
 import com.tunjid.heron.timeline.utilities.CopyToClipboardCard
-import com.tunjid.heron.timeline.utilities.PostModerationMenuSection
+import com.tunjid.heron.timeline.utilities.ItemHorizontalDivider
 import com.tunjid.heron.timeline.utilities.SendDirectMessageCard
 import com.tunjid.heron.timeline.utilities.shareUri
+import com.tunjid.heron.ui.DestructiveDialogButton
+import com.tunjid.heron.ui.NeutralDialogButton
+import com.tunjid.heron.ui.SimpleDialog
+import com.tunjid.heron.ui.SimpleDialogText
+import com.tunjid.heron.ui.SimpleDialogTitle
+import com.tunjid.heron.ui.rememberSimpleDialogState
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
 import com.tunjid.heron.ui.text.CommonStrings
+import heron.ui.core.generated.resources.no
 import heron.ui.core.generated.resources.viewer_state_block_account
 import heron.ui.core.generated.resources.viewer_state_mute_account
+import heron.ui.core.generated.resources.yes
 import heron.ui.timeline.generated.resources.Res
+import heron.ui.timeline.generated.resources.delete_post
+import heron.ui.timeline.generated.resources.delete_post_prompt
 import heron.ui.timeline.generated.resources.mute_words_tags
 import heron.ui.timeline.generated.resources.thread_gate_post_reply_settings
 import org.jetbrains.compose.resources.StringResource
@@ -122,35 +133,133 @@ private fun PostOptionsBottomSheet(
                     state.hide()
                 },
             )
-            state.currentPost?.let {
-                val isOwnPost = it.author.did == signedInProfileId
-                if (isOwnPost) BottomSheetItemCard(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    onClick = {
-                        onOptionClicked(PostOption.ThreadGate(it.uri))
-                    },
-                    content = {
-                        BottomSheetItemCardRow(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            icon = Icons.Rounded.EditAttributes,
-                            text = stringResource(Res.string.thread_gate_post_reply_settings),
-                        )
-                    },
-                )
-                CopyToClipboardCard(it.uri.shareUri())
+            state.currentPost?.let { post ->
+                val isOwnPost = post.author.did == signedInProfileId
+
+                CopyToClipboardCard(post.uri.shareUri())
+
                 if (!isOwnPost) PostModerationMenuSection(
                     signedInProfileId = signedInProfileId,
-                    post = it,
+                    post = post,
                     onOptionClicked = { option ->
                         state.hide()
                         onOptionClicked(option)
                     },
                 )
+
+                if (isOwnPost) PostManagementMenuSection(
+                    state = state,
+                    post = post,
+                    onOptionClicked = onOptionClicked,
+                )
             }
         }
     }
+}
+
+@Composable
+internal fun PostModerationMenuSection(
+    modifier: Modifier = Modifier,
+    signedInProfileId: ProfileId,
+    post: Post,
+    onOptionClicked: (PostOption) -> Unit,
+) {
+    BottomSheetItemCard(modifier) {
+        PostModerationTools.entries.forEachIndexed { index, tool ->
+            val isLast = index == PostModerationTools.entries.lastIndex
+
+            BottomSheetItemCardRow(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                icon = tool.icon,
+                text = stringResource(tool.stringRes),
+                onClick = {
+                    val option = when (tool) {
+                        PostModerationTools.MuteWords -> PostOption.Moderation.MuteWords
+                        PostModerationTools.BlockAccount -> PostOption.Moderation.BlockAccount(
+                            signedInProfileId = signedInProfileId,
+                            post = post,
+                        )
+                        PostModerationTools.MuteAccount -> PostOption.Moderation.MuteAccount(
+                            signedInProfileId = signedInProfileId,
+                            post = post,
+                        )
+                    }
+                    onOptionClicked(option)
+                },
+            )
+            if (!isLast) {
+                ItemHorizontalDivider()
+            }
+        }
+    }
+}
+
+@Composable
+private fun PostManagementMenuSection(
+    modifier: Modifier = Modifier,
+    state: PostOptionsSheetState,
+    post: Post,
+    onOptionClicked: (PostOption) -> Unit,
+) {
+    BottomSheetItemCard(
+        modifier = modifier
+            .fillMaxWidth(),
+        content = {
+            BottomSheetItemCardRow(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                icon = Icons.Rounded.EditAttributes,
+                text = stringResource(Res.string.thread_gate_post_reply_settings),
+                onClick = {
+                    onOptionClicked(PostOption.ThreadGate(post.uri))
+                },
+            )
+            ItemHorizontalDivider()
+
+            val deletePostDialogState = rememberSimpleDialogState()
+            BottomSheetItemCardRow(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                icon = Icons.Rounded.Delete,
+                text = stringResource(Res.string.delete_post),
+                iconTint = MaterialTheme.colorScheme.error,
+                onClick = {
+                    deletePostDialogState.show()
+                },
+            )
+
+            SimpleDialog(
+                state = deletePostDialogState,
+                title = {
+                    SimpleDialogTitle(
+                        text = stringResource(Res.string.delete_post),
+                    )
+                },
+                text = {
+                    SimpleDialogText(
+                        text = stringResource(Res.string.delete_post_prompt),
+                    )
+                },
+                confirmButton = {
+                    DestructiveDialogButton(
+                        text = stringResource(CommonStrings.yes),
+                        onClick = {
+                            onOptionClicked(PostOption.Delete(post.uri))
+                            deletePostDialogState.hide()
+                            state.hide()
+                        },
+                    )
+                },
+                dismissButton = {
+                    NeutralDialogButton(
+                        text = stringResource(CommonStrings.no),
+                        onClick = deletePostDialogState::hide,
+                    )
+                },
+            )
+        },
+    )
 }
 
 sealed class PostOption {

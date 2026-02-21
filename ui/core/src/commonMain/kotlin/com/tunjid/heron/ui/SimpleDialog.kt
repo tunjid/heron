@@ -21,9 +21,52 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+
+@Stable
+class SimpleDialogState internal constructor() {
+    internal var showing by mutableStateOf(false)
+
+    fun show() {
+        showing = true
+    }
+
+    fun hide() {
+        showing = false
+    }
+}
+
+@Composable
+fun rememberSimpleDialogState() =
+    remember(::SimpleDialogState)
+
+@Composable
+fun SimpleDialog(
+    state: SimpleDialogState,
+    modifier: Modifier = Modifier,
+    confirmButton: @Composable () -> Unit,
+    dismissButton: @Composable (() -> Unit)? = null,
+    icon: @Composable (() -> Unit)? = null,
+    title: @Composable (() -> Unit)? = null,
+    text: @Composable (() -> Unit)? = null,
+) {
+    if (state.showing) SimpleDialog(
+        onDismissRequest = state::hide,
+        modifier = modifier,
+        confirmButton = confirmButton,
+        dismissButton = dismissButton,
+        icon = icon,
+        title = title,
+        text = text,
+    )
+}
 
 @Composable
 fun SimpleDialog(
