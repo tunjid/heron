@@ -50,6 +50,7 @@ import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.scaffold.AppBarTitle
 import com.tunjid.heron.scaffold.scaffold.AppLogo
+import com.tunjid.heron.scaffold.scaffold.LogoPresentation
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
@@ -237,7 +238,7 @@ private fun PaneScaffoldState.TopBar(
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .size(36.dp),
-                isRootDestination = true,
+                presentation = LogoPresentation.Destination.Root,
             )
         },
         title = {

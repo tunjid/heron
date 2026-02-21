@@ -46,6 +46,7 @@ import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.referringRouteQueryParams
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -487,7 +488,7 @@ class PersistedNavigationStateHolder(
                 }
 
                 val elapsed = startTime.elapsedNow()
-                if (elapsed < SplashDelay) delay(SplashDelay - elapsed)
+                if (elapsed < UiTokens.splashScreenDuration) delay(UiTokens.splashScreenDuration - elapsed)
 
                 emit { multiStackNav }
 
@@ -695,8 +696,6 @@ private fun AppStack.toStackNav() = StackNav(
     name = stackName,
     children = listOf(rootRoute),
 )
-
-private val SplashDelay = 1.seconds
 
 private const val ReferringRouteQueryParam = "referringRoute"
 private const val OAuthUrlPathSegment = "oauth"

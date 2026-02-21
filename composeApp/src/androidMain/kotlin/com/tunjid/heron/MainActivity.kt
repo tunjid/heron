@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen().apply {
-            setKeepOnScreenCondition(appState::isShowingSplashScreen)
+            setKeepOnScreenCondition(appState::showPlatformSplashScreen)
             setOnExitAnimationListener(SplashScreenViewProvider::remove)
         }
         enableEdgeToEdge()

@@ -17,10 +17,6 @@
 package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -77,7 +73,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                 modifier = Modifier
                     .padding(start = 8.dp)
                     .size(36.dp),
-                isRootDestination = true,
+                presentation = LogoPresentation.Destination.Root,
             )
         },
         title = title,
@@ -160,7 +156,7 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
                     .clip(CircleShape)
                     .clickable(onClick = onBackPressed)
                     .size(36.dp),
-                isRootDestination = false,
+                presentation = LogoPresentation.Destination.Poppable,
             )
         },
         title = {
