@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.lazy.rememberLazyScrollableState
 import com.tunjid.heron.data.core.models.Conversation
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
@@ -121,6 +122,7 @@ internal fun FeedScreen(
                 timelineStateHolder = timelineStateHolder,
                 actions = actions,
                 signedInProfileId = state.signedInProfileId,
+                recentLists = state.recentLists,
                 recentConversations = state.recentConversations,
                 mutedWordsPreferences = state.preferences.mutedWordPreferences,
                 autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
@@ -137,6 +139,7 @@ private fun FeedTimeline(
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
     mutedWordsPreferences: List<MutedWordPreference>,
+    recentLists: List<FeedList>,
     recentConversations: List<Conversation>,
     autoPlayTimelineVideos: Boolean,
 ) {
@@ -179,6 +182,10 @@ private fun FeedTimeline(
         },
     )
     val threadGateSheetState = rememberUpdatedThreadGateSheetState(
+        recentLists = recentLists,
+        onRequestRecentLists = {
+            actions(Action.UpdateRecentLists)
+        },
         onThreadGateUpdated = {
             actions(Action.SendPostInteraction(it))
         },

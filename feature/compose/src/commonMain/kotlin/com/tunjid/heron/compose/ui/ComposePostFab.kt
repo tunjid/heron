@@ -92,6 +92,10 @@ fun PaneScaffoldState.ComposePostFabRow(
                 onInteractionSettingsUpdated = {
                     onAction(Action.UpdateInteractionSettings(it))
                 },
+                recentLists = state.recentLists,
+                onRequestRecentLists = {
+                    onAction(Action.UpdateRecentLists)
+                },
             )
         }
         Spacer(Modifier.weight(1f))

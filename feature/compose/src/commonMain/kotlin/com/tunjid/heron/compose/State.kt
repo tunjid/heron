@@ -19,6 +19,7 @@ package com.tunjid.heron.compose
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
@@ -42,6 +43,8 @@ data class State(
     val signedInProfile: Profile? = null,
     val fabExpanded: Boolean = true,
     val embeddedRecord: Record.Embeddable? = null,
+    @Transient
+    val recentLists: List<FeedList> = emptyList(),
     @Transient
     val interactionsPreference: PostInteractionSettingsPreference? = null,
     @Serializable(with = TextFieldValueSerializer::class)
@@ -148,4 +151,6 @@ sealed class Action(val key: String) {
     data object ClearSuggestions : Action("ClearSuggestions")
 
     data object RemoveEmbeddedRecord : Action("RemoveEmbeddedRecord")
+
+    data object UpdateRecentLists : Action("UpdateRecentLists")
 }

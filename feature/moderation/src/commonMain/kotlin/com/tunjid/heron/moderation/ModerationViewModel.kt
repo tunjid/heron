@@ -44,6 +44,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 
 internal typealias ModerationStateHolder = ActionStateMutator<Action, StateFlow<State>>
@@ -105,6 +106,9 @@ class ActualModerationViewModel(
                     is Action.UpdateThreadGates -> action.flow.updateThreadGateMutations(
                         writeQueue = writeQueue,
                     )
+                    is Action.UpdateRecentLists -> action.flow.recentListsMutations(
+                        recordRepository = recordRepository,
+                    )
                     Action.SignOut -> action.flow.mapToManyMutations {
                         authRepository.signOut()
                     }
@@ -155,6 +159,16 @@ private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
         emit { copy(messages = messages + it) }
     }
 }
+
+fun Flow<Action.UpdateRecentLists>.recentListsMutations(
+    recordRepository: RecordRepository,
+): Flow<Mutation<State>> =
+    flatMapLatest {
+        recordRepository.recentLists
+            .mapToMutation { lists ->
+                copy(recentLists = lists)
+            }
+    }
 
 private fun Flow<Action.UpdateThreadGates>.updateThreadGateMutations(
     writeQueue: WriteQueue,

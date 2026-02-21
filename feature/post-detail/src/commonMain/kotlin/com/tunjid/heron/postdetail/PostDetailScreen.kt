@@ -126,6 +126,10 @@ internal fun PostDetailScreen(
         },
     )
     val threadGateSheetState = rememberUpdatedThreadGateSheetState(
+        recentLists = state.recentLists,
+        onRequestRecentLists = {
+            actions(Action.UpdateRecentLists)
+        },
         onThreadGateUpdated = {
             actions(Action.SendPostInteraction(it))
         },

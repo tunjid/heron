@@ -55,6 +55,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.composables.lazy.rememberLazyScrollableState
 import com.tunjid.heron.data.core.models.Conversation
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
@@ -181,6 +182,7 @@ internal fun HomeScreen(
                     signedInProfileId = state.signedInProfile?.did,
                     mutedWordsPreferences = state.preferences.mutedWordPreferences,
                     autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
+                    recentLists = state.recentLists,
                     recentConversations = state.recentConversations,
                     timelineStateHolder = timelineStateHolder,
                     tabsOffset = tabsOffsetNestedScrollConnection::offset,
@@ -302,6 +304,7 @@ private fun HomeTimeline(
     signedInProfileId: ProfileId?,
     mutedWordsPreferences: List<MutedWordPreference>,
     autoPlayTimelineVideos: Boolean,
+    recentLists: List<FeedList>,
     recentConversations: List<Conversation>,
     timelineStateHolder: TimelineStateHolder,
     tabsOffset: () -> Offset,
@@ -335,6 +338,10 @@ private fun HomeTimeline(
         },
     )
     val threadGateSheetState = rememberUpdatedThreadGateSheetState(
+        recentLists = recentLists,
+        onRequestRecentLists = {
+            actions(Action.UpdateRecentLists)
+        },
         onThreadGateUpdated = {
             actions(Action.SendPostInteraction(it))
         },

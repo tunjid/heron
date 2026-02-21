@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.AppliedLabels.Companion.warned
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
@@ -84,11 +85,13 @@ internal fun PostSearchResults(
     gridState: LazyStaggeredGridState,
     modifier: Modifier,
     signedInProfileId: ProfileId?,
+    recentLists: List<FeedList>,
     recentConversations: List<Conversation>,
     mutedWordPreferences: List<MutedWordPreference>,
     autoPlayTimelineVideos: Boolean,
     videoStates: ThreadedVideoPositionStates<SearchResult.OfPost>,
     paneScaffoldState: PaneScaffoldState,
+    onRequestRecentLists: () -> Unit,
     onLinkTargetClicked: (LinkTarget) -> Unit,
     onPostSearchResultProfileClicked: (profile: Profile, post: Post, sharedElementPrefix: String) -> Unit,
     onPostSearchResultClicked: (post: Post, sharedElementPrefix: String) -> Unit,
@@ -121,6 +124,8 @@ internal fun PostSearchResults(
         },
     )
     val threadGateSheetState = rememberUpdatedThreadGateSheetState(
+        recentLists = recentLists,
+        onRequestRecentLists = onRequestRecentLists,
         onThreadGateUpdated = onSendPostInteraction,
     )
     val mutedWordsSheetState = rememberUpdatedMutedWordsSheetState(

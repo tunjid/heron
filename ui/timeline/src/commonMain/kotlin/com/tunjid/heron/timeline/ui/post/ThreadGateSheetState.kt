@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.timeline.ui.post
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,9 +29,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -41,14 +45,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
 import com.tunjid.heron.data.core.models.ThreadGate
@@ -59,10 +66,16 @@ import com.tunjid.heron.data.core.models.allowsFollowers
 import com.tunjid.heron.data.core.models.allowsFollowing
 import com.tunjid.heron.data.core.models.allowsMentioned
 import com.tunjid.heron.data.core.models.allowsNone
+import com.tunjid.heron.images.AsyncImage
+import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
+import com.tunjid.heron.ui.text.CommonStrings
+import heron.ui.core.generated.resources.collapse_icon
+import heron.ui.core.generated.resources.expand_icon
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.thread_gate_anyone
 import heron.ui.timeline.generated.resources.thread_gate_info
@@ -71,6 +84,7 @@ import heron.ui.timeline.generated.resources.thread_gate_people_you_follow
 import heron.ui.timeline.generated.resources.thread_gate_people_you_mention
 import heron.ui.timeline.generated.resources.thread_gate_post_reply_settings
 import heron.ui.timeline.generated.resources.thread_gate_save
+import heron.ui.timeline.generated.resources.thread_gate_select_from_your_lists
 import heron.ui.timeline.generated.resources.thread_gate_who_can_reply
 import heron.ui.timeline.generated.resources.thread_gate_your_followers
 import org.jetbrains.compose.resources.stringResource
@@ -137,8 +151,12 @@ sealed class ThreadGateSheetState private constructor(
 
         @Composable
         fun rememberUpdatedThreadGateSheetState(
+            recentLists: List<FeedList>,
+            onRequestRecentLists: () -> Unit,
             onThreadGateUpdated: (Post.Interaction.Upsert.Gate) -> Unit,
         ): OfTimeline = rememberUpdatedGenericThreadGateSheetState(
+            recentLists = recentLists,
+            onRequestRecentLists = onRequestRecentLists,
             ThreadGateSheetState::OfTimeline,
         ) { mode, allowed ->
             require(mode is Mode.Timeline)
@@ -147,8 +165,12 @@ sealed class ThreadGateSheetState private constructor(
 
         @Composable
         fun rememberUpdatedThreadGateSheetState(
+            recentLists: List<FeedList>,
+            onRequestRecentLists: () -> Unit,
             onDefaultThreadGateUpdated: (PostInteractionSettingsPreference) -> Unit,
         ): OfPreference = rememberUpdatedGenericThreadGateSheetState(
+            recentLists = recentLists,
+            onRequestRecentLists = onRequestRecentLists,
             ThreadGateSheetState::OfPreference,
         ) { mode, allowed ->
             require(mode is Mode.Preferences)
@@ -157,6 +179,8 @@ sealed class ThreadGateSheetState private constructor(
 
         @Composable
         private inline fun <T : ThreadGateSheetState> rememberUpdatedGenericThreadGateSheetState(
+            recentLists: List<FeedList>,
+            noinline onRequestRecentLists: () -> Unit,
             crossinline initializer: (BottomSheetScope) -> T,
             crossinline onThreadGateUpdated: (Mode, ThreadGate.Allowed?) -> Unit,
         ): T {
@@ -166,6 +190,8 @@ sealed class ThreadGateSheetState private constructor(
 
             ThreadGateBottomSheet(
                 state = state,
+                recentLists = recentLists,
+                onRequestRecentLists = onRequestRecentLists,
                 onThreadGateUpdated = { mode, allowed ->
                     onThreadGateUpdated(mode, allowed)
                 },
@@ -179,8 +205,12 @@ sealed class ThreadGateSheetState private constructor(
 @Composable
 private fun ThreadGateBottomSheet(
     state: ThreadGateSheetState,
+    recentLists: List<FeedList>,
+    onRequestRecentLists: () -> Unit,
     onThreadGateUpdated: (Mode, ThreadGate.Allowed?) -> Unit,
 ) {
+    var listsExpanded by remember { mutableStateOf(false) }
+
     state.ModalBottomSheet {
         Column(
             modifier = Modifier
@@ -254,30 +284,75 @@ private fun ThreadGateBottomSheet(
                 )
             }
 
-            // Lists Dropdown
-            /* Comment out for now, out of scope
-            Row(
+            val selectedUris = state.allowed.allowedListUrisOrEmpty
+            val enabled = !state.allowed.allowsNone
+
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f))
-                    .clickable { /* Open Lists selection */ }
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+                    .background(
+                        MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f),
+                    ),
             ) {
-                Text(
-                    text = stringResource(Res.string.thread_gate_select_from_your_lists),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Icon(
-                    imageVector = Icons.Rounded.KeyboardArrowDown,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(enabled = enabled) {
+                            if (!listsExpanded) onRequestRecentLists()
+                            listsExpanded = !listsExpanded
+                        }
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(Res.string.thread_gate_select_from_your_lists),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+
+                    Icon(
+                        imageVector = if (listsExpanded)
+                            Icons.Rounded.KeyboardArrowUp
+                        else
+                            Icons.Rounded.KeyboardArrowDown,
+                        contentDescription = stringResource(
+                            if (listsExpanded) CommonStrings.collapse_icon
+                            else CommonStrings.expand_icon,
+                        ),
+                    )
+                }
+
+                AnimatedVisibility(visible = listsExpanded && enabled) {
+                    Column(
+                        modifier = Modifier.padding(bottom = 8.dp),
+                    ) {
+                        recentLists.forEach { list ->
+                            val checked = list.uri in selectedUris
+
+                            FeedListCheckboxRow(
+                                list = list,
+                                checked = checked,
+                                enabled = enabled,
+                                onClick = {
+                                    state.updateAllowed {
+                                        val currentUris = allowedListUrisOrEmpty
+                                        val newLists =
+                                            if (checked) currentUris - list.uri
+                                            else currentUris + list.uri
+
+                                        copy(
+                                            allowedLists = emptyList(),
+                                            allowedListUris = newLists,
+                                        )
+                                    }
+                                },
+                            )
+                        }
+                    }
+                }
             }
-             */
+
             // Quote Posts Toggle
             /* Comment out for now, out of scope
              Row(
@@ -312,6 +387,7 @@ private fun ThreadGateBottomSheet(
              )
              }
              */
+
             Spacer(Modifier.height(8.dp))
 
             // Save Button
@@ -434,6 +510,56 @@ private fun SettingsCheckboxRow(
             color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
                 alpha = 0.38f,
             ),
+        )
+    }
+}
+
+@Composable
+private fun FeedListCheckboxRow(
+    list: FeedList,
+    checked: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = null,
+            enabled = enabled,
+        )
+
+        Spacer(Modifier.width(12.dp))
+
+        AsyncImage(
+            modifier = Modifier
+                .size(28.dp)
+                .clip(CircleShape),
+            args = remember(list.avatar) {
+                ImageArgs(
+                    url = list.avatar?.uri,
+                    contentScale = ContentScale.Crop,
+                    contentDescription = list.name,
+                    shape = RoundedPolygonShape.Circle,
+                )
+            },
+        )
+
+        Spacer(Modifier.width(12.dp))
+
+        Text(
+            text = list.name,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (enabled)
+                MaterialTheme.colorScheme.onSurface
+            else
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
         )
     }
 }
