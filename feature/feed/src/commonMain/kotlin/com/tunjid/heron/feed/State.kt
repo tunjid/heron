@@ -26,6 +26,7 @@ import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.model
@@ -99,6 +100,10 @@ sealed class Action(val key: String) {
         val signedInProfileId: ProfileId,
         val profileId: ProfileId,
     ) : Action(key = "MuteAccount")
+
+    data class DeleteRecord(
+        val recordUri: RecordUri,
+    ) : Action(key = "DeleteRecord")
 
     data class SendPostInteraction(
         val interaction: Post.Interaction,

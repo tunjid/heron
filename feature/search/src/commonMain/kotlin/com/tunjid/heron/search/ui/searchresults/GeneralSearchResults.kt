@@ -61,6 +61,7 @@ import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.search.SearchResult
@@ -106,6 +107,7 @@ internal fun GeneralSearchResults(
     onSave: (mutedWordPreferences: List<MutedWordPreference>) -> Unit,
     onMuteAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
     onBlockAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
+    onDeletePostClicked: (RecordUri) -> Unit,
 ) {
     Box(
         modifier = modifier,
@@ -214,6 +216,7 @@ internal fun GeneralSearchResults(
                             onSave = onSave,
                             onMuteAccountClicked = onMuteAccountClicked,
                             onBlockAccountClicked = onBlockAccountClicked,
+                            onDeletePostClicked = onDeletePostClicked,
                         )
                         tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(
                             pagerState = pagerState,
