@@ -69,7 +69,11 @@ internal class SplashLogoAnimation(
         val degrees = rotation()
 
         when (part) {
-            HeronPart.Head -> withTransform(
+            HeronPart.Legs -> drawPath(
+                path = part.path,
+                color = bodyColor,
+            )
+            else -> withTransform(
                 transformBlock = {
                     rotate(
                         degrees = degrees,
@@ -83,39 +87,6 @@ internal class SplashLogoAnimation(
                     )
                 },
             )
-            HeronPart.Body ->
-                withTransform(
-                    transformBlock = {
-                        rotate(
-                            degrees = degrees,
-                            pivot = RotationPivot,
-                        )
-                    },
-                    drawBlock = {
-                        drawPath(
-                            path = part.path,
-                            color = bodyColor,
-                        )
-                    },
-                )
-            HeronPart.Legs -> drawPath(
-                path = part.path,
-                color = bodyColor,
-            )
-            HeronPart.Beak -> withTransform(
-                transformBlock = {
-                    rotate(
-                        degrees = degrees,
-                        pivot = RotationPivot,
-                    )
-                },
-                drawBlock = {
-                    drawPath(
-                        path = part.path,
-                        color = bodyColor,
-                    )
-                },
-            )
         }
     }
 }
@@ -123,7 +94,7 @@ internal class SplashLogoAnimation(
 private val KeyframesSpec.KeyframesSpecConfig<Float>.dipKeyframe: KeyframesSpec.KeyframeEntity<Float>
     get() = (-35f) at (durationMillis * 0.45).toInt()
 
-val KeyframesSpec.KeyframesSpecConfig<Float>.raiseKeyFrame: KeyframesSpec.KeyframeEntity<Float>
+private val KeyframesSpec.KeyframesSpecConfig<Float>.raiseKeyFrame: KeyframesSpec.KeyframeEntity<Float>
     get() = 0f at (durationMillis * 0.90).toInt()
 
 private val RotationPivot = Offset(
