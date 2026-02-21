@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.utilities.BottomSheetItemCard
 import com.tunjid.heron.timeline.utilities.BottomSheetItemCardRow
 import com.tunjid.heron.timeline.utilities.CopyToClipboardCard
@@ -159,6 +160,10 @@ sealed class PostOption {
     ) : PostOption()
 
     data class ThreadGate(
+        val postUri: PostUri,
+    ) : PostOption()
+
+    data class Delete(
         val postUri: PostUri,
     ) : PostOption()
 

@@ -283,6 +283,7 @@ internal fun SearchScreen(
                         ),
                     )
                 },
+                onDeletePostClicked = { actions(Action.DeleteRecord(it)) },
             )
         }
     }

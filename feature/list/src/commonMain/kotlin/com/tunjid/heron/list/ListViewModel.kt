@@ -156,6 +156,9 @@ class ActualListViewModel(
                         is Action.UpdateRecentLists -> action.flow.recentListsMutations(
                             recordRepository = recordRepository,
                         )
+                        is Action.DeleteRecord -> action.flow.deleteRecordMutations(
+                            writeQueue = writeQueue,
+                        )
                     }
                 },
             )
@@ -354,6 +357,18 @@ private fun Flow<Action.MuteAccount>.muteAccountMutations(
             signedInProfileId = action.signedInProfileId,
             profileId = action.profileId,
         ),
+    )
+    val status = writeQueue.enqueue(writable)
+    writable.writeStatusMessage(status)?.let {
+        emit { copy(messages = messages + it) }
+    }
+}
+
+private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = mapToManyMutations { action ->
+    val writable = Writable.RecordDeletion(
+        recordUri = action.recordUri,
     )
     val status = writeQueue.enqueue(writable)
     writable.writeStatusMessage(status)?.let {

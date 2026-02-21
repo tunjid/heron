@@ -196,6 +196,9 @@ class ActualProfileViewModel(
                         is Action.UpdateRecentLists -> action.flow.recentListsMutations(
                             recordRepository = recordRepository,
                         )
+                        is Action.DeleteRecord -> action.flow.deleteRecordMutations(
+                            writeQueue = writeQueue,
+                        )
                     }
                 },
             )
@@ -451,6 +454,18 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
     mapToMutation { action ->
         copy(messages = messages - action.message)
     }
+
+private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = mapToManyMutations { action ->
+    val writable = Writable.RecordDeletion(
+        recordUri = action.recordUri,
+    )
+    val status = writeQueue.enqueue(writable)
+    writable.writeStatusMessage(status)?.let {
+        emit { copy(messages = messages + it) }
+    }
+}
 
 private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
     writeQueue: WriteQueue,

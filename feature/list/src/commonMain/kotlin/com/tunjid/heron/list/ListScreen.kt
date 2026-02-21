@@ -479,6 +479,7 @@ private fun ListTimeline(
                     profileRestrictionDialogState.show(option)
 
                 is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
+                is PostOption.Delete -> actions(Action.DeleteRecord(option.postUri))
             }
         },
     )

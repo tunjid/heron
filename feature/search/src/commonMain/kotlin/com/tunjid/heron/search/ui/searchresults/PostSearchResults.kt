@@ -41,6 +41,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
@@ -104,6 +105,7 @@ internal fun PostSearchResults(
     searchResultActions: (SearchState.Tile) -> Unit,
     onMuteAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
     onBlockAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
+    onDeletePostClicked: (RecordUri) -> Unit,
 ) {
     val now = remember { Clock.System.now() }
     val results by rememberUpdatedState(state.tiledItems)
@@ -178,6 +180,7 @@ internal fun PostSearchResults(
                     profileRestrictionDialogState.show(option)
 
                 is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
+                is PostOption.Delete -> onDeletePostClicked(option.postUri)
             }
         },
     )
