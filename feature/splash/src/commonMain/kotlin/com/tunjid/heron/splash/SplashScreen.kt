@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.scaffold.scaffold.AppLogo
+import com.tunjid.heron.scaffold.scaffold.LogoPresentation
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 
 @Composable
@@ -39,7 +40,7 @@ internal fun SplashScreen(
             modifier = Modifier
                 .size(128.dp)
                 .align(Alignment.Center),
-            isRootDestination = true,
+            presentation = LogoPresentation.Splash,
         )
     }
 }
