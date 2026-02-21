@@ -22,6 +22,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.sourceId
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.utilities.Outcome
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
@@ -175,6 +176,18 @@ sealed interface Writable {
 
         override suspend fun WriteQueue.write(): Outcome =
             notificationRepository.updateNotificationPreferences(updates)
+    }
+
+    @Serializable
+    data class RecordDeletion(
+        val recordUri: RecordUri,
+    ) : Writable {
+
+        override val queueId: String
+            get() = "delete-$recordUri"
+
+        override suspend fun WriteQueue.write(): Outcome =
+            recordRepository.deleteRecord(recordUri)
     }
 }
 
