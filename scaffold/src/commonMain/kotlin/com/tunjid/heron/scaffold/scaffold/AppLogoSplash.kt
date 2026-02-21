@@ -83,7 +83,7 @@ internal class SplashLogoAnimation(
                 drawBlock = {
                     drawPath(
                         path = part.path,
-                        color = HeadColor,
+                        color = if (part == HeronPart.Head) HeadColor else bodyColor,
                     )
                 },
             )
