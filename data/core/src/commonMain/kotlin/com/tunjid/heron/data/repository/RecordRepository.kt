@@ -46,7 +46,9 @@ import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackUri
+import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
@@ -119,6 +121,10 @@ interface RecordRepository {
     suspend fun updateGrazeFeed(
         update: GrazeFeed.Update,
     ): Result<GrazeFeed>
+
+    suspend fun deleteRecord(
+        uri: RecordUri,
+    ): Outcome
 }
 
 internal class OfflineRecordRepository @Inject constructor(
@@ -376,6 +382,13 @@ internal class OfflineRecordRepository @Inject constructor(
             }
         }
     } ?: expiredSessionResult()
+
+    override suspend fun deleteRecord(
+        uri: RecordUri,
+    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+        recordResolver.deleteRecord(uri)
+    } ?: expiredSessionOutcome()
 }
 
 private suspend fun NetworkService.updateFeedRecord(
@@ -393,7 +406,8 @@ private suspend fun NetworkService.updateFeedRecord(
                     record = BskyFeed(
                         did = Did(GrazeDid.id),
                         displayName = editableFeed?.displayName ?: "Graze Feed",
-                        description = editableFeed?.description ?: "A custom feed created with \uD80C\uDD63 and \uD83D\uDC2E",
+                        description = editableFeed?.description
+                            ?: "A custom feed created with \uD80C\uDD63 and \uD83D\uDC2E",
                         createdAt = Clock.System.now(),
                         contentMode = response.contentMode,
                     ).asJsonContent(BskyFeed.serializer()),

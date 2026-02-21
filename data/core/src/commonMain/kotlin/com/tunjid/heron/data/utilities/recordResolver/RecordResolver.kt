@@ -26,6 +26,7 @@ import app.bsky.graph.GetListQueryParams
 import app.bsky.graph.GetStarterPackQueryParams
 import app.bsky.labeler.GetServicesQueryParams
 import app.bsky.labeler.GetServicesResponseViewUnion
+import com.atproto.repo.DeleteRecordRequest
 import com.atproto.repo.GetRecordQueryParams
 import com.atproto.repo.GetRecordResponse
 import com.tunjid.heron.data.core.models.AppliedLabels
@@ -63,6 +64,7 @@ import com.tunjid.heron.data.core.types.UnresolvableRecordException
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.types.requireCollection
+import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
@@ -99,6 +101,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver.TimelineItemCreationContext
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.toDistinctUntilChangedFlowOrEmpty
+import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import io.ktor.http.HttpStatusCode
@@ -140,6 +143,10 @@ internal interface RecordResolver {
     suspend fun resolve(
         uri: RecordUri,
     ): Result<Record>
+
+    suspend fun deleteRecord(
+        uri: RecordUri,
+    ): Outcome
 
     interface TimelineItemCreationContext {
         val list: MutableList<TimelineItem>
@@ -438,18 +445,40 @@ internal class OfflineRecordResolver @Inject constructor(
             "Failed to resolve $uri. Cause: ${throwable.loggableText()}"
         }
         if (isNotFound(throwable)) {
-            when (uri) {
-                is BlockUri -> profileDao.deleteBlock(uri)
-                is FeedGeneratorUri -> feedGeneratorDao.deleteFeedGenerator(uri)
-                is LabelerUri -> labelDao.deleteLabeler(uri)
-                is ListUri -> listDao.deleteList(uri)
-                is PostUri -> postDao.deletePost(uri)
-                is StarterPackUri -> starterPackDao.deleteStarterPack(uri)
-                is FollowUri -> profileDao.deleteFollow(uri)
-                is LikeUri -> postDao.deletePostViewerStatisticsLike(uri)
-                is RepostUri -> postDao.deletePostViewerStatisticsRepost(uri)
-                is UnknownRecordUri -> Unit
-            }
+            deleteLocalRecord(uri)
+        }
+    }
+
+    override suspend fun deleteRecord(
+        uri: RecordUri,
+    ) = runCatchingUnlessCancelled {
+        networkService.runCatchingWithMonitoredNetworkRetry {
+            deleteRecord(
+                DeleteRecordRequest(
+                    repo = Did(uri.profileId().id),
+                    collection = Nsid(uri.requireCollection()),
+                    rkey = RKey(uri.recordKey.value),
+                ),
+            )
+        }.getOrThrow()
+
+        deleteLocalRecord(uri)
+    }.toOutcome()
+
+    private suspend fun deleteLocalRecord(
+        uri: RecordUri,
+    ) {
+        when (uri) {
+            is BlockUri -> profileDao.deleteBlock(uri)
+            is FeedGeneratorUri -> feedGeneratorDao.deleteFeedGenerator(uri)
+            is LabelerUri -> labelDao.deleteLabeler(uri)
+            is ListUri -> listDao.deleteList(uri)
+            is PostUri -> postDao.deletePost(uri)
+            is StarterPackUri -> starterPackDao.deleteStarterPack(uri)
+            is FollowUri -> profileDao.deleteFollow(uri)
+            is LikeUri -> postDao.deletePostViewerStatisticsLike(uri)
+            is RepostUri -> postDao.deletePostViewerStatisticsRepost(uri)
+            is UnknownRecordUri -> Unit
         }
     }
 
