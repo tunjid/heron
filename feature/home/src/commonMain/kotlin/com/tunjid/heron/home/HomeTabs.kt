@@ -40,6 +40,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -53,12 +54,12 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.InputChip
@@ -217,6 +218,7 @@ internal fun HomeTabs(
                     tabsState = expandedTabsState,
                     sharedTransitionScope = this@with,
                     animatedContentScope = this@AnimatedContent,
+                    onCreateFeedClicked = onCreateFeedClicked,
                     onDismissed = { onLayoutChanged(TabLayout.Collapsed.All) },
                     onTimelinePreferencesSaved = onTimelinePreferencesSaved,
                 )
@@ -282,12 +284,6 @@ internal fun HomeTabs(
                     icon = Icons.Rounded.Bookmark,
                     iconDescription = stringResource(Res.string.bookmark),
                 )
-                AppBarButton(
-                    modifier = expandedOptionsModifier,
-                    onClick = onCreateFeedClicked,
-                    icon = Icons.Rounded.Add,
-                    iconDescription = stringResource(CommonStrings.feed_generator_create),
-                )
             }
             AppBarButton(
                 modifier = Modifier
@@ -324,6 +320,7 @@ private fun ExpandedTabs(
     animatedContentScope: AnimatedContentScope,
     onDismissed: () -> Unit,
     onTimelinePreferencesSaved: (List<Timeline.Home>) -> Unit,
+    onCreateFeedClicked: () -> Unit,
 ) = with(sharedTransitionScope) {
     val editableTimelineState = rememberEditableTimelineState(
         timelines = timelines,
@@ -422,6 +419,23 @@ private fun ExpandedTabs(
                         .padding(horizontal = 8.dp)
                         .fillMaxWidth(),
                     isHovered = editableTimelineState.isHintHovered,
+                )
+            }
+
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .animateBounds(this@with),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                FilledTonalButton(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    onClick = onCreateFeedClicked,
+                    content = {
+                        Text(stringResource(CommonStrings.feed_generator_create))
+                    },
                 )
             }
         }
