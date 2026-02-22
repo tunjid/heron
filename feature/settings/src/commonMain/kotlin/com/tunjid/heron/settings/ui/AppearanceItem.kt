@@ -26,6 +26,7 @@ import com.tunjid.heron.data.core.models.Preferences
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.appearance
 import heron.feature.settings.generated.resources.autohide_bottom_navigation
+import heron.feature.settings.generated.resources.show_post_engagement_metrics
 import heron.feature.settings.generated.resources.use_compact_navigation
 import heron.feature.settings.generated.resources.use_dynamic_theming
 import org.jetbrains.compose.resources.stringResource
@@ -43,6 +44,7 @@ fun AppearanceItem(
     setDynamicThemingPreference: (Boolean) -> Unit,
     setCompactNavigation: (Boolean) -> Unit,
     setAutoHideBottomNavigation: (Boolean) -> Unit,
+    setShowPostEngagementMetrics: (Boolean) -> Unit,
 ) {
     val isDynamicThemingSupported = isDynamicThemingSupported()
     val isCompactNavigationSupported = isCompactNavigationSupported()
@@ -77,6 +79,14 @@ fun AppearanceItem(
             enabled = isCompactNavigationSupported,
             checked = signedInProfilePreferences.local.autoHideBottomNavigation,
             onCheckedChange = setAutoHideBottomNavigation,
+        )
+        SettingsToggleItem(
+            modifier = Modifier
+                .fillMaxWidth(),
+            text = stringResource(Res.string.show_post_engagement_metrics),
+            enabled = true,
+            checked = signedInProfilePreferences.local.showPostEngagementMetrics,
+            onCheckedChange = setShowPostEngagementMetrics,
         )
     }
 }

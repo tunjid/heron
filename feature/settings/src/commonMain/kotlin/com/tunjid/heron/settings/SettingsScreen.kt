@@ -155,6 +155,9 @@ private fun MainSection(
                 setAutoHideBottomNavigation = {
                     actions(Action.SetAutoHideBottomNavigation(it))
                 },
+                setShowPostEngagementMetrics = {
+                    actions(Action.SetShowPostEngagementMetrics(it))
+                },
             )
             FeedbackItem(
                 modifier = Modifier

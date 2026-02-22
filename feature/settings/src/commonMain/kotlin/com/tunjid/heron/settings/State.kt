@@ -100,6 +100,10 @@ sealed class Action(val key: String) {
         val autoHideBottomNavigation: Boolean,
     ) : Action(key = "SetAutoHideBottomNavigation")
 
+    data class SetShowPostEngagementMetrics(
+        val showPostEngagementMetrics: Boolean,
+    ) : Action(key = "SetShowPostEngagementMetrics")
+
     data class SnackbarDismissed(
         val message: Memo,
     ) : Action(key = "SnackbarDismissed")

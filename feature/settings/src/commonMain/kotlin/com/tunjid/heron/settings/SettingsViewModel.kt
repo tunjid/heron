@@ -127,6 +127,10 @@ class ActualSettingsViewModel(
                         userDataRepository = userDataRepository,
                     )
 
+                    is Action.SetShowPostEngagementMetrics -> action.flow.toggleShowPostEngagementMetrics(
+                        userDataRepository = userDataRepository,
+                    )
+
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
@@ -286,6 +290,13 @@ private fun Flow<Action.SetAutoHideBottomNavigation>.toggleAutoHideBottomNavigat
 ): Flow<Mutation<State>> =
     mapToManyMutations { (autoHideBottomNavigation) ->
         userDataRepository.setAutoHideBottomNavigation(autoHideBottomNavigation)
+    }
+
+private fun Flow<Action.SetShowPostEngagementMetrics>.toggleShowPostEngagementMetrics(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    mapToManyMutations { (showPostEngagementMetrics) ->
+        userDataRepository.setShowPostEngagementMetrics(showPostEngagementMetrics)
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
