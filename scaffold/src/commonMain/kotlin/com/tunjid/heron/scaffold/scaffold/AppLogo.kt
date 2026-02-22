@@ -18,7 +18,9 @@ package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -26,12 +28,14 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.util.lerp
 import com.tunjid.heron.ui.UiTokens
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
+import com.tunjid.heron.ui.modifiers.blurEffect
 import com.tunjid.treenav.compose.UpdatedMovableSharedElementOf
 
 @Composable
-fun MovableElementSharedTransitionScope.AppLogo(
+fun PaneScaffoldState.AppLogo(
     modifier: Modifier,
     presentation: LogoPresentation,
 ) {
@@ -55,7 +59,25 @@ fun MovableElementSharedTransitionScope.AppLogo(
                     .aspectRatio(
                         ratio = LogoViewportWidth / LogoViewportHeight,
                         matchHeightConstraintsFirst = true,
-                    ),
+                    )
+                    .graphicsLayer {
+                        if (currentPresentation !is LogoPresentation.Destination.Root) return@graphicsLayer
+                        val animationProgress = backLogoAnimation.progress()
+                        if (animationProgress == 0f && !isTransitionActive) return@graphicsLayer
+
+                        blurEffect(
+                            shape = CircleShape,
+                            radius = UiTokens::appBarBlurRadius,
+                            clip = { false },
+                            progress = {
+                                lerp(
+                                    start = 0f,
+                                    stop = currentPresentation.blurProgress(),
+                                    fraction = 1f - animationProgress,
+                                )
+                            },
+                        )
+                    },
             ) {
                 scale(
                     scaleX = size.width / LogoViewportWidth,
@@ -73,10 +95,15 @@ fun MovableElementSharedTransitionScope.AppLogo(
     )
 }
 
+@Stable
 sealed class LogoPresentation {
     data object Splash : LogoPresentation()
     sealed class Destination : LogoPresentation() {
-        data object Root : Destination()
+        @Stable
+        class Root(
+            val blurProgress: () -> Float = { 0f },
+        ) : Destination()
+
         data object Poppable : Destination()
     }
 }

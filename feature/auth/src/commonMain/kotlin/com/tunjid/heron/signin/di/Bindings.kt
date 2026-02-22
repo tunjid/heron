@@ -238,7 +238,7 @@ private fun PaneScaffoldState.TopBar(
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .size(36.dp),
-                presentation = LogoPresentation.Destination.Root,
+                presentation = LogoPresentation.Destination.Root(),
             )
         },
         title = {

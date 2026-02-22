@@ -64,7 +64,11 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                 backgroundColor = MaterialTheme.colorScheme.surface,
                 progress = transparencyFactor,
             )
-            .rootAppBarBlur(transparencyFactor),
+            .blur(
+                shape = RectangleShape,
+                radius = UiTokens::appBarBlurRadius,
+                progress = transparencyFactor,
+            ),
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = Color.Transparent,
         ),
@@ -73,7 +77,9 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                 modifier = Modifier
                     .padding(start = 8.dp)
                     .size(36.dp),
-                presentation = LogoPresentation.Destination.Root,
+                presentation = LogoPresentation.Destination.Root(
+                    blurProgress = transparencyFactor,
+                ),
             )
         },
         title = title,
@@ -199,14 +205,5 @@ private fun Modifier.rootAppBarBackground(
     )
 }
 
-private fun Modifier.rootAppBarBlur(
-    progress: () -> Float,
-): Modifier = blur(
-    shape = RectangleShape,
-    radius = ::RootAppBarBlurRadius,
-    progress = progress,
-)
-
-private val RootAppBarBlurRadius = 60.dp
 private const val MaxTransparency = 0.1f
 private const val HundredPercent = 1f
