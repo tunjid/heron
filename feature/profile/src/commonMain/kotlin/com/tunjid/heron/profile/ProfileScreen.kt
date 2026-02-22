@@ -482,6 +482,7 @@ internal fun ProfileScreen(
                                 recentConversations = state.recentConversations,
                                 mutedWordsPreferences = state.preferences.mutedWordPreferences,
                                 autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
+                                showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
                             )
                             is ProfileScreenStateHolders.LabelerSettings -> LabelerSettings(
                                 prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
@@ -1160,6 +1161,7 @@ private fun ProfileTimeline(
     recentConversations: List<Conversation>,
     mutedWordsPreferences: List<MutedWordPreference>,
     autoPlayTimelineVideos: Boolean,
+    showEngagementMetrics: Boolean,
 ) {
     var pendingScrollOffset by rememberSaveable { mutableIntStateOf(0) }
     val gridState = rememberLazyScrollableState(
@@ -1317,6 +1319,7 @@ private fun ProfileTimeline(
                         now = remember { Clock.System.now() },
                         item = item,
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                        showEngagementMetrics = showEngagementMetrics,
                         presentation = presentation,
                         postActions = remember(timelineState.timeline.source.id) {
                             PostActions { action ->

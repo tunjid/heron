@@ -31,6 +31,7 @@ import heron.feature.settings.generated.resources.auto_play_timeline_videos
 import heron.feature.settings.generated.resources.content_and_media
 import heron.feature.settings.generated.resources.following_feed_preferences
 import heron.feature.settings.generated.resources.refresh_timelines_on_launch
+import heron.feature.settings.generated.resources.show_post_engagement_metrics
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -40,6 +41,7 @@ fun ContentAndMediaItem(
     setRefreshHomeTimelineOnLaunch: (Boolean) -> Unit,
     setAutoplayTimelineVideos: (Boolean) -> Unit,
     onFeedPreferenceSectionSelected: (FeedPreference) -> Unit,
+    setShowPostEngagementMetrics: (Boolean) -> Unit,
 ) {
     ExpandableSettingsItemRow(
         modifier = modifier
@@ -74,6 +76,14 @@ fun ContentAndMediaItem(
             enabled = true,
             checked = signedInProfilePreferences.local.autoPlayTimelineVideos,
             onCheckedChange = setAutoplayTimelineVideos,
+        )
+        SettingsToggleItem(
+            modifier = Modifier
+                .fillMaxWidth(),
+            text = stringResource(Res.string.show_post_engagement_metrics),
+            enabled = true,
+            checked = signedInProfilePreferences.local.showPostEngagementMetrics,
+            onCheckedChange = setShowPostEngagementMetrics,
         )
     }
 }

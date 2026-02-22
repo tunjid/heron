@@ -90,6 +90,7 @@ internal fun PostSearchResults(
     recentConversations: List<Conversation>,
     mutedWordPreferences: List<MutedWordPreference>,
     autoPlayTimelineVideos: Boolean,
+    showEngagementMetrics: Boolean,
     videoStates: ThreadedVideoPositionStates<SearchResult.OfPost>,
     paneScaffoldState: PaneScaffoldState,
     onRequestRecentLists: () -> Unit,
@@ -259,6 +260,7 @@ internal fun PostSearchResults(
                     now = now,
                     result = result,
                     sharedElementPrefix = state.sharedElementPrefix,
+                    showEngagementMetrics = showEngagementMetrics,
                     postActions = postActions,
                 )
             },
@@ -301,6 +303,7 @@ private fun PostSearchResult(
     now: Instant,
     result: SearchResult.OfPost,
     sharedElementPrefix: String,
+    showEngagementMetrics: Boolean,
     postActions: PostActions,
 ) {
     ElevatedCard(
@@ -327,6 +330,7 @@ private fun PostSearchResult(
                 now = now,
                 item = result.timelineItem,
                 sharedElementPrefix = sharedElementPrefix,
+                showEngagementMetrics = showEngagementMetrics,
                 presentation = Timeline.Presentation.Text.WithEmbed,
                 postActions = postActions,
             )

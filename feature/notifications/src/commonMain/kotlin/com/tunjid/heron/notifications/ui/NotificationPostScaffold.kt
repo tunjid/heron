@@ -61,6 +61,7 @@ internal fun NotificationPostScaffold(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     now: Instant,
     isRead: Boolean,
+    showEngagementMetrics: Boolean,
     notification: Notification.PostAssociated,
     onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
     onPostClicked: (Notification.PostAssociated) -> Unit,
@@ -128,6 +129,7 @@ internal fun NotificationPostScaffold(
                     post = notification.associatedPost,
                     sharedElementPrefix = notification.sharedElementPrefix(),
                     presentation = Timeline.Presentation.Text.WithEmbed,
+                    showEngagementMetrics = showEngagementMetrics,
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     onInteraction = { action ->
                         onPostInteraction(notification, action)

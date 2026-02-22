@@ -126,6 +126,7 @@ internal fun FeedScreen(
                 recentConversations = state.recentConversations,
                 mutedWordsPreferences = state.preferences.mutedWordPreferences,
                 autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
+                showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
             )
         }
     }
@@ -142,6 +143,7 @@ private fun FeedTimeline(
     recentLists: List<FeedList>,
     recentConversations: List<Conversation>,
     autoPlayTimelineVideos: Boolean,
+    showEngagementMetrics: Boolean,
 ) {
     var pendingScrollOffset by rememberSaveable { mutableIntStateOf(0) }
     val gridState = rememberLazyScrollableState(
@@ -327,6 +329,7 @@ private fun FeedTimeline(
                             now = remember { Clock.System.now() },
                             item = item,
                             sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                            showEngagementMetrics = showEngagementMetrics,
                             presentation = presentation,
                             postActions = remember(timelineState.timeline.sourceId) {
                                 PostActions { action ->

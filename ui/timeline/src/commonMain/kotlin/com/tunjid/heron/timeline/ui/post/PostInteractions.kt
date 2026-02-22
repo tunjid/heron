@@ -121,6 +121,7 @@ import org.jetbrains.compose.resources.stringResource
 fun PostInteractions(
     post: Post,
     sharedElementPrefix: String,
+    showEngagementMetrics: Boolean,
     presentation: Timeline.Presentation,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     modifier: Modifier = Modifier,
@@ -135,6 +136,7 @@ fun PostInteractions(
             interactionButtons = PostInteractionButton.PostButtons,
             post = post,
             sharedElementPrefix = sharedElementPrefix,
+            showEngagementMetrics = showEngagementMetrics,
             iconSize = animateDpAsState(presentation.actionIconSize).value,
             orientation = Orientation.Horizontal,
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
@@ -153,6 +155,7 @@ fun PostInteractions(
 fun MediaPostInteractions(
     post: Post,
     sharedElementPrefix: String,
+    showEngagementMetrics: Boolean,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     modifier: Modifier = Modifier,
     onInteraction: (PostAction.Options) -> Unit,
@@ -166,6 +169,7 @@ fun MediaPostInteractions(
             interactionButtons = PostInteractionButton.MediaButtons,
             post = post,
             sharedElementPrefix = sharedElementPrefix,
+            showEngagementMetrics = showEngagementMetrics,
             iconSize = 40.dp,
             orientation = Orientation.Vertical,
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
@@ -179,6 +183,7 @@ private inline fun PostInteractionsButtons(
     interactionButtons: List<PostInteractionButton>,
     post: Post,
     sharedElementPrefix: String,
+    showEngagementMetrics: Boolean,
     iconSize: Dp,
     orientation: Orientation,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
@@ -213,13 +218,14 @@ private inline fun PostInteractionsButtons(
                     contentDescription = stringResource(button.stringResource),
                     modifier = Modifier,
                     orientation = orientation,
-                    value = when (button) {
+                    value = if (showEngagementMetrics) when (button) {
                         PostInteractionButton.Comment -> post.replyCount
                         PostInteractionButton.Like -> post.likeCount
                         PostInteractionButton.Repost -> post.repostCount
                         PostInteractionButton.Bookmark -> 0L
                         PostInteractionButton.MoreOptions -> 0L
-                    },
+                    }
+                    else 0L,
                     enabled = when (button) {
                         PostInteractionButton.Bookmark -> true
                         PostInteractionButton.Comment -> post.viewerStats.canReply

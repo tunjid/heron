@@ -129,6 +129,9 @@ private fun MainSection(
                 onFeedPreferenceSectionSelected = {
                     actions(Action.UpdateSection(Section.FeedPreferences(it)))
                 },
+                setShowPostEngagementMetrics = {
+                    actions(Action.SetShowPostEngagementMetrics(it))
+                },
             )
             ModerationItem(
                 modifier = Modifier
@@ -154,9 +157,6 @@ private fun MainSection(
                 },
                 setAutoHideBottomNavigation = {
                     actions(Action.SetAutoHideBottomNavigation(it))
-                },
-                setShowPostEngagementMetrics = {
-                    actions(Action.SetShowPostEngagementMetrics(it))
                 },
             )
             FeedbackItem(

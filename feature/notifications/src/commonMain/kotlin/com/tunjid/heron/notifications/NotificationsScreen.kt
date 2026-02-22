@@ -249,6 +249,7 @@ internal fun NotificationsScreen(
     }
 
     val pullToRefreshState = rememberPullToRefreshState()
+    val showEngagementMetrics = state.preferences.local.showPostEngagementMetrics
 
     PullToRefreshBox(
         modifier = modifier
@@ -341,6 +342,7 @@ internal fun NotificationsScreen(
                                 paneMovableElementSharedTransitionScope = paneScaffoldState,
                                 now = now,
                                 isRead = item.isRead,
+                                showEngagementMetrics = showEngagementMetrics,
                                 notification = notification,
                                 onLinkTargetClicked = onLinkTargetClicked,
                                 onProfileClicked = onProfileClicked,
@@ -353,6 +355,7 @@ internal fun NotificationsScreen(
                                 paneMovableElementSharedTransitionScope = paneScaffoldState,
                                 now = now,
                                 isRead = item.isRead,
+                                showEngagementMetrics = showEngagementMetrics,
                                 notification = notification,
                                 onLinkTargetClicked = onLinkTargetClicked,
                                 onProfileClicked = onProfileClicked,
@@ -365,6 +368,7 @@ internal fun NotificationsScreen(
                                 paneMovableElementSharedTransitionScope = paneScaffoldState,
                                 now = now,
                                 isRead = item.isRead,
+                                showEngagementMetrics = showEngagementMetrics,
                                 notification = notification,
                                 onLinkTargetClicked = onLinkTargetClicked,
                                 onProfileClicked = onProfileClicked,

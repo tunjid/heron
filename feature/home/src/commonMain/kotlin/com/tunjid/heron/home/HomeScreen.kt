@@ -182,6 +182,7 @@ internal fun HomeScreen(
                     signedInProfileId = state.signedInProfile?.did,
                     mutedWordsPreferences = state.preferences.mutedWordPreferences,
                     autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
+                    showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
                     recentLists = state.recentLists,
                     recentConversations = state.recentConversations,
                     timelineStateHolder = timelineStateHolder,
@@ -304,6 +305,7 @@ private fun HomeTimeline(
     signedInProfileId: ProfileId?,
     mutedWordsPreferences: List<MutedWordPreference>,
     autoPlayTimelineVideos: Boolean,
+    showEngagementMetrics: Boolean,
     recentLists: List<FeedList>,
     recentConversations: List<Conversation>,
     timelineStateHolder: TimelineStateHolder,
@@ -484,6 +486,7 @@ private fun HomeTimeline(
                             now = remember { Clock.System.now() },
                             item = item,
                             sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                            showEngagementMetrics = showEngagementMetrics,
                             presentation = presentation,
                             postActions = remember(timelineState.timeline.sourceId) {
                                 PostActions { action ->

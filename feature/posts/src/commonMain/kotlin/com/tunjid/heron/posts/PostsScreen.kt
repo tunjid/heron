@@ -272,6 +272,7 @@ internal fun PostsScreen(
                             now = now,
                             item = item,
                             sharedElementPrefix = SharedElementPrefix,
+                            showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
                             presentation = presentation,
                             postActions = remember {
                                 PostActions { action ->

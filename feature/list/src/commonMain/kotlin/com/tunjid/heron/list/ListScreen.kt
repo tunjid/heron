@@ -254,6 +254,7 @@ internal fun ListScreen(
                                 recentConversations = state.recentConversations,
                                 mutedWordsPreferences = state.preferences.mutedWordPreferences,
                                 autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
+                                showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
                             )
                         }
                     },
@@ -375,6 +376,7 @@ private fun ListTimeline(
     recentConversations: List<Conversation>,
     mutedWordsPreferences: List<MutedWordPreference>,
     autoPlayTimelineVideos: Boolean,
+    showEngagementMetrics: Boolean,
 ) {
     var pendingScrollOffset by rememberSaveable { mutableIntStateOf(0) }
     val gridState = rememberLazyScrollableState(
@@ -531,6 +533,7 @@ private fun ListTimeline(
                         now = remember { Clock.System.now() },
                         item = item,
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                        showEngagementMetrics = showEngagementMetrics,
                         presentation = presentation,
                         postActions = remember(timelineState.timeline.sourceId) {
                             PostActions { action ->
