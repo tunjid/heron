@@ -40,6 +40,7 @@
     <string name="use_compact_navigation">Use compact bottom navigation bar</string>
     <string name="autohide_bottom_navigation">Autohide bottom navigation bar on scroll</string>
     <string name="auto_play_timeline_videos">Autoplay videos on the timeline</string>
+    <string name="show_post_engagement_metrics">Show post engagement metrics</string>
     <string name="following_feed_preferences">Following Feed Preferences</string>
     <string name="timeline_preferences_replies">Hide replies</string>
     <string name="timeline_preferences_reposts">Hide reposts</string>

@@ -46,6 +46,10 @@ interface UserDataRepository {
     suspend fun setAutoPlayTimelineVideos(
         autoPlayTimelineVideos: Boolean,
     ): Outcome
+
+    suspend fun setShowPostEngagementMetrics(
+        showEngagementMetrics: Boolean,
+    ): Outcome
 }
 
 internal class OfflineUserDataRepository @Inject constructor(
@@ -110,6 +114,13 @@ internal class OfflineUserDataRepository @Inject constructor(
     ): Outcome = updatePreferences {
         copy(local = local.copy(autoPlayTimelineVideos = autoPlayTimelineVideos))
     }
+
+    override suspend fun setShowPostEngagementMetrics(
+        showEngagementMetrics: Boolean,
+    ): Outcome = updatePreferences {
+        copy(local = local.copy(showPostEngagementMetrics = showEngagementMetrics))
+    }
+
     private suspend inline fun updatePreferences(
         crossinline updater: suspend Preferences.() -> Preferences,
     ): Outcome =
