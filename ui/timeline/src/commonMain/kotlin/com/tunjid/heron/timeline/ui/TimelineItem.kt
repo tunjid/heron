@@ -83,6 +83,7 @@ fun TimelineItem(
     now: Instant,
     item: TimelineItem,
     sharedElementPrefix: String,
+    showEngagementMetrics: Boolean,
     presentation: Timeline.Presentation,
     postActions: PostActions,
 ) {
@@ -136,6 +137,7 @@ fun TimelineItem(
                         item = item,
                         sharedElementPrefix = sharedElementPrefix,
                         now = now,
+                        showEngagementMetrics = showEngagementMetrics,
                         presentation = presentation,
                         postActions = postActions,
                     )
@@ -150,6 +152,7 @@ fun TimelineItem(
                         threadGate = item.threadGate,
                         isAnchoredInTimeline = false,
                         isMainPost = true,
+                        showEngagementMetrics = showEngagementMetrics,
                         avatarShape = RoundedPolygonShape.Circle,
                         sharedElementPrefix = sharedElementPrefix,
                         createdAt = item.post.createdAt,
@@ -171,6 +174,7 @@ private fun ThreadedPost(
     item: TimelineItem.Thread,
     sharedElementPrefix: String,
     now: Instant,
+    showEngagementMetrics: Boolean,
     presentation: Timeline.Presentation,
     postActions: PostActions,
 ) {
@@ -214,6 +218,7 @@ private fun ThreadedPost(
                         sharedElementPrefix = sharedElementPrefix,
                         createdAt = post.createdAt,
                         presentation = presentation,
+                        showEngagementMetrics = showEngagementMetrics,
                         appliedLabels = item.appliedLabels,
                         postActions = postActions,
                         timeline = {

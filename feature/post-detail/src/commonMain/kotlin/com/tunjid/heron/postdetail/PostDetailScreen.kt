@@ -222,6 +222,7 @@ internal fun PostDetailScreen(
                     now = remember { Clock.System.now() },
                     item = item,
                     sharedElementPrefix = state.sharedElementPrefix,
+                    showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
                     presentation = Timeline.Presentation.Text.WithEmbed,
                     postActions = remember(state.sharedElementPrefix, state.signedInProfileId) {
                         PostActions { action ->

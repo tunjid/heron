@@ -104,6 +104,7 @@ internal fun Post(
     threadGate: ThreadGate?,
     isAnchoredInTimeline: Boolean,
     isMainPost: Boolean,
+    showEngagementMetrics: Boolean,
     avatarShape: RoundedPolygonShape,
     sharedElementPrefix: String,
     createdAt: Instant,

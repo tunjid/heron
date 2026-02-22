@@ -53,6 +53,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
@@ -202,6 +203,7 @@ internal fun GeneralSearchResults(
                             signedInProfileId = state.signedInProfile?.did,
                             mutedWordPreferences = state.preferences.mutedWordPreferences,
                             autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
+                            showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
                             recentLists = state.recentLists,
                             recentConversations = state.recentConversations,
                             videoStates = videoStates,
