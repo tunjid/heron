@@ -16,28 +16,39 @@
 
 package com.tunjid.heron.scaffold.scaffold
 
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.SharedTransitionScope.OverlayClip
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.util.lerp
 import com.tunjid.heron.ui.UiTokens
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
+import com.tunjid.heron.ui.modifiers.blurEffect
 import com.tunjid.treenav.compose.UpdatedMovableSharedElementOf
 
 @Composable
-fun MovableElementSharedTransitionScope.AppLogo(
+fun PaneScaffoldState.AppLogo(
     modifier: Modifier,
     presentation: LogoPresentation,
 ) {
     UpdatedMovableSharedElementOf(
         sharedContentState = rememberSharedContentState(AppLogo),
         zIndexInOverlay = UiTokens.navigationIconZIndex,
+        clipInOverlayDuringTransition = NoPathOverlayClip,
         state = presentation,
         modifier = modifier,
         sharedElement = { currentPresentation, innerModifier ->
@@ -52,19 +63,47 @@ fun MovableElementSharedTransitionScope.AppLogo(
             }
             Canvas(
                 modifier = innerModifier
-                    .aspectRatio(
-                        ratio = LogoViewportWidth / LogoViewportHeight,
-                        matchHeightConstraintsFirst = true,
-                    ),
+                    // Always draw logo in a square
+                    .aspectRatio(1f)
+                    .graphicsLayer {
+                        if (currentPresentation !is LogoPresentation.Destination.Root) return@graphicsLayer
+
+                        val animationProgress = backLogoAnimation.progress()
+                        // Apply the blur until the transition stops
+                        if (animationProgress == 0f && !isTransitionActive) return@graphicsLayer
+
+                        blurEffect(
+                            shape = CircleShape,
+                            radius = UiTokens::appBarBlurRadius,
+                            clip = { false },
+                            progress = {
+                                lerp(
+                                    start = 0f,
+                                    stop = currentPresentation.blurProgress(),
+                                    fraction = 1f - animationProgress,
+                                )
+                            },
+                        )
+                    },
             ) {
-                scale(
-                    scaleX = size.width / LogoViewportWidth,
-                    scaleY = size.height / LogoViewportHeight,
-                    pivot = Offset.Zero,
+                val scaleX = LogoAspectRatio * size.width / LogoViewportWidth
+                val scaleY = size.height / LogoViewportHeight
+
+                val width = size.width
+                val actualWidth = LogoViewportWidth * scaleX
+
+                translate(
+                    left = (width - actualWidth) / 2,
                 ) {
-                    HeronPart.entries.forEach { part ->
-                        with(animation) {
-                            drawPart(part)
+                    scale(
+                        scaleX = scaleX,
+                        scaleY = scaleY,
+                        pivot = Offset.Zero,
+                    ) {
+                        HeronPart.entries.forEach { part ->
+                            with(animation) {
+                                drawPart(part)
+                            }
                         }
                     }
                 }
@@ -73,10 +112,15 @@ fun MovableElementSharedTransitionScope.AppLogo(
     )
 }
 
+@Stable
 sealed class LogoPresentation {
     data object Splash : LogoPresentation()
     sealed class Destination : LogoPresentation() {
-        data object Root : Destination()
+        @Stable
+        class Root(
+            val blurProgress: () -> Float = { 0f },
+        ) : Destination()
+
         data object Poppable : Destination()
     }
 }
@@ -159,6 +203,17 @@ internal enum class HeronPart(
 
 private object AppLogo
 
+private object NoPathOverlayClip : OverlayClip {
+    override fun getClipPath(
+        sharedContentState: SharedTransitionScope.SharedContentState,
+        bounds: Rect,
+        layoutDirection: LayoutDirection,
+        density: Density,
+    ): Path? = null
+}
+
 internal val HeadColor = Color(color = 0xFF607B8B)
 private const val LogoViewportWidth = 35f
 private const val LogoViewportHeight = 48f
+
+private const val LogoAspectRatio = LogoViewportWidth / LogoViewportHeight

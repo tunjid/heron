@@ -34,7 +34,7 @@ import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 @Composable
 internal fun rememberBackLogoAnimation(
     isArrow: Boolean,
-): LogoAnimation {
+): BackAnimation {
     val bodyColor = rememberUpdatedState(
         MaterialTheme.colorScheme.onSurface,
     )

@@ -42,6 +42,8 @@ object UiTokens {
 
     val appBarButtonSize = 40.dp
 
+    val appBarBlurRadius = 60.dp
+
     val LikeRed: Color = Color(0xFFE0245E)
 
     val RepostGreen: Color = Color(0xFF17BF63)

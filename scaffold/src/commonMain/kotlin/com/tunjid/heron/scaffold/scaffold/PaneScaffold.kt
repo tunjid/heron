@@ -108,6 +108,9 @@ class PaneScaffoldState internal constructor(
     internal val hasSiblings
         get() = splitPaneState.filteredPaneOrder.size > 1
 
+    internal val backPreviewProgress
+        get() = appState.backPreviewState.progress
+
     internal val defaultContainerColor: Color
         @Composable get() {
             val elevation by animateDpAsState(
