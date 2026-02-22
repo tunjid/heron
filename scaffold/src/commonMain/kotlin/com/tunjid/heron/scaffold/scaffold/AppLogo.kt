@@ -16,6 +16,8 @@
 
 package com.tunjid.heron.scaffold.scaffold
 
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.SharedTransitionScope.OverlayClip
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.shape.CircleShape
@@ -23,12 +25,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.util.lerp
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blurEffect
@@ -42,6 +48,7 @@ fun PaneScaffoldState.AppLogo(
     UpdatedMovableSharedElementOf(
         sharedContentState = rememberSharedContentState(AppLogo),
         zIndexInOverlay = UiTokens.navigationIconZIndex,
+        clipInOverlayDuringTransition = NoPathOverlayClip,
         state = presentation,
         modifier = modifier,
         sharedElement = { currentPresentation, innerModifier ->
@@ -56,13 +63,13 @@ fun PaneScaffoldState.AppLogo(
             }
             Canvas(
                 modifier = innerModifier
-                    .aspectRatio(
-                        ratio = LogoViewportWidth / LogoViewportHeight,
-                        matchHeightConstraintsFirst = true,
-                    )
+                    // Always draw logo in a square
+                    .aspectRatio(1f)
                     .graphicsLayer {
                         if (currentPresentation !is LogoPresentation.Destination.Root) return@graphicsLayer
+
                         val animationProgress = backLogoAnimation.progress()
+                        // Apply the blur until the transition stops
                         if (animationProgress == 0f && !isTransitionActive) return@graphicsLayer
 
                         blurEffect(
@@ -79,14 +86,24 @@ fun PaneScaffoldState.AppLogo(
                         )
                     },
             ) {
-                scale(
-                    scaleX = size.width / LogoViewportWidth,
-                    scaleY = size.height / LogoViewportHeight,
-                    pivot = Offset.Zero,
+                val scaleX = LogoAspectRatio * size.width / LogoViewportWidth
+                val scaleY = size.height / LogoViewportHeight
+
+                val width = size.width
+                val actualWidth = LogoViewportWidth * scaleX
+
+                translate(
+                    left = (width - actualWidth) / 2,
                 ) {
-                    HeronPart.entries.forEach { part ->
-                        with(animation) {
-                            drawPart(part)
+                    scale(
+                        scaleX = scaleX,
+                        scaleY = scaleY,
+                        pivot = Offset.Zero,
+                    ) {
+                        HeronPart.entries.forEach { part ->
+                            with(animation) {
+                                drawPart(part)
+                            }
                         }
                     }
                 }
@@ -186,6 +203,17 @@ internal enum class HeronPart(
 
 private object AppLogo
 
+private object NoPathOverlayClip : OverlayClip {
+    override fun getClipPath(
+        sharedContentState: SharedTransitionScope.SharedContentState,
+        bounds: Rect,
+        layoutDirection: LayoutDirection,
+        density: Density,
+    ): Path? = null
+}
+
 internal val HeadColor = Color(color = 0xFF607B8B)
 private const val LogoViewportWidth = 35f
 private const val LogoViewportHeight = 48f
+
+private const val LogoAspectRatio = LogoViewportWidth / LogoViewportHeight

@@ -75,8 +75,8 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
         navigationIcon = {
             AppLogo(
                 modifier = Modifier
-                    .padding(start = 8.dp)
-                    .size(36.dp),
+                    .padding(8.dp)
+                    .size(UiTokens.avatarSize),
                 presentation = LogoPresentation.Destination.Root(
                     blurProgress = transparencyFactor,
                 ),
@@ -158,10 +158,10 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
         navigationIcon = {
             AppLogo(
                 modifier = Modifier
-                    .padding(start = 8.dp)
+                    .padding(8.dp)
                     .clip(CircleShape)
                     .clickable(onClick = onBackPressed)
-                    .size(36.dp),
+                    .size(UiTokens.avatarSize),
                 presentation = LogoPresentation.Destination.Poppable,
             )
         },
