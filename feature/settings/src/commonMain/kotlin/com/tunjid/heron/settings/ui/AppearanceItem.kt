@@ -44,7 +44,6 @@ fun AppearanceItem(
     setDynamicThemingPreference: (Boolean) -> Unit,
     setCompactNavigation: (Boolean) -> Unit,
     setAutoHideBottomNavigation: (Boolean) -> Unit,
-    setShowPostEngagementMetrics: (Boolean) -> Unit,
 ) {
     val isDynamicThemingSupported = isDynamicThemingSupported()
     val isCompactNavigationSupported = isCompactNavigationSupported()
@@ -79,14 +78,6 @@ fun AppearanceItem(
             enabled = isCompactNavigationSupported,
             checked = signedInProfilePreferences.local.autoHideBottomNavigation,
             onCheckedChange = setAutoHideBottomNavigation,
-        )
-        SettingsToggleItem(
-            modifier = Modifier
-                .fillMaxWidth(),
-            text = stringResource(Res.string.show_post_engagement_metrics),
-            enabled = true,
-            checked = signedInProfilePreferences.local.showPostEngagementMetrics,
-            onCheckedChange = setShowPostEngagementMetrics,
         )
     }
 }
