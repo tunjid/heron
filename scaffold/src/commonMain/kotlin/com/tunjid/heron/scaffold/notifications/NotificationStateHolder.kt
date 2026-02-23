@@ -74,6 +74,9 @@ sealed class NotificationAction(
         val senderDid = payload[NotificationAtProtoSenderDid]
             ?.let(::ProfileId)
 
+        val targetDid = payload[NotificationAtProtoTargetDid]
+            ?.let(::ProfileId)
+
         val recordUri: RecordUri? = payload[NotificationAtProtoRecordUri]
             ?.let { "${Uri.Host.AtProto.prefix}$it" }
             ?.asRecordUriOrNull()
@@ -164,7 +167,7 @@ private fun Flow<NotificationAction.RegisterToken>.registerTokenMutations(
         //  support updating a queued write to something else. For now, just write
         //  using the app scope and fix in a follow up PR.
         val state = currentState()
-        if (state.hasNotificationPermissions && action.token != state.notificationToken) {
+        if (state.hasNotificationPermissions) {
             val tokenRegistrationOutcome = notificationsRepository.registerPushNotificationToken(
                 action.token,
             )
@@ -186,6 +189,7 @@ private fun Flow<NotificationAction.HandleNotification>.handleNotificationMutati
         .flatMapMerge(NotificationProcessingMaxConcurrencyLimit) { action ->
 
             val senderId = action.senderDid ?: return@flatMapMerge emptyFlow()
+            val targetDid = action.targetDid ?: return@flatMapMerge emptyFlow()
             val recordUri = action.recordUri ?: return@flatMapMerge emptyFlow()
             val reason = action.reason ?: return@flatMapMerge emptyFlow()
 
@@ -196,6 +200,7 @@ private fun Flow<NotificationAction.HandleNotification>.handleNotificationMutati
                     notificationsRepository.resolvePushNotification(
                         NotificationsQuery.Push(
                             senderId = senderId,
+                            targetDid = targetDid,
                             recordUri = recordUri,
                             reason = reason,
                         ),
@@ -250,6 +255,7 @@ private fun Flow<NotificationAction.RequestedNotificationPermission>.markNotific
     }
 
 private const val NotificationAtProtoSenderDid = "senderDid"
+private const val NotificationAtProtoTargetDid = "targetDid"
 private const val NotificationAtProtoRecordUri = "recordUri"
 private const val NotificationAtProtoReason = "reason"
 private const val NotificationProcessingMaxConcurrencyLimit = 4
