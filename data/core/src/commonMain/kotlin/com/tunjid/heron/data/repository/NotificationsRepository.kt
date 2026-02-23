@@ -28,6 +28,7 @@ import app.bsky.notification.ListNotificationsResponse
 import app.bsky.notification.Preference
 import app.bsky.notification.PutPreferencesV2Request
 import app.bsky.notification.UpdateSeenRequest
+import com.atproto.server.GetServiceAuthQueryParams
 import com.tunjid.heron.data.InternalEndpoints
 import com.tunjid.heron.data.core.models.Block
 import com.tunjid.heron.data.core.models.Cursor
@@ -51,6 +52,7 @@ import com.tunjid.heron.data.core.models.shouldShowNotification
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.MutedThreadException
 import com.tunjid.heron.data.core.types.NotificationFilteredOutException
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.RepostUri
@@ -86,6 +88,7 @@ import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -93,6 +96,7 @@ import io.ktor.http.contentType
 import io.ktor.http.takeFrom
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineDispatcher
@@ -112,6 +116,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.plus
 import kotlinx.serialization.Serializable
+import sh.christian.ozone.api.Did
+import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.response.AtpResponse
 
 @Serializable
@@ -120,6 +126,7 @@ data class NotificationsQuery(
 ) : CursorQuery {
     data class Push(
         val senderId: ProfileId,
+        val targetDid: ProfileId,
         val recordUri: RecordUri,
         val reason: Notification.Reason,
     )
@@ -302,18 +309,37 @@ internal class OfflineNotificationsRepository @Inject constructor(
         token: String,
     ) = savedStateDataSource.inCurrentProfileSession { signedProfileId ->
         if (signedProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
-        val saveNotificationTokenRequest = SaveNotificationTokenRequest(
-            did = signedProfileId.id,
-            token = token,
-        )
-        networkMonitor.runCatchingWithNetworkRetry(
-            block = {
-                notificationsClient.post(SaveNotificationTokenPath) {
-                    contentType(ContentType.Application.Json)
-                    setBody(saveNotificationTokenRequest)
-                }
-            },
-        ).toOutcome()
+
+        networkService.runCatchingWithMonitoredNetworkRetry {
+            getServiceAuth(
+                GetServiceAuthQueryParams(
+                    aud = Did(signedProfileId.id),
+                    exp = Clock.System.now().epochSeconds + 5.minutes.inWholeSeconds,
+                    lxm = Nsid(PostUri.NAMESPACE),
+                ),
+            )
+        }.mapToResult { tokenResponse ->
+            val saveNotificationTokenRequest = SaveNotificationTokenRequest(
+                did = signedProfileId.id,
+                token = token,
+                otherDids = savedStateDataSource.savedState
+                    .value.pastSessions
+                    ?.mapNotNull {
+                        if (it.profileId == signedProfileId) null
+                        else it.profileId.id
+                    }
+                    .orEmpty(),
+            )
+            networkMonitor.runCatchingWithNetworkRetry(
+                block = {
+                    notificationsClient.post(SaveNotificationTokenPath) {
+                        contentType(ContentType.Application.Json)
+                        setBody(saveNotificationTokenRequest)
+                        bearerAuth(tokenResponse.token)
+                    }
+                },
+            )
+        }.toOutcome()
     } ?: expiredSessionOutcome()
 
     override suspend fun updateNotificationPreferences(
@@ -348,7 +374,9 @@ internal class OfflineNotificationsRepository @Inject constructor(
                             push = update.push,
                         )
                         when (update.reason) {
-                            Notification.Reason.JoinedStarterPack -> currentPrefs.copy(starterpackJoined = simplePref)
+                            Notification.Reason.JoinedStarterPack -> currentPrefs.copy(
+                                starterpackJoined = simplePref,
+                            )
                             Notification.Reason.SubscribedPost -> currentPrefs.copy(subscribedPost = simplePref)
                             Notification.Reason.Unverified -> currentPrefs.copy(unverified = simplePref)
                             Notification.Reason.Verified -> currentPrefs.copy(verified = simplePref)
@@ -405,12 +433,9 @@ internal class OfflineNotificationsRepository @Inject constructor(
         query: NotificationsQuery.Push,
     ): Result<Notification> =
         // Push notifications can be received for any profile that has been signed in
-        savedStateDataSource.inPastSession(query.recordUri.profileId()) { token ->
-            val signedInProfileId = token.authProfileId
-
+        savedStateDataSource.inProfileSession(query.targetDid) { signedInProfileId ->
             recordResolver.resolve(query.recordUri)
                 .mapCatchingUnlessCancelled { resolvedRecord ->
-
                     val authorEntity = profileDao.profiles(
                         signedInProfiledId = signedInProfileId.id,
                         ids = listOf(query.senderId),
@@ -552,7 +577,9 @@ internal class OfflineNotificationsRepository @Inject constructor(
                         }
                     }
 
-                    val notificationPreferences = savedStateDataSource.savedState.value.signedNotificationPreferencesOrDefault()
+                    val notificationPreferences = profileData.notifications
+                        .preferences
+                        ?: NotificationPreferences.Default
 
                     val isAuthorFollowed = viewerState?.isFollowing == true
 
@@ -690,6 +717,7 @@ private fun SavedState.signedInProfileNotifications() =
 private data class SaveNotificationTokenRequest(
     val did: String,
     val token: String,
+    val otherDids: List<String>,
 )
 
 private const val SaveNotificationTokenPath = "/saveNotificationToken"

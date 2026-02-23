@@ -55,10 +55,8 @@ class AndroidNotifier(
     private val notificationManager = NotificationManagerCompat.from(context)
 
     override suspend fun displayNotifications(notifications: List<Notification>) {
-        val currentLifecycleState = ProcessLifecycleOwner.get().lifecycle.currentStateFlow.value
-
-        // Show notifications in the background only
-        if (currentLifecycleState.isAtLeast(Lifecycle.State.RESUMED)) return
+        // TODO: When in app notifications are supported, check process lifecycle
+        //  before displaying in the notifications tray. Till then, display in tray.
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
             ContextCompat.checkSelfPermission(
