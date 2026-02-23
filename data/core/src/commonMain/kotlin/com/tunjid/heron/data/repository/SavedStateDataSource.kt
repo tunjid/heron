@@ -268,7 +268,7 @@ private fun SavedState.AuthTokens?.ifSignedIn(): SavedState.AuthTokens.Authentic
         is SavedState.AuthTokens.Guest,
         is SavedState.AuthTokens.Pending,
         null,
-            -> null
+        -> null
     }
 
 private val SavedState.signedInProfileId: ProfileId?
