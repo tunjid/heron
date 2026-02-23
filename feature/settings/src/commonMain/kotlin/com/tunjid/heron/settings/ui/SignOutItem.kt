@@ -45,12 +45,13 @@ fun SignOutItem(
 ) {
     var showSignOutDialog by rememberSaveable { mutableStateOf(false) }
 
-    SettingsItemRow(
+    SettingsItem(
         modifier = modifier
             .fillMaxWidth()
             .clickable {
                 showSignOutDialog = true
-            },
+            }
+            .settingsItemPaddingAndMinHeight(),
         title = stringResource(Res.string.sign_out),
         titleColor = MaterialTheme.colorScheme.error,
         icon = Icons.AutoMirrored.Rounded.DirectionsWalk,

@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.graze.editor
 
-import androidx.navigationevent.NavigationEventInfo
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Profile
@@ -29,7 +28,6 @@ import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.treenav.strings.Route
-import kotlin.time.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -61,13 +59,12 @@ fun State(
 )
 
 val State.currentFilter
-    get() = currentPath.fold(grazeFeed.filter) { current, index ->
+    get() = grazeFeed.filter.rootFilterAt(currentPath)
+
+fun Filter.Root.rootFilterAt(path: List<Int>) =
+    path.fold(this) { current, index ->
         current.filters[index] as Filter.Root
     }
-
-data class FilterNavigationEventInfo(
-    val filter: Filter.Root,
-) : NavigationEventInfo()
 
 sealed class Action(val key: String) {
     sealed class EditorNavigation : Action("EditorNavigation") {

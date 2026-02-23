@@ -24,6 +24,7 @@ import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.models.SessionSummary
+import com.tunjid.heron.data.core.types.ExpiredSessionException
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.utilities.Outcome
@@ -59,7 +60,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoBuf
 import okio.FileSystem
-import okio.IOException
 import okio.Path
 import sh.christian.ozone.api.model.JsonContent
 
@@ -565,5 +565,3 @@ internal suspend inline fun <T> SavedStateDataSource.inPastSession(
 internal fun expiredSessionOutcome() = Outcome.Failure(ExpiredSessionException())
 
 internal fun <T> expiredSessionResult() = Result.failure<T>(ExpiredSessionException())
-
-private class ExpiredSessionException : IOException()

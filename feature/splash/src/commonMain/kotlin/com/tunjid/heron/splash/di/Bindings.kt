@@ -21,13 +21,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
+import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.splash.ActualSplashViewModel
 import com.tunjid.heron.splash.RouteViewModelInitializer
 import com.tunjid.heron.splash.SplashScreen
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
-import com.tunjid.treenav.compose.threepane.rememberThreePaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.threePaneEntry
 import com.tunjid.treenav.strings.Route
 import com.tunjid.treenav.strings.RouteMatcher
@@ -89,7 +89,7 @@ class SplashBindings(
             viewModel.state.collectAsStateWithLifecycle()
 
             SplashScreen(
-                paneMovableElementSharedTransitionScope = rememberThreePaneMovableElementSharedTransitionScope(),
+                paneScaffoldState = rememberPaneScaffoldState(),
                 modifier = Modifier,
             )
         },

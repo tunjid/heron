@@ -136,6 +136,9 @@ class ActualComposeViewModel(
                     )
                     is Action.ClearSuggestions -> action.flow.clearSuggestionsMutations()
                     is Action.RemoveEmbeddedRecord -> action.flow.removeEmbeddedMutations()
+                    is Action.UpdateRecentLists -> action.flow.recentListsMutations(
+                        recordRepository = recordRepository,
+                    )
                 }
             }
         },
@@ -189,6 +192,16 @@ private fun Flow<Action.RemoveEmbeddedRecord>.removeEmbeddedMutations(): Flow<Mu
 private fun Flow<Action.UpdateInteractionSettings>.updateInteractionSettingsMutations(): Flow<Mutation<State>> =
     mapToMutation {
         copy(interactionsPreference = it.interactionSettingsPreference)
+    }
+
+fun Flow<Action.UpdateRecentLists>.recentListsMutations(
+    recordRepository: RecordRepository,
+): Flow<Mutation<State>> =
+    flatMapLatest {
+        recordRepository.recentLists
+            .mapToMutation { lists ->
+                copy(recentLists = lists)
+            }
     }
 
 private fun Flow<Action.EditMedia>.editMediaMutations(): Flow<Mutation<State>> =

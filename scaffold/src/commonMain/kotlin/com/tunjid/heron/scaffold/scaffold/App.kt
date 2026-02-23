@@ -22,21 +22,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.unit.round
-import androidx.navigationevent.NavigationEvent
-import androidx.navigationevent.NavigationEventTransitionState
-import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.tunjid.composables.splitlayout.SplitLayout
 import com.tunjid.heron.images.LocalImageLoader
 import com.tunjid.heron.media.video.LocalVideoPlayerController
@@ -141,33 +135,6 @@ fun App(
                                     Destination(splitPaneState.filteredPaneOrder[index])
                                 },
                             )
-                        }
-
-                        val navigationEventDispatcher =
-                            LocalNavigationEventDispatcherOwner.current!!
-                                .navigationEventDispatcher
-
-                        LaunchedEffect(navigationEventDispatcher) {
-                            navigationEventDispatcher.transitionState
-                                .collect { eventState ->
-                                    when (eventState) {
-                                        is NavigationEventTransitionState.Idle -> {
-                                            appState.backPreviewState.progress = 0f
-                                        }
-
-                                        is NavigationEventTransitionState.InProgress -> {
-                                            appState.backPreviewState.progress =
-                                                eventState.latestEvent.progress
-                                            appState.backPreviewState.atStart =
-                                                eventState.latestEvent.swipeEdge == NavigationEvent.EDGE_LEFT
-                                            appState.backPreviewState.pointerOffset =
-                                                Offset(
-                                                    eventState.latestEvent.touchX,
-                                                    eventState.latestEvent.touchY,
-                                                ).round()
-                                        }
-                                    }
-                                }
                         }
                     }
                 }

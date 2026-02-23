@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.AppliedLabels.Companion.warned
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Embed
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
@@ -40,6 +41,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
@@ -84,11 +86,14 @@ internal fun PostSearchResults(
     gridState: LazyStaggeredGridState,
     modifier: Modifier,
     signedInProfileId: ProfileId?,
+    recentLists: List<FeedList>,
     recentConversations: List<Conversation>,
     mutedWordPreferences: List<MutedWordPreference>,
     autoPlayTimelineVideos: Boolean,
+    showEngagementMetrics: Boolean,
     videoStates: ThreadedVideoPositionStates<SearchResult.OfPost>,
     paneScaffoldState: PaneScaffoldState,
+    onRequestRecentLists: () -> Unit,
     onLinkTargetClicked: (LinkTarget) -> Unit,
     onPostSearchResultProfileClicked: (profile: Profile, post: Post, sharedElementPrefix: String) -> Unit,
     onPostSearchResultClicked: (post: Post, sharedElementPrefix: String) -> Unit,
@@ -101,6 +106,7 @@ internal fun PostSearchResults(
     searchResultActions: (SearchState.Tile) -> Unit,
     onMuteAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
     onBlockAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
+    onDeletePostClicked: (RecordUri) -> Unit,
 ) {
     val now = remember { Clock.System.now() }
     val results by rememberUpdatedState(state.tiledItems)
@@ -121,6 +127,8 @@ internal fun PostSearchResults(
         },
     )
     val threadGateSheetState = rememberUpdatedThreadGateSheetState(
+        recentLists = recentLists,
+        onRequestRecentLists = onRequestRecentLists,
         onThreadGateUpdated = onSendPostInteraction,
     )
     val mutedWordsSheetState = rememberUpdatedMutedWordsSheetState(
@@ -173,6 +181,7 @@ internal fun PostSearchResults(
                     profileRestrictionDialogState.show(option)
 
                 is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
+                is PostOption.Delete -> onDeletePostClicked(option.postUri)
             }
         },
     )
@@ -251,6 +260,7 @@ internal fun PostSearchResults(
                     now = now,
                     result = result,
                     sharedElementPrefix = state.sharedElementPrefix,
+                    showEngagementMetrics = showEngagementMetrics,
                     postActions = postActions,
                 )
             },
@@ -293,6 +303,7 @@ private fun PostSearchResult(
     now: Instant,
     result: SearchResult.OfPost,
     sharedElementPrefix: String,
+    showEngagementMetrics: Boolean,
     postActions: PostActions,
 ) {
     ElevatedCard(
@@ -319,6 +330,7 @@ private fun PostSearchResult(
                 now = now,
                 item = result.timelineItem,
                 sharedElementPrefix = sharedElementPrefix,
+                showEngagementMetrics = showEngagementMetrics,
                 presentation = Timeline.Presentation.Text.WithEmbed,
                 postActions = postActions,
             )

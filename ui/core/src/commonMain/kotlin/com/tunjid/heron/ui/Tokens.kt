@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlin.time.Duration.Companion.seconds
 
 val AvatarSize = 40.dp
 
@@ -41,11 +42,15 @@ object UiTokens {
 
     val appBarButtonSize = 40.dp
 
+    val appBarBlurRadius = 60.dp
+
     val LikeRed: Color = Color(0xFFE0245E)
 
     val RepostGreen: Color = Color(0xFF17BF63)
 
     val BookmarkBlue: Color = Color(0xFF1D9BF0)
+
+    val splashScreenDuration = 1.seconds
 
     const val SignedInUserAvatarSharedElementKey = "self"
 

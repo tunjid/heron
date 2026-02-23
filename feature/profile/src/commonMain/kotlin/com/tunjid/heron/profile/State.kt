@@ -237,6 +237,10 @@ sealed class Action(val key: String) {
         val mutedWordPreference: List<MutedWordPreference>,
     ) : Action(key = "UpdateMutedWord")
 
+    data class DeleteRecord(
+        val recordUri: RecordUri,
+    ) : Action(key = "DeleteRecord")
+
     data class SendPostInteraction(
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")

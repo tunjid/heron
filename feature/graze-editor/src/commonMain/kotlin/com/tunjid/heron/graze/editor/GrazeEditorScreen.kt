@@ -16,11 +16,7 @@
 
 package com.tunjid.heron.graze.editor
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,6 +41,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,6 +64,7 @@ import com.tunjid.heron.graze.editor.ui.filter.SocialStarterPackFilter
 import com.tunjid.heron.graze.editor.ui.filter.SocialUserListFilter
 import com.tunjid.heron.graze.editor.ui.filter.UnsupportedFilter
 import com.tunjid.heron.graze.editor.ui.filter.validationTint
+import com.tunjid.heron.scaffold.scaffold.NestedNavigation
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.Indicator
 import com.tunjid.heron.ui.UiTokens
@@ -91,18 +89,19 @@ fun GrazeEditorScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) = with(paneScaffoldState) {
-    AnimatedContent(
+    paneScaffoldState.NestedNavigation(
         modifier = modifier
             .ifTrue(
                 predicate = state.isLoading,
                 block = Modifier::blockClickEvents,
             ),
-        targetState = state.currentFilter to state.currentPath,
-        contentKey = { (currentFilter) -> currentFilter.id },
-        transitionSpec = {
-            FilterTransitionSpec
+        key = remember(state.currentPath) {
+            NestedNavigationKey(path = state.currentPath)
         },
-    ) { (currentFilter, currentPath) ->
+    ) { key ->
+        val currentPath = key.path
+        val currentFilter = state.grazeFeed.filter.rootFilterAt(currentPath)
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -116,7 +115,7 @@ fun GrazeEditorScreen(
                 isAnd = currentFilter is Filter.And,
                 size = currentFilter.filters.size,
                 level = currentPath.size + 1,
-                animatedVisibilityScope = this@AnimatedContent,
+                animatedVisibilityScope = this@NestedNavigation,
                 paneScaffoldState = paneScaffoldState,
                 id = currentFilter.id,
                 onRemove = null,
@@ -132,7 +131,7 @@ fun GrazeEditorScreen(
                 modifier = Modifier
                     .sharedBounds(
                         sharedContentState = rememberSharedContentState(currentFilter.backgroundSharedElementKey()),
-                        animatedVisibilityScope = this@AnimatedContent,
+                        animatedVisibilityScope = this@NestedNavigation,
                     )
                     .fillMaxWidth()
                     .weight(1f),
@@ -149,7 +148,7 @@ fun GrazeEditorScreen(
                             modifier = Modifier
                                 .animateItem()
                                 .fillMaxWidth(),
-                            animatedVisibilityScope = this@AnimatedContent,
+                            animatedVisibilityScope = this@NestedNavigation,
                             paneScaffoldState = paneScaffoldState,
                             profileSearchResults = state.suggestedProfiles,
                             recentLists = state.recentLists,
@@ -181,7 +180,9 @@ fun GrazeEditorScreen(
                                 )
                             },
                             onRemoveFilter = { path: List<Int>, removedIndex: Int ->
-                                actions(
+                                // Prevents removing a filter when the animation
+                                // depends on it
+                                if (!transition.isRunning) actions(
                                     Action.EditFilter.RemoveFilter(
                                         path = path,
                                         index = removedIndex,
@@ -226,6 +227,16 @@ fun GrazeEditorScreen(
                 )
             }
         }
+    }
+
+    val hasList = state.currentFilter
+        .filters
+        .any { it is Filter.Social.ListMember }
+
+    // Using Disposable effect as there's no need for a CoroutineScope
+    DisposableEffect(hasList) {
+        if (hasList) actions(Action.UpdateRecentLists)
+        onDispose { }
     }
 }
 
@@ -582,4 +593,9 @@ fun FilterLeaf(
 
 private fun Filter.Root.backgroundSharedElementKey(): String = "$id-background"
 
-private val FilterTransitionSpec = fadeIn() togetherWith fadeOut()
+private data class NestedNavigationKey(
+    val path: List<Int>,
+) : PaneScaffoldState.NestedNavigationKey {
+    override val isRoot: Boolean
+        get() = path.isEmpty()
+}

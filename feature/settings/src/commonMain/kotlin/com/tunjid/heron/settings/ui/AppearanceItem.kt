@@ -26,6 +26,7 @@ import com.tunjid.heron.data.core.models.Preferences
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.appearance
 import heron.feature.settings.generated.resources.autohide_bottom_navigation
+import heron.feature.settings.generated.resources.show_post_engagement_metrics
 import heron.feature.settings.generated.resources.use_compact_navigation
 import heron.feature.settings.generated.resources.use_dynamic_theming
 import org.jetbrains.compose.resources.stringResource
@@ -49,6 +50,7 @@ fun AppearanceItem(
 
     ExpandableSettingsItemRow(
         modifier = modifier
+            .settingsItemPaddingAndMinHeight()
             .fillMaxWidth(),
         title = stringResource(Res.string.appearance),
         icon = Icons.Rounded.Palette,

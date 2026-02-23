@@ -53,6 +53,8 @@ data class Preferences(
     val postInteractionSettings: PostInteractionSettingsPreference? = null,
     @ProtoNumber(11)
     val verificationPreferences: VerificationPreference? = null,
+    @ProtoNumber(12)
+    val feedPreferences: List<FeedPreference> = emptyList(),
 ) : UrlEncodableModel {
 
     @Serializable
@@ -69,6 +71,8 @@ data class Preferences(
         val autoHideBottomNavigation: Boolean = true,
         @ProtoNumber(6)
         val autoPlayTimelineVideos: Boolean = true,
+        @ProtoNumber(7)
+        val showPostEngagementMetrics: Boolean = true,
     )
 
     companion object {
@@ -186,3 +190,33 @@ data class PostInteractionSettingsPreference(
 data class VerificationPreference(
     val hideBadges: Boolean = false,
 )
+
+@Serializable
+data class FeedPreference(
+    val feed: String,
+    val hideReplies: Boolean? = null,
+    val hideRepliesByUnfollowed: Boolean? = true,
+    val hideRepliesByLikeCount: Long? = null,
+    val hideReposts: Boolean? = null,
+    val hideQuotePosts: Boolean? = null,
+) {
+    companion object {
+        private const val HOME_FEED = "home"
+
+        val FeedPreference.shouldHideReplies: Boolean
+            get() = hideReplies.isTrue
+
+        val FeedPreference.shouldHideReposts: Boolean
+            get() = hideReposts.isTrue
+
+        val FeedPreference.shouldHideQuotes: Boolean
+            get() = hideQuotePosts.isTrue
+
+        fun List<FeedPreference>.homeFeedOrDefault(): FeedPreference =
+            firstOrNull { it.feed == HOME_FEED } ?: FeedPreference(
+                feed = HOME_FEED,
+            )
+    }
+}
+
+private val Boolean?.isTrue get() = this == true

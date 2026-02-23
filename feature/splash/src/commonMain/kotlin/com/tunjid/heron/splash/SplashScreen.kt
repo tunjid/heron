@@ -24,22 +24,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.scaffold.scaffold.AppLogo
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
+import com.tunjid.heron.scaffold.scaffold.LogoPresentation
+import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 
 @Composable
 internal fun SplashScreen(
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneScaffoldState: PaneScaffoldState,
     modifier: Modifier = Modifier,
 ) {
     Box(
         modifier = modifier
             .fillMaxSize(),
     ) {
-        paneMovableElementSharedTransitionScope.AppLogo(
+        paneScaffoldState.AppLogo(
             modifier = Modifier
                 .size(128.dp)
                 .align(Alignment.Center),
-            isRootDestination = true,
+            presentation = LogoPresentation.Splash,
         )
     }
 }

@@ -251,6 +251,9 @@ internal fun SearchScreen(
                 pagerState = pagerState,
                 state = state,
                 paneScaffoldState = paneScaffoldState,
+                onRequestRecentLists = {
+                    actions(Action.UpdateRecentLists)
+                },
                 onProfileClicked = onProfileClicked,
                 onViewerStateClicked = onViewerStateClicked,
                 onLinkTargetClicked = onLinkTargetClicked,
@@ -280,6 +283,7 @@ internal fun SearchScreen(
                         ),
                     )
                 },
+                onDeletePostClicked = { actions(Action.DeleteRecord(it)) },
             )
         }
     }

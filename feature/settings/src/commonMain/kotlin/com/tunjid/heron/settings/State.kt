@@ -17,10 +17,12 @@
 package com.tunjid.heron.settings
 
 import com.mikepenz.aboutlibraries.Libs
+import com.tunjid.heron.data.core.models.FeedPreference
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.scaffold.navigation.NavigationAction
+import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.ui.text.Memo
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -28,6 +30,7 @@ import kotlinx.serialization.Transient
 @Serializable
 data class State(
     val activeProfileId: ProfileId? = null,
+    val section: Section = Section.Main,
     val switchPhase: AccountSwitchPhase = AccountSwitchPhase.IDLE,
     val switchingSession: SessionSummary? = null,
     val signedInProfilePreferences: Preferences? = null,
@@ -36,6 +39,33 @@ data class State(
     @Transient
     val messages: List<Memo> = emptyList(),
 )
+
+@Serializable
+sealed class Section {
+
+    sealed interface Key : PaneScaffoldState.NestedNavigationKey
+
+    data object Main : Section(), Key {
+        override val isRoot: Boolean
+            get() = true
+    }
+
+    data class FeedPreferences(
+        val feedPreference: FeedPreference,
+    ) : Section() {
+        // Using the Companion as the key is deliberate.
+        companion object : Key {
+            override val isRoot: Boolean
+                get() = false
+        }
+    }
+
+    val key: PaneScaffoldState.NestedNavigationKey
+        get() = when (this) {
+            is FeedPreferences -> FeedPreferences
+            Main -> Main
+        }
+}
 
 enum class AccountSwitchPhase {
     IDLE,
@@ -70,9 +100,21 @@ sealed class Action(val key: String) {
         val autoHideBottomNavigation: Boolean,
     ) : Action(key = "SetAutoHideBottomNavigation")
 
+    data class SetShowPostEngagementMetrics(
+        val showPostEngagementMetrics: Boolean,
+    ) : Action(key = "SetShowPostEngagementMetrics")
+
     data class SnackbarDismissed(
         val message: Memo,
     ) : Action(key = "SnackbarDismissed")
+
+    data class UpdateSection(
+        val section: Section,
+    ) : Action(key = "UpdateSection")
+
+    data class UpdateFeedPreference(
+        val feedPreference: FeedPreference,
+    ) : Action(key = "UpdateFeedPreference")
 
     data object SignOut : Action(key = "SignOut")
 

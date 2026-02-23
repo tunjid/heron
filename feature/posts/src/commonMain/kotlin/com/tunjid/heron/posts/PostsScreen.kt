@@ -133,6 +133,10 @@ internal fun PostsScreen(
         },
     )
     val threadGateSheetState = rememberUpdatedThreadGateSheetState(
+        recentLists = state.recentLists,
+        onRequestRecentLists = {
+            actions(Action.UpdateRecentLists)
+        },
         onThreadGateUpdated = {
             actions(Action.SendPostInteraction(it))
         },
@@ -194,6 +198,7 @@ internal fun PostsScreen(
                     profileRestrictionDialogState.show(option)
 
                 is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
+                is PostOption.Delete -> actions(Action.DeleteRecord(option.postUri))
             }
         },
     )
@@ -267,6 +272,7 @@ internal fun PostsScreen(
                             now = now,
                             item = item,
                             sharedElementPrefix = SharedElementPrefix,
+                            showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
                             presentation = presentation,
                             postActions = remember {
                                 PostActions { action ->

@@ -19,25 +19,11 @@ package com.tunjid.heron.settings.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
 import androidx.compose.material.icons.rounded.Shield
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.tunjid.heron.ui.DestructiveDialogButton
-import com.tunjid.heron.ui.NeutralDialogButton
-import com.tunjid.heron.ui.SimpleDialog
-import com.tunjid.heron.ui.SimpleDialogText
-import com.tunjid.heron.ui.SimpleDialogTitle
 import heron.feature.settings.generated.resources.Res
-import heron.feature.settings.generated.resources.cancel
 import heron.feature.settings.generated.resources.moderation
-import heron.feature.settings.generated.resources.sign_out
-import heron.feature.settings.generated.resources.sign_out_confirmation
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -45,12 +31,13 @@ fun ModerationItem(
     modifier: Modifier = Modifier,
     onModerationSettingsClicked: () -> Unit,
 ) {
-    SettingsItemRow(
+    SettingsItem(
         modifier = modifier
             .fillMaxWidth()
             .clickable {
                 onModerationSettingsClicked()
-            },
+            }
+            .settingsItemPaddingAndMinHeight(),
         title = stringResource(Res.string.moderation),
         icon = Icons.Rounded.Shield,
     )

@@ -53,6 +53,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.FeedGenerator
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
@@ -61,6 +62,7 @@ import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.search.SearchResult
@@ -91,6 +93,7 @@ internal fun GeneralSearchResults(
     pagerState: PagerState,
     state: State,
     paneScaffoldState: PaneScaffoldState,
+    onRequestRecentLists: () -> Unit,
     onProfileClicked: (Profile, String) -> Unit,
     onViewerStateClicked: (ProfileWithViewerState) -> Unit,
     onLinkTargetClicked: (LinkTarget) -> Unit,
@@ -106,6 +109,7 @@ internal fun GeneralSearchResults(
     onSave: (mutedWordPreferences: List<MutedWordPreference>) -> Unit,
     onMuteAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
     onBlockAccountClicked: (signedInProfileId: ProfileId, profileId: ProfileId) -> Unit,
+    onDeletePostClicked: (RecordUri) -> Unit,
 ) {
     Box(
         modifier = modifier,
@@ -199,9 +203,12 @@ internal fun GeneralSearchResults(
                             signedInProfileId = state.signedInProfile?.did,
                             mutedWordPreferences = state.preferences.mutedWordPreferences,
                             autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
+                            showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
+                            recentLists = state.recentLists,
                             recentConversations = state.recentConversations,
                             videoStates = videoStates,
                             paneScaffoldState = paneScaffoldState,
+                            onRequestRecentLists = onRequestRecentLists,
                             onLinkTargetClicked = onLinkTargetClicked,
                             onPostSearchResultProfileClicked = onPostSearchResultProfileClicked,
                             onPostSearchResultClicked = onPostSearchResultClicked,
@@ -214,6 +221,7 @@ internal fun GeneralSearchResults(
                             onSave = onSave,
                             onMuteAccountClicked = onMuteAccountClicked,
                             onBlockAccountClicked = onBlockAccountClicked,
+                            onDeletePostClicked = onDeletePostClicked,
                         )
                         tabsOffsetNestedScrollConnection.PagerTopGapCloseEffect(
                             pagerState = pagerState,

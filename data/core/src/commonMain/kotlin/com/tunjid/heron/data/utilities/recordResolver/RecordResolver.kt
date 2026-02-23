@@ -26,6 +26,7 @@ import app.bsky.graph.GetListQueryParams
 import app.bsky.graph.GetStarterPackQueryParams
 import app.bsky.labeler.GetServicesQueryParams
 import app.bsky.labeler.GetServicesResponseViewUnion
+import com.atproto.repo.DeleteRecordRequest
 import com.atproto.repo.GetRecordQueryParams
 import com.atproto.repo.GetRecordResponse
 import com.tunjid.heron.data.core.models.AppliedLabels
@@ -43,8 +44,10 @@ import com.tunjid.heron.data.core.models.Repost
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.isBlocked
+import com.tunjid.heron.data.core.types.AtProtoException
 import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
+import com.tunjid.heron.data.core.types.ExpiredSessionException
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.GenericId
@@ -61,6 +64,7 @@ import com.tunjid.heron.data.core.types.UnresolvableRecordException
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.types.requireCollection
+import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
@@ -81,22 +85,23 @@ import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.network.currentSessionContext
 import com.tunjid.heron.data.network.models.asExternalModel
 import com.tunjid.heron.data.network.models.post
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.distinctUntilChangedSignedProfilePreferencesOrDefault
-import com.tunjid.heron.data.repository.expiredSessionResult
-import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.repository.singleSessionFlow
-import com.tunjid.heron.data.utilities.AtProtoException
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.Collections.requireRecordUri
 import com.tunjid.heron.data.utilities.LazyList
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.mapToResult
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver.TimelineItemCreationContext
+import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.toDistinctUntilChangedFlowOrEmpty
+import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import io.ktor.http.HttpStatusCode
@@ -138,6 +143,10 @@ internal interface RecordResolver {
     suspend fun resolve(
         uri: RecordUri,
     ): Result<Record>
+
+    suspend fun deleteRecord(
+        uri: RecordUri,
+    ): Outcome
 
     interface TimelineItemCreationContext {
         val list: MutableList<TimelineItem>
@@ -289,7 +298,11 @@ internal class OfflineRecordResolver @Inject constructor(
 
     override suspend fun resolve(
         uri: RecordUri,
-    ): Result<Record> = savedStateDataSource.inCurrentProfileSession { viewingProfileId ->
+    ): Result<Record> = runCatchingUnlessCancelled {
+        currentSessionContext()?.tokens
+            ?.authProfileId
+            ?: throw ExpiredSessionException()
+    }.mapToResult { viewingProfileId ->
         when (uri) {
             is FeedGeneratorUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
                 getFeedGenerator(
@@ -427,25 +440,47 @@ internal class OfflineRecordResolver @Inject constructor(
                 }
             is UnknownRecordUri -> Result.failure(UnresolvableRecordException(uri))
         }
-    }?.onFailure { throwable ->
+    }.onFailure { throwable ->
         logcat(LogPriority.WARN) {
             "Failed to resolve $uri. Cause: ${throwable.loggableText()}"
         }
-        if (isNotFound(throwable).also { println("NOT: $it") }) {
-            when (uri) {
-                is BlockUri -> profileDao.deleteBlock(uri)
-                is FeedGeneratorUri -> feedGeneratorDao.deleteFeedGenerator(uri)
-                is LabelerUri -> labelDao.deleteLabeler(uri)
-                is ListUri -> listDao.deleteList(uri)
-                is PostUri -> postDao.deletePost(uri)
-                is StarterPackUri -> starterPackDao.deleteStarterPack(uri)
-                is FollowUri -> profileDao.deleteFollow(uri)
-                is LikeUri -> postDao.deletePostViewerStatisticsLike(uri)
-                is RepostUri -> postDao.deletePostViewerStatisticsRepost(uri)
-                is UnknownRecordUri -> Unit
-            }
+        if (isNotFound(throwable)) {
+            deleteLocalRecord(uri)
         }
-    } ?: expiredSessionResult()
+    }
+
+    override suspend fun deleteRecord(
+        uri: RecordUri,
+    ) = runCatchingUnlessCancelled {
+        networkService.runCatchingWithMonitoredNetworkRetry {
+            deleteRecord(
+                DeleteRecordRequest(
+                    repo = Did(uri.profileId().id),
+                    collection = Nsid(uri.requireCollection()),
+                    rkey = RKey(uri.recordKey.value),
+                ),
+            )
+        }.getOrThrow()
+
+        deleteLocalRecord(uri)
+    }.toOutcome()
+
+    private suspend fun deleteLocalRecord(
+        uri: RecordUri,
+    ) {
+        when (uri) {
+            is BlockUri -> profileDao.deleteBlock(uri)
+            is FeedGeneratorUri -> feedGeneratorDao.deleteFeedGenerator(uri)
+            is LabelerUri -> labelDao.deleteLabeler(uri)
+            is ListUri -> listDao.deleteList(uri)
+            is PostUri -> postDao.deletePost(uri)
+            is StarterPackUri -> starterPackDao.deleteStarterPack(uri)
+            is FollowUri -> profileDao.deleteFollow(uri)
+            is LikeUri -> postDao.deletePostViewerStatisticsLike(uri)
+            is RepostUri -> postDao.deletePostViewerStatisticsRepost(uri)
+            is UnknownRecordUri -> Unit
+        }
+    }
 
     override fun <T> timelineItems(
         items: List<T>,

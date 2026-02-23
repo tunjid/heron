@@ -33,12 +33,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigationevent.NavigationEvent
 import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
-import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.splitlayout.SplitLayoutState
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.types.GenericUri
@@ -100,14 +101,14 @@ class AppState(
     private val multiStackNavState = mutableStateOf(navigationStateHolder.state.value)
 
     internal var showNavigation by mutableStateOf(false)
+
+    var showPlatformSplashScreen by mutableStateOf(true)
+        internal set
     internal val navItems by derivedStateOf {
         currentNavItems()
     }
 
     internal val navigation by multiStackNavState
-    internal val backPreviewState = BackPreviewState(
-        minScale = 0.75f,
-    )
 
     internal var dismissBehavior by mutableStateOf<DismissBehavior>(DismissBehavior.None)
         private set
@@ -157,6 +158,7 @@ class AppState(
                 navEntryDecorators = listOf(
                     saveableStateHolderNavEntryDecorator,
                     viewModelStoreNavEntryDecorator,
+                    splashVisibilityNavEntryDecorator(),
                 ),
                 entryProvider = { node ->
                     entryTrie[node] ?: threePaneEntry(
@@ -293,6 +295,16 @@ class AppState(
 
 val AppState.isShowingSplashScreen: Boolean
     get() = navigation.isShowingSplashScreen
+
+private fun AppState.splashVisibilityNavEntryDecorator(): NavEntryDecorator<Route> = NavEntryDecorator { entry ->
+    entry.Content()
+    LifecycleStartEffect(Unit) {
+        if (entry.contentKey == AppStack.Splash.rootRoute.id) {
+            showPlatformSplashScreen = false
+        }
+        onStopOrDispose { }
+    }
+}
 
 @Stable
 internal class SplitPaneState(

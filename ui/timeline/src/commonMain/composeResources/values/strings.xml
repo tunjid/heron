@@ -31,9 +31,12 @@
     <string name="likes">likes</string>
     <string name="repost">repost</string>
     <string name="reposts">reposts</string>
+    <string name="remove_repost">remove repost</string>
     <string name="quote">quote</string>
     <string name="quotes">quotes</string>
     <string name="quote_post">quote post</string>
+    <string name="delete_post">Delete post</string>
+    <string name="delete_post_prompt">Are you sure you want to delete this post?</string>
     <string name="videos">videos</string>
     <string name="text_and_embeds">text and embeds</string>
     <string name="condensed_media">condensed media</string>
@@ -124,6 +127,8 @@
     <string name="writable_unmute">unmute</string>
     <string name="writable_profile_update">profile update</string>
     <string name="writable_timeline_update">timeline update</string>
+    <string name="writable_notification_update">notification update</string>
+    <string name="writable_record_deletion">record deletion</string>
     <string name="writable_bookmark">bookmark</string>
     <string name="writable_bookmark_removal">bookmark removal</string>
     <string name="writable_like">like</string>

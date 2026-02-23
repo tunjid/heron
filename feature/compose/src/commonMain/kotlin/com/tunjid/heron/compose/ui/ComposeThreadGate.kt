@@ -22,6 +22,7 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
 import com.tunjid.heron.timeline.ui.post.PostInteractionStatus
 import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.rememberUpdatedThreadGateSheetState
@@ -29,10 +30,14 @@ import com.tunjid.heron.timeline.ui.post.ThreadGateSheetState.Companion.remember
 @Composable
 fun ComposeThreadGate(
     modifier: Modifier = Modifier,
+    recentLists: List<FeedList>,
+    onRequestRecentLists: () -> Unit,
     interactionSettingsPreference: PostInteractionSettingsPreference?,
     onInteractionSettingsUpdated: (PostInteractionSettingsPreference) -> Unit,
 ) {
     val threadGateSheetState = rememberUpdatedThreadGateSheetState(
+        recentLists = recentLists,
+        onRequestRecentLists = onRequestRecentLists,
         onDefaultThreadGateUpdated = onInteractionSettingsUpdated,
     )
 

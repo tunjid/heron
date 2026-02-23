@@ -321,6 +321,7 @@ private fun GalleryText(
 @Composable
 internal fun MediaInteractions(
     post: Post?,
+    showEngagementMetrics: Boolean,
     paneScaffoldState: PaneScaffoldState,
     modifier: Modifier = Modifier,
     onPostInteraction: (PostAction.Options) -> Unit,
@@ -330,6 +331,7 @@ internal fun MediaInteractions(
     MediaPostInteractions(
         post = post,
         sharedElementPrefix = UnmatchedPrefix,
+        showEngagementMetrics = showEngagementMetrics,
         paneMovableElementSharedTransitionScope = paneScaffoldState,
         modifier = modifier,
         onInteraction = onPostInteraction,

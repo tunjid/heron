@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.lazy.rememberLazyScrollableState
 import com.tunjid.heron.data.core.models.Conversation
+import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
@@ -121,9 +122,11 @@ internal fun FeedScreen(
                 timelineStateHolder = timelineStateHolder,
                 actions = actions,
                 signedInProfileId = state.signedInProfileId,
+                recentLists = state.recentLists,
                 recentConversations = state.recentConversations,
                 mutedWordsPreferences = state.preferences.mutedWordPreferences,
                 autoPlayTimelineVideos = state.preferences.local.autoPlayTimelineVideos,
+                showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
             )
         }
     }
@@ -137,8 +140,10 @@ private fun FeedTimeline(
     timelineStateHolder: TimelineStateHolder,
     actions: (Action) -> Unit,
     mutedWordsPreferences: List<MutedWordPreference>,
+    recentLists: List<FeedList>,
     recentConversations: List<Conversation>,
     autoPlayTimelineVideos: Boolean,
+    showEngagementMetrics: Boolean,
 ) {
     var pendingScrollOffset by rememberSaveable { mutableIntStateOf(0) }
     val gridState = rememberLazyScrollableState(
@@ -179,6 +184,10 @@ private fun FeedTimeline(
         },
     )
     val threadGateSheetState = rememberUpdatedThreadGateSheetState(
+        recentLists = recentLists,
+        onRequestRecentLists = {
+            actions(Action.UpdateRecentLists)
+        },
         onThreadGateUpdated = {
             actions(Action.SendPostInteraction(it))
         },
@@ -240,6 +249,7 @@ private fun FeedTimeline(
                     profileRestrictionDialogState.show(option)
 
                 is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
+                is PostOption.Delete -> actions(Action.DeleteRecord(option.postUri))
             }
         },
     )
@@ -319,6 +329,7 @@ private fun FeedTimeline(
                             now = remember { Clock.System.now() },
                             item = item,
                             sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
+                            showEngagementMetrics = showEngagementMetrics,
                             presentation = presentation,
                             postActions = remember(timelineState.timeline.sourceId) {
                                 PostActions { action ->

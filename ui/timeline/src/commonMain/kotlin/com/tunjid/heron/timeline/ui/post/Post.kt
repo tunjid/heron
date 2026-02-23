@@ -104,6 +104,7 @@ internal fun Post(
     threadGate: ThreadGate?,
     isAnchoredInTimeline: Boolean,
     isMainPost: Boolean,
+    showEngagementMetrics: Boolean,
     avatarShape: RoundedPolygonShape,
     sharedElementPrefix: String,
     createdAt: Instant,
@@ -131,6 +132,7 @@ internal fun Post(
             presentation = presentation,
             appliedLabels = appliedLabels,
             hasMutedWords = hasMutedWords,
+            showEngagementMetrics = showEngagementMetrics,
             isMainPost = isMainPost,
             sharedElementPrefix = sharedElementPrefix,
             avatarShape = avatarShape,
@@ -479,6 +481,7 @@ private fun ActionsContent(
             post = data.post,
             sharedElementPrefix = data.sharedElementPrefix,
             presentation = data.presentation,
+            showEngagementMetrics = data.showEngagementMetrics,
             paneMovableElementSharedTransitionScope = data.paneMovableElementSharedTransitionScope,
             modifier = Modifier
                 .contentPresentationPadding(
@@ -658,6 +661,7 @@ private fun rememberUpdatedPostData(
     presentation: Timeline.Presentation,
     appliedLabels: AppliedLabels,
     hasMutedWords: Boolean,
+    showEngagementMetrics: Boolean,
     sharedElementPrefix: String,
     avatarShape: RoundedPolygonShape,
     now: Instant,
@@ -682,6 +686,7 @@ private fun rememberUpdatedPostData(
                 presentation = presentation,
                 appliedLabels = appliedLabels,
                 hasMutedWords = hasMutedWords,
+                showEngagementMetrics = showEngagementMetrics,
                 isMainPost = isMainPost,
                 sharedElementPrefix = sharedElementPrefix,
                 avatarShape = avatarShape,
@@ -703,6 +708,7 @@ private fun rememberUpdatedPostData(
         presentation = presentation,
         appliedLabels = appliedLabels,
         hasMutedWords = hasMutedWords,
+        showEngagementMetrics = showEngagementMetrics,
         isMainPost = isMainPost,
         sharedElementPrefix = sharedElementPrefix,
         avatarShape = avatarShape,
@@ -718,6 +724,7 @@ private fun rememberUpdatedPostData(
     it.post = post
     it.threadGate = threadGate
     it.presentation = presentation
+    it.showEngagementMetrics = showEngagementMetrics
     it.appliedLabels = appliedLabels
     it.hasMutedWords = hasMutedWords
     it.isMainPost = isMainPost
@@ -738,6 +745,7 @@ private class PostData(
     presentation: Timeline.Presentation,
     appliedLabels: AppliedLabels,
     hasMutedWords: Boolean,
+    showEngagementMetrics: Boolean,
     isMainPost: Boolean,
     sharedElementPrefix: String,
     avatarShape: RoundedPolygonShape,
@@ -757,6 +765,7 @@ private class PostData(
     var presentation by mutableStateOf(presentation)
     var appliedLabels by mutableStateOf(appliedLabels)
     var hasMutedWords by mutableStateOf(hasMutedWords)
+    var showEngagementMetrics by mutableStateOf(showEngagementMetrics)
     var isMainPost by mutableStateOf(isMainPost)
     var sharedElementPrefix by mutableStateOf(sharedElementPrefix)
     var avatarShape by mutableStateOf(avatarShape)

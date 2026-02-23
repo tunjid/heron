@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
@@ -57,40 +58,49 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.rememberLatchedState
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.collapse_icon
 import heron.ui.core.generated.resources.expand_icon
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun SettingsItemRow(
+fun SettingsItem(
     title: String,
-    icon: ImageVector,
+    icon: ImageVector? = null,
     modifier: Modifier = Modifier,
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
-    content: @Composable RowScope.() -> Unit = {},
+) = SettingsItemRow(
+    title = title,
+    icon = icon,
+    modifier = modifier,
+    titleColor = titleColor,
+    content = {},
+)
+
+@Composable
+private fun SettingsItemRow(
+    title: String,
+    icon: ImageVector?,
+    modifier: Modifier = Modifier,
+    titleColor: Color = MaterialTheme.colorScheme.onSurface,
+    content: @Composable RowScope.() -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
         modifier = SettingsItemClipModifier
             .then(
                 modifier
                     .semantics {
                         contentDescription = title
-                    }
-                    .padding(
-                        horizontal = 24.dp,
-                        vertical = 8.dp,
-                    ),
+                    },
             ),
     ) {
-        Icon(
+        if (icon != null) Icon(
             imageVector = icon,
             contentDescription = null,
             tint = titleColor,
-        )
-        Spacer(
-            modifier = Modifier.width(16.dp),
         )
         Text(
             modifier = Modifier
@@ -115,18 +125,17 @@ fun ExpandableSettingsItemRow(
 
     Column(
         modifier = SettingsItemClipModifier
-            .then(
-                modifier
-                    .fillMaxWidth()
-                    .toggleable(
-                        value = isExpanded,
-                        onValueChange = { isExpanded = it },
-                        role = Role.Button,
-                    ),
-            ),
+            .toggleable(
+                value = isExpanded,
+                onValueChange = { isExpanded = it },
+                role = Role.Button,
+            )
+            .then(modifier),
     ) {
         SettingsItemRow(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .settingsItemMinHeight(),
             title = title,
             icon = icon,
             titleColor = titleColor,
@@ -150,7 +159,7 @@ fun ExpandableSettingsItemRow(
         }
         androidx.compose.animation.AnimatedVisibility(
             modifier = Modifier
-                .padding(horizontal = 24.dp)
+                .settingsItemChildPadding()
                 .fillMaxWidth(),
             visible = isExpanded,
             enter = EnterTransition,
@@ -178,13 +187,18 @@ fun SettingsToggleItem(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
+    val latchedCheckedState = rememberLatchedState(checked)
+
     Row(
         modifier = SettingsItemClipModifier
             .then(
                 modifier
                     .toggleable(
-                        value = checked,
-                        onValueChange = onCheckedChange,
+                        value = latchedCheckedState.value,
+                        onValueChange = {
+                            latchedCheckedState.latch(it)
+                            onCheckedChange(it)
+                        },
                         enabled = enabled,
                         role = Role.Switch,
                     )
@@ -207,11 +221,27 @@ fun SettingsToggleItem(
         )
         Switch(
             enabled = enabled,
-            checked = checked,
+            checked = latchedCheckedState.value,
             onCheckedChange = null,
         )
     }
 }
+
+fun Modifier.settingsItemChildPadding() =
+    padding(horizontal = 24.dp)
+
+fun Modifier.settingsItemClip() =
+    this then SettingsItemClipModifier
+
+fun Modifier.settingsItemMinHeight() =
+    heightIn(min = 36.dp)
+
+fun Modifier.settingsItemPaddingAndMinHeight() =
+    padding(
+        horizontal = 8.dp,
+        vertical = 4.dp,
+    )
+        .settingsItemMinHeight()
 
 private val EnterTransition = fadeIn() + slideInVertically { -it }
 private val ExitTransition =

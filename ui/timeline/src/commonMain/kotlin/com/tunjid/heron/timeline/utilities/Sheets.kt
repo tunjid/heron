@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
@@ -45,6 +46,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboard
@@ -52,13 +54,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Conversation
-import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.timeline.ui.post.PostModerationTools
-import com.tunjid.heron.timeline.ui.post.PostOption
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.asClipEntry
 import heron.ui.timeline.generated.resources.Res
@@ -76,41 +75,46 @@ internal fun SendDirectMessageCard(
 ) {
     BottomSheetItemCard(
         content = {
-            Text(
+            Column(
                 modifier = Modifier
-                    .padding(
-                        vertical = 4.dp,
-                    ),
-                text = stringResource(Res.string.send_via_direct_message),
-                style = MaterialTheme.typography.bodySmall,
-            )
-            LazyRow(
-                modifier = Modifier
-                    .clip(CircleShape),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    .sheetItemPadding(),
             ) {
-                items(
-                    items = recentConversations,
-                    key = { it.id.id },
-                ) { conversation ->
-                    val member = conversation.members.firstOrNull {
-                        it.did != signedInProfileId
-                    } ?: return@items
-                    AsyncImage(
-                        args = remember(member.avatar?.uri) {
-                            ImageArgs(
-                                url = member.avatar?.uri,
-                                contentScale = ContentScale.Crop,
-                                shape = RoundedPolygonShape.Circle,
-                            )
-                        },
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(CircleShape)
-                            .clickable {
-                                onConversationClicked(conversation)
+                Text(
+                    modifier = Modifier
+                        .padding(
+                            vertical = 4.dp,
+                        ),
+                    text = stringResource(Res.string.send_via_direct_message),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                LazyRow(
+                    modifier = Modifier
+                        .clip(CircleShape),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    items(
+                        items = recentConversations,
+                        key = { it.id.id },
+                    ) { conversation ->
+                        val member = conversation.members.firstOrNull {
+                            it.did != signedInProfileId
+                        } ?: return@items
+                        AsyncImage(
+                            args = remember(member.avatar?.uri) {
+                                ImageArgs(
+                                    url = member.avatar?.uri,
+                                    contentScale = ContentScale.Crop,
+                                    shape = RoundedPolygonShape.Circle,
+                                )
                             },
-                    )
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(CircleShape)
+                                .clickable {
+                                    onConversationClicked(conversation)
+                                },
+                        )
+                    }
                 }
             }
         },
@@ -166,73 +170,8 @@ internal fun CopyToClipboardCard(
 }
 
 @Composable
-internal fun PostModerationMenuSection(
-    modifier: Modifier = Modifier,
-    signedInProfileId: ProfileId,
-    post: Post,
-    onOptionClicked: (PostOption) -> Unit,
-) {
-    ModerationMenuCard(modifier) {
-        PostModerationTools.entries.forEachIndexed { index, tool ->
-            val isLast = index == PostModerationTools.entries.lastIndex
-
-            BottomSheetItemCardRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        val option = when (tool) {
-                            PostModerationTools.MuteWords -> PostOption.Moderation.MuteWords
-                            PostModerationTools.BlockAccount -> PostOption.Moderation.BlockAccount(
-                                signedInProfileId = signedInProfileId,
-                                post = post,
-                            )
-                            PostModerationTools.MuteAccount -> PostOption.Moderation.MuteAccount(
-                                signedInProfileId = signedInProfileId,
-                                post = post,
-                            )
-                        }
-                        onOptionClicked(option)
-                    }
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                icon = tool.icon,
-                text = stringResource(tool.stringRes),
-                isModerationItem = true,
-            )
-            if (!isLast) {
-                HorizontalDivider(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 0.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-internal fun ModerationMenuCard(
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    BottomSheetItemCard(
-        modifier = modifier,
-        isModerationMenu = true,
-        onClick = null, // Card itself is not clickable, only items inside
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth(),
-        ) {
-            content()
-        }
-    }
-}
-
-@Composable
 internal fun BottomSheetItemCard(
     modifier: Modifier = Modifier,
-    isModerationMenu: Boolean = false,
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -246,7 +185,6 @@ internal fun BottomSheetItemCard(
     ) {
         BottomSheetItemCardColumn(
             content = content,
-            isModerationMenu = isModerationMenu,
         )
     }
     else ElevatedCard(
@@ -258,22 +196,29 @@ internal fun BottomSheetItemCard(
     ) {
         BottomSheetItemCardColumn(
             content = content,
-            isModerationMenu = isModerationMenu,
         )
     }
 }
 
 @Composable
-internal inline fun BottomSheetItemCardRow(
+internal fun BottomSheetItemCardRow(
     modifier: Modifier = Modifier,
-    isModerationItem: Boolean = false,
     icon: ImageVector,
     text: String,
+    iconTint: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    onClick: (() -> Unit)? = null,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = if (isModerationItem) 0.dp else 4.dp),
+            .then(
+                if (onClick == null) Modifier
+                else Modifier.clickable(onClick = onClick),
+            )
+            .heightIn(
+                min = 48.dp,
+            )
+            .sheetItemPadding(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -284,30 +229,41 @@ internal inline fun BottomSheetItemCardRow(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = iconTint,
         )
     }
 }
 
 @Composable
 private inline fun BottomSheetItemCardColumn(
-    isModerationMenu: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = if (isModerationMenu) 0.dp else 16.dp,
-                vertical = 8.dp,
-            ),
+            .fillMaxWidth(),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             content()
         }
     }
 }
+
+@Composable
+internal fun ItemHorizontalDivider(
+    modifier: Modifier = Modifier,
+) {
+    HorizontalDivider(
+        modifier = modifier
+            .fillMaxWidth(),
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f),
+    )
+}
+
+private fun Modifier.sheetItemPadding() =
+    padding(
+        horizontal = 16.dp,
+        vertical = 8.dp,
+    )

@@ -163,6 +163,10 @@ sealed class Action(val key: String) {
         val profileId: ProfileId,
     ) : Action(key = "MuteAccount")
 
+    data class DeleteRecord(
+        val recordUri: RecordUri,
+    ) : Action(key = "DeleteRecord")
+
     data class SendPostInteraction(
         val interaction: Post.Interaction,
     ) : Action(key = "SendPostInteraction")

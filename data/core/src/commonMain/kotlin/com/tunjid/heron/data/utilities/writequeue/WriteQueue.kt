@@ -26,6 +26,7 @@ import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.NotificationsRepository
 import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
+import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.TimelineRepository
@@ -68,6 +69,8 @@ sealed class WriteQueue {
     internal abstract val timelineRepository: TimelineRepository
     internal abstract val notificationRepository: NotificationsRepository
 
+    internal abstract val recordRepository: RecordRepository
+
     abstract val queueChanges: Flow<List<Writable>>
 
     abstract suspend fun enqueue(
@@ -93,6 +96,7 @@ internal class SnapshotWriteQueue @Inject constructor(
     override val messageRepository: MessageRepository,
     override val timelineRepository: TimelineRepository,
     override val notificationRepository: NotificationsRepository,
+    override val recordRepository: RecordRepository,
 ) : WriteQueue() {
     // At some point this queue should be persisted to disk
     private val queue = mutableStateListOf<Writable>()
@@ -145,6 +149,7 @@ internal class PersistedWriteQueue @Inject constructor(
     override val timelineRepository: TimelineRepository,
     private val savedStateDataSource: SavedStateDataSource,
     override val notificationRepository: NotificationsRepository,
+    override val recordRepository: RecordRepository,
 ) : WriteQueue() {
 
     private val processingWriteIds = mutableSetOf<String>()
@@ -345,6 +350,7 @@ private fun Writable.writeTimeout() =
         is Writable.Restriction,
         is Writable.Send,
         is Writable.TimelineUpdate,
+        is Writable.RecordDeletion,
         -> BasicWriteTimeout
     }
 

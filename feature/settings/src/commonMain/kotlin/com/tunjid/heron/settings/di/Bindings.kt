@@ -30,6 +30,7 @@ import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.scaffold.AppBarTitle
+import com.tunjid.heron.scaffold.scaffold.NestedNavigationEventHandler
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
@@ -43,6 +44,7 @@ import com.tunjid.heron.settings.AccountSwitchPhase
 import com.tunjid.heron.settings.Action
 import com.tunjid.heron.settings.ActualSettingsViewModel
 import com.tunjid.heron.settings.RouteViewModelInitializer
+import com.tunjid.heron.settings.Section
 import com.tunjid.heron.settings.SettingsScreen
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.modifiers.ifTrue
@@ -152,7 +154,12 @@ class SettingsBindings(
                         },
                         onBackPressed = {
                             if (state.switchPhase == AccountSwitchPhase.IDLE) {
-                                viewModel.accept(Action.Navigate.Pop)
+                                viewModel.accept(
+                                    when (state.section) {
+                                        is Section.FeedPreferences -> Action.UpdateSection(Section.Main)
+                                        Section.Main -> Action.Navigate.Pop
+                                    },
+                                )
                             }
                         },
                     )
@@ -182,6 +189,10 @@ class SettingsBindings(
                     SecondaryPaneCloseBackHandler()
                 },
             )
+
+            paneScaffoldState.NestedNavigationEventHandler {
+                viewModel.accept(Action.UpdateSection(Section.Main))
+            }
         },
     )
 }

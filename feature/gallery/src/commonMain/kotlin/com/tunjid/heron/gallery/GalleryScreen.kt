@@ -182,6 +182,7 @@ internal fun GalleryScreen(
                     profileRestrictionDialogState.show(option)
 
                 is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
+                is PostOption.Delete -> actions(Action.DeleteRecord(option.postUri))
             }
         },
     )
@@ -250,6 +251,7 @@ internal fun GalleryScreen(
                 item = item,
                 paneScaffoldState = paneScaffoldState,
                 signedInProfileId = state.signedInProfileId,
+                showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
                 pagerStates = horizontalPagerStates,
                 focusedItem = {
                     val page = pagerState.currentPage + pagerState.currentPageOffsetFraction
@@ -286,6 +288,7 @@ private fun HorizontalItems(
     modifier: Modifier = Modifier,
     item: GalleryItem,
     signedInProfileId: ProfileId?,
+    showEngagementMetrics: Boolean,
     pagerStates: PagerStates<PostUri>,
     paneScaffoldState: PaneScaffoldState,
     focusedItem: () -> GalleryItem?,
@@ -458,6 +461,7 @@ private fun HorizontalItems(
                 paneScaffoldState = paneScaffoldState,
                 modifier = Modifier
                     .padding(horizontal = 16.dp),
+                showEngagementMetrics = showEngagementMetrics,
                 onPostInteraction = { interaction ->
                     when (interaction) {
                         is PostAction.OfInteraction -> postInteractionSheetState.onInteraction(

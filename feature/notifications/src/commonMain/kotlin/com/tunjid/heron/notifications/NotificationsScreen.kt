@@ -167,6 +167,7 @@ internal fun NotificationsScreen(
                     profileRestrictionDialogState.show(option)
 
                 is PostOption.Moderation.MuteWords -> mutedWordsSheetState.show()
+                is PostOption.Delete -> actions(Action.DeleteRecord(option.postUri))
             }
         },
     )
@@ -248,6 +249,7 @@ internal fun NotificationsScreen(
     }
 
     val pullToRefreshState = rememberPullToRefreshState()
+    val showEngagementMetrics = state.preferences.local.showPostEngagementMetrics
 
     PullToRefreshBox(
         modifier = modifier
@@ -340,6 +342,7 @@ internal fun NotificationsScreen(
                                 paneMovableElementSharedTransitionScope = paneScaffoldState,
                                 now = now,
                                 isRead = item.isRead,
+                                showEngagementMetrics = showEngagementMetrics,
                                 notification = notification,
                                 onLinkTargetClicked = onLinkTargetClicked,
                                 onProfileClicked = onProfileClicked,
@@ -352,6 +355,7 @@ internal fun NotificationsScreen(
                                 paneMovableElementSharedTransitionScope = paneScaffoldState,
                                 now = now,
                                 isRead = item.isRead,
+                                showEngagementMetrics = showEngagementMetrics,
                                 notification = notification,
                                 onLinkTargetClicked = onLinkTargetClicked,
                                 onProfileClicked = onProfileClicked,
@@ -364,6 +368,7 @@ internal fun NotificationsScreen(
                                 paneMovableElementSharedTransitionScope = paneScaffoldState,
                                 now = now,
                                 isRead = item.isRead,
+                                showEngagementMetrics = showEngagementMetrics,
                                 notification = notification,
                                 onLinkTargetClicked = onLinkTargetClicked,
                                 onProfileClicked = onProfileClicked,

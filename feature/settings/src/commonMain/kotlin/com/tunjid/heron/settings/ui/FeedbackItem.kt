@@ -33,12 +33,13 @@ fun FeedbackItem(
 ) {
     val uriHandler = LocalUriHandler.current
 
-    SettingsItemRow(
+    SettingsItem(
         modifier = modifier
             .fillMaxWidth()
             .clickable {
                 runCatching { uriHandler.openUri(FeedbackLink) }
-            },
+            }
+            .settingsItemPaddingAndMinHeight(),
         title = stringResource(Res.string.give_feedback),
         icon = Icons.Rounded.Feedback,
     )

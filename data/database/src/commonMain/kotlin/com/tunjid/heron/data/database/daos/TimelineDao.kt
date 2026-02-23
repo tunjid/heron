@@ -52,10 +52,23 @@ interface TimelineDao {
             SELECT * FROM timelineItems
             WHERE sourceId = :sourceId
             AND indexedAt < :before
-            AND CASE WHEN :viewingProfileId IS NOT NULL
-                THEN viewingProfileId = :viewingProfileId
-                ELSE viewingProfileId IS NULL
-            END
+            AND (
+                (:viewingProfileId IS NOT NULL AND viewingProfileId = :viewingProfileId)
+                OR (:viewingProfileId IS NULL AND viewingProfileId IS NULL)
+            )
+            AND (
+                :hideReplies = FALSE
+                OR parentPostUri IS NULL
+            )
+            AND (
+                :hideReposts = FALSE
+                OR reposter IS NULL
+            )
+            AND (
+                :hideQuotePosts = FALSE
+                OR embeddedRecordUri IS NULL
+                OR embeddedRecordUri NOT LIKE '%app.bsky.feed.post%'
+            )
             ORDER BY itemSort
             DESC
             LIMIT :limit
@@ -68,16 +81,19 @@ interface TimelineDao {
         before: Instant,
         limit: Long,
         offset: Long,
+        hideReplies: Boolean,
+        hideReposts: Boolean,
+        hideQuotePosts: Boolean,
     ): Flow<List<TimelineItemEntity>>
 
     @Query(
         """
         SELECT COUNT(*) FROM timelineItems
         WHERE sourceId = :sourceId
-        AND CASE WHEN :viewingProfileId IS NOT NULL
-            THEN viewingProfileId = :viewingProfileId
-            ELSE viewingProfileId IS NULL
-        END
+        AND (
+            (:viewingProfileId IS NOT NULL AND viewingProfileId = :viewingProfileId)
+            OR (:viewingProfileId IS NULL AND viewingProfileId IS NULL)
+        )
     """,
     )
     fun count(

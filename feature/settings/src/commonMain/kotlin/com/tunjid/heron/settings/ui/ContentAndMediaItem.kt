@@ -16,16 +16,22 @@
 
 package com.tunjid.heron.settings.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ConnectWithoutContact
 import androidx.compose.material.icons.rounded.Newspaper
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.tunjid.heron.data.core.models.FeedPreference
+import com.tunjid.heron.data.core.models.FeedPreference.Companion.homeFeedOrDefault
 import com.tunjid.heron.data.core.models.Preferences
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.auto_play_timeline_videos
 import heron.feature.settings.generated.resources.content_and_media
+import heron.feature.settings.generated.resources.following_feed_preferences
 import heron.feature.settings.generated.resources.refresh_timelines_on_launch
+import heron.feature.settings.generated.resources.show_post_engagement_metrics
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -34,13 +40,27 @@ fun ContentAndMediaItem(
     signedInProfilePreferences: Preferences,
     setRefreshHomeTimelineOnLaunch: (Boolean) -> Unit,
     setAutoplayTimelineVideos: (Boolean) -> Unit,
+    onFeedPreferenceSectionSelected: (FeedPreference) -> Unit,
+    setShowPostEngagementMetrics: (Boolean) -> Unit,
 ) {
     ExpandableSettingsItemRow(
         modifier = modifier
+            .settingsItemPaddingAndMinHeight()
             .fillMaxWidth(),
         title = stringResource(Res.string.content_and_media),
         icon = Icons.Rounded.Newspaper,
     ) {
+        SettingsItem(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    onFeedPreferenceSectionSelected(
+                        signedInProfilePreferences.feedPreferences.homeFeedOrDefault(),
+                    )
+                }
+                .settingsItemPaddingAndMinHeight(),
+            title = stringResource(Res.string.following_feed_preferences),
+        )
         SettingsToggleItem(
             modifier = Modifier
                 .fillMaxWidth(),
@@ -56,6 +76,14 @@ fun ContentAndMediaItem(
             enabled = true,
             checked = signedInProfilePreferences.local.autoPlayTimelineVideos,
             onCheckedChange = setAutoplayTimelineVideos,
+        )
+        SettingsToggleItem(
+            modifier = Modifier
+                .fillMaxWidth(),
+            text = stringResource(Res.string.show_post_engagement_metrics),
+            enabled = true,
+            checked = signedInProfilePreferences.local.showPostEngagementMetrics,
+            onCheckedChange = setShowPostEngagementMetrics,
         )
     }
 }

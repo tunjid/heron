@@ -16,9 +16,9 @@
 
 package com.tunjid.heron.data.network
 
+import com.tunjid.heron.data.core.types.AtProtoException
 import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.lexicons.XrpcBlueskyApi
-import com.tunjid.heron.data.utilities.AtProtoException
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.runCatchingWithNetworkRetry
 import dev.zacsweers.metro.Inject
@@ -26,7 +26,6 @@ import io.ktor.client.HttpClient
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.currentCoroutineContext
 import sh.christian.ozone.api.response.AtpResponse
 
 internal interface NetworkService {

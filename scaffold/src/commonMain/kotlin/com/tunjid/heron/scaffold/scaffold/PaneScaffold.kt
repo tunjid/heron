@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.scaffold.scaffold
 
+import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.animateBounds
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.gestures.Orientation
@@ -36,13 +37,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.round
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.navigationevent.NavigationEvent
+import androidx.navigationevent.NavigationEventTransitionState
+import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
+import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.message
@@ -51,7 +60,10 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.ThreePaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.rememberThreePaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.strings.Route
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class PaneScaffoldState internal constructor(
     internal val appState: AppState,
@@ -79,6 +91,10 @@ class PaneScaffoldState internal constructor(
     val prefersAutoHidingBottomNav
         get() = appState.prefersAutoHidingBottomNav
 
+    internal val nestedNavigationState = PaneNestedNavigationState(
+        paneScaffoldState = this,
+    )
+
     internal val canShowNavigationBar: Boolean
         get() = !isMediumScreenWidthOrWider
 
@@ -104,6 +120,10 @@ class PaneScaffoldState internal constructor(
     internal val hasSiblings
         get() = splitPaneState.filteredPaneOrder.size > 1
 
+    internal val backPreviewState = BackPreviewState(
+        minScale = 0.75f,
+    )
+
     internal val defaultContainerColor: Color
         @Composable get() {
             val elevation by animateDpAsState(
@@ -116,6 +136,10 @@ class PaneScaffoldState internal constructor(
 
             return MaterialTheme.colorScheme.surfaceColorAtElevation(elevation)
         }
+
+    interface NestedNavigationKey {
+        val isRoot: Boolean
+    }
 }
 
 @Composable
@@ -124,7 +148,7 @@ fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(): PaneScaffoldState {
     val splitPaneState = LocalSplitPaneState.current
     val paneMovableElementSharedTransitionScope =
         rememberThreePaneMovableElementSharedTransitionScope()
-    return remember(
+    val paneScaffoldState = remember(
         appState,
         splitPaneState,
         paneMovableElementSharedTransitionScope,
@@ -135,6 +159,41 @@ fun PaneScope<ThreePane, Route>.rememberPaneScaffoldState(): PaneScaffoldState {
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
         )
     }
+
+    val scope = rememberCoroutineScope()
+
+    val navigationEventDispatcher =
+        LocalNavigationEventDispatcherOwner.current!!
+            .navigationEventDispatcher
+
+    LifecycleStartEffect(
+        key1 = scope,
+        key2 = navigationEventDispatcher,
+    ) {
+        val job = scope.launch {
+            navigationEventDispatcher.transitionState
+                .collectLatest { eventState ->
+                    when (eventState) {
+                        is NavigationEventTransitionState.Idle -> {
+                            // Wait to be visible
+                            snapshotFlow { paneScaffoldState.transition.targetState }
+                                .first { it == EnterExitState.Visible }
+                            paneScaffoldState.backPreviewState.progress = 0f
+                        }
+                        is NavigationEventTransitionState.InProgress -> paneScaffoldState.backPreviewState.apply {
+                            progress = eventState.latestEvent.progress
+                            atStart = eventState.latestEvent.swipeEdge == NavigationEvent.EDGE_LEFT
+                            pointerOffset = Offset(
+                                x = eventState.latestEvent.touchX,
+                                y = eventState.latestEvent.touchY,
+                            ).round()
+                        }
+                    }
+                }
+        }
+        onStopOrDispose { job.cancel() }
+    }
+    return paneScaffoldState
 }
 
 @Composable

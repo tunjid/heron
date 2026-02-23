@@ -404,10 +404,9 @@ internal class OfflineNotificationsRepository @Inject constructor(
     override suspend fun resolvePushNotification(
         query: NotificationsQuery.Push,
     ): Result<Notification> =
-        savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
-            if (signedInProfileId == null) {
-                return@inCurrentProfileSession expiredSessionResult()
-            }
+        // Push notifications can be received for any profile that has been signed in
+        savedStateDataSource.inPastSession(query.recordUri.profileId()) { token ->
+            val signedInProfileId = token.authProfileId
 
             recordResolver.resolve(query.recordUri)
                 .mapCatchingUnlessCancelled { resolvedRecord ->
