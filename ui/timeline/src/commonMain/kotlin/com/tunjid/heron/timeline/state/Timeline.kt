@@ -252,4 +252,4 @@ private fun TiledList<TimelineQuery, TimelineItem>.filterThreadDuplicates(): Til
         .distinctBy(TimelineItem::id)
 }
 
-private val EMPTY_STATE_DELAY = 1.4.seconds
+private val EMPTY_STATE_DELAY = 2.2.seconds
