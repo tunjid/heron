@@ -67,7 +67,7 @@ fun GraphicsLayerScope.blurEffect(
     this.renderEffect = BlurEffect(
         radiusX = horizontalBlurPixels,
         radiusY = verticalBlurPixels,
-        edgeTreatment = TileMode.Clamp,
+        edgeTreatment = TileMode.Decal,
     )
 
     this.shape = shape
