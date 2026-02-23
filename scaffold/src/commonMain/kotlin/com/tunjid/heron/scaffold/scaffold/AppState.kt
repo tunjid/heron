@@ -40,7 +40,6 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigationevent.NavigationEvent
 import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
-import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.splitlayout.SplitLayoutState
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.types.GenericUri
@@ -110,9 +109,6 @@ class AppState(
     }
 
     internal val navigation by multiStackNavState
-    internal val backPreviewState = BackPreviewState(
-        minScale = 0.75f,
-    )
 
     internal var dismissBehavior by mutableStateOf<DismissBehavior>(DismissBehavior.None)
         private set

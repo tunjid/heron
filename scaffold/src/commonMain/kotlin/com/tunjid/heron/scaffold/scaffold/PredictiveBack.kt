@@ -40,7 +40,7 @@ fun Modifier.predictiveBackPlacement(
         appState.dismissBehavior != AppState.DismissBehavior.Gesture.DragToPop
 
     ifTrue(shouldDrawBackground) {
-        backPreview(appState.backPreviewState)
+        backPreview(backPreviewState)
     }
         .animatedRoundedCornerClip(
             cornerRadius = if (shouldDrawBackground) 16.dp else 0.dp,
