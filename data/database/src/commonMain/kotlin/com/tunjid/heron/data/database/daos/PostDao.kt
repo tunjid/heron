@@ -397,7 +397,7 @@ interface PostDao {
               ft.generation AS generation,
               ft.ancestorCreated AS ancestorCreated,
               ft.postCreated AS postCreated,
-              CASE WHEN ft.generation = 0 THEN NULL ELSE pt.parentPostUri END AS parentPostUri
+              pt.parentPostUri AS parentPostUri
             FROM
               posts p
             JOIN
