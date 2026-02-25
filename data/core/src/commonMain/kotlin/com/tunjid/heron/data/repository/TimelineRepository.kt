@@ -1240,24 +1240,28 @@ internal class OfflineTimelineRepository(
     }
 
     // Recursively finds the node matching parentPostUri and appends newNode as its child.
-    // Returns the list unchanged if the parent is not found — safe fallback for malformed data.
+    // Returns the list unchanged if the parent is not found, safe fallback for malformed data.
     private fun List<ReplyNode>.withInsertedNode(
         node: ReplyNode,
         parentPostUri: PostUri,
-    ): List<ReplyNode> = map { existingNode ->
-        when {
-            existingNode.post.uri == parentPostUri ->
-                existingNode.copy(children = existingNode.children + node)
-            existingNode.children.isEmpty() ->
-                existingNode
-            else ->
-                existingNode.copy(
-                    children = existingNode.children.withInsertedNode(
-                        node = node,
-                        parentPostUri = parentPostUri,
-                    ),
+    ): List<ReplyNode> {
+        for ((index, existingNode) in withIndex()) {
+            if (existingNode.post.uri == parentPostUri) {
+                val updatedNode = existingNode.copy(children = existingNode.children + node)
+                return toMutableList().apply { set(index, updatedNode) }
+            }
+            if (existingNode.children.isNotEmpty()) {
+                val newChildren = existingNode.children.withInsertedNode(
+                    node = node,
+                    parentPostUri = parentPostUri,
                 )
+                if (newChildren !== existingNode.children) {
+                    val updatedNode = existingNode.copy(children = newChildren)
+                    return toMutableList().apply { set(index, updatedNode) }
+                }
+            }
         }
+        return this
     }
 }
 
