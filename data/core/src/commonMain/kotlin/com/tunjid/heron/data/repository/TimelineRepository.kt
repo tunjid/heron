@@ -45,6 +45,7 @@ import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideRepl
 import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideReposts
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
+import com.tunjid.heron.data.core.models.ReplyNode
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.id
@@ -1173,58 +1174,89 @@ internal class OfflineTimelineRepository(
     ) = with(context) {
         val lastItem = list.lastOrNull()
         when {
-            // To start or for the OP, start a new thread
-            lastItem == null || thread.generation == 0L -> list += TimelineItem.Thread(
+            // Anchor post — start a ReplyTree with an empty reply list.
+            // Descendants (generation > 0) will be inserted as they arrive.
+            thread.generation == 0L -> list += TimelineItem.ReplyTree(
                 id = thread.entity.uri.uri,
-                generation = thread.generation,
+                post = post,
                 isMuted = isMuted(post),
-                anchorPostIndex = 0,
-                hasBreak = false,
-                posts = listOf(post),
+                threadGate = threadGate(post.uri),
                 appliedLabels = appliedLabels,
                 signedInProfileId = signedInProfileId,
-                postUrisToThreadGates = mapOf(post.uri to threadGate(post.uri)),
+                replies = emptyList(),
             )
-            // For parents, edit the head
-            thread.generation <= -1L ->
-                if (lastItem is TimelineItem.Thread) list[list.lastIndex] = lastItem.copy(
+
+            // Ancestor posts — most distant arrives first per SQL ordering.
+            // First ancestor starts a Thread; subsequent ancestors append to it.
+            thread.generation < 0L -> when (lastItem) {
+                is TimelineItem.Thread -> list[list.lastIndex] = lastItem.copy(
                     posts = lastItem.posts + post,
                     isMuted = lastItem.isMuted || isMuted(post),
-                    postUrisToThreadGates = lastItem.postUrisToThreadGates + Pair(
-                        post.uri,
-                        threadGate(post.uri),
+                    postUrisToThreadGates = lastItem.postUrisToThreadGates + (
+                        post.uri to threadGate(post.uri)
+                        ),
+                )
+                else -> list += TimelineItem.Thread(
+                    id = thread.entity.uri.uri,
+                    generation = thread.generation,
+                    isMuted = isMuted(post),
+                    anchorPostIndex = 0,
+                    hasBreak = false,
+                    posts = listOf(post),
+                    appliedLabels = appliedLabels,
+                    signedInProfileId = signedInProfileId,
+                    postUrisToThreadGates = mapOf(post.uri to threadGate(post.uri)),
+                )
+            }
+
+            // Descendant posts — insert into the ReplyTree using parentPostUri.
+            // SQL ordering guarantees a parent is always inserted before its children.
+            thread.generation > 0L -> {
+                // ReplyTree must exist from the anchor post — skip if data is malformed.
+                val replyTree = list.lastOrNull() as? TimelineItem.ReplyTree ?: return@with
+                // parentPostUri must be present on every descendant — skip if malformed.
+                val parentUri = thread.parentPostUri ?: return@with
+
+                val newNode = ReplyNode(
+                    post = post,
+                    threadGate = threadGate(post.uri),
+                    appliedLabels = appliedLabels,
+                    depth = thread.generation.toInt(),
+                    children = emptyList(),
+                )
+
+                list[list.lastIndex] = replyTree.copy(
+                    isMuted = replyTree.isMuted || isMuted(post),
+                    replies = when (parentUri) {
+                        replyTree.post.uri -> replyTree.replies + newNode
+                        else -> replyTree.replies.withInsertedNode(
+                            node = newNode,
+                            parentPostUri = parentUri,
+                        )
+                    },
+                )
+            }
+        }
+    }
+
+    // Recursively finds the node matching parentPostUri and appends newNode as its child.
+    // Returns the list unchanged if the parent is not found — safe fallback for malformed data.
+    private fun List<ReplyNode>.withInsertedNode(
+        node: ReplyNode,
+        parentPostUri: PostUri,
+    ): List<ReplyNode> = map { existingNode ->
+        when {
+            existingNode.post.uri == parentPostUri ->
+                existingNode.copy(children = existingNode.children + node)
+            existingNode.children.isEmpty() ->
+                existingNode
+            else ->
+                existingNode.copy(
+                    children = existingNode.children.withInsertedNode(
+                        node = node,
+                        parentPostUri = parentPostUri,
                     ),
                 )
-                else Unit
-
-            // New reply to the OP, start its own thread
-            lastItem is TimelineItem.Thread &&
-                lastItem.posts.first().uri != thread.rootPostUri -> list += TimelineItem.Thread(
-                id = thread.entity.uri.uri,
-                generation = thread.generation,
-                isMuted = isMuted(post),
-                anchorPostIndex = 0,
-                hasBreak = false,
-                posts = listOf(post),
-                appliedLabels = appliedLabels,
-                signedInProfileId = signedInProfileId,
-                postUrisToThreadGates = mapOf(post.uri to threadGate(post.uri)),
-            )
-            // Just tack the post to the current thread
-            lastItem is TimelineItem.Thread ->
-                // Make sure only consecutive generations are added to the thread.
-                // Nonconsecutive generations are dropped. Users can see these replies by
-                // diving into the thread.
-                if (lastItem.nextGeneration == thread.generation) list[list.lastIndex] =
-                    lastItem.copy(
-                        posts = lastItem.posts + post,
-                        isMuted = lastItem.isMuted || isMuted(post),
-                        postUrisToThreadGates = lastItem.postUrisToThreadGates + Pair(
-                            post.uri,
-                            threadGate(post.uri),
-                        ),
-                    )
-            else -> Unit
         }
     }
 }
