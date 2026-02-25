@@ -21,13 +21,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.asComposeImageBitmap
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.unit.IntOffset
 import coil3.BitmapImage
 import coil3.PlatformContext
-import coil3.asImage
-import coil3.compose.asPainter
-import coil3.toBitmap
 
 internal actual fun coil3.Image.renderInto(
     canvas: Canvas,
