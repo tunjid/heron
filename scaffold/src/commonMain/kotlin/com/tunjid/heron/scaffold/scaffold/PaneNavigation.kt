@@ -21,6 +21,7 @@ import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.animateBounds
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
@@ -31,6 +32,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.BottomAppBarDefaults
@@ -42,8 +44,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.ui.UiTokens
@@ -125,8 +129,9 @@ internal fun AppState.PaneNavigationBar(
             modifier = modifier
                 .fillMaxWidth()
                 .animateBounds(lookaheadScope = this@LookaheadScope),
-            color = BottomAppBarDefaults.containerColor,
+            color = BottomAppBarDefaults.containerColor.copy(alpha = BackgroundAlpha),
             contentColor = contentColorFor(BottomAppBarDefaults.containerColor),
+            shape = navigationBarShape(prefersCompactBottomNav),
         ) {
             Row(
                 modifier = Modifier
@@ -225,9 +230,28 @@ fun Modifier.bottomNavigationSharedBounds(
     }
 }
 
+@Composable
+fun navigationBarShape(
+    prefersCompactBottomNav: Boolean,
+): Shape {
+    val topCornerSize by animateDpAsState(
+        if (prefersCompactBottomNav) CompactCornerSize else RegularCornerSize,
+    )
+
+    return RoundedCornerShape(
+        topStart = topCornerSize,
+        topEnd = topCornerSize,
+    )
+}
+
 private data object NavigationBarSharedElementKey
 private data object NavigationRailSharedElementKey
 
+private val CompactCornerSize = 0.dp
+private val RegularCornerSize = 16.dp
+
 private const val MaxBadgeCount = 100L
+
+private const val BackgroundAlpha = 0.98f
 
 private val NavigationRailBoundsTransform = BoundsTransform { _, _ -> snap() }
