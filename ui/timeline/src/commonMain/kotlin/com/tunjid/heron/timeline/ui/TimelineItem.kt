@@ -331,7 +331,7 @@ private fun ReplyTreePost(
                 Timeline(
                     modifier = Modifier
                         .padding(start = 8.dp)
-                        .height(if (index == 0) 16.dp else 12.dp)
+                        .height(if (index == 0) ReplyTreeFirstLineHeight else ReplyTreeSubsequentLineHeight)
                         .childThreadNode(videoId = null),
                 )
                 ReplyTreeItem(
@@ -435,7 +435,7 @@ private fun ReplyTreeItem(
                 Timeline(
                     modifier = Modifier
                         .padding(start = 8.dp)
-                        .height(if (index == 0) 16.dp else 12.dp)
+                        .height(if (index == 0) ReplyTreeFirstLineHeight else ReplyTreeSubsequentLineHeight)
                         .childThreadNode(videoId = null),
                 )
                 ReplyTreeItem(
@@ -676,3 +676,5 @@ private const val DefaultMaxPostsInThread = 3
 private const val MaxReplyTreeDepth = 4
 private const val MaxReplyTreeSiblings = 3
 private val ReplyTreeIndent = 16.dp
+private val ReplyTreeFirstLineHeight = 16.dp
+private val ReplyTreeSubsequentLineHeight = 12.dp
