@@ -64,6 +64,7 @@ sealed class TimelineItem {
             is Thread,
             is Single,
             is Placeholder,
+            is ReplyTree,
             -> post.indexedAt
 
             is Repost -> at
@@ -115,6 +116,15 @@ sealed class TimelineItem {
         override val signedInProfileId: ProfileId?,
     ) : TimelineItem()
 
+    data class ReplyTree(
+        override val id: String,
+        override val post: Post,
+        override val isMuted: Boolean,
+        override val threadGate: ThreadGate?,
+        override val appliedLabels: AppliedLabels,
+        override val signedInProfileId: ProfileId?,
+        val replies: List<ReplyNode>,
+    ) : TimelineItem()
     sealed class Placeholder : TimelineItem() {
         override val post: Post
             get() = LoadingPost
@@ -168,3 +178,11 @@ sealed class TimelineItem {
         val LoadingItems = (0..16).map { Loading() }
     }
 }
+
+data class ReplyNode(
+    val post: Post,
+    val threadGate: ThreadGate?,
+    val appliedLabels: AppliedLabels,
+    val depth: Int,
+    val children: List<ReplyNode>,
+)

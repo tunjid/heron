@@ -166,6 +166,10 @@ fun postThreadsMutations(
                                 it.uri.recordKey == route.postRecordKey
                             }
                             is TimelineItem.Placeholder -> null
+                            // Anchor post now lives here, the ReplyTree's post is the anchor
+                            is TimelineItem.ReplyTree -> item.post.takeIf {
+                                it.uri.recordKey == route.postRecordKey
+                            }
                         }
                     },
                 )
