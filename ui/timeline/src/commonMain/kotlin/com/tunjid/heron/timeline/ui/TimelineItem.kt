@@ -382,7 +382,9 @@ private fun ReplyTreeItem(
 
     // Indent the entire node (post + its children's connectors) based on depth.
     Column(
-        modifier = modifier.padding(start = (node.depth - 1) * ReplyTreeIndent),
+        modifier = modifier.padding(
+            start = maxOf(0, node.depth - 1) * ReplyTreeIndent,
+        ),
     ) {
         Post(
             modifier = Modifier.fillMaxWidth(),
