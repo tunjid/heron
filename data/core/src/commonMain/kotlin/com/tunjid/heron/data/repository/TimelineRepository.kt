@@ -536,7 +536,7 @@ internal class OfflineTimelineRepository(
                     associatedProfileIds = {
                         emptyList()
                     },
-                    block = ::spinThread,
+                    block = ::spinReplyTree,
                 )
             }
             .withRefresh {
@@ -1169,6 +1169,67 @@ internal class OfflineTimelineRepository(
         }
 
     private fun spinThread(
+        context: RecordResolver.TimelineItemCreationContext,
+        thread: ThreadedPostEntity,
+    ) = with(context) {
+        val lastItem = list.lastOrNull()
+        when {
+            // To start or for the OP, start a new thread
+            lastItem == null || thread.generation == 0L -> list += TimelineItem.Thread(
+                id = thread.entity.uri.uri,
+                generation = thread.generation,
+                isMuted = isMuted(post),
+                anchorPostIndex = 0,
+                hasBreak = false,
+                posts = listOf(post),
+                appliedLabels = appliedLabels,
+                signedInProfileId = signedInProfileId,
+                postUrisToThreadGates = mapOf(post.uri to threadGate(post.uri)),
+            )
+            // For parents, edit the head
+            thread.generation <= -1L ->
+                if (lastItem is TimelineItem.Thread) list[list.lastIndex] = lastItem.copy(
+                    posts = lastItem.posts + post,
+                    isMuted = lastItem.isMuted || isMuted(post),
+                    postUrisToThreadGates = lastItem.postUrisToThreadGates + Pair(
+                        post.uri,
+                        threadGate(post.uri),
+                    ),
+                )
+                else Unit
+
+            // New reply to the OP, start its own thread
+            lastItem is TimelineItem.Thread &&
+                lastItem.posts.first().uri != thread.rootPostUri -> list += TimelineItem.Thread(
+                id = thread.entity.uri.uri,
+                generation = thread.generation,
+                isMuted = isMuted(post),
+                anchorPostIndex = 0,
+                hasBreak = false,
+                posts = listOf(post),
+                appliedLabels = appliedLabels,
+                signedInProfileId = signedInProfileId,
+                postUrisToThreadGates = mapOf(post.uri to threadGate(post.uri)),
+            )
+            // Just tack the post to the current thread
+            lastItem is TimelineItem.Thread ->
+                // Make sure only consecutive generations are added to the thread.
+                // Nonconsecutive generations are dropped. Users can see these replies by
+                // diving into the thread.
+                if (lastItem.nextGeneration == thread.generation) list[list.lastIndex] =
+                    lastItem.copy(
+                        posts = lastItem.posts + post,
+                        isMuted = lastItem.isMuted || isMuted(post),
+                        postUrisToThreadGates = lastItem.postUrisToThreadGates + Pair(
+                            post.uri,
+                            threadGate(post.uri),
+                        ),
+                    )
+            else -> Unit
+        }
+    }
+
+    private fun spinReplyTree(
         context: RecordResolver.TimelineItemCreationContext,
         thread: ThreadedPostEntity,
     ) = with(context) {
