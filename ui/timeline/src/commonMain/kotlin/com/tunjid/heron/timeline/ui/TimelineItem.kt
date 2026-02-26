@@ -55,7 +55,9 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.times
 import com.tunjid.heron.data.core.models.AppliedLabels.Companion.warned
+import com.tunjid.heron.data.core.models.ReplyNode
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.PostUri
@@ -132,6 +134,17 @@ fun TimelineItem(
                     is TimelineItem.Thread if presentation == Timeline.Presentation.Text.WithEmbed -> ThreadedPost(
                         modifier = Modifier
                             .fillMaxWidth(),
+                        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                        presentationLookaheadScope = presentationLookaheadScope,
+                        item = item,
+                        sharedElementPrefix = sharedElementPrefix,
+                        now = now,
+                        showEngagementMetrics = showEngagementMetrics,
+                        presentation = presentation,
+                        postActions = postActions,
+                    )
+                    is TimelineItem.ReplyTree if presentation == Timeline.Presentation.Text.WithEmbed -> ReplyTreePost(
+                        modifier = Modifier.fillMaxWidth(),
                         paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                         presentationLookaheadScope = presentationLookaheadScope,
                         item = item,
@@ -265,6 +278,184 @@ private fun ThreadedPost(
 
         if (item.posts.size > maxPosts) ShowMore {
             maxPosts += DefaultMaxPostsInThread
+        }
+    }
+}
+
+@Composable
+private fun ReplyTreePost(
+    modifier: Modifier = Modifier,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    presentationLookaheadScope: LookaheadScope,
+    item: TimelineItem.ReplyTree,
+    sharedElementPrefix: String,
+    now: Instant,
+    showEngagementMetrics: Boolean,
+    presentation: Timeline.Presentation,
+    postActions: PostActions,
+) {
+    var showAllReplies by rememberSaveable { mutableStateOf(false) }
+    val visibleReplies = remember(item.replies, showAllReplies) {
+        if (showAllReplies) item.replies else item.replies.take(MaxReplyTreeSiblings)
+    }
+
+    Column(modifier = modifier) {
+        Post(
+            modifier = Modifier.fillMaxWidth(),
+            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+            presentationLookaheadScope = presentationLookaheadScope,
+            hasMutedWords = item.isMuted && !item.post.authorMuted,
+            now = now,
+            post = item.post,
+            threadGate = item.threadGate,
+            isAnchoredInTimeline = true,
+            isMainPost = true,
+            showEngagementMetrics = showEngagementMetrics,
+            avatarShape = RoundedPolygonShape.Circle,
+            sharedElementPrefix = sharedElementPrefix,
+            createdAt = item.post.createdAt,
+            presentation = presentation,
+            appliedLabels = item.appliedLabels,
+            postActions = postActions,
+            timeline = {
+                if (item.replies.isNotEmpty()) Timeline(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .padding(top = 60.dp),
+                )
+            },
+        )
+
+        visibleReplies.forEachIndexed { index, node ->
+            key(node.post.uri.uri) {
+                Timeline(
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .height(if (index == 0) 16.dp else 12.dp)
+                        .childThreadNode(videoId = null),
+                )
+                ReplyTreeItem(
+                    modifier = Modifier.fillMaxWidth(),
+                    node = node,
+                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    presentationLookaheadScope = presentationLookaheadScope,
+                    sharedElementPrefix = sharedElementPrefix,
+                    now = now,
+                    showEngagementMetrics = showEngagementMetrics,
+                    presentation = presentation,
+                    postActions = postActions,
+                    isMuted = item.isMuted,
+                )
+            }
+        }
+
+        // Inline expander for more root siblings
+        if (item.replies.size > MaxReplyTreeSiblings && !showAllReplies) {
+            ShowMore { showAllReplies = true }
+        }
+    }
+}
+
+@Composable
+private fun ReplyTreeItem(
+    modifier: Modifier = Modifier,
+    node: ReplyNode,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    presentationLookaheadScope: LookaheadScope,
+    sharedElementPrefix: String,
+    now: Instant,
+    showEngagementMetrics: Boolean,
+    presentation: Timeline.Presentation,
+    postActions: PostActions,
+    isMuted: Boolean,
+) {
+    val atDepthLimit = node.depth >= MaxReplyTreeDepth
+    val hasChildrenToShow = node.children.isNotEmpty() && !atDepthLimit
+    var showAllChildren by rememberSaveable { mutableStateOf(false) }
+    val visibleChildren = remember(node.children, showAllChildren, hasChildrenToShow) {
+        when {
+            !hasChildrenToShow -> emptyList()
+            showAllChildren -> node.children
+            else -> node.children.take(MaxReplyTreeSiblings)
+        }
+    }
+
+    // Indent the entire node (post + its children's connectors) based on depth.
+    Column(
+        modifier = modifier.padding(start = (node.depth - 1) * ReplyTreeIndent),
+    ) {
+        Post(
+            modifier = Modifier.fillMaxWidth(),
+            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+            presentationLookaheadScope = presentationLookaheadScope,
+            hasMutedWords = isMuted && !node.post.authorMuted,
+            now = now,
+            post = node.post,
+            threadGate = node.threadGate,
+            isAnchoredInTimeline = false,
+            isMainPost = false,
+            showEngagementMetrics = showEngagementMetrics,
+            avatarShape = when {
+                // Has children to display below, flatten avatar bottom to connect to line
+                hasChildrenToShow -> ReplyThreadStartImageShape
+                else -> RoundedPolygonShape.Circle
+            },
+            sharedElementPrefix = sharedElementPrefix,
+            createdAt = node.post.createdAt,
+            presentation = presentation,
+            appliedLabels = node.appliedLabels,
+            postActions = postActions,
+            timeline = {
+                // Draw line down through avatar area only if children will be shown below
+                if (hasChildrenToShow) Timeline(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .padding(top = 60.dp),
+                )
+            },
+        )
+
+        // At depth limit with children show "Continue thread" that navigates
+        // into the post's own detail screen instead of recursing further.
+        if (atDepthLimit && node.children.isNotEmpty()) {
+            ShowMore {
+                postActions.onPostAction(
+                    PostAction.OfPost(
+                        post = node.post,
+                        isMainPost = false,
+                        warnedAppliedLabels = node.appliedLabels.warned(),
+                    ),
+                )
+            }
+        }
+
+        // Render visible children recursively
+        visibleChildren.forEachIndexed { index, child ->
+            key(child.post.uri.uri) {
+                Timeline(
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .height(if (index == 0) 16.dp else 12.dp)
+                        .childThreadNode(videoId = null),
+                )
+                ReplyTreeItem(
+                    modifier = Modifier.fillMaxWidth(),
+                    node = child,
+                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    presentationLookaheadScope = presentationLookaheadScope,
+                    sharedElementPrefix = sharedElementPrefix,
+                    now = now,
+                    showEngagementMetrics = showEngagementMetrics,
+                    presentation = presentation,
+                    postActions = postActions,
+                    isMuted = isMuted,
+                )
+            }
+        }
+
+        // Inline expander for more siblings
+        if (hasChildrenToShow && node.children.size > MaxReplyTreeSiblings && !showAllChildren) {
+            ShowMore { showAllChildren = true }
         }
     }
 }
@@ -477,8 +668,11 @@ private val TimelineItem.isThreadedAnchor
     get() = this is TimelineItem.Thread && generation == 0L
 
 private val TimelineItem.isThreadedAncestorOrAnchor
-    get() = isThreadedAncestor || isThreadedAnchor
+    get() = isThreadedAncestor || isThreadedAnchor || this is TimelineItem.ReplyTree
 
 private val NoOpInteractionSource = MutableInteractionSource()
 
 private const val DefaultMaxPostsInThread = 3
+private const val MaxReplyTreeDepth = 4
+private const val MaxReplyTreeSiblings = 3
+private val ReplyTreeIndent = 16.dp
