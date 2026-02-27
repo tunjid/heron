@@ -108,6 +108,7 @@ fun ProfileEntity?.asExternalModel(
         ),
         labels = labels,
         isLabeler = associated.labeler ?: false,
+        status = null,
     )
 
 data class PopulatedProfileEntity(
@@ -120,6 +121,8 @@ data class PopulatedProfileEntity(
         entityColumn = "uri",
     )
     val labelEntities: List<LabelEntity>,
+    @Relation(parentColumn = "did", entityColumn = "profileId")
+    val statusEntity: ProfileStatusEntity?,
 )
 
 fun PopulatedProfileEntity.asExternalModel() = with(entity) {
@@ -146,6 +149,7 @@ fun PopulatedProfileEntity.asExternalModel() = with(entity) {
         ),
         labels = labelEntities.map(LabelEntity::asExternalModel),
         isLabeler = associated.labeler ?: false,
+        status = statusEntity?.asExternalModel(),
     )
 }
 
