@@ -175,14 +175,16 @@ interface ProfileDao {
 
     @Upsert
     suspend fun upsertStatus(
-        entity: ProfileStatusEntity
+        entity: ProfileStatusEntity,
     )
 
-    @Query("""
+    @Query(
+        """
         DELETE FROM profile_statuses
         WHERE profileId = :profileId
-    """)
+    """,
+    )
     suspend fun deleteStatus(
-        profileId: ProfileId
+        profileId: ProfileId,
     )
 }

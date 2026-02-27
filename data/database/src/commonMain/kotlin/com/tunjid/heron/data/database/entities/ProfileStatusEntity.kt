@@ -16,8 +16,8 @@ import kotlin.time.Instant
             parentColumns = ["did"],
             childColumns = ["profileId"],
             onDelete = ForeignKey.CASCADE,
-        )
-    ]
+        ),
+    ],
 )
 data class ProfileStatusEntity(
     val profileId: ProfileId,
