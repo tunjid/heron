@@ -23,6 +23,8 @@ import app.bsky.graph.GetActorStarterPacksQueryParams
 import app.bsky.graph.GetActorStarterPacksResponse
 import app.bsky.graph.GetBlocksQueryParams
 import app.bsky.graph.GetBlocksResponse
+import app.bsky.graph.GetListQueryParams
+import app.bsky.graph.GetListResponse
 import app.bsky.graph.GetListsQueryParams
 import app.bsky.graph.GetListsResponse
 import com.atproto.repo.CreateRecordRequest
@@ -35,6 +37,7 @@ import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Labeler
+import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
@@ -56,6 +59,7 @@ import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
+import com.tunjid.heron.data.database.entities.PopulatedListMemberEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.AppMainScope
@@ -84,6 +88,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
@@ -112,6 +117,11 @@ interface RecordRepository {
         query: ProfilesQuery,
         cursor: Cursor,
     ): Flow<CursorList<FeedList>>
+
+    fun listMembers(
+        query: ListMemberQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<ListMember>>
 
     fun feedGenerators(
         query: ProfilesQuery,
@@ -295,6 +305,50 @@ internal class OfflineRecordRepository @Inject constructor(
                     onResponse = {
                         multipleEntitySaverProvider.saveInTransaction {
                             lists.forEach(::add)
+                        }
+                    },
+                ),
+                ::CursorList,
+            )
+                .distinctUntilChanged()
+        }
+
+    override fun listMembers(
+        query: ListMemberQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<ListMember>> =
+        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
+            combine(
+                listDao.listMembers(
+                    listUri = query.listUri.uri,
+                    signedInUserId = signedInProfileId.id,
+                    offset = query.data.offset,
+                    limit = query.data.limit,
+                )
+                    .map {
+                        it.map(PopulatedListMemberEntity::asExternalModel)
+                    },
+                networkService.nextCursorFlow(
+                    currentCursor = cursor,
+                    currentRequestWithNextCursor = {
+                        getList(
+                            GetListQueryParams(
+                                list = query.listUri.uri.let(::AtUri),
+                                limit = query.data.limit,
+                                cursor = cursor.value,
+                            ),
+                        )
+                    },
+                    nextCursor = GetListResponse::cursor,
+                    onResponse = {
+                        multipleEntitySaverProvider.saveInTransaction {
+                            add(list)
+                            items.forEach { listItemView ->
+                                add(
+                                    listUri = list.uri.atUri.let(::ListUri),
+                                    listItemView = listItemView,
+                                )
+                            }
                         }
                     },
                 ),

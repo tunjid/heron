@@ -123,7 +123,7 @@ class ActualListViewModel(
                     request = route.timelineRequest,
                     scope = scope,
                     timelineRepository = timelineRepository,
-                    profileRepository = profileRepository,
+                    recordRepository = recordRepository,
                     authRepository = authRepository,
                 ),
                 actions.toMutationStream(
@@ -253,7 +253,7 @@ private fun SuspendingStateHolder<State>.listMemberStateHolderMutations(
     request: TimelineRequest.OfList,
     scope: CoroutineScope,
     timelineRepository: TimelineRepository,
-    profileRepository: ProfileRepository,
+    recordRepository: RecordRepository,
     authRepository: AuthRepository,
 ): Flow<Mutation<State>> = flow {
     val existingHolder = state().stateHolders
@@ -293,7 +293,7 @@ private fun SuspendingStateHolder<State>.listMemberStateHolderMutations(
                             currentState = { state() },
                             updateQueryData = { copy(data = it) },
                             refreshQuery = { copy(data = data.reset()) },
-                            cursorListLoader = profileRepository::listMembers,
+                            cursorListLoader = recordRepository::listMembers,
                             onNewItems = { items ->
                                 items.distinctBy(ListMember::uri)
                             },
