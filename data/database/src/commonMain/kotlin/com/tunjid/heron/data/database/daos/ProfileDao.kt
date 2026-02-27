@@ -26,8 +26,10 @@ import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
+import com.tunjid.heron.data.database.entities.ProfileStatusEntity
 import com.tunjid.heron.data.database.entities.partial
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.partial
@@ -169,5 +171,18 @@ interface ProfileDao {
     )
     suspend fun deleteBlock(
         uri: BlockUri,
+    )
+
+    @Upsert
+    suspend fun upsertStatus(
+        entity: ProfileStatusEntity
+    )
+
+    @Query("""
+        DELETE FROM profile_statuses
+        WHERE profileId = :profileId
+    """)
+    suspend fun deleteStatus(
+        profileId: ProfileId
     )
 }
