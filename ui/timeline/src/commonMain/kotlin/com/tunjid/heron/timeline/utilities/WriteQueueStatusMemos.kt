@@ -42,6 +42,7 @@ import heron.ui.timeline.generated.resources.writable_reaction_removal
 import heron.ui.timeline.generated.resources.writable_record_deletion
 import heron.ui.timeline.generated.resources.writable_repost
 import heron.ui.timeline.generated.resources.writable_repost_removal
+import heron.ui.timeline.generated.resources.writable_status_update
 import heron.ui.timeline.generated.resources.writable_thread_gate_update
 import heron.ui.timeline.generated.resources.writable_timeline_update
 import heron.ui.timeline.generated.resources.writable_unblock
@@ -135,6 +136,10 @@ fun Writable.writeStatusMessage(
             is Writable.RecordDeletion -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_record_deletion),
+            )
+            is Writable.StatusUpdate -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_status_update),
             )
         }
     }
