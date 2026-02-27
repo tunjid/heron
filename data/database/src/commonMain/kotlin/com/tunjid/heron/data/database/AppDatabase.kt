@@ -53,6 +53,7 @@ import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostRepostEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
+import com.tunjid.heron.data.database.entities.ProfileStatusEntity
 import com.tunjid.heron.data.database.entities.StarterPackEntity
 import com.tunjid.heron.data.database.entities.ThreadGateAllowedListEntity
 import com.tunjid.heron.data.database.entities.ThreadGateEntity
@@ -108,6 +109,7 @@ import kotlinx.coroutines.IO
         PostViewerStatisticsEntity::class,
         ProfileViewerStateEntity::class,
         ProfileEntity::class,
+        ProfileStatusEntity::class,
         PostLikeEntity::class,
         PostRepostEntity::class,
         LabelEntity::class,

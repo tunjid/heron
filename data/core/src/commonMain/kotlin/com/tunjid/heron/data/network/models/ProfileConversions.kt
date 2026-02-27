@@ -22,6 +22,8 @@ import app.bsky.actor.ProfileAssociatedChatAllowIncoming
 import app.bsky.actor.ProfileView
 import app.bsky.actor.ProfileViewBasic
 import app.bsky.actor.ProfileViewDetailed
+import app.bsky.actor.StatusView
+import app.bsky.actor.StatusViewEmbedUnion
 import app.bsky.actor.ViewerState
 import app.bsky.feed.BlockedAuthor
 import com.tunjid.heron.data.core.models.Constants
@@ -185,6 +187,7 @@ internal fun ProfileViewBasic.profile() = Profile(
     ),
     labels = labels?.map(com.atproto.label.Label::asExternalModel) ?: emptyList(),
     isLabeler = associated?.labeler ?: false,
+    status = status?.profileStatus(),
 )
 
 internal fun ProfileView.profile() = Profile(
@@ -210,6 +213,26 @@ internal fun ProfileView.profile() = Profile(
     ),
     labels = labels?.map(com.atproto.label.Label::asExternalModel) ?: emptyList(),
     isLabeler = associated?.labeler ?: false,
+    status = status?.profileStatus(),
+)
+
+internal fun StatusView.profileStatus() = Profile.ProfileStatus(
+    uri = uri?.atUri,
+    status = status,
+    embed = (embed as? StatusViewEmbedUnion.View)
+        ?.value
+        ?.external
+        ?.let { ext ->
+            Profile.ProfileStatus.Embed(
+                uri = ext.uri.uri,
+                title = ext.title,
+                description = ext.description,
+                thumb = ext.thumb?.uri?.let(::ImageUri),
+            )
+        },
+    expiresAt = expiresAt,
+    isActive = isActive,
+    isDisabled = isDisabled,
 )
 
 private fun ProfileAssociated?.allowedChat(): Profile.ChatInfo.Allowed =

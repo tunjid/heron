@@ -130,6 +130,18 @@ sealed interface Writable {
     }
 
     @Serializable
+    data class StatusUpdate(
+        val update: Profile.StatusUpdate,
+    ) : Writable {
+
+        override val queueId: String
+            get() = "status-update-${update.profileId}"
+
+        override suspend fun WriteQueue.write(): Outcome =
+            profileRepository.updateStatus(update)
+    }
+
+    @Serializable
     data class TimelineUpdate(
         val update: Timeline.Update,
     ) : Writable {

@@ -17,6 +17,10 @@
 package com.tunjid.heron.data.repository
 
 import app.bsky.actor.Profile as BskyProfile
+import app.bsky.actor.Status
+import app.bsky.actor.StatusEmbedUnion
+import app.bsky.embed.External
+import app.bsky.embed.ExternalExternal
 import app.bsky.graph.Block as BskyBlock
 import app.bsky.graph.Follow as BskyFollow
 import app.bsky.graph.GetFollowersQueryParams
@@ -56,6 +60,7 @@ import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.PopulatedListMemberEntity
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
+import com.tunjid.heron.data.database.entities.asEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
@@ -74,6 +79,7 @@ import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import io.ktor.utils.io.ByteReadChannel
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -87,6 +93,7 @@ import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
+import sh.christian.ozone.api.Uri as LexiconUri
 
 @Serializable
 data class ProfilesQuery(
@@ -145,6 +152,10 @@ interface ProfileRepository {
 
     suspend fun updateProfile(
         update: Profile.Update,
+    ): Outcome
+
+    suspend fun updateStatus(
+        update: Profile.StatusUpdate,
     ): Outcome
 }
 
@@ -516,6 +527,64 @@ internal class OfflineProfileRepository @Inject constructor(
                     )
                 }
                 .toOutcome()
+        }
+    } ?: expiredSessionOutcome()
+
+    override suspend fun updateStatus(
+        update: Profile.StatusUpdate,
+    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+
+        when (update) {
+            is Profile.StatusUpdate.GoLive -> networkService.runCatchingWithMonitoredNetworkRetry {
+                putRecord(
+                    PutRecordRequest(
+                        repo = update.profileId.id.let(::Did),
+                        collection = Nsid(Collections.ProfileStatus),
+                        rkey = RKey(Collections.SelfRecordKey.rkey),
+                        record = Status(
+                            status = Profile.ProfileStatus.STATUS_LIVE,
+                            durationMinutes = update.durationMinutes.toLong(),
+                            embed = StatusEmbedUnion.AppBskyEmbedExternal(
+                                value = External(
+                                    external = ExternalExternal(
+                                        uri = LexiconUri(update.streamUrl),
+                                        title = "",
+                                        description = "",
+                                    ),
+                                ),
+                            ),
+                            createdAt = Clock.System.now(),
+                        ).asJsonContent(Status.serializer()),
+                    ),
+                )
+            }.toOutcome {
+                profileDao.upsertStatus(
+                    Profile.ProfileStatus(
+                        status = Profile.ProfileStatus.STATUS_LIVE,
+                        embed = Profile.ProfileStatus.Embed(
+                            uri = update.streamUrl,
+                            title = "",
+                            description = "",
+                        ),
+                        expiresAt = Clock.System.now().plus(update.durationMinutes.minutes),
+                        isActive = true,
+                        isDisabled = false,
+                    ).asEntity(update.profileId),
+                )
+            }
+
+            is Profile.StatusUpdate.EndLive -> networkService.runCatchingWithMonitoredNetworkRetry {
+                deleteRecord(
+                    DeleteRecordRequest(
+                        repo = update.profileId.id.let(::Did),
+                        collection = Nsid(Collections.ProfileStatus),
+                        rkey = RKey(Collections.SelfRecordKey.rkey),
+                    ),
+                )
+            }.toOutcome {
+                profileDao.deleteStatus(update.profileId)
+            }
         }
     } ?: expiredSessionOutcome()
 }

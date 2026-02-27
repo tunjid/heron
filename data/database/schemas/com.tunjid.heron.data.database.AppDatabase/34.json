@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 34,
-    "identityHash": "1e975be4633a2c929f918f6201d3bdf4",
+    "identityHash": "adbac83d33dc50b8cc208c46f3e14c77",
     "entities": [
       {
         "tableName": "bookmarks",
@@ -1038,6 +1038,78 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_profiles_handle` ON `${TABLE_NAME}` (`handle`)"
+          }
+        ]
+      },
+      {
+        "tableName": "profile_statuses",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profileId` TEXT NOT NULL, `statusValue` TEXT NOT NULL, `embedUri` TEXT, `embedTitle` TEXT, `embedDescription` TEXT, `embedThumb` TEXT, `expiresAt` INTEGER, `isActive` INTEGER, `isDisabled` INTEGER, PRIMARY KEY(`profileId`), FOREIGN KEY(`profileId`) REFERENCES `profiles`(`did`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "profileId",
+            "columnName": "profileId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statusValue",
+            "columnName": "statusValue",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "embedUri",
+            "columnName": "embedUri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "embedTitle",
+            "columnName": "embedTitle",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "embedDescription",
+            "columnName": "embedDescription",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "embedThumb",
+            "columnName": "embedThumb",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "expiresAt",
+            "columnName": "expiresAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "isActive",
+            "columnName": "isActive",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "isDisabled",
+            "columnName": "isDisabled",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "profileId"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "profiles",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "profileId"
+            ],
+            "referencedColumns": [
+              "did"
+            ]
           }
         ]
       },
@@ -3209,7 +3281,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1e975be4633a2c929f918f6201d3bdf4')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'adbac83d33dc50b8cc208c46f3e14c77')"
     ]
   }
 }
