@@ -135,6 +135,7 @@
     <string name="writable_unlike">unlike</string>
     <string name="writable_repost">repost</string>
     <string name="writable_repost_removal">repost removal</string>
+    <string name="writable_add_list_member">list member addition</string>
     <string name="writable_thread_gate_update">post reply update</string>
     <string name="empty_timeline_generic">This feed is empty</string>
     <string name="empty_timeline_generic_description">When you follow people, their posts will show up here.</string>
