@@ -44,16 +44,6 @@ dependencyResolutionManagement {
                 includeGroupAndSubgroups("com.google")
             }
         }
-        maven {
-            name = "Central Portal Snapshots"
-            url = URI.create("https://central.sonatype.com/repository/maven-snapshots/")
-
-            // Only search this repository for the specific dependency
-            content {
-                includeGroupAndSubgroups("com.tunjid.mutator")
-                includeGroupAndSubgroups("com.tunjid.tiler")
-            }
-        }
         mavenCentral()
     }
 }
