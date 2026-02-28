@@ -40,6 +40,7 @@ import com.tunjid.heron.data.core.models.Follow
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.Like
 import com.tunjid.heron.data.core.models.LinkTarget
+import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.data.core.models.Post
@@ -459,6 +460,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                         is FeedGenerator,
                         is FeedList,
                         is Labeler,
+                        is ListMember,
                         is StarterPack,
                         is Block,
                         -> throw UnknownNotificationException(query.recordUri)

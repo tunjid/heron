@@ -27,6 +27,7 @@ import app.bsky.graph.GetListQueryParams
 import app.bsky.graph.GetListResponse
 import app.bsky.graph.GetListsQueryParams
 import app.bsky.graph.GetListsResponse
+import app.bsky.graph.Listitem as BskyListMember
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.DeleteRecordRequest
 import com.atproto.repo.GetRecordQueryParams
@@ -46,17 +47,21 @@ import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.LabelerUri
+import com.tunjid.heron.data.core.types.ListMemberUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackUri
+import com.tunjid.heron.data.core.types.recordUriOrNull
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
+import com.tunjid.heron.data.database.entities.ListMemberEntity
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedListMemberEntity
@@ -76,6 +81,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
+import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
@@ -131,6 +137,10 @@ interface RecordRepository {
     suspend fun updateGrazeFeed(
         update: GrazeFeed.Update,
     ): Result<GrazeFeed>
+
+    suspend fun addListMember(
+        create: ListMember.Create,
+    ): Outcome
 
     suspend fun deleteRecord(
         uri: RecordUri,
@@ -436,6 +446,46 @@ internal class OfflineRecordRepository @Inject constructor(
             }
         }
     } ?: expiredSessionResult()
+
+    override suspend fun addListMember(
+        create: ListMember.Create,
+    ): Outcome {
+        val createdAt = Clock.System.now()
+        val recordKey = RecordKey.generate()
+        return networkService.runCatchingWithMonitoredNetworkRetry {
+            createRecord(
+                CreateRecordRequest(
+                    repo = Did(create.profileId.id),
+                    collection = Nsid(ListMemberUri.NAMESPACE),
+                    rkey = RKey(recordKey.value),
+                    record = BskyListMember(
+                        subject = Did(create.profileId.id),
+                        list = AtUri(create.listUri.uri),
+                        createdAt = createdAt,
+                    ).asJsonContent(BskyListMember.serializer()),
+                ),
+            )
+        }.mapCatchingUnlessCancelled {
+            val listMemberUri = requireNotNull(
+                recordUriOrNull(
+                    profileId = create.profileId,
+                    namespace = ListMemberUri.NAMESPACE,
+                    recordKey = recordKey,
+                ),
+            ) as ListMemberUri
+            multipleEntitySaverProvider.saveInTransaction {
+                add(
+                    ListMemberEntity(
+                        uri = listMemberUri,
+                        listUri = create.listUri,
+                        subjectId = create.profileId,
+                        createdAt = createdAt,
+                    ),
+                )
+            }
+        }
+            .toOutcome()
+    }
 
     override suspend fun deleteRecord(
         uri: RecordUri,

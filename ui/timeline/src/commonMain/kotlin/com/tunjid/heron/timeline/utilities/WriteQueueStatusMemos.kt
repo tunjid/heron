@@ -23,6 +23,7 @@ import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.ui.text.Memo
 import heron.ui.timeline.generated.resources.Res
+import heron.ui.timeline.generated.resources.writable_add_list_member
 import heron.ui.timeline.generated.resources.writable_block
 import heron.ui.timeline.generated.resources.writable_bookmark
 import heron.ui.timeline.generated.resources.writable_bookmark_removal
@@ -135,6 +136,10 @@ fun Writable.writeStatusMessage(
             is Writable.RecordDeletion -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_record_deletion),
+            )
+            is Writable.FeedList.AddMember -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_add_list_member),
             )
         }
     }

@@ -24,6 +24,7 @@ import app.bsky.feed.Repost as BskyRepost
 import app.bsky.graph.Block as BskyBlock
 import app.bsky.graph.GetListQueryParams
 import app.bsky.graph.GetStarterPackQueryParams
+import app.bsky.graph.Listitem as BskyListMember
 import app.bsky.labeler.GetServicesQueryParams
 import app.bsky.labeler.GetServicesResponseViewUnion
 import com.atproto.repo.DeleteRecordRequest
@@ -37,6 +38,7 @@ import com.tunjid.heron.data.core.models.Label
 import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LabelerPreference
 import com.tunjid.heron.data.core.models.Like
+import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
@@ -53,6 +55,7 @@ import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.GenericId
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.LikeUri
+import com.tunjid.heron.data.core.types.ListMemberUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
@@ -88,6 +91,7 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.currentSessionContext
 import com.tunjid.heron.data.network.models.asExternalModel
 import com.tunjid.heron.data.network.models.post
+import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.distinctUntilChangedSignedProfilePreferencesOrDefault
 import com.tunjid.heron.data.repository.singleSessionFlow
@@ -330,6 +334,28 @@ internal class OfflineRecordResolver @Inject constructor(
                     it.list.asExternalModel()
                 }
 
+            is ListMemberUri -> fetchRecordAndSaveCreator(
+                recordUri = uri,
+                viewingProfileId = viewingProfileId,
+            ).mapToResult { recordResponse ->
+                val bskyListMember = recordResponse.value.decodeAs<BskyListMember>()
+                networkService.runCatchingWithMonitoredNetworkRetry {
+                    getProfile(
+                        GetProfileQueryParams(
+                            actor = bskyListMember.subject,
+                        ),
+                    )
+                }.mapCatchingUnlessCancelled { profileResponse ->
+                    ListMember(
+                        uri = uri,
+                        subject = profileResponse.profileEntity().asExternalModel(),
+                        listUri = bskyListMember.list.atUri.let(::ListUri),
+                        createdAt = bskyListMember.createdAt,
+                        viewerState = null,
+                    )
+                }
+            }
+
             is PostUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
                 getPosts(
                     GetPostsQueryParams(
@@ -473,6 +499,7 @@ internal class OfflineRecordResolver @Inject constructor(
             is FeedGeneratorUri -> feedGeneratorDao.deleteFeedGenerator(uri)
             is LabelerUri -> labelDao.deleteLabeler(uri)
             is ListUri -> listDao.deleteList(uri)
+            is ListMemberUri -> listDao.deleteListMember(uri)
             is PostUri -> postDao.deletePost(uri)
             is StarterPackUri -> starterPackDao.deleteStarterPack(uri)
             is FollowUri -> profileDao.deleteFollow(uri)
