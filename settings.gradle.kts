@@ -1,3 +1,5 @@
+import java.net.URI
+
 /*
  *    Copyright 2024 Adetunji Dahunsi
  *
@@ -40,6 +42,16 @@ dependencyResolutionManagement {
                 includeGroupAndSubgroups("androidx")
                 includeGroupAndSubgroups("com.android")
                 includeGroupAndSubgroups("com.google")
+            }
+        }
+        maven {
+            name = "Central Portal Snapshots"
+            url = URI.create("https://central.sonatype.com/repository/maven-snapshots/")
+
+            // Only search this repository for the specific dependency
+            content {
+                includeGroupAndSubgroups("com.tunjid.mutator")
+                includeGroupAndSubgroups("com.tunjid.tiler")
             }
         }
         mavenCentral()

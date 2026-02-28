@@ -62,9 +62,8 @@ kotlin {
                 implementation(libs.lifecycle.multiplatform.runtime.compose)
                 implementation(libs.lifecycle.multiplatform.viewmodel.navigation3)
 
-                implementation(libs.navigation.event)
                 implementation(libs.navigation.event.compose)
-                implementation(libs.navigation3.runtime)
+                implementation(libs.navigation3.multiplatform.ui)
 
                 implementation(libs.okio)
 
