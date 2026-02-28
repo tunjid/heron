@@ -23,8 +23,11 @@ import app.bsky.graph.GetActorStarterPacksQueryParams
 import app.bsky.graph.GetActorStarterPacksResponse
 import app.bsky.graph.GetBlocksQueryParams
 import app.bsky.graph.GetBlocksResponse
+import app.bsky.graph.GetListQueryParams
+import app.bsky.graph.GetListResponse
 import app.bsky.graph.GetListsQueryParams
 import app.bsky.graph.GetListsResponse
+import app.bsky.graph.Listitem as BskyListMember
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.DeleteRecordRequest
 import com.atproto.repo.GetRecordQueryParams
@@ -35,6 +38,7 @@ import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Labeler
+import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StarterPack
@@ -43,19 +47,25 @@ import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.EmbeddableRecordUri
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.LabelerUri
+import com.tunjid.heron.data.core.types.ListMemberUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackUri
+import com.tunjid.heron.data.core.types.profileId
+import com.tunjid.heron.data.core.types.recordUriOrNull
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
+import com.tunjid.heron.data.database.entities.ListMemberEntity
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
+import com.tunjid.heron.data.database.entities.PopulatedListMemberEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.AppMainScope
@@ -72,6 +82,7 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
+import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
@@ -84,6 +95,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
@@ -113,6 +125,11 @@ interface RecordRepository {
         cursor: Cursor,
     ): Flow<CursorList<FeedList>>
 
+    fun listMembers(
+        query: ListMemberQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<ListMember>>
+
     fun feedGenerators(
         query: ProfilesQuery,
         cursor: Cursor,
@@ -121,6 +138,10 @@ interface RecordRepository {
     suspend fun updateGrazeFeed(
         update: GrazeFeed.Update,
     ): Result<GrazeFeed>
+
+    suspend fun addListMember(
+        create: ListMember.Create,
+    ): Outcome
 
     suspend fun deleteRecord(
         uri: RecordUri,
@@ -303,6 +324,50 @@ internal class OfflineRecordRepository @Inject constructor(
                 .distinctUntilChanged()
         }
 
+    override fun listMembers(
+        query: ListMemberQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<ListMember>> =
+        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
+            combine(
+                listDao.listMembers(
+                    listUri = query.listUri.uri,
+                    signedInUserId = signedInProfileId.id,
+                    offset = query.data.offset,
+                    limit = query.data.limit,
+                )
+                    .map {
+                        it.map(PopulatedListMemberEntity::asExternalModel)
+                    },
+                networkService.nextCursorFlow(
+                    currentCursor = cursor,
+                    currentRequestWithNextCursor = {
+                        getList(
+                            GetListQueryParams(
+                                list = query.listUri.uri.let(::AtUri),
+                                limit = query.data.limit,
+                                cursor = cursor.value,
+                            ),
+                        )
+                    },
+                    nextCursor = GetListResponse::cursor,
+                    onResponse = {
+                        multipleEntitySaverProvider.saveInTransaction {
+                            add(list)
+                            items.forEach { listItemView ->
+                                add(
+                                    listUri = list.uri.atUri.let(::ListUri),
+                                    listItemView = listItemView,
+                                )
+                            }
+                        }
+                    },
+                ),
+                ::CursorList,
+            )
+                .distinctUntilChanged()
+        }
+
     override fun feedGenerators(
         query: ProfilesQuery,
         cursor: Cursor,
@@ -382,6 +447,50 @@ internal class OfflineRecordRepository @Inject constructor(
             }
         }
     } ?: expiredSessionResult()
+
+    override suspend fun addListMember(
+        create: ListMember.Create,
+    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+
+        val createdAt = Clock.System.now()
+        val recordKey = RecordKey.generate()
+        val listOwnerId = create.listUri.profileId()
+
+        networkService.runCatchingWithMonitoredNetworkRetry {
+            createRecord(
+                CreateRecordRequest(
+                    repo = Did(listOwnerId.id),
+                    collection = Nsid(ListMemberUri.NAMESPACE),
+                    rkey = RKey(recordKey.value),
+                    record = BskyListMember(
+                        subject = Did(create.subjectId.id),
+                        list = AtUri(create.listUri.uri),
+                        createdAt = createdAt,
+                    ).asJsonContent(BskyListMember.serializer()),
+                ),
+            )
+        }.mapCatchingUnlessCancelled {
+            val listMemberUri = requireNotNull(
+                recordUriOrNull(
+                    profileId = listOwnerId,
+                    namespace = ListMemberUri.NAMESPACE,
+                    recordKey = recordKey,
+                ),
+            ) as ListMemberUri
+            multipleEntitySaverProvider.saveInTransaction {
+                add(
+                    ListMemberEntity(
+                        uri = listMemberUri,
+                        listUri = create.listUri,
+                        subjectId = create.subjectId,
+                        createdAt = createdAt,
+                    ),
+                )
+            }
+        }
+            .toOutcome()
+    } ?: expiredSessionOutcome()
 
     override suspend fun deleteRecord(
         uri: RecordUri,

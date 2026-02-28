@@ -26,7 +26,6 @@ import com.tunjid.heron.data.core.models.timelineRecordUri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.MessageRepository
-import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SearchQuery
 import com.tunjid.heron.data.repository.SearchRepository
@@ -91,7 +90,6 @@ class SearchViewModel(
     messageRepository: MessageRepository,
     recordRepository: RecordRepository,
     searchRepository: SearchRepository,
-    profileRepository: ProfileRepository,
     timelineRepository: TimelineRepository,
     userDataRepository: UserDataRepository,
     writeQueue: WriteQueue,
@@ -119,7 +117,7 @@ class SearchViewModel(
             trendsMutations(searchRepository),
             suggestedStarterPackMutations(
                 searchRepository = searchRepository,
-                profileRepository = profileRepository,
+                recordRepository = recordRepository,
             ),
             suggestedFeedGeneratorMutations(
                 searchRepository = searchRepository,
@@ -226,13 +224,13 @@ private fun trendsMutations(
 
 private fun suggestedStarterPackMutations(
     searchRepository: SearchRepository,
-    profileRepository: ProfileRepository,
+    recordRepository: RecordRepository,
 ): Flow<Mutation<State>> =
     searchRepository.suggestedStarterPacks()
         .flatMapLatest { starterPacks ->
             val starterPackListUris = starterPacks.mapNotNull { it.list?.uri }
             val listMembersFlow = starterPackListUris.map { listUri ->
-                profileRepository.listMembers(
+                recordRepository.listMembers(
                     query = ListMemberQuery(
                         listUri = listUri,
                         data = CursorQuery.Data(

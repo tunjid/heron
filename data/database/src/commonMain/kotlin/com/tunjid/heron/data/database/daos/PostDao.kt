@@ -396,11 +396,14 @@ interface PostDao {
               ft.rootPostUri AS rootPostUri,
               ft.generation AS generation,
               ft.ancestorCreated AS ancestorCreated,
-              ft.postCreated AS postCreated
+              ft.postCreated AS postCreated,
+              pt.parentPostUri AS parentPostUri
             FROM
               posts p
             JOIN
               FullThread ft ON p.uri = ft.uri
+            LEFT JOIN
+              postThreads pt ON pt.postUri = p.uri
             ORDER BY
               ft.ancestorCreated, ft.generation, ft.postCreated; -- sort by the first reply to the op, then the generation, then the post itself
         """,

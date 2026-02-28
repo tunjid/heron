@@ -17,13 +17,23 @@
 package com.tunjid.heron.images
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Canvas
-import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.asComposeImageBitmap
+import coil3.BitmapImage
 import coil3.PlatformContext
 
 internal actual fun coil3.Image.renderInto(
     canvas: Canvas,
-) = draw(canvas.nativeCanvas)
+) {
+    if (this !is BitmapImage) return
+    canvas.drawImage(
+        image = bitmap.asComposeImageBitmap(),
+        topLeftOffset = Offset.Zero,
+        paint = DefaultPaint,
+    )
+}
 
 fun imageLoader(): ImageLoader = CoilImageLoader.create(
     context = PlatformContext.INSTANCE,
@@ -31,3 +41,5 @@ fun imageLoader(): ImageLoader = CoilImageLoader.create(
 
 @Composable
 internal actual fun coil3.Image.AnimationEffect() = Unit
+
+private val DefaultPaint = Paint()

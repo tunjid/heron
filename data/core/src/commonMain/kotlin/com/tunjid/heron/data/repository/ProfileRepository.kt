@@ -115,11 +115,6 @@ interface ProfileRepository {
         limit: Long,
     ): Flow<List<Profile>>
 
-    fun listMembers(
-        query: ListMemberQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<ListMember>>
-
     fun followers(
         query: ProfilesQuery,
         cursor: Cursor,
@@ -216,50 +211,6 @@ internal class OfflineProfileRepository @Inject constructor(
                 .map { profileEntities ->
                     profileEntities.map(PopulatedProfileEntity::asExternalModel)
                 }
-        }
-
-    override fun listMembers(
-        query: ListMemberQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<ListMember>> =
-        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
-            combine(
-                listDao.listMembers(
-                    listUri = query.listUri.uri,
-                    signedInUserId = signedInProfileId.id,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
-                    .map {
-                        it.map(PopulatedListMemberEntity::asExternalModel)
-                    },
-                networkService.nextCursorFlow(
-                    currentCursor = cursor,
-                    currentRequestWithNextCursor = {
-                        getList(
-                            GetListQueryParams(
-                                list = query.listUri.uri.let(::AtUri),
-                                limit = query.data.limit,
-                                cursor = cursor.value,
-                            ),
-                        )
-                    },
-                    nextCursor = GetListResponse::cursor,
-                    onResponse = {
-                        multipleEntitySaverProvider.saveInTransaction {
-                            add(list)
-                            items.forEach { listItemView ->
-                                add(
-                                    listUri = list.uri.atUri.let(::ListUri),
-                                    listItemView = listItemView,
-                                )
-                            }
-                        }
-                    },
-                ),
-                ::CursorList,
-            )
-                .distinctUntilChanged()
         }
 
     override fun followers(

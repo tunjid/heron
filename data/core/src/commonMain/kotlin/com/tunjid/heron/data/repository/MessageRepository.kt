@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.data.repository
 
-import app.bsky.embed.Record as BskyRecord
 import chat.bsky.convo.AddReactionRequest
 import chat.bsky.convo.AddReactionResponse
 import chat.bsky.convo.DeletedMessageView
@@ -38,7 +37,6 @@ import chat.bsky.convo.MessageView
 import chat.bsky.convo.RemoveReactionRequest
 import chat.bsky.convo.RemoveReactionResponse
 import chat.bsky.convo.SendMessageRequest
-import com.atproto.repo.StrongRef
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
@@ -63,6 +61,7 @@ import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.toOutcome
+import com.tunjid.heron.data.utilities.toStrongReferencedRecord
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
@@ -76,8 +75,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.scan
 import kotlinx.serialization.Serializable
-import sh.christian.ozone.api.AtUri
-import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
 
 @Serializable
@@ -361,16 +358,9 @@ internal class OfflineMessageRepository @Inject constructor(
                     message = MessageInput(
                         text = message.text,
                         facets = resolvedLinks.facet(),
-                        embed = message.recordReference?.let { ref ->
-                            MessageInputEmbedUnion.AppBskyEmbedRecord(
-                                value = BskyRecord(
-                                    record = StrongRef(
-                                        uri = ref.uri.uri.let(::AtUri),
-                                        cid = ref.id.id.let(::Cid),
-                                    ),
-                                ),
-                            )
-                        },
+                        embed = message.recordReference
+                            ?.toStrongReferencedRecord()
+                            ?.let(MessageInputEmbedUnion::AppBskyEmbedRecord),
                     ),
                 ),
             )

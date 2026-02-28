@@ -51,6 +51,7 @@ fun RecordUri.requireCollection(): String =
         is FeedGeneratorUri -> FeedGeneratorUri.NAMESPACE
         is LabelerUri -> LabelerUri.NAMESPACE
         is ListUri -> ListUri.NAMESPACE
+        is ListMemberUri -> ListMemberUri.NAMESPACE
         is PostUri -> PostUri.NAMESPACE
         is StarterPackUri -> StarterPackUri.NAMESPACE
         is FollowUri -> FollowUri.NAMESPACE
@@ -224,8 +225,13 @@ value class UnknownRecordUri(
 @JvmInline
 value class ListMemberUri(
     override val uri: String,
-) : Uri {
+) : Uri,
+    RecordUri {
     override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "app.bsky.graph.listitem"
+    }
 }
 
 @Serializable
