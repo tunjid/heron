@@ -54,6 +54,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StarterPackUri
+import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordUriOrNull
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
@@ -449,17 +450,21 @@ internal class OfflineRecordRepository @Inject constructor(
 
     override suspend fun addListMember(
         create: ListMember.Create,
-    ): Outcome {
+    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+
         val createdAt = Clock.System.now()
         val recordKey = RecordKey.generate()
-        return networkService.runCatchingWithMonitoredNetworkRetry {
+        val listOwnerId = create.listUri.profileId()
+
+        networkService.runCatchingWithMonitoredNetworkRetry {
             createRecord(
                 CreateRecordRequest(
-                    repo = Did(create.profileId.id),
+                    repo = Did(listOwnerId.id),
                     collection = Nsid(ListMemberUri.NAMESPACE),
                     rkey = RKey(recordKey.value),
                     record = BskyListMember(
-                        subject = Did(create.profileId.id),
+                        subject = Did(create.subjectId.id),
                         list = AtUri(create.listUri.uri),
                         createdAt = createdAt,
                     ).asJsonContent(BskyListMember.serializer()),
@@ -468,7 +473,7 @@ internal class OfflineRecordRepository @Inject constructor(
         }.mapCatchingUnlessCancelled {
             val listMemberUri = requireNotNull(
                 recordUriOrNull(
-                    profileId = create.profileId,
+                    profileId = listOwnerId,
                     namespace = ListMemberUri.NAMESPACE,
                     recordKey = recordKey,
                 ),
@@ -478,14 +483,14 @@ internal class OfflineRecordRepository @Inject constructor(
                     ListMemberEntity(
                         uri = listMemberUri,
                         listUri = create.listUri,
-                        subjectId = create.profileId,
+                        subjectId = create.subjectId,
                         createdAt = createdAt,
                     ),
                 )
             }
         }
             .toOutcome()
-    }
+    } ?: expiredSessionOutcome()
 
     override suspend fun deleteRecord(
         uri: RecordUri,

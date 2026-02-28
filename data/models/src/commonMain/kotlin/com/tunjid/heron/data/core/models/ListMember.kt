@@ -39,7 +39,7 @@ data class ListMember(
 
     @Serializable
     data class Create(
-        val profileId: ProfileId,
+        val subjectId: ProfileId,
         val listUri: ListUri,
     )
 }
