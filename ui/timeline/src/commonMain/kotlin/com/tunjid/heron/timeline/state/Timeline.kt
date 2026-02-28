@@ -188,7 +188,7 @@ private fun timelineUpdateMutations(
                 emit {
                     if (this@emit.timeline.isEmpty()) {
                         copy(
-                            tilingData = tilingData.copy(
+                            tilingData = this@emit.tilingData.copy(
                                 items = buildTiledList {
                                     add(
                                         query = tilingData.currentQuery,
@@ -197,7 +197,7 @@ private fun timelineUpdateMutations(
                                 },
                             ),
                         )
-                    } else this
+                    } else this@emit
                 }
             }
         }
@@ -252,4 +252,4 @@ private fun TiledList<TimelineQuery, TimelineItem>.filterThreadDuplicates(): Til
         .distinctBy(TimelineItem::id)
 }
 
-private val EMPTY_STATE_DELAY = 2.2.seconds
+private val EMPTY_STATE_DELAY = 2.8.seconds
