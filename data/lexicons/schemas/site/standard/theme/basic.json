@@ -1,0 +1,45 @@
+{
+  "defs": {
+    "main": {
+      "properties": {
+        "accent": {
+          "refs": [
+            "site.standard.theme.color#rgb",
+            "site.standard.theme.color#rgba"
+          ],
+          "type": "union"
+        },
+        "accentForeground": {
+          "refs": [
+            "site.standard.theme.color#rgb",
+            "site.standard.theme.color#rgba"
+          ],
+          "type": "union"
+        },
+        "background": {
+          "refs": [
+            "site.standard.theme.color#rgb",
+            "site.standard.theme.color#rgba"
+          ],
+          "type": "union"
+        },
+        "foreground": {
+          "refs": [
+            "site.standard.theme.color#rgb",
+            "site.standard.theme.color#rgba"
+          ],
+          "type": "union"
+        }
+      },
+      "required": [
+        "background",
+        "foreground",
+        "accent",
+        "accentForeground"
+      ],
+      "type": "object"
+    }
+  },
+  "id": "site.standard.theme.basic",
+  "lexicon": 1
+}
