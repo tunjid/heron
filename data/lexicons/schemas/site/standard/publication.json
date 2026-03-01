@@ -42,22 +42,6 @@
         "showInDiscover": {
           "default": true,
           "type": "boolean"
-        },
-        "showComments": {
-          "default": true,
-          "type": "boolean"
-        },
-        "showMentions": {
-          "default": true,
-          "type": "boolean"
-        },
-        "showPrevNext": {
-          "default": false,
-          "type": "boolean"
-        },
-        "showRecommends": {
-          "default": true,
-          "type": "boolean"
         }
       },
       "type": "object"
