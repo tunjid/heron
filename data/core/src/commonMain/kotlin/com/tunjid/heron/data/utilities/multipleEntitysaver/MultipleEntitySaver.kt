@@ -26,6 +26,7 @@ import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
+import com.tunjid.heron.data.database.daos.StandardSiteDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.ThreadGateDao
 import com.tunjid.heron.data.database.daos.TimelineDao
@@ -45,6 +46,9 @@ import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
+import com.tunjid.heron.data.database.entities.StandardDocumentEntity
+import com.tunjid.heron.data.database.entities.StandardPublicationEntity
+import com.tunjid.heron.data.database.entities.StandardSubscriptionEntity
 import com.tunjid.heron.data.database.entities.StarterPackEntity
 import com.tunjid.heron.data.database.entities.ThreadGateAllowedListEntity
 import com.tunjid.heron.data.database.entities.ThreadGateEntity
@@ -85,6 +89,7 @@ class MultipleEntitySaverProvider @Inject constructor(
     private val starterPackDao: StarterPackDao,
     private val messageDao: MessageDao,
     private val threadGateDao: ThreadGateDao,
+    private val standardSiteDao: StandardSiteDao,
     private val transactionWriter: TransactionWriter,
 ) {
     internal suspend fun saveInTransaction(
@@ -101,6 +106,7 @@ class MultipleEntitySaverProvider @Inject constructor(
         starterPackDao = starterPackDao,
         messageDao = messageDao,
         threadGateDao = threadGateDao,
+        standardSiteDao = standardSiteDao,
         transactionWriter = transactionWriter,
     ).apply {
         block()
@@ -123,6 +129,7 @@ internal class MultipleEntitySaver(
     private val starterPackDao: StarterPackDao,
     private val messageDao: MessageDao,
     private val threadGateDao: ThreadGateDao,
+    private val standardSiteDao: StandardSiteDao,
     private val transactionWriter: TransactionWriter,
 ) {
     private val timelineItemEntities = LazyList<TimelineItemEntity>()
@@ -187,6 +194,10 @@ internal class MultipleEntitySaver(
     private val threadGateEntities = LazyList<ThreadGateEntity>()
     private val threadGateAllowedListEntities = LazyList<ThreadGateAllowedListEntity>()
     private val threadGateHiddenPostEntities = LazyList<ThreadGateHiddenPostEntity>()
+
+    private val standardPublicationEntities = LazyList<StandardPublicationEntity>()
+    private val standardDocumentEntities = LazyList<StandardDocumentEntity>()
+    private val standardSubscriptionEntities = LazyList<StandardSubscriptionEntity>()
 
     /**
      * Saves all entities added to this [MultipleEntitySaver] in a single transaction
@@ -285,6 +296,11 @@ internal class MultipleEntitySaver(
                 else null
             },
         )
+        // Standard site entities: publications before documents/subscriptions (FK ordering)
+        standardSiteDao.upsertPublications(standardPublicationEntities.list)
+        standardSiteDao.upsertDocuments(standardDocumentEntities.list)
+        standardSiteDao.upsertSubscriptions(standardSubscriptionEntities.list)
+
         if (threadGateEntities.list.isNotEmpty()) {
             threadGateDao.upsertThreadGates(threadGateEntities.list)
             val threadGateUris = threadGateEntities.list.map(
@@ -375,6 +391,12 @@ internal class MultipleEntitySaver(
     fun add(entity: ThreadGateAllowedListEntity) = threadGateAllowedListEntities.add(entity)
 
     fun add(entity: ThreadGateHiddenPostEntity) = threadGateHiddenPostEntities.add(entity)
+
+    fun add(entity: StandardPublicationEntity) = standardPublicationEntities.add(entity)
+
+    fun add(entity: StandardDocumentEntity) = standardDocumentEntities.add(entity)
+
+    fun add(entity: StandardSubscriptionEntity) = standardSubscriptionEntities.add(entity)
 
     private fun add(entity: ExternalEmbedEntity) = externalEmbedEntities.add(entity)
 

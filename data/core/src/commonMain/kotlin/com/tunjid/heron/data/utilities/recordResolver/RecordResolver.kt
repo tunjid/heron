@@ -43,6 +43,8 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Repost
+import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.isBlocked
@@ -61,9 +63,13 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.RepostUri
+import com.tunjid.heron.data.core.types.StandardDocumentUri
+import com.tunjid.heron.data.core.types.StandardPublicationUri
+import com.tunjid.heron.data.core.types.StandardSubscriptionUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.UnknownRecordUri
 import com.tunjid.heron.data.core.types.UnresolvableRecordException
+import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.types.requireCollection
@@ -73,6 +79,7 @@ import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
+import com.tunjid.heron.data.database.daos.StandardSiteDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.ThreadGateDao
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
@@ -102,6 +109,7 @@ import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.mapToResult
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
+import com.tunjid.heron.data.utilities.multipleEntitysaver.asExternalModel
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver.TimelineItemCreationContext
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.toDistinctUntilChangedFlowOrEmpty
@@ -126,6 +134,9 @@ import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
+import site.standard.Document
+import site.standard.Publication
+import site.standard.graph.Subscription
 
 internal interface RecordResolver {
     val subscribedLabelers: Flow<List<Labeler>>
@@ -178,6 +189,7 @@ internal class OfflineRecordResolver @Inject constructor(
     private val postDao: PostDao,
     private val profileDao: ProfileDao,
     private val threadGateDao: ThreadGateDao,
+    private val standardSiteDao: StandardSiteDao,
     private val starterPackDao: StarterPackDao,
     private val savedStateDataSource: SavedStateDataSource,
     private val networkService: NetworkService,
@@ -464,6 +476,52 @@ internal class OfflineRecordResolver @Inject constructor(
                         subject = bskyBlock.subject.did.let(::ProfileId),
                     )
                 }
+
+            is StandardPublicationUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
+                .mapCatchingUnlessCancelled { response ->
+                    val publication = response.value.decodeAs<Publication>()
+                    multipleEntitySaverProvider.saveInTransaction {
+                        add(publicationUri = uri, publication = publication)
+                    }
+                    publication.asExternalModel(uri)
+                }
+
+            is StandardDocumentUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
+                .mapCatchingUnlessCancelled { response ->
+                    val document = response.value.decodeAs<Document>()
+                    val publicationUri = document.site.uri
+                        .asRecordUriOrNull() as? StandardPublicationUri
+                    val publication = publicationUri?.let {
+                        resolve(it).getOrNull() as? StandardPublication
+                    }
+                    multipleEntitySaverProvider.saveInTransaction {
+                        add(
+                            documentUri = uri,
+                            document = document,
+                            publicationUri = publicationUri,
+                        )
+                    }
+                    document.asExternalModel(uri = uri, publication = publication)
+                }
+
+            is StandardSubscriptionUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
+                .mapCatchingUnlessCancelled { response ->
+                    val subscription = response.value.decodeAs<Subscription>()
+                    multipleEntitySaverProvider.saveInTransaction {
+                        add(
+                            subscriptionUri = uri,
+                            subscription = subscription,
+                            viewingProfileId = viewingProfileId,
+                        )
+                    }
+                    StandardSubscription(
+                        uri = uri,
+                        publicationUri = StandardPublicationUri(
+                            subscription.publication.atUri,
+                        ),
+                    )
+                }
+
             is UnknownRecordUri -> Result.failure(UnresolvableRecordException(uri))
         }
     }.onFailure { throwable ->
@@ -505,6 +563,9 @@ internal class OfflineRecordResolver @Inject constructor(
             is FollowUri -> profileDao.deleteFollow(uri)
             is LikeUri -> postDao.deletePostViewerStatisticsLike(uri)
             is RepostUri -> postDao.deletePostViewerStatisticsRepost(uri)
+            is StandardPublicationUri -> standardSiteDao.deletePublication(uri)
+            is StandardDocumentUri -> standardSiteDao.deleteDocument(uri)
+            is StandardSubscriptionUri -> standardSiteDao.deleteSubscription(uri)
             is UnknownRecordUri -> Unit
         }
     }

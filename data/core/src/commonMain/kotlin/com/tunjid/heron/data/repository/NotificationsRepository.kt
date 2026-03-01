@@ -45,6 +45,9 @@ import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Repost
+import com.tunjid.heron.data.core.models.StandardDocument
+import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.isFollowing
 import com.tunjid.heron.data.core.models.isRestricted
@@ -463,6 +466,9 @@ internal class OfflineNotificationsRepository @Inject constructor(
                         is ListMember,
                         is StarterPack,
                         is Block,
+                        is StandardDocument,
+                        is StandardPublication,
+                        is StandardSubscription,
                         -> throw UnknownNotificationException(query.recordUri)
                         // Reply, mention or Quote
                         is Post -> when {
