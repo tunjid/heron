@@ -1,0 +1,12 @@
+An indulgence in form over function, Heron is an atproto client that is all about presenting content in your feeds in the best possible way. Filled with deliberate use of animations and other small visual flourishes, Heron adapts to your content across different form factors, letting you see just what you want to.
+
+Features:
+
+- Adaptive layouts that gracefully adjust to your screen size
+- Smooth, deliberate animations and transitions throughout the app
+- Offline-first architecture so you can browse your feeds without a connection
+- Drag and drop to sort and organize your timelines
+- Text, images, and short video support
+- Search across posts, people, and feeds
+- Profile customization with geometric avatar shapes
+- Material Design 3 with a design inspired by the Crane material study
