@@ -4,25 +4,29 @@
       "properties": {
         "accent": {
           "refs": [
-            "site.standard.theme.color#rgb"
+            "site.standard.theme.color#rgb",
+            "site.standard.theme.color#rgba"
           ],
           "type": "union"
         },
         "accentForeground": {
           "refs": [
-            "site.standard.theme.color#rgb"
+            "site.standard.theme.color#rgb",
+            "site.standard.theme.color#rgba"
           ],
           "type": "union"
         },
         "background": {
           "refs": [
-            "site.standard.theme.color#rgb"
+            "site.standard.theme.color#rgb",
+            "site.standard.theme.color#rgba"
           ],
           "type": "union"
         },
         "foreground": {
           "refs": [
-            "site.standard.theme.color#rgb"
+            "site.standard.theme.color#rgb",
+            "site.standard.theme.color#rgba"
           ],
           "type": "union"
         }
