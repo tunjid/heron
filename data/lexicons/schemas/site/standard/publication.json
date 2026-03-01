@@ -8,10 +8,6 @@
             "ref": "site.standard.theme.basic",
             "type": "ref"
           },
-          "theme": {
-            "type": "union",
-            "refs": ["pub.leaflet.publication#theme"]
-          },
           "description": {
             "maxGraphemes": 300,
             "maxLength": 3000,

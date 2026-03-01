@@ -42,11 +42,6 @@
           "textContent": {
             "type": "string"
           },
-          "theme": {
-            "description": "Theme for standalone documents. For documents in publications, theme is inherited from the publication.",
-            "ref": "pub.leaflet.publication#theme",
-            "type": "ref"
-          },
           "title": {
             "maxGraphemes": 500,
             "maxLength": 5000,
