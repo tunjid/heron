@@ -8,11 +8,6 @@
             "ref": "com.atproto.repo.strongRef",
             "type": "ref"
           },
-          "content": {
-            "closed": false,
-            "refs": ["pub.leaflet.content"],
-            "type": "union"
-          },
           "coverImage": {
             "accept": ["image/*"],
             "maxSize": 1000000,
@@ -56,11 +51,6 @@
             "maxGraphemes": 500,
             "maxLength": 5000,
             "type": "string"
-          },
-          "preferences": {
-            "type": "union",
-            "refs": ["pub.leaflet.publication#preferences"],
-            "closed": false
           },
           "updatedAt": {
             "format": "datetime",
