@@ -1,0 +1,72 @@
+{
+  "defs": {
+    "main": {
+      "key": "tid",
+      "record": {
+        "properties": {
+          "basicTheme": {
+            "ref": "site.standard.theme.basic",
+            "type": "ref"
+          },
+          "theme": {
+            "type": "union",
+            "refs": ["pub.leaflet.publication#theme"]
+          },
+          "description": {
+            "maxGraphemes": 300,
+            "maxLength": 3000,
+            "type": "string"
+          },
+          "icon": {
+            "accept": ["image/*"],
+            "maxSize": 1000000,
+            "type": "blob"
+          },
+          "name": {
+            "maxGraphemes": 128,
+            "maxLength": 1280,
+            "type": "string"
+          },
+          "preferences": {
+            "ref": "#preferences",
+            "type": "ref"
+          },
+          "url": {
+            "format": "uri",
+            "type": "string"
+          }
+        },
+        "required": ["url", "name"],
+        "type": "object"
+      },
+      "type": "record"
+    },
+    "preferences": {
+      "properties": {
+        "showInDiscover": {
+          "default": true,
+          "type": "boolean"
+        },
+        "showComments": {
+          "default": true,
+          "type": "boolean"
+        },
+        "showMentions": {
+          "default": true,
+          "type": "boolean"
+        },
+        "showPrevNext": {
+          "default": false,
+          "type": "boolean"
+        },
+        "showRecommends": {
+          "default": true,
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "id": "site.standard.publication",
+  "lexicon": 1
+}
