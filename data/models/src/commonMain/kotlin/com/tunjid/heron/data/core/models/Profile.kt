@@ -45,7 +45,7 @@ data class Profile(
     // Stubbed for migrations
     val labels: List<Label> = emptyList(),
     val isLabeler: Boolean = false,
-    val status: ProfileStatus?,
+    val status: ProfileStatus? = null,
 ) : UrlEncodableModel {
 
     @Serializable
