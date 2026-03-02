@@ -114,6 +114,10 @@ internal fun MultipleEntitySaver.add(
             bskyPostRefCid = document.bskyPostRef?.cid?.cid?.let(::PostId),
             tags = document.tags?.joinToString(separator = ","),
             publicationUri = document.site.uri.asRecordUriOrNull() as? StandardPublicationUri,
+            // Markdown content is always null for now.
+            // To be added in later as support for different standard doc
+            // types are added.
+            markdownContent = null,
         ),
     )
 }

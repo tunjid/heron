@@ -75,6 +75,7 @@ data class StandardDocumentEntity(
     val bskyPostRefCid: PostId?,
     val tags: String?,
     val publicationUri: StandardPublicationUri?,
+    val markdownContent: String?,
 )
 
 data class PopulatedStandardDocumentEntity(
