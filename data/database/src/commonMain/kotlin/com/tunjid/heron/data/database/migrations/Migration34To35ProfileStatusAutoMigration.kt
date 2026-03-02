@@ -4,7 +4,6 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-
 internal object Migration34To35ProfileStatus : Migration(34, 35) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL("ALTER TABLE profiles ADD COLUMN live_uri TEXT;")
