@@ -26,6 +26,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
+import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.database.entities.StandardDocumentEntity
 import com.tunjid.heron.data.database.entities.StandardPublicationEntity
 import com.tunjid.heron.data.database.entities.StandardSubscriptionEntity
@@ -43,6 +44,7 @@ import site.standard.theme.ColorRgba
 internal fun MultipleEntitySaver.add(
     publicationUri: StandardPublicationUri,
     publication: Publication,
+    pdsUrl: String,
 ) {
     add(
         StandardPublicationEntity(
@@ -50,7 +52,10 @@ internal fun MultipleEntitySaver.add(
             name = publication.name,
             description = publication.description,
             url = publication.url.uri,
-            icon = publication.icon.imageUri(),
+            icon = publication.icon.imageUri(
+                profileId = publicationUri.profileId(),
+                pdsUrl = pdsUrl,
+            ),
             preferences = publication.preferences?.let { prefs ->
                 StandardPublicationEntity.Preferences(
                     showInDiscover = prefs.showInDiscover == true,
@@ -68,16 +73,11 @@ internal fun MultipleEntitySaver.add(
     )
 }
 
-private fun Blob?.imageUri(): ImageUri? = when (val icon = this) {
-    is Blob.LegacyBlob -> null
-    is Blob.StandardBlob -> icon.ref.link.cid.let(::ImageUri)
-    null -> null
-}
-
 internal fun MultipleEntitySaver.add(
     documentUri: StandardDocumentUri,
     document: Document,
     publicationUri: StandardPublicationUri?,
+    pdsUrl: String,
 ) {
     add(
         StandardDocumentEntity(
@@ -89,7 +89,10 @@ internal fun MultipleEntitySaver.add(
             site = document.site.uri,
             publishedAt = document.publishedAt,
             updatedAt = document.updatedAt,
-            coverImage = document.coverImage?.imageUri(),
+            coverImage = document.coverImage?.imageUri(
+                profileId = documentUri.profileId(),
+                pdsUrl = pdsUrl,
+            ),
             bskyPostRefUri = document.bskyPostRef?.uri?.atUri?.let(::PostUri),
             bskyPostRefCid = document.bskyPostRef?.cid?.cid?.let(::PostId),
             tags = document.tags?.joinToString(separator = ","),
@@ -110,6 +113,20 @@ internal fun MultipleEntitySaver.add(
             viewingProfileId = viewingProfileId,
         ),
     )
+}
+
+private fun Blob?.imageUri(
+    profileId: ProfileId,
+    pdsUrl: String?,
+): ImageUri? {
+    if (pdsUrl == null) return null
+    return when (val icon = this) {
+        is Blob.LegacyBlob -> null
+        is Blob.StandardBlob -> ImageUri(
+            "$pdsUrl/xprc/com.atproto.sync.getBlob?did=${profileId.id}&cid=${icon.ref.link.cid}"
+        )
+        null -> null
+    }
 }
 
 private fun BasicAccentUnion.toColor(): StandardPublicationEntity.Color? = when (this) {
@@ -152,12 +169,16 @@ private fun ColorRgba.toColor() = StandardPublicationEntity.Color(
 
 internal fun Publication.asExternalModel(
     uri: StandardPublicationUri,
+    pdsUrl: String,
 ) = StandardPublication(
     uri = uri,
     name = name,
     description = description,
     url = url.uri,
-    icon = icon?.imageUri(),
+    icon = icon?.imageUri(
+        profileId = uri.profileId(),
+        pdsUrl = pdsUrl,
+    ),
     showInDiscover = preferences?.showInDiscover ?: true,
     basicTheme = basicTheme?.let { theme ->
         StandardPublication.BasicTheme(
@@ -172,6 +193,7 @@ internal fun Publication.asExternalModel(
 internal fun Document.asExternalModel(
     uri: StandardDocumentUri,
     publication: StandardPublication?,
+    pdsUrl: String,
 ) = StandardDocument(
     uri = uri,
     title = title,
@@ -181,7 +203,10 @@ internal fun Document.asExternalModel(
     site = site.uri,
     publishedAt = publishedAt,
     updatedAt = updatedAt,
-    coverImage = coverImage?.imageUri(),
+    coverImage = coverImage?.imageUri(
+        profileId = uri.profileId(),
+        pdsUrl = pdsUrl,
+    ),
     bskyPostRef = bskyPostRef?.let { ref ->
         Record.Reference(
             id = ref.cid.cid.let(::PostId),

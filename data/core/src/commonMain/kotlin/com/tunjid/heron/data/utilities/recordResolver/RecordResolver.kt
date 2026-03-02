@@ -27,6 +27,7 @@ import app.bsky.graph.GetStarterPackQueryParams
 import app.bsky.graph.Listitem as BskyListMember
 import app.bsky.labeler.GetServicesQueryParams
 import app.bsky.labeler.GetServicesResponseViewUnion
+import com.atproto.identity.ResolveDidQueryParams
 import com.atproto.repo.DeleteRecordRequest
 import com.atproto.repo.GetRecordQueryParams
 import com.atproto.repo.GetRecordResponse
@@ -99,6 +100,7 @@ import com.tunjid.heron.data.network.currentSessionContext
 import com.tunjid.heron.data.network.models.asExternalModel
 import com.tunjid.heron.data.network.models.post
 import com.tunjid.heron.data.network.models.profileEntity
+import com.tunjid.heron.data.repository.SavedState.AuthTokens.DidDoc
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.distinctUntilChangedSignedProfilePreferencesOrDefault
 import com.tunjid.heron.data.repository.singleSessionFlow
@@ -479,15 +481,26 @@ internal class OfflineRecordResolver @Inject constructor(
 
             is StandardPublicationUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
                 .mapCatchingUnlessCancelled { response ->
+                    val pdsUrl = networkService.psdUrlOrThrow(uri)
+
                     val publication = response.value.decodeAs<Publication>()
                     multipleEntitySaverProvider.saveInTransaction {
-                        add(publicationUri = uri, publication = publication)
+                        add(
+                            publicationUri = uri,
+                            publication = publication,
+                            pdsUrl = pdsUrl,
+                        )
                     }
-                    publication.asExternalModel(uri)
+                    publication.asExternalModel(
+                        uri,
+                        pdsUrl = pdsUrl,
+                    )
                 }
 
             is StandardDocumentUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
                 .mapCatchingUnlessCancelled { response ->
+                    val pdsUrl = networkService.psdUrlOrThrow(uri)
+
                     val document = response.value.decodeAs<Document>()
                     val publicationUri = document.site.uri
                         .asRecordUriOrNull() as? StandardPublicationUri
@@ -499,9 +512,14 @@ internal class OfflineRecordResolver @Inject constructor(
                             documentUri = uri,
                             document = document,
                             publicationUri = publicationUri,
+                            pdsUrl = pdsUrl,
                         )
                     }
-                    document.asExternalModel(uri = uri, publication = publication)
+                    document.asExternalModel(
+                        uri = uri,
+                        publication = publication,
+                        pdsUrl = pdsUrl,
+                    )
                 }
 
             is StandardSubscriptionUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
@@ -705,6 +723,16 @@ internal class OfflineRecordResolver @Inject constructor(
             )
         }
     }
+
+    private suspend fun NetworkService.psdUrlOrThrow(
+        recordUri: RecordUri,
+    ) = runCatchingWithMonitoredNetworkRetry {
+        resolveDid(
+            ResolveDidQueryParams(Did(recordUri.profileId().id)),
+        )
+    }.mapCatchingUnlessCancelled {
+        it.didDoc.decodeAs<DidDoc>().service.first().serviceEndpoint
+    }.getOrThrow()
 }
 
 private fun isNotFound(throwable: Throwable): Boolean {
