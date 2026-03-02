@@ -27,6 +27,7 @@ import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import kotlin.time.Instant
@@ -51,6 +52,7 @@ import kotlin.time.Instant
 data class StandardDocumentEntity(
     @PrimaryKey
     val uri: StandardDocumentUri,
+    val cid: StandardDocumentId?,
     val title: String,
     val description: String?,
     val textContent: String?,
@@ -77,6 +79,7 @@ data class PopulatedStandardDocumentEntity(
 
 fun PopulatedStandardDocumentEntity.asExternalModel() = StandardDocument(
     uri = entity.uri,
+    cid = entity.cid,
     title = entity.title,
     description = entity.description,
     textContent = entity.textContent,

@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
@@ -24,6 +25,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class StandardDocument(
     val uri: StandardDocumentUri,
+    val cid: StandardDocumentId?,
     val title: String,
     val description: String?,
     val textContent: String?,
@@ -38,7 +40,7 @@ data class StandardDocument(
 ) : Record {
     override val reference: Record.Reference =
         Record.Reference(
-            id = null,
+            id = cid,
             uri = uri,
         )
 }

@@ -122,3 +122,19 @@ value class MessageId(
 ) : Id {
     override fun toString(): String = id
 }
+
+@Serializable
+@JvmInline
+value class StandardPublicationId(
+    override val id: String,
+) : Id {
+    override fun toString(): String = id
+}
+
+@Serializable
+@JvmInline
+value class StandardDocumentId(
+    override val id: String,
+) : Id {
+    override fun toString(): String = id
+}

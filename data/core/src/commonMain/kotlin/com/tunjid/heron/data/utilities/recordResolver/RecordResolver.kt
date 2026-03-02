@@ -64,7 +64,9 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.RepostUri
+import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
+import com.tunjid.heron.data.core.types.StandardPublicationId
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
 import com.tunjid.heron.data.core.types.StarterPackUri
@@ -482,17 +484,20 @@ internal class OfflineRecordResolver @Inject constructor(
             is StandardPublicationUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
                 .mapCatchingUnlessCancelled { response ->
                     val pdsUrl = networkService.psdUrlOrThrow(uri)
+                    val publicationCid = response.cid?.cid?.let(::StandardPublicationId)
 
                     val publication = response.value.decodeAs<Publication>()
                     multipleEntitySaverProvider.saveInTransaction {
                         add(
                             publicationUri = uri,
+                            publicationCid = publicationCid,
                             publication = publication,
                             pdsUrl = pdsUrl,
                         )
                     }
                     publication.asExternalModel(
-                        uri,
+                        uri = uri,
+                        cid = publicationCid,
                         pdsUrl = pdsUrl,
                     )
                 }
@@ -500,6 +505,7 @@ internal class OfflineRecordResolver @Inject constructor(
             is StandardDocumentUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
                 .mapCatchingUnlessCancelled { response ->
                     val pdsUrl = networkService.psdUrlOrThrow(uri)
+                    val documentCid = response.cid?.cid?.let(::StandardDocumentId)
 
                     val document = response.value.decodeAs<Document>()
                     val publicationUri = document.site.uri
@@ -510,6 +516,7 @@ internal class OfflineRecordResolver @Inject constructor(
                     multipleEntitySaverProvider.saveInTransaction {
                         add(
                             documentUri = uri,
+                            documentCid = documentCid,
                             document = document,
                             publicationUri = publicationUri,
                             pdsUrl = pdsUrl,
@@ -517,6 +524,7 @@ internal class OfflineRecordResolver @Inject constructor(
                     }
                     document.asExternalModel(
                         uri = uri,
+                        cid = documentCid,
                         publication = publication,
                         pdsUrl = pdsUrl,
                     )

@@ -37,7 +37,9 @@ import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
+import com.tunjid.heron.data.core.types.StandardPublicationId
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
 import com.tunjid.heron.data.core.types.StarterPackId
@@ -182,6 +184,14 @@ internal class IdConverters {
     @TypeConverter
     fun messageIdFromString(value: String?): MessageId? =
         value?.let(::MessageId)
+
+    @TypeConverter
+    fun standardPublicationIdFromString(value: String?): StandardPublicationId? =
+        value?.let(::StandardPublicationId)
+
+    @TypeConverter
+    fun standardDocumentIdFromString(value: String?): StandardDocumentId? =
+        value?.let(::StandardDocumentId)
 
     @TypeConverter
     fun toIdString(id: Id?): String? =

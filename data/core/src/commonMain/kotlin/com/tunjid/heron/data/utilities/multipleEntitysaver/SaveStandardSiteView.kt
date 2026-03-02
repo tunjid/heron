@@ -23,7 +23,9 @@ import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
+import com.tunjid.heron.data.core.types.StandardPublicationId
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
 import com.tunjid.heron.data.core.types.profileId
@@ -43,12 +45,14 @@ import site.standard.theme.ColorRgba
 
 internal fun MultipleEntitySaver.add(
     publicationUri: StandardPublicationUri,
+    publicationCid: StandardPublicationId?,
     publication: Publication,
     pdsUrl: String,
 ) {
     add(
         StandardPublicationEntity(
             uri = publicationUri,
+            cid = publicationCid,
             name = publication.name,
             description = publication.description,
             url = publication.url.uri,
@@ -75,6 +79,7 @@ internal fun MultipleEntitySaver.add(
 
 internal fun MultipleEntitySaver.add(
     documentUri: StandardDocumentUri,
+    documentCid: StandardDocumentId?,
     document: Document,
     publicationUri: StandardPublicationUri?,
     pdsUrl: String,
@@ -82,6 +87,7 @@ internal fun MultipleEntitySaver.add(
     add(
         StandardDocumentEntity(
             uri = documentUri,
+            cid = documentCid,
             title = document.title,
             description = document.description,
             textContent = document.textContent,
@@ -123,7 +129,7 @@ private fun Blob?.imageUri(
     return when (val icon = this) {
         is Blob.LegacyBlob -> null
         is Blob.StandardBlob -> ImageUri(
-            "$pdsUrl/xprc/com.atproto.sync.getBlob?did=${profileId.id}&cid=${icon.ref.link.cid}"
+            "$pdsUrl/xprc/com.atproto.sync.getBlob?did=${profileId.id}&cid=${icon.ref.link.cid}",
         )
         null -> null
     }
@@ -169,9 +175,11 @@ private fun ColorRgba.toColor() = StandardPublicationEntity.Color(
 
 internal fun Publication.asExternalModel(
     uri: StandardPublicationUri,
+    cid: StandardPublicationId?,
     pdsUrl: String,
 ) = StandardPublication(
     uri = uri,
+    cid = cid,
     name = name,
     description = description,
     url = url.uri,
@@ -192,10 +200,12 @@ internal fun Publication.asExternalModel(
 
 internal fun Document.asExternalModel(
     uri: StandardDocumentUri,
+    cid: StandardDocumentId?,
     publication: StandardPublication?,
     pdsUrl: String,
 ) = StandardDocument(
     uri = uri,
+    cid = cid,
     title = title,
     description = description,
     textContent = textContent,

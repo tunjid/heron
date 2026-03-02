@@ -17,12 +17,14 @@
 package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.StandardPublicationId
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class StandardPublication(
     val uri: StandardPublicationUri,
+    val cid: StandardPublicationId?,
     val name: String,
     val description: String?,
     val url: String,
@@ -32,7 +34,7 @@ data class StandardPublication(
 ) : Record {
     override val reference: Record.Reference =
         Record.Reference(
-            id = null,
+            id = cid,
             uri = uri,
         )
 

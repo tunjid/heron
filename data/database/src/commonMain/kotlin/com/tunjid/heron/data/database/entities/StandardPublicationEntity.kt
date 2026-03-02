@@ -22,6 +22,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.StandardPublicationId
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 
 @Entity(
@@ -33,6 +34,7 @@ import com.tunjid.heron.data.core.types.StandardPublicationUri
 data class StandardPublicationEntity(
     @PrimaryKey
     val uri: StandardPublicationUri,
+    val cid: StandardPublicationId?,
     val name: String,
     val description: String?,
     val url: String,
@@ -67,6 +69,7 @@ data class StandardPublicationEntity(
 
 fun StandardPublicationEntity.asExternalModel() = StandardPublication(
     uri = uri,
+    cid = cid,
     name = name,
     description = description,
     url = url,
