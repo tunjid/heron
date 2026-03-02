@@ -56,7 +56,7 @@ data class ProfileEntity(
     val createdAt: Instant?,
     @Embedded
     val associated: Associated,
-    @Embedded(prefix = "live_")
+    @Embedded(prefix = "status_")
     val status: Status? = null,
 ) {
     data class Partial(

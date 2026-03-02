@@ -155,15 +155,15 @@ interface ProfileDao {
     @Query(
         """
         UPDATE profiles SET
-            live_uri = :uri,
-            live_value = :value,
-            live_uriLink = :uriLink,
-            live_title = :title,
-            live_description = :description,
-            live_thumbnail = :thumbnail,
-            live_expiresAt = :expiresAt,
-            live_active = :active,
-            live_disabled = :disabled
+            status_uri = :uri,
+            status_value = :value,
+            status_uriLink = :uriLink,
+            status_title = :title,
+            status_description = :description,
+            status_thumbnail = :thumbnail,
+            status_expiresAt = :expiresAt,
+            status_active = :active,
+            status_disabled = :disabled
         WHERE did = :did
     """,
     )
