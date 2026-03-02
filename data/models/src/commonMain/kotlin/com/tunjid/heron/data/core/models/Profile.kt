@@ -119,25 +119,20 @@ data class Profile(
     data class ProfileStatus(
         val uri: String? = null,
         val status: String,
-        val embed: Embed? = null,
+        val embedUri: String,
+        val embedTitle: String,
+        val embedDescription: String,
+        val embedThumb: ImageUri? = null,
         val expiresAt: Instant? = null,
         val isActive: Boolean? = null,
         val isDisabled: Boolean? = null,
     ) {
-        // True only when the profile is actively live and not disabled
         val isLive: Boolean
             get() = status == STATUS_LIVE && isActive == true && isDisabled != true
 
-        @Serializable
-        data class Embed(
-            val uri: String,
-            val title: String,
-            val description: String,
-            val thumb: ImageUri? = null,
-        )
-
         companion object {
             const val STATUS_LIVE = "app.bsky.actor.status#live"
+            const val DEFAULT_LIVE_DURATION_MINUTES = 60
         }
     }
 
@@ -149,7 +144,7 @@ data class Profile(
         data class GoLive(
             override val profileId: ProfileId,
             val streamUrl: String,
-            val durationMinutes: Int = 60,
+            val durationMinutes: Int = ProfileStatus.DEFAULT_LIVE_DURATION_MINUTES,
         ) : StatusUpdate()
 
         @Serializable
