@@ -32,6 +32,7 @@ import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.database.entities.StandardDocumentEntity
 import com.tunjid.heron.data.database.entities.StandardPublicationEntity
 import com.tunjid.heron.data.database.entities.StandardSubscriptionEntity
+import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.model.Blob
 import site.standard.Document
 import site.standard.Publication
@@ -49,16 +50,20 @@ internal fun MultipleEntitySaver.add(
     publication: Publication,
     pdsUrl: String,
 ) {
+    val publisherId = publicationUri.profileId()
+    add(
+        stubProfileEntity(did = Did(publisherId.id)),
+    )
     add(
         StandardPublicationEntity(
             uri = publicationUri,
             cid = publicationCid,
-            publisherId = publicationUri.profileId(),
+            publisherId = publisherId,
             name = publication.name,
             description = publication.description,
             url = publication.url.uri,
             icon = publication.icon.imageUri(
-                profileId = publicationUri.profileId(),
+                profileId = publisherId,
                 pdsUrl = pdsUrl,
             ),
             preferences = publication.preferences?.let { prefs ->
@@ -85,11 +90,15 @@ internal fun MultipleEntitySaver.add(
     publicationUri: StandardPublicationUri?,
     pdsUrl: String,
 ) {
+    val authorId = documentUri.profileId()
+    add(
+        stubProfileEntity(did = Did(authorId.id)),
+    )
     add(
         StandardDocumentEntity(
             uri = documentUri,
             cid = documentCid,
-            authorId = documentUri.profileId(),
+            authorId = authorId,
             title = document.title,
             description = document.description,
             textContent = document.textContent,
@@ -98,7 +107,7 @@ internal fun MultipleEntitySaver.add(
             publishedAt = document.publishedAt,
             updatedAt = document.updatedAt,
             coverImage = document.coverImage?.imageUri(
-                profileId = documentUri.profileId(),
+                profileId = authorId,
                 pdsUrl = pdsUrl,
             ),
             bskyPostRefUri = document.bskyPostRef?.uri?.atUri?.let(::PostUri),
