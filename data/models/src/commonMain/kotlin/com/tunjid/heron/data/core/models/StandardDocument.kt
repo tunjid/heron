@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import kotlin.time.Instant
@@ -26,6 +27,7 @@ import kotlinx.serialization.Serializable
 data class StandardDocument(
     val uri: StandardDocumentUri,
     val cid: StandardDocumentId?,
+    val authorId: ProfileId,
     val title: String,
     val description: String?,
     val textContent: String?,

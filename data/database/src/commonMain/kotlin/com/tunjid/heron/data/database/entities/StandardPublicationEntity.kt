@@ -18,23 +18,36 @@ package com.tunjid.heron.data.database.entities
 
 import androidx.room.Embedded
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StandardPublicationId
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 
 @Entity(
     tableName = "standardPublications",
+    foreignKeys = [
+        ForeignKey(
+            entity = ProfileEntity::class,
+            parentColumns = ["did"],
+            childColumns = ["profileId"],
+            onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
+        ),
+    ],
     indices = [
         Index(value = ["uri"]),
+        Index(value = ["profileId"]),
     ],
 )
 data class StandardPublicationEntity(
     @PrimaryKey
     val uri: StandardPublicationUri,
     val cid: StandardPublicationId?,
+    val publisherId: ProfileId,
     val name: String,
     val description: String?,
     val url: String,
@@ -70,6 +83,7 @@ data class StandardPublicationEntity(
 fun StandardPublicationEntity.asExternalModel() = StandardPublication(
     uri = uri,
     cid = cid,
+    publisherId = publisherId,
     name = name,
     description = description,
     url = url,

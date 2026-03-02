@@ -53,6 +53,7 @@ internal fun MultipleEntitySaver.add(
         StandardPublicationEntity(
             uri = publicationUri,
             cid = publicationCid,
+            publisherId = publicationUri.profileId(),
             name = publication.name,
             description = publication.description,
             url = publication.url.uri,
@@ -88,6 +89,7 @@ internal fun MultipleEntitySaver.add(
         StandardDocumentEntity(
             uri = documentUri,
             cid = documentCid,
+            authorId = documentUri.profileId(),
             title = document.title,
             description = document.description,
             textContent = document.textContent,
@@ -180,6 +182,7 @@ internal fun Publication.asExternalModel(
 ) = StandardPublication(
     uri = uri,
     cid = cid,
+    publisherId = uri.profileId(),
     name = name,
     description = description,
     url = url.uri,
@@ -206,6 +209,7 @@ internal fun Document.asExternalModel(
 ) = StandardDocument(
     uri = uri,
     cid = cid,
+    authorId = uri.profileId(),
     title = title,
     description = description,
     textContent = textContent,

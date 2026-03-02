@@ -27,6 +27,7 @@ import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
@@ -42,10 +43,18 @@ import kotlin.time.Instant
             onDelete = ForeignKey.CASCADE,
             onUpdate = ForeignKey.CASCADE,
         ),
+        ForeignKey(
+            entity = ProfileEntity::class,
+            parentColumns = ["did"],
+            childColumns = ["profileId"],
+            onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
+        ),
     ],
     indices = [
         Index(value = ["uri"]),
         Index(value = ["publicationUri"]),
+        Index(value = ["profileId"]),
         Index(value = ["publishedAt"]),
     ],
 )
@@ -53,6 +62,7 @@ data class StandardDocumentEntity(
     @PrimaryKey
     val uri: StandardDocumentUri,
     val cid: StandardDocumentId?,
+    val authorId: ProfileId,
     val title: String,
     val description: String?,
     val textContent: String?,
@@ -80,6 +90,7 @@ data class PopulatedStandardDocumentEntity(
 fun PopulatedStandardDocumentEntity.asExternalModel() = StandardDocument(
     uri = entity.uri,
     cid = entity.cid,
+    authorId = entity.authorId,
     title = entity.title,
     description = entity.description,
     textContent = entity.textContent,
