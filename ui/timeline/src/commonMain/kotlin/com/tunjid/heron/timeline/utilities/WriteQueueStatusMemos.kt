@@ -37,6 +37,7 @@ import heron.ui.timeline.generated.resources.writable_message
 import heron.ui.timeline.generated.resources.writable_mute
 import heron.ui.timeline.generated.resources.writable_notification_update
 import heron.ui.timeline.generated.resources.writable_post
+import heron.ui.timeline.generated.resources.writable_profile_status_update
 import heron.ui.timeline.generated.resources.writable_profile_update
 import heron.ui.timeline.generated.resources.writable_reaction
 import heron.ui.timeline.generated.resources.writable_reaction_removal
@@ -140,6 +141,10 @@ fun Writable.writeStatusMessage(
             is Writable.FeedList.AddMember -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_add_list_member),
+            )
+            is Writable.StatusUpdate -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_profile_status_update),
             )
         }
     }
