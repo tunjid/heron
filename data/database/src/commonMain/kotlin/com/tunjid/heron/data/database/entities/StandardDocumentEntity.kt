@@ -46,7 +46,7 @@ import kotlin.time.Instant
         ForeignKey(
             entity = ProfileEntity::class,
             parentColumns = ["did"],
-            childColumns = ["profileId"],
+            childColumns = ["authorId"],
             onDelete = ForeignKey.CASCADE,
             onUpdate = ForeignKey.CASCADE,
         ),
@@ -54,7 +54,7 @@ import kotlin.time.Instant
     indices = [
         Index(value = ["uri"]),
         Index(value = ["publicationUri"]),
-        Index(value = ["profileId"]),
+        Index(value = ["authorId"]),
         Index(value = ["publishedAt"]),
     ],
 )

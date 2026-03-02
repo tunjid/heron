@@ -28,6 +28,7 @@ import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationId
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
+import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.database.entities.StandardDocumentEntity
 import com.tunjid.heron.data.database.entities.StandardPublicationEntity
@@ -87,7 +88,6 @@ internal fun MultipleEntitySaver.add(
     documentUri: StandardDocumentUri,
     documentCid: StandardDocumentId?,
     document: Document,
-    publicationUri: StandardPublicationUri?,
     pdsUrl: String,
 ) {
     val authorId = documentUri.profileId()
@@ -113,7 +113,7 @@ internal fun MultipleEntitySaver.add(
             bskyPostRefUri = document.bskyPostRef?.uri?.atUri?.let(::PostUri),
             bskyPostRefCid = document.bskyPostRef?.cid?.cid?.let(::PostId),
             tags = document.tags?.joinToString(separator = ","),
-            publicationUri = publicationUri,
+            publicationUri = document.site.uri.asRecordUriOrNull() as? StandardPublicationUri,
         ),
     )
 }

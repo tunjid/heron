@@ -65,25 +65,14 @@ interface StandardSiteDao {
     @Query(
         """
             SELECT * FROM standardDocuments
-            WHERE uri IN (:uris)
-        """,
-    )
-    fun documents(
-        uris: Collection<StandardDocumentUri>,
-    ): Flow<List<PopulatedStandardDocumentEntity>>
-
-    @Transaction
-    @Query(
-        """
-            SELECT * FROM standardDocuments
-            WHERE publicationUri = :publicationUri
+            WHERE authorId = :authorId
             ORDER BY publishedAt DESC
             LIMIT :limit
             OFFSET :offset
         """,
     )
-    fun publicationDocuments(
-        publicationUri: StandardPublicationUri,
+    fun authorDocuments(
+        authorId: String,
         limit: Long,
         offset: Long,
     ): Flow<List<PopulatedStandardDocumentEntity>>

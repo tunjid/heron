@@ -28,9 +28,12 @@ import app.bsky.graph.GetListResponse
 import app.bsky.graph.GetListsQueryParams
 import app.bsky.graph.GetListsResponse
 import app.bsky.graph.Listitem as BskyListMember
+import com.atproto.identity.ResolveDidQueryParams
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.DeleteRecordRequest
 import com.atproto.repo.GetRecordQueryParams
+import com.atproto.repo.ListRecordsQueryParams
+import com.atproto.repo.ListRecordsResponse
 import com.atproto.repo.PutRecordRequest
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
@@ -41,6 +44,7 @@ import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
@@ -53,6 +57,8 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.StandardDocumentId
+import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordUriOrNull
@@ -61,11 +67,13 @@ import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
+import com.tunjid.heron.data.database.daos.StandardSiteDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.ListMemberEntity
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedListMemberEntity
+import com.tunjid.heron.data.database.entities.PopulatedStandardDocumentEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.AppMainScope
@@ -99,6 +107,7 @@ import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
+import site.standard.Document
 
 interface RecordRepository {
 
@@ -135,6 +144,11 @@ interface RecordRepository {
         cursor: Cursor,
     ): Flow<CursorList<FeedGenerator>>
 
+    fun standardDocuments(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<StandardDocument>>
+
     suspend fun updateGrazeFeed(
         update: GrazeFeed.Update,
     ): Result<GrazeFeed>
@@ -156,6 +170,7 @@ internal class OfflineRecordRepository @Inject constructor(
     private val labelDao: LabelDao,
     private val starterPackDao: StarterPackDao,
     private val feedGeneratorDao: FeedGeneratorDao,
+    private val standardSiteDao: StandardSiteDao,
     private val savedStateDataSource: SavedStateDataSource,
     private val recordResolver: RecordResolver,
     private val feedCreationService: FeedCreationService,
@@ -401,6 +416,73 @@ internal class OfflineRecordRepository @Inject constructor(
                     onResponse = {
                         multipleEntitySaverProvider.saveInTransaction {
                             feeds.forEach(::add)
+                        }
+                    },
+                ),
+                ::CursorList,
+            )
+                .distinctUntilChanged()
+        }
+
+    override fun standardDocuments(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<StandardDocument>> =
+        savedStateDataSource.singleSessionFlow {
+            val profileDid = profileLookup.lookupProfileDid(
+                profileId = query.profileId,
+            ) ?: return@singleSessionFlow emptyFlow()
+
+            val pdsUrl = networkService.runCatchingWithMonitoredNetworkRetry {
+                resolveDid(
+                    ResolveDidQueryParams(Did(query.profileId.id)),
+                )
+            }
+                .mapCatchingUnlessCancelled {
+                    it.didDoc
+                        .decodeAs<SavedState.AuthTokens.DidDoc>()
+                        .service
+                        .first()
+                        .serviceEndpoint
+                }
+                .getOrNull() ?: return@singleSessionFlow emptyFlow()
+
+            combine(
+                standardSiteDao.authorDocuments(
+                    authorId = profileDid.did,
+                    offset = query.data.offset,
+                    limit = query.data.limit,
+                )
+                    .map { populatedFeedGeneratorEntities ->
+                        populatedFeedGeneratorEntities.map(PopulatedStandardDocumentEntity::asExternalModel)
+                    },
+                networkService.nextCursorFlow(
+                    currentCursor = cursor,
+                    currentRequestWithNextCursor = {
+                        listRecords(
+                            params = ListRecordsQueryParams(
+                                repo = Did(profileDid.did),
+                                collection = Nsid(StandardDocumentUri.NAMESPACE),
+                                limit = query.data.limit,
+                                cursor = cursor.value,
+                            ),
+                        )
+                    },
+                    nextCursor = ListRecordsResponse::cursor,
+                    onResponse = {
+                        multipleEntitySaverProvider.saveInTransaction {
+                            records.forEach { record ->
+                                val documentUri = record.uri.atUri.let(::StandardDocumentUri)
+                                val documentCid = record.cid.cid.let(::StandardDocumentId)
+                                val document = record.value.decodeAs<Document>()
+
+                                add(
+                                    documentUri = documentUri,
+                                    documentCid = documentCid,
+                                    document = document,
+                                    pdsUrl = pdsUrl,
+                                )
+                            }
                         }
                     },
                 ),

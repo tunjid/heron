@@ -33,14 +33,14 @@ import com.tunjid.heron.data.core.types.StandardPublicationUri
         ForeignKey(
             entity = ProfileEntity::class,
             parentColumns = ["did"],
-            childColumns = ["profileId"],
+            childColumns = ["publisherId"],
             onDelete = ForeignKey.CASCADE,
             onUpdate = ForeignKey.CASCADE,
         ),
     ],
     indices = [
         Index(value = ["uri"]),
-        Index(value = ["profileId"]),
+        Index(value = ["publisherId"]),
     ],
 )
 data class StandardPublicationEntity(

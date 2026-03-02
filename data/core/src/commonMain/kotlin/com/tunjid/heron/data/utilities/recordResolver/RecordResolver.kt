@@ -518,7 +518,6 @@ internal class OfflineRecordResolver @Inject constructor(
                             documentUri = uri,
                             documentCid = documentCid,
                             document = document,
-                            publicationUri = publicationUri,
                             pdsUrl = pdsUrl,
                         )
                     }
