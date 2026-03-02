@@ -84,7 +84,6 @@ import com.tunjid.heron.data.database.migrations.Migration29To30PostBookmarkView
 import com.tunjid.heron.data.database.migrations.Migration30To31ThreadGateAutoMigration
 import com.tunjid.heron.data.database.migrations.Migration32To33ItemSortOnTimelineEntity
 import com.tunjid.heron.data.database.migrations.Migration33To34OnUpdateForeignKey
-import com.tunjid.heron.data.database.migrations.Migration34To35ProfileStatus
 import com.tunjid.heron.data.database.migrations.Migration5To6NonNullPostUriAndAuthor
 import com.tunjid.heron.data.database.migrations.Migration6To7PostViewerStatisticsAutoMigration
 import com.tunjid.heron.data.database.migrations.Migration8To9ProfileViewersAutoMigration
@@ -203,7 +202,8 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 31, to = 32),
         // Migration 32 - 33 is a manual migration
         // Migration 33 - 34 is a manual migration
-        // Migration 34 - 35 is a manual migration
+        // Add Profile Status
+        AutoMigration(from = 34, to = 35),
     ],
     exportSchema = true,
 )
@@ -254,7 +254,6 @@ fun RoomDatabase.Builder<AppDatabase>.configureAndBuild() =
             Migration29To30PostBookmarkViewingProfileId,
             Migration32To33ItemSortOnTimelineEntity,
             Migration33To34OnUpdateForeignKey,
-            Migration34To35ProfileStatus,
         )
         .addCallback(UnknownProfileInsertionCallback)
         .setDriver(BundledSQLiteDriver())

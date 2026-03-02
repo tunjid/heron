@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 35,
-    "identityHash": "74dfa2275a281be681466dcddd21392e",
+    "identityHash": "1821591f8aa3829fb562dc06a8203162",
     "entities": [
       {
         "tableName": "bookmarks",
@@ -924,7 +924,7 @@
       },
       {
         "tableName": "profiles",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`did` TEXT NOT NULL, `handle` TEXT NOT NULL, `displayName` TEXT, `description` TEXT, `avatar` TEXT, `banner` TEXT, `followersCount` INTEGER, `followsCount` INTEGER, `postsCount` INTEGER, `joinedViaStarterPack` TEXT, `indexedAt` INTEGER, `createdAt` INTEGER, `createdListCount` INTEGER, `createdFeedGeneratorCount` INTEGER, `createdStarterPackCount` INTEGER, `labeler` INTEGER, `allowDms` TEXT, `live_uri` TEXT, `live_value` TEXT, `live_uriLink` TEXT, `live_title` TEXT, `live_description` TEXT, `live_thumbnail` TEXT, `live_expiresAt` INTEGER, `live_active` INTEGER, `live_disabled` INTEGER, PRIMARY KEY(`did`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`did` TEXT NOT NULL, `handle` TEXT NOT NULL, `displayName` TEXT, `description` TEXT, `avatar` TEXT, `banner` TEXT, `followersCount` INTEGER, `followsCount` INTEGER, `postsCount` INTEGER, `joinedViaStarterPack` TEXT, `indexedAt` INTEGER, `createdAt` INTEGER, `createdListCount` INTEGER, `createdFeedGeneratorCount` INTEGER, `createdStarterPackCount` INTEGER, `labeler` INTEGER, `allowDms` TEXT, `status_uri` TEXT, `status_value` TEXT, `status_uriLink` TEXT, `status_title` TEXT, `status_description` TEXT, `status_thumbnail` TEXT, `status_expiresAt` INTEGER, `status_active` INTEGER, `status_disabled` INTEGER, PRIMARY KEY(`did`))",
         "fields": [
           {
             "fieldPath": "did",
@@ -1015,47 +1015,47 @@
           },
           {
             "fieldPath": "status.uri",
-            "columnName": "live_uri",
+            "columnName": "status_uri",
             "affinity": "TEXT"
           },
           {
             "fieldPath": "status.value",
-            "columnName": "live_value",
+            "columnName": "status_value",
             "affinity": "TEXT"
           },
           {
             "fieldPath": "status.uriLink",
-            "columnName": "live_uriLink",
+            "columnName": "status_uriLink",
             "affinity": "TEXT"
           },
           {
             "fieldPath": "status.title",
-            "columnName": "live_title",
+            "columnName": "status_title",
             "affinity": "TEXT"
           },
           {
             "fieldPath": "status.description",
-            "columnName": "live_description",
+            "columnName": "status_description",
             "affinity": "TEXT"
           },
           {
             "fieldPath": "status.thumbnail",
-            "columnName": "live_thumbnail",
+            "columnName": "status_thumbnail",
             "affinity": "TEXT"
           },
           {
             "fieldPath": "status.expiresAt",
-            "columnName": "live_expiresAt",
+            "columnName": "status_expiresAt",
             "affinity": "INTEGER"
           },
           {
             "fieldPath": "status.active",
-            "columnName": "live_active",
+            "columnName": "status_active",
             "affinity": "INTEGER"
           },
           {
             "fieldPath": "status.disabled",
-            "columnName": "live_disabled",
+            "columnName": "status_disabled",
             "affinity": "INTEGER"
           }
         ],
@@ -3254,7 +3254,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '74dfa2275a281be681466dcddd21392e')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1821591f8aa3829fb562dc06a8203162')"
     ]
   }
 }
