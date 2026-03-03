@@ -58,6 +58,7 @@ import io.ktor.client.request.post
 import io.ktor.http.HttpHeaders.Authorization
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
+import io.ktor.http.content.TextContent
 import io.ktor.http.encodedPath
 import io.ktor.http.isSuccess
 import io.ktor.http.set
@@ -71,6 +72,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Handle
 import sh.christian.ozone.api.response.AtpErrorDescription
 import sh.christian.ozone.api.response.AtpException
@@ -94,6 +98,7 @@ internal interface SessionManager {
 internal class PersistedSessionManager @Inject constructor(
     httpClient: HttpClient,
     private val savedStateDataSource: SavedStateDataSource,
+    private val pdsResolver: PdsResolver,
 ) : SessionManager {
 
     private val sessionRequestUrl = MutableStateFlow<Url?>(null)
@@ -281,6 +286,7 @@ internal class PersistedSessionManager @Inject constructor(
                 },
                 authenticate = ::authenticate,
                 refresh = ::refresh,
+                resolvePds = pdsResolver::resolve,
             ),
         )
         install(Logging) {
@@ -364,6 +370,7 @@ private fun atProtoAuth(
     saveAuth: suspend (SavedState.AuthTokens.Authenticated?) -> Unit,
     authenticate: suspend HttpRequestBuilder.(SavedState.AuthTokens.Authenticated) -> Unit,
     refresh: suspend (SavedState.AuthTokens.Authenticated) -> SavedState.AuthTokens.Authenticated,
+    resolvePds: suspend (Did) -> Url?,
 ) = createClientPlugin("AtProtoAuthPlugin") {
     val tokenRefreshDeferredMutex = DeferredMutex<String, SavedState.AuthTokens.Authenticated>()
     val nonceDeferredMutex = DeferredMutex<String, SavedState.AuthTokens.Authenticated.DPoP?>()
@@ -425,7 +432,32 @@ private fun atProtoAuth(
             }
         }
 
-        if (!context.headers.contains(Authorization) && authTokens != null) {
+        var resolvedOtherProfilePds = false
+
+        if (context.url.encodedPath.contains(ComAtProtoPathSegment)) {
+            val subjectDid = context.extractSubjectDid()
+            if (subjectDid != null) {
+                val isSignedInDPoPUser =
+                    authTokens is SavedState.AuthTokens.Authenticated.DPoP &&
+                        authTokens.authProfileId.id == subjectDid.did
+
+                if (!isSignedInDPoPUser) {
+                    val resolvedPdsUrl = resolvePds(subjectDid)
+
+                    if (resolvedPdsUrl != null) {
+                        context.url.protocol = resolvedPdsUrl.protocol
+                        context.url.host = resolvedPdsUrl.host
+                        context.url.port = resolvedPdsUrl.port
+                        resolvedOtherProfilePds = true
+                    }
+                }
+            }
+        }
+
+        val shouldAuthenticate = !resolvedOtherProfilePds &&
+            !context.headers.contains(Authorization)
+
+        if (shouldAuthenticate && authTokens != null) {
             context.authenticate(authTokens)
         }
 
@@ -512,6 +544,36 @@ private fun SavedState.AuthTokens.Authenticated?.maybeUpdateDPoPNonce(
 private fun HttpRequestBuilder.clearAuth() {
     headers.remove(Authorization)
     headers.remove(DPoP)
+}
+
+private fun HttpRequestBuilder.extractSubjectDid(): Did? {
+    val fromQueryParams = extractDidFromQueryParams()
+    if (fromQueryParams != null) return Did(fromQueryParams)
+
+    val fromBody = extractDidFromBody()
+    if (fromBody != null) return Did(fromBody)
+
+    return null
+}
+
+private fun HttpRequestBuilder.extractDidFromQueryParams(): String? {
+    url.parameters[DidParam]?.let { return it }
+    url.parameters[RepoParam]?.takeIf { it.startsWith(DidPrefix) }?.let { return it }
+    return null
+}
+
+private fun HttpRequestBuilder.extractDidFromBody(): String? {
+    val textContent = body as? TextContent ?: return null
+    val jsonObject = runCatching {
+        BlueskyJson.parseToJsonElement(textContent.text) as? JsonObject
+    }.getOrNull() ?: return null
+
+    (jsonObject[DidParam] as? JsonPrimitive)?.content
+        ?.let { return it }
+    (jsonObject[RepoParam] as? JsonPrimitive)?.content
+        ?.takeIf { it.startsWith(DidPrefix) }
+        ?.let { return it }
+    return null
 }
 
 private suspend fun SavedState.AuthTokens.Authenticated.DPoP.toKeyPair() =
@@ -611,3 +673,7 @@ private const val InvalidTokenError = "invalid_token"
 private const val UseDPoPNonce = "use_dpop_nonce"
 private const val DPoPNonceHeaderKey = "DPoP-Nonce"
 private const val DPoP = "DPoP"
+private const val ComAtProtoPathSegment = "com.atproto"
+private const val DidParam = "did"
+private const val RepoParam = "repo"
+private const val DidPrefix = "did:"
