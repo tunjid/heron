@@ -20,6 +20,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -120,6 +121,7 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
+import com.tunjid.heron.profile.ProfileLiveStatusSheetState.Companion.rememberUpdatedProfileLiveStatusSheetState
 import com.tunjid.heron.profile.ui.LabelerSettings
 import com.tunjid.heron.profile.ui.LabelerState
 import com.tunjid.heron.profile.ui.ProfileActionsMenu
@@ -180,6 +182,9 @@ import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.AttributionLayout
+import com.tunjid.heron.ui.LiveBorderWidth
+import com.tunjid.heron.ui.LiveChip
+import com.tunjid.heron.ui.LiveStatusColor
 import com.tunjid.heron.ui.OverlappingAvatarRow
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
@@ -201,6 +206,7 @@ import heron.feature.profile.generated.resources.followed_by_profiles
 import heron.feature.profile.generated.resources.follows_you
 import heron.feature.profile.generated.resources.labels
 import heron.feature.profile.generated.resources.posts
+import heron.ui.core.generated.resources.action_edit_live_status
 import heron.ui.core.generated.resources.action_go_live
 import heron.ui.core.generated.resources.followers
 import heron.ui.core.generated.resources.following
@@ -255,6 +261,26 @@ internal fun ProfileScreen(
             .isRefreshing
             .collect { value = it }
     }
+
+    val profileLiveStatusSheetState = rememberUpdatedProfileLiveStatusSheetState(
+        profile = state.profile,
+        onGoLive = { streamUrl, duration ->
+            actions(
+                Action.LiveStatus.GoLive(
+                    profileId = state.profile.did,
+                    streamUrl = streamUrl,
+                    duration = duration,
+                ),
+            )
+        },
+        onEndLive = {
+            actions(
+                Action.LiveStatus.EndLive(
+                    profileId = state.profile.did,
+                ),
+            )
+        },
+    )
 
     CollapsingHeaderLayout(
         modifier = modifier
@@ -364,6 +390,7 @@ internal fun ProfileScreen(
                     )
                 },
                 onModerationAction = actions,
+                onUpdateProfileLiveStatus = profileLiveStatusSheetState::show,
             )
         },
         body = {
@@ -586,6 +613,7 @@ private fun ProfileHeader(
     onEditClick: () -> Unit,
     onToggleLabelerSubscription: (ProfileId, Boolean) -> Unit,
     onModerationAction: (Action.Moderation) -> Unit,
+    onUpdateProfileLiveStatus: () -> Unit,
 ) = with(paneScaffoldState) {
     Box(
         modifier = modifier
@@ -656,7 +684,7 @@ private fun ProfileHeader(
                     onEditClick = onEditClick,
                     onToggleLabelerSubscription = onToggleLabelerSubscription,
                     onModerationAction = onModerationAction,
-                    onGoLive = {},
+                    onUpdateProfileLiveStatus = onUpdateProfileLiveStatus,
                 )
                 ProfileStats(
                     modifier = Modifier.fillMaxWidth(),
@@ -810,6 +838,7 @@ private fun ProfileAvatar(
     onProfileAvatarClicked: () -> Unit,
 ) = with(paneScaffoldState) {
     val statusBarHeight = UiTokens.statusBarHeight
+    val isLive = profile.status?.isLive == true
     Box(
         modifier = modifier
             .padding(top = headerState.avatarTopPadding)
@@ -820,6 +849,7 @@ private fun ProfileAvatar(
                     statusBarHeight = statusBarHeight,
                 )
             },
+        contentAlignment = Alignment.BottomCenter,
     ) {
         val showWave = isRefreshing || pullToRefreshState.distanceFraction >= 1f
         val scale = animateFloatAsState(
@@ -841,20 +871,24 @@ private fun ProfileAvatar(
                 progress = { if (isRefreshing) 1f else pullToRefreshState.distanceFraction },
                 trackColor = MaterialTheme.colorScheme.surface,
                 amplitude = { if (showWave) 1f else 0f },
-                modifier = Modifier
-                    .fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
             )
         }
         paneScaffoldState.UpdatedMovableStickySharedElementOf(
             sharedContentState = with(paneScaffoldState) {
-                rememberSharedContentState(
-                    key = avatarSharedElementKey,
-                )
+                rememberSharedContentState(key = avatarSharedElementKey)
             },
             zIndexInOverlay = AvatarZIndex,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(headerState.avatarPadding)
+                .then(
+                    if (isLive) Modifier.border(
+                        width = LiveBorderWidth,
+                        color = LiveStatusColor,
+                        shape = CircleShape,
+                    ) else Modifier,
+                )
                 .clickable { onProfileAvatarClicked() },
             state = remember(
                 key1 = profile.avatar?.uri,
@@ -865,8 +899,7 @@ private fun ProfileAvatar(
                     url = profile.avatar.orDefault.uri,
                     contentScale = ContentScale.Crop,
                     contentDescription = profile.displayName ?: profile.handle.id,
-                    shape =
-                    if (profile.isLabeler) profile.did.asSelfLabelerUri().collectionShape()
+                    shape = if (profile.isLabeler) profile.did.asSelfLabelerUri().collectionShape()
                     else RoundedPolygonShape.Circle,
                 )
             },
@@ -874,6 +907,7 @@ private fun ProfileAvatar(
                 AsyncImage(state, modifier)
             },
         )
+        if (isLive) LiveChip()
     }
 }
 
@@ -889,7 +923,7 @@ private fun ProfileHeadline(
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
     onToggleLabelerSubscription: (ProfileId, Boolean) -> Unit,
     onModerationAction: (Action.Moderation) -> Unit,
-    onGoLive: () -> Unit,
+    onUpdateProfileLiveStatus: () -> Unit,
 ) {
     val profileRestrictionsDialogState = rememberProfileRestrictionsDialogState(
         onApproved = onModerationAction,
@@ -964,10 +998,15 @@ private fun ProfileHeadline(
                             )
                             if (isSignedInProfile || signedInProfileId != null) {
                                 ProfileActionsMenu(
-                                    items = viewerState.profileActionMenuItems(isSignedInProfile),
+                                    items = viewerState.profileActionMenuItems(
+                                        isSignedInProfile = isSignedInProfile,
+                                        isLive = profile.status?.isLive == true,
+                                    ),
                                     onItemClicked = { item ->
                                         when (item.title) {
-                                            CommonStrings.action_go_live -> onGoLive()
+                                            CommonStrings.action_go_live,
+                                            CommonStrings.action_edit_live_status,
+                                            -> onUpdateProfileLiveStatus()
                                             CommonStrings.viewer_state_block_account ->
                                                 profileRestrictionsDialogState.show(
                                                     Action.Block.Add(

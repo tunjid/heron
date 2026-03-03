@@ -17,12 +17,14 @@
 package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -44,6 +46,9 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.ui.LiveBorderWidth
+import com.tunjid.heron.ui.LiveChip
+import com.tunjid.heron.ui.LiveStatusColor
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -58,6 +63,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
     transparencyFactor: () -> Float = { 0f },
     onSignedInProfileClicked: (Profile, String) -> Unit,
 ) {
+    val isLive = signedInProfile?.status?.isLive == true
     TopAppBar(
         modifier = modifier
             .rootAppBarBackground(
@@ -97,31 +103,44 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                 visible = signedInProfile != null,
             ) {
                 signedInProfile?.let { profile ->
-                    PaneStickySharedElement(
-                        modifier = Modifier
-                            .size(36.dp),
-                        sharedContentState = rememberSharedContentState(
-                            key = UiTokens.SignedInUserAvatarSharedElementKey,
-                        ),
+                    Box(
+                        modifier = Modifier.size(36.dp),
+                        contentAlignment = Alignment.BottomCenter,
                     ) {
-                        AsyncImage(
+                        PaneStickySharedElement(
                             modifier = Modifier
-                                .fillParentAxisIfFixedOrWrap()
-                                .clickable {
-                                    onSignedInProfileClicked(
-                                        profile,
-                                        UiTokens.SignedInUserAvatarSharedElementKey,
+                                .fillMaxSize()
+                                .then(
+                                    if (isLive) Modifier.border(
+                                        width = LiveBorderWidth,
+                                        color = LiveStatusColor,
+                                        shape = CircleShape,
+                                    ) else Modifier,
+                                ),
+                            sharedContentState = rememberSharedContentState(
+                                key = UiTokens.SignedInUserAvatarSharedElementKey,
+                            ),
+                        ) {
+                            AsyncImage(
+                                modifier = Modifier
+                                    .fillParentAxisIfFixedOrWrap()
+                                    .clickable {
+                                        onSignedInProfileClicked(
+                                            profile,
+                                            UiTokens.SignedInUserAvatarSharedElementKey,
+                                        )
+                                    },
+                                args = remember(profile) {
+                                    ImageArgs(
+                                        url = profile.avatar?.uri,
+                                        contentDescription = signedInProfile.displayName,
+                                        contentScale = ContentScale.Crop,
+                                        shape = RoundedPolygonShape.Circle,
                                     )
                                 },
-                            args = remember(profile) {
-                                ImageArgs(
-                                    url = profile.avatar?.uri,
-                                    contentDescription = signedInProfile.displayName,
-                                    contentScale = ContentScale.Crop,
-                                    shape = RoundedPolygonShape.Circle,
-                                )
-                            },
-                        )
+                            )
+                        }
+                        if (isLive) LiveChip()
                     }
                 }
             }
