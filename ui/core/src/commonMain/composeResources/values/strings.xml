@@ -148,4 +148,23 @@
 
     <string name="action_go_live">Go Live</string>
     <string name="action_end_live">End Live</string>
+    <string name="action_edit_live_status">Edit Live Status</string>
+
+    <string name="live_badge">LIVE</string>
+    <string name="action_close">Close</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="live_status_go_live_title">Go Live</string>
+    <string name="live_status_go_live_subtitle">Add a temporary live status to your profile. When someone clicks on your avatar, they will see information about your live event.</string>
+    <string name="live_status_url_placeholder">www.livestream.tv</string>
+    <string name="live_status_clear_url">Clear URL</string>
+    <string name="live_status_reset_url">Reset URL</string>
+    <string name="live_status_enabled_services">The following services are enabled for your account: Twitch, Streamplace, Bluecast</string>
+    <string name="live_status_url_not_supported">URL not supported</string>
+    <string name="live_status_go_live_for">Go Live for</string>
+    <string name="live_status_you_are_live">You are live</string>
+    <string name="live_status_expires_in">Expires in %1$s</string>
+    <string name="live_status_end_live">End Live</string>
+    <string name="twitch_live_platform">Twitch</string>
+    <string name="streamplace_live_platform">Streamplace</string>
+    <string name="bluecast_live_platform">Bluecast</string>
 </resources>
