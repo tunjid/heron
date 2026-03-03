@@ -444,8 +444,8 @@ internal class OfflineRecordRepository @Inject constructor(
                     offset = query.data.offset,
                     limit = query.data.limit,
                 )
-                    .map { populatedFeedGeneratorEntities ->
-                        populatedFeedGeneratorEntities.map(PopulatedStandardDocumentEntity::asExternalModel)
+                    .map { populatedStandardDocumentEntities ->
+                        populatedStandardDocumentEntities.map(PopulatedStandardDocumentEntity::asExternalModel)
                     },
                 networkService.nextCursorFlow(
                     currentCursor = cursor,

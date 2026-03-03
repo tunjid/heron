@@ -111,7 +111,4 @@ fun PopulatedStandardDocumentEntity.asExternalModel() = StandardDocument(
 )
 
 private fun String.deserializeTags(): List<String> =
-    split("\n").filter(String::isNotEmpty)
-
-private fun List<String>.serializeTags(): String =
-    joinToString(",")
+    split(",").filter(String::isNotEmpty)
