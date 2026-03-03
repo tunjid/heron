@@ -79,6 +79,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
@@ -105,6 +106,7 @@ import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.id
+import com.tunjid.heron.data.core.models.link
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.ProfileId
@@ -161,6 +163,7 @@ import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
+import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
@@ -468,6 +471,26 @@ internal fun ProfileScreen(
                                             if (paneScaffoldState.isSignedOut) signInPopUpState.show()
                                             else actions(Action.UpdatePreferences(update))
                                         },
+                                    )
+                                },
+                            )
+
+                            is ProfileScreenStateHolders.Records.Documents -> RecordList(
+                                collectionStateHolder = stateHolder,
+                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
+                                itemKey = { it.uri.uri },
+                                itemContent = { document ->
+                                    val uriHandler = LocalUriHandler.current
+                                    Document(
+                                        modifier = Modifier
+                                            .fillParentMaxWidth()
+                                            .clip(RecordShape)
+                                            .animateItem()
+                                            .clickable {
+                                                runCatching { uriHandler.openUri(document.link) }
+                                            }
+                                            .recordPadding(),
+                                        document = document,
                                     )
                                 },
                             )

@@ -46,3 +46,9 @@ data class StandardDocument(
             uri = uri,
         )
 }
+
+val StandardDocument.link: String
+    get() = when (publication) {
+        null -> "$site/$path"
+        else -> "${publication.url}/$path"
+    }

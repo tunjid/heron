@@ -28,6 +28,7 @@ import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.sourceId
@@ -121,6 +122,10 @@ sealed class ProfileScreenStateHolders {
         class StarterPacks(
             mutator: RecordStateHolder<StarterPack>,
         ) : Records<StarterPack>(mutator)
+
+        class Documents(
+            mutator: RecordStateHolder<StandardDocument>,
+        ) : Records<StandardDocument>(mutator)
     }
 
     class Timeline(
@@ -149,6 +154,7 @@ sealed class ProfileScreenStateHolders {
             is Records.Feeds -> "Feeds"
             is Records.Lists -> "Lists"
             is Records.StarterPacks -> "StarterPacks"
+            is Records.Documents -> "Documents"
             is Timeline -> state.value.timeline.sourceId
             is LabelerSettings -> "LabelerSettings"
         }
