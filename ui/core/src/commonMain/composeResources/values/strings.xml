@@ -145,4 +145,7 @@
     <string name="error_network_too_many_requests">Too many requests. Please try again later.</string>
     <string name="error_network_server_error">Internal server error</string>
     <string name="error_network_unknown">Server error (Code %1$d)</string>
+
+    <string name="action_go_live">Go Live</string>
+    <string name="action_end_live">End Live</string>
 </resources>

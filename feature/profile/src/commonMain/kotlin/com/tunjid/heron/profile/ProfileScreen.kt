@@ -201,6 +201,7 @@ import heron.feature.profile.generated.resources.followed_by_profiles
 import heron.feature.profile.generated.resources.follows_you
 import heron.feature.profile.generated.resources.labels
 import heron.feature.profile.generated.resources.posts
+import heron.ui.core.generated.resources.action_go_live
 import heron.ui.core.generated.resources.followers
 import heron.ui.core.generated.resources.following
 import heron.ui.core.generated.resources.viewer_state_block_account
@@ -655,6 +656,7 @@ private fun ProfileHeader(
                     onEditClick = onEditClick,
                     onToggleLabelerSubscription = onToggleLabelerSubscription,
                     onModerationAction = onModerationAction,
+                    onGoLive = {},
                 )
                 ProfileStats(
                     modifier = Modifier.fillMaxWidth(),
@@ -887,6 +889,7 @@ private fun ProfileHeadline(
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
     onToggleLabelerSubscription: (ProfileId, Boolean) -> Unit,
     onModerationAction: (Action.Moderation) -> Unit,
+    onGoLive: () -> Unit,
 ) {
     val profileRestrictionsDialogState = rememberProfileRestrictionsDialogState(
         onApproved = onModerationAction,
@@ -959,29 +962,30 @@ private fun ProfileHeadline(
                                     else onViewerStateClicked(viewerState)
                                 },
                             )
-                            if (!isSignedInProfile && signedInProfileId != null) {
+                            if (isSignedInProfile || signedInProfileId != null) {
                                 ProfileActionsMenu(
-                                    items = viewerState.profileActionMenuItems(),
+                                    items = viewerState.profileActionMenuItems(isSignedInProfile),
                                     onItemClicked = { item ->
                                         when (item.title) {
+                                            CommonStrings.action_go_live -> onGoLive()
                                             CommonStrings.viewer_state_block_account ->
                                                 profileRestrictionsDialogState.show(
                                                     Action.Block.Add(
-                                                        signedInProfileId = signedInProfileId,
+                                                        signedInProfileId = signedInProfileId!!,
                                                         profileId = profile.did,
                                                     ),
                                                 )
                                             CommonStrings.viewer_state_mute_account ->
                                                 profileRestrictionsDialogState.show(
                                                     Action.Mute.Add(
-                                                        signedInProfileId = signedInProfileId,
+                                                        signedInProfileId = signedInProfileId!!,
                                                         profileId = profile.did,
                                                     ),
                                                 )
                                             CommonStrings.viewer_state_unmute_account ->
                                                 profileRestrictionsDialogState.show(
                                                     Action.Mute.Remove(
-                                                        signedInProfileId = signedInProfileId,
+                                                        signedInProfileId = signedInProfileId!!,
                                                         profileId = profile.did,
                                                     ),
                                                 )
