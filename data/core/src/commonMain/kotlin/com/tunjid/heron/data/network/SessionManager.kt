@@ -435,13 +435,10 @@ private fun atProtoAuth(
         var resolvedOtherProfilePds = false
 
         if (context.url.encodedPath.contains(ComAtProtoPathSegment)) {
-            val subjectDid = context.extractSubjectDid()
-            if (subjectDid != null) {
+            context.extractSubjectDid()?.let { subjectDid ->
                 val isSignedInUser = authTokens != null && authTokens.authProfileId.id == subjectDid.did
                 if (!isSignedInUser) {
-                    val resolvedPdsUrl = resolvePds(subjectDid)
-
-                    if (resolvedPdsUrl != null) {
+                    resolvePds(subjectDid)?.let { resolvedPdsUrl ->
                         context.url.protocol = resolvedPdsUrl.protocol
                         context.url.host = resolvedPdsUrl.host
                         context.url.port = resolvedPdsUrl.port

@@ -44,38 +44,25 @@ internal class PlcDirectoryPdsResolver @Inject constructor(
 
     override suspend fun resolve(did: Did): Url? {
         val deferred = cacheMutex.withLock {
-            var existingDeferred = cache[did]
-
-            if (existingDeferred != null) {
-                // LRU Access: Remove and re-insert to move it to the "most recently used" position (end of the map)
-                cache.remove(did)
-                cache[did] = existingDeferred
-            } else {
-                // Create new deferred task
-                existingDeferred = scope.async {
-                    runCatchingUnlessCancelled {
-                        val responseText = httpClient.get("$PlcDirectoryUrl/${did.did}")
-                            .bodyAsText()
-                        BlueskyJson.decodeFromString<SavedState.AuthTokens.DidDoc>(responseText)
-                            .service
-                            .firstOrNull()
-                            ?.serviceEndpoint
-                            ?.let(::Url)
-                    }.getOrNull()
-                }
-
-                // Insert into cache
-                cache[did] = existingDeferred
-
-                // LRU Eviction: Remove the eldest entry (first item) if we exceed our max size
-                if (cache.size > MaxCacheSize) {
-                    val eldestKey = cache.keys.first()
-                    cache.remove(eldestKey)
-                }
+            val existing = cache.remove(did)
+            val deferred = existing ?: scope.async {
+                runCatchingUnlessCancelled {
+                    val responseText = httpClient.get("$PlcDirectoryUrl/${did.did}")
+                        .bodyAsText()
+                    BlueskyJson.decodeFromString<SavedState.AuthTokens.DidDoc>(responseText)
+                        .service
+                        .firstOrNull()
+                        ?.serviceEndpoint
+                        ?.let(::Url)
+                }.getOrNull()
             }
+            // Place in front as most recently used
+            cache[did] = deferred
 
-            // Return the non-null deferred we either found or just created
-            existingDeferred
+            if (existing == null && cache.size > MaxCacheSize) {
+                cache.remove(cache.keys.first())
+            }
+            deferred
         }
 
         return deferred.await()
