@@ -58,7 +58,9 @@ import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
+import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StarterPackUri
+import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordUriOrNull
 import com.tunjid.heron.data.core.utilities.Outcome
@@ -95,6 +97,10 @@ import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -461,11 +467,16 @@ internal class OfflineRecordRepository @Inject constructor(
                     },
                     nextCursor = ListRecordsResponse::cursor,
                     onResponse = {
+                        val publicationUris = mutableSetOf<StandardPublicationUri>()
                         multipleEntitySaverProvider.saveInTransaction {
                             records.forEach { record ->
                                 val documentUri = record.uri.atUri.let(::StandardDocumentUri)
                                 val documentCid = record.cid.cid.let(::StandardDocumentId)
                                 val document = record.value.decodeAs<Document>()
+
+                                (document.site.uri.asRecordUriOrNull() as? StandardPublicationUri)?.let {
+                                    if (publicationUris.add(it)) recordResolver.resolve(it)
+                                }
 
                                 add(
                                     documentUri = documentUri,
@@ -475,6 +486,11 @@ internal class OfflineRecordRepository @Inject constructor(
                                 )
                             }
                         }
+                        coroutineScope {
+                            publicationUris.map {
+                                async { recordResolver.resolve(it) }
+                            }
+                        }.awaitAll()
                     },
                 ),
                 ::CursorList,
