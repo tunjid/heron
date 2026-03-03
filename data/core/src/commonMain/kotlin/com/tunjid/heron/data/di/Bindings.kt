@@ -43,7 +43,9 @@ import com.tunjid.heron.data.network.KtorNetworkService
 import com.tunjid.heron.data.network.NetworkConnectionException
 import com.tunjid.heron.data.network.NetworkMonitor
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.network.PdsResolver
 import com.tunjid.heron.data.network.PersistedSessionManager
+import com.tunjid.heron.data.network.PlcDirectoryPdsResolver
 import com.tunjid.heron.data.network.SessionManager
 import com.tunjid.heron.data.network.SuspendingVideoUploadService
 import com.tunjid.heron.data.network.VideoUploadService
@@ -169,12 +171,20 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
+    internal fun providePdsResolver(
+        plcDirectoryPdsResolver: PlcDirectoryPdsResolver,
+    ): PdsResolver = plcDirectoryPdsResolver
+
+    @SingleIn(AppScope::class)
+    @Provides
     internal fun provideSessionManager(
         httpClient: HttpClient,
         savedStateDataSource: SavedStateDataSource,
+        pdsResolver: PdsResolver,
     ): SessionManager = PersistedSessionManager(
         httpClient = httpClient,
         savedStateDataSource = savedStateDataSource,
+        pdsResolver = pdsResolver,
     )
 
     @SingleIn(AppScope::class)
