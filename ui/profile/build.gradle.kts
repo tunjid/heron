@@ -32,6 +32,7 @@ kotlin {
             dependencies {
                 implementation(project(":data:models"))
                 implementation(project(":ui:core"))
+                implementation(project(":ui:media"))
 
                 implementation(libs.compose.multiplatform.animation)
                 implementation(libs.compose.multiplatform.components.resources)
