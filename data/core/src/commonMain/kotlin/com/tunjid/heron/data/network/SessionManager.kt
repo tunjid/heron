@@ -437,11 +437,8 @@ private fun atProtoAuth(
         if (context.url.encodedPath.contains(ComAtProtoPathSegment)) {
             val subjectDid = context.extractSubjectDid()
             if (subjectDid != null) {
-                val isSignedInDPoPUser =
-                    authTokens is SavedState.AuthTokens.Authenticated.DPoP &&
-                        authTokens.authProfileId.id == subjectDid.did
-
-                if (!isSignedInDPoPUser) {
+                val isSignedInUser = authTokens != null && authTokens.authProfileId.id == subjectDid.did
+                if (!isSignedInUser) {
                     val resolvedPdsUrl = resolvePds(subjectDid)
 
                     if (resolvedPdsUrl != null) {
@@ -556,11 +553,10 @@ private fun HttpRequestBuilder.extractSubjectDid(): Did? {
     return null
 }
 
-private fun HttpRequestBuilder.extractDidFromQueryParams(): String? {
-    url.parameters[DidParam]?.let { return it }
-    url.parameters[RepoParam]?.takeIf { it.startsWith(DidPrefix) }?.let { return it }
-    return null
-}
+private fun HttpRequestBuilder.extractDidFromQueryParams(): String? =
+    url.parameters[DidParam]
+        ?: url.parameters[RepoParam]
+            ?.takeIf { it.startsWith(DidPrefix) }
 
 private fun HttpRequestBuilder.extractDidFromBody(): String? {
     val textContent = body as? TextContent ?: return null
@@ -568,12 +564,9 @@ private fun HttpRequestBuilder.extractDidFromBody(): String? {
         BlueskyJson.parseToJsonElement(textContent.text) as? JsonObject
     }.getOrNull() ?: return null
 
-    (jsonObject[DidParam] as? JsonPrimitive)?.content
-        ?.let { return it }
-    (jsonObject[RepoParam] as? JsonPrimitive)?.content
-        ?.takeIf { it.startsWith(DidPrefix) }
-        ?.let { return it }
-    return null
+    return (jsonObject[DidParam] as? JsonPrimitive)?.content
+        ?: (jsonObject[RepoParam] as? JsonPrimitive)?.content
+            ?.takeIf { it.startsWith(DidPrefix) }
 }
 
 private suspend fun SavedState.AuthTokens.Authenticated.DPoP.toKeyPair() =
