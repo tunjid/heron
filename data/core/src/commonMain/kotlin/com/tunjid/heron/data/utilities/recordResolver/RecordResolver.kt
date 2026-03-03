@@ -98,6 +98,7 @@ import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.network.PdsResolver
 import com.tunjid.heron.data.network.currentSessionContext
 import com.tunjid.heron.data.network.models.asExternalModel
 import com.tunjid.heron.data.network.models.post
@@ -197,6 +198,7 @@ internal class OfflineRecordResolver @Inject constructor(
     private val starterPackDao: StarterPackDao,
     private val savedStateDataSource: SavedStateDataSource,
     private val networkService: NetworkService,
+    private val pdsResolver: PdsResolver,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
 ) : RecordResolver {
 
@@ -483,7 +485,8 @@ internal class OfflineRecordResolver @Inject constructor(
 
             is StandardPublicationUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
                 .mapCatchingUnlessCancelled { response ->
-                    val pdsUrl = networkService.psdUrlOrThrow(uri)
+                    val pdsUrl = requireNotNull(pdsResolver.resolve(Did(uri.profileId().id)))
+                        .toString()
                     val publicationCid = response.cid?.cid?.let(::StandardPublicationId)
 
                     val publication = response.value.decodeAs<Publication>()
@@ -504,7 +507,8 @@ internal class OfflineRecordResolver @Inject constructor(
 
             is StandardDocumentUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
                 .mapCatchingUnlessCancelled { response ->
-                    val pdsUrl = networkService.psdUrlOrThrow(uri)
+                    val pdsUrl = requireNotNull(pdsResolver.resolve(Did(uri.profileId().id)))
+                        .toString()
                     val documentCid = response.cid?.cid?.let(::StandardDocumentId)
 
                     val document = response.value.decodeAs<Document>()
@@ -730,16 +734,6 @@ internal class OfflineRecordResolver @Inject constructor(
             )
         }
     }
-
-    private suspend fun NetworkService.psdUrlOrThrow(
-        recordUri: RecordUri,
-    ) = runCatchingWithMonitoredNetworkRetry {
-        resolveDid(
-            ResolveDidQueryParams(Did(recordUri.profileId().id)),
-        )
-    }.mapCatchingUnlessCancelled {
-        it.didDoc.decodeAs<DidDoc>().service.first().serviceEndpoint
-    }.getOrThrow()
 }
 
 private fun isNotFound(throwable: Throwable): Boolean {

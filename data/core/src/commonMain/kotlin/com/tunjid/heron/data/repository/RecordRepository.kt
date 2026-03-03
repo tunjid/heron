@@ -28,7 +28,6 @@ import app.bsky.graph.GetListResponse
 import app.bsky.graph.GetListsQueryParams
 import app.bsky.graph.GetListsResponse
 import app.bsky.graph.Listitem as BskyListMember
-import com.atproto.identity.ResolveDidQueryParams
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.DeleteRecordRequest
 import com.atproto.repo.GetRecordQueryParams
@@ -82,6 +81,7 @@ import com.tunjid.heron.data.graze.GrazeFeed
 import com.tunjid.heron.data.network.FeedCreationService
 import com.tunjid.heron.data.network.GrazeResponse
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.network.PdsResolver
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.mapDistinctUntilChanged
@@ -177,6 +177,7 @@ internal class OfflineRecordRepository @Inject constructor(
     private val profileLookup: ProfileLookup,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
+    private val pdsResolver: PdsResolver,
 ) : RecordRepository {
 
     override val subscribedLabelers: Flow<List<Labeler>> =
@@ -433,19 +434,9 @@ internal class OfflineRecordRepository @Inject constructor(
                 profileId = query.profileId,
             ) ?: return@singleSessionFlow emptyFlow()
 
-            val pdsUrl = networkService.runCatchingWithMonitoredNetworkRetry {
-                resolveDid(
-                    ResolveDidQueryParams(Did(query.profileId.id)),
-                )
-            }
-                .mapCatchingUnlessCancelled {
-                    it.didDoc
-                        .decodeAs<SavedState.AuthTokens.DidDoc>()
-                        .service
-                        .first()
-                        .serviceEndpoint
-                }
-                .getOrNull() ?: return@singleSessionFlow emptyFlow()
+            val pdsUrl = pdsResolver.resolve(Did(profileDid.did))
+                ?.toString()
+                ?: return@singleSessionFlow emptyFlow()
 
             combine(
                 standardSiteDao.authorDocuments(
