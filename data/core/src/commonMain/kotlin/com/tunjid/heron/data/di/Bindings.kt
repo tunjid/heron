@@ -30,6 +30,7 @@ import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
+import com.tunjid.heron.data.database.daos.StandardSiteDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.ThreadGateDao
 import com.tunjid.heron.data.database.daos.TimelineDao
@@ -325,6 +326,12 @@ class DataBindings(
     fun provideThreadGateDao(
         database: AppDatabase,
     ): ThreadGateDao = database.threadGateDao()
+
+    @SingleIn(AppScope::class)
+    @Provides
+    fun provideStandardSiteDao(
+        database: AppDatabase,
+    ): StandardSiteDao = database.standardSiteDao()
 
     @SingleIn(AppScope::class)
     @Provides

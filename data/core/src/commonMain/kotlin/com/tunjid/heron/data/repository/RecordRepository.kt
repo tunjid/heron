@@ -31,6 +31,8 @@ import app.bsky.graph.Listitem as BskyListMember
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.DeleteRecordRequest
 import com.atproto.repo.GetRecordQueryParams
+import com.atproto.repo.ListRecordsQueryParams
+import com.atproto.repo.ListRecordsResponse
 import com.atproto.repo.PutRecordRequest
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
@@ -41,6 +43,7 @@ import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
@@ -53,7 +56,11 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.StandardDocumentId
+import com.tunjid.heron.data.core.types.StandardDocumentUri
+import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StarterPackUri
+import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordUriOrNull
 import com.tunjid.heron.data.core.utilities.Outcome
@@ -61,11 +68,13 @@ import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
+import com.tunjid.heron.data.database.daos.StandardSiteDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.ListMemberEntity
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedListMemberEntity
+import com.tunjid.heron.data.database.entities.PopulatedStandardDocumentEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.AppMainScope
@@ -74,6 +83,7 @@ import com.tunjid.heron.data.graze.GrazeFeed
 import com.tunjid.heron.data.network.FeedCreationService
 import com.tunjid.heron.data.network.GrazeResponse
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.network.PdsResolver
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.mapDistinctUntilChanged
@@ -87,6 +97,10 @@ import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -99,6 +113,7 @@ import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
+import site.standard.Document
 
 interface RecordRepository {
 
@@ -135,6 +150,11 @@ interface RecordRepository {
         cursor: Cursor,
     ): Flow<CursorList<FeedGenerator>>
 
+    fun standardDocuments(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<StandardDocument>>
+
     suspend fun updateGrazeFeed(
         update: GrazeFeed.Update,
     ): Result<GrazeFeed>
@@ -156,12 +176,14 @@ internal class OfflineRecordRepository @Inject constructor(
     private val labelDao: LabelDao,
     private val starterPackDao: StarterPackDao,
     private val feedGeneratorDao: FeedGeneratorDao,
+    private val standardSiteDao: StandardSiteDao,
     private val savedStateDataSource: SavedStateDataSource,
     private val recordResolver: RecordResolver,
     private val feedCreationService: FeedCreationService,
     private val profileLookup: ProfileLookup,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
+    private val pdsResolver: PdsResolver,
 ) : RecordRepository {
 
     override val subscribedLabelers: Flow<List<Labeler>> =
@@ -402,6 +424,73 @@ internal class OfflineRecordRepository @Inject constructor(
                         multipleEntitySaverProvider.saveInTransaction {
                             feeds.forEach(::add)
                         }
+                    },
+                ),
+                ::CursorList,
+            )
+                .distinctUntilChanged()
+        }
+
+    override fun standardDocuments(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<StandardDocument>> =
+        savedStateDataSource.singleSessionFlow {
+            val profileDid = profileLookup.lookupProfileDid(
+                profileId = query.profileId,
+            ) ?: return@singleSessionFlow emptyFlow()
+
+            val pdsUrl = pdsResolver.resolve(Did(profileDid.did))
+                ?.toString()
+                ?: return@singleSessionFlow emptyFlow()
+
+            combine(
+                standardSiteDao.authorDocuments(
+                    authorId = profileDid.did,
+                    offset = query.data.offset,
+                    limit = query.data.limit,
+                )
+                    .map { populatedStandardDocumentEntities ->
+                        populatedStandardDocumentEntities.map(PopulatedStandardDocumentEntity::asExternalModel)
+                    },
+                networkService.nextCursorFlow(
+                    currentCursor = cursor,
+                    currentRequestWithNextCursor = {
+                        listRecords(
+                            params = ListRecordsQueryParams(
+                                repo = Did(profileDid.did),
+                                collection = Nsid(StandardDocumentUri.NAMESPACE),
+                                limit = query.data.limit,
+                                cursor = cursor.value,
+                            ),
+                        )
+                    },
+                    nextCursor = ListRecordsResponse::cursor,
+                    onResponse = {
+                        val publicationUris = mutableSetOf<StandardPublicationUri>()
+                        multipleEntitySaverProvider.saveInTransaction {
+                            records.forEach { record ->
+                                val documentUri = record.uri.atUri.let(::StandardDocumentUri)
+                                val documentCid = record.cid.cid.let(::StandardDocumentId)
+                                val document = record.value.decodeAs<Document>()
+
+                                (document.site.uri.asRecordUriOrNull() as? StandardPublicationUri)?.let {
+                                    if (publicationUris.add(it)) recordResolver.resolve(it)
+                                }
+
+                                add(
+                                    documentUri = documentUri,
+                                    documentCid = documentCid,
+                                    document = document,
+                                    pdsUrl = pdsUrl,
+                                )
+                            }
+                        }
+                        coroutineScope {
+                            publicationUris.map {
+                                async { recordResolver.resolve(it) }
+                            }
+                        }.awaitAll()
                     },
                 ),
                 ::CursorList,

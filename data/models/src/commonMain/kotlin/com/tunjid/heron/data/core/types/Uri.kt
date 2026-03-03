@@ -58,6 +58,9 @@ fun RecordUri.requireCollection(): String =
         is LikeUri -> LikeUri.NAMESPACE
         is RepostUri -> RepostUri.NAMESPACE
         is BlockUri -> BlockUri.NAMESPACE
+        is StandardPublicationUri -> StandardPublicationUri.NAMESPACE
+        is StandardDocumentUri -> StandardDocumentUri.NAMESPACE
+        is StandardSubscriptionUri -> StandardSubscriptionUri.NAMESPACE
         is UnknownRecordUri -> throw UnresolvableRecordException(this)
     }
 
@@ -214,6 +217,45 @@ value class BlockUri(
 
 @Serializable
 @JvmInline
+value class StandardPublicationUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "site.standard.publication"
+    }
+}
+
+@Serializable
+@JvmInline
+value class StandardDocumentUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "site.standard.document"
+    }
+}
+
+@Serializable
+@JvmInline
+value class StandardSubscriptionUri(
+    override val uri: String,
+) : Uri,
+    RecordUri {
+    override fun toString(): String = uri
+
+    companion object {
+        const val NAMESPACE = "site.standard.graph.subscription"
+    }
+}
+
+@Serializable
+@JvmInline
 value class UnknownRecordUri(
     override val uri: String,
 ) : Uri,
@@ -310,6 +352,9 @@ fun String.asRecordUriOrNull(): RecordUri? = atUriComponents { _, collectionRang
         RepostUri.NAMESPACE -> RepostUri(this)
         FollowUri.NAMESPACE -> FollowUri(this)
         BlockUri.NAMESPACE -> BlockUri(this)
+        StandardPublicationUri.NAMESPACE -> StandardPublicationUri(this)
+        StandardDocumentUri.NAMESPACE -> StandardDocumentUri(this)
+        StandardSubscriptionUri.NAMESPACE -> StandardSubscriptionUri(this)
         else -> UnknownRecordUri(this)
     }
 }

@@ -32,6 +32,7 @@ import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
+import com.tunjid.heron.data.database.daos.StandardSiteDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.ThreadGateDao
 import com.tunjid.heron.data.database.daos.TimelineDao
@@ -53,6 +54,9 @@ import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostRepostEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
+import com.tunjid.heron.data.database.entities.StandardDocumentEntity
+import com.tunjid.heron.data.database.entities.StandardPublicationEntity
+import com.tunjid.heron.data.database.entities.StandardSubscriptionEntity
 import com.tunjid.heron.data.database.entities.StarterPackEntity
 import com.tunjid.heron.data.database.entities.ThreadGateAllowedListEntity
 import com.tunjid.heron.data.database.entities.ThreadGateEntity
@@ -92,7 +96,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 35,
+    version = 36,
     entities = [
         BookmarkEntity::class,
         ExternalEmbedEntity::class,
@@ -131,6 +135,9 @@ import kotlinx.coroutines.IO
         ThreadGateEntity::class,
         ThreadGateAllowedListEntity::class,
         ThreadGateHiddenPostEntity::class,
+        StandardPublicationEntity::class,
+        StandardDocumentEntity::class,
+        StandardSubscriptionEntity::class,
     ],
     autoMigrations = [
         // firstMigration
@@ -204,6 +211,8 @@ import kotlinx.coroutines.IO
         // Migration 33 - 34 is a manual migration
         // Add Profile Status
         AutoMigration(from = 34, to = 35),
+        // Add standard site tables (publications, documents, subscriptions)
+        AutoMigration(from = 35, to = 36),
     ],
     exportSchema = true,
 )
@@ -225,6 +234,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun starterPackDao(): StarterPackDao
     abstract fun messagesDao(): MessageDao
     abstract fun threadGateDao(): ThreadGateDao
+    abstract fun standardSiteDao(): StandardSiteDao
 }
 
 // The Room compiler generates the `actual` implementations.
