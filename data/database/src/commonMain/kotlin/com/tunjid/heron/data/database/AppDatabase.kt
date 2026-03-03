@@ -92,7 +92,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 34,
+    version = 35,
     entities = [
         BookmarkEntity::class,
         ExternalEmbedEntity::class,
@@ -202,6 +202,8 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 31, to = 32),
         // Migration 32 - 33 is a manual migration
         // Migration 33 - 34 is a manual migration
+        // Add Profile Status
+        AutoMigration(from = 34, to = 35),
     ],
     exportSchema = true,
 )

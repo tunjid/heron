@@ -32,6 +32,7 @@ import sh.christian.ozone.api.model.JsonContent
 
 internal object Collections {
     const val Profile = "app.bsky.actor.profile"
+    const val ProfileStatus = "app.bsky.actor.status"
     const val UploadVideo = "com.atproto.repo.uploadBlob"
 
     val SelfRecordKey = RKey("self")

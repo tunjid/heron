@@ -45,6 +45,7 @@ data class Profile(
     // Stubbed for migrations
     val labels: List<Label> = emptyList(),
     val isLabeler: Boolean = false,
+    val status: ProfileStatus? = null,
 ) : UrlEncodableModel {
 
     @Serializable
@@ -115,6 +116,44 @@ data class Profile(
     )
 
     @Serializable
+    data class ProfileStatus(
+        val uri: String? = null,
+        val status: String,
+        val embedUri: String,
+        val embedTitle: String,
+        val embedDescription: String,
+        val embedThumb: ImageUri? = null,
+        val expiresAt: Instant? = null,
+        val isActive: Boolean? = null,
+        val isDisabled: Boolean? = null,
+    ) {
+        val isLive: Boolean
+            get() = status == STATUS_LIVE && isActive == true && isDisabled != true
+
+        companion object {
+            const val STATUS_LIVE = "app.bsky.actor.status#live"
+            const val DEFAULT_LIVE_DURATION_MINUTES = 60
+        }
+    }
+
+    @Serializable
+    sealed class StatusUpdate {
+        abstract val profileId: ProfileId
+
+        @Serializable
+        data class GoLive(
+            override val profileId: ProfileId,
+            val streamUrl: String,
+            val durationMinutes: Int = ProfileStatus.DEFAULT_LIVE_DURATION_MINUTES,
+        ) : StatusUpdate()
+
+        @Serializable
+        data class EndLive(
+            override val profileId: ProfileId,
+        ) : StatusUpdate()
+    }
+
+    @Serializable
     data class Update(
         @ProtoNumber(1)
         val profileId: ProfileId,
@@ -183,4 +222,5 @@ fun stubProfile(
     ),
     labels = emptyList(),
     isLabeler = false,
+    status = null,
 )
