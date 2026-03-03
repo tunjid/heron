@@ -36,6 +36,7 @@ import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.isBlocked
 import com.tunjid.heron.data.core.models.isMuted
 import com.tunjid.heron.ui.text.CommonStrings
+import heron.ui.core.generated.resources.action_edit_live_status
 import heron.ui.core.generated.resources.action_go_live
 import heron.ui.core.generated.resources.more_options
 import heron.ui.core.generated.resources.viewer_state_block_account
@@ -145,14 +146,20 @@ internal sealed class ProfileActionMenu {
 
 internal fun ProfileViewerState?.profileActionMenuItems(
     isSignedInProfile: Boolean = false,
+    isLive: Boolean = false,
 ) = buildList {
     if (isSignedInProfile) {
         add(
-            ProfileActionMenu.Item(
-                title = CommonStrings.action_go_live,
-                icon = Icons.Rounded.Videocam,
-                isDestructive = false,
-            ),
+            when {
+                isLive -> ProfileActionMenu.Item(
+                    title = CommonStrings.action_edit_live_status,
+                    icon = Icons.Rounded.Videocam,
+                )
+                else -> ProfileActionMenu.Item(
+                    title = CommonStrings.action_go_live,
+                    icon = Icons.Rounded.Videocam,
+                )
+            },
         )
     } else if (this@profileActionMenuItems != null) {
         if (!isBlocked) add(
