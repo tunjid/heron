@@ -56,7 +56,7 @@ internal class PlcDirectoryPdsResolver @Inject constructor(
                         ?.let(::Url)
                 }.getOrNull()
             }
-            // Place in front as most recently used
+            // Place at the end to mark as most recently used
             cache[did] = deferred
 
             if (existing == null && cache.size > MaxCacheSize) {

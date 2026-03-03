@@ -540,15 +540,9 @@ private fun HttpRequestBuilder.clearAuth() {
     headers.remove(DPoP)
 }
 
-private fun HttpRequestBuilder.extractSubjectDid(): Did? {
-    val fromQueryParams = extractDidFromQueryParams()
-    if (fromQueryParams != null) return Did(fromQueryParams)
-
-    val fromBody = extractDidFromBody()
-    if (fromBody != null) return Did(fromBody)
-
-    return null
-}
+private fun HttpRequestBuilder.extractSubjectDid(): Did? =
+    extractDidFromQueryParams()?.let(::Did)
+        ?: extractDidFromBody()?.let(::Did)
 
 private fun HttpRequestBuilder.extractDidFromQueryParams(): String? =
     url.parameters[DidParam]
