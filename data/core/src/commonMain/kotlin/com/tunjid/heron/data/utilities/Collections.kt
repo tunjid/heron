@@ -46,6 +46,8 @@ internal object Collections {
     inline fun <reified T : Id> stubbedId(
         constructor: (String) -> T,
     ) = constructor(StubbedId)
+
+    const val PLACEHOLDER_URL = "https://example.com"
 }
 
 fun Uri.asGenericUri(): GenericUri = GenericUri(uri)

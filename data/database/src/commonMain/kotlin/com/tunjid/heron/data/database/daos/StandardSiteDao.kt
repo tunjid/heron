@@ -17,12 +17,15 @@
 package com.tunjid.heron.data.database.daos
 
 import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
+import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.PopulatedStandardDocumentEntity
 import com.tunjid.heron.data.database.entities.StandardDocumentEntity
 import com.tunjid.heron.data.database.entities.StandardPublicationEntity
@@ -48,6 +51,12 @@ interface StandardSiteDao {
     suspend fun upsertPublications(
         entities: List<StandardPublicationEntity>,
     )
+
+    @Transaction
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertOrIgnorePublications(
+        entities: List<StandardPublicationEntity>,
+    ): List<Long>
 
     @Query(
         """

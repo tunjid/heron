@@ -33,6 +33,7 @@ import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.database.entities.StandardDocumentEntity
 import com.tunjid.heron.data.database.entities.StandardPublicationEntity
 import com.tunjid.heron.data.database.entities.StandardSubscriptionEntity
+import com.tunjid.heron.data.utilities.Collections
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.model.Blob
 import site.standard.Document
@@ -91,8 +92,13 @@ internal fun MultipleEntitySaver.add(
     pdsUrl: String,
 ) {
     val authorId = documentUri.profileId()
+    val publicationUri = document.site.uri.asRecordUriOrNull() as? StandardPublicationUri
     add(
         stubProfileEntity(did = Did(authorId.id)),
+    )
+
+    if (publicationUri != null) add(
+        stubPublicationEntity(publicationUri),
     )
     add(
         StandardDocumentEntity(
@@ -113,7 +119,7 @@ internal fun MultipleEntitySaver.add(
             bskyPostRefUri = document.bskyPostRef?.uri?.atUri?.let(::PostUri),
             bskyPostRefCid = document.bskyPostRef?.cid?.cid?.let(::PostId),
             tags = document.tags?.joinToString(separator = ","),
-            publicationUri = document.site.uri.asRecordUriOrNull() as? StandardPublicationUri,
+            publicationUri = publicationUri,
             // Markdown content is always null for now.
             // To be added in later as support for different standard doc
             // types are added.
@@ -149,6 +155,19 @@ private fun Blob?.imageUri(
         null -> null
     }
 }
+
+private fun stubPublicationEntity(publicationUri: StandardPublicationUri): StandardPublicationEntity =
+    StandardPublicationEntity(
+        uri = publicationUri,
+        cid = null,
+        publisherId = publicationUri.profileId(),
+        name = "",
+        description = null,
+        url = Collections.PLACEHOLDER_URL,
+        icon = null,
+        preferences = null,
+        basicTheme = null,
+    )
 
 private fun BasicAccentUnion.toColor(): StandardPublicationEntity.Color? = when (this) {
     is BasicAccentUnion.Rgb -> value.toColor()

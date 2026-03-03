@@ -71,6 +71,7 @@ import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.network.models.postExternalEmbedEntity
 import com.tunjid.heron.data.network.models.postImageEntity
 import com.tunjid.heron.data.network.models.postVideoEntity
+import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.Collections.isStubbedId
 import com.tunjid.heron.data.utilities.LazyList
 import com.tunjid.heron.data.utilities.triage
@@ -297,7 +298,11 @@ internal class MultipleEntitySaver(
             },
         )
         // Standard site entities: publications before documents/subscriptions (FK ordering)
-        standardSiteDao.upsertPublications(standardPublicationEntities.list)
+        val (fullPublicationEntities, partialPublicationEntities) = standardPublicationEntities.list.partition {
+            it.url != Collections.PLACEHOLDER_URL && it.cid != null
+        }
+        standardSiteDao.insertOrIgnorePublications(partialPublicationEntities)
+        standardSiteDao.upsertPublications(fullPublicationEntities)
         standardSiteDao.upsertDocuments(standardDocumentEntities.list)
         standardSiteDao.upsertSubscriptions(standardSubscriptionEntities.list)
 
