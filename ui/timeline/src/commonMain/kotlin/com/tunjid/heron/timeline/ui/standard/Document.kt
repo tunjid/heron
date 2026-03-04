@@ -41,6 +41,11 @@ import com.tunjid.heron.ui.RecordText
 import com.tunjid.heron.ui.RecordTitle
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.standard_site_published_in
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format
+import kotlinx.datetime.format.char
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -77,7 +82,7 @@ fun Document(
                 RecordTitle(
                     title = document.title,
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(4.dp))
                 document.publication?.let { publication ->
                     val publisherDescription = stringResource(
                         Res.string.standard_site_published_in,
@@ -125,6 +130,12 @@ fun Document(
             )
         }
         LabelFlowRow {
+            RecordBlurb(
+                remember(document.publishedAt) {
+                    document.publishDate()
+                },
+            )
+
             document.tags.forEach {
                 Label(
                     contentDescription = it,
@@ -139,3 +150,16 @@ fun Document(
         }
     }
 }
+
+private fun StandardDocument.publishDate(): String =
+    publishedAt
+        .toLocalDateTime(TimeZone.currentSystemDefault())
+        .format(
+            LocalDateTime.Format {
+                monthNumber()
+                char('.')
+                day()
+                char('.')
+                year()
+            },
+        )

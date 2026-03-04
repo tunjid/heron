@@ -487,7 +487,10 @@ internal fun ProfileScreen(
                                             .clip(RecordShape)
                                             .animateItem()
                                             .clickable {
-                                                runCatching { uriHandler.openUri(document.link) }
+                                                runCatching {
+                                                    document.link
+                                                        ?.let(uriHandler::openUri)
+                                                }
                                             }
                                             .recordPadding(),
                                         document = document,
