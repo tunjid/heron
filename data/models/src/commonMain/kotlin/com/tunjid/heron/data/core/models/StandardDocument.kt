@@ -51,7 +51,7 @@ data class StandardDocument(
 val StandardDocument.link: String?
     get() = path?.let {
         when (publication) {
-            null -> "$site/$it"
-            else -> "${publication.url}/$it"
+            null -> "$site$it"
+            else -> "${publication.url}$it"
         }
     }?.takeIf { it.startsWith(Uri.Host.Https.prefix) }
