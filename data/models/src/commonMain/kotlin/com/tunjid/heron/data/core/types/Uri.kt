@@ -30,6 +30,10 @@ sealed interface Uri {
     }
 }
 
+fun String.takeIfIs(
+    host: Uri.Host,
+) = takeIf { it.startsWith(host.prefix) }
+
 @Serializable
 sealed interface RecordUri : Uri
 

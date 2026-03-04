@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.takeIfIs
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
@@ -54,4 +55,4 @@ val StandardDocument.link: String?
             null -> "$site$it"
             else -> "${publication.url}$it"
         }
-    }?.takeIf { it.startsWith(Uri.Host.Https.prefix) }
+    }?.takeIfIs(Uri.Host.Https)

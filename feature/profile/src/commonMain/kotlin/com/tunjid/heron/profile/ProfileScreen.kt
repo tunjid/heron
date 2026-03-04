@@ -112,6 +112,8 @@ import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri.Companion.asSelfLabelerUri
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.takeIfIs
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.images.AsyncImage
@@ -489,6 +491,7 @@ internal fun ProfileScreen(
                                             .clickable {
                                                 runCatching {
                                                     document.link
+                                                        ?.takeIfIs(Uri.Host.Https)
                                                         ?.let(uriHandler::openUri)
                                                 }
                                             }
