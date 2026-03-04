@@ -522,7 +522,7 @@ internal class OfflineTimelineRepository(
     ): Flow<List<TimelineItem>> = savedStateDataSource.singleSessionFlow { signedInProfileId ->
         postDao.postThread(
             postUri = postUri.uri,
-            sortOrder = order.ordinal,
+            sortOrder = order.sortOrder,
         )
             .distinctUntilChanged()
             .flatMapLatest { postThread ->

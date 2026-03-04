@@ -107,10 +107,20 @@ sealed class TimelineItem {
 
         enum class Order(
             val value: String,
+            val sortOrder: Int,
         ) {
-            Oldest("oldest"),
-            Newest("newest"),
-            Top("most-likes"),
+            Oldest(
+                value = "oldest",
+                sortOrder = 0,
+            ),
+            Newest(
+                value = "newest",
+                sortOrder = 1,
+            ),
+            Top(
+                value = "most-likes",
+                sortOrder = 2,
+            ),
         }
     }
 

@@ -90,10 +90,7 @@ fun TimelineOrder(
                     leadingIcon = {
                         RadioButton(
                             selected = item == order,
-                            onClick = {
-                                expanded = false
-                                onOrderChanged(item)
-                            },
+                            onClick = null,
                         )
                     },
                     modifier = Modifier
