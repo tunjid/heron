@@ -26,9 +26,13 @@ sealed interface Uri {
 
     enum class Host(val prefix: String) {
         AtProto("at://"),
-        Http("http://"),
+        Https("https://"),
     }
 }
+
+fun String.takeIfIs(
+    host: Uri.Host,
+) = takeIf { it.startsWith(host.prefix) }
 
 @Serializable
 sealed interface RecordUri : Uri

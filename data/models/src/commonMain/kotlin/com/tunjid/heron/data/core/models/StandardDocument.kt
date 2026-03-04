@@ -20,6 +20,8 @@ import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
+import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.takeIfIs
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
@@ -46,3 +48,11 @@ data class StandardDocument(
             uri = uri,
         )
 }
+
+val StandardDocument.link: String?
+    get() = path?.let {
+        when (publication) {
+            null -> "$site$it"
+            else -> "${publication.url}$it"
+        }
+    }?.takeIfIs(Uri.Host.Https)

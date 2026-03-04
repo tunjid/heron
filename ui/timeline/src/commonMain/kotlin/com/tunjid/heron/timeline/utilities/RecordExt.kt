@@ -206,6 +206,13 @@ internal val StarterPackCollectionShape by lazy {
     )
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+internal val DocumentCollectionShape by lazy {
+    RoundedPolygonShape.Custom(
+        polygon = MaterialShapes.Square,
+    )
+}
+
 internal val LabelerCollectionShape by lazy {
     RoundedPolygonShape.Custom(
         polygon = RoundedPolygon(

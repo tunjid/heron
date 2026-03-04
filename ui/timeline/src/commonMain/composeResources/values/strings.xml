@@ -97,6 +97,7 @@
     <string name="send_icon">Send icon</string>
     <string name="label_source">Label by: %1$s</string>
     <string name="view_labeler">View Labeler</string>
+    <string name="standard_site_published_in">Published in %1$s</string>
     <string name="thread_gate_who_can_reply">Who can reply</string>
     <string name="thread_gate_anyone">Anyone</string>
     <string name="thread_gate_nobody">Nobody</string>

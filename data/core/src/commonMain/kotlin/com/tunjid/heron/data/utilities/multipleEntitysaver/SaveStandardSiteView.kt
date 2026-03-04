@@ -150,7 +150,7 @@ private fun Blob?.imageUri(
     return when (val icon = this) {
         is Blob.LegacyBlob -> null
         is Blob.StandardBlob -> ImageUri(
-            "$pdsUrl/xprc/com.atproto.sync.getBlob?did=${profileId.id}&cid=${icon.ref.link.cid}",
+            "$pdsUrl/xrpc/com.atproto.sync.getBlob?did=${profileId.id}&cid=${icon.ref.link.cid}",
         )
         null -> null
     }

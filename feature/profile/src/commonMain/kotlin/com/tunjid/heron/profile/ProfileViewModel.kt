@@ -27,6 +27,7 @@ import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
@@ -75,6 +76,7 @@ import heron.feature.profile.generated.resources.Res
 import heron.feature.profile.generated.resources.feeds
 import heron.feature.profile.generated.resources.lists
 import heron.feature.profile.generated.resources.starter_packs
+import heron.feature.profile.generated.resources.writing
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -527,6 +529,21 @@ private fun CoroutineScope.recordStateHolders(
                 ),
                 itemId = FeedGenerator::cid,
                 cursorListLoader = recordRepository::feedGenerators,
+            ),
+        ),
+        ProfileScreenStateHolders.Records.Documents(
+            mutator = recordStateHolder(
+                initialState = RecordState(
+                    stringResource = Res.string.writing,
+                    tilingData = TilingState.Data(
+                        currentQuery = ProfilesQuery(
+                            profileId = profileId,
+                            data = defaultQueryData(),
+                        ),
+                    ),
+                ),
+                itemId = StandardDocument::uri,
+                cursorListLoader = recordRepository::standardDocuments,
             ),
         ),
         ProfileScreenStateHolders.Records.StarterPacks(
