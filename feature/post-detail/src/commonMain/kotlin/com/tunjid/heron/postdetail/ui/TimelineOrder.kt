@@ -17,17 +17,12 @@
 package com.tunjid.heron.postdetail.ui
 
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Sort
-import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -41,7 +36,6 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.ui.AppBarButton
 import com.tunjid.heron.ui.text.CommonStrings
-import heron.ui.core.generated.resources.sign_in
 import heron.ui.core.generated.resources.timeline_thread_newest_first
 import heron.ui.core.generated.resources.timeline_thread_oldest_first
 import heron.ui.core.generated.resources.timeline_thread_order
