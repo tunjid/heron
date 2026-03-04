@@ -104,6 +104,14 @@ sealed class TimelineItem {
             get() = posts[anchorPostIndex]
         override val threadGate: ThreadGate?
             get() = postUrisToThreadGates[post.uri]
+
+        enum class Order(
+            val value: String,
+        ) {
+            Oldest("oldest"),
+            Newest("newest"),
+            Top("most-likes"),
+        }
     }
 
     data class Single(
