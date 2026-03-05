@@ -78,6 +78,7 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.models.sourceId
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
@@ -391,18 +392,20 @@ private fun ListMembers(
                             }
                         },
                     )
-                    IconButton(
-                        onClick = {
-                            listMemberToDelete = item
-                        },
-                        content = {
-                            Icon(
-                                imageVector = Icons.Rounded.RemoveCircle,
-                                contentDescription = stringResource(Res.string.remove_list_member),
-                                tint = MaterialTheme.colorScheme.error,
-                            )
-                        },
-                    )
+                    if (state.signedInProfileId == state.listUri.profileId()) {
+                        IconButton(
+                            onClick = {
+                                listMemberToDelete = item
+                            },
+                            content = {
+                                Icon(
+                                    imageVector = Icons.Rounded.RemoveCircle,
+                                    contentDescription = stringResource(Res.string.remove_list_member),
+                                    tint = MaterialTheme.colorScheme.error,
+                                )
+                            },
+                        )
+                    }
                 }
             },
         )

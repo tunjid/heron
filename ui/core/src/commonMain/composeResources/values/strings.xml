@@ -132,6 +132,7 @@
     <string name="error_record_creation">Unable to create record</string>
     <string name="error_session_switch">Unable to switch sessions</string>
     <string name="error_expired_session">Session expired</string>
+    <string name="error_unauthorized">Unauthorized request</string>
     <string name="error_unknown">An unknown error occurred</string>
     <string name="error_generic">Error: %1$s</string>
 

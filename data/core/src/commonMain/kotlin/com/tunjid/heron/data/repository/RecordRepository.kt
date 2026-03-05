@@ -60,10 +60,12 @@ import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StarterPackUri
+import com.tunjid.heron.data.core.types.UnauthorizedException
 import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordUriOrNull
 import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.core.utilities.asFailureOutcome
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
@@ -520,7 +522,7 @@ internal class OfflineRecordRepository @Inject constructor(
                 }
                 is GrazeResponse.Created,
                 is GrazeResponse.Edited,
-                -> {
+                    -> {
                     check(update is GrazeFeed.Update.Put)
                     GrazeFeed.Created(
                         recordKey = update.recordKey,
@@ -541,6 +543,14 @@ internal class OfflineRecordRepository @Inject constructor(
     ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
         if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
 
+        val listOwnerId = create.listUri.profileId()
+
+        if (listOwnerId != signedInProfileId)
+            return@inCurrentProfileSession UnauthorizedException(
+                signedInProfileId = signedInProfileId,
+                profileId = listOwnerId,
+            ).asFailureOutcome()
+
         val prospectiveMemberRefreshOutcome = profileLookup.refreshProfile(
             signedInProfileId = signedInProfileId,
             profileId = create.subjectId,
@@ -550,7 +560,6 @@ internal class OfflineRecordRepository @Inject constructor(
 
         val createdAt = Clock.System.now()
         val recordKey = RecordKey.generate()
-        val listOwnerId = create.listUri.profileId()
 
         networkService.runCatchingWithMonitoredNetworkRetry {
             createRecord(
@@ -591,6 +600,13 @@ internal class OfflineRecordRepository @Inject constructor(
         uri: RecordUri,
     ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
         if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+
+        val recordOwnerId = uri.profileId()
+        if (recordOwnerId != signedInProfileId) return@inCurrentProfileSession UnauthorizedException(
+            signedInProfileId = signedInProfileId,
+            profileId = recordOwnerId,
+        ).asFailureOutcome()
+
         recordResolver.deleteRecord(uri)
     } ?: expiredSessionOutcome()
 }
@@ -619,7 +635,7 @@ private suspend fun NetworkService.updateFeedRecord(
             )
             is GrazeResponse.Edited,
             is GrazeResponse.Read,
-            -> {
+                -> {
                 val currentRecordResponse = getRecord(
                     GetRecordQueryParams(
                         repo = Did(profileId.id),

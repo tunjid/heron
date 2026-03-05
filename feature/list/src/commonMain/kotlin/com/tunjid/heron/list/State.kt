@@ -153,6 +153,7 @@ sealed class ListScreenStateHolders {
 
 data class MemberState(
     val signedInProfileId: ProfileId?,
+    val listUri: ListUri,
     override val tilingData: TilingState.Data<ListMemberQuery, ListMember>,
 ) : TilingState<ListMemberQuery, ListMember>
 

@@ -286,6 +286,7 @@ private fun SuspendingStateHolder<State>.listMemberStateHolderMutations(
         mutator = scope.actionStateFlowMutator(
             initialState = MemberState(
                 signedInProfileId = null,
+                listUri = timeline.feedList.uri,
                 tilingData = TilingState.Data(
                     currentQuery = ListMemberQuery(
                         listUri = timeline.feedList.uri,
@@ -407,6 +408,7 @@ private fun Flow<Action.SearchProfiles>.searchMutations(
 ): Flow<Mutation<State>> =
     debounce(SEARCH_DEBOUNCE_MILLIS)
         .flatMapLatest { action ->
+            if (action.query.isBlank()) return@flatMapLatest emptyFlow()
             searchRepository.autoCompleteProfileSearch(
                 query = SearchQuery.OfProfiles(
                     query = action.query,
