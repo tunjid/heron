@@ -21,4 +21,6 @@
     <string name="posts">Posts</string>
     <string name="more_options">More Options</string>
     <string name="add_list_member">Add a List Member</string>
+    <string name="remove_list_member">Remove a List Member</string>
+    <string name="remove_list_member_confirmation">Are you sure to want to remove %1$s from your list?</string>
 </resources>
