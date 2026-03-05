@@ -33,6 +33,8 @@ import app.bsky.actor.PreferencesUnion
 import app.bsky.actor.SavedFeed
 import app.bsky.actor.SavedFeedType
 import app.bsky.actor.SavedFeedsPrefV2
+import app.bsky.actor.ThreadViewPref
+import app.bsky.actor.ThreadViewPrefSort
 import app.bsky.feed.PostgateDisableRule
 import app.bsky.feed.ThreadgateFollowerRule
 import app.bsky.feed.ThreadgateFollowingRule
@@ -51,7 +53,9 @@ import com.tunjid.heron.data.core.models.PostInteractionSettingsPreference
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.ThreadViewPreference
+import com.tunjid.heron.data.core.models.ThreadViewPreference.Companion.order
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.models.VerificationPreference
 import com.tunjid.heron.data.core.types.ListUri
@@ -438,19 +442,23 @@ internal class ThingPreferenceUpdater @Inject constructor(
     private fun Timeline.Update.OfInteractionSettings.updatePostInteractionPreferences(
         existingPreference: PreferencesUnion.PostInteractionSettingsPref?,
     ): List<PreferencesUnion.PostInteractionSettingsPref> {
-        val threadGateAllowRules = preference.threadGateAllowed?.let {
+        val threadGateAllowRules = preference.threadGateAllowed?.let { allowed ->
             buildList {
-                if (it.allowsFollowing) add(
+                if (allowed.allowsFollowing) add(
                     BskyPostReplyGateRule.FollowingRule(ThreadgateFollowingRule),
                 )
-                if (it.allowsFollowers) add(
+                if (allowed.allowsFollowers) add(
                     BskyPostReplyGateRule.FollowerRule(ThreadgateFollowerRule),
                 )
-                if (it.allowsMentioned) add(
+                if (allowed.allowsMentioned) add(
                     BskyPostReplyGateRule.MentionRule(ThreadgateMentionRule),
                 )
-                it.allowedListUris
-                    .map { BskyPostReplyGateRule.ListRule(ThreadgateListRule(it.uri.let(::AtUri))) }
+                allowed.allowedListUris
+                    .map {
+                        BskyPostReplyGateRule.ListRule(
+                            ThreadgateListRule(it.uri.let(::AtUri)),
+                        )
+                    }
                     .let(::addAll)
             }
         }
@@ -494,6 +502,23 @@ internal class ThingPreferenceUpdater @Inject constructor(
         }
     }
 
+    private fun Timeline.Update.OfThreadViewPreference.updateThreadViewPreferences(): List<PreferencesUnion.ThreadViewPref> =
+        when (this) {
+            is Timeline.Update.OfThreadViewPreference.ThreadView -> {
+                listOf(
+                    PreferencesUnion.ThreadViewPref(
+                        value = ThreadViewPref(
+                            sort = when (threadViewPreference.order()) {
+                                TimelineItem.Thread.Order.Oldest -> ThreadViewPrefSort.Oldest
+                                TimelineItem.Thread.Order.Newest -> ThreadViewPrefSort.Newest
+                                TimelineItem.Thread.Order.Top -> ThreadViewPrefSort.MostLikes
+                            },
+                        ),
+                    ),
+                )
+            }
+        }
+
     private suspend fun Timeline.Update.updatePreferences(
         existingPreferences: List<PreferencesUnion>,
     ): List<PreferencesUnion> =
@@ -517,6 +542,7 @@ internal class ThingPreferenceUpdater @Inject constructor(
             is Timeline.Update.OfFeedPreference -> updateFeedPreferences(
                 existingPreferences = existingPreferences.filterIsInstance<PreferencesUnion.FeedViewPref>(),
             )
+            is Timeline.Update.OfThreadViewPreference.ThreadView -> updateThreadViewPreferences()
         }
 }
 
@@ -529,6 +555,7 @@ private fun Timeline.Update.targetClass() =
         is Timeline.Update.OfMutedWord -> PreferencesUnion.MutedWordsPref::class
         is Timeline.Update.OfInteractionSettings -> PreferencesUnion.PostInteractionSettingsPref::class
         is Timeline.Update.OfFeedPreference -> PreferencesUnion.FeedViewPref::class
+        is Timeline.Update.OfThreadViewPreference.ThreadView -> PreferencesUnion.ThreadViewPref::class
     }
 
 private fun PreferencesUnion.ContentLabelPref.asExternalModel() = ContentLabelPreference(

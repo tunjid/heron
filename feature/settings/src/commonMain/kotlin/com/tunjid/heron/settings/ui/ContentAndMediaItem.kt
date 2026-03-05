@@ -18,20 +18,25 @@ package com.tunjid.heron.settings.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ConnectWithoutContact
+import androidx.compose.material.icons.rounded.Forum
+import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Newspaper
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.tunjid.heron.data.core.models.FeedPreference
+import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedPreference.Companion.homeFeedOrDefault
 import com.tunjid.heron.data.core.models.Preferences
+import com.tunjid.heron.settings.Section
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.auto_play_timeline_videos
 import heron.feature.settings.generated.resources.content_and_media
 import heron.feature.settings.generated.resources.following_feed_preferences
 import heron.feature.settings.generated.resources.refresh_timelines_on_launch
 import heron.feature.settings.generated.resources.show_post_engagement_metrics
+import heron.feature.settings.generated.resources.thread_preferences
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -40,8 +45,8 @@ fun ContentAndMediaItem(
     signedInProfilePreferences: Preferences,
     setRefreshHomeTimelineOnLaunch: (Boolean) -> Unit,
     setAutoplayTimelineVideos: (Boolean) -> Unit,
-    onFeedPreferenceSectionSelected: (FeedPreference) -> Unit,
     setShowPostEngagementMetrics: (Boolean) -> Unit,
+    onSectionSelected: (Section) -> Unit,
 ) {
     ExpandableSettingsItemRow(
         modifier = modifier
@@ -54,13 +59,36 @@ fun ContentAndMediaItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable {
-                    onFeedPreferenceSectionSelected(
-                        signedInProfilePreferences.feedPreferences.homeFeedOrDefault(),
+                    onSectionSelected(
+                        Section.FeedPreferences(
+                            signedInProfilePreferences.feedPreferences.homeFeedOrDefault(),
+                        ),
                     )
                 }
                 .settingsItemPaddingAndMinHeight(),
+            icon = Icons.Rounded.Home,
             title = stringResource(Res.string.following_feed_preferences),
         )
+        SettingsItem(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    onSectionSelected(
+                        Section.ThreadPreferences(
+                            signedInProfilePreferences.threadViewPreferences,
+                        ),
+                    )
+                }
+                .settingsItemPaddingAndMinHeight(),
+            icon = Icons.Rounded.Forum,
+            title = stringResource(Res.string.thread_preferences),
+        )
+
+        HorizontalDivider(
+            modifier = Modifier
+                .padding(vertical = 8.dp),
+        )
+
         SettingsToggleItem(
             modifier = Modifier
                 .fillMaxWidth(),
