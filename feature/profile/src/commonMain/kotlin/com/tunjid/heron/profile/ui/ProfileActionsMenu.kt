@@ -145,8 +145,8 @@ internal sealed class ProfileActionMenu {
 }
 
 internal fun ProfileViewerState?.profileActionMenuItems(
-    isSignedInProfile: Boolean = false,
-    isLive: Boolean = false,
+    isSignedInProfile: Boolean,
+    isLive: Boolean,
 ) = buildList {
     if (isSignedInProfile) {
         add(
@@ -161,7 +161,9 @@ internal fun ProfileViewerState?.profileActionMenuItems(
                 )
             },
         )
-    } else if (this@profileActionMenuItems != null) {
+    }
+
+    if (this@profileActionMenuItems != null) {
         if (!isBlocked) add(
             ProfileActionMenu.Item(
                 title = CommonStrings.viewer_state_block_account,
@@ -169,17 +171,14 @@ internal fun ProfileViewerState?.profileActionMenuItems(
                 isDestructive = true,
             ),
         )
-
         add(
             if (isMuted) ProfileActionMenu.Item(
                 title = CommonStrings.viewer_state_unmute_account,
                 icon = Icons.AutoMirrored.Rounded.VolumeUp,
-                isDestructive = false,
             )
             else ProfileActionMenu.Item(
                 title = CommonStrings.viewer_state_mute_account,
                 icon = Icons.AutoMirrored.Rounded.VolumeOff,
-                isDestructive = false,
             ),
         )
     }
