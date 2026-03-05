@@ -161,9 +161,7 @@ internal fun ProfileViewerState?.profileActionMenuItems(
                 )
             },
         )
-    }
-
-    if (this@profileActionMenuItems != null) {
+    } else if (this@profileActionMenuItems != null) {
         if (!isBlocked) add(
             ProfileActionMenu.Item(
                 title = CommonStrings.viewer_state_block_account,
