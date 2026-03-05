@@ -77,8 +77,9 @@ import com.tunjid.heron.data.network.NetworkMonitor
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.asGenericId
 import com.tunjid.heron.data.utilities.asGenericUri
+import com.tunjid.heron.data.utilities.distinctUntilChangedFlatMapLatest
+import com.tunjid.heron.data.utilities.distinctUntilChangedMap
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
-import com.tunjid.heron.data.utilities.mapDistinctUntilChanged
 import com.tunjid.heron.data.utilities.mapToResult
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
@@ -633,7 +634,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                 offset = query.data.offset,
                 limit = query.data.limit,
             )
-                .flatMapLatest { populatedNotificationEntities ->
+                .distinctUntilChangedFlatMapLatest { populatedNotificationEntities ->
                     asExternalModel(
                         signedInProfileId = signedInProfileId,
                         populatedNotificationEntities = populatedNotificationEntities,
@@ -649,7 +650,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
         postUris = populatedNotificationEntities
             .mapNotNull { it.entity.associatedPostUri }
             .toSet(),
-    ).mapDistinctUntilChanged { posts ->
+    ).distinctUntilChangedMap { posts ->
         val urisToPosts = posts.associateBy { it.entity.uri }
         populatedNotificationEntities.map {
             it.asExternalModel(

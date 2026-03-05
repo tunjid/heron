@@ -54,6 +54,7 @@ import com.tunjid.heron.data.database.entities.PopulatedMessageEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.LazyList
+import com.tunjid.heron.data.utilities.distinctUntilChangedMap
 import com.tunjid.heron.data.utilities.facet
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
@@ -135,7 +136,7 @@ internal class OfflineMessageRepository @Inject constructor(
                     offset = query.data.offset,
                     limit = query.data.limit,
                 )
-                    .map { populatedConversationEntities ->
+                    .distinctUntilChangedMap { populatedConversationEntities ->
                         populatedConversationEntities.map(PopulatedConversationEntity::asExternalModel)
                     },
                 networkService.nextCursorFlow(

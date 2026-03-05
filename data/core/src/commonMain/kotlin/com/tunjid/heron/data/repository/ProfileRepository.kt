@@ -60,8 +60,8 @@ import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.asJsonContent
+import com.tunjid.heron.data.utilities.distinctUntilChangedMapNotNull
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
-import com.tunjid.heron.data.utilities.mapNotNullDistinctUntilChanged
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
@@ -155,7 +155,7 @@ internal class OfflineProfileRepository @Inject constructor(
                 signedInProfiledId = signedInProfileId.id,
                 ids = listOf(signedInProfileId),
             )
-                .mapNotNullDistinctUntilChanged { it.firstOrNull()?.asExternalModel() }
+                .distinctUntilChangedMapNotNull { it.firstOrNull()?.asExternalModel() }
         }
 
     override fun profile(
@@ -166,7 +166,7 @@ internal class OfflineProfileRepository @Inject constructor(
                 signedInProfiledId = signedInProfileId?.id,
                 ids = listOf(profileId),
             )
-                .mapNotNullDistinctUntilChanged { it.firstOrNull()?.asExternalModel() }
+                .distinctUntilChangedMapNotNull { it.firstOrNull()?.asExternalModel() }
                 .withRefresh {
                     profileLookup.refreshProfile(
                         signedInProfileId = signedInProfileId,
