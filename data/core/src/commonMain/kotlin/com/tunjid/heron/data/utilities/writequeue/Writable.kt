@@ -176,6 +176,7 @@ sealed interface Writable {
                 is Timeline.Update.OfMutedWord -> "muted-words-change-$update"
                 is Timeline.Update.OfInteractionSettings -> "interaction-settings-$update"
                 is Timeline.Update.OfFeedPreference.Add -> "feed-preference-$update"
+                is Timeline.Update.OfThreadViewPreference.ThreadView -> "thread-view-preference-$update"
             }
 
         override suspend fun WriteQueue.write(): Outcome =

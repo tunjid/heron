@@ -155,10 +155,8 @@ class SettingsBindings(
                         onBackPressed = {
                             if (state.switchPhase == AccountSwitchPhase.IDLE) {
                                 viewModel.accept(
-                                    when (state.section) {
-                                        is Section.FeedPreferences -> Action.UpdateSection(Section.Main)
-                                        Section.Main -> Action.Navigate.Pop
-                                    },
+                                    if (state.section == Section.Main) Action.Navigate.Pop
+                                    else Action.UpdateSection(Section.Main),
                                 )
                             }
                         },

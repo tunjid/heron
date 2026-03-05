@@ -18,12 +18,10 @@ package com.tunjid.heron.settings
 
 import androidx.lifecycle.ViewModel
 import com.mikepenz.aboutlibraries.Libs
-import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -141,6 +139,9 @@ class ActualSettingsViewModel(
                     is Action.UpdateFeedPreference -> action.flow.updateFeedPreferenceMutations(
                         writeQueue = writeQueue,
                     )
+                    is Action.UpdateThreadViewPreference -> action.flow.updateThreadPreferenceMutations(
+                        writeQueue = writeQueue,
+                    )
                     Action.SignOut -> action.flow.mapToManyMutations {
                         authRepository.signOut()
                     }
@@ -182,16 +183,23 @@ private fun Flow<Action.UpdateSection>.updateSectionMutations(): Flow<Mutation<S
 private fun Flow<Action.UpdateFeedPreference>.updateFeedPreferenceMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    mapLatestToManyMutations { action ->
-        val writable = Writable.TimelineUpdate(
+    enqueue(writeQueue) { action ->
+        Writable.TimelineUpdate(
             update = Timeline.Update.OfFeedPreference.Add(
                 action.feedPreference,
             ),
         )
-        val status = writeQueue.enqueue(writable)
-        writable.writeStatusMessage(status)?.let {
-            emit { copy(messages = messages + it) }
-        }
+    }
+
+private fun Flow<Action.UpdateThreadViewPreference>.updateThreadPreferenceMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    enqueue(writeQueue) { action ->
+        Writable.TimelineUpdate(
+            update = Timeline.Update.OfThreadViewPreference.ThreadView(
+                action.threadViewPreference,
+            ),
+        )
     }
 
 private fun Flow<Action.SwitchSession>.handleSwitchSessionMutations(
@@ -302,6 +310,18 @@ private fun Flow<Action.SetShowPostEngagementMetrics>.toggleShowPostEngagementMe
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(messages = messages - action.message)
+    }
+
+private fun <T> Flow<T>.enqueue(
+    writeQueue: WriteQueue,
+    mapper: (T) -> Writable,
+): Flow<Mutation<State>> =
+    mapLatestToManyMutations { action ->
+        val writable = mapper(action)
+        val status = writeQueue.enqueue(writable)
+        writable.writeStatusMessage(status)?.let {
+            emit { copy(messages = messages + it) }
+        }
     }
 
 private val AccountSwitchPhase.changeDelay
