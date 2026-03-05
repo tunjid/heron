@@ -65,6 +65,7 @@ fun EmbeddedRecord(
     movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     postActions: PostActions,
 ) {
+    val now = remember { Clock.System.now() }
     OutlinedCard(
         modifier = modifier,
     ) {
@@ -77,7 +78,7 @@ fun EmbeddedRecord(
             )
             is Post -> QuotedPost(
                 paneMovableElementSharedTransitionScope = movableElementSharedTransitionScope,
-                now = remember { Clock.System.now() },
+                now = now,
                 quotedPost = record,
                 isBlurred = false,
                 sharedElementPrefix = sharedElementPrefix,

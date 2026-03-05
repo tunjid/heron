@@ -105,6 +105,7 @@ import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememb
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
+import com.tunjid.heron.timeline.utilities.contentType
 import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
 import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
 import com.tunjid.heron.timeline.utilities.pendingOffsetFor
@@ -316,6 +317,7 @@ private fun HomeTimeline(
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
     val items by rememberUpdatedState(timelineState.tiledItems)
 
+    val now = remember { Clock.System.now() }
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
     val presentation = timelineState.timeline.presentation
@@ -473,6 +475,7 @@ private fun HomeTimeline(
                 items(
                     items = items,
                     key = TimelineItem::id,
+                    contentType = TimelineItem::contentType,
                     itemContent = { item ->
                         TimelineItem(
                             modifier = Modifier
@@ -483,7 +486,7 @@ private fun HomeTimeline(
                                 ),
                             paneMovableElementSharedTransitionScope = paneScaffoldState,
                             presentationLookaheadScope = this@LookaheadScope,
-                            now = remember { Clock.System.now() },
+                            now = now,
                             item = item,
                             sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                             showEngagementMetrics = showEngagementMetrics,

@@ -241,7 +241,8 @@ private fun trendsMutations(
 
 private fun Flow<Action.UpdatePageWithUpdates>.pageWithUpdateMutations(): Flow<Mutation<State>> =
     mapToMutation { (sourceId, hasUpdates) ->
-        copy(sourceIdsToHasUpdates = sourceIdsToHasUpdates + (sourceId to hasUpdates))
+        if (sourceIdsToHasUpdates[sourceId] == hasUpdates) this
+        else copy(sourceIdsToHasUpdates = sourceIdsToHasUpdates + (sourceId to hasUpdates))
     }
 
 @OptIn(ExperimentalUuidApi::class)
