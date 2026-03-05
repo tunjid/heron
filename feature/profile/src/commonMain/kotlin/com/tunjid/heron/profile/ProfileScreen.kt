@@ -268,7 +268,7 @@ internal fun ProfileScreen(
         onGoLive = { streamUrl, duration ->
             actions(
                 Action.UpdateLiveStatus.GoLive(
-                    profileId = state.profile.did,
+                    signedInProfileId = state.profile.did,
                     streamUrl = streamUrl,
                     duration = duration,
                 ),
@@ -277,7 +277,7 @@ internal fun ProfileScreen(
         onEndLive = {
             actions(
                 Action.UpdateLiveStatus.EndLive(
-                    profileId = state.profile.did,
+                    signedInProfileId = state.profile.did,
                 ),
             )
         },

@@ -106,6 +106,7 @@ class ProfileLiveStatusSheetState(
 ) : BottomSheetState(scope) {
 
     override fun onHidden() = Unit
+
     companion object {
         @Composable
         fun rememberUpdatedProfileLiveStatusSheetState(
@@ -121,8 +122,14 @@ class ProfileLiveStatusSheetState(
             ProfileLiveStatusBottomSheet(
                 state = state,
                 profile = profile,
-                onGoLive = onGoLive,
-                onEndLive = onEndLive,
+                onGoLive = { url, duration ->
+                    onGoLive(url, duration)
+                    state.hide()
+                },
+                onEndLive = {
+                    onEndLive()
+                    state.hide()
+                },
             )
             return state
         }
