@@ -133,6 +133,9 @@ internal value class LazyList<T>(
     val list: List<T>
         get() = if (lazyList.isInitialized()) lazyList.value else emptyList()
 
+    val isNotEmpty: Boolean
+        get() = lazyList.isInitialized() && lazyList.value.isNotEmpty()
+
     fun add(element: T): Boolean =
         lazyList.value.add(element)
 }
