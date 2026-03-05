@@ -323,6 +323,7 @@ private fun SuspendingStateHolder<State>.listMemberStateHolderMutations(
         )
     }
 }
+
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
@@ -408,7 +409,9 @@ private fun Flow<Action.SearchProfiles>.searchMutations(
 ): Flow<Mutation<State>> =
     debounce(SEARCH_DEBOUNCE_MILLIS)
         .flatMapLatest { action ->
-            if (action.query.isBlank()) return@flatMapLatest emptyFlow()
+            if (action.query.isBlank()) return@flatMapLatest flow {
+                emit { copy(suggestedProfiles = emptyList()) }
+            }
             searchRepository.autoCompleteProfileSearch(
                 query = SearchQuery.OfProfiles(
                     query = action.query,

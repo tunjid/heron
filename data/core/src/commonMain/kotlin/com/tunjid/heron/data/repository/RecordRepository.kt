@@ -522,7 +522,7 @@ internal class OfflineRecordRepository @Inject constructor(
                 }
                 is GrazeResponse.Created,
                 is GrazeResponse.Edited,
-                    -> {
+                -> {
                     check(update is GrazeFeed.Update.Put)
                     GrazeFeed.Created(
                         recordKey = update.recordKey,
@@ -635,7 +635,7 @@ private suspend fun NetworkService.updateFeedRecord(
             )
             is GrazeResponse.Edited,
             is GrazeResponse.Read,
-                -> {
+            -> {
                 val currentRecordResponse = getRecord(
                     GetRecordQueryParams(
                         repo = Did(profileId.id),
