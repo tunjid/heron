@@ -201,7 +201,7 @@ class ActualProfileViewModel(
                         is Action.DeleteRecord -> action.flow.deleteRecordMutations(
                             writeQueue = writeQueue,
                         )
-                        is Action.LiveStatus -> action.flow.liveStatusMutations(
+                        is Action.UpdateLiveStatus -> action.flow.liveStatusMutations(
                             writeQueue = writeQueue,
                         )
                     }
@@ -458,17 +458,17 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
         if (memo != null) emit { copy(messages = messages + memo) }
     }
 
-private fun Flow<Action.LiveStatus>.liveStatusMutations(
+private fun Flow<Action.UpdateLiveStatus>.liveStatusMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
     val writable = Writable.StatusUpdate(
         when (action) {
-            is Action.LiveStatus.GoLive -> Profile.StatusUpdate.GoLive(
+            is Action.UpdateLiveStatus.GoLive -> Profile.StatusUpdate.GoLive(
                 profileId = action.profileId,
                 streamUrl = action.streamUrl,
                 durationMinutes = action.duration,
             )
-            is Action.LiveStatus.EndLive -> Profile.StatusUpdate.EndLive(
+            is Action.UpdateLiveStatus.EndLive -> Profile.StatusUpdate.EndLive(
                 profileId = action.profileId,
             )
         },
