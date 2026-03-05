@@ -2,7 +2,6 @@ package com.tunjid.heron.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -13,6 +12,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tunjid.heron.ui.UiTokens.LiveChipCorner
+import com.tunjid.heron.ui.UiTokens.LiveStatusColor
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.live_badge
 import org.jetbrains.compose.resources.stringResource
@@ -21,7 +22,6 @@ import org.jetbrains.compose.resources.stringResource
 fun LiveChip(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
-            .offset(y = 5.dp)
             .background(color = LiveStatusColor, shape = RoundedCornerShape(LiveChipCorner))
             .padding(horizontal = 5.dp, vertical = 1.5.dp),
         contentAlignment = Alignment.Center,
@@ -36,7 +36,3 @@ fun LiveChip(modifier: Modifier = Modifier) {
         )
     }
 }
-
-val LiveStatusColor = Color(0xFFE5143A)
-val LiveBorderWidth = 2.5.dp
-val LiveChipCorner = 4.dp
