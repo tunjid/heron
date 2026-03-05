@@ -208,13 +208,13 @@ sealed class Action(val key: String) {
 
     sealed class UpdateLiveStatus(key: String) : Action(key) {
         data class GoLive(
-            val profileId: ProfileId,
+            val signedInProfileId: ProfileId,
             val streamUrl: String,
             val duration: Int,
         ) : UpdateLiveStatus(key = "GoLive")
 
         data class EndLive(
-            val profileId: ProfileId,
+            val signedInProfileId: ProfileId,
         ) : UpdateLiveStatus(key = "EndLive")
     }
 

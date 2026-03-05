@@ -47,6 +47,7 @@ import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordCreationException
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.recordKey
@@ -138,6 +139,11 @@ interface ProfileRepository {
 
     suspend fun updateProfileStatus(
         update: Profile.StatusUpdate,
+    ): Outcome
+
+    suspend fun refreshProfile(
+        signedInProfileId: ProfileId?,
+        profileId: Id.Profile,
     ): Outcome
 }
 
@@ -475,7 +481,7 @@ internal class OfflineProfileRepository @Inject constructor(
             is Profile.StatusUpdate.GoLive -> networkService.runCatchingWithMonitoredNetworkRetry {
                 putRecord(
                     PutRecordRequest(
-                        repo = update.profileId.id.let(::Did),
+                        repo = update.signedInProfileId.id.let(::Did),
                         collection = Nsid(Collections.ProfileStatus),
                         rkey = RKey(Collections.SelfRecordKey.rkey),
                         record = Status(
@@ -498,7 +504,7 @@ internal class OfflineProfileRepository @Inject constructor(
                 val now = Clock.System.now()
                 val expiresAt = now.plus(update.durationMinutes.minutes)
                 profileDao.updateStatus(
-                    did = update.profileId,
+                    did = update.signedInProfileId,
                     uri = null,
                     value = Profile.ProfileStatus.STATUS_LIVE,
                     uriLink = update.streamUrl,
@@ -514,14 +520,14 @@ internal class OfflineProfileRepository @Inject constructor(
             is Profile.StatusUpdate.EndLive -> networkService.runCatchingWithMonitoredNetworkRetry {
                 deleteRecord(
                     DeleteRecordRequest(
-                        repo = update.profileId.id.let(::Did),
+                        repo = update.signedInProfileId.id.let(::Did),
                         collection = Nsid(Collections.ProfileStatus),
                         rkey = RKey(Collections.SelfRecordKey.rkey),
                     ),
                 )
             }.toOutcome {
                 profileDao.updateStatus(
-                    did = update.profileId,
+                    did = update.signedInProfileId,
                     uri = null,
                     value = null,
                     uriLink = null,
@@ -535,4 +541,12 @@ internal class OfflineProfileRepository @Inject constructor(
             }
         }
     } ?: expiredSessionOutcome()
+
+    override suspend fun refreshProfile(
+        signedInProfileId: ProfileId?,
+        profileId: Id.Profile,
+    ): Outcome = profileLookup.refreshProfile(
+        signedInProfileId = signedInProfileId,
+        profileId = profileId,
+    )
 }

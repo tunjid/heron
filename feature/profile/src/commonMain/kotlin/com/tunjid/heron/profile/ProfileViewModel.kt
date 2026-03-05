@@ -37,6 +37,7 @@ import com.tunjid.heron.data.core.models.timelineRecordUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri.Companion.asSelfLabelerUri
+import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
@@ -460,23 +461,24 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
 
 private fun Flow<Action.UpdateLiveStatus>.liveStatusMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
-    val writable = Writable.StatusUpdate(
-        when (action) {
-            is Action.UpdateLiveStatus.GoLive -> Profile.StatusUpdate.GoLive(
-                profileId = action.profileId,
-                streamUrl = action.streamUrl,
-                durationMinutes = action.duration,
-            )
-            is Action.UpdateLiveStatus.EndLive -> Profile.StatusUpdate.EndLive(
-                profileId = action.profileId,
-            )
-        },
-    )
-    val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
+): Flow<Mutation<State>> = enqueueMutations(
+    writeQueue,
+    toWritable = { action ->
+        Writable.StatusUpdate(
+            when (action) {
+                is Action.UpdateLiveStatus.GoLive -> Profile.StatusUpdate.GoLive(
+                    signedInProfileId = action.signedInProfileId,
+                    streamUrl = action.streamUrl,
+                    durationMinutes = action.duration,
+                )
+                is Action.UpdateLiveStatus.EndLive -> Profile.StatusUpdate.EndLive(
+                    signedInProfileId = action.signedInProfileId,
+                )
+            },
+        )
+    },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
 }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
