@@ -186,17 +186,17 @@ internal inline fun <T, R> Collection<T>.toDistinctUntilChangedFlowOrEmpty(
         .onStart { emit(emptyList()) }
         .distinctUntilChanged()
 
-internal inline fun <T, R> Flow<T>.mapDistinctUntilChanged(
+internal inline fun <T, R> Flow<T>.distinctUntilChangedMap(
     crossinline transform: suspend (value: T) -> R,
-) = map(transform)
-    .distinctUntilChanged()
+) = distinctUntilChanged()
+    .map(transform)
 
-internal inline fun <T, R> Flow<T>.mapNotNullDistinctUntilChanged(
+internal inline fun <T, R> Flow<T>.distinctUntilChangedMapNotNull(
     crossinline transform: suspend (value: T) -> R?,
-) = mapNotNull(transform)
-    .distinctUntilChanged()
+) = distinctUntilChanged()
+    .mapNotNull(transform)
 
-internal inline fun <T, R> Flow<T>.flatMapLatestDistinctUntilChanged(
+internal inline fun <T, R> Flow<T>.distinctUntilChangedFlatMapLatest(
     crossinline transform: suspend (value: T) -> Flow<R>,
 ) = distinctUntilChanged()
     .flatMapLatest(transform)

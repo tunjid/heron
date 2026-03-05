@@ -87,8 +87,8 @@ import com.tunjid.heron.data.network.GrazeResponse
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.PdsResolver
 import com.tunjid.heron.data.utilities.asJsonContent
+import com.tunjid.heron.data.utilities.distinctUntilChangedMap
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
-import com.tunjid.heron.data.utilities.mapDistinctUntilChanged
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
@@ -108,7 +108,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
@@ -196,7 +195,7 @@ internal class OfflineRecordRepository @Inject constructor(
                 creatorId = profileId.id,
                 limit = 30,
                 offset = 0,
-            ).mapDistinctUntilChanged { it.map(PopulatedListEntity::asExternalModel) }
+            ).distinctUntilChangedMap { it.map(PopulatedListEntity::asExternalModel) }
         }
             .stateIn(
                 scope = appMainScope,
@@ -209,21 +208,21 @@ internal class OfflineRecordRepository @Inject constructor(
             is FeedGeneratorUri -> feedGeneratorDao.feedGenerators(
                 listOf(uri),
             )
-                .mapDistinctUntilChanged { it.firstOrNull()?.asExternalModel() }
+                .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
 
             is ListUri -> listDao.lists(
                 listOf(uri),
             )
-                .mapDistinctUntilChanged { it.firstOrNull()?.asExternalModel() }
+                .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
 
             is StarterPackUri -> starterPackDao.starterPacks(
                 listOf(uri),
             )
-                .mapDistinctUntilChanged { it.firstOrNull()?.asExternalModel() }
+                .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
             is LabelerUri -> labelDao.labelers(
                 listOf(uri),
             )
-                .mapDistinctUntilChanged { it.firstOrNull()?.asExternalModel() }
+                .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
 
             is PostUri ->
                 savedStateDataSource
@@ -232,7 +231,7 @@ internal class OfflineRecordRepository @Inject constructor(
                             viewingProfileId = profileId?.id,
                             postUris = listOf(uri),
                         )
-                            .mapDistinctUntilChanged {
+                            .distinctUntilChangedMap {
                                 it.firstOrNull()?.asExternalModel(
                                     embeddedRecord = null,
                                 )
@@ -280,7 +279,7 @@ internal class OfflineRecordRepository @Inject constructor(
                     offset = query.data.offset,
                     limit = query.data.limit,
                 )
-                    .mapDistinctUntilChanged { populatedStarterPackEntities ->
+                    .distinctUntilChangedMap { populatedStarterPackEntities ->
                         populatedStarterPackEntities.map(PopulatedStarterPackEntity::asExternalModel)
                     },
                 networkService.nextCursorFlow(
@@ -321,7 +320,7 @@ internal class OfflineRecordRepository @Inject constructor(
                     offset = query.data.offset,
                     limit = query.data.limit,
                 )
-                    .mapDistinctUntilChanged { populatedListEntities ->
+                    .distinctUntilChangedMap { populatedListEntities ->
                         populatedListEntities.map(PopulatedListEntity::asExternalModel)
                     },
                 networkService.nextCursorFlow(
@@ -359,7 +358,7 @@ internal class OfflineRecordRepository @Inject constructor(
                     offset = query.data.offset,
                     limit = query.data.limit,
                 )
-                    .mapDistinctUntilChanged {
+                    .distinctUntilChangedMap {
                         it.map(PopulatedListMemberEntity::asExternalModel)
                     },
                 networkService.nextCursorFlow(
@@ -406,7 +405,7 @@ internal class OfflineRecordRepository @Inject constructor(
                     offset = query.data.offset,
                     limit = query.data.limit,
                 )
-                    .mapDistinctUntilChanged { populatedFeedGeneratorEntities ->
+                    .distinctUntilChangedMap { populatedFeedGeneratorEntities ->
                         populatedFeedGeneratorEntities.map(PopulatedFeedGeneratorEntity::asExternalModel)
                     },
                 networkService.nextCursorFlow(
@@ -451,7 +450,7 @@ internal class OfflineRecordRepository @Inject constructor(
                     offset = query.data.offset,
                     limit = query.data.limit,
                 )
-                    .mapDistinctUntilChanged { populatedStandardDocumentEntities ->
+                    .distinctUntilChangedMap { populatedStandardDocumentEntities ->
                         populatedStandardDocumentEntities.map(PopulatedStandardDocumentEntity::asExternalModel)
                     },
                 networkService.nextCursorFlow(
