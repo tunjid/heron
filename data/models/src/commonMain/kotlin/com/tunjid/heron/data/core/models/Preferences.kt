@@ -73,6 +73,8 @@ data class Preferences(
         val autoPlayTimelineVideos: Boolean = true,
         @ProtoNumber(7)
         val showPostEngagementMetrics: Boolean = true,
+        @ProtoNumber(8)
+        val showTrendingTopics: Boolean = true,
     )
 
     companion object {

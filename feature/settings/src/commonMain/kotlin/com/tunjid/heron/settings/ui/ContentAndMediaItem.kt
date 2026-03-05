@@ -36,6 +36,7 @@ import heron.feature.settings.generated.resources.content_and_media
 import heron.feature.settings.generated.resources.following_feed_preferences
 import heron.feature.settings.generated.resources.refresh_timelines_on_launch
 import heron.feature.settings.generated.resources.show_post_engagement_metrics
+import heron.feature.settings.generated.resources.show_trending_topics
 import heron.feature.settings.generated.resources.thread_preferences
 import org.jetbrains.compose.resources.stringResource
 
@@ -46,6 +47,7 @@ fun ContentAndMediaItem(
     setRefreshHomeTimelineOnLaunch: (Boolean) -> Unit,
     setAutoplayTimelineVideos: (Boolean) -> Unit,
     setShowPostEngagementMetrics: (Boolean) -> Unit,
+    setShowTrendingTopics: (Boolean) -> Unit,
     onSectionSelected: (Section) -> Unit,
 ) {
     ExpandableSettingsItemRow(
@@ -112,6 +114,14 @@ fun ContentAndMediaItem(
             enabled = true,
             checked = signedInProfilePreferences.local.showPostEngagementMetrics,
             onCheckedChange = setShowPostEngagementMetrics,
+        )
+        SettingsToggleItem(
+            modifier = Modifier
+                .fillMaxWidth(),
+            text = stringResource(Res.string.show_trending_topics),
+            enabled = true,
+            checked = signedInProfilePreferences.local.showTrendingTopics,
+            onCheckedChange = setShowTrendingTopics,
         )
     }
 }

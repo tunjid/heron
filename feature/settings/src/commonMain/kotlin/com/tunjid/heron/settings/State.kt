@@ -116,6 +116,10 @@ sealed class Action(val key: String) {
         val showPostEngagementMetrics: Boolean,
     ) : Action(key = "SetShowPostEngagementMetrics")
 
+    data class SetShowTrendingTopics(
+        val showTrendingTopics: Boolean,
+    ) : Action(key = "SetShowTrendingTopics")
+
     data class SnackbarDismissed(
         val message: Memo,
     ) : Action(key = "SnackbarDismissed")
