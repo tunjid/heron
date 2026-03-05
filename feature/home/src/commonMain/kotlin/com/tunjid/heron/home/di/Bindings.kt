@@ -16,6 +16,9 @@
 
 package com.tunjid.heron.home.di
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
@@ -25,6 +28,7 @@ import androidx.compose.material.icons.automirrored.rounded.Login
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
@@ -161,23 +165,29 @@ class HomeBindings(
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         signedInProfile = state.signedInProfile,
                         title = {
-                            TrendsTicker(
-                                modifier = Modifier
-                                    .padding(horizontal = 20.dp)
-                                    .fillMaxWidth(),
-                                sharedTransitionScope = paneScaffoldState,
-                                trends = state.trends,
-                                onTrendClicked = { trend ->
-                                    viewModel.accept(
-                                        Action.Navigate.To(
-                                            pathDestination(
-                                                path = trend.link,
-                                                referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                            AnimatedVisibility(
+                                visible = state.preferences.local.showTrendingTopics,
+                                enter = remember(::fadeIn),
+                                exit = remember(::fadeOut),
+                            ) {
+                                TrendsTicker(
+                                    modifier = Modifier
+                                        .padding(horizontal = 20.dp)
+                                        .fillMaxWidth(),
+                                    sharedTransitionScope = paneScaffoldState,
+                                    trends = state.trends,
+                                    onTrendClicked = { trend ->
+                                        viewModel.accept(
+                                            Action.Navigate.To(
+                                                pathDestination(
+                                                    path = trend.link,
+                                                    referringRouteOption = NavigationAction.ReferringRouteOption.ParentOrCurrent,
+                                                ),
                                             ),
-                                        ),
-                                    )
-                                },
-                            )
+                                        )
+                                    },
+                                )
+                            }
                         },
                         onSignedInProfileClicked = { profile, sharedElementKey ->
                             viewModel.accept(

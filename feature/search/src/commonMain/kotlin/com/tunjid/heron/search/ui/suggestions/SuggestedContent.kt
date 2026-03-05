@@ -87,6 +87,7 @@ import org.jetbrains.compose.resources.stringResource
 internal fun SuggestedContent(
     modifier: Modifier = Modifier,
     paneScaffoldState: PaneScaffoldState,
+    showTrendingTopics: Boolean,
     trends: List<Trend>,
     suggestedProfiles: List<ProfileWithViewerState>,
     starterPacksWithMembers: List<SuggestedStarterPack>,
@@ -108,7 +109,7 @@ internal fun SuggestedContent(
             isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),
     ) {
-        item {
+        if (showTrendingTopics) item {
             TrendTitle(
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
@@ -117,7 +118,7 @@ internal fun SuggestedContent(
                 title = stringResource(Res.string.trending_title),
             )
         }
-        itemsIndexed(
+        if (showTrendingTopics) itemsIndexed(
             items = trends.take(5),
             key = { _, trend -> trend.link },
             itemContent = { index, trend ->
