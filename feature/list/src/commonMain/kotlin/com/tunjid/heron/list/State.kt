@@ -67,6 +67,8 @@ data class State(
     @Transient
     val isOnProfilesTab: Boolean = false,
     @Transient
+    val suggestedProfiles: List<Profile> = emptyList(),
+    @Transient
     val messages: List<Memo> = emptyList(),
 )
 
@@ -195,6 +197,10 @@ sealed class Action(val key: String) {
         val profileId: ProfileId,
         val listUri: ListUri,
     ) : Action(key = "AddListMember")
+
+    data class SearchProfiles(
+        val query: String,
+    ) : Action(key = "SearchProfiles")
 
     data class CurrentPageChanged(
         val currentPage: Int,

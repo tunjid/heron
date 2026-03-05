@@ -17,9 +17,11 @@
 package com.tunjid.heron.list
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.timelineRecordUri
@@ -28,6 +30,8 @@ import com.tunjid.heron.data.repository.ListMemberQuery
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
+import com.tunjid.heron.data.repository.SearchQuery
+import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.repository.UserDataRepository
@@ -62,6 +66,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
@@ -90,6 +95,7 @@ class ActualListViewModel(
     timelineRepository: TimelineRepository,
     profileRepository: ProfileRepository,
     recordRepository: RecordRepository,
+    searchRepository: SearchRepository,
     authRepository: AuthRepository,
     userDataRepository: UserDataRepository,
     @Assisted
@@ -161,6 +167,9 @@ class ActualListViewModel(
                         )
                         is Action.AddListMember -> action.flow.addListMemberMutations(
                             writeQueue = writeQueue,
+                        )
+                        is Action.SearchProfiles -> action.flow.searchMutations(
+                            searchRepository = searchRepository,
                         )
                         is Action.CurrentPageChanged -> action.flow.currentPageMutations()
                     }
@@ -393,6 +402,29 @@ private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
     }
 }
 
+private fun Flow<Action.SearchProfiles>.searchMutations(
+    searchRepository: SearchRepository,
+): Flow<Mutation<State>> =
+    debounce(SEARCH_DEBOUNCE_MILLIS)
+        .flatMapLatest { action ->
+            searchRepository.autoCompleteProfileSearch(
+                query = SearchQuery.OfProfiles(
+                    query = action.query,
+                    isLocalOnly = false,
+                    data = CursorQuery.Data(
+                        page = 0,
+                        cursorAnchor = Clock.System.now(),
+                        limit = MAX_SUGGESTED_PROFILES.toLong(),
+                    ),
+                ),
+                cursor = Cursor.Initial,
+            ).mapToMutation { profiles ->
+                copy(
+                    suggestedProfiles = profiles.map(ProfileWithViewerState::profile),
+                )
+            }
+        }
+
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(messages = messages - action.message)
@@ -523,3 +555,6 @@ internal inline fun <T> Timeline.withListTimelineOrNull(
 ) =
     if (this is Timeline.Home.List) block(this)
     else null
+
+private const val SEARCH_DEBOUNCE_MILLIS = 300L
+private const val MAX_SUGGESTED_PROFILES = 5
