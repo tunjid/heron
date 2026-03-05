@@ -289,11 +289,12 @@ private fun BrokenTimeline(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
     Column(
         modifier
             .fillMaxWidth()
             .clickable(
-                interactionSource = NoOpInteractionSource,
+                interactionSource = interactionSource,
                 indication = null,
                 onClick = onClick,
             ),
@@ -478,7 +479,5 @@ private val TimelineItem.isThreadedAnchor
 
 private val TimelineItem.isThreadedAncestorOrAnchor
     get() = isThreadedAncestor || isThreadedAnchor
-
-private val NoOpInteractionSource = MutableInteractionSource()
 
 private const val DefaultMaxPostsInThread = 3
