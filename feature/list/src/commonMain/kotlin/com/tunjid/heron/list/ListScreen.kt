@@ -272,14 +272,14 @@ private fun listTabs(
         isEmpty() -> {
             add(
                 Tab(
-                    title = stringResource(Res.string.people),
-                    hasUpdate = false,
+                    title = stringResource(Res.string.posts),
+                    hasUpdate = hasUpdate,
                 ),
             )
             add(
                 Tab(
-                    title = stringResource(Res.string.posts),
-                    hasUpdate = hasUpdate,
+                    title = stringResource(Res.string.people),
+                    hasUpdate = false,
                 ),
             )
         }

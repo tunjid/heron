@@ -229,7 +229,7 @@ private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
     )
     emit {
         copy(
-            stateHolders = stateHolders + createdHolder,
+            stateHolders = listOf(createdHolder) + stateHolders,
         )
     }
     emitAll(
@@ -305,7 +305,7 @@ private fun SuspendingStateHolder<State>.listMemberStateHolderMutations(
     )
     emit {
         copy(
-            stateHolders = listOf(createdHolder) + stateHolders,
+            stateHolders = stateHolders + createdHolder,
         )
     }
 }
