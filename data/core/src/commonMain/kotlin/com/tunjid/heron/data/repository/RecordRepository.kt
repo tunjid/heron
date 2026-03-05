@@ -196,7 +196,7 @@ internal class OfflineRecordRepository @Inject constructor(
                 creatorId = profileId.id,
                 limit = 30,
                 offset = 0,
-            ).map { it.map(PopulatedListEntity::asExternalModel) }
+            ).mapDistinctUntilChanged { it.map(PopulatedListEntity::asExternalModel) }
         }
             .stateIn(
                 scope = appMainScope,
@@ -280,7 +280,7 @@ internal class OfflineRecordRepository @Inject constructor(
                     offset = query.data.offset,
                     limit = query.data.limit,
                 )
-                    .map { populatedStarterPackEntities ->
+                    .mapDistinctUntilChanged { populatedStarterPackEntities ->
                         populatedStarterPackEntities.map(PopulatedStarterPackEntity::asExternalModel)
                     },
                 networkService.nextCursorFlow(
@@ -321,7 +321,7 @@ internal class OfflineRecordRepository @Inject constructor(
                     offset = query.data.offset,
                     limit = query.data.limit,
                 )
-                    .map { populatedListEntities ->
+                    .mapDistinctUntilChanged { populatedListEntities ->
                         populatedListEntities.map(PopulatedListEntity::asExternalModel)
                     },
                 networkService.nextCursorFlow(
@@ -359,7 +359,7 @@ internal class OfflineRecordRepository @Inject constructor(
                     offset = query.data.offset,
                     limit = query.data.limit,
                 )
-                    .map {
+                    .mapDistinctUntilChanged {
                         it.map(PopulatedListMemberEntity::asExternalModel)
                     },
                 networkService.nextCursorFlow(
@@ -406,7 +406,7 @@ internal class OfflineRecordRepository @Inject constructor(
                     offset = query.data.offset,
                     limit = query.data.limit,
                 )
-                    .map { populatedFeedGeneratorEntities ->
+                    .mapDistinctUntilChanged { populatedFeedGeneratorEntities ->
                         populatedFeedGeneratorEntities.map(PopulatedFeedGeneratorEntity::asExternalModel)
                     },
                 networkService.nextCursorFlow(
@@ -451,7 +451,7 @@ internal class OfflineRecordRepository @Inject constructor(
                     offset = query.data.offset,
                     limit = query.data.limit,
                 )
-                    .map { populatedStandardDocumentEntities ->
+                    .mapDistinctUntilChanged { populatedStandardDocumentEntities ->
                         populatedStandardDocumentEntities.map(PopulatedStandardDocumentEntity::asExternalModel)
                     },
                 networkService.nextCursorFlow(

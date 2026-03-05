@@ -77,6 +77,7 @@ import com.tunjid.heron.data.network.NetworkMonitor
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.asGenericId
 import com.tunjid.heron.data.utilities.asGenericUri
+import com.tunjid.heron.data.utilities.flatMapLatestDistinctUntilChanged
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.mapDistinctUntilChanged
 import com.tunjid.heron.data.utilities.mapToResult
@@ -633,7 +634,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                 offset = query.data.offset,
                 limit = query.data.limit,
             )
-                .flatMapLatest { populatedNotificationEntities ->
+                .flatMapLatestDistinctUntilChanged { populatedNotificationEntities ->
                     asExternalModel(
                         signedInProfileId = signedInProfileId,
                         populatedNotificationEntities = populatedNotificationEntities,
