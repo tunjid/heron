@@ -33,6 +33,7 @@
     <string name="show">Show</string>
     <string name="save">Save</string>
     <string name="close">Close</string>
+    <string name="done">Done</string>
     <string name="expand_icon">Expand icon</string>
     <string name="collapse_icon">Collapse icon</string>
     <string name="notification_settings">Notification settings</string>

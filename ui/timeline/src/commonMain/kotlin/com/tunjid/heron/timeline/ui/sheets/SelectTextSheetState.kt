@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.graze.editor.ui
+package com.tunjid.heron.timeline.ui.sheets
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -39,8 +39,8 @@ import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
-import heron.feature.graze_editor.generated.resources.Res
-import heron.feature.graze_editor.generated.resources.done
+import com.tunjid.heron.ui.text.CommonStrings
+import heron.ui.core.generated.resources.done
 import org.jetbrains.compose.resources.stringResource
 
 @Stable
@@ -255,7 +255,7 @@ class SelectTextSheetState(
                         modifier = Modifier
                             .fillMaxWidth(),
                     ) {
-                        Text(text = stringResource(Res.string.done))
+                        Text(text = stringResource(CommonStrings.done))
                     }
                 }
             }
