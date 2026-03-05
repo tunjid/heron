@@ -159,6 +159,9 @@ class ActualListViewModel(
                         is Action.DeleteRecord -> action.flow.deleteRecordMutations(
                             writeQueue = writeQueue,
                         )
+                        is Action.AddListMember -> action.flow.addListMemberMutations(
+                            writeQueue = writeQueue,
+                        )
                     }
                 },
             )
@@ -322,17 +325,30 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
 
 private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = mapToManyMutations { action ->
-    val writable = Writable.TimelineUpdate(
-        Timeline.Update.OfMutedWord.ReplaceAll(
-            mutedWordPreferences = action.mutedWordPreference,
-        ),
-    )
-    val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
-}
+): Flow<Mutation<State>> = enqueue(
+    writeQueue = writeQueue,
+    mapper = { action ->
+        Writable.TimelineUpdate(
+            Timeline.Update.OfMutedWord.ReplaceAll(
+                mutedWordPreferences = action.mutedWordPreference,
+            ),
+        )
+    },
+)
+
+private fun Flow<Action.AddListMember>.addListMemberMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = enqueue(
+    writeQueue = writeQueue,
+    mapper = { action ->
+        Writable.FeedList.AddMember(
+            create = ListMember.Create(
+                subjectId = action.profileId,
+                listUri = action.listUri,
+            ),
+        )
+    },
+)
 
 private fun Flow<Action.BlockAccount>.blockAccountMutations(
     writeQueue: WriteQueue,
@@ -474,6 +490,18 @@ private fun timelineCreatorMutations(
         .mapToMutation {
             copy(creator = it)
         }
+
+private fun <T> Flow<T>.enqueue(
+    writeQueue: WriteQueue,
+    mapper: (T) -> Writable,
+): Flow<Mutation<State>> =
+    mapLatestToManyMutations { action ->
+        val writable = mapper(action)
+        val status = writeQueue.enqueue(writable)
+        writable.writeStatusMessage(status)?.let {
+            emit { copy(messages = messages + it) }
+        }
+    }
 
 private fun defaultQueryData() = CursorQuery.Data(
     page = 0,
