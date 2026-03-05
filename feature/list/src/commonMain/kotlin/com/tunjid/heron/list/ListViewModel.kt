@@ -504,7 +504,7 @@ private fun <T> Flow<T>.enqueue(
     writeQueue: WriteQueue,
     mapper: (T) -> Writable,
 ): Flow<Mutation<State>> =
-    mapLatestToManyMutations { action ->
+    mapToManyMutations { action ->
         val writable = mapper(action)
         val status = writeQueue.enqueue(writable)
         writable.writeStatusMessage(status)?.let {

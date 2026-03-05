@@ -138,13 +138,6 @@ internal fun ListScreen(
     val pagerState = rememberPagerState { updatedStateHolders.size }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
-        snapshotFlow { pagerState.currentPage }
-            .collect { currentPage ->
-                actions(Action.CurrentPageChanged(currentPage))
-            }
-    }
-
     val collapsedHeight = with(density) {
         UiTokens.tabsHeight.toPx()
     }
@@ -270,6 +263,13 @@ internal fun ListScreen(
                 )
             },
         )
+    }
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.currentPage }
+            .collect { currentPage ->
+                actions(Action.CurrentPageChanged(currentPage))
+            }
     }
 }
 
