@@ -159,6 +159,10 @@ class ActualListViewModel(
                         is Action.DeleteRecord -> action.flow.deleteRecordMutations(
                             writeQueue = writeQueue,
                         )
+                        is Action.AddListMember -> action.flow.addListMemberMutations(
+                            writeQueue = writeQueue,
+                        )
+                        is Action.CurrentPageChanged -> action.flow.currentPageMutations()
                     }
                 },
             )
@@ -229,7 +233,7 @@ private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
     )
     emit {
         copy(
-            stateHolders = stateHolders + createdHolder,
+            stateHolders = listOf(createdHolder) + stateHolders,
         )
     }
     emitAll(
@@ -305,7 +309,7 @@ private fun SuspendingStateHolder<State>.listMemberStateHolderMutations(
     )
     emit {
         copy(
-            stateHolders = listOf(createdHolder) + stateHolders,
+            stateHolders = stateHolders + createdHolder,
         )
     }
 }
@@ -322,17 +326,30 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
 
 private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = mapToManyMutations { action ->
-    val writable = Writable.TimelineUpdate(
-        Timeline.Update.OfMutedWord.ReplaceAll(
-            mutedWordPreferences = action.mutedWordPreference,
-        ),
-    )
-    val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
-}
+): Flow<Mutation<State>> = enqueue(
+    writeQueue = writeQueue,
+    mapper = { action ->
+        Writable.TimelineUpdate(
+            Timeline.Update.OfMutedWord.ReplaceAll(
+                mutedWordPreferences = action.mutedWordPreference,
+            ),
+        )
+    },
+)
+
+private fun Flow<Action.AddListMember>.addListMemberMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = enqueue(
+    writeQueue = writeQueue,
+    mapper = { action ->
+        Writable.FeedList.AddMember(
+            create = ListMember.Create(
+                subjectId = action.profileId,
+                listUri = action.listUri,
+            ),
+        )
+    },
+)
 
 private fun Flow<Action.BlockAccount>.blockAccountMutations(
     writeQueue: WriteQueue,
@@ -379,6 +396,14 @@ private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(messages = messages - action.message)
+    }
+
+private fun Flow<Action.CurrentPageChanged>.currentPageMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(
+            isOnProfilesTab = stateHolders.getOrNull(action.currentPage)
+                is ListScreenStateHolders.Members,
+        )
     }
 
 private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
@@ -474,6 +499,18 @@ private fun timelineCreatorMutations(
         .mapToMutation {
             copy(creator = it)
         }
+
+private fun <T> Flow<T>.enqueue(
+    writeQueue: WriteQueue,
+    mapper: (T) -> Writable,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        val writable = mapper(action)
+        val status = writeQueue.enqueue(writable)
+        writable.writeStatusMessage(status)?.let {
+            emit { copy(messages = messages + it) }
+        }
+    }
 
 private fun defaultQueryData() = CursorQuery.Data(
     page = 0,

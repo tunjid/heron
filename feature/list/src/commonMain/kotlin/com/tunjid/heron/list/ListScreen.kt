@@ -37,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -46,6 +47,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -262,6 +264,13 @@ internal fun ListScreen(
             },
         )
     }
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.currentPage }
+            .collect { currentPage ->
+                actions(Action.CurrentPageChanged(currentPage))
+            }
+    }
 }
 
 @Composable
@@ -272,14 +281,14 @@ private fun listTabs(
         isEmpty() -> {
             add(
                 Tab(
-                    title = stringResource(Res.string.people),
-                    hasUpdate = false,
+                    title = stringResource(Res.string.posts),
+                    hasUpdate = hasUpdate,
                 ),
             )
             add(
                 Tab(
-                    title = stringResource(Res.string.posts),
-                    hasUpdate = hasUpdate,
+                    title = stringResource(Res.string.people),
+                    hasUpdate = false,
                 ),
             )
         }
