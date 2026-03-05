@@ -53,6 +53,8 @@ jobs:
             -out "composeApp/src/release/google-services.json"
 
       - name: Tag release
+        env:
+          RELEASE_BRANCH: ${{ steps.extract_branch.outputs.branch }}
         run: |
           ./gradlew release \
-            -Pheron.releaseBranch=${{ steps.extract_branch.outputs.branch }}
+            -Pheron.releaseBranch="$RELEASE_BRANCH"
