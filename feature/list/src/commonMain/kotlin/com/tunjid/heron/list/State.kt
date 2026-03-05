@@ -67,6 +67,8 @@ data class State(
     @Transient
     val isOnProfilesTab: Boolean = false,
     @Transient
+    val suggestedProfiles: List<Profile> = emptyList(),
+    @Transient
     val messages: List<Memo> = emptyList(),
 )
 
@@ -151,6 +153,7 @@ sealed class ListScreenStateHolders {
 
 data class MemberState(
     val signedInProfileId: ProfileId?,
+    val listUri: ListUri,
     override val tilingData: TilingState.Data<ListMemberQuery, ListMember>,
 ) : TilingState<ListMemberQuery, ListMember>
 
@@ -195,6 +198,10 @@ sealed class Action(val key: String) {
         val profileId: ProfileId,
         val listUri: ListUri,
     ) : Action(key = "AddListMember")
+
+    data class SearchProfiles(
+        val query: String,
+    ) : Action(key = "SearchProfiles")
 
     data class CurrentPageChanged(
         val currentPage: Int,

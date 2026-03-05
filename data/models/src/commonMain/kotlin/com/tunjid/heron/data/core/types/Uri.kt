@@ -355,6 +355,7 @@ fun String.asRecordUriOrNull(): RecordUri? = atUriComponents { _, collectionRang
         LikeUri.NAMESPACE -> LikeUri(this)
         RepostUri.NAMESPACE -> RepostUri(this)
         FollowUri.NAMESPACE -> FollowUri(this)
+        ListMemberUri.NAMESPACE -> ListMemberUri(this)
         BlockUri.NAMESPACE -> BlockUri(this)
         StandardPublicationUri.NAMESPACE -> StandardPublicationUri(this)
         StandardDocumentUri.NAMESPACE -> StandardDocumentUri(this)

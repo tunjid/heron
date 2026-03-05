@@ -28,6 +28,7 @@ import com.tunjid.heron.data.core.types.ExpiredSessionException
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.core.utilities.asFailureOutcome
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedState
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
 import com.tunjid.heron.data.di.AppMainScope
@@ -573,6 +574,6 @@ internal suspend inline fun <T> SavedStateDataSource.inProfileSession(
     }
 }
 
-internal fun expiredSessionOutcome() = Outcome.Failure(ExpiredSessionException())
+internal fun expiredSessionOutcome() = ExpiredSessionException().asFailureOutcome()
 
 internal fun <T> expiredSessionResult() = Result.failure<T>(ExpiredSessionException())

@@ -60,10 +60,12 @@ import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StarterPackUri
+import com.tunjid.heron.data.core.types.UnauthorizedException
 import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordUriOrNull
 import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.core.utilities.asFailureOutcome
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
@@ -97,7 +99,6 @@ import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -542,9 +543,23 @@ internal class OfflineRecordRepository @Inject constructor(
     ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
         if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
 
+        val listOwnerId = create.listUri.profileId()
+
+        if (listOwnerId != signedInProfileId)
+            return@inCurrentProfileSession UnauthorizedException(
+                signedInProfileId = signedInProfileId,
+                profileId = listOwnerId,
+            ).asFailureOutcome()
+
+        val prospectiveMemberRefreshOutcome = profileLookup.refreshProfile(
+            signedInProfileId = signedInProfileId,
+            profileId = create.subjectId,
+        )
+        if (prospectiveMemberRefreshOutcome is Outcome.Failure)
+            return@inCurrentProfileSession prospectiveMemberRefreshOutcome
+
         val createdAt = Clock.System.now()
         val recordKey = RecordKey.generate()
-        val listOwnerId = create.listUri.profileId()
 
         networkService.runCatchingWithMonitoredNetworkRetry {
             createRecord(
@@ -585,6 +600,13 @@ internal class OfflineRecordRepository @Inject constructor(
         uri: RecordUri,
     ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
         if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+
+        val recordOwnerId = uri.profileId()
+        if (recordOwnerId != signedInProfileId) return@inCurrentProfileSession UnauthorizedException(
+            signedInProfileId = signedInProfileId,
+            profileId = recordOwnerId,
+        ).asFailureOutcome()
+
         recordResolver.deleteRecord(uri)
     } ?: expiredSessionOutcome()
 }

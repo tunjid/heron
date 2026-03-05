@@ -25,6 +25,7 @@ import com.tunjid.heron.data.core.types.NotificationFilteredOutException
 import com.tunjid.heron.data.core.types.RecordCreationException
 import com.tunjid.heron.data.core.types.RestrictedProfileException
 import com.tunjid.heron.data.core.types.SessionSwitchException
+import com.tunjid.heron.data.core.types.UnauthorizedException
 import com.tunjid.heron.data.core.types.UnknownNotificationException
 import com.tunjid.heron.data.core.types.UnresolvableProfileException
 import com.tunjid.heron.data.core.types.UnresolvableRecordException
@@ -46,6 +47,7 @@ import heron.ui.core.generated.resources.error_notification_filtered_out
 import heron.ui.core.generated.resources.error_record_creation
 import heron.ui.core.generated.resources.error_restricted_profile
 import heron.ui.core.generated.resources.error_session_switch
+import heron.ui.core.generated.resources.error_unauthorized
 import heron.ui.core.generated.resources.error_unknown_notification
 import heron.ui.core.generated.resources.error_unresolvable_profile
 import heron.ui.core.generated.resources.error_unresolvable_record
@@ -62,6 +64,7 @@ val HeronException.messageResource: Memo.Resource
         is UnresolvableProfileException -> Memo.Resource(stringResource = Res.string.error_unresolvable_profile)
         is UnresolvableRecordException -> Memo.Resource(stringResource = Res.string.error_unresolvable_record)
         is InvalidTokenException -> Memo.Resource(stringResource = Res.string.error_invalid_token)
+        is UnauthorizedException -> Memo.Resource(stringResource = Res.string.error_unauthorized)
         is AtProtoException ->
             if (error != null) Memo.Resource(
                 stringResource = Res.string.error_atproto_with_error,

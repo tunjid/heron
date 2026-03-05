@@ -64,6 +64,12 @@ class SessionSwitchException(
 ) : Exception("Unable to switch sessions to $profileId"),
     HeronException
 
+class UnauthorizedException(
+    signedInProfileId: ProfileId,
+    profileId: ProfileId,
+) : Exception("Tried to perform an action restricted to $profileId as $signedInProfileId"),
+    HeronException
+
 class ExpiredSessionException :
     IOException(),
     HeronException
