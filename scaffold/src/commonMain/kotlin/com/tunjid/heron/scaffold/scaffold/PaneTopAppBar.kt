@@ -46,11 +46,12 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.ui.LiveBorderWidth
 import com.tunjid.heron.ui.LiveChip
-import com.tunjid.heron.ui.LiveStatusColor
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.UiTokens.LiveBorderWidth
+import com.tunjid.heron.ui.UiTokens.LiveStatusColor
 import com.tunjid.heron.ui.modifiers.blur
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.threepane.ThreePane
 
@@ -109,14 +110,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                     ) {
                         PaneStickySharedElement(
                             modifier = Modifier
-                                .fillMaxSize()
-                                .then(
-                                    if (isLive) Modifier.border(
-                                        width = LiveBorderWidth,
-                                        color = LiveStatusColor,
-                                        shape = CircleShape,
-                                    ) else Modifier,
-                                ),
+                                .fillMaxSize(),
                             sharedContentState = rememberSharedContentState(
                                 key = UiTokens.SignedInUserAvatarSharedElementKey,
                             ),
@@ -124,6 +118,13 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                             AsyncImage(
                                 modifier = Modifier
                                     .fillParentAxisIfFixedOrWrap()
+                                    .ifTrue(isLive) {
+                                        border(
+                                            width = LiveBorderWidth,
+                                            color = LiveStatusColor,
+                                            shape = CircleShape,
+                                        )
+                                    }
                                     .clickable {
                                         onSignedInProfileClicked(
                                             profile,
@@ -140,7 +141,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                                 },
                             )
                         }
-                        if (isLive) LiveChip()
+                        if (isLive) LiveChip(modifier = Modifier.align(Alignment.BottomCenter))
                     }
                 }
             }

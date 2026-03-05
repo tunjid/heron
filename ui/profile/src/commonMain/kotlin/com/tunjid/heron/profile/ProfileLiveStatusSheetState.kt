@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -68,9 +67,10 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.ui.LiveBorderWidth
 import com.tunjid.heron.ui.LiveChip
-import com.tunjid.heron.ui.LiveStatusColor
+import com.tunjid.heron.ui.UiTokens.LiveBorderWidth
+import com.tunjid.heron.ui.UiTokens.LiveStatusColor
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
@@ -176,7 +176,6 @@ private fun ProfileLiveStatusSheetContent(
 
         when {
             currentStatus?.isLive == true -> EditLiveContent(
-                profile = profile,
                 status = currentStatus,
                 onDismiss = onDismiss,
                 onEndLive = onEndLive,
@@ -299,7 +298,6 @@ private fun GoLiveContent(
 
 @Composable
 private fun EditLiveContent(
-    profile: Profile,
     status: Profile.ProfileStatus,
     onDismiss: () -> Unit,
     onEndLive: () -> Unit,
@@ -451,23 +449,24 @@ private fun LiveAvatarBadge(
         modifier = modifier.size(56.dp),
         contentAlignment = Alignment.BottomCenter,
     ) {
-        Box(
+        AsyncImage(
+            args = ImageArgs(
+                url = profile.avatar?.uri,
+                contentDescription = profile.displayName ?: profile.handle.id,
+                contentScale = ContentScale.Crop,
+                shape = RoundedPolygonShape.Circle,
+            ),
             modifier = Modifier
-                .fillMaxSize()
-                .border(width = LiveBorderWidth, color = LiveStatusColor, shape = CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            AsyncImage(
-                args = ImageArgs(
-                    url = profile.avatar?.uri,
-                    contentDescription = profile.displayName ?: profile.handle.id,
-                    contentScale = ContentScale.Crop,
-                    shape = RoundedPolygonShape.Circle,
-                ),
-                modifier = Modifier.size(50.dp),
-            )
-        }
-        LiveChip()
+                .size(50.dp)
+                .ifTrue(profile.status?.isLive == true) {
+                    border(
+                        width = LiveBorderWidth,
+                        color = LiveStatusColor,
+                        shape = CircleShape,
+                    )
+                },
+        )
+        LiveChip(modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
 

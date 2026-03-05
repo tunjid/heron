@@ -182,15 +182,16 @@ import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.AttributionLayout
-import com.tunjid.heron.ui.LiveBorderWidth
 import com.tunjid.heron.ui.LiveChip
-import com.tunjid.heron.ui.LiveStatusColor
 import com.tunjid.heron.ui.OverlappingAvatarRow
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.UiTokens.LiveBorderWidth
+import com.tunjid.heron.ui.UiTokens.LiveStatusColor
 import com.tunjid.heron.ui.modifiers.blur
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.navigableLinkTargetHandler
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
@@ -262,11 +263,11 @@ internal fun ProfileScreen(
             .collect { value = it }
     }
 
-    val profileLiveStatusSheetState = rememberUpdatedProfileLiveStatusSheetState(
+    val profileUpdateLiveStatusSheetState = rememberUpdatedProfileLiveStatusSheetState(
         profile = state.profile,
         onGoLive = { streamUrl, duration ->
             actions(
-                Action.LiveStatus.GoLive(
+                Action.UpdateLiveStatus.GoLive(
                     profileId = state.profile.did,
                     streamUrl = streamUrl,
                     duration = duration,
@@ -275,7 +276,7 @@ internal fun ProfileScreen(
         },
         onEndLive = {
             actions(
-                Action.LiveStatus.EndLive(
+                Action.UpdateLiveStatus.EndLive(
                     profileId = state.profile.did,
                 ),
             )
@@ -390,7 +391,7 @@ internal fun ProfileScreen(
                     )
                 },
                 onModerationAction = actions,
-                onUpdateProfileLiveStatus = profileLiveStatusSheetState::show,
+                onUpdateProfileLiveStatus = profileUpdateLiveStatusSheetState::show,
             )
         },
         body = {
@@ -882,13 +883,6 @@ private fun ProfileAvatar(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(headerState.avatarPadding)
-                .then(
-                    if (isLive) Modifier.border(
-                        width = LiveBorderWidth,
-                        color = LiveStatusColor,
-                        shape = CircleShape,
-                    ) else Modifier,
-                )
                 .clickable { onProfileAvatarClicked() },
             state = remember(
                 key1 = profile.avatar?.uri,
@@ -904,10 +898,19 @@ private fun ProfileAvatar(
                 )
             },
             sharedElement = { state, modifier ->
-                AsyncImage(state, modifier)
+                AsyncImage(
+                    args = state,
+                    modifier = modifier.ifTrue(isLive) {
+                        border(
+                            width = LiveBorderWidth,
+                            color = LiveStatusColor,
+                            shape = CircleShape,
+                        )
+                    },
+                )
             },
         )
-        if (isLive) LiveChip()
+        if (isLive) LiveChip(modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
 
