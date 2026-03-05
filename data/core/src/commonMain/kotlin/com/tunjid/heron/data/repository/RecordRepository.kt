@@ -541,6 +541,13 @@ internal class OfflineRecordRepository @Inject constructor(
     ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
         if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
 
+        val prospectiveMemberRefreshOutcome = profileLookup.refreshProfile(
+            signedInProfileId = signedInProfileId,
+            profileId = create.subjectId,
+        )
+        if (prospectiveMemberRefreshOutcome is Outcome.Failure)
+            return@inCurrentProfileSession prospectiveMemberRefreshOutcome
+
         val createdAt = Clock.System.now()
         val recordKey = RecordKey.generate()
         val listOwnerId = create.listUri.profileId()

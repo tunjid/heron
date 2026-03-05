@@ -127,7 +127,6 @@ import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
-import com.tunjid.heron.ui.rememberSimpleDialogState
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -336,7 +335,6 @@ private fun ListMembers(
     val updatedMembers by rememberUpdatedState(state.tiledItems)
     val listState = rememberLazyListState()
 
-    val removeDialogState = rememberSimpleDialogState()
     var listMemberToDelete by remember { mutableStateOf<ListMember?>(null) }
 
     LazyColumn(
@@ -396,7 +394,6 @@ private fun ListMembers(
                     IconButton(
                         onClick = {
                             listMemberToDelete = item
-                            removeDialogState.show()
                         },
                         content = {
                             Icon(
@@ -413,7 +410,9 @@ private fun ListMembers(
 
     listMemberToDelete?.let { member ->
         SimpleDialog(
-            state = removeDialogState,
+            onDismissRequest = {
+                listMemberToDelete = null
+            },
             title = {
                 SimpleDialogTitle(
                     text = stringResource(Res.string.remove_list_member),
@@ -432,13 +431,15 @@ private fun ListMembers(
                     text = stringResource(CommonStrings.yes),
                 ) {
                     actions(Action.DeleteRecord(member.uri))
-                    removeDialogState.hide()
+                    listMemberToDelete = null
                 }
             },
             dismissButton = {
                 NeutralDialogButton(
                     text = stringResource(CommonStrings.no),
-                    onClick = removeDialogState::hide,
+                    onClick = {
+                        listMemberToDelete = null
+                    },
                 )
             },
         )
