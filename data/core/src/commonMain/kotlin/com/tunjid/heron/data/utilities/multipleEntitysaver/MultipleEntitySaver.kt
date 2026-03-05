@@ -206,107 +206,178 @@ internal class MultipleEntitySaver(
      */
     suspend fun saveInTransaction() = transactionWriter.inTransaction {
         // Order matters to satisfy foreign key constraints
-        val (fullProfileEntities, usablePartialProfileEntities, emptyProfileEntities) = profileEntities.list.triage(
-            firstPredicate = {
-                it.handle != Constants.unknownAuthorHandle &&
-                    it.followersCount != null &&
-                    it.followsCount != null &&
-                    it.postsCount != null
-            },
-            // Profiles from messages may just be empty profiles with Dids
-            secondPredicate = {
-                it.handle != Constants.unknownAuthorHandle && it.displayName != null
-            },
-        )
-        profileDao.upsertProfiles(fullProfileEntities)
-        profileDao.insertOrPartiallyUpdateProfiles(usablePartialProfileEntities)
-        profileDao.insertOrIgnoreProfiles(emptyProfileEntities)
+        if (profileEntities.isNotEmpty) {
+            val (fullProfileEntities, usablePartialProfileEntities, emptyProfileEntities) = profileEntities.list.triage(
+                firstPredicate = {
+                    it.handle != Constants.unknownAuthorHandle &&
+                        it.followersCount != null &&
+                        it.followsCount != null &&
+                        it.postsCount != null
+                },
+                // Profiles from messages may just be empty profiles with Dids
+                secondPredicate = {
+                    it.handle != Constants.unknownAuthorHandle && it.displayName != null
+                },
+            )
+            profileDao.upsertProfiles(fullProfileEntities)
+            profileDao.insertOrPartiallyUpdateProfiles(usablePartialProfileEntities)
+            profileDao.insertOrIgnoreProfiles(emptyProfileEntities)
+        }
 
-        val (fullPostEntities, partialPostEntities, stubbedPostEntities) = postEntities.list.triage(
-            firstPredicate = { it.hasThreadGate != null && !it.cid.isStubbedId() },
-            secondPredicate = { !it.cid.isStubbedId() },
-        )
-        postDao.upsertPosts(fullPostEntities)
-        postDao.insertOrPartiallyUpdatePosts(partialPostEntities)
-        postDao.insertOrIgnorePosts(stubbedPostEntities)
+        if (postEntities.isNotEmpty) {
+            val (fullPostEntities, partialPostEntities, stubbedPostEntities) = postEntities.list.triage(
+                firstPredicate = { it.hasThreadGate != null && !it.cid.isStubbedId() },
+                secondPredicate = { !it.cid.isStubbedId() },
+            )
+            postDao.upsertPosts(fullPostEntities)
+            postDao.insertOrPartiallyUpdatePosts(partialPostEntities)
+            postDao.insertOrIgnorePosts(stubbedPostEntities)
+        }
 
-        embedDao.upsertExternalEmbeds(externalEmbedEntities.list)
-        embedDao.upsertImages(imageEntities.list)
-        embedDao.upsertVideos(videoEntities.list)
+        if (externalEmbedEntities.isNotEmpty) {
+            embedDao.upsertExternalEmbeds(externalEmbedEntities.list)
+        }
+        if (imageEntities.isNotEmpty) {
+            embedDao.upsertImages(imageEntities.list)
+        }
+        if (videoEntities.isNotEmpty) {
+            embedDao.upsertVideos(videoEntities.list)
+        }
 
-        postDao.insertOrIgnorePostPosts(postPostEntities.list)
+        if (postPostEntities.isNotEmpty) {
+            postDao.insertOrIgnorePostPosts(postPostEntities.list)
+        }
 
-        postDao.insertOrIgnorePostExternalEmbeds(postExternalEmbedEntities.list)
-        postDao.insertOrIgnorePostImages(postImageEntities.list)
-        postDao.insertOrIgnorePostVideos(postVideoEntities.list)
+        if (postExternalEmbedEntities.isNotEmpty) {
+            postDao.insertOrIgnorePostExternalEmbeds(postExternalEmbedEntities.list)
+        }
+        if (postImageEntities.isNotEmpty) {
+            postDao.insertOrIgnorePostImages(postImageEntities.list)
+        }
+        if (postVideoEntities.isNotEmpty) {
+            postDao.insertOrIgnorePostVideos(postVideoEntities.list)
+        }
 
-        postDao.upsertPostThreads(postThreadEntities.list)
-        postDao.upsertPostStatistics(postViewerStatisticsEntities.list)
-        postDao.upsertPostLikes(postLikeEntities.list)
-        postDao.upsertBookmarks(postBookmarkEntities.list)
+        if (postThreadEntities.isNotEmpty) {
+            postDao.upsertPostThreads(postThreadEntities.list)
+        }
+        if (postViewerStatisticsEntities.isNotEmpty) {
+            postDao.upsertPostStatistics(postViewerStatisticsEntities.list)
+        }
+        if (postLikeEntities.isNotEmpty) {
+            postDao.upsertPostLikes(postLikeEntities.list)
+        }
+        if (postBookmarkEntities.isNotEmpty) {
+            postDao.upsertBookmarks(postBookmarkEntities.list)
+        }
 
-        val (fullProfileViewerEntities, partialProfileViewerEntities) = profileViewerEntities.list
-            .partition {
-                it.commonFollowersCount != null
-            }
-        profileDao.upsertProfileViewers(
-            fullProfileViewerEntities,
-        )
-        profileDao.insertOrPartiallyUpdateProfileViewers(
-            partialProfileViewerEntities,
-        )
+        if (profileViewerEntities.isNotEmpty) {
+            val (fullProfileViewerEntities, partialProfileViewerEntities) = profileViewerEntities.list
+                .partition {
+                    it.commonFollowersCount != null
+                }
+            profileDao.upsertProfileViewers(
+                fullProfileViewerEntities,
+            )
+            profileDao.insertOrPartiallyUpdateProfileViewers(
+                partialProfileViewerEntities,
+            )
+        }
 
-        notificationsDao.upsertNotifications(notificationEntities.list)
+        if (notificationEntities.isNotEmpty) {
+            notificationsDao.upsertNotifications(notificationEntities.list)
+        }
 
         // Order matters to satisfy foreign key constraints
-        val (fullListEntities, partialListEntities) = listEntities.list.partition {
-            it.description != null && it.indexedAt != Instant.DISTANT_PAST
+        if (listEntities.isNotEmpty) {
+            val (fullListEntities, partialListEntities) = listEntities.list.partition {
+                it.description != null && it.indexedAt != Instant.DISTANT_PAST
+            }
+            listDao.upsertLists(fullListEntities)
+            listDao.insertOrPartiallyUpdateLists(partialListEntities)
         }
-        listDao.upsertLists(fullListEntities)
-        listDao.insertOrPartiallyUpdateLists(partialListEntities)
 
-        listDao.upsertListItems(listItemEntities.list)
-        starterPackDao.upsertStarterPacks(starterPackEntities.list)
+        if (listItemEntities.isNotEmpty) {
+            listDao.upsertListItems(listItemEntities.list)
+        }
+        if (starterPackEntities.isNotEmpty) {
+            starterPackDao.upsertStarterPacks(starterPackEntities.list)
+        }
 
-        feedGeneratorDao.upsertFeedGenerators(feedGeneratorEntities.list)
+        if (feedGeneratorEntities.isNotEmpty) {
+            feedGeneratorDao.upsertFeedGenerators(feedGeneratorEntities.list)
+        }
 
-        labelDao.upsertLabelers(labelerEntities.list)
-        labelDao.upsertLabelValueDefinitions(labelDefinitionsEntities.list)
-        labelDao.upsertLabels(labelEntities.list)
+        if (labelerEntities.isNotEmpty) {
+            labelDao.upsertLabelers(labelerEntities.list)
+        }
+        if (labelDefinitionsEntities.isNotEmpty) {
+            labelDao.upsertLabelValueDefinitions(labelDefinitionsEntities.list)
+        }
+        if (labelEntities.isNotEmpty) {
+            labelDao.upsertLabels(labelEntities.list)
+        }
 
-        timelineDao.upsertTimelineItems(timelineItemEntities.list)
+        if (timelineItemEntities.isNotEmpty) {
+            timelineDao.upsertTimelineItems(timelineItemEntities.list)
+        }
 
-        messageDao.upsertConversations(conversationEntities.list)
-        messageDao.upsertConversationMembers(conversationMemberEntities.list)
-        messageDao.upsertMessages(messageEntities.list)
-        messageDao.deleteMessageReactions(
-            messageEntities.list.mapTo(
-                mutableSetOf(),
-                MessageEntity::id,
-            ),
-        )
-        messageDao.upsertMessageReactions(messageReactionEntities.list)
-        messageDao.upsertMessageFeeds(messageFeedGeneratorEntities.list)
-        messageDao.upsertMessageLists(messageListEntities.list)
-        messageDao.upsertMessageStarterPacks(messageStarterPackEntities.list)
-        messageDao.upsertMessagePosts(messagePostEntities.list)
+        if (conversationEntities.isNotEmpty) {
+            messageDao.upsertConversations(conversationEntities.list)
+        }
+        if (conversationMemberEntities.isNotEmpty) {
+            messageDao.upsertConversationMembers(conversationMemberEntities.list)
+        }
+        if (messageEntities.isNotEmpty) {
+            messageDao.upsertMessages(messageEntities.list)
+            messageDao.deleteMessageReactions(
+                messageEntities.list.mapTo(
+                    mutableSetOf(),
+                    MessageEntity::id,
+                ),
+            )
+        }
+        if (messageReactionEntities.isNotEmpty) {
+            messageDao.upsertMessageReactions(messageReactionEntities.list)
+        }
+        if (messageFeedGeneratorEntities.isNotEmpty) {
+            messageDao.upsertMessageFeeds(messageFeedGeneratorEntities.list)
+        }
+        if (messageListEntities.isNotEmpty) {
+            messageDao.upsertMessageLists(messageListEntities.list)
+        }
+        if (messageStarterPackEntities.isNotEmpty) {
+            messageDao.upsertMessageStarterPacks(messageStarterPackEntities.list)
+        }
+        if (messagePostEntities.isNotEmpty) {
+            messageDao.upsertMessagePosts(messagePostEntities.list)
+        }
 
-        threadGateDao.deleteThreadGates(
-            postUris = postEntities.list.mapNotNull {
-                if (it.hasThreadGate == false) it.uri
-                else null
-            },
-        )
+        if (postEntities.isNotEmpty) {
+            threadGateDao.deleteThreadGates(
+                postUris = postEntities.list.mapNotNull {
+                    if (it.hasThreadGate == false) it.uri
+                    else null
+                },
+            )
+        }
+
         // Standard site entities: publications before documents/subscriptions (FK ordering)
-        val (fullPublicationEntities, partialPublicationEntities) = standardPublicationEntities.list.partition {
-            it.url != Collections.PLACEHOLDER_URL && it.cid != null
+        if (standardPublicationEntities.isNotEmpty) {
+            val (fullPublicationEntities, partialPublicationEntities) = standardPublicationEntities.list.partition {
+                it.url != Collections.PLACEHOLDER_URL && it.cid != null
+            }
+            standardSiteDao.insertOrIgnorePublications(partialPublicationEntities)
+            standardSiteDao.upsertPublications(fullPublicationEntities)
         }
-        standardSiteDao.insertOrIgnorePublications(partialPublicationEntities)
-        standardSiteDao.upsertPublications(fullPublicationEntities)
-        standardSiteDao.upsertDocuments(standardDocumentEntities.list)
-        standardSiteDao.upsertSubscriptions(standardSubscriptionEntities.list)
+        if (standardDocumentEntities.isNotEmpty) {
+            standardSiteDao.upsertDocuments(standardDocumentEntities.list)
+        }
+        if (standardSubscriptionEntities.isNotEmpty) {
+            standardSiteDao.upsertSubscriptions(standardSubscriptionEntities.list)
+        }
 
-        if (threadGateEntities.list.isNotEmpty()) {
+        if (threadGateEntities.isNotEmpty) {
             threadGateDao.upsertThreadGates(threadGateEntities.list)
             val threadGateUris = threadGateEntities.list.map(
                 ThreadGateEntity::uri,
