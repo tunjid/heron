@@ -432,7 +432,7 @@ private fun ListMembers(
             dismissButton = {
                 NeutralDialogButton(
                     text = stringResource(CommonStrings.no),
-                    onClick = removeDialogState::hide
+                    onClick = removeDialogState::hide,
                 )
             },
         )
