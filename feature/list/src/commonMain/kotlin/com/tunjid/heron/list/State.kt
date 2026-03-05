@@ -65,6 +65,8 @@ data class State(
     @Transient
     val recentLists: List<FeedList> = emptyList(),
     @Transient
+    val isOnProfilesTab: Boolean = false,
+    @Transient
     val messages: List<Memo> = emptyList(),
 )
 
@@ -193,6 +195,10 @@ sealed class Action(val key: String) {
         val profileId: ProfileId,
         val listUri: ListUri,
     ) : Action(key = "AddListMember")
+
+    data class CurrentPageChanged(
+        val currentPage: Int,
+    ) : Action(key = "CurrentPageChanged")
 
     data class UpdateFeedListStatus(
         val update: Timeline.Update,

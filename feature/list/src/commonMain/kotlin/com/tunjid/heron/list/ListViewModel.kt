@@ -162,6 +162,7 @@ class ActualListViewModel(
                         is Action.AddListMember -> action.flow.addListMemberMutations(
                             writeQueue = writeQueue,
                         )
+                        is Action.CurrentPageChanged -> action.flow.currentPageMutations()
                     }
                 },
             )
@@ -395,6 +396,14 @@ private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(messages = messages - action.message)
+    }
+
+private fun Flow<Action.CurrentPageChanged>.currentPageMutations(): Flow<Mutation<State>> =
+    mapToMutation { action ->
+        copy(
+            isOnProfilesTab = stateHolders.getOrNull(action.currentPage)
+                is ListScreenStateHolders.Members,
+        )
     }
 
 private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
