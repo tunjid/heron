@@ -222,14 +222,20 @@ internal fun ListScreen(
                             )
                         },
                 ) {
-                    Text(
-                        modifier = Modifier
-                            .padding(
-                                horizontal = 16.dp,
-                                vertical = 8.dp,
-                            ),
-                        text = state.timelineState?.timeline?.description ?: "",
-                    )
+                    state.timelineState
+                        ?.timeline
+                        ?.description
+                        ?.takeIf(String::isNotBlank)
+                        ?.let { description ->
+                            Text(
+                                modifier = Modifier
+                                    .padding(
+                                        horizontal = 16.dp,
+                                        vertical = 8.dp,
+                                    ),
+                                text = description,
+                            )
+                        }
                     Tabs(
                         modifier = Modifier
                             .fillMaxWidth()
