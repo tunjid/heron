@@ -129,6 +129,10 @@ class ActualSettingsViewModel(
                         userDataRepository = userDataRepository,
                     )
 
+                    is Action.SetShowTrendingTopics -> action.flow.toggleShowTrendingTopics(
+                        userDataRepository = userDataRepository,
+                    )
+
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
@@ -305,6 +309,13 @@ private fun Flow<Action.SetShowPostEngagementMetrics>.toggleShowPostEngagementMe
 ): Flow<Mutation<State>> =
     mapToManyMutations { (showPostEngagementMetrics) ->
         userDataRepository.setShowPostEngagementMetrics(showPostEngagementMetrics)
+    }
+
+private fun Flow<Action.SetShowTrendingTopics>.toggleShowTrendingTopics(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    mapToManyMutations { (showTrendingTopics) ->
+        userDataRepository.setShowTrendingTopics(showTrendingTopics)
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =

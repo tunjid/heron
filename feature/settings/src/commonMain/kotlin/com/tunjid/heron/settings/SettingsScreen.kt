@@ -130,6 +130,9 @@ private fun MainSection(
                 setShowPostEngagementMetrics = {
                     actions(Action.SetShowPostEngagementMetrics(it))
                 },
+                setShowTrendingTopics = {
+                    actions(Action.SetShowTrendingTopics(it))
+                },
             )
             ModerationItem(
                 modifier = Modifier
