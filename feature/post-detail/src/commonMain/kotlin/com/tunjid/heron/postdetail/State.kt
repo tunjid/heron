@@ -40,6 +40,8 @@ data class State(
     val anchorPost: Post?,
     val sharedElementPrefix: String,
     @Transient
+    val order: TimelineItem.Thread.Order? = null,
+    @Transient
     val source: Timeline.Source? = null,
     @Transient
     val timelinePosition: CursorQuery.Data? = null,
@@ -89,6 +91,13 @@ fun State(route: Route): State {
 }
 
 sealed class Action(val key: String) {
+
+    sealed class Load : Action(key = "Load") {
+        data object Initial : Load()
+        data class Order(
+            val order: TimelineItem.Thread.Order,
+        ) : Load()
+    }
 
     data class UpdateMutedWord(
         val mutedWordPreference: List<MutedWordPreference>,

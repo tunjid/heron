@@ -184,6 +184,7 @@ interface TimelineRepository {
 
     fun postThreadedItems(
         postUri: PostUri,
+        order: TimelineItem.Thread.Order,
     ): Flow<List<TimelineItem>>
 
     suspend fun updatePreferredPresentation(
@@ -517,9 +518,11 @@ internal class OfflineTimelineRepository(
 
     override fun postThreadedItems(
         postUri: PostUri,
+        order: TimelineItem.Thread.Order,
     ): Flow<List<TimelineItem>> = savedStateDataSource.singleSessionFlow { signedInProfileId ->
         postDao.postThread(
             postUri = postUri.uri,
+            sortOrder = order.sortOrder,
         )
             .distinctUntilChanged()
             .flatMapLatest { postThread ->

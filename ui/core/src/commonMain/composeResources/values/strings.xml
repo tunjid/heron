@@ -79,6 +79,12 @@
     <string name="viewer_state_block_account">Block account</string>
     <string name="viewer_state_unblock_account">Unblock account</string>
     <string name="viewer_state_blocked">Blocked</string>
+
+    <string name="timeline_thread_oldest_first">Oldest replies first</string>
+    <string name="timeline_thread_newest_first">Newest replies first</string>
+    <string name="timeline_thread_top_first">Top replies first</string>
+    <string name="timeline_thread_order">Thread reply order</string>
+
     <string name="notifications_followed_you_description">Followed you</string>
     <string name="notifications_followed_you">%1$s followed you</string>
     <string name="notifications_multiple_followed">%1$s and %2$d others followed you</string>

@@ -328,13 +328,14 @@ interface PostDao {
             WITH RECURSIVE
               -- 1. ParentHierarchy CTE: Recursively finds all parent URIs for the given post
               -- and calculates their generation (negative).
-              ParentHierarchy(uri, rootPostUri, generation, ancestorCreated, postCreated) AS (
+              ParentHierarchy(uri, rootPostUri, generation, ancestorCreated, postCreated, ancestorLikeCount) AS (
                 SELECT
                   pt.parentPostUri, -- each parent is its own root
                   pt.postUri AS rootPostUri,
                   -1 AS generation,
                   -1 AS ancestorCreated, -- Always a negative constant for ancestors
-                  -1 AS postCreated -- Always a negative constant for ancestors
+                  -1 AS postCreated, -- Always a negative constant for ancestors
+                  0 AS ancestorLikeCount
                 FROM
                   postThreads pt
                 WHERE postUri = :postUri
@@ -344,7 +345,8 @@ interface PostDao {
                   ph.rootPostUri,
                   ph.generation - 1,
                   ph.ancestorCreated - 1,
-                  ph.postCreated - 1
+                  ph.postCreated - 1,
+                  0
                 FROM
                   postThreads pt
                 INNER JOIN
@@ -353,13 +355,14 @@ interface PostDao {
 
               -- 2. ChildHierarchy CTE: Recursively finds all child URIs for the given post
               -- and calculates their generation (positive).
-              ChildHierarchy(uri, rootPostUri, generation, ancestorCreated, postCreated) AS (
+              ChildHierarchy(uri, rootPostUri, generation, ancestorCreated, postCreated, ancestorLikeCount) AS (
                 SELECT
                   pt.postUri,
                   pt.postUri AS rootPostUri, -- add the very first reply to the OP as the root
                   1 AS generation,
                   p.createdAt as ancestorCreated, -- sort all replies by the very first reply to the OP
-                  p.createdAt as postCreated -- second sort is the actual post's createdAt
+                  p.createdAt as postCreated, -- second sort is the actual post's createdAt
+                  COALESCE(p.likeCount, 0) as ancestorLikeCount -- like count of the root reply for top sort
                 FROM
                   postThreads pt
                 JOIN posts p ON pt.postUri = p.uri
@@ -371,7 +374,8 @@ interface PostDao {
                   ch.rootPostUri,
                   ch.generation + 1,
                   ch.ancestorCreated, -- preserve the ancestorCreatedDate in the thread
-                  p.createdAt -- pull in the actual post's createdAt date
+                  p.createdAt, -- pull in the actual post's createdAt date
+                  ch.ancestorLikeCount -- preserve the root reply's like count in the thread
                 FROM
                   postThreads pt
                 INNER JOIN posts p ON pt.postUri = p.uri
@@ -381,16 +385,17 @@ interface PostDao {
 
               -- 3. FullThread CTE: Combines the URIs and generations from parents, children,
               -- and the post itself (generation 0).
-              FullThread(uri, rootPostUri, generation, ancestorCreated, postCreated) AS (
-                SELECT uri, rootPostUri, generation, ancestorCreated, postCreated FROM ParentHierarchy
+              FullThread(uri, rootPostUri, generation, ancestorCreated, postCreated, ancestorLikeCount) AS (
+                SELECT uri, rootPostUri, generation, ancestorCreated, postCreated, ancestorLikeCount FROM ParentHierarchy
                 UNION
-                SELECT uri, rootPostUri, generation, ancestorCreated, postCreated FROM ChildHierarchy
+                SELECT uri, rootPostUri, generation, ancestorCreated, postCreated, ancestorLikeCount FROM ChildHierarchy
                 UNION
-                SELECT :postUri, NULL, 0, 0, 0
+                SELECT :postUri, NULL, 0, 0, 0, 0
               )
 
             -- 4. Final SELECT: Fetches all columns from the `posts` table for every URI
             -- identified in the FullThread CTE, along with its calculated generation and the root post URI.
+            -- sortOrder: 0 = oldest first, 1 = newest first, 2 = top (most liked) first
             SELECT
               p.*,
               ft.rootPostUri AS rootPostUri,
@@ -405,11 +410,28 @@ interface PostDao {
             LEFT JOIN
               postThreads pt ON pt.postUri = p.uri
             ORDER BY
-              ft.ancestorCreated, ft.generation, ft.postCreated; -- sort by the first reply to the op, then the generation, then the post itself
+              -- Tier 1: ancestors before main post before replies
+              CASE
+                WHEN ft.generation < 0 THEN 0
+                WHEN ft.generation = 0 THEN 1
+                ELSE 2
+              END,
+              -- Tier 2: within ancestors, sort by generation (most distant first)
+              CASE WHEN ft.generation < 0 THEN ft.generation END,
+              -- Tier 3: within replies, sort by chosen criteria for the root reply chain
+              CASE
+                WHEN ft.generation > 0 AND :sortOrder = 0 THEN ft.ancestorCreated
+                WHEN ft.generation > 0 AND :sortOrder = 1 THEN -ft.ancestorCreated
+                WHEN ft.generation > 0 AND :sortOrder = 2 THEN -ft.ancestorLikeCount
+              END,
+              -- Tier 4: within same reply chain, sort by depth then creation time
+              ft.generation,
+              ft.postCreated;
         """,
     )
     fun postThread(
         postUri: String,
+        sortOrder: Int,
     ): Flow<List<ThreadedPostEntity>>
 
     @Query(
