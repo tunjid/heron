@@ -50,6 +50,10 @@ object UiTokens {
 
     val BookmarkBlue: Color = Color(0xFF1D9BF0)
 
+    val LiveStatusColor = Color(0xFFE5143A)
+    val LiveBorderWidth = 2.5.dp
+    val LiveChipCorner = 4.dp
+
     val splashScreenDuration = 1.seconds
 
     const val SignedInUserAvatarSharedElementKey = "self"
