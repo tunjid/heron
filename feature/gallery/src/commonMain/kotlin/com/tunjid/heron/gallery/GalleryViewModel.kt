@@ -17,6 +17,7 @@
 package com.tunjid.heron.gallery
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ThreadViewPreference.Companion.order
@@ -47,6 +48,7 @@ import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapLatestToManyMutations
+import com.tunjid.mutator.coroutines.mapLatestToMutation
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
@@ -135,6 +137,10 @@ class ActualGalleryViewModel(
                             writeQueue = writeQueue,
                         )
                         is Action.DeleteRecord -> action.flow.deleteRecordMutations(
+                            writeQueue = writeQueue,
+                        )
+                        is Action.TextChanged -> action.flow.inputTextChangeMutations()
+                        is Action.SendReply -> action.flow.sendReplyMutations(
                             writeQueue = writeQueue,
                         )
                         is Action.LoadComments -> action.flow.loadCommentsMutations(
@@ -245,96 +251,92 @@ private fun profileRelationshipMutations(
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        val writable = Writable.Interaction(action.interaction)
-        val status = writeQueue.enqueue(writable)
-        writable.writeStatusMessage(status)?.let {
-            emit { copy(messages = messages + it) }
-        }
-    }
+): Flow<Mutation<State>> = enqueue(writeQueue) { action ->
+    Writable.Interaction(action.interaction)
+}
 
 private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = mapToManyMutations {
-    val writable = Writable.TimelineUpdate(
+): Flow<Mutation<State>> = enqueue(writeQueue) { action ->
+    Writable.TimelineUpdate(
         Timeline.Update.OfMutedWord.ReplaceAll(
-            mutedWordPreferences = it.mutedWordPreference,
+            mutedWordPreferences = action.mutedWordPreference,
         ),
     )
-    val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
 }
 
 private fun Flow<Action.BlockAccount>.blockAccountMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
-    val writable = Writable.Restriction(
+): Flow<Mutation<State>> = enqueue(writeQueue) { action ->
+    Writable.Restriction(
         Profile.Restriction.Block.Add(
             signedInProfileId = action.signedInProfileId,
             profileId = action.profileId,
         ),
     )
-    val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
 }
 
 private fun Flow<Action.MuteAccount>.muteAccountMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
-    val writable = Writable.Restriction(
+): Flow<Mutation<State>> = enqueue(writeQueue) { action ->
+    Writable.Restriction(
         Profile.Restriction.Mute.Add(
             signedInProfileId = action.signedInProfileId,
             profileId = action.profileId,
         ),
     )
-    val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
 }
 
 private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = mapToManyMutations { action ->
-    val writable = Writable.RecordDeletion(
+): Flow<Mutation<State>> = enqueue(writeQueue) { action ->
+    Writable.RecordDeletion(
         recordUri = action.recordUri,
     )
-    val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
 }
 
 private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        val writable = Writable.Connection(
-            when (val following = action.following) {
-                null -> Profile.Connection.Follow(
-                    signedInProfileId = action.signedInProfileId,
-                    profileId = action.viewedProfileId,
-                    followedBy = action.followedBy,
-                )
+): Flow<Mutation<State>> = enqueue(writeQueue) { action ->
+    Writable.Connection(
+        when (val following = action.following) {
+            null -> Profile.Connection.Follow(
+                signedInProfileId = action.signedInProfileId,
+                profileId = action.viewedProfileId,
+                followedBy = action.followedBy,
+            )
 
-                else -> Profile.Connection.Unfollow(
-                    signedInProfileId = action.signedInProfileId,
-                    profileId = action.viewedProfileId,
-                    followUri = following,
-                    followedBy = action.followedBy,
-                )
-            },
-        )
-        val status = writeQueue.enqueue(writable)
-        writable.writeStatusMessage(status)?.let {
-            emit { copy(messages = messages + it) }
-        }
+            else -> Profile.Connection.Unfollow(
+                signedInProfileId = action.signedInProfileId,
+                profileId = action.viewedProfileId,
+                followUri = following,
+                followedBy = action.followedBy,
+            )
+        },
+    )
+}
+
+private fun Flow<Action.TextChanged>.inputTextChangeMutations(): Flow<Mutation<State>> =
+    mapLatestToMutation { action ->
+        copy(inputText = action.inputText)
     }
+
+private fun Flow<Action.SendReply>.sendReplyMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = enqueue(writeQueue) { action ->
+    Writable.Create(
+        request = Post.Create.Request(
+            authorId = action.authorId,
+            text = action.text,
+            links = action.links,
+            metadata = Post.Create.Metadata(
+                reply = Post.Create.Reply(
+                    parent = action.parent,
+                ),
+            ),
+        ),
+    )
+}
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
@@ -346,7 +348,7 @@ fun Flow<Action.LoadComments>.loadCommentsMutations(
     timelineRepository: TimelineRepository,
     userDataRepository: UserDataRepository,
 ): Flow<Mutation<State>> = flatMapLatest { action ->
-    val postUri = action.postUri
+    val post = action.post
     val order = action.order
         ?: state().order
         ?: userDataRepository.preferences
@@ -355,10 +357,15 @@ fun Flow<Action.LoadComments>.loadCommentsMutations(
             .order()
 
     flow {
-        emit { copy(order = order) }
+        emit {
+            copy(
+                order = order,
+                commentsPost = post,
+            )
+        }
         emitAll(
             timelineRepository.postThreadedItems(
-                postUri = postUri,
+                postUri = post.uri,
                 order = order,
             )
                 .mapToMutation { timelineItems ->
@@ -449,6 +456,18 @@ private fun verticalTimelineMutations(
             },
     )
 }
+
+private fun <T> Flow<T>.enqueue(
+    writeQueue: WriteQueue,
+    mapper: (T) -> Writable,
+): Flow<Mutation<State>> =
+    mapToManyMutations { action ->
+        val writable = mapper(action)
+        val status = writeQueue.enqueue(writable)
+        writable.writeStatusMessage(status)?.let {
+            emit { copy(messages = messages + it) }
+        }
+    }
 
 private fun profileGalleryTimeline(
     source: Timeline.Source.Profile,

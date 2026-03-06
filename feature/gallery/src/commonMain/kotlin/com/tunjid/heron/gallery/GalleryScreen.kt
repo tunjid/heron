@@ -98,6 +98,7 @@ import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Compan
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.Indicator
+import com.tunjid.heron.ui.text.links
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
@@ -192,6 +193,7 @@ internal fun GalleryScreen(
     val updatedItems by rememberUpdatedState(state.items)
     val pagerState = rememberPagerState(pageCount = updatedItems::size)
     val horizontalPagerStates = remember { PagerStates<PostUri>() }
+    val commentsState = rememberCommentsState()
 
     val dragToPopState = rememberDragToPopState(
         shouldDragToPop = remember(
@@ -202,6 +204,8 @@ internal fun GalleryScreen(
             var overscrollCount = 0
 
             canPop@{ delta ->
+                commentsState.collapse()
+
                 // Already dragging, continue
                 if (isDraggingToPop) return@canPop true
 
@@ -236,8 +240,6 @@ internal fun GalleryScreen(
             }
         },
     )
-
-    val commentsState = rememberCommentsState()
 
     Box(
         modifier = modifier,
@@ -274,11 +276,27 @@ internal fun GalleryScreen(
             },
         )
 
+        val commentsPost = state.commentsPost
         Comments(
             paneScaffoldState = paneScaffoldState,
             state = commentsState,
             modifier = Modifier.fillMaxSize(),
             comments = state.comments,
+            inputText = state.inputText,
+            onTextChanged = { actions(Action.TextChanged(it)) },
+            onSendReply = {
+                commentsPost ?: return@Comments
+                val signedInProfileId = state.signedInProfileId ?: return@Comments
+                val inputText = state.inputText
+                actions(
+                    Action.SendReply(
+                        authorId = signedInProfileId,
+                        parent = commentsPost,
+                        text = inputText.text,
+                        links = inputText.annotatedString.links(),
+                    ),
+                )
+            },
             actions = actions,
         )
     }
@@ -502,21 +520,10 @@ private fun HorizontalItems(
                             commentsState.expand()
                             actions(
                                 Action.LoadComments(
-                                    postUri = item.post.uri,
+                                    post = item.post,
                                     order = null,
                                 ),
                             )
-//                            actions(
-//                                Action.Navigate.To(
-//                                    if (paneScaffoldState.isSignedOut) signInDestination()
-//                                    else composePostDestination(
-//                                        type = Post.Create.Reply(
-//                                            parent = interaction.post,
-//                                        ),
-//                                        sharedElementPrefix = item.sharedElementPrefix,
-//                                    ),
-//                                ),
-//                            )
                         }
                     }
                 },

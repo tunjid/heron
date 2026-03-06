@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.gallery
 
+import androidx.compose.ui.text.input.TextFieldValue
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
@@ -24,6 +25,7 @@ import com.tunjid.heron.data.core.models.Embed
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.Image as EmbeddedImage
 import com.tunjid.heron.data.core.models.ImageList
+import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
@@ -48,6 +50,7 @@ import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.ui.text.Memo
+import com.tunjid.heron.ui.text.TextFieldValueSerializer
 import com.tunjid.tiler.TiledList
 import com.tunjid.tiler.emptyTiledList
 import com.tunjid.tiler.tiledListOf
@@ -63,6 +66,9 @@ data class State(
     val signedInProfileId: ProfileId? = null,
     val canScrollVertically: Boolean = false,
     val cursorData: CursorQuery.Data?,
+    val commentsPost: Post? = null,
+    @Serializable(with = TextFieldValueSerializer::class)
+    val inputText: TextFieldValue = TextFieldValue(),
     @Transient
     val order: TimelineItem.Thread.Order? = null,
     @Transient
@@ -183,7 +189,7 @@ sealed class Action(val key: String) {
     ) : Action(key = "UpdateMutedWord")
 
     data class LoadComments(
-        val postUri: PostUri,
+        val post: Post,
         val order: TimelineItem.Thread.Order?,
     ) : Action(key = "Load")
 
@@ -208,6 +214,17 @@ sealed class Action(val key: String) {
     data class SnackbarDismissed(
         val message: Memo,
     ) : Action(key = "SnackbarDismissed")
+
+    data class TextChanged(
+        val inputText: TextFieldValue,
+    ) : Action(key = "TextChanged")
+
+    data class SendReply(
+        val authorId: ProfileId,
+        val parent: Post,
+        val text: String,
+        val links: List<Link>,
+    ) : Action(key = "SendReply")
 
     data class ToggleViewerState(
         val signedInProfileId: ProfileId,

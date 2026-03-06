@@ -16,6 +16,11 @@
 
 package com.tunjid.heron.gallery.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
@@ -26,9 +31,12 @@ import androidx.compose.foundation.gestures.animateToWithDecay
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -37,11 +45,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.listSaver
@@ -49,12 +63,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
@@ -70,6 +89,7 @@ import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.recordDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
+import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
@@ -77,9 +97,14 @@ import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.text.withFormattedTextPost
+import heron.feature.gallery.generated.resources.Res
+import heron.feature.gallery.generated.resources.reply_hint
+import heron.feature.gallery.generated.resources.reply_send
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun rememberCommentsState(): CommentsState {
@@ -124,7 +149,9 @@ class CommentsState internal constructor(
     }
 
     fun collapse() {
-        if (anchoredDraggableState.currentValue != Anchor.Collapsed) scope.launch {
+        val shouldCollapse = anchoredDraggableState.currentValue != Anchor.Collapsed &&
+            anchoredDraggableState.targetValue != Anchor.Collapsed
+        if (shouldCollapse) scope.launch {
             anchoredDraggableState.animateTo(Anchor.Collapsed)
         }
     }
@@ -136,6 +163,9 @@ fun Comments(
     state: CommentsState,
     modifier: Modifier = Modifier,
     comments: List<TimelineItem>,
+    inputText: TextFieldValue,
+    onTextChanged: (TextFieldValue) -> Unit,
+    onSendReply: () -> Unit,
     actions: (Action) -> Unit,
 ) {
     val navigateTo = remember(actions) {
@@ -290,8 +320,106 @@ fun Comments(
                 }
             }
         }
+
+        AnimatedVisibility(
+            modifier = Modifier
+                .align(Alignment.BottomCenter),
+            visible = state.isNotCollapsed,
+            enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
+        ) {
+            CommentReplyInput(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(horizontal = 16.dp)
+                    .padding(vertical = 8.dp)
+                    .navigationBarsPadding(),
+                paneScaffoldState = paneScaffoldState,
+                inputText = inputText,
+                onTextChanged = onTextChanged,
+                onSendReply = onSendReply,
+            )
+        }
     }
 }
+
+@Composable
+private fun CommentReplyInput(
+    modifier: Modifier = Modifier,
+    paneScaffoldState: PaneScaffoldState,
+    inputText: TextFieldValue,
+    onTextChanged: (TextFieldValue) -> Unit,
+    onSendReply: () -> Unit,
+) {
+    var textFieldFocusState by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    shape = ReplyInputShape,
+                )
+                .padding(vertical = 12.dp)
+                .weight(1f)
+                .heightIn(max = 80.dp),
+        ) {
+            var lastFocusState by remember { mutableStateOf(false) }
+            BasicTextField(
+                value = inputText,
+                onValueChange = { onTextChanged(it.withFormattedTextPost()) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .align(Alignment.CenterStart)
+                    .onFocusChanged { state ->
+                        if (lastFocusState != state.isFocused) {
+                            textFieldFocusState = state.isFocused
+                        }
+                        lastFocusState = state.isFocused
+                    },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Default,
+                ),
+                cursorBrush = SolidColor(LocalContentColor.current),
+                textStyle = LocalTextStyle.current.copy(color = LocalContentColor.current),
+            )
+
+            if (inputText.text.isEmpty() && !textFieldFocusState) {
+                Text(
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start = 16.dp),
+                    text = stringResource(Res.string.reply_hint),
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
+                )
+            }
+        }
+
+        paneScaffoldState.PaneFab(
+            modifier = Modifier
+                .height(36.dp),
+            text = stringResource(Res.string.reply_send),
+            icon = null,
+            expanded = true,
+            enabled = inputText.text.isNotBlank(),
+            onClick = onSendReply,
+        )
+    }
+}
+
+private val ReplyInputShape = RoundedCornerShape(32.dp)
+
+private val CommentsState.isNotCollapsed: Boolean
+    get() = anchoredDraggableState.currentValue != Anchor.Collapsed
 
 private val CommentsState.contentOffset
     get() = (height - anchoredDraggableState.requireOffset())
