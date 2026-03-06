@@ -299,6 +299,14 @@ internal fun GalleryScreen(
             },
         )
     }
+    LaunchedEffect(Unit) {
+        snapshotFlow {
+            pagerState.isScrollInProgress
+        }
+            .collect { isScrolling ->
+                if (isScrolling) commentsState.collapse()
+            }
+    }
 }
 
 @Composable

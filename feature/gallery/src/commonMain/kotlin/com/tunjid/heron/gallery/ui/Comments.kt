@@ -39,7 +39,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -118,28 +117,16 @@ class CommentsState internal constructor(
         anchors = currentDraggableAnchors(),
     )
 
-    val contentOffset
-        get() = (height - anchoredDraggableState.requireOffset())
-            .toOffset()
-            .round()
-
-    val progress: Float get() = anchoredDraggableState.requireOffset() / height
-
-    fun updateHeight(height: Int) {
-        this.height = height.toFloat()
-        anchoredDraggableState.updateAnchors(currentDraggableAnchors())
-    }
-
     fun expand() {
         scope.launch {
             anchoredDraggableState.animateTo(Anchor.Halfway)
         }
     }
 
-    private fun currentDraggableAnchors() = DraggableAnchors {
-        Anchor.Collapsed at 0f
-        Anchor.Halfway at height / 2
-        Anchor.Expanded at height
+    fun collapse() {
+        if (anchoredDraggableState.currentValue != Anchor.Collapsed) scope.launch {
+            anchoredDraggableState.animateTo(Anchor.Collapsed)
+        }
     }
 }
 
@@ -304,6 +291,24 @@ fun Comments(
             }
         }
     }
+}
+
+private val CommentsState.contentOffset
+    get() = (height - anchoredDraggableState.requireOffset())
+        .toOffset()
+        .round()
+
+private val CommentsState.progress: Float get() = anchoredDraggableState.requireOffset() / height
+
+private fun CommentsState.updateHeight(height: Int) {
+    this.height = height.toFloat()
+    anchoredDraggableState.updateAnchors(currentDraggableAnchors())
+}
+
+private fun CommentsState.currentDraggableAnchors() = DraggableAnchors {
+    Anchor.Collapsed at 0f
+    Anchor.Halfway at height / 2
+    Anchor.Expanded at height
 }
 
 private fun CommentsState.nestedScrollConnection() =
