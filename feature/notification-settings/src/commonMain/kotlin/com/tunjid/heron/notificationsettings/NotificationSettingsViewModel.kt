@@ -24,11 +24,10 @@ import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
-import com.tunjid.heron.timeline.utilities.writeStatusMessage
+import com.tunjid.heron.timeline.utilities.enqueue
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.treenav.strings.Route
@@ -104,14 +103,15 @@ private fun Flow<Action.CacheNotificationPreferenceUpdate>.cacheUpdateMutations(
 private fun Flow<Action.UpdateNotificationPreferences>.updateNotificationPreferencesMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        val writable = Writable.NotificationUpdate(
-            updates = action.updates,
-        )
-        val status = writeQueue.enqueue(writable)
-        writable.writeStatusMessage(status)?.let {
-            emit { copy(messages = messages + it) }
-        }
+    enqueue(
+        writeQueue = writeQueue,
+        toWritable = { action ->
+            Writable.NotificationUpdate(
+                updates = action.updates,
+            )
+        },
+    ) { _, memo ->
+        if (memo != null) emit { copy(messages = messages + memo) }
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =

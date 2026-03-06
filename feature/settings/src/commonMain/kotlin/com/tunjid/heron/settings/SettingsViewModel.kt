@@ -31,7 +31,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationContext
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.navigation.resetAuthNavigation
-import com.tunjid.heron.timeline.utilities.writeStatusMessage
+import com.tunjid.heron.timeline.utilities.enqueue
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -187,23 +187,33 @@ private fun Flow<Action.UpdateSection>.updateSectionMutations(): Flow<Mutation<S
 private fun Flow<Action.UpdateFeedPreference>.updateFeedPreferenceMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    enqueue(writeQueue) { action ->
-        Writable.TimelineUpdate(
-            update = Timeline.Update.OfFeedPreference.Add(
-                action.feedPreference,
-            ),
-        )
+    enqueue(
+        writeQueue = writeQueue,
+        toWritable = { action ->
+            Writable.TimelineUpdate(
+                update = Timeline.Update.OfFeedPreference.Add(
+                    action.feedPreference,
+                ),
+            )
+        },
+    ) { _, memo ->
+        if (memo != null) emit { copy(messages = messages + memo) }
     }
 
 private fun Flow<Action.UpdateThreadViewPreference>.updateThreadPreferenceMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    enqueue(writeQueue) { action ->
-        Writable.TimelineUpdate(
-            update = Timeline.Update.OfThreadViewPreference.ThreadView(
-                action.threadViewPreference,
-            ),
-        )
+    enqueue(
+        writeQueue = writeQueue,
+        toWritable = { action ->
+            Writable.TimelineUpdate(
+                update = Timeline.Update.OfThreadViewPreference.ThreadView(
+                    action.threadViewPreference,
+                ),
+            )
+        },
+    ) { _, memo ->
+        if (memo != null) emit { copy(messages = messages + memo) }
     }
 
 private fun Flow<Action.SwitchSession>.handleSwitchSessionMutations(
@@ -321,18 +331,6 @@ private fun Flow<Action.SetShowTrendingTopics>.toggleShowTrendingTopics(
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(messages = messages - action.message)
-    }
-
-private fun <T> Flow<T>.enqueue(
-    writeQueue: WriteQueue,
-    mapper: (T) -> Writable,
-): Flow<Mutation<State>> =
-    mapLatestToManyMutations { action ->
-        val writable = mapper(action)
-        val status = writeQueue.enqueue(writable)
-        writable.writeStatusMessage(status)?.let {
-            emit { copy(messages = messages + it) }
-        }
     }
 
 private val AccountSwitchPhase.changeDelay

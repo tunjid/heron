@@ -28,7 +28,7 @@ import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
-import com.tunjid.heron.timeline.utilities.writeStatusMessage
+import com.tunjid.heron.timeline.utilities.enqueue
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -148,16 +148,17 @@ private fun loadPreferenceMutations(
 
 private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = mapToManyMutations {
-    val writable = Writable.TimelineUpdate(
-        Timeline.Update.OfMutedWord.ReplaceAll(
-            mutedWordPreferences = it.mutedWordPreference,
-        ),
-    )
-    val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
+): Flow<Mutation<State>> = enqueue(
+    writeQueue = writeQueue,
+    toWritable = {
+        Writable.TimelineUpdate(
+            Timeline.Update.OfMutedWord.ReplaceAll(
+                mutedWordPreferences = it.mutedWordPreference,
+            ),
+        )
+    },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
 }
 
 fun Flow<Action.UpdateRecentLists>.recentListsMutations(
@@ -172,48 +173,49 @@ fun Flow<Action.UpdateRecentLists>.recentListsMutations(
 
 private fun Flow<Action.UpdateThreadGates>.updateThreadGateMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = mapToManyMutations {
-    val writable = Writable.TimelineUpdate(
-        Timeline.Update.OfInteractionSettings(
-            preference = it.preference,
-        ),
-    )
-    val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
+): Flow<Mutation<State>> = enqueue(
+    writeQueue = writeQueue,
+    toWritable = {
+        Writable.TimelineUpdate(
+            Timeline.Update.OfInteractionSettings(
+                preference = it.preference,
+            ),
+        )
+    },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
 }
 
 private fun Flow<Action.UpdateAdultLabelVisibility>.updateGlobalLabelMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        val writable = Writable.TimelineUpdate(
+): Flow<Mutation<State>> = enqueue(
+    writeQueue = writeQueue,
+    toWritable = { action ->
+        Writable.TimelineUpdate(
             Timeline.Update.OfContentLabel.AdultLabelVisibilityChange(
                 label = action.adultLabel,
                 visibility = action.visibility,
             ),
         )
-        val status = writeQueue.enqueue(writable)
-        writable.writeStatusMessage(status)?.let {
-            emit { copy(messages = messages + it) }
-        }
-    }
+    },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
+}
 
 private fun Flow<Action.UpdateAdultContentPreferences>.updateAdultContentPreferencesMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        val writable = Writable.TimelineUpdate(
+): Flow<Mutation<State>> = enqueue(
+    writeQueue = writeQueue,
+    toWritable = { action ->
+        Writable.TimelineUpdate(
             Timeline.Update.OfAdultContent(
                 enabled = action.adultContentEnabled,
             ),
         )
-        val status = writeQueue.enqueue(writable)
-        writable.writeStatusMessage(status)?.let {
-            emit { copy(messages = messages + it) }
-        }
-    }
+    },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
+}
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
