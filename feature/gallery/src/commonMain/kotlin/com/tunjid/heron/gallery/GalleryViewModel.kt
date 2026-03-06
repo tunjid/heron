@@ -19,6 +19,7 @@ package com.tunjid.heron.gallery
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.ThreadViewPreference.Companion.order
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.AuthRepository
@@ -63,6 +64,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -134,6 +136,11 @@ class ActualGalleryViewModel(
                         )
                         is Action.DeleteRecord -> action.flow.deleteRecordMutations(
                             writeQueue = writeQueue,
+                        )
+                        is Action.LoadComments -> action.flow.loadCommentsMutations(
+                            state = state,
+                            timelineRepository = timelineRepository,
+                            userDataRepository = userDataRepository,
                         )
                     }
                 },
@@ -333,6 +340,36 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
     mapToMutation { action ->
         copy(messages = messages - action.message)
     }
+
+fun Flow<Action.LoadComments>.loadCommentsMutations(
+    state: suspend () -> State,
+    timelineRepository: TimelineRepository,
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> = flatMapLatest { action ->
+    val postUri = action.postUri
+    val order = action.order
+        ?: state().order
+        ?: userDataRepository.preferences
+            .first()
+            .threadViewPreferences
+            .order()
+
+    flow {
+        emit { copy(order = order) }
+        emitAll(
+            timelineRepository.postThreadedItems(
+                postUri = postUri,
+                order = order,
+            )
+                .mapToMutation { timelineItems ->
+                    if (timelineItems.isEmpty()) this
+                    else copy(
+                        comments = timelineItems,
+                    )
+                },
+        )
+    }
+}
 
 private fun verticalTimelineMutations(
     route: Route,

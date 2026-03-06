@@ -30,11 +30,13 @@ import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.ThreadGate
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.data.core.models.Video as EmbeddedVideo
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.FollowUri
+import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
@@ -62,11 +64,15 @@ data class State(
     val canScrollVertically: Boolean = false,
     val cursorData: CursorQuery.Data?,
     @Transient
+    val order: TimelineItem.Thread.Order? = null,
+    @Transient
     val preferences: Preferences = Preferences.EmptyPreferences,
     @Transient
     val recentConversations: List<Conversation> = emptyList(),
     @Transient
     val items: TiledList<CursorQuery, GalleryItem> = emptyTiledList(),
+    @Transient
+    val comments: List<TimelineItem> = emptyList(),
     @Transient
     val timelineStateHolder: TimelineStateHolder? = null,
     @Transient
@@ -175,6 +181,11 @@ sealed class Action(val key: String) {
     data class UpdateMutedWord(
         val mutedWordPreference: List<MutedWordPreference>,
     ) : Action(key = "UpdateMutedWord")
+
+    data class LoadComments(
+        val postUri: PostUri,
+        val order: TimelineItem.Thread.Order?,
+    ) : Action(key = "Load")
 
     data class BlockAccount(
         val signedInProfileId: ProfileId,

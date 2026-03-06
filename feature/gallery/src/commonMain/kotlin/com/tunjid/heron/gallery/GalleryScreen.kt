@@ -234,36 +234,40 @@ internal fun GalleryScreen(
         },
     )
 
-    VerticalPager(
-        state = pagerState,
-        modifier = modifier
-            .dragToPop(dragToPopState)
-            .fillMaxSize(),
-        beyondViewportPageCount = PagerPrefetchCount,
-        userScrollEnabled = state.canScrollVertically,
-        key = { page ->
-            updatedItems[page].post.uri.uri
-        },
-        pageContent = { page ->
-            val item = updatedItems[page]
+    Box(
+        modifier = modifier,
+    ) {
+        VerticalPager(
+            state = pagerState,
+            modifier = Modifier
+                .dragToPop(dragToPopState)
+                .fillMaxSize(),
+            beyondViewportPageCount = PagerPrefetchCount,
+            userScrollEnabled = state.canScrollVertically,
+            key = { page ->
+                updatedItems[page].post.uri.uri
+            },
+            pageContent = { page ->
+                val item = updatedItems[page]
 
-            HorizontalItems(
-                item = item,
-                paneScaffoldState = paneScaffoldState,
-                signedInProfileId = state.signedInProfileId,
-                showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
-                pagerStates = horizontalPagerStates,
-                focusedItem = {
-                    val page = pagerState.currentPage + pagerState.currentPageOffsetFraction
-                    updatedItems.getOrNull(page.fastRoundToInt())
-                },
-                isDraggingToPop = dragToPopState::isDraggingToPop,
-                actions = actions,
-                postInteractionSheetState = postInteractionSheetState,
-                postOptionsSheetState = postOptionsSheetState,
-            )
-        },
-    )
+                HorizontalItems(
+                    item = item,
+                    paneScaffoldState = paneScaffoldState,
+                    signedInProfileId = state.signedInProfileId,
+                    showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
+                    pagerStates = horizontalPagerStates,
+                    focusedItem = {
+                        val page = pagerState.currentPage + pagerState.currentPageOffsetFraction
+                        updatedItems.getOrNull(page.fastRoundToInt())
+                    },
+                    isDraggingToPop = dragToPopState::isDraggingToPop,
+                    actions = actions,
+                    postInteractionSheetState = postInteractionSheetState,
+                    postOptionsSheetState = postOptionsSheetState,
+                )
+            },
+        )
+    }
 
     state.timelineStateHolder?.let { timelineStateHolder ->
         val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
