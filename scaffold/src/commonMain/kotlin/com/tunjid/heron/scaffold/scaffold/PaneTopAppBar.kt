@@ -109,39 +109,43 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                         contentAlignment = Alignment.BottomCenter,
                     ) {
                         PaneStickySharedElement(
-                            modifier = Modifier
-                                .fillMaxSize(),
+                            modifier = Modifier.fillMaxSize(),
                             sharedContentState = rememberSharedContentState(
                                 key = UiTokens.SignedInUserAvatarSharedElementKey,
                             ),
                         ) {
-                            AsyncImage(
-                                modifier = Modifier
-                                    .fillParentAxisIfFixedOrWrap()
-                                    .ifTrue(isLive) {
-                                        border(
-                                            width = LiveBorderWidth,
-                                            color = LiveStatusColor,
-                                            shape = CircleShape,
-                                        )
-                                    }
-                                    .clickable {
-                                        onSignedInProfileClicked(
-                                            profile,
-                                            UiTokens.SignedInUserAvatarSharedElementKey,
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.BottomCenter,
+                            ) {
+                                AsyncImage(
+                                    modifier = Modifier
+                                        .fillParentAxisIfFixedOrWrap()
+                                        .ifTrue(isLive) {
+                                            border(
+                                                width = LiveBorderWidth,
+                                                color = LiveStatusColor,
+                                                shape = CircleShape,
+                                            )
+                                        }
+                                        .clickable {
+                                            onSignedInProfileClicked(
+                                                profile,
+                                                UiTokens.SignedInUserAvatarSharedElementKey,
+                                            )
+                                        },
+                                    args = remember(profile) {
+                                        ImageArgs(
+                                            url = profile.avatar?.uri,
+                                            contentDescription = signedInProfile.displayName,
+                                            contentScale = ContentScale.Crop,
+                                            shape = RoundedPolygonShape.Circle,
                                         )
                                     },
-                                args = remember(profile) {
-                                    ImageArgs(
-                                        url = profile.avatar?.uri,
-                                        contentDescription = signedInProfile.displayName,
-                                        contentScale = ContentScale.Crop,
-                                        shape = RoundedPolygonShape.Circle,
-                                    )
-                                },
-                            )
+                                )
+                                if (isLive) LiveChip(modifier = Modifier.align(Alignment.BottomCenter))
+                            }
                         }
-                        if (isLive) LiveChip(modifier = Modifier.align(Alignment.BottomCenter))
                     }
                 }
             }
