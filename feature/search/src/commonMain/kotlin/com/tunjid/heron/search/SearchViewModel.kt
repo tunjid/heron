@@ -44,7 +44,7 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.mapCursorList
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
-import com.tunjid.heron.timeline.utilities.process
+import com.tunjid.heron.timeline.utilities.enqueueMutations
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -387,7 +387,7 @@ private fun Flow<Action.Search>.searchQueryMutations(
 private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    writeQueue.process(
+    writeQueue.enqueueMutations(
         this,
         toWritable = { action ->
             Writable.Connection(
@@ -413,7 +413,7 @@ private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
 
 private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.process(
+): Flow<Mutation<State>> = writeQueue.enqueueMutations(
     this,
     toWritable = {
         Writable.TimelineUpdate(
@@ -428,7 +428,7 @@ private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
 
 private fun Flow<Action.BlockAccount>.blockAccountMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.process(
+): Flow<Mutation<State>> = writeQueue.enqueueMutations(
     this,
     toWritable = { action ->
         Writable.Restriction(
@@ -444,7 +444,7 @@ private fun Flow<Action.BlockAccount>.blockAccountMutations(
 
 private fun Flow<Action.MuteAccount>.muteAccountMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.process(
+): Flow<Mutation<State>> = writeQueue.enqueueMutations(
     this,
     toWritable = { action ->
         Writable.Restriction(
@@ -460,7 +460,7 @@ private fun Flow<Action.MuteAccount>.muteAccountMutations(
 
 private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.process(
+): Flow<Mutation<State>> = writeQueue.enqueueMutations(
     this,
     toWritable = { action ->
         Writable.RecordDeletion(
@@ -474,7 +474,7 @@ private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    writeQueue.process(
+    writeQueue.enqueueMutations(
         this,
         toWritable = { action -> Writable.Interaction(action.interaction) },
     ) { _, memo ->
@@ -489,7 +489,7 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
 private fun Flow<Action.UpdateFeedGeneratorStatus>.feedGeneratorStatusMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    writeQueue.process(
+    writeQueue.enqueueMutations(
         this,
         toWritable = { action -> Writable.TimelineUpdate(action.update) },
     ) { _, memo ->

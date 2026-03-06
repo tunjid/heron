@@ -28,7 +28,7 @@ import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
-import com.tunjid.heron.timeline.utilities.process
+import com.tunjid.heron.timeline.utilities.enqueueMutations
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -148,7 +148,7 @@ private fun loadPreferenceMutations(
 
 private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.process(
+): Flow<Mutation<State>> = writeQueue.enqueueMutations(
     this,
     toWritable = {
         Writable.TimelineUpdate(
@@ -173,7 +173,7 @@ fun Flow<Action.UpdateRecentLists>.recentListsMutations(
 
 private fun Flow<Action.UpdateThreadGates>.updateThreadGateMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.process(
+): Flow<Mutation<State>> = writeQueue.enqueueMutations(
     this,
     toWritable = {
         Writable.TimelineUpdate(
@@ -188,7 +188,7 @@ private fun Flow<Action.UpdateThreadGates>.updateThreadGateMutations(
 
 private fun Flow<Action.UpdateAdultLabelVisibility>.updateGlobalLabelMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.process(
+): Flow<Mutation<State>> = writeQueue.enqueueMutations(
     this,
     toWritable = { action ->
         Writable.TimelineUpdate(
@@ -204,7 +204,7 @@ private fun Flow<Action.UpdateAdultLabelVisibility>.updateGlobalLabelMutations(
 
 private fun Flow<Action.UpdateAdultContentPreferences>.updateAdultContentPreferencesMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.process(
+): Flow<Mutation<State>> = writeQueue.enqueueMutations(
     this,
     toWritable = { action ->
         Writable.TimelineUpdate(

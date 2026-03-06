@@ -37,7 +37,7 @@ import com.tunjid.heron.feed.di.timelineRequest
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.timeline.state.timelineStateHolder
-import com.tunjid.heron.timeline.utilities.process
+import com.tunjid.heron.timeline.utilities.enqueueMutations
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
@@ -240,7 +240,7 @@ private fun SuspendingStateHolder<State>.timelineStateHolderMutations(
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    writeQueue.process(
+    writeQueue.enqueueMutations(
         this,
         toWritable = { Writable.Interaction(it.interaction) },
     ) { _, memo ->
@@ -249,7 +249,7 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
 
 private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.process(
+): Flow<Mutation<State>> = writeQueue.enqueueMutations(
     this,
     toWritable = {
         Writable.TimelineUpdate(
@@ -264,7 +264,7 @@ private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
 
 private fun Flow<Action.BlockAccount>.blockAccountMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.process(
+): Flow<Mutation<State>> = writeQueue.enqueueMutations(
     this,
     toWritable = {
         Writable.Restriction(
@@ -280,7 +280,7 @@ private fun Flow<Action.BlockAccount>.blockAccountMutations(
 
 private fun Flow<Action.MuteAccount>.muteAccountMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.process(
+): Flow<Mutation<State>> = writeQueue.enqueueMutations(
     this,
     toWritable = {
         Writable.Restriction(
@@ -296,7 +296,7 @@ private fun Flow<Action.MuteAccount>.muteAccountMutations(
 
 private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.process(
+): Flow<Mutation<State>> = writeQueue.enqueueMutations(
     this,
     toWritable = { Writable.RecordDeletion(recordUri = it.recordUri) },
 ) { _, memo ->
@@ -317,7 +317,7 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
 private fun Flow<Action.UpdateFeedGeneratorStatus>.feedGeneratorStatusMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    writeQueue.process(
+    writeQueue.enqueueMutations(
         this,
         toWritable = { Writable.TimelineUpdate(it.update) },
     ) { _, memo ->

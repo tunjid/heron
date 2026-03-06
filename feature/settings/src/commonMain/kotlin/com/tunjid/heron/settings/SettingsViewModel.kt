@@ -31,7 +31,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationContext
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.navigation.resetAuthNavigation
-import com.tunjid.heron.timeline.utilities.process
+import com.tunjid.heron.timeline.utilities.enqueueMutations
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -187,7 +187,7 @@ private fun Flow<Action.UpdateSection>.updateSectionMutations(): Flow<Mutation<S
 private fun Flow<Action.UpdateFeedPreference>.updateFeedPreferenceMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    writeQueue.process(
+    writeQueue.enqueueMutations(
         this,
         toWritable = { action ->
             Writable.TimelineUpdate(
@@ -203,7 +203,7 @@ private fun Flow<Action.UpdateFeedPreference>.updateFeedPreferenceMutations(
 private fun Flow<Action.UpdateThreadViewPreference>.updateThreadPreferenceMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    writeQueue.process(
+    writeQueue.enqueueMutations(
         this,
         toWritable = { action ->
             Writable.TimelineUpdate(
