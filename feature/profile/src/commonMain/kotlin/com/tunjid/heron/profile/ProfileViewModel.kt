@@ -37,7 +37,6 @@ import com.tunjid.heron.data.core.models.timelineRecordUri
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri.Companion.asSelfLabelerUri
-import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
 import com.tunjid.heron.data.repository.ProfileRepository
