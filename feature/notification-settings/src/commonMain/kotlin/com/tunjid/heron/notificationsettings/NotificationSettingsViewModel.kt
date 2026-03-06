@@ -103,8 +103,8 @@ private fun Flow<Action.CacheNotificationPreferenceUpdate>.cacheUpdateMutations(
 private fun Flow<Action.UpdateNotificationPreferences>.updateNotificationPreferencesMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    writeQueue.enqueueMutations(
-        this,
+    this.enqueueMutations(
+        writeQueue,
         toWritable = { action ->
             Writable.NotificationUpdate(
                 updates = action.updates,

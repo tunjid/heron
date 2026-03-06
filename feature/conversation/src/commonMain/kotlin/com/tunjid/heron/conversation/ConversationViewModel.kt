@@ -210,8 +210,8 @@ private fun sharedRecordMutations(
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    writeQueue.enqueueMutations(
-        this,
+    this.enqueueMutations(
+        writeQueue,
         toWritable = { Writable.Interaction(it.interaction) },
     ) { _, memo ->
         if (memo != null) emit { copy(messages = messages + memo) }
@@ -225,8 +225,8 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
 private fun Flow<Action.UpdateMessageReaction>.updateMessageReactionMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    writeQueue.enqueueMutations(
-        this,
+    this.enqueueMutations(
+        writeQueue,
         toWritable = { Writable.Reaction(it.reaction) },
     ) { _, memo ->
         if (memo != null) emit { copy(messages = messages + memo) }

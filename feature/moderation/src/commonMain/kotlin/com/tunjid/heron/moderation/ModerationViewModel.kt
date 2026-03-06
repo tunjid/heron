@@ -148,8 +148,8 @@ private fun loadPreferenceMutations(
 
 private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.enqueueMutations(
-    this,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
     toWritable = {
         Writable.TimelineUpdate(
             Timeline.Update.OfMutedWord.ReplaceAll(
@@ -173,8 +173,8 @@ fun Flow<Action.UpdateRecentLists>.recentListsMutations(
 
 private fun Flow<Action.UpdateThreadGates>.updateThreadGateMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.enqueueMutations(
-    this,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
     toWritable = {
         Writable.TimelineUpdate(
             Timeline.Update.OfInteractionSettings(
@@ -188,8 +188,8 @@ private fun Flow<Action.UpdateThreadGates>.updateThreadGateMutations(
 
 private fun Flow<Action.UpdateAdultLabelVisibility>.updateGlobalLabelMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.enqueueMutations(
-    this,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
     toWritable = { action ->
         Writable.TimelineUpdate(
             Timeline.Update.OfContentLabel.AdultLabelVisibilityChange(
@@ -204,8 +204,8 @@ private fun Flow<Action.UpdateAdultLabelVisibility>.updateGlobalLabelMutations(
 
 private fun Flow<Action.UpdateAdultContentPreferences>.updateAdultContentPreferencesMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.enqueueMutations(
-    this,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
     toWritable = { action ->
         Writable.TimelineUpdate(
             Timeline.Update.OfAdultContent(

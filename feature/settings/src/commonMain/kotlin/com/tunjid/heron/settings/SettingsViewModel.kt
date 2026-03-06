@@ -187,8 +187,8 @@ private fun Flow<Action.UpdateSection>.updateSectionMutations(): Flow<Mutation<S
 private fun Flow<Action.UpdateFeedPreference>.updateFeedPreferenceMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    writeQueue.enqueueMutations(
-        this,
+    this.enqueueMutations(
+        writeQueue,
         toWritable = { action ->
             Writable.TimelineUpdate(
                 update = Timeline.Update.OfFeedPreference.Add(
@@ -203,8 +203,8 @@ private fun Flow<Action.UpdateFeedPreference>.updateFeedPreferenceMutations(
 private fun Flow<Action.UpdateThreadViewPreference>.updateThreadPreferenceMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    writeQueue.enqueueMutations(
-        this,
+    this.enqueueMutations(
+        writeQueue,
         toWritable = { action ->
             Writable.TimelineUpdate(
                 update = Timeline.Update.OfThreadViewPreference.ThreadView(

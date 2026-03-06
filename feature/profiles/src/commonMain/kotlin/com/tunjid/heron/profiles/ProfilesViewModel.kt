@@ -184,8 +184,8 @@ suspend fun Flow<Action.Tile>.profilesLoadMutations(
 private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    writeQueue.enqueueMutations(
-        this,
+    this.enqueueMutations(
+        writeQueue,
         toWritable = { action ->
             Writable.Connection(
                 when (val following = action.following) {

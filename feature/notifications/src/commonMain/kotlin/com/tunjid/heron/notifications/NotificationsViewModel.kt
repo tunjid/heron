@@ -189,8 +189,8 @@ fun canShowRequestPermissionsButtonMutations(
 
 private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.enqueueMutations(
-    this,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
     toWritable = {
         Writable.TimelineUpdate(
             Timeline.Update.OfMutedWord.ReplaceAll(
@@ -204,8 +204,8 @@ private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
 
 private fun Flow<Action.BlockAccount>.blockAccountMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.enqueueMutations(
-    this,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
     toWritable = { action ->
         Writable.Restriction(
             Profile.Restriction.Block.Add(
@@ -220,8 +220,8 @@ private fun Flow<Action.BlockAccount>.blockAccountMutations(
 
 private fun Flow<Action.MuteAccount>.muteAccountMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.enqueueMutations(
-    this,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
     toWritable = { action ->
         Writable.Restriction(
             Profile.Restriction.Mute.Add(
@@ -236,8 +236,8 @@ private fun Flow<Action.MuteAccount>.muteAccountMutations(
 
 private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.enqueueMutations(
-    this,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
     toWritable = { action ->
         Writable.RecordDeletion(
             recordUri = action.recordUri,
@@ -249,8 +249,8 @@ private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.enqueueMutations(
-    this,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
     toWritable = { action -> Writable.Interaction(action.interaction) },
 ) { _, memo ->
     if (memo != null) emit { copy(messages = messages + memo) }

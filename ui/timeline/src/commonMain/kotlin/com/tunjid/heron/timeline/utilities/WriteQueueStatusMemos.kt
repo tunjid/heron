@@ -60,20 +60,20 @@ import org.jetbrains.compose.resources.StringResource
  * Enqueues a [Writable] created from each emission of this [Flow] into the [WriteQueue],
  * and invokes [postEnqueue] with the result.
  *
- * @param actions the actions to process.
+ * @param writeQueue the [WriteQueue] use to enqueue the [Writable] produced by [toWritable].
  * @param toWritable creates the [Writable] from each emission.
  * @param postEnqueue callback invoked after the enqueue with the action and a [Memo] that is
  * non-null if the enqueue failed. Use the presence of a [Memo] to signify an error and update
  * the state appropriately.
  */
-inline fun <T, S> WriteQueue.enqueueMutations(
-    actions: Flow<T>,
+inline fun <T, S> Flow<T>.enqueueMutations(
+    writeQueue: WriteQueue,
     crossinline toWritable: (T) -> Writable,
     crossinline postEnqueue: suspend FlowCollector<Mutation<S>>.(T, Memo?) -> Unit = { _, _ -> },
 ): Flow<Mutation<S>> =
-    actions.mapToManyMutations { action ->
+    mapToManyMutations { action ->
         val writable = toWritable(action)
-        val status = enqueue(writable)
+        val status = writeQueue.enqueue(writable)
         val memo = writable.writeStatusMessage(status)
         postEnqueue(action, memo)
     }

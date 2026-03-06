@@ -326,8 +326,8 @@ private fun SuspendingStateHolder<State>.listMemberStateHolderMutations(
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.enqueueMutations(
-    this,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
     toWritable = { action -> Writable.Interaction(action.interaction) },
 ) { _, memo ->
     if (memo != null) emit { copy(messages = messages + memo) }
@@ -335,8 +335,8 @@ private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
 
 private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.enqueueMutations(
-    this,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
     toWritable = { action ->
         Writable.TimelineUpdate(
             Timeline.Update.OfMutedWord.ReplaceAll(
@@ -350,8 +350,8 @@ private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
 
 private fun Flow<Action.AddListMember>.addListMemberMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.enqueueMutations(
-    this,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
     toWritable = { action ->
         Writable.FeedList.AddMember(
             create = ListMember.Create(
@@ -394,8 +394,8 @@ private fun Flow<Action.MuteAccount>.muteAccountMutations(
 
 private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.enqueueMutations(
-    this,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
     toWritable = { action ->
         Writable.RecordDeletion(
             recordUri = action.recordUri,
@@ -446,8 +446,8 @@ private fun Flow<Action.CurrentPageChanged>.currentPageMutations(): Flow<Mutatio
 
 private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.enqueueMutations(
-    this,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
     toWritable = { action ->
         Writable.Connection(
             when (val following = action.following) {
@@ -472,8 +472,8 @@ private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
 
 private fun Flow<Action.UpdateFeedListStatus>.feedListStatusMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = writeQueue.enqueueMutations(
-    this,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
     toWritable = { action -> Writable.TimelineUpdate(action.update) },
 ) { _, memo ->
     if (memo != null) emit { copy(messages = messages + memo) }
