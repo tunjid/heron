@@ -16,21 +16,29 @@
 
 package com.tunjid.heron.gallery.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.gestures.animateToWithDecay
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -40,11 +48,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
@@ -146,7 +156,7 @@ fun Comments(
             actions(Action.Navigate.To(destination))
         }
     }
-    Column(
+    Box(
         modifier = modifier
             .statusBarsPadding()
             .onSizeChanged { state.updateHeight(it.height) }
@@ -172,10 +182,9 @@ fun Comments(
             },
         )
 
-        Surface(
+        ElevatedCard(
             shape = TopShape,
             modifier = Modifier
-                .padding(top = 16.dp)
                 .fillMaxSize()
                 .offset { state.contentOffset }
                 .anchoredDraggable(
@@ -185,93 +194,113 @@ fun Comments(
                     orientation = Orientation.Vertical,
                 ),
         ) {
-            LazyColumn(
+            Column(
                 modifier = Modifier
+                    .padding(top = 16.dp)
                     .fillMaxSize(),
-                contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-                    isCompact = paneScaffoldState.prefersCompactBottomNav,
-                ),
-                userScrollEnabled = !paneScaffoldState.isTransitionActive,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                items(
-                    items = comments,
-                    key = TimelineItem::id,
-                    itemContent = { item ->
-                        TimelineItem(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .animateItem(),
-                            paneMovableElementSharedTransitionScope = paneScaffoldState,
-                            presentationLookaheadScope = paneScaffoldState,
-                            now = now,
-                            item = item,
-                            sharedElementPrefix = CommentSharedElementPrefix,
-                            showEngagementMetrics = false,
-                            presentation = Timeline.Presentation.Text.WithEmbed,
-                            postActions = remember(Unit) {
-                                PostActions { action ->
-                                    when (action) {
-                                        is PostAction.OfLinkTarget -> {
-                                            val linkTarget = action.linkTarget
-                                            if (linkTarget is LinkTarget.Navigable) navigateTo(
-                                                pathDestination(
-                                                    path = linkTarget.path,
-                                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                ),
-                                            )
-                                        }
+                Box(
+                    Modifier
+                        .background(
+                            color = MaterialTheme.colorScheme.onSurface,
+                            shape = CircleShape,
+                        )
+                        .height(2.dp)
+                        .width(48.dp),
+                )
 
-                                        is PostAction.OfPost -> {
-                                            navigateTo(
-                                                recordDestination(
-                                                    referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
-                                                    sharedElementPrefix = CommentSharedElementPrefix,
-                                                    otherModels = listOfNotNull(
-                                                        action.warnedAppliedLabels,
-                                                    ),
-                                                    record = action.post,
-                                                ),
-                                            )
-                                        }
-
-                                        is PostAction.OfProfile -> {
-                                            navigateTo(
-                                                profileDestination(
-                                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                                    profile = action.profile,
-                                                    avatarSharedElementKey = action.post.avatarSharedElementKey(
-                                                        prefix = CommentSharedElementPrefix,
-                                                        quotingPostUri = action.quotingPostUri,
+                LookaheadScope {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
+                            isCompact = paneScaffoldState.prefersCompactBottomNav,
+                        ),
+                        userScrollEnabled = !paneScaffoldState.isTransitionActive,
+                    ) {
+                        items(
+                            items = comments,
+                            key = TimelineItem::id,
+                            itemContent = { item ->
+                                TimelineItem(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .animateItem(),
+                                    paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                    presentationLookaheadScope = this@LookaheadScope,
+                                    now = now,
+                                    item = item,
+                                    sharedElementPrefix = CommentSharedElementPrefix,
+                                    showEngagementMetrics = false,
+                                    presentation = Timeline.Presentation.Text.WithEmbed,
+                                    postActions = remember(Unit) {
+                                        PostActions { action ->
+                                            when (action) {
+                                                is PostAction.OfLinkTarget -> {
+                                                    val linkTarget = action.linkTarget
+                                                    if (linkTarget is LinkTarget.Navigable) navigateTo(
+                                                        pathDestination(
+                                                            path = linkTarget.path,
+                                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                                        ),
                                                     )
-                                                        .takeIf { action.post.author.did == action.profile.did },
-                                                ),
-                                            )
+                                                }
+
+                                                is PostAction.OfPost -> {
+                                                    navigateTo(
+                                                        recordDestination(
+                                                            referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
+                                                            sharedElementPrefix = CommentSharedElementPrefix,
+                                                            otherModels = listOfNotNull(
+                                                                action.warnedAppliedLabels,
+                                                            ),
+                                                            record = action.post,
+                                                        ),
+                                                    )
+                                                }
+
+                                                is PostAction.OfProfile -> {
+                                                    navigateTo(
+                                                        profileDestination(
+                                                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                                            profile = action.profile,
+                                                            avatarSharedElementKey = action.post.avatarSharedElementKey(
+                                                                prefix = CommentSharedElementPrefix,
+                                                                quotingPostUri = action.quotingPostUri,
+                                                            )
+                                                                .takeIf { action.post.author.did == action.profile.did },
+                                                        ),
+                                                    )
+                                                }
+                                                is PostAction.OfReply -> {
+                                                    navigateTo(
+                                                        if (paneScaffoldState.isSignedOut) signInDestination()
+                                                        else composePostDestination(
+                                                            type = Post.Create.Reply(
+                                                                parent = action.post,
+                                                            ),
+                                                            sharedElementPrefix = CommentSharedElementPrefix,
+                                                        ),
+                                                    )
+                                                }
+                                                is PostAction.OfInteraction -> {
+                                                    postInteractionSheetState.onInteraction(action)
+                                                }
+                                                is PostAction.OfRecord,
+                                                is PostAction.OfMedia,
+                                                is PostAction.OfMetadata,
+                                                is PostAction.OfMore,
+                                                -> Unit
+                                            }
                                         }
-                                        is PostAction.OfReply -> {
-                                            navigateTo(
-                                                if (paneScaffoldState.isSignedOut) signInDestination()
-                                                else composePostDestination(
-                                                    type = Post.Create.Reply(
-                                                        parent = action.post,
-                                                    ),
-                                                    sharedElementPrefix = CommentSharedElementPrefix,
-                                                ),
-                                            )
-                                        }
-                                        is PostAction.OfInteraction -> {
-                                            postInteractionSheetState.onInteraction(action)
-                                        }
-                                        is PostAction.OfRecord,
-                                        is PostAction.OfMedia,
-                                        is PostAction.OfMetadata,
-                                        is PostAction.OfMore,
-                                        -> Unit
-                                    }
-                                }
+                                    },
+                                )
                             },
                         )
-                    },
-                )
+                    }
+                }
             }
         }
     }
@@ -363,6 +392,7 @@ internal enum class Anchor {
     Halfway,
     Expanded,
 }
+
 private const val CommentSharedElementPrefix = "gallery-comment-shared-element-prefix"
 
 private const val ProgressThreshold = 0.5f
