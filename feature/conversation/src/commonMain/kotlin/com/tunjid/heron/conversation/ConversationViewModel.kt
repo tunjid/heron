@@ -41,8 +41,8 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.mapCursorList
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
+import com.tunjid.heron.timeline.utilities.process
 import com.tunjid.heron.timeline.utilities.shareUri
-import com.tunjid.heron.timeline.utilities.enqueue
 import com.tunjid.heron.timeline.utilities.writeStatusMessage
 import com.tunjid.heron.ui.text.withFormattedTextPost
 import com.tunjid.mutator.ActionStateMutator
@@ -210,8 +210,8 @@ private fun sharedRecordMutations(
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    enqueue(
-        writeQueue = writeQueue,
+    writeQueue.process(
+        this,
         toWritable = { Writable.Interaction(it.interaction) },
     ) { _, memo ->
         if (memo != null) emit { copy(messages = messages + memo) }
@@ -225,8 +225,8 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
 private fun Flow<Action.UpdateMessageReaction>.updateMessageReactionMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    enqueue(
-        writeQueue = writeQueue,
+    writeQueue.process(
+        this,
         toWritable = { Writable.Reaction(it.reaction) },
     ) { _, memo ->
         if (memo != null) emit { copy(messages = messages + memo) }

@@ -24,7 +24,7 @@ import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
-import com.tunjid.heron.timeline.utilities.enqueue
+import com.tunjid.heron.timeline.utilities.process
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
@@ -103,8 +103,8 @@ private fun Flow<Action.CacheNotificationPreferenceUpdate>.cacheUpdateMutations(
 private fun Flow<Action.UpdateNotificationPreferences>.updateNotificationPreferencesMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    enqueue(
-        writeQueue = writeQueue,
+    writeQueue.process(
+        this,
         toWritable = { action ->
             Writable.NotificationUpdate(
                 updates = action.updates,

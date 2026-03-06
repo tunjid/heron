@@ -24,8 +24,6 @@ import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.mapToManyMutations
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.FlowCollector
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.writable_add_list_member
 import heron.ui.timeline.generated.resources.writable_block
@@ -54,25 +52,28 @@ import heron.ui.timeline.generated.resources.writable_unblock
 import heron.ui.timeline.generated.resources.writable_unfollow
 import heron.ui.timeline.generated.resources.writable_unlike
 import heron.ui.timeline.generated.resources.writable_unmute
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import org.jetbrains.compose.resources.StringResource
 
 /**
  * Enqueues a [Writable] created from each emission of this [Flow] into the [WriteQueue],
  * and invokes [postWrite] with the result.
  *
+ * @param actions the actions to process.
  * @param toWritable creates the [Writable] from each emission.
  * @param postWrite callback invoked after the enqueue with the action and a [Memo] that is
  * non-null if the enqueue failed. Use the presence of a [Memo] to signify an error and update
  * the state appropriately.
  */
-inline fun <T, S> Flow<T>.enqueue(
-    writeQueue: WriteQueue,
+inline fun <T, S> WriteQueue.process(
+    actions: Flow<T>,
     crossinline toWritable: (T) -> Writable,
     crossinline postWrite: suspend FlowCollector<Mutation<S>>.(T, Memo?) -> Unit = { _, _ -> },
 ): Flow<Mutation<S>> =
-    mapToManyMutations { action ->
+    actions.mapToManyMutations { action ->
         val writable = toWritable(action)
-        val status = writeQueue.enqueue(writable)
+        val status = enqueue(writable)
         val memo = writable.writeStatusMessage(status)
         postWrite(action, memo)
     }
