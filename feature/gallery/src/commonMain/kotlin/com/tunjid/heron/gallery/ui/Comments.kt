@@ -99,12 +99,12 @@ import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.re
 import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
-import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.text.withFormattedTextPost
 import heron.feature.gallery.generated.resources.Res
 import heron.feature.gallery.generated.resources.reply_hint
 import heron.feature.gallery.generated.resources.reply_send
+import kotlin.math.max
 import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -452,7 +452,12 @@ private fun CommentReplyInput(
     }
 }
 
-private val ReplyInputShape = RoundedCornerShape(32.dp)
+val CommentsState.galleryHeightFraction: Float get() = max(
+    a = GalleryMinHeightFraction,
+    b = 1 - progress,
+)
+
+val CommentsState.progress: Float get() = anchoredDraggableState.requireOffset() / height
 
 private val CommentsState.isNotCollapsed: Boolean
     get() = anchoredDraggableState.currentValue != Anchor.Collapsed
@@ -461,8 +466,6 @@ private val CommentsState.contentOffset
     get() = (height - anchoredDraggableState.requireOffset())
         .toOffset()
         .round()
-
-private val CommentsState.progress: Float get() = anchoredDraggableState.requireOffset() / height
 
 private fun CommentsState.updateHeight(height: Int) {
     this.height = height.toFloat()
@@ -556,10 +559,13 @@ private val TopShape = RoundedCornerShape(
     topEnd = 16.dp,
 )
 
+private val ReplyInputShape = RoundedCornerShape(32.dp)
+
 internal enum class Anchor {
     Collapsed,
     Halfway,
     Expanded,
 }
 
+private const val GalleryMinHeightFraction = 0.72f
 private const val ProgressThreshold = 0.5f

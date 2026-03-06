@@ -25,10 +25,12 @@ import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -47,8 +49,10 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -71,6 +75,8 @@ import com.tunjid.heron.gallery.ui.MediaInteractions
 import com.tunjid.heron.gallery.ui.MediaOverlay
 import com.tunjid.heron.gallery.ui.MediaPoster
 import com.tunjid.heron.gallery.ui.PagerStates
+import com.tunjid.heron.gallery.ui.galleryHeightFraction
+import com.tunjid.heron.gallery.ui.progress
 import com.tunjid.heron.gallery.ui.rememberCommentsState
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.ControlsVisibilityEffect
@@ -98,6 +104,7 @@ import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Compan
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.Indicator
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.text.links
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlin.math.absoluteValue
@@ -248,7 +255,10 @@ internal fun GalleryScreen(
             state = pagerState,
             modifier = Modifier
                 .dragToPop(dragToPopState)
-                .fillMaxSize(),
+                .fillMaxWidth()
+                .fillMaxHeight(
+                    fraction = commentsState.galleryHeightFraction,
+                ),
             beyondViewportPageCount = PagerPrefetchCount,
             userScrollEnabled = state.canScrollVertically,
             key = { page ->
@@ -364,8 +374,18 @@ private fun HorizontalItems(
             }
         }
 
+        val statusBarHeight = UiTokens.statusBarHeight
         HorizontalPager(
             modifier = Modifier
+                .offset {
+                    IntOffset(
+                        x = 0,
+                        y = min(
+                            a = statusBarHeight,
+                            b = statusBarHeight * commentsState.progress * StatusBarOffsetMultiplier,
+                        ).roundToPx(),
+                    )
+                }
                 .zIndex(MediaZIndex)
                 .fillMaxSize(),
             beyondViewportPageCount = PagerPrefetchCount,
@@ -607,4 +627,6 @@ private val IndicatorEnterAnimation = fadeIn()
 private val IndicatorExitAnimation = fadeOut()
 
 private const val MediaZIndex = 0f
+
+private const val StatusBarOffsetMultiplier = 1.8f
 private const val PagerPrefetchCount = 1
