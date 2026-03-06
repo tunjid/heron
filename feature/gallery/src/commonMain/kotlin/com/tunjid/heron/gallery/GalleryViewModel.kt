@@ -61,6 +61,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -323,7 +324,13 @@ private fun Flow<Action.TextChanged>.inputTextChangeMutations(): Flow<Mutation<S
 
 private fun Flow<Action.SendReply>.sendReplyMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = enqueue(writeQueue) { action ->
+): Flow<Mutation<State>> = enqueue(
+    writeQueue,
+    postWrite = { _, _ ->
+        // Clear the input text after sending the reply.
+        emit { copy(inputText = androidx.compose.ui.text.input.TextFieldValue()) }
+    },
+) { action ->
     Writable.Create(
         request = Post.Create.Request(
             authorId = action.authorId,
@@ -459,14 +466,17 @@ private fun verticalTimelineMutations(
 
 private fun <T> Flow<T>.enqueue(
     writeQueue: WriteQueue,
+    postWrite: suspend FlowCollector<Mutation<State>>.(T, Boolean) -> Unit = { _, _ -> },
     mapper: (T) -> Writable,
 ): Flow<Mutation<State>> =
     mapToManyMutations { action ->
         val writable = mapper(action)
         val status = writeQueue.enqueue(writable)
-        writable.writeStatusMessage(status)?.let {
+        val errorMemo = writable.writeStatusMessage(status)
+        errorMemo?.let {
             emit { copy(messages = messages + it) }
         }
+        postWrite(action, errorMemo == null)
     }
 
 private fun profileGalleryTimeline(

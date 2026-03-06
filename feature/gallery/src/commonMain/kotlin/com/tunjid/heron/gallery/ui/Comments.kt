@@ -85,6 +85,7 @@ import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.gallery.Action
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
+import com.tunjid.heron.scaffold.navigation.galleryDestination
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.recordDestination
@@ -95,13 +96,18 @@ import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.TimelineItem
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
+import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState
+import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.text.withFormattedTextPost
 import heron.feature.gallery.generated.resources.Res
 import heron.feature.gallery.generated.resources.reply_hint
 import heron.feature.gallery.generated.resources.reply_send
 import kotlin.time.Clock
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -157,10 +163,12 @@ class CommentsState internal constructor(
     }
 }
 
+@OptIn(ExperimentalUuidApi::class)
 @Composable
 fun Comments(
     paneScaffoldState: PaneScaffoldState,
     state: CommentsState,
+    postOptionsSheetState: PostOptionsSheetState,
     modifier: Modifier = Modifier,
     comments: List<TimelineItem>,
     inputText: TextFieldValue,
@@ -168,6 +176,10 @@ fun Comments(
     onSendReply: () -> Unit,
     actions: (Action) -> Unit,
 ) {
+    val commentSharedElementPrefix = rememberSaveable {
+        Uuid.random().toString()
+    }
+
     val navigateTo = remember(actions) {
         { destination: NavigationAction.Destination ->
             actions(Action.Navigate.To(destination))
@@ -193,7 +205,7 @@ fun Comments(
                 navigateTo(
                     composePostDestination(
                         type = Post.Create.Quote(repost),
-                        sharedElementPrefix = CommentSharedElementPrefix,
+                        sharedElementPrefix = commentSharedElementPrefix,
                     ),
                 )
             },
@@ -249,7 +261,7 @@ fun Comments(
                                     presentationLookaheadScope = this@LookaheadScope,
                                     now = now,
                                     item = item,
-                                    sharedElementPrefix = CommentSharedElementPrefix,
+                                    sharedElementPrefix = commentSharedElementPrefix,
                                     showEngagementMetrics = false,
                                     presentation = Timeline.Presentation.Text.WithEmbed,
                                     postActions = remember(Unit) {
@@ -269,7 +281,7 @@ fun Comments(
                                                     navigateTo(
                                                         recordDestination(
                                                             referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
-                                                            sharedElementPrefix = CommentSharedElementPrefix,
+                                                            sharedElementPrefix = commentSharedElementPrefix,
                                                             otherModels = listOfNotNull(
                                                                 action.warnedAppliedLabels,
                                                             ),
@@ -284,7 +296,7 @@ fun Comments(
                                                             referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                                             profile = action.profile,
                                                             avatarSharedElementKey = action.post.avatarSharedElementKey(
-                                                                prefix = CommentSharedElementPrefix,
+                                                                prefix = commentSharedElementPrefix,
                                                                 quotingPostUri = action.quotingPostUri,
                                                             )
                                                                 .takeIf { action.post.author.did == action.profile.did },
@@ -298,18 +310,42 @@ fun Comments(
                                                             type = Post.Create.Reply(
                                                                 parent = action.post,
                                                             ),
-                                                            sharedElementPrefix = CommentSharedElementPrefix,
+                                                            sharedElementPrefix = commentSharedElementPrefix,
                                                         ),
                                                     )
                                                 }
                                                 is PostAction.OfInteraction -> {
                                                     postInteractionSheetState.onInteraction(action)
                                                 }
-                                                is PostAction.OfRecord,
-                                                is PostAction.OfMedia,
-                                                is PostAction.OfMetadata,
-                                                is PostAction.OfMore,
-                                                -> Unit
+                                                is PostAction.OfRecord -> {
+                                                    val record = action.record
+                                                    val owningPostUri = action.owningPostUri
+                                                    navigateTo(
+                                                        recordDestination(
+                                                            referringRouteOption = NavigationAction.ReferringRouteOption.Parent,
+                                                            sharedElementPrefix = commentSharedElementPrefix.withQuotingPostUriPrefix(
+                                                                quotingPostUri = owningPostUri,
+                                                            ),
+                                                            record = record,
+                                                        ),
+                                                    )
+                                                }
+                                                is PostAction.OfMedia -> {
+                                                    navigateTo(
+                                                        galleryDestination(
+                                                            post = action.post,
+                                                            media = action.media,
+                                                            startIndex = action.index,
+                                                            sharedElementPrefix = commentSharedElementPrefix.withQuotingPostUriPrefix(
+                                                                quotingPostUri = action.quotingPostUri,
+                                                            ),
+                                                        ),
+                                                    )
+                                                }
+                                                is PostAction.OfMore -> {
+                                                    postOptionsSheetState.showOptions(action.post)
+                                                }
+                                                is PostAction.OfMetadata -> Unit
                                             }
                                         }
                                     },
@@ -525,7 +561,5 @@ internal enum class Anchor {
     Halfway,
     Expanded,
 }
-
-private const val CommentSharedElementPrefix = "gallery-comment-shared-element-prefix"
 
 private const val ProgressThreshold = 0.5f

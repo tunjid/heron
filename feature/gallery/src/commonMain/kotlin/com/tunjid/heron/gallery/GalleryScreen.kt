@@ -278,8 +278,9 @@ internal fun GalleryScreen(
 
         val commentsPost = state.commentsPost
         Comments(
-            paneScaffoldState = paneScaffoldState,
             state = commentsState,
+            paneScaffoldState = paneScaffoldState,
+            postOptionsSheetState = postOptionsSheetState,
             modifier = Modifier.fillMaxSize(),
             comments = state.comments,
             inputText = state.inputText,
