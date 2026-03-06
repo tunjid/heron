@@ -47,12 +47,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -215,7 +213,7 @@ fun Comments(
             },
         )
 
-        Surface(
+        ElevatedCard(
             shape = TopShape,
             modifier = Modifier
                 .fillMaxSize()
@@ -574,5 +572,5 @@ internal enum class Anchor {
     Expanded,
 }
 
-private const val GalleryMinHeightFraction = 0.72f
+private const val GalleryMinHeightFraction = 0.5f
 private const val ProgressThreshold = 0.5f
