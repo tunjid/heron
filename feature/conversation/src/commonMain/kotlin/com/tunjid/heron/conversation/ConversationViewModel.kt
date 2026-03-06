@@ -41,6 +41,7 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.mapCursorList
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
+import com.tunjid.heron.timeline.utilities.enqueueMutations
 import com.tunjid.heron.timeline.utilities.shareUri
 import com.tunjid.heron.timeline.utilities.writeStatusMessage
 import com.tunjid.heron.ui.text.withFormattedTextPost
@@ -209,12 +210,11 @@ private fun sharedRecordMutations(
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        val writable = Writable.Interaction(action.interaction)
-        val status = writeQueue.enqueue(writable)
-        writable.writeStatusMessage(status)?.let {
-            emit { copy(messages = messages + it) }
-        }
+    this.enqueueMutations(
+        writeQueue,
+        toWritable = { Writable.Interaction(it.interaction) },
+    ) { _, memo ->
+        if (memo != null) emit { copy(messages = messages + memo) }
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
@@ -225,12 +225,11 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
 private fun Flow<Action.UpdateMessageReaction>.updateMessageReactionMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        val writable = Writable.Reaction(action.reaction)
-        val status = writeQueue.enqueue(writable)
-        writable.writeStatusMessage(status)?.let {
-            emit { copy(messages = messages + it) }
-        }
+    this.enqueueMutations(
+        writeQueue,
+        toWritable = { Writable.Reaction(it.reaction) },
+    ) { _, memo ->
+        if (memo != null) emit { copy(messages = messages + memo) }
     }
 
 private fun Flow<Action.TextChanged>.inputTextChangeMutations(): Flow<Mutation<State>> =
@@ -301,9 +300,8 @@ private fun Flow<Action.SendMessage>.sendMessageMutations(
         // Write the message
         val writable = Writable.Send(action.message)
         val status = writeQueue.enqueue(writable)
-        writable.writeStatusMessage(status)?.let {
-            emit { copy(messages = messages + it) }
-        }
+        val memo = writable.writeStatusMessage(status)
+        if (memo != null) emit { copy(messages = messages + memo) }
     }
 
 private suspend fun Flow<Action.Tile>.messagingTilingMutations(
