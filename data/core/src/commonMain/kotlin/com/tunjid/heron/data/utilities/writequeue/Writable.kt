@@ -151,7 +151,7 @@ sealed interface Writable {
     ) : Writable {
 
         override val queueId: String
-            get() = "status-update-${update.signedInProfileId}"
+            get() = "status-update-${update.profileId}"
 
         override suspend fun WriteQueue.write(): Outcome =
             profileRepository.updateProfileStatus(update)

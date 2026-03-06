@@ -105,7 +105,6 @@ internal fun ProfileViewDetailed.profileEntity(): ProfileEntity =
             labeler = associated?.labeler,
             allowDms = associated?.chat?.allowIncoming?.value,
         ),
-        status = status?.toStatusEntity(),
     )
 
 internal fun BlockedAuthor.profileEntity(): ProfileEntity =
@@ -275,21 +274,4 @@ private fun KnownFollowers?.profileViewers(
             viewingProfileId = viewingProfileId,
         )
     }
-}
-
-private fun StatusView.toStatusEntity(): ProfileEntity.Status {
-    val external = (embed as? StatusViewEmbedUnion.View)
-        ?.value
-        ?.external
-    return ProfileEntity.Status(
-        uri = uri?.atUri,
-        value = this.status,
-        uriLink = external?.uri?.uri,
-        title = external?.title,
-        description = external?.description,
-        thumbnail = external?.thumb?.uri?.let(::ImageUri),
-        expiresAt = expiresAt,
-        active = isActive,
-        disabled = isDisabled,
-    )
 }
