@@ -999,7 +999,7 @@ private fun ProfileHeadline(
                                     else onViewerStateClicked(viewerState)
                                 },
                             )
-                            if (isSignedInProfile || signedInProfileId != null) {
+                            if (signedInProfileId != null && isSignedInProfile) {
                                 ProfileActionsMenu(
                                     items = viewerState.profileActionMenuItems(
                                         isSignedInProfile = isSignedInProfile,
@@ -1013,21 +1013,21 @@ private fun ProfileHeadline(
                                             CommonStrings.viewer_state_block_account ->
                                                 profileRestrictionsDialogState.show(
                                                     Action.Block.Add(
-                                                        signedInProfileId = signedInProfileId!!,
+                                                        signedInProfileId = signedInProfileId,
                                                         profileId = profile.did,
                                                     ),
                                                 )
                                             CommonStrings.viewer_state_mute_account ->
                                                 profileRestrictionsDialogState.show(
                                                     Action.Mute.Add(
-                                                        signedInProfileId = signedInProfileId!!,
+                                                        signedInProfileId = signedInProfileId,
                                                         profileId = profile.did,
                                                     ),
                                                 )
                                             CommonStrings.viewer_state_unmute_account ->
                                                 profileRestrictionsDialogState.show(
                                                     Action.Mute.Remove(
-                                                        signedInProfileId = signedInProfileId!!,
+                                                        signedInProfileId = signedInProfileId,
                                                         profileId = profile.did,
                                                     ),
                                                 )
