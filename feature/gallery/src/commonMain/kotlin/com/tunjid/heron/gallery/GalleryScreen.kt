@@ -61,6 +61,8 @@ import com.tunjid.heron.data.core.models.aspectRatioOrSquare
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.utilities.asGenericUri
+import com.tunjid.heron.gallery.ui.Comments
+import com.tunjid.heron.gallery.ui.CommentsState
 import com.tunjid.heron.gallery.ui.GalleryFooter
 import com.tunjid.heron.gallery.ui.GalleryImage
 import com.tunjid.heron.gallery.ui.GalleryVideo
@@ -69,6 +71,7 @@ import com.tunjid.heron.gallery.ui.MediaInteractions
 import com.tunjid.heron.gallery.ui.MediaOverlay
 import com.tunjid.heron.gallery.ui.MediaPoster
 import com.tunjid.heron.gallery.ui.PagerStates
+import com.tunjid.heron.gallery.ui.rememberCommentsState
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.ControlsVisibilityEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
@@ -234,6 +237,8 @@ internal fun GalleryScreen(
         },
     )
 
+    val commentsState = rememberCommentsState()
+
     Box(
         modifier = modifier,
     ) {
@@ -256,6 +261,7 @@ internal fun GalleryScreen(
                     signedInProfileId = state.signedInProfileId,
                     showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
                     pagerStates = horizontalPagerStates,
+                    commentsState = commentsState,
                     focusedItem = {
                         val page = pagerState.currentPage + pagerState.currentPageOffsetFraction
                         updatedItems.getOrNull(page.fastRoundToInt())
@@ -266,6 +272,14 @@ internal fun GalleryScreen(
                     postOptionsSheetState = postOptionsSheetState,
                 )
             },
+        )
+
+        Comments(
+            paneScaffoldState = paneScaffoldState,
+            state = commentsState,
+            modifier = Modifier.fillMaxSize(),
+            comments = state.comments,
+            actions = actions,
         )
     }
 
@@ -295,6 +309,7 @@ private fun HorizontalItems(
     showEngagementMetrics: Boolean,
     pagerStates: PagerStates<PostUri>,
     paneScaffoldState: PaneScaffoldState,
+    commentsState: CommentsState,
     focusedItem: () -> GalleryItem?,
     isDraggingToPop: () -> Boolean,
     actions: (Action) -> Unit,
@@ -475,17 +490,26 @@ private fun HorizontalItems(
                         is PostAction.OfMore -> postOptionsSheetState.showOptions(
                             interaction.post,
                         )
-                        is PostAction.OfReply -> actions(
-                            Action.Navigate.To(
-                                if (paneScaffoldState.isSignedOut) signInDestination()
-                                else composePostDestination(
-                                    type = Post.Create.Reply(
-                                        parent = interaction.post,
-                                    ),
-                                    sharedElementPrefix = item.sharedElementPrefix,
+                        is PostAction.OfReply -> {
+                            commentsState.expand()
+                            actions(
+                                Action.LoadComments(
+                                    postUri = item.post.uri,
+                                    order = null,
                                 ),
-                            ),
-                        )
+                            )
+//                            actions(
+//                                Action.Navigate.To(
+//                                    if (paneScaffoldState.isSignedOut) signInDestination()
+//                                    else composePostDestination(
+//                                        type = Post.Create.Reply(
+//                                            parent = interaction.post,
+//                                        ),
+//                                        sharedElementPrefix = item.sharedElementPrefix,
+//                                    ),
+//                                ),
+//                            )
+                        }
                     }
                 },
             )

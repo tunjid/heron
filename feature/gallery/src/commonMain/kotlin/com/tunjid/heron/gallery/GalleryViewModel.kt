@@ -364,7 +364,8 @@ fun Flow<Action.LoadComments>.loadCommentsMutations(
                 .mapToMutation { timelineItems ->
                     if (timelineItems.isEmpty()) this
                     else copy(
-                        comments = timelineItems,
+                        // Drop the first item as its the post in the gallery
+                        comments = timelineItems.drop(1),
                     )
                 },
         )
