@@ -76,6 +76,7 @@ import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.contentType
+import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
 import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -104,6 +105,7 @@ internal fun PostDetailScreen(
     val items by rememberUpdatedState(state.items)
 
     val now = remember { Clock.System.now() }
+    val presentation = Timeline.Presentation.Text.WithEmbed
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
     val navigateTo = remember(actions) {
         { destination: NavigationAction.Destination ->
@@ -200,7 +202,7 @@ internal fun PostDetailScreen(
             .paneClip(),
         state = gridState,
         columns = StaggeredGridCells.Adaptive(340.dp),
-        verticalItemSpacing = 4.dp,
+        verticalItemSpacing = presentation.lazyGridVerticalItemSpacing,
         contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
             top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
             isCompact = paneScaffoldState.prefersCompactBottomNav,
@@ -226,7 +228,7 @@ internal fun PostDetailScreen(
                     item = item,
                     sharedElementPrefix = state.sharedElementPrefix,
                     showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
-                    presentation = Timeline.Presentation.Text.WithEmbed,
+                    presentation = presentation,
                     postActions = remember(state.sharedElementPrefix, state.signedInProfileId) {
                         PostActions { action ->
                             when (action) {

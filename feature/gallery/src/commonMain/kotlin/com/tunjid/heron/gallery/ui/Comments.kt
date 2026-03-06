@@ -47,10 +47,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -99,6 +101,7 @@ import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.re
 import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.text.withFormattedTextPost
 import heron.feature.gallery.generated.resources.Res
@@ -192,6 +195,7 @@ fun Comments(
             .nestedScroll(state.nestedScrollConnection()),
     ) {
         val now = remember { Clock.System.now() }
+        val presentation = Timeline.Presentation.Text.WithEmbed
 
         val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
             isSignedIn = paneScaffoldState.isSignedIn,
@@ -211,7 +215,7 @@ fun Comments(
             },
         )
 
-        ElevatedCard(
+        Surface(
             shape = TopShape,
             modifier = Modifier
                 .fillMaxSize()
@@ -247,6 +251,9 @@ fun Comments(
                         contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
                             isCompact = paneScaffoldState.prefersCompactBottomNav,
                         ),
+                        verticalArrangement = Arrangement.spacedBy(
+                            presentation.lazyGridVerticalItemSpacing,
+                        ),
                         userScrollEnabled = !paneScaffoldState.isTransitionActive,
                     ) {
                         items(
@@ -263,7 +270,7 @@ fun Comments(
                                     item = item,
                                     sharedElementPrefix = commentSharedElementPrefix,
                                     showEngagementMetrics = false,
-                                    presentation = Timeline.Presentation.Text.WithEmbed,
+                                    presentation = presentation,
                                     postActions = remember(Unit) {
                                         PostActions { action ->
                                             when (action) {

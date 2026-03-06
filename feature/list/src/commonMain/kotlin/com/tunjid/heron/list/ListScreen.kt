@@ -116,6 +116,7 @@ import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.contentType
 import com.tunjid.heron.timeline.utilities.description
+import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
 import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
@@ -605,7 +606,7 @@ private fun ListTimeline(
                 },
             state = gridState,
             columns = StaggeredGridCells.Adaptive(presentation.cardSize),
-            verticalItemSpacing = 8.dp,
+            verticalItemSpacing = presentation.lazyGridVerticalItemSpacing,
             contentPadding = bottomNavAndInsetPaddingValues(
                 isCompact = paneScaffoldState.prefersCompactBottomNav,
             ),

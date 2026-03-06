@@ -192,7 +192,7 @@ private fun timelineUpdateMutations(
                                 items = buildTiledList {
                                     add(
                                         query = tilingData.currentQuery,
-                                        item = TimelineItem.Empty(this@emit.timeline),
+                                        item = TimelineItem.Empty.Timeline(this@emit.timeline),
                                     )
                                 },
                             ),

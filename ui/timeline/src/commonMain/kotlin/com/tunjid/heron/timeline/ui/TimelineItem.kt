@@ -406,7 +406,16 @@ fun TimelineCard(
         colors =
         if (isFlat) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         else CardDefaults.elevatedCardColors(),
-        elevation = CardDefaults.cardElevation(),
+        elevation =
+        if (isEmpty) CardDefaults.cardElevation(
+            defaultElevation = 0.dp,
+            pressedElevation = 0.dp,
+            focusedElevation = 0.dp,
+            hoveredElevation = 0.dp,
+            draggedElevation = 0.dp,
+            disabledElevation = 0.dp,
+        )
+        else CardDefaults.cardElevation(),
         content = { content() },
     )
 }
