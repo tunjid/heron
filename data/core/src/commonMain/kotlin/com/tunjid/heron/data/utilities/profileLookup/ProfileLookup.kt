@@ -39,6 +39,7 @@ import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.profile
 import com.tunjid.heron.data.network.models.profileViewerStateEntity
+import com.tunjid.heron.data.utilities.distinctUntilChangedMap
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.toOutcome
@@ -47,7 +48,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
@@ -259,8 +259,7 @@ internal class OfflineProfileLookup @Inject constructor(
                     transform = idMapper,
                 ),
             )
-                .distinctUntilChanged()
-                .map { viewerStates ->
+                .distinctUntilChangedMap{ viewerStates ->
                     val profileIdsToViewerStates = viewerStates.associateBy(
                         ProfileViewerStateEntity::otherProfileId,
                     )

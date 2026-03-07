@@ -56,10 +56,12 @@ import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
+import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.asJsonContent
+import com.tunjid.heron.data.utilities.distinctUntilChangedMap
 import com.tunjid.heron.data.utilities.distinctUntilChangedMapNotNull
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
@@ -69,13 +71,13 @@ import dev.zacsweers.metro.Inject
 import io.ktor.utils.io.ByteReadChannel
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.serialization.Serializable
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
@@ -142,6 +144,8 @@ interface ProfileRepository {
 }
 
 internal class OfflineProfileRepository @Inject constructor(
+    @param:IODispatcher
+    private val ioDispatcher: CoroutineDispatcher,
     private val profileDao: ProfileDao,
     private val profileLookup: ProfileLookup,
     private val networkService: NetworkService,
@@ -157,6 +161,7 @@ internal class OfflineProfileRepository @Inject constructor(
             )
                 .distinctUntilChangedMapNotNull { it.firstOrNull()?.asExternalModel() }
         }
+            .flowOn(ioDispatcher)
 
     override fun profile(
         profileId: Id.Profile,
@@ -174,6 +179,7 @@ internal class OfflineProfileRepository @Inject constructor(
                     )
                 }
         }
+            .flowOn(ioDispatcher)
 
     override fun profileRelationships(
         profileIds: Set<Id.Profile>,
@@ -183,8 +189,7 @@ internal class OfflineProfileRepository @Inject constructor(
                 profileId = it.id,
                 otherProfileIds = profileIds,
             )
-                .distinctUntilChanged()
-                .map { viewerEntities ->
+                .distinctUntilChangedMap { viewerEntities ->
                     viewerEntities.map(ProfileViewerStateEntity::asExternalModel)
                 }
         }
@@ -203,8 +208,7 @@ internal class OfflineProfileRepository @Inject constructor(
                 otherProfileId = otherProfileResolvedId,
                 limit = limit,
             )
-                .distinctUntilChanged()
-                .map { profileEntities ->
+                .distinctUntilChangedMap { profileEntities ->
                     profileEntities.map(PopulatedProfileEntity::asExternalModel)
                 }
         }
