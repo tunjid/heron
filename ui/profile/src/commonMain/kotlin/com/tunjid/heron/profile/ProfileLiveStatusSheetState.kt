@@ -51,6 +51,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -90,6 +91,7 @@ import heron.ui.core.generated.resources.live_status_url_placeholder
 import heron.ui.core.generated.resources.live_status_you_are_live
 import heron.ui.core.generated.resources.streamplace_live_platform
 import heron.ui.core.generated.resources.twitch_live_platform
+import kotlin.jvm.JvmInline
 import kotlin.time.Clock
 import kotlinx.coroutines.delay
 import kotlinx.datetime.LocalDateTime
@@ -202,7 +204,9 @@ private fun GoLiveContent(
     var urlInput by rememberSaveable { mutableStateOf("") }
     val streamLink = remember(urlInput) { urlInput.toStreamLink() }
     val isUrlValid = streamLink != null
-    var selectedDuration by rememberSaveable { mutableStateOf(LiveDuration.default) }
+    var selectedDuration by rememberSaveable(stateSaver = LiveDurationSaver) {
+        mutableStateOf(LiveDuration.default)
+    }
 
     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -280,7 +284,12 @@ private fun GoLiveContent(
         }
 
         Button(
-            onClick = { if (isUrlValid) onGoLive(urlInput, selectedDuration.minutes) else onDismiss() },
+            onClick = {
+                if (isUrlValid) onGoLive(
+                    urlInput,
+                    selectedDuration.minutes,
+                ) else onDismiss()
+            },
             modifier = Modifier.fillMaxWidth().height(52.dp),
             shape = RoundedCornerShape(14.dp),
             colors = if (isUrlValid) ButtonDefaults.buttonColors()
@@ -647,7 +656,7 @@ private fun DurationSelector(
                 .heightIn(max = 280.dp)
                 .exposedDropdownSize(),
         ) {
-            LiveDuration.entries.forEach { duration ->
+            LiveDuration.Durations.forEach { duration ->
                 DropdownMenuItem(
                     text = {
                         Row(
@@ -715,63 +724,23 @@ internal fun String.toStreamLink(): Pair<LinkTarget.ExternalLink, LivePlatform>?
     val normalized = trim().lowercase()
     if (normalized.isBlank()) return null
     val platform = LivePlatform.entries.firstOrNull { platform ->
-        platform.domains.any { domain -> normalized.contains(domain) }
+        platform.domains.any { domain ->
+            normalized.endsWith(domain) || normalized.contains(".$domain")
+        }
     } ?: return null
     return LinkTarget.ExternalLink(uri = GenericUri(trim())) to platform
 }
 
-internal enum class LiveDuration(val minutes: Int) {
-    MIN_5(5),
-    MIN_10(10),
-    MIN_15(15),
-    MIN_20(20),
-    MIN_25(25),
-    MIN_30(30),
-    MIN_35(35),
-    MIN_40(40),
-    MIN_45(45),
-    MIN_50(50),
-    MIN_55(55),
-    HOUR_1(60),
-    MIN_70(70),
-    MIN_75(75),
-    MIN_80(80),
-    MIN_85(85),
-    MIN_90(90),
-    MIN_95(95),
-    MIN_100(100),
-    MIN_105(105),
-    MIN_110(110),
-    MIN_115(115),
-    HOUR_2(120),
-    MIN_130(130),
-    MIN_135(135),
-    MIN_140(140),
-    MIN_145(145),
-    MIN_150(150),
-    MIN_155(155),
-    MIN_160(160),
-    MIN_165(165),
-    MIN_170(170),
-    MIN_175(175),
-    HOUR_3(180),
-    MIN_190(190),
-    MIN_195(195),
-    MIN_200(200),
-    MIN_205(205),
-    MIN_210(210),
-    MIN_215(215),
-    MIN_220(220),
-    MIN_225(225),
-    MIN_230(230),
-    MIN_235(235),
-    HOUR_4(240), ;
-
-    val label: String get() = when {
-        minutes % 60 == 0 -> "${minutes / 60}h"
-        minutes < 60 -> "${minutes}m"
-        else -> "${minutes / 60}h ${minutes % 60}m"
-    }
+@JvmInline
+internal value class LiveDuration(
+    val minutes: Int,
+) {
+    val label: String
+        get() = when {
+            minutes % 60 == 0 -> "${minutes / 60}h"
+            minutes < 60 -> "${minutes}m"
+            else -> "${minutes / 60}h ${minutes % 60}m"
+        }
 
     fun endTimeLabel(from: LocalDateTime): String {
         val total = from.hour * 60 + from.minute + minutes
@@ -787,6 +756,17 @@ internal enum class LiveDuration(val minutes: Int) {
     }
 
     companion object {
-        val default = HOUR_1
+        val default = LiveDuration(minutes = 60)
+
+        val Durations = (1..<45).map { LiveDuration(it * 5) }
     }
 }
+
+private val LiveDurationSaver: Saver<LiveDuration, Int> = Saver(
+    save = {
+        it.minutes
+    },
+    restore = {
+        LiveDuration(minutes = it)
+    },
+)

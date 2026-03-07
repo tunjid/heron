@@ -879,6 +879,10 @@ private fun ProfileAvatar(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(headerState.avatarPadding)
+                .ifTrue(
+                    predicate = isLive,
+                    block = Modifier::profileLiveAvatarBorder,
+                )
                 .clickable { onProfileAvatarClicked() },
             state = remember(
                 key1 = profile.avatar?.uri,
@@ -894,13 +898,7 @@ private fun ProfileAvatar(
                 )
             },
             sharedElement = { state, modifier ->
-                AsyncImage(
-                    args = state,
-                    modifier = modifier.ifTrue(
-                        predicate = isLive,
-                        block = Modifier::profileLiveAvatarBorder,
-                    ),
-                )
+                AsyncImage(state, modifier)
             },
         )
         if (isLive) ProfileLiveChip(
@@ -995,7 +993,7 @@ private fun ProfileHeadline(
                                     else onViewerStateClicked(viewerState)
                                 },
                             )
-                            if (signedInProfileId != null && isSignedInProfile) {
+                            if (signedInProfileId != null) {
                                 ProfileActionsMenu(
                                     items = viewerState.profileActionMenuItems(
                                         isSignedInProfile = isSignedInProfile,
