@@ -110,9 +110,6 @@ class ActualListViewModel(
             signedInProfileIdMutations(
                 authRepository = authRepository,
             ),
-            recentConversationMutations(
-                messageRepository = messageRepository,
-            ),
             loadPreferencesMutations(
                 userDataRepository = userDataRepository,
             ),
@@ -159,6 +156,9 @@ class ActualListViewModel(
                         is Action.MuteAccount -> action.flow.muteAccountMutations(
                             writeQueue = writeQueue,
                         )
+                        is Action.UpdateRecentConversations -> action.flow.recentConversationMutations(
+                            messageRepository = messageRepository,
+                        )
                         is Action.UpdateRecentLists -> action.flow.recentListsMutations(
                             recordRepository = recordRepository,
                         )
@@ -186,13 +186,15 @@ fun signedInProfileIdMutations(
             copy(signedInProfileId = signedInProfile?.did)
         }
 
-private fun recentConversationMutations(
+private fun Flow<Action.UpdateRecentConversations>.recentConversationMutations(
     messageRepository: MessageRepository,
 ): Flow<Mutation<State>> =
-    messageRepository.recentConversations()
-        .mapToMutation { conversations ->
-            copy(recentConversations = conversations)
-        }
+    flatMapLatest {
+        messageRepository.recentConversations()
+            .mapToMutation { conversations ->
+                copy(recentConversations = conversations)
+            }
+    }
 
 private fun loadPreferencesMutations(
     userDataRepository: UserDataRepository,

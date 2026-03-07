@@ -52,6 +52,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 
 internal typealias NotificationsStateHolder = ActionStateMutator<Action, StateFlow<State>>
@@ -87,9 +88,6 @@ class ActualNotificationsViewModel(
             ),
             loadProfileMutations(
                 authRepository,
-            ),
-            recentConversationMutations(
-                messageRepository = messageRepository,
             ),
             canShowRequestPermissionsButtonMutations(
                 notificationsRepository,
@@ -129,6 +127,9 @@ class ActualNotificationsViewModel(
                     is Action.MuteAccount -> action.flow.muteAccountMutations(
                         writeQueue = writeQueue,
                     )
+                    is Action.UpdateRecentConversations -> action.flow.recentConversationMutations(
+                        messageRepository = messageRepository,
+                    )
                     is Action.DeleteRecord -> action.flow.deleteRecordMutations(
                         writeQueue = writeQueue,
                     )
@@ -144,13 +145,15 @@ private fun loadProfileMutations(
         copy(signedInProfile = it)
     }
 
-fun recentConversationMutations(
+fun Flow<Action.UpdateRecentConversations>.recentConversationMutations(
     messageRepository: MessageRepository,
 ): Flow<Mutation<State>> =
-    messageRepository.recentConversations()
-        .mapToMutation { conversations ->
-            copy(recentConversations = conversations)
-        }
+    flatMapLatest {
+        messageRepository.recentConversations()
+            .mapToMutation { conversations ->
+                copy(recentConversations = conversations)
+            }
+    }
 
 fun loadPreferencesMutations(
     userDataRepository: UserDataRepository,

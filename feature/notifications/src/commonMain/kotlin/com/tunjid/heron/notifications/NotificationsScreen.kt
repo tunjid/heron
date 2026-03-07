@@ -142,6 +142,7 @@ internal fun NotificationsScreen(
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = state.signedInProfile?.did,
         recentConversations = state.recentConversations,
+        onShown = { actions(Action.UpdateRecentConversations) },
         onOptionClicked = { option ->
             when (option) {
                 is PostOption.ShareInConversation ->

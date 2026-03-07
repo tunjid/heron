@@ -123,6 +123,8 @@ sealed class Action(val key: String) {
         val at: Instant,
     ) : Action(key = "markNotificationsRead")
 
+    data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
+
     sealed class Navigate :
         Action(key = "Navigate"),
         NavigationAction {

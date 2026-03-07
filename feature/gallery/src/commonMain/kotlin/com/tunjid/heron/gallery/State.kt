@@ -233,6 +233,8 @@ sealed class Action(val key: String) {
         val followedBy: FollowUri?,
     ) : Action(key = "ToggleViewerState")
 
+    data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
+
     sealed class Navigate :
         Action(key = "Navigate"),
         NavigationAction {

@@ -123,9 +123,6 @@ class SearchViewModel(
             feedGeneratorUrisToStatusMutations(
                 timelineRepository = timelineRepository,
             ),
-            recentConversationMutations(
-                messageRepository = messageRepository,
-            ),
             loadPreferencesMutations(
                 userDataRepository = userDataRepository,
             ),
@@ -169,6 +166,9 @@ class SearchViewModel(
                     is Action.MuteAccount -> action.flow.muteAccountMutations(
                         writeQueue = writeQueue,
                     )
+                    is Action.UpdateRecentConversations -> action.flow.recentConversationMutations(
+                        messageRepository = messageRepository,
+                    )
                     is Action.UpdateRecentLists -> action.flow.recentListsMutations(
                         recordRepository = recordRepository,
                     )
@@ -197,13 +197,15 @@ private fun loadProfileMutations(
         )
     }
 
-fun recentConversationMutations(
+fun Flow<Action.UpdateRecentConversations>.recentConversationMutations(
     messageRepository: MessageRepository,
 ): Flow<Mutation<State>> =
-    messageRepository.recentConversations()
-        .mapToMutation { conversations ->
-            copy(recentConversations = conversations)
-        }
+    flatMapLatest {
+        messageRepository.recentConversations()
+            .mapToMutation { conversations ->
+                copy(recentConversations = conversations)
+            }
+    }
 
 private fun loadPreferencesMutations(
     userDataRepository: UserDataRepository,
