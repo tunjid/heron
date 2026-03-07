@@ -14,38 +14,48 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.ui
+package com.tunjid.heron.ui.modifiers
 
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.ReadOnlyComposable
-import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.layout.onLayoutRectChanged
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.LayoutDirection
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.threepane.ThreePane
+import androidx.compose.ui.unit.toRect
 
-val MovableElementSharedTransitionScope.isPrimaryOrActive
-    get() = paneState.pane == ThreePane.Primary || isActive
+class TrackingOverlayClip : SharedTransitionScope.OverlayClip {
 
-// This should only be callable from this scope
-@Suppress("UnusedReceiverParameter")
-inline val MovableElementSharedTransitionScope.localOverlayClip: SharedTransitionScope.OverlayClip
-    @ReadOnlyComposable @Composable get() = LocalSharedElementOverlayClip.current
+    internal var parentBounds by mutableStateOf(IntRect.Zero)
+    private var path: Path? = null
 
-val DefaultSharedElementOverlayClip = object : SharedTransitionScope.OverlayClip {
     override fun getClipPath(
         sharedContentState: SharedTransitionScope.SharedContentState,
         bounds: Rect,
         layoutDirection: LayoutDirection,
         density: Density,
     ): Path? {
-        return sharedContentState.parentSharedContentState?.clipPathInOverlay
+        if (parentBounds == IntRect.Zero) return null
+        val clipPath = path ?: Path().also { path = it }
+
+        clipPath.rewind()
+        clipPath.addRect(parentBounds.toRect())
+        return clipPath
     }
 }
 
-val LocalSharedElementOverlayClip = staticCompositionLocalOf {
-    DefaultSharedElementOverlayClip
+/**
+ * Used to track the bounds of a Composable so it may be used for clipping later.
+ * There should be a 1:1 use of this Modifier to [TrackingOverlayClip], it should not be
+ * reused.
+ */
+fun Modifier.trackOverlayClipBounds(
+    trackingOverlayClip: TrackingOverlayClip,
+) = onLayoutRectChanged { bounds ->
+    trackingOverlayClip.parentBounds = bounds.boundsInScreen
 }
