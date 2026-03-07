@@ -464,7 +464,7 @@ val CommentsState.galleryHeightFraction: Float get() = max(
 
 val CommentsState.progress: Float get() = anchoredDraggableState.requireOffset() / height
 
-private val CommentsState.isNotCollapsed: Boolean
+val CommentsState.isNotCollapsed: Boolean
     get() = anchoredDraggableState.currentValue != Anchor.Collapsed
 
 private val CommentsState.contentOffset
@@ -479,7 +479,7 @@ private fun CommentsState.updateHeight(height: Int) {
 
 private fun CommentsState.currentDraggableAnchors() = DraggableAnchors {
     Anchor.Collapsed at 0f
-    Anchor.Halfway at height / 2
+    Anchor.Halfway at height * ProgressThreshold
     Anchor.Expanded at height
 }
 
@@ -573,4 +573,4 @@ internal enum class Anchor {
 }
 
 private const val GalleryMinHeightFraction = 0.5f
-private const val ProgressThreshold = 0.5f
+private const val ProgressThreshold = 0.68f

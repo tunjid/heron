@@ -55,6 +55,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import com.tunjid.composables.gesturezoom.GestureZoomState.Companion.gestureZoomable
 import com.tunjid.composables.gesturezoom.GestureZoomState.Options
 import com.tunjid.composables.gesturezoom.rememberGestureZoomState
@@ -75,6 +78,7 @@ import com.tunjid.heron.gallery.ui.MediaOverlay
 import com.tunjid.heron.gallery.ui.MediaPoster
 import com.tunjid.heron.gallery.ui.PagerStates
 import com.tunjid.heron.gallery.ui.galleryHeightFraction
+import com.tunjid.heron.gallery.ui.isNotCollapsed
 import com.tunjid.heron.gallery.ui.rememberCommentsState
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.ControlsVisibilityEffect
@@ -289,7 +293,8 @@ internal fun GalleryScreen(
             state = commentsState,
             paneScaffoldState = paneScaffoldState,
             postOptionsSheetState = postOptionsSheetState,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize(),
             comments = state.comments,
             inputText = state.inputText,
             onTextChanged = { actions(Action.TextChanged(it)) },
@@ -334,6 +339,11 @@ internal fun GalleryScreen(
                 if (isScrolling) commentsState.collapse()
             }
     }
+    NavigationBackHandler(
+        state = rememberNavigationEventState(NavigationEventInfo.None),
+        isBackEnabled = commentsState.isNotCollapsed,
+        onBackCompleted = commentsState::collapse,
+    )
 }
 
 @Composable
