@@ -209,6 +209,7 @@ private fun FeedTimeline(
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
+        onShown = { actions(Action.UpdateRecentConversations) },
         onOptionClicked = { option ->
             when (option) {
                 is PostOption.ShareInConversation ->
