@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -49,13 +48,16 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
 import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import com.tunjid.composables.gesturezoom.GestureZoomState.Companion.gestureZoomable
 import com.tunjid.composables.gesturezoom.GestureZoomState.Options
 import com.tunjid.composables.gesturezoom.rememberGestureZoomState
@@ -76,7 +78,7 @@ import com.tunjid.heron.gallery.ui.MediaOverlay
 import com.tunjid.heron.gallery.ui.MediaPoster
 import com.tunjid.heron.gallery.ui.PagerStates
 import com.tunjid.heron.gallery.ui.galleryHeightFraction
-import com.tunjid.heron.gallery.ui.progress
+import com.tunjid.heron.gallery.ui.isNotCollapsed
 import com.tunjid.heron.gallery.ui.rememberCommentsState
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.ControlsVisibilityEffect
@@ -291,7 +293,8 @@ internal fun GalleryScreen(
             state = commentsState,
             paneScaffoldState = paneScaffoldState,
             postOptionsSheetState = postOptionsSheetState,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize(),
             comments = state.comments,
             inputText = state.inputText,
             onTextChanged = { actions(Action.TextChanged(it)) },
@@ -336,6 +339,11 @@ internal fun GalleryScreen(
                 if (isScrolling) commentsState.collapse()
             }
     }
+    NavigationBackHandler(
+        state = rememberNavigationEventState(NavigationEventInfo.None),
+        isBackEnabled = commentsState.isNotCollapsed,
+        onBackCompleted = commentsState::collapse,
+    )
 }
 
 @Composable
@@ -374,18 +382,11 @@ private fun HorizontalItems(
             }
         }
 
-        val statusBarHeight = UiTokens.statusBarHeight
+        val statusBarHeight = with(LocalDensity.current) {
+            UiTokens.statusBarHeight.toPx()
+        }
         HorizontalPager(
             modifier = Modifier
-                .offset {
-                    IntOffset(
-                        x = 0,
-                        y = min(
-                            a = statusBarHeight,
-                            b = statusBarHeight * commentsState.progress * StatusBarOffsetMultiplier,
-                        ).roundToPx(),
-                    )
-                }
                 .zIndex(MediaZIndex)
                 .fillMaxSize(),
             beyondViewportPageCount = PagerPrefetchCount,
@@ -407,6 +408,14 @@ private fun HorizontalItems(
                             windowSize = it
                         },
                 ) {
+                    val itemModifier = Modifier
+                        .align { size, space, _ ->
+                            val heightDifference = space.height - size.height
+                            val verticalOffset =
+                                if (heightDifference < statusBarHeight) statusBarHeight.fastRoundToInt()
+                                else heightDifference / 2
+                            IntOffset(x = 0, y = verticalOffset)
+                        }
                     when (val media = item.media[page]) {
                         is GalleryItem.Media.Photo -> {
                             val zoomState = rememberGestureZoomState(
@@ -419,8 +428,7 @@ private fun HorizontalItems(
                             )
                             val coroutineScope = rememberCoroutineScope()
                             GalleryImage(
-                                modifier = Modifier
-                                    .align(Alignment.Center)
+                                modifier = itemModifier
                                     .aspectRatioFor(
                                         windowSize = windowSize,
                                         aspectRatio = media.image,
@@ -443,8 +451,7 @@ private fun HorizontalItems(
                         }
 
                         is GalleryItem.Media.Video -> GalleryVideo(
-                            modifier = Modifier
-                                .align(Alignment.Center)
+                            modifier = itemModifier
                                 .aspectRatioFor(
                                     windowSize = windowSize,
                                     aspectRatio = media.video,
@@ -627,6 +634,4 @@ private val IndicatorEnterAnimation = fadeIn()
 private val IndicatorExitAnimation = fadeOut()
 
 private const val MediaZIndex = 0f
-
-private const val StatusBarOffsetMultiplier = 1.8f
 private const val PagerPrefetchCount = 1

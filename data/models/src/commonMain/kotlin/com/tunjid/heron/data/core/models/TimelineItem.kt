@@ -147,10 +147,17 @@ sealed class TimelineItem {
         override val id: String = Uuid.random().toString(),
     ) : Placeholder()
 
-    data class Empty(
-        val timeline: Timeline,
-    ) : Placeholder() {
-        override val id: String = timeline.sourceId
+    sealed class Empty : Placeholder() {
+        data object Thread : Empty() {
+            @OptIn(ExperimentalUuidApi::class)
+            override val id: String = Uuid.random().toString()
+        }
+
+        data class Timeline(
+            val timeline: com.tunjid.heron.data.core.models.Timeline,
+        ) : Empty() {
+            override val id: String = timeline.sourceId
+        }
     }
 
     companion object {
@@ -184,5 +191,6 @@ sealed class TimelineItem {
         )
 
         val LoadingItems = (0..16).map { Loading() }
+        val EmptyThreadItems = listOf(Empty.Thread)
     }
 }

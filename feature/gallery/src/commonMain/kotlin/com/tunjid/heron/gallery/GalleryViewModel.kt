@@ -22,6 +22,7 @@ import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ThreadViewPreference.Companion.order
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
@@ -56,9 +57,11 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -391,6 +394,7 @@ fun Flow<Action.LoadComments>.loadCommentsMutations(
             copy(
                 order = order,
                 commentsPost = post,
+                comments = TimelineItem.LoadingItems,
             )
         }
         emitAll(
@@ -398,12 +402,29 @@ fun Flow<Action.LoadComments>.loadCommentsMutations(
                 postUri = post.uri,
                 order = order,
             )
-                .mapToMutation { timelineItems ->
-                    if (timelineItems.isEmpty()) this
-                    else copy(
-                        // Drop the first item as its the post in the gallery
-                        comments = timelineItems.drop(1),
-                    )
+                .mapLatestToManyMutations { timelineItems ->
+                    if (timelineItems.isEmpty()) {
+                        // Delay to prevent false positives
+                        delay(3.seconds)
+                        emit {
+                            copy(
+                                comments = TimelineItem.EmptyThreadItems,
+                            )
+                        }
+                    } else {
+                        val fetchingPostIndex = timelineItems.indexOfFirst {
+                            it.post.uri == post.uri
+                        }
+                        emit {
+                            copy(
+                                // Drop the fetching post from comments
+                                comments =
+                                if (fetchingPostIndex < 0) TimelineItem.EmptyThreadItems
+                                else timelineItems.drop(fetchingPostIndex + 1)
+                                    .ifEmpty(TimelineItem::EmptyThreadItems),
+                            )
+                        }
+                    }
                 },
         )
     }
@@ -462,7 +483,7 @@ private fun verticalTimelineMutations(
                 val missingInitialItem = initialItem != null &&
                     fetched.none { it.post.uri == initialItem.post.uri }
 
-                // If the the tile containing the initial item
+                // If the tile containing the initial item
                 // is missing, wait for the tiling pipeline to catch up
                 if (missingInitialItem) this
                 else copy(

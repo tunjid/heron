@@ -39,7 +39,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -99,6 +98,7 @@ import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.re
 import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
+import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.text.withFormattedTextPost
 import heron.feature.gallery.generated.resources.Res
@@ -187,11 +187,11 @@ fun Comments(
     }
     Box(
         modifier = modifier
-            .statusBarsPadding()
             .onSizeChanged { state.updateHeight(it.height) }
             .nestedScroll(state.nestedScrollConnection()),
     ) {
         val now = remember { Clock.System.now() }
+        val presentation = Timeline.Presentation.Text.WithEmbed
 
         val postInteractionSheetState = rememberUpdatedPostInteractionsSheetState(
             isSignedIn = paneScaffoldState.isSignedIn,
@@ -214,8 +214,9 @@ fun Comments(
         ElevatedCard(
             shape = TopShape,
             modifier = Modifier
-                .fillMaxSize()
+                .offset(y = UiTokens.statusBarHeight)
                 .offset { state.contentOffset }
+                .fillMaxSize()
                 .anchoredDraggable(
                     enabled = false,
                     reverseDirection = true,
@@ -247,6 +248,9 @@ fun Comments(
                         contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
                             isCompact = paneScaffoldState.prefersCompactBottomNav,
                         ),
+                        verticalArrangement = Arrangement.spacedBy(
+                            presentation.lazyGridVerticalItemSpacing,
+                        ),
                         userScrollEnabled = !paneScaffoldState.isTransitionActive,
                     ) {
                         items(
@@ -263,7 +267,7 @@ fun Comments(
                                     item = item,
                                     sharedElementPrefix = commentSharedElementPrefix,
                                     showEngagementMetrics = false,
-                                    presentation = Timeline.Presentation.Text.WithEmbed,
+                                    presentation = presentation,
                                     postActions = remember(Unit) {
                                         PostActions { action ->
                                             when (action) {
@@ -459,7 +463,7 @@ val CommentsState.galleryHeightFraction: Float get() = max(
 
 val CommentsState.progress: Float get() = anchoredDraggableState.requireOffset() / height
 
-private val CommentsState.isNotCollapsed: Boolean
+val CommentsState.isNotCollapsed: Boolean
     get() = anchoredDraggableState.currentValue != Anchor.Collapsed
 
 private val CommentsState.contentOffset
@@ -474,7 +478,7 @@ private fun CommentsState.updateHeight(height: Int) {
 
 private fun CommentsState.currentDraggableAnchors() = DraggableAnchors {
     Anchor.Collapsed at 0f
-    Anchor.Halfway at height / 2
+    Anchor.Halfway at height * ProgressThreshold
     Anchor.Expanded at height
 }
 
@@ -567,5 +571,5 @@ internal enum class Anchor {
     Expanded,
 }
 
-private const val GalleryMinHeightFraction = 0.72f
-private const val ProgressThreshold = 0.5f
+private const val GalleryMinHeightFraction = 0.5f
+private const val ProgressThreshold = 0.68f
