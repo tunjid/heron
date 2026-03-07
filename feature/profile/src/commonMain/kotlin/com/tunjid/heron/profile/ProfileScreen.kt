@@ -20,7 +20,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -182,14 +181,11 @@ import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.AttributionLayout
-import com.tunjid.heron.ui.LiveChip
 import com.tunjid.heron.ui.OverlappingAvatarRow
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
-import com.tunjid.heron.ui.UiTokens.LiveBorderWidth
-import com.tunjid.heron.ui.UiTokens.LiveStatusColor
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.navigableLinkTargetHandler
@@ -900,17 +896,17 @@ private fun ProfileAvatar(
             sharedElement = { state, modifier ->
                 AsyncImage(
                     args = state,
-                    modifier = modifier.ifTrue(isLive) {
-                        border(
-                            width = LiveBorderWidth,
-                            color = LiveStatusColor,
-                            shape = CircleShape,
-                        )
-                    },
+                    modifier = modifier.ifTrue(
+                        predicate = isLive,
+                        block = Modifier::profileLiveAvatarBorder,
+                    ),
                 )
             },
         )
-        if (isLive) LiveChip(modifier = Modifier.align(Alignment.BottomCenter))
+        if (isLive) ProfileLiveChip(
+            modifier = Modifier
+                .align(Alignment.BottomCenter),
+        )
     }
 }
 

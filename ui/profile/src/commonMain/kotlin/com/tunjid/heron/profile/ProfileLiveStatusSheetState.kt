@@ -67,9 +67,6 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
-import com.tunjid.heron.ui.LiveChip
-import com.tunjid.heron.ui.UiTokens.LiveBorderWidth
-import com.tunjid.heron.ui.UiTokens.LiveStatusColor
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.sheets.BottomSheetScope
@@ -453,7 +450,8 @@ private fun LiveAvatarBadge(
     modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = modifier.size(56.dp),
+        modifier = modifier
+            .size(56.dp),
         contentAlignment = Alignment.BottomCenter,
     ) {
         AsyncImage(
@@ -465,15 +463,12 @@ private fun LiveAvatarBadge(
             ),
             modifier = Modifier
                 .size(50.dp)
-                .ifTrue(profile.status?.isLive == true) {
-                    border(
-                        width = LiveBorderWidth,
-                        color = LiveStatusColor,
-                        shape = CircleShape,
-                    )
-                },
+                .ifTrue(
+                    predicate = profile.status?.isLive == true,
+                    block = Modifier::profileLiveAvatarBorder,
+                ),
         )
-        LiveChip(modifier = Modifier.align(Alignment.BottomCenter))
+        ProfileLiveChip(modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
 
