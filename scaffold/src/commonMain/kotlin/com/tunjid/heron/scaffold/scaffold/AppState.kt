@@ -46,6 +46,7 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.UserDataRepository
+import com.tunjid.heron.data.utilities.DatabaseCleanup
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.images.ImageLoader
 import com.tunjid.heron.media.video.VideoPlayerController
@@ -91,6 +92,7 @@ class AppState(
     internal val imageLoader: ImageLoader,
     internal val videoPlayerController: VideoPlayerController,
     private val writeQueue: WriteQueue,
+    private val databaseCleanup: DatabaseCleanup,
 ) {
     private var notificationCount by mutableStateOf(0L)
 
@@ -180,6 +182,9 @@ class AppState(
         LaunchedEffect(Unit) {
             launch {
                 writeQueue.drain()
+            }
+            launch {
+                databaseCleanup.cleanup()
             }
             launch {
                 notificationStateHolder.state.collect { notificationState ->

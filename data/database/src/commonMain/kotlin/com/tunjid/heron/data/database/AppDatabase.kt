@@ -30,6 +30,7 @@ import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
+import com.tunjid.heron.data.database.daos.PostCleanupDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StandardSiteDao
@@ -235,6 +236,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun messagesDao(): MessageDao
     abstract fun threadGateDao(): ThreadGateDao
     abstract fun standardSiteDao(): StandardSiteDao
+    abstract fun postCleanupDao(): PostCleanupDao
 }
 
 // The Room compiler generates the `actual` implementations.

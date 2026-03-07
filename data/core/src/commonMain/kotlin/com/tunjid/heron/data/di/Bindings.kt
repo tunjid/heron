@@ -28,6 +28,7 @@ import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
+import com.tunjid.heron.data.database.daos.PostCleanupDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StandardSiteDao
@@ -332,6 +333,12 @@ class DataBindings(
     fun provideStandardSiteDao(
         database: AppDatabase,
     ): StandardSiteDao = database.standardSiteDao()
+
+    @SingleIn(AppScope::class)
+    @Provides
+    fun providePostCleanupDao(
+        database: AppDatabase,
+    ): PostCleanupDao = database.postCleanupDao()
 
     @SingleIn(AppScope::class)
     @Provides

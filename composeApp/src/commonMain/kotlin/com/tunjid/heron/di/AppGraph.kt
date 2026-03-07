@@ -22,6 +22,7 @@ import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.UserDataRepository
+import com.tunjid.heron.data.utilities.DatabaseCleanup
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.editprofile.di.EditProfileBindings
 import com.tunjid.heron.feed.di.FeedBindings
@@ -106,6 +107,7 @@ interface AppGraph {
         imageLoader: ImageLoader,
         videoPlayerController: VideoPlayerController,
         writeQueue: WriteQueue,
+        databaseCleanup: DatabaseCleanup,
     ): AppState = AppState(
         entryMap = entryMap,
         authRepository = authRepository,
@@ -115,6 +117,7 @@ interface AppGraph {
         imageLoader = imageLoader,
         videoPlayerController = videoPlayerController,
         writeQueue = writeQueue,
+        databaseCleanup = databaseCleanup,
     )
 
     val appState: AppState
