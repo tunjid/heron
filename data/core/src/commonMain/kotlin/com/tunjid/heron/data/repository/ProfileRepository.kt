@@ -475,7 +475,7 @@ internal class OfflineProfileRepository @Inject constructor(
             is Profile.StatusUpdate.GoLive -> networkService.runCatchingWithMonitoredNetworkRetry {
                 putRecord(
                     PutRecordRequest(
-                        repo = update.profileId.id.let(::Did),
+                        repo = update.signedInProfileId.id.let(::Did),
                         collection = Nsid(Collections.ProfileStatus),
                         rkey = RKey(Collections.SelfRecordKey.rkey),
                         record = Status(
@@ -498,7 +498,7 @@ internal class OfflineProfileRepository @Inject constructor(
                 val now = Clock.System.now()
                 val expiresAt = now.plus(update.durationMinutes.minutes)
                 profileDao.updateStatus(
-                    did = update.profileId,
+                    did = update.signedInProfileId,
                     uri = null,
                     value = Profile.ProfileStatus.STATUS_LIVE,
                     uriLink = update.streamUrl,
@@ -514,14 +514,14 @@ internal class OfflineProfileRepository @Inject constructor(
             is Profile.StatusUpdate.EndLive -> networkService.runCatchingWithMonitoredNetworkRetry {
                 deleteRecord(
                     DeleteRecordRequest(
-                        repo = update.profileId.id.let(::Did),
+                        repo = update.signedInProfileId.id.let(::Did),
                         collection = Nsid(Collections.ProfileStatus),
                         rkey = RKey(Collections.SelfRecordKey.rkey),
                     ),
                 )
             }.toOutcome {
                 profileDao.updateStatus(
-                    did = update.profileId,
+                    did = update.signedInProfileId,
                     uri = null,
                     value = null,
                     uriLink = null,

@@ -138,18 +138,18 @@ data class Profile(
 
     @Serializable
     sealed class StatusUpdate {
-        abstract val profileId: ProfileId
+        abstract val signedInProfileId: ProfileId
 
         @Serializable
         data class GoLive(
-            override val profileId: ProfileId,
+            override val signedInProfileId: ProfileId,
             val streamUrl: String,
             val durationMinutes: Int = ProfileStatus.DEFAULT_LIVE_DURATION_MINUTES,
         ) : StatusUpdate()
 
         @Serializable
         data class EndLive(
-            override val profileId: ProfileId,
+            override val signedInProfileId: ProfileId,
         ) : StatusUpdate()
     }
 

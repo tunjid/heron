@@ -57,7 +57,7 @@ data class ProfileEntity(
     @Embedded
     val associated: Associated,
     @Embedded(prefix = "status_")
-    val status: Status? = null,
+    val status: Status?,
 ) {
     data class Partial(
         val did: ProfileId,

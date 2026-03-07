@@ -206,6 +206,18 @@ sealed class Action(val key: String) {
         val target: LinkTarget,
     ) : Action(key = "BioLinkClicked")
 
+    sealed class UpdateLiveStatus(key: String) : Action(key) {
+        data class GoLive(
+            val signedInProfileId: ProfileId,
+            val streamUrl: String,
+            val duration: Int,
+        ) : UpdateLiveStatus(key = "GoLive")
+
+        data class EndLive(
+            val signedInProfileId: ProfileId,
+        ) : UpdateLiveStatus(key = "EndLive")
+    }
+
     sealed class Moderation(
         key: String,
     ) : Action(key)

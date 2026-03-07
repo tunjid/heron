@@ -44,8 +44,11 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.profile.ProfileLiveChip
+import com.tunjid.heron.profile.profileLiveAvatarBorder
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blur
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.threepane.ThreePane
 
@@ -58,6 +61,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
     transparencyFactor: () -> Float = { 0f },
     onSignedInProfileClicked: (Profile, String) -> Unit,
 ) {
+    val isLive = signedInProfile?.status?.isLive == true
     TopAppBar(
         modifier = modifier
             .rootAppBarBackground(
@@ -97,30 +101,40 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                 visible = signedInProfile != null,
             ) {
                 signedInProfile?.let { profile ->
-                    PaneStickySharedElement(
-                        modifier = Modifier
-                            .size(36.dp),
-                        sharedContentState = rememberSharedContentState(
-                            key = UiTokens.SignedInUserAvatarSharedElementKey,
-                        ),
-                    ) {
-                        AsyncImage(
+                    Box {
+                        PaneStickySharedElement(
                             modifier = Modifier
-                                .fillParentAxisIfFixedOrWrap()
-                                .clickable {
-                                    onSignedInProfileClicked(
-                                        profile,
-                                        UiTokens.SignedInUserAvatarSharedElementKey,
+                                .size(36.dp),
+                            sharedContentState = rememberSharedContentState(
+                                key = UiTokens.SignedInUserAvatarSharedElementKey,
+                            ),
+                        ) {
+                            AsyncImage(
+                                modifier = Modifier
+                                    .fillParentAxisIfFixedOrWrap()
+                                    .ifTrue(
+                                        predicate = isLive,
+                                        block = Modifier::profileLiveAvatarBorder,
+                                    )
+                                    .clickable {
+                                        onSignedInProfileClicked(
+                                            profile,
+                                            UiTokens.SignedInUserAvatarSharedElementKey,
+                                        )
+                                    },
+                                args = remember(profile) {
+                                    ImageArgs(
+                                        url = profile.avatar?.uri,
+                                        contentDescription = signedInProfile.displayName,
+                                        contentScale = ContentScale.Crop,
+                                        shape = RoundedPolygonShape.Circle,
                                     )
                                 },
-                            args = remember(profile) {
-                                ImageArgs(
-                                    url = profile.avatar?.uri,
-                                    contentDescription = signedInProfile.displayName,
-                                    contentScale = ContentScale.Crop,
-                                    shape = RoundedPolygonShape.Circle,
-                                )
-                            },
+                            )
+                        }
+                        if (isLive) ProfileLiveChip(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter),
                         )
                     }
                 }
