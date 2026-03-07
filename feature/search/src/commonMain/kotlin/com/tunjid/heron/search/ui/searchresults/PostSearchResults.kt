@@ -95,6 +95,7 @@ internal fun PostSearchResults(
     videoStates: ThreadedVideoPositionStates<SearchResult.OfPost>,
     paneScaffoldState: PaneScaffoldState,
     onRequestRecentLists: () -> Unit,
+    onRequestRecentConversations: () -> Unit,
     onLinkTargetClicked: (LinkTarget) -> Unit,
     onPostSearchResultProfileClicked: (profile: Profile, post: Post, sharedElementPrefix: String) -> Unit,
     onPostSearchResultClicked: (post: Post, sharedElementPrefix: String) -> Unit,
@@ -157,6 +158,7 @@ internal fun PostSearchResults(
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
+        onShown = onRequestRecentConversations,
         onOptionClicked = { option ->
             when (option) {
                 is PostOption.ShareInConversation ->

@@ -24,6 +24,7 @@ import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.tunjid.heron.data.database.callbacks.UnknownProfileInsertionCallback
+import com.tunjid.heron.data.database.daos.DatabaseCleanupDao
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
@@ -235,6 +236,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun messagesDao(): MessageDao
     abstract fun threadGateDao(): ThreadGateDao
     abstract fun standardSiteDao(): StandardSiteDao
+    abstract fun databaseCleanupDao(): DatabaseCleanupDao
 }
 
 // The Room compiler generates the `actual` implementations.

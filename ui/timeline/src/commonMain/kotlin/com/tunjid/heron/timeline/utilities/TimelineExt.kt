@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BookmarkAdd
 import androidx.compose.material.icons.rounded.Bookmark
@@ -238,14 +237,6 @@ fun Timeline.sharedElementPrefix(
 ) = source.id.withQuotingPostUriPrefix(
     quotingPostUri = quotingPostUri,
 )
-
-fun LazyStaggeredGridState.pendingOffsetFor(
-    item: TimelineItem,
-) = layoutInfo
-    .visibleItemsInfo
-    .first { it.key == item.id }
-    .offset
-    .y
 
 val TimelineItem.canAutoPlayVideo: Boolean
     get() = appliedLabels.canAutoPlayVideo

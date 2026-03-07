@@ -107,9 +107,6 @@ class ActualPostsViewModel(
             ),
         ),
         inputs = listOf(
-            recentConversationMutations(
-                messageRepository = messageRepository,
-            ),
             loadPreferencesMutations(
                 userDataRepository = userDataRepository,
             ),
@@ -140,6 +137,9 @@ class ActualPostsViewModel(
                     )
                     is Action.MuteAccount -> action.flow.muteAccountMutations(
                         writeQueue = writeQueue,
+                    )
+                    is Action.UpdateRecentConversations -> action.flow.recentConversationMutations(
+                        messageRepository = messageRepository,
                     )
                     is Action.UpdateRecentLists -> action.flow.recentListsMutations(
                         recordRepository = recordRepository,
@@ -176,13 +176,15 @@ private suspend fun Flow<Action.Tile>.postsLoadMutations(
             onTilingDataUpdated = { copy(tilingData = it) },
         )
 
-private fun recentConversationMutations(
+private fun Flow<Action.UpdateRecentConversations>.recentConversationMutations(
     messageRepository: MessageRepository,
 ): Flow<Mutation<State>> =
-    messageRepository.recentConversations()
-        .mapToMutation { conversations ->
-            copy(recentConversations = conversations)
-        }
+    flatMapLatest {
+        messageRepository.recentConversations()
+            .mapToMutation { conversations ->
+                copy(recentConversations = conversations)
+            }
+    }
 
 fun Flow<Action.UpdateRecentLists>.recentListsMutations(
     recordRepository: RecordRepository,

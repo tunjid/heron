@@ -740,6 +740,7 @@ internal class OfflineTimelineRepository(
                 }
             }
     }
+        .flowOn(ioDispatcher)
 
     override suspend fun updatePreferredPresentation(
         timeline: Timeline,
@@ -896,6 +897,7 @@ internal class OfflineTimelineRepository(
                     }
                 }
         }
+        .flowOn(ioDispatcher)
 
     private fun observeAndRefreshTimeline(
         query: TimelineQuery,

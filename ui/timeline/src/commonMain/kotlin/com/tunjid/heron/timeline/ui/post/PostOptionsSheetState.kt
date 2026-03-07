@@ -12,6 +12,7 @@ import androidx.compose.material.icons.rounded.FilterAlt
 import androidx.compose.material.icons.rounded.PersonOff
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -82,6 +83,7 @@ class PostOptionsSheetState private constructor(
         fun rememberUpdatedPostOptionsSheetState(
             signedInProfileId: ProfileId?,
             recentConversations: List<Conversation>,
+            onShown: () -> Unit,
             onOptionClicked: (PostOption) -> Unit,
         ): PostOptionsSheetState {
             val state = rememberBottomSheetState {
@@ -97,6 +99,7 @@ class PostOptionsSheetState private constructor(
 
             PostOptionsBottomSheet(
                 state = state,
+                onShown = onShown,
                 onOptionClicked = onOptionClicked,
             )
 
@@ -108,10 +111,15 @@ class PostOptionsSheetState private constructor(
 @Composable
 private fun PostOptionsBottomSheet(
     state: PostOptionsSheetState,
+    onShown: () -> Unit,
     onOptionClicked: (PostOption) -> Unit,
 ) {
     val signedInProfileId = state.signedInProfileId
     if (signedInProfileId != null) state.ModalBottomSheet {
+        DisposableEffect(Unit) {
+            onShown()
+            onDispose { }
+        }
         Column(
             modifier = Modifier
                 .padding(horizontal = 16.dp),

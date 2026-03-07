@@ -128,6 +128,8 @@ sealed class Action(val key: String) {
 
     data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
+    data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
+
     sealed class UpdateTimeline : Action(key = "Timeline") {
         data object RequestUpdate : UpdateTimeline()
 

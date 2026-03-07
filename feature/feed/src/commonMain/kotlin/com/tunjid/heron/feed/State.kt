@@ -121,6 +121,8 @@ sealed class Action(val key: String) {
 
     data object UpdateRecentLists : Action(key = "UpdateRecentLists")
 
+    data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
+
     sealed class Navigate :
         Action(key = "Navigate"),
         NavigationAction {

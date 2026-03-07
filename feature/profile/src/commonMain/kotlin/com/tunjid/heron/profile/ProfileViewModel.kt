@@ -132,9 +132,6 @@ class ActualProfileViewModel(
             feedGeneratorUrisToStatusMutations(
                 timelineRepository = timelineRepository,
             ),
-            recentConversationMutations(
-                messageRepository = messageRepository,
-            ),
             subscribedLabelerMutations(
                 recordRepository = recordRepository,
             ),
@@ -195,6 +192,9 @@ class ActualProfileViewModel(
                             writeQueue = writeQueue,
                         )
                         is Action.PageChanged -> action.flow.pageChangeMutations()
+                        is Action.UpdateRecentConversations -> action.flow.recentConversationMutations(
+                            messageRepository = messageRepository,
+                        )
                         is Action.UpdateRecentLists -> action.flow.recentListsMutations(
                             recordRepository = recordRepository,
                         )
@@ -210,13 +210,15 @@ class ActualProfileViewModel(
         },
     )
 
-fun recentConversationMutations(
+fun Flow<Action.UpdateRecentConversations>.recentConversationMutations(
     messageRepository: MessageRepository,
 ): Flow<Mutation<State>> =
-    messageRepository.recentConversations()
-        .mapToMutation { conversations ->
-            copy(recentConversations = conversations)
-        }
+    flatMapLatest {
+        messageRepository.recentConversations()
+            .mapToMutation { conversations ->
+                copy(recentConversations = conversations)
+            }
+    }
 
 fun Flow<Action.UpdateRecentLists>.recentListsMutations(
     recordRepository: RecordRepository,

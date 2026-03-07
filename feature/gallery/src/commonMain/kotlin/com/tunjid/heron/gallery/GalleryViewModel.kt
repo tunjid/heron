@@ -105,9 +105,6 @@ class ActualGalleryViewModel(
             loadSignedInProfileIdMutations(
                 authRepository = authRepository,
             ),
-            recentConversationMutations(
-                messageRepository = messageRepository,
-            ),
             loadPreferencesMutations(
                 userDataRepository = userDataRepository,
             ),
@@ -137,6 +134,9 @@ class ActualGalleryViewModel(
                         )
                         is Action.MuteAccount -> action.flow.muteAccountMutations(
                             writeQueue = writeQueue,
+                        )
+                        is Action.UpdateRecentConversations -> action.flow.recentConversationMutations(
+                            messageRepository = messageRepository,
                         )
                         is Action.DeleteRecord -> action.flow.deleteRecordMutations(
                             writeQueue = writeQueue,
@@ -215,13 +215,15 @@ private fun loadPreferencesMutations(
             copy(preferences = it)
         }
 
-fun recentConversationMutations(
+fun Flow<Action.UpdateRecentConversations>.recentConversationMutations(
     messageRepository: MessageRepository,
 ): Flow<Mutation<State>> =
-    messageRepository.recentConversations()
-        .mapToMutation { conversations ->
-            copy(recentConversations = conversations)
-        }
+    flatMapLatest {
+        messageRepository.recentConversations()
+            .mapToMutation { conversations ->
+                copy(recentConversations = conversations)
+            }
+    }
 
 private fun loadSignedInProfileIdMutations(
     authRepository: AuthRepository,
@@ -443,6 +445,9 @@ private fun verticalTimelineMutations(
     // that being viewed and cause a disruptive experience
     state.cursorData ?: return@flow
 
+    // Allow shared element transition to complete before fetching vertical items
+    delay(VerticalItemDelay)
+
     val timelineStateHolder = when (
         val existing = state.timelineStateHolder
     ) {
@@ -550,3 +555,5 @@ private fun CoroutineScope.galleryTimelineStateHolder(
     startNumColumns = 1,
     timelineRepository = timelineRepository,
 )
+
+private val VerticalItemDelay = 1.4.seconds
