@@ -37,6 +37,9 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
+import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.heron.ui.modifiers.trackOverlayClipBounds
+import com.tunjid.heron.ui.modifiers.rememberTrackingOverlayClip
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
@@ -55,12 +58,15 @@ internal fun PostImages(
     presentation: Timeline.Presentation,
 ) {
     val shape = presentation.imageShape
+    val itemModifier = Modifier.ifTrue(isBlurred) {
+        sensitiveContentBlur(shape)
+    }
 
-    val itemModifier = if (isBlurred) Modifier.sensitiveContentBlur(shape)
-    else Modifier
+    val overlayClip = rememberTrackingOverlayClip()
 
     LazyRow(
-        modifier = modifier,
+        modifier = modifier
+            .trackOverlayClipBounds(overlayClip),
         horizontalArrangement = spacedBy(8.dp),
     ) {
         val tallestAspectRatio = feature.images.minOf { it.aspectRatioOrSquare }
@@ -102,6 +108,7 @@ internal fun PostImages(
                     }
                         .clip(shape)
                         .clickable { onImageClicked(index) },
+                    clipInOverlayDuringTransition = overlayClip,
                     sharedContentState = with(paneMovableElementSharedTransitionScope) {
                         rememberSharedContentState(
                             key = image.sharedElementKey(

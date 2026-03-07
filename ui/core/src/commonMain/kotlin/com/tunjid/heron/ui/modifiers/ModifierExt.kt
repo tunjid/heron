@@ -85,5 +85,5 @@ fun Modifier.blockClickEvents() =
 
 inline fun Modifier.ifTrue(
     predicate: Boolean,
-    block: Modifier.() -> Modifier,
+    crossinline block: Modifier.() -> Modifier,
 ) = if (predicate) block() else this
