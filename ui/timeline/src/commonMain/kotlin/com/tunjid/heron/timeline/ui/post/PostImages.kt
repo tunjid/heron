@@ -38,9 +38,9 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.localOverlayClip
+import com.tunjid.heron.ui.modifiers.TrackingOverlayClip
 import com.tunjid.heron.ui.modifiers.ifNotNull
 import com.tunjid.heron.ui.modifiers.ifTrue
-import com.tunjid.heron.ui.modifiers.rememberTrackingOverlayClip
 import com.tunjid.heron.ui.modifiers.trackOverlayClipBounds
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
@@ -64,7 +64,10 @@ internal fun PostImages(
         sensitiveContentBlur(shape)
     }
 
-    val overlayClip = if (feature.images.size > 1) rememberTrackingOverlayClip() else null
+    val imagesSize = feature.images.size
+    val overlayClip = remember(imagesSize) {
+        if (imagesSize > 1) TrackingOverlayClip() else null
+    }
 
     LazyRow(
         modifier = modifier

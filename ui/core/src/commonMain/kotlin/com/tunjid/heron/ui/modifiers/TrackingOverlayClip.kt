@@ -17,10 +17,8 @@
 package com.tunjid.heron.ui.modifiers
 
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
@@ -51,10 +49,11 @@ class TrackingOverlayClip : SharedTransitionScope.OverlayClip {
     }
 }
 
-@Composable
-fun rememberTrackingOverlayClip() =
-    remember(::TrackingOverlayClip)
-
+/**
+ * Used to track the bounds of a Composable so it may be used for clipping later.
+ * There should be a 1:1 use of this Modifier to [TrackingOverlayClip], it should not be
+ * reused.
+ */
 fun Modifier.trackOverlayClipBounds(
     trackingOverlayClip: TrackingOverlayClip,
 ) = onLayoutRectChanged { bounds ->
