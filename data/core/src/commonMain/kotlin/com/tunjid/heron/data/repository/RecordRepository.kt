@@ -31,6 +31,8 @@ import app.bsky.graph.Listitem as BskyListMember
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.DeleteRecordRequest
 import com.atproto.repo.GetRecordQueryParams
+import com.atproto.repo.ListRecordsQueryParams
+import com.atproto.repo.ListRecordsResponse
 import com.atproto.repo.PutRecordRequest
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
@@ -41,6 +43,7 @@ import com.tunjid.heron.data.core.models.Labeler
 import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
@@ -53,19 +56,27 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.StandardDocumentId
+import com.tunjid.heron.data.core.types.StandardDocumentUri
+import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StarterPackUri
+import com.tunjid.heron.data.core.types.UnauthorizedException
+import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordUriOrNull
 import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.core.utilities.asFailureOutcome
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.PostDao
+import com.tunjid.heron.data.database.daos.StandardSiteDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.ListMemberEntity
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedListMemberEntity
+import com.tunjid.heron.data.database.entities.PopulatedStandardDocumentEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.AppMainScope
@@ -74,9 +85,10 @@ import com.tunjid.heron.data.graze.GrazeFeed
 import com.tunjid.heron.data.network.FeedCreationService
 import com.tunjid.heron.data.network.GrazeResponse
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.network.PdsResolver
 import com.tunjid.heron.data.utilities.asJsonContent
+import com.tunjid.heron.data.utilities.distinctUntilChangedMap
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
-import com.tunjid.heron.data.utilities.mapDistinctUntilChanged
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
@@ -87,18 +99,21 @@ import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
+import site.standard.Document
 
 interface RecordRepository {
 
@@ -135,6 +150,11 @@ interface RecordRepository {
         cursor: Cursor,
     ): Flow<CursorList<FeedGenerator>>
 
+    fun standardDocuments(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<StandardDocument>>
+
     suspend fun updateGrazeFeed(
         update: GrazeFeed.Update,
     ): Result<GrazeFeed>
@@ -156,12 +176,14 @@ internal class OfflineRecordRepository @Inject constructor(
     private val labelDao: LabelDao,
     private val starterPackDao: StarterPackDao,
     private val feedGeneratorDao: FeedGeneratorDao,
+    private val standardSiteDao: StandardSiteDao,
     private val savedStateDataSource: SavedStateDataSource,
     private val recordResolver: RecordResolver,
     private val feedCreationService: FeedCreationService,
     private val profileLookup: ProfileLookup,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
+    private val pdsResolver: PdsResolver,
 ) : RecordRepository {
 
     override val subscribedLabelers: Flow<List<Labeler>> =
@@ -173,7 +195,7 @@ internal class OfflineRecordRepository @Inject constructor(
                 creatorId = profileId.id,
                 limit = 30,
                 offset = 0,
-            ).map { it.map(PopulatedListEntity::asExternalModel) }
+            ).distinctUntilChangedMap { it.map(PopulatedListEntity::asExternalModel) }
         }
             .stateIn(
                 scope = appMainScope,
@@ -186,21 +208,21 @@ internal class OfflineRecordRepository @Inject constructor(
             is FeedGeneratorUri -> feedGeneratorDao.feedGenerators(
                 listOf(uri),
             )
-                .mapDistinctUntilChanged { it.firstOrNull()?.asExternalModel() }
+                .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
 
             is ListUri -> listDao.lists(
                 listOf(uri),
             )
-                .mapDistinctUntilChanged { it.firstOrNull()?.asExternalModel() }
+                .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
 
             is StarterPackUri -> starterPackDao.starterPacks(
                 listOf(uri),
             )
-                .mapDistinctUntilChanged { it.firstOrNull()?.asExternalModel() }
+                .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
             is LabelerUri -> labelDao.labelers(
                 listOf(uri),
             )
-                .mapDistinctUntilChanged { it.firstOrNull()?.asExternalModel() }
+                .distinctUntilChangedMap { it.firstOrNull()?.asExternalModel() }
 
             is PostUri ->
                 savedStateDataSource
@@ -209,7 +231,7 @@ internal class OfflineRecordRepository @Inject constructor(
                             viewingProfileId = profileId?.id,
                             postUris = listOf(uri),
                         )
-                            .mapDistinctUntilChanged {
+                            .distinctUntilChangedMap {
                                 it.firstOrNull()?.asExternalModel(
                                     embeddedRecord = null,
                                 )
@@ -257,7 +279,7 @@ internal class OfflineRecordRepository @Inject constructor(
                     offset = query.data.offset,
                     limit = query.data.limit,
                 )
-                    .map { populatedStarterPackEntities ->
+                    .distinctUntilChangedMap { populatedStarterPackEntities ->
                         populatedStarterPackEntities.map(PopulatedStarterPackEntity::asExternalModel)
                     },
                 networkService.nextCursorFlow(
@@ -298,7 +320,7 @@ internal class OfflineRecordRepository @Inject constructor(
                     offset = query.data.offset,
                     limit = query.data.limit,
                 )
-                    .map { populatedListEntities ->
+                    .distinctUntilChangedMap { populatedListEntities ->
                         populatedListEntities.map(PopulatedListEntity::asExternalModel)
                     },
                 networkService.nextCursorFlow(
@@ -336,7 +358,7 @@ internal class OfflineRecordRepository @Inject constructor(
                     offset = query.data.offset,
                     limit = query.data.limit,
                 )
-                    .map {
+                    .distinctUntilChangedMap {
                         it.map(PopulatedListMemberEntity::asExternalModel)
                     },
                 networkService.nextCursorFlow(
@@ -383,7 +405,7 @@ internal class OfflineRecordRepository @Inject constructor(
                     offset = query.data.offset,
                     limit = query.data.limit,
                 )
-                    .map { populatedFeedGeneratorEntities ->
+                    .distinctUntilChangedMap { populatedFeedGeneratorEntities ->
                         populatedFeedGeneratorEntities.map(PopulatedFeedGeneratorEntity::asExternalModel)
                     },
                 networkService.nextCursorFlow(
@@ -402,6 +424,73 @@ internal class OfflineRecordRepository @Inject constructor(
                         multipleEntitySaverProvider.saveInTransaction {
                             feeds.forEach(::add)
                         }
+                    },
+                ),
+                ::CursorList,
+            )
+                .distinctUntilChanged()
+        }
+
+    override fun standardDocuments(
+        query: ProfilesQuery,
+        cursor: Cursor,
+    ): Flow<CursorList<StandardDocument>> =
+        savedStateDataSource.singleSessionFlow {
+            val profileDid = profileLookup.lookupProfileDid(
+                profileId = query.profileId,
+            ) ?: return@singleSessionFlow emptyFlow()
+
+            val pdsUrl = pdsResolver.resolve(Did(profileDid.did))
+                ?.toString()
+                ?: return@singleSessionFlow emptyFlow()
+
+            combine(
+                standardSiteDao.authorDocuments(
+                    authorId = profileDid.did,
+                    offset = query.data.offset,
+                    limit = query.data.limit,
+                )
+                    .distinctUntilChangedMap { populatedStandardDocumentEntities ->
+                        populatedStandardDocumentEntities.map(PopulatedStandardDocumentEntity::asExternalModel)
+                    },
+                networkService.nextCursorFlow(
+                    currentCursor = cursor,
+                    currentRequestWithNextCursor = {
+                        listRecords(
+                            params = ListRecordsQueryParams(
+                                repo = Did(profileDid.did),
+                                collection = Nsid(StandardDocumentUri.NAMESPACE),
+                                limit = query.data.limit,
+                                cursor = cursor.value,
+                            ),
+                        )
+                    },
+                    nextCursor = ListRecordsResponse::cursor,
+                    onResponse = {
+                        val publicationUris = mutableSetOf<StandardPublicationUri>()
+                        multipleEntitySaverProvider.saveInTransaction {
+                            records.forEach { record ->
+                                val documentUri = record.uri.atUri.let(::StandardDocumentUri)
+                                val documentCid = record.cid.cid.let(::StandardDocumentId)
+                                val document = record.value.decodeAs<Document>()
+
+                                (document.site.uri.asRecordUriOrNull() as? StandardPublicationUri)?.let {
+                                    if (publicationUris.add(it)) recordResolver.resolve(it)
+                                }
+
+                                add(
+                                    documentUri = documentUri,
+                                    documentCid = documentCid,
+                                    document = document,
+                                    pdsUrl = pdsUrl,
+                                )
+                            }
+                        }
+                        coroutineScope {
+                            publicationUris.map {
+                                async { recordResolver.resolve(it) }
+                            }
+                        }.awaitAll()
                     },
                 ),
                 ::CursorList,
@@ -453,9 +542,23 @@ internal class OfflineRecordRepository @Inject constructor(
     ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
         if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
 
+        val listOwnerId = create.listUri.profileId()
+
+        if (listOwnerId != signedInProfileId)
+            return@inCurrentProfileSession UnauthorizedException(
+                signedInProfileId = signedInProfileId,
+                profileId = listOwnerId,
+            ).asFailureOutcome()
+
+        val prospectiveMemberRefreshOutcome = profileLookup.refreshProfile(
+            signedInProfileId = signedInProfileId,
+            profileId = create.subjectId,
+        )
+        if (prospectiveMemberRefreshOutcome is Outcome.Failure)
+            return@inCurrentProfileSession prospectiveMemberRefreshOutcome
+
         val createdAt = Clock.System.now()
         val recordKey = RecordKey.generate()
-        val listOwnerId = create.listUri.profileId()
 
         networkService.runCatchingWithMonitoredNetworkRetry {
             createRecord(
@@ -496,6 +599,13 @@ internal class OfflineRecordRepository @Inject constructor(
         uri: RecordUri,
     ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
         if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+
+        val recordOwnerId = uri.profileId()
+        if (recordOwnerId != signedInProfileId) return@inCurrentProfileSession UnauthorizedException(
+            signedInProfileId = signedInProfileId,
+            profileId = recordOwnerId,
+        ).asFailureOutcome()
+
         recordResolver.deleteRecord(uri)
     } ?: expiredSessionOutcome()
 }

@@ -54,6 +54,7 @@ import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.post
 import com.tunjid.heron.data.network.models.profile
+import com.tunjid.heron.data.utilities.distinctUntilChangedMap
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
@@ -271,7 +272,7 @@ internal class OfflineSearchRepository @Inject constructor(
                 feedGeneratorDao.feedGenerators(
                     feedUris = feedUris,
                 )
-                    .map { populatedFeedGeneratorEntities ->
+                    .distinctUntilChangedMap { populatedFeedGeneratorEntities ->
                         CursorList(
                             items = populatedFeedGeneratorEntities
                                 .map(PopulatedFeedGeneratorEntity::asExternalModel)

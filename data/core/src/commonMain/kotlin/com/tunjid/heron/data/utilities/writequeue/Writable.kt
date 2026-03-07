@@ -146,6 +146,18 @@ sealed interface Writable {
     }
 
     @Serializable
+    data class StatusUpdate(
+        val update: Profile.StatusUpdate,
+    ) : Writable {
+
+        override val queueId: String
+            get() = "status-update-${update.signedInProfileId}"
+
+        override suspend fun WriteQueue.write(): Outcome =
+            profileRepository.updateProfileStatus(update)
+    }
+
+    @Serializable
     data class TimelineUpdate(
         val update: Timeline.Update,
     ) : Writable {
@@ -164,6 +176,7 @@ sealed interface Writable {
                 is Timeline.Update.OfMutedWord -> "muted-words-change-$update"
                 is Timeline.Update.OfInteractionSettings -> "interaction-settings-$update"
                 is Timeline.Update.OfFeedPreference.Add -> "feed-preference-$update"
+                is Timeline.Update.OfThreadViewPreference.ThreadView -> "thread-view-preference-$update"
             }
 
         override suspend fun WriteQueue.write(): Outcome =

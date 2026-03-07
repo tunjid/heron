@@ -53,8 +53,8 @@ import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.graze.Filter
 import com.tunjid.heron.data.graze.isValid
-import com.tunjid.heron.graze.editor.ui.SelectTextSheetState
-import com.tunjid.heron.graze.editor.ui.SelectTextSheetState.Companion.rememberSelectTextState
+import com.tunjid.heron.timeline.ui.sheets.SelectTextSheetState
+import com.tunjid.heron.timeline.ui.sheets.SelectTextSheetState.Companion.rememberSelectTextState
 import com.tunjid.heron.ui.UiTokens.withDim
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.graze_editor.generated.resources.Res

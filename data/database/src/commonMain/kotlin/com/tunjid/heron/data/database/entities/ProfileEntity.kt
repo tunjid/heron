@@ -56,6 +56,8 @@ data class ProfileEntity(
     val createdAt: Instant?,
     @Embedded
     val associated: Associated,
+    @Embedded(prefix = "status_")
+    val status: Status?,
 ) {
     data class Partial(
         val did: ProfileId,
@@ -71,6 +73,18 @@ data class ProfileEntity(
         val createdStarterPackCount: Long? = null,
         val labeler: Boolean? = null,
         val allowDms: String? = null,
+    )
+
+    data class Status(
+        val uri: String?,
+        val value: String?,
+        val uriLink: String?,
+        val title: String?,
+        val description: String?,
+        val thumbnail: ImageUri?,
+        val expiresAt: Instant?,
+        val active: Boolean?,
+        val disabled: Boolean?,
     )
 }
 
@@ -108,6 +122,7 @@ fun ProfileEntity?.asExternalModel(
         ),
         labels = labels,
         isLabeler = associated.labeler ?: false,
+        status = toProfileStatus(),
     )
 
 data class PopulatedProfileEntity(
@@ -146,8 +161,24 @@ fun PopulatedProfileEntity.asExternalModel() = with(entity) {
         ),
         labels = labelEntities.map(LabelEntity::asExternalModel),
         isLabeler = associated.labeler ?: false,
+        status = toProfileStatus(),
     )
 }
+
+private fun ProfileEntity.toProfileStatus(): Profile.ProfileStatus? =
+    status?.value?.let { value ->
+        Profile.ProfileStatus(
+            uri = status.uri,
+            status = value,
+            embedUri = status.uriLink ?: "",
+            embedTitle = status.title ?: "",
+            embedDescription = status.description ?: "",
+            embedThumb = status.thumbnail,
+            expiresAt = status.expiresAt,
+            isActive = status.active,
+            isDisabled = status.disabled,
+        )
+    }
 
 fun PopulatedProfileEntity.asExternalModelWithViewerState() =
     ProfileWithViewerState(

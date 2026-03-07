@@ -40,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
@@ -64,6 +65,8 @@ import com.tunjid.heron.data.core.models.UnknownEmbed
 import com.tunjid.heron.data.core.models.Video
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.profile.ProfileLiveChip
+import com.tunjid.heron.profile.withProfileAvatarLiveSharedElementPrefix
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.PostActions
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
@@ -194,35 +197,47 @@ private fun AttributionContent(
                     presentation = data.presentation,
                 ),
             avatar = {
-                UpdatedMovableStickySharedElementOf(
-                    modifier = Modifier
-                        .size(UiTokens.avatarSize)
-                        .clip(data.avatarShape)
-                        .clickable {
-                            data.postActions.onPostAction(
-                                PostAction.OfProfile(
-                                    profile = data.post.author,
-                                    post = data.post,
-                                    quotingPostUri = null,
-                                ),
+                Box {
+                    UpdatedMovableStickySharedElementOf(
+                        modifier = Modifier
+                            .size(UiTokens.avatarSize)
+                            .clip(data.avatarShape)
+                            .clickable {
+                                data.postActions.onPostAction(
+                                    PostAction.OfProfile(
+                                        profile = data.post.author,
+                                        post = data.post,
+                                        quotingPostUri = null,
+                                    ),
+                                )
+                            },
+                        sharedContentState = rememberSharedContentState(
+                            key = data.post.avatarSharedElementKey(data.sharedElementPrefix),
+                        ),
+                        state = remember(data.post.author.avatar) {
+                            ImageArgs(
+                                url = data.post.author.avatar?.uri,
+                                contentScale = ContentScale.Crop,
+                                contentDescription = data.post.author.displayName
+                                    ?: data.post.author.handle.id,
+                                shape = data.avatarShape,
                             )
                         },
-                    sharedContentState = rememberSharedContentState(
-                        key = data.post.avatarSharedElementKey(data.sharedElementPrefix),
-                    ),
-                    state = remember(data.post.author.avatar) {
-                        ImageArgs(
-                            url = data.post.author.avatar?.uri,
-                            contentScale = ContentScale.Crop,
-                            contentDescription = data.post.author.displayName
-                                ?: data.post.author.handle.id,
-                            shape = data.avatarShape,
-                        )
-                    },
-                    sharedElement = { state, modifier ->
-                        AsyncImage(state, modifier)
-                    },
-                )
+                        sharedElement = { state, modifier ->
+                            AsyncImage(state, modifier)
+                        },
+                    )
+                    if (data.post.author.status?.isLive == true) PaneStickySharedElement(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter),
+                        sharedContentState = rememberSharedContentState(
+                            key = data.post.avatarSharedElementKey(data.sharedElementPrefix)
+                                .withProfileAvatarLiveSharedElementPrefix(),
+                        ),
+                    ) {
+                        ProfileLiveChip()
+                    }
+                }
             },
             label = {
                 PostHeadline(

@@ -79,9 +79,9 @@ import com.tunjid.heron.data.network.models.toNetworkRecord
 import com.tunjid.heron.data.utilities.MediaBlob
 import com.tunjid.heron.data.utilities.TidGenerator
 import com.tunjid.heron.data.utilities.asJsonContent
+import com.tunjid.heron.data.utilities.distinctUntilChangedMapNotNull
 import com.tunjid.heron.data.utilities.facet
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
-import com.tunjid.heron.data.utilities.mapNotNullDistinctUntilChanged
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
@@ -406,7 +406,7 @@ internal class OfflinePostRepository @Inject constructor(
                 viewingProfileId = signedInProfileId?.id,
                 postUris = setOf(uri),
             )
-                .mapNotNullDistinctUntilChanged {
+                .distinctUntilChangedMapNotNull {
                     it.firstOrNull()?.asExternalModel(
                         embeddedRecord = null,
                     )

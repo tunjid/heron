@@ -25,4 +25,7 @@
     <string name="download">Download</string>
     <string name="download_complete">Download complete</string>
     <string name="download_failed">Download failed</string>
+    <string name="reply_hint">Write a reply…</string>
+    <string name="reply_desc">Reply input</string>
+    <string name="reply_send">Reply</string>
 </resources>

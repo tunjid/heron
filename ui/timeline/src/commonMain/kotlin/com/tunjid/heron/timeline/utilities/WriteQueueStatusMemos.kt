@@ -22,6 +22,8 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.ui.text.Memo
+import com.tunjid.mutator.Mutation
+import com.tunjid.mutator.coroutines.mapToManyMutations
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.writable_add_list_member
 import heron.ui.timeline.generated.resources.writable_block
@@ -37,6 +39,7 @@ import heron.ui.timeline.generated.resources.writable_message
 import heron.ui.timeline.generated.resources.writable_mute
 import heron.ui.timeline.generated.resources.writable_notification_update
 import heron.ui.timeline.generated.resources.writable_post
+import heron.ui.timeline.generated.resources.writable_profile_status_update
 import heron.ui.timeline.generated.resources.writable_profile_update
 import heron.ui.timeline.generated.resources.writable_reaction
 import heron.ui.timeline.generated.resources.writable_reaction_removal
@@ -49,7 +52,31 @@ import heron.ui.timeline.generated.resources.writable_unblock
 import heron.ui.timeline.generated.resources.writable_unfollow
 import heron.ui.timeline.generated.resources.writable_unlike
 import heron.ui.timeline.generated.resources.writable_unmute
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import org.jetbrains.compose.resources.StringResource
+
+/**
+ * Enqueues a [Writable] created from each emission of this [Flow] into the [WriteQueue],
+ * and invokes [postEnqueue] with the result.
+ *
+ * @param writeQueue the [WriteQueue] use to enqueue the [Writable] produced by [toWritable].
+ * @param toWritable creates the [Writable] from each emission.
+ * @param postEnqueue callback invoked after the enqueue with the action and a [Memo] that is
+ * non-null if the enqueue failed. Use the presence of a [Memo] to signify an error and update
+ * the state appropriately.
+ */
+inline fun <T, S> Flow<T>.enqueueMutations(
+    writeQueue: WriteQueue,
+    crossinline toWritable: (T) -> Writable,
+    crossinline postEnqueue: suspend FlowCollector<Mutation<S>>.(T, Memo?) -> Unit = { _, _ -> },
+): Flow<Mutation<S>> =
+    mapToManyMutations { action ->
+        val writable = toWritable(action)
+        val status = writeQueue.enqueue(writable)
+        val memo = writable.writeStatusMessage(status)
+        postEnqueue(action, memo)
+    }
 
 fun Writable.writeStatusMessage(
     status: WriteQueue.Status,
@@ -140,6 +167,10 @@ fun Writable.writeStatusMessage(
             is Writable.FeedList.AddMember -> Memo.Resource(
                 stringResource = genericDroppedOrDuplicateResource(isDropped),
                 args = listOf(Res.string.writable_add_list_member),
+            )
+            is Writable.StatusUpdate -> Memo.Resource(
+                stringResource = genericDroppedOrDuplicateResource(isDropped),
+                args = listOf(Res.string.writable_profile_status_update),
             )
         }
     }

@@ -76,7 +76,7 @@ import com.tunjid.heron.data.database.entities.preferredPresentationPartial
 import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.utilities.mapDistinctUntilChanged
+import com.tunjid.heron.data.utilities.distinctUntilChangedMap
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
@@ -184,6 +184,7 @@ interface TimelineRepository {
 
     fun postThreadedItems(
         postUri: PostUri,
+        order: TimelineItem.Thread.Order,
     ): Flow<List<TimelineItem>>
 
     suspend fun updatePreferredPresentation(
@@ -517,9 +518,11 @@ internal class OfflineTimelineRepository(
 
     override fun postThreadedItems(
         postUri: PostUri,
+        order: TimelineItem.Thread.Order,
     ): Flow<List<TimelineItem>> = savedStateDataSource.singleSessionFlow { signedInProfileId ->
         postDao.postThread(
             postUri = postUri.uri,
+            sortOrder = order.sortOrder,
         )
             .distinctUntilChanged()
             .flatMapLatest { postThread ->
@@ -1234,7 +1237,7 @@ private fun SavedStateDataSource.timelineFeedPreference(
 ): Flow<FeedPreference> =
     // Only the following timeline currently has this setting
     if (source is Timeline.Source.Following) savedState
-        .mapDistinctUntilChanged {
+        .distinctUntilChangedMap {
             it.signedProfilePreferencesOrDefault().feedPreferences.homeFeedOrDefault()
         }
     else flowOf(FeedPreference(source.id))

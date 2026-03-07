@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.graze.editor.ui
+package com.tunjid.heron.timeline.ui.sheets
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -34,13 +34,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.timeline.ui.profile.ProfileSearchResults
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
-import heron.feature.graze_editor.generated.resources.Res
-import heron.feature.graze_editor.generated.resources.done
+import com.tunjid.heron.ui.text.CommonStrings
+import heron.ui.core.generated.resources.done
 import org.jetbrains.compose.resources.stringResource
 
 @Stable
@@ -73,12 +74,13 @@ class SelectTextSheetState(
             title: String,
         ) : Options(title) {
 
-            class Text(
+            class Text internal constructor(
                 title: String,
             ) : Single(title)
 
-            class SuggestedProfiles(
+            class SuggestedProfiles internal constructor(
                 title: String,
+                val profileToText: (Profile) -> String = { it.handle.id },
             ) : Single(title) {
                 var profileSuggestions by mutableStateOf(emptyList<Profile>())
             }
@@ -89,12 +91,13 @@ class SelectTextSheetState(
         ) : Options(title) {
             var items by mutableStateOf(emptyList<String>())
 
-            class Text(
+            class Text internal constructor(
                 title: String,
             ) : Collection(title)
 
-            class SuggestedProfiles(
+            class SuggestedProfiles internal constructor(
                 title: String,
+                val profileToText: (Profile) -> String = { it.handle.id },
             ) : Collection(title) {
                 var profileSuggestions by mutableStateOf(emptyList<Profile>())
             }
@@ -133,6 +136,27 @@ class SelectTextSheetState(
             return rememberSelectTextState(
                 options = options,
                 onTextConfirmed = onTextConfirmed,
+            )
+        }
+
+        @Composable
+        fun rememberSelectProfileIdState(
+            title: String,
+            suggestedProfiles: List<Profile>,
+            onProfileIdSelected: Options.(ProfileId) -> Unit,
+        ): SelectTextSheetState {
+            val options = remember {
+                Options.Single.SuggestedProfiles(
+                    title = title,
+                    profileToText = { it.did.id },
+                )
+            }.also {
+                it.title = title
+                it.profileSuggestions = suggestedProfiles
+            }
+            return rememberSelectTextState(
+                options = options,
+                onTextConfirmed = { text -> onProfileIdSelected(ProfileId(text)) },
             )
         }
 
@@ -234,12 +258,19 @@ class SelectTextSheetState(
                         else -> null
                     }
                     if (suggestions != null) {
+                        val profileToText = when (options) {
+                            is Options.Single.SuggestedProfiles -> options.profileToText
+                            is Options.Collection.SuggestedProfiles -> options.profileToText
+                            else -> null
+                        }
                         ProfileSearchResults(
                             modifier = Modifier
                                 .fillMaxWidth(),
                             results = suggestions,
                             onProfileClicked = { profile ->
-                                options.onTextConfirmed(profile.handle.id)
+                                options.onTextConfirmed(
+                                    profileToText?.invoke(profile) ?: profile.handle.id,
+                                )
                                 state.hide()
                             },
                         )
@@ -255,7 +286,7 @@ class SelectTextSheetState(
                         modifier = Modifier
                             .fillMaxWidth(),
                     ) {
-                        Text(text = stringResource(Res.string.done))
+                        Text(text = stringResource(CommonStrings.done))
                     }
                 }
             }

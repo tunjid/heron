@@ -209,6 +209,7 @@ internal fun FeedViewPostReasonUnion.profileEntity() =
                 labeler = value.by.associated?.labeler,
                 allowDms = value.by.associated?.chat?.allowIncoming?.value,
             ),
+            status = value.by.status?.statusEntity(),
         )
 
         else -> null

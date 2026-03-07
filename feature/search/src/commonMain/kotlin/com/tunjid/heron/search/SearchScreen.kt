@@ -220,6 +220,7 @@ internal fun SearchScreen(
                     .fillMaxSize()
                     .padding(top = 16.dp),
                 paneScaffoldState = paneScaffoldState,
+                showTrendingTopics = state.preferences.local.showTrendingTopics,
                 trends = state.trends,
                 suggestedProfiles = state.categoriesToSuggestedProfiles[state.suggestedProfileCategory]
                     ?: emptyList(),

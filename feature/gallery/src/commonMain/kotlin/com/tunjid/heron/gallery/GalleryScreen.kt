@@ -25,6 +25,7 @@ import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
@@ -47,11 +48,16 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import com.tunjid.composables.gesturezoom.GestureZoomState.Companion.gestureZoomable
 import com.tunjid.composables.gesturezoom.GestureZoomState.Options
 import com.tunjid.composables.gesturezoom.rememberGestureZoomState
@@ -61,6 +67,8 @@ import com.tunjid.heron.data.core.models.aspectRatioOrSquare
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.utilities.asGenericUri
+import com.tunjid.heron.gallery.ui.Comments
+import com.tunjid.heron.gallery.ui.CommentsState
 import com.tunjid.heron.gallery.ui.GalleryFooter
 import com.tunjid.heron.gallery.ui.GalleryImage
 import com.tunjid.heron.gallery.ui.GalleryVideo
@@ -69,6 +77,9 @@ import com.tunjid.heron.gallery.ui.MediaInteractions
 import com.tunjid.heron.gallery.ui.MediaOverlay
 import com.tunjid.heron.gallery.ui.MediaPoster
 import com.tunjid.heron.gallery.ui.PagerStates
+import com.tunjid.heron.gallery.ui.galleryHeightFraction
+import com.tunjid.heron.gallery.ui.isNotCollapsed
+import com.tunjid.heron.gallery.ui.rememberCommentsState
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.ControlsVisibilityEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
@@ -95,6 +106,8 @@ import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Compan
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.Indicator
+import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.text.links
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
@@ -189,6 +202,7 @@ internal fun GalleryScreen(
     val updatedItems by rememberUpdatedState(state.items)
     val pagerState = rememberPagerState(pageCount = updatedItems::size)
     val horizontalPagerStates = remember { PagerStates<PostUri>() }
+    val commentsState = rememberCommentsState()
 
     val dragToPopState = rememberDragToPopState(
         shouldDragToPop = remember(
@@ -199,6 +213,8 @@ internal fun GalleryScreen(
             var overscrollCount = 0
 
             canPop@{ delta ->
+                commentsState.collapse()
+
                 // Already dragging, continue
                 if (isDraggingToPop) return@canPop true
 
@@ -234,36 +250,70 @@ internal fun GalleryScreen(
         },
     )
 
-    VerticalPager(
-        state = pagerState,
-        modifier = modifier
-            .dragToPop(dragToPopState)
-            .fillMaxSize(),
-        beyondViewportPageCount = PagerPrefetchCount,
-        userScrollEnabled = state.canScrollVertically,
-        key = { page ->
-            updatedItems[page].post.uri.uri
-        },
-        pageContent = { page ->
-            val item = updatedItems[page]
+    Box(
+        modifier = modifier,
+    ) {
+        VerticalPager(
+            state = pagerState,
+            modifier = Modifier
+                .dragToPop(dragToPopState)
+                .fillMaxWidth()
+                .fillMaxHeight(
+                    fraction = commentsState.galleryHeightFraction,
+                ),
+            beyondViewportPageCount = PagerPrefetchCount,
+            userScrollEnabled = state.canScrollVertically,
+            key = { page ->
+                updatedItems[page].post.uri.uri
+            },
+            pageContent = { page ->
+                val item = updatedItems[page]
 
-            HorizontalItems(
-                item = item,
-                paneScaffoldState = paneScaffoldState,
-                signedInProfileId = state.signedInProfileId,
-                showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
-                pagerStates = horizontalPagerStates,
-                focusedItem = {
-                    val page = pagerState.currentPage + pagerState.currentPageOffsetFraction
-                    updatedItems.getOrNull(page.fastRoundToInt())
-                },
-                isDraggingToPop = dragToPopState::isDraggingToPop,
-                actions = actions,
-                postInteractionSheetState = postInteractionSheetState,
-                postOptionsSheetState = postOptionsSheetState,
-            )
-        },
-    )
+                HorizontalItems(
+                    item = item,
+                    paneScaffoldState = paneScaffoldState,
+                    signedInProfileId = state.signedInProfileId,
+                    showEngagementMetrics = state.preferences.local.showPostEngagementMetrics,
+                    pagerStates = horizontalPagerStates,
+                    commentsState = commentsState,
+                    focusedItem = {
+                        val page = pagerState.currentPage + pagerState.currentPageOffsetFraction
+                        updatedItems.getOrNull(page.fastRoundToInt())
+                    },
+                    isDraggingToPop = dragToPopState::isDraggingToPop,
+                    actions = actions,
+                    postInteractionSheetState = postInteractionSheetState,
+                    postOptionsSheetState = postOptionsSheetState,
+                )
+            },
+        )
+
+        val commentsPost = state.commentsPost
+        Comments(
+            state = commentsState,
+            paneScaffoldState = paneScaffoldState,
+            postOptionsSheetState = postOptionsSheetState,
+            modifier = Modifier
+                .fillMaxSize(),
+            comments = state.comments,
+            inputText = state.inputText,
+            onTextChanged = { actions(Action.TextChanged(it)) },
+            onSendReply = {
+                commentsPost ?: return@Comments
+                val signedInProfileId = state.signedInProfileId ?: return@Comments
+                val inputText = state.inputText
+                actions(
+                    Action.SendReply(
+                        authorId = signedInProfileId,
+                        parent = commentsPost,
+                        text = inputText.text,
+                        links = inputText.annotatedString.links(),
+                    ),
+                )
+            },
+            actions = actions,
+        )
+    }
 
     state.timelineStateHolder?.let { timelineStateHolder ->
         val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
@@ -281,6 +331,19 @@ internal fun GalleryScreen(
             },
         )
     }
+    LaunchedEffect(Unit) {
+        snapshotFlow {
+            pagerState.isScrollInProgress
+        }
+            .collect { isScrolling ->
+                if (isScrolling) commentsState.collapse()
+            }
+    }
+    NavigationBackHandler(
+        state = rememberNavigationEventState(NavigationEventInfo.None),
+        isBackEnabled = commentsState.isNotCollapsed,
+        onBackCompleted = commentsState::collapse,
+    )
 }
 
 @Composable
@@ -291,6 +354,7 @@ private fun HorizontalItems(
     showEngagementMetrics: Boolean,
     pagerStates: PagerStates<PostUri>,
     paneScaffoldState: PaneScaffoldState,
+    commentsState: CommentsState,
     focusedItem: () -> GalleryItem?,
     isDraggingToPop: () -> Boolean,
     actions: (Action) -> Unit,
@@ -318,6 +382,9 @@ private fun HorizontalItems(
             }
         }
 
+        val statusBarHeight = with(LocalDensity.current) {
+            UiTokens.statusBarHeight.toPx()
+        }
         HorizontalPager(
             modifier = Modifier
                 .zIndex(MediaZIndex)
@@ -341,6 +408,14 @@ private fun HorizontalItems(
                             windowSize = it
                         },
                 ) {
+                    val itemModifier = Modifier
+                        .align { size, space, _ ->
+                            val heightDifference = space.height - size.height
+                            val verticalOffset =
+                                if (heightDifference < statusBarHeight) statusBarHeight.fastRoundToInt()
+                                else heightDifference / 2
+                            IntOffset(x = 0, y = verticalOffset)
+                        }
                     when (val media = item.media[page]) {
                         is GalleryItem.Media.Photo -> {
                             val zoomState = rememberGestureZoomState(
@@ -353,8 +428,7 @@ private fun HorizontalItems(
                             )
                             val coroutineScope = rememberCoroutineScope()
                             GalleryImage(
-                                modifier = Modifier
-                                    .align(Alignment.Center)
+                                modifier = itemModifier
                                     .aspectRatioFor(
                                         windowSize = windowSize,
                                         aspectRatio = media.image,
@@ -377,8 +451,7 @@ private fun HorizontalItems(
                         }
 
                         is GalleryItem.Media.Video -> GalleryVideo(
-                            modifier = Modifier
-                                .align(Alignment.Center)
+                            modifier = itemModifier
                                 .aspectRatioFor(
                                     windowSize = windowSize,
                                     aspectRatio = media.video,
@@ -471,17 +544,15 @@ private fun HorizontalItems(
                         is PostAction.OfMore -> postOptionsSheetState.showOptions(
                             interaction.post,
                         )
-                        is PostAction.OfReply -> actions(
-                            Action.Navigate.To(
-                                if (paneScaffoldState.isSignedOut) signInDestination()
-                                else composePostDestination(
-                                    type = Post.Create.Reply(
-                                        parent = interaction.post,
-                                    ),
-                                    sharedElementPrefix = item.sharedElementPrefix,
+                        is PostAction.OfReply -> {
+                            commentsState.expand()
+                            actions(
+                                Action.LoadComments(
+                                    post = item.post,
+                                    order = null,
                                 ),
-                            ),
-                        )
+                            )
+                        }
                     }
                 },
             )

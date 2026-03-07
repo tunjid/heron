@@ -41,6 +41,7 @@ kotlin {
                 implementation(project(":data:logging"))
                 implementation(project(":data:core"))
                 implementation(project(":ui:core"))
+                implementation(project(":ui:profile"))
                 implementation(project(":ui:media"))
 
                 implementation(libs.compose.multiplatform.animation)

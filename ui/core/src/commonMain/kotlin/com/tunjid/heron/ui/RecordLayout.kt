@@ -63,11 +63,8 @@ fun RecordLayout(
                         ),
                     ),
                 ) {
-                    Text(
-                        text = title,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1,
-                        style = LocalTextStyle.current.copy(fontWeight = Bold),
+                    RecordTitle(
+                        title = title,
                     )
                 }
                 PaneStickySharedElement(
@@ -78,35 +75,82 @@ fun RecordLayout(
                         ),
                     ),
                 ) {
-                    Text(
-                        text = subtitle,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.outline,
+                    RecordSubtitle(
+                        subtitle = subtitle,
                     )
                 }
             },
             action = action,
         )
         description.takeUnless(String?::isNullOrEmpty)?.let {
-            Text(
-                text = rememberFormattedTextPost(it),
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis,
+            RecordText(
+                text = it,
             )
         }
         blurb.takeUnless(String?::isNullOrEmpty)?.let {
-            Text(
-                text = rememberFormattedTextPost(it),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.outline,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
+            RecordBlurb(
+                blurb = it,
             )
         }
     }
+}
+
+@Composable
+fun RecordTitle(
+    title: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        modifier = modifier,
+        text = title,
+        overflow = TextOverflow.Ellipsis,
+        maxLines = 1,
+        style = LocalTextStyle.current.copy(fontWeight = Bold),
+    )
+}
+
+@Composable
+fun RecordSubtitle(
+    subtitle: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        modifier = modifier,
+        text = subtitle,
+        overflow = TextOverflow.Ellipsis,
+        maxLines = 1,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.outline,
+    )
+}
+
+@Composable
+fun RecordText(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        modifier = modifier,
+        text = rememberFormattedTextPost(text),
+        style = MaterialTheme.typography.bodySmall,
+        maxLines = 3,
+        overflow = TextOverflow.Ellipsis,
+    )
+}
+
+@Composable
+fun RecordBlurb(
+    blurb: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        modifier = modifier,
+        text = rememberFormattedTextPost(blurb),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.outline,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+    )
 }
 
 fun titleSharedElementKey(

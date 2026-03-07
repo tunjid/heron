@@ -104,6 +104,24 @@ sealed class TimelineItem {
             get() = posts[anchorPostIndex]
         override val threadGate: ThreadGate?
             get() = postUrisToThreadGates[post.uri]
+
+        enum class Order(
+            val value: String,
+            val sortOrder: Int,
+        ) {
+            Oldest(
+                value = "oldest",
+                sortOrder = 0,
+            ),
+            Newest(
+                value = "newest",
+                sortOrder = 1,
+            ),
+            Top(
+                value = "most-likes",
+                sortOrder = 2,
+            ),
+        }
     }
 
     data class Single(
@@ -129,10 +147,17 @@ sealed class TimelineItem {
         override val id: String = Uuid.random().toString(),
     ) : Placeholder()
 
-    data class Empty(
-        val timeline: Timeline,
-    ) : Placeholder() {
-        override val id: String = timeline.sourceId
+    sealed class Empty : Placeholder() {
+        data object Thread : Empty() {
+            @OptIn(ExperimentalUuidApi::class)
+            override val id: String = Uuid.random().toString()
+        }
+
+        data class Timeline(
+            val timeline: com.tunjid.heron.data.core.models.Timeline,
+        ) : Empty() {
+            override val id: String = timeline.sourceId
+        }
     }
 
     companion object {
@@ -166,5 +191,6 @@ sealed class TimelineItem {
         )
 
         val LoadingItems = (0..16).map { Loading() }
+        val EmptyThreadItems = listOf(Empty.Thread)
     }
 }

@@ -22,3 +22,11 @@ sealed class Outcome {
         val exception: Throwable,
     ) : Outcome()
 }
+
+fun Throwable.asFailureOutcome(): Outcome.Failure =
+    Outcome.Failure(
+        requireNotNull(
+            // throw to have a valid kmp stacktrace
+            runCatching { throw this }.exceptionOrNull(),
+        ),
+    )
