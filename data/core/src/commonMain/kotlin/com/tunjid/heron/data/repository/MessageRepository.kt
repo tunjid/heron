@@ -65,16 +65,22 @@ import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.toStrongReferencedRecord
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.scan
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.timeout
 import kotlinx.serialization.Serializable
 import sh.christian.ozone.api.Did
 
@@ -409,7 +415,10 @@ internal class OfflineMessageRepository @Inject constructor(
     } ?: expiredSessionOutcome()
 }
 
-fun MessageRepository.recentConversations(): Flow<List<Conversation>> =
+fun MessageRepository.recentConversations(
+    emissions: Int = DefaultRecentConversationsMaxEmissions,
+    timeout: Duration = DefaultRecentConversationsTimeout,
+): Flow<List<Conversation>> =
     conversations(
         query = ConversationQuery(
             data = CursorQuery.Data(
@@ -420,6 +429,13 @@ fun MessageRepository.recentConversations(): Flow<List<Conversation>> =
         ),
         cursor = Cursor.Initial,
     )
+        .filter<List<Conversation>>(List<Conversation>::isNotEmpty)
+        .take(emissions)
+        .timeout(timeout)
+        .catch { throwable ->
+            if (throwable is TimeoutCancellationException) emit(emptyList())
+            else throw throwable
+        }
 
 private const val RecentConversationLimit = 8L
 
@@ -496,3 +512,6 @@ private fun PopulatedMessageEntity.embeddedRecordUri() =
         ?: list?.listUri
         ?: starterPack?.starterPackUri
         ?: post?.postUri
+
+private val DefaultRecentConversationsTimeout = 3.seconds
+private const val DefaultRecentConversationsMaxEmissions = 1
