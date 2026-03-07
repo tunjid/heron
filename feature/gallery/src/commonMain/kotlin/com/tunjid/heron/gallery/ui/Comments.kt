@@ -39,7 +39,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -188,7 +187,6 @@ fun Comments(
     }
     Box(
         modifier = modifier
-            .statusBarsPadding()
             .onSizeChanged { state.updateHeight(it.height) }
             .nestedScroll(state.nestedScrollConnection()),
     ) {
@@ -216,8 +214,9 @@ fun Comments(
         ElevatedCard(
             shape = TopShape,
             modifier = Modifier
-                .fillMaxSize()
+                .offset(y = UiTokens.statusBarHeight)
                 .offset { state.contentOffset }
+                .fillMaxSize()
                 .anchoredDraggable(
                     enabled = false,
                     reverseDirection = true,
