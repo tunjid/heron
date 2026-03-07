@@ -22,27 +22,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
-import com.tunjid.composables.lazy.rememberLazyScrollableState
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Timeline
@@ -79,7 +75,6 @@ import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
 import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
-import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -95,18 +90,7 @@ internal fun PostsScreen(
     actions: (Action) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var pendingScrollOffset by rememberSaveable { mutableIntStateOf(0) }
-    val gridState = rememberLazyScrollableState(
-        init = ::LazyStaggeredGridState,
-        firstVisibleItemIndex = LazyStaggeredGridState::firstVisibleItemIndex,
-        firstVisibleItemScrollOffset = LazyStaggeredGridState::firstVisibleItemScrollOffset,
-        restore = { firstVisibleItemIndex, firstVisibleItemScrollOffset ->
-            LazyStaggeredGridState(
-                initialFirstVisibleItemIndex = firstVisibleItemIndex,
-                initialFirstVisibleItemOffset = firstVisibleItemScrollOffset + pendingScrollOffset,
-            )
-        },
-    )
+    val gridState = rememberLazyStaggeredGridState()
     val items by rememberUpdatedState(state.tilingData.items)
     val density = LocalDensity.current
     val now by remember { mutableStateOf(Clock.System.now()) }
@@ -290,7 +274,6 @@ internal fun PostsScreen(
                                         }
 
                                         is PostAction.OfPost -> {
-                                            pendingScrollOffset = gridState.pendingOffsetFor(item)
                                             actions(
                                                 Action.Navigate.To(
                                                     recordDestination(
@@ -304,7 +287,6 @@ internal fun PostsScreen(
                                         }
 
                                         is PostAction.OfProfile -> {
-                                            pendingScrollOffset = gridState.pendingOffsetFor(item)
                                             actions(
                                                 Action.Navigate.To(
                                                     profileDestination(
@@ -322,7 +304,6 @@ internal fun PostsScreen(
                                         }
 
                                         is PostAction.OfRecord -> {
-                                            pendingScrollOffset = gridState.pendingOffsetFor(item)
                                             actions(
                                                 Action.Navigate.To(
                                                     recordDestination(
@@ -336,7 +317,6 @@ internal fun PostsScreen(
                                         }
 
                                         is PostAction.OfMedia -> {
-                                            pendingScrollOffset = gridState.pendingOffsetFor(item)
                                             actions(
                                                 Action.Navigate.To(
                                                     galleryDestination(
@@ -351,7 +331,6 @@ internal fun PostsScreen(
                                         }
 
                                         is PostAction.OfReply -> {
-                                            pendingScrollOffset = gridState.pendingOffsetFor(item)
                                             actions(
                                                 Action.Navigate.To(
                                                     if (paneScaffoldState.isSignedOut) signInDestination()
