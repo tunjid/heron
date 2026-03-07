@@ -259,7 +259,7 @@ internal class OfflineProfileLookup @Inject constructor(
                     transform = idMapper,
                 ),
             )
-                .distinctUntilChangedMap{ viewerStates ->
+                .distinctUntilChangedMap { viewerStates ->
                     val profileIdsToViewerStates = viewerStates.associateBy(
                         ProfileViewerStateEntity::otherProfileId,
                     )
