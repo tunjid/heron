@@ -62,12 +62,19 @@ fun PaneScaffoldState.PaneNavigationBar(
     exitTransition: ExitTransition = slideOutVertically(targetOffsetY = { it }),
     onNavItemReselected: () -> Boolean = { false },
 ) {
+    val sharedContentState = rememberSharedContentState(NavigationBarSharedElementKey)
     AnimatedVisibility(
         modifier = modifier
             .sharedElement(
-                sharedContentState = rememberSharedContentState(NavigationBarSharedElementKey),
+                sharedContentState = sharedContentState,
                 animatedVisibilityScope = this,
                 zIndexInOverlay = UiTokens.navigationBarSharedElementZIndex,
+            )
+            .renderInSharedTransitionScopeOverlay(
+                zIndexInOverlay = UiTokens.navigationBarSharedElementZIndex,
+                renderInOverlay = {
+                    isActive && isTransitionActive && !sharedContentState.isMatchFound
+                },
             ),
         visible = canShowNavigationBar,
         enter = enterTransition,
