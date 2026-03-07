@@ -17,7 +17,7 @@
 package com.tunjid.heron.data.utilities
 
 import com.tunjid.heron.data.core.models.Constants
-import com.tunjid.heron.data.database.daos.PostCleanupDao
+import com.tunjid.heron.data.database.daos.DatabaseCleanupDao
 import com.tunjid.heron.data.di.IODispatcher
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
@@ -32,7 +32,7 @@ import kotlinx.coroutines.withContext
 class DatabaseCleanup(
     @param:IODispatcher
     private val ioDispatcher: CoroutineDispatcher,
-    private val postCleanupDao: PostCleanupDao,
+    private val databaseCleanupDao: DatabaseCleanupDao,
 ) {
     /**
      * Cleans up stale posts when the database exceeds [MaxPosts].
@@ -53,35 +53,57 @@ class DatabaseCleanup(
     suspend fun cleanup() {
         delay(StartupDelay)
         withContext(ioDispatcher) {
-            val count = postCleanupDao.postCount()
-            if (count <= MaxPosts) return@withContext
-
-            val deleteCount = (count - TargetPosts).toInt()
-            val candidates = postCleanupDao.findDeletablePostUris(limit = deleteCount)
-
-            candidates.chunked(BatchSize).forEach { batch ->
-                postCleanupDao.deletePostsByUri(batch)
-            }
-
-            // Clean up orphaned standalone media entities whose junction rows
-            // were cascade-deleted along with their posts.
-            postCleanupDao.deleteOrphanedImages()
-            postCleanupDao.deleteOrphanedVideos()
-            postCleanupDao.deleteOrphanedExternalEmbeds()
-
-            // Clean up profiles no longer referenced by any table.
-            postCleanupDao.deleteOrphanedProfiles(
-                sentinelProfileIds = listOf(
-                    Constants.unknownAuthorId,
-                    Constants.guestProfileId,
-                    Constants.pendingProfileId,
-                ),
-            )
+            cleanupPosts()
+            cleanupNotifications()
+            cleanupOrphans()
         }
+    }
+
+    private suspend fun cleanupPosts() {
+        val count = databaseCleanupDao.postCount()
+        if (count <= MaxPosts) return
+
+        val deleteCount = (count - TargetPosts).toInt()
+        val candidates = databaseCleanupDao.findDeletablePostUris(
+            sentinelPostUris = listOf(
+                Constants.unknownPostUri,
+            ),
+            limit = deleteCount,
+        )
+
+        candidates.chunked(BatchSize).forEach { batch ->
+            databaseCleanupDao.deletePostsByUri(batch)
+        }
+    }
+
+    /**
+     * Caps notifications per owner to [MaxNotificationsPerOwner], keeping the newest.
+     */
+    private suspend fun cleanupNotifications() {
+        databaseCleanupDao.deleteOldNotifications(maxPerOwner = MaxNotificationsPerOwner)
+    }
+
+    /**
+     * Cleans up orphaned entities left behind after post and notification deletion:
+     * standalone media entities whose junction rows were cascade-deleted,
+     * and profiles no longer referenced by any table.
+     */
+    private suspend fun cleanupOrphans() {
+        databaseCleanupDao.deleteOrphanedImages()
+        databaseCleanupDao.deleteOrphanedVideos()
+        databaseCleanupDao.deleteOrphanedExternalEmbeds()
+        databaseCleanupDao.deleteOrphanedProfiles(
+            sentinelProfileIds = listOf(
+                Constants.unknownAuthorId,
+                Constants.guestProfileId,
+                Constants.pendingProfileId,
+            ),
+        )
     }
 }
 
 private val StartupDelay = 5.seconds
 private const val MaxPosts = 10_000L
 private const val TargetPosts = 7_500L
+private const val MaxNotificationsPerOwner = 500
 private const val BatchSize = 500

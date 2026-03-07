@@ -22,13 +22,13 @@ import androidx.room.useWriterConnection
 import com.tunjid.heron.data.database.AppDatabase
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.configureAndBuild
+import com.tunjid.heron.data.database.daos.DatabaseCleanupDao
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
 import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
-import com.tunjid.heron.data.database.daos.PostCleanupDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.daos.StandardSiteDao
@@ -336,9 +336,9 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
-    fun providePostCleanupDao(
+    fun provideDatabaseCleanupDao(
         database: AppDatabase,
-    ): PostCleanupDao = database.postCleanupDao()
+    ): DatabaseCleanupDao = database.databaseCleanupDao()
 
     @SingleIn(AppScope::class)
     @Provides
