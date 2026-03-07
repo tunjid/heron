@@ -60,3 +60,15 @@ fun Modifier.trackOverlayClipBounds(
 ) = onLayoutRectChanged { bounds ->
     trackingOverlayClip.parentBounds = bounds.boundsInScreen
 }
+
+val ParentOverlayClip: SharedTransitionScope.OverlayClip =
+    object : SharedTransitionScope.OverlayClip {
+        override fun getClipPath(
+            sharedContentState: SharedTransitionScope.SharedContentState,
+            bounds: Rect,
+            layoutDirection: LayoutDirection,
+            density: Density,
+        ): Path? {
+            return sharedContentState.parentSharedContentState?.clipPathInOverlay
+        }
+    }

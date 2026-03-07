@@ -53,6 +53,8 @@ import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
+import com.tunjid.heron.ui.modifiers.TrackingOverlayClip
+import com.tunjid.heron.ui.modifiers.trackOverlayClipBounds
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.message
 import com.tunjid.treenav.compose.PaneScope
@@ -90,6 +92,8 @@ class PaneScaffoldState internal constructor(
 
     val prefersAutoHidingBottomNav
         get() = appState.prefersAutoHidingBottomNav
+
+    internal val trackingOverlayClip = TrackingOverlayClip()
 
     internal val nestedNavigationState = PaneNestedNavigationState(
         paneScaffoldState = this,
@@ -222,18 +226,22 @@ fun PaneScaffoldState.PaneScaffold(
         },
         content = {
             Scaffold(
-                modifier = if (splitPaneState.paneAnchorState.hasInteractions) Modifier
-                else when (dismissBehavior) {
-                    AppState.DismissBehavior.None,
-                    AppState.DismissBehavior.Gesture.DragToPop,
-                    -> Modifier.animateBounds(lookaheadScope = this)
-                    AppState.DismissBehavior.Gesture.SlideToPop,
-                    AppState.DismissBehavior.Gesture.ScaleToPop,
-                    -> Modifier
-                }
-                    .padding(
-                        horizontal = if (hasSiblings) 8.dp else 0.dp,
-                    ),
+                modifier = when {
+                    splitPaneState.paneAnchorState.hasInteractions -> Modifier
+                    else -> when (dismissBehavior) {
+                        AppState.DismissBehavior.None,
+                        AppState.DismissBehavior.Gesture.DragToPop,
+                        -> Modifier.animateBounds(lookaheadScope = this)
+
+                        AppState.DismissBehavior.Gesture.SlideToPop,
+                        AppState.DismissBehavior.Gesture.ScaleToPop,
+                        -> Modifier
+                    }
+                        .trackOverlayClipBounds(trackingOverlayClip)
+                        .padding(
+                            horizontal = if (hasSiblings) 8.dp else 0.dp,
+                        )
+                },
                 containerColor = containerColor,
                 topBar = {
                     topBar()

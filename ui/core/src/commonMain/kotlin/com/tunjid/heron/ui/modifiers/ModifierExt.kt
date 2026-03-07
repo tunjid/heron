@@ -87,3 +87,8 @@ inline fun Modifier.ifTrue(
     predicate: Boolean,
     crossinline block: Modifier.() -> Modifier,
 ) = if (predicate) block() else this
+
+inline fun <T> Modifier.ifNotNull(
+    item: T?,
+    crossinline block: Modifier.(T) -> Modifier,
+) = if (item != null) block(item) else this
