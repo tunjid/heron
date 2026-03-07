@@ -37,7 +37,7 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
-import com.tunjid.heron.ui.modifiers.ParentOverlayClip
+import com.tunjid.heron.ui.localOverlayClip
 import com.tunjid.heron.ui.modifiers.ifNotNull
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.rememberTrackingOverlayClip
@@ -113,7 +113,7 @@ internal fun PostImages(
                     }
                         .clip(shape)
                         .clickable { onImageClicked(index) },
-                    clipInOverlayDuringTransition = overlayClip ?: ParentOverlayClip,
+                    clipInOverlayDuringTransition = overlayClip ?: paneMovableElementSharedTransitionScope.localOverlayClip,
                     sharedContentState = with(paneMovableElementSharedTransitionScope) {
                         rememberSharedContentState(
                             key = image.sharedElementKey(

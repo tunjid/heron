@@ -16,9 +16,36 @@
 
 package com.tunjid.heron.ui
 
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 
 val MovableElementSharedTransitionScope.isPrimaryOrActive
-    get() =
-        paneState.pane == ThreePane.Primary || isActive
+    get() = paneState.pane == ThreePane.Primary || isActive
+
+// This should only be callable from this scope
+@Suppress("UnusedReceiverParameter")
+inline val MovableElementSharedTransitionScope.localOverlayClip: SharedTransitionScope.OverlayClip
+    @ReadOnlyComposable @Composable get() = LocalSharedElementOverlayClip.current
+
+val DefaultSharedElementOverlayClip = object : SharedTransitionScope.OverlayClip {
+    override fun getClipPath(
+        sharedContentState: SharedTransitionScope.SharedContentState,
+        bounds: Rect,
+        layoutDirection: LayoutDirection,
+        density: Density,
+    ): Path? {
+        return sharedContentState.parentSharedContentState?.clipPathInOverlay
+    }
+}
+
+val LocalSharedElementOverlayClip = staticCompositionLocalOf {
+    DefaultSharedElementOverlayClip
+}
