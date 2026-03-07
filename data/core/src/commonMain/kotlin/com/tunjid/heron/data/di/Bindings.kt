@@ -22,6 +22,7 @@ import androidx.room.useWriterConnection
 import com.tunjid.heron.data.database.AppDatabase
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.configureAndBuild
+import com.tunjid.heron.data.database.daos.DatabaseCleanupDao
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
@@ -332,6 +333,12 @@ class DataBindings(
     fun provideStandardSiteDao(
         database: AppDatabase,
     ): StandardSiteDao = database.standardSiteDao()
+
+    @SingleIn(AppScope::class)
+    @Provides
+    fun provideDatabaseCleanupDao(
+        database: AppDatabase,
+    ): DatabaseCleanupDao = database.databaseCleanupDao()
 
     @SingleIn(AppScope::class)
     @Provides
