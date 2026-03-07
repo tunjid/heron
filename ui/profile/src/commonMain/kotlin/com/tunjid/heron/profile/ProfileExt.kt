@@ -36,9 +36,11 @@ fun Modifier.profileBioTabBackground(
 fun String.withProfileBannerSharedElementPrefix() = "banner-$this"
 fun String.withProfileBioTabSharedElementPrefix() = "bio-tab-$this"
 fun String.withProfileAvatarHaloSharedElementPrefix() = "avatar-halo-$this"
+fun String.withProfileAvatarLiveSharedElementPrefix() = "avatar-live-$this"
 
 val ProfileBioTabHeight = 32.dp
 const val BannerAspectRatio = 16f / 9
+const val AvatarLiveZIndex = 7f
 const val AvatarZIndex = 6f
 const val AvatarHaloZIndex = 5f
 const val SurfaceZIndex = 4f

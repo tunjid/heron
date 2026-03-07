@@ -901,10 +901,16 @@ private fun ProfileAvatar(
                 AsyncImage(state, modifier)
             },
         )
-        if (isLive) ProfileLiveChip(
+        if (isLive) PaneStickySharedElement(
             modifier = Modifier
                 .align(Alignment.BottomCenter),
-        )
+            sharedContentState = rememberSharedContentState(
+                key = avatarSharedElementKey.withProfileAvatarLiveSharedElementPrefix(),
+            ),
+            zIndexInOverlay = AvatarLiveZIndex,
+        ) {
+            ProfileLiveChip()
+        }
     }
 }
 

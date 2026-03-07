@@ -44,8 +44,11 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.profile.AvatarLiveZIndex
+import com.tunjid.heron.profile.AvatarZIndex
 import com.tunjid.heron.profile.ProfileLiveChip
 import com.tunjid.heron.profile.profileLiveAvatarBorder
+import com.tunjid.heron.profile.withProfileAvatarLiveSharedElementPrefix
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
@@ -108,6 +111,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                             sharedContentState = rememberSharedContentState(
                                 key = UiTokens.SignedInUserAvatarSharedElementKey,
                             ),
+                            zIndexInOverlay = AvatarZIndex,
                         ) {
                             AsyncImage(
                                 modifier = Modifier
@@ -132,10 +136,17 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                                 },
                             )
                         }
-                        if (isLive) ProfileLiveChip(
+                        if (isLive) PaneStickySharedElement(
                             modifier = Modifier
                                 .align(Alignment.BottomCenter),
-                        )
+                            sharedContentState = rememberSharedContentState(
+                                key = UiTokens.SignedInUserAvatarSharedElementKey
+                                    .withProfileAvatarLiveSharedElementPrefix(),
+                            ),
+                            zIndexInOverlay = AvatarLiveZIndex,
+                        ) {
+                            ProfileLiveChip()
+                        }
                     }
                 }
             }
