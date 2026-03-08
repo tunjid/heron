@@ -61,6 +61,7 @@ import com.tunjid.heron.ui.text.validated
 import heron.feature.auth.generated.resources.Res
 import heron.feature.auth.generated.resources.blacksky_server
 import heron.feature.auth.generated.resources.bluesky_server
+import heron.feature.auth.generated.resources.eurosky_server
 import heron.feature.auth.generated.resources.cancel
 import heron.feature.auth.generated.resources.custom_server
 import heron.feature.auth.generated.resources.empty_form
@@ -133,6 +134,7 @@ private fun ServerSelectionBottomSheet(
             null -> Unit
             Server.BlueSky.endpoint,
             Server.BlackSky.endpoint,
+            Server.EuroSky.endpoint,
             -> {
                 onServerConfirmed(server)
                 state.currentServer = null
@@ -254,6 +256,7 @@ private val Server.logo
     get() = when (endpoint) {
         Server.BlueSky.endpoint -> Bluesky
         Server.BlackSky.endpoint -> Blacksky
+        Server.EuroSky.endpoint -> Eurosky
         else -> Icons.Rounded.Public
     }
 
@@ -261,5 +264,6 @@ internal val Server.stringResource
     get() = when (endpoint) {
         Server.BlueSky.endpoint -> Res.string.bluesky_server
         Server.BlackSky.endpoint -> Res.string.blacksky_server
+        Server.EuroSky.endpoint -> Res.string.eurosky_server
         else -> Res.string.custom_server
     }

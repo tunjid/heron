@@ -67,9 +67,15 @@ data class Server(
             supportsOauth = true,
         )
 
+        val EuroSky = Server(
+            endpoint = "https://eurosky.social",
+            supportsOauth = true,
+        )
+
         val KnownServers = setOf(
             BlueSky,
             BlackSky,
+            EuroSky,
         )
     }
 }
