@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -59,12 +60,13 @@ import com.tunjid.heron.ui.text.copyWithValidation
 import com.tunjid.heron.ui.text.isValid
 import com.tunjid.heron.ui.text.validated
 import heron.feature.auth.generated.resources.Res
+import heron.feature.auth.generated.resources.account_host
 import heron.feature.auth.generated.resources.blacksky_server
 import heron.feature.auth.generated.resources.bluesky_server
-import heron.feature.auth.generated.resources.eurosky_server
 import heron.feature.auth.generated.resources.cancel
 import heron.feature.auth.generated.resources.custom_server
 import heron.feature.auth.generated.resources.empty_form
+import heron.feature.auth.generated.resources.eurosky_server
 import heron.feature.auth.generated.resources.invalid_domain
 import heron.feature.auth.generated.resources.submit
 import org.jetbrains.compose.resources.stringResource
@@ -76,15 +78,29 @@ fun ServerSelection(
     availableServers: List<Server>,
     onServerSelected: (Server) -> Unit,
 ) {
-    ItemSelection(
+    Column(
         modifier = modifier,
-        selectedItem = selectedServer,
-        availableItems = availableServers,
-        key = Server::key,
-        icon = Server::logo,
-        stringResource = Server::stringResource,
-        onItemSelected = onServerSelected,
-    )
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            stringResource(Res.string.account_host),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        ItemSelection(
+            alwaysExpanded = true,
+            selectedItem = selectedServer,
+            availableItems = availableServers,
+            key = Server::key,
+            icon = Server::logo,
+            stringResource = Server::stringResource,
+            onItemSelected = onServerSelected,
+        )
+        NoAccountButton(
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally),
+        )
+    }
 }
 
 @Stable

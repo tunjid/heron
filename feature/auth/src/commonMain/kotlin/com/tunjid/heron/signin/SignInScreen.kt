@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -51,7 +50,6 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.signin.oauth.rememberOauthFlowState
-import com.tunjid.heron.signin.ui.NoAccountButton
 import com.tunjid.heron.signin.ui.ServerSelection
 import com.tunjid.heron.signin.ui.ServerSelectionSheetState.Companion.rememberUpdatedServerSelectionState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -75,11 +73,10 @@ internal fun SignInScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .widthIn(max = 360.dp)
             .padding(horizontal = 56.dp)
             .verticalScroll(state = scrollState),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(32.dp),
     ) {
         val focusManager = LocalFocusManager.current
         val keyboardController = LocalSoftwareKeyboardController.current
@@ -99,6 +96,8 @@ internal fun SignInScreen(
         state.fields.forEach { field ->
             key(field.id) {
                 AnimatedVisibility(
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally),
                     visible = state.isVisible(field),
                     enter = EnterTransition,
                     exit = ExitTransition,
@@ -146,14 +145,12 @@ internal fun SignInScreen(
 
         ServerSelection(
             modifier = Modifier
-                .align(Alignment.End)
+                .align(Alignment.CenterHorizontally)
                 .animateBounds(paneScaffoldState),
             selectedServer = state.selectedServer,
             availableServers = state.availableServers,
             onServerSelected = serverSelectionSheetState::onServer,
         )
-
-        NoAccountButton()
 
         LaunchedEffect(Unit) {
             launch {
