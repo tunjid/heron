@@ -27,6 +27,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ElevatedCard
@@ -45,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.LookaheadScope
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.StringResource
 
@@ -53,6 +55,7 @@ import org.jetbrains.compose.resources.StringResource
 inline fun <T> ItemSelection(
     modifier: Modifier = Modifier,
     alwaysExpanded: Boolean = false,
+    iconSize: Dp = 24.dp,
     selectedItem: T,
     availableItems: List<T>,
     crossinline key: T.() -> String,
@@ -95,7 +98,7 @@ inline fun <T> ItemSelection(
                                     .graphicsLayer {
                                         alpha = progress.value
                                     }
-                                    .size(40.dp),
+                                    .size(iconSize * 5 / 3),
                                 onClick = {
                                     when (expandedItem) {
                                         null -> expandedItem = item
@@ -106,7 +109,7 @@ inline fun <T> ItemSelection(
                                 content = {
                                     Icon(
                                         modifier = Modifier
-                                            .size(24.dp),
+                                            .size(iconSize),
                                         imageVector = item.icon(),
                                         contentDescription = org.jetbrains.compose.resources.stringResource(
                                             item.stringResource(),
@@ -133,6 +136,8 @@ inline fun <T> ItemSelection(
             if (expandedItem != null && expandedItem != selectedItem) {
                 expandedItem = null
             }
+        } else {
+            expandedItem = selectedItem
         }
         onDispose { }
     }

@@ -28,7 +28,7 @@
     <string name="invalid_handle">Invalid handle</string>
     <string name="invalid_domain">Invalid domain</string>
     <string name="empty_form">%1$s should not be empty</string>
-    <string name="account_host">Choose your account host</string>
+    <string name="account_host">Where are you @?</string>
     <string name="bluesky_server">Bluesky</string>
     <string name="blacksky_server">Blacksky</string>
     <string name="eurosky_server">Eurosky</string>
