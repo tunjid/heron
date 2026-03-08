@@ -39,17 +39,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.capitalize
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.signin.DomainRegex
@@ -65,7 +60,6 @@ import com.tunjid.heron.ui.text.copyWithValidation
 import com.tunjid.heron.ui.text.isValid
 import com.tunjid.heron.ui.text.validated
 import heron.feature.auth.generated.resources.Res
-import heron.feature.auth.generated.resources.account_host
 import heron.feature.auth.generated.resources.blacksky_server
 import heron.feature.auth.generated.resources.bluesky_server
 import heron.feature.auth.generated.resources.cancel
@@ -86,34 +80,8 @@ fun ServerSelection(
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(36.dp),
     ) {
-        val accountHostText = stringResource(Res.string.account_host)
-        val atIndex = accountHostText.indexOf('@')
-        val primaryColor = MaterialTheme.colorScheme.primary
-
-        Text(
-            text = remember(atIndex, primaryColor) {
-                buildAnnotatedString {
-                    if (atIndex >= 0) {
-                        append(accountHostText.substring(0, atIndex))
-                        withStyle(
-                            SpanStyle(
-                                color = primaryColor,
-                                fontWeight = FontWeight.Bold,
-                                fontStyle = FontStyle.Italic,
-                            )
-                        ) {
-                            append("@")
-                        }
-                        append(accountHostText.substring(atIndex + 1))
-                    } else {
-                        append(accountHostText)
-                    }
-                }
-            },
-            style = MaterialTheme.typography.bodyLarge,
-        )
         ItemSelection(
             alwaysExpanded = true,
             selectedItem = selectedServer,
@@ -124,7 +92,6 @@ fun ServerSelection(
             stringResource = Server::stringResource,
             onItemSelected = onServerSelected,
         )
-        Spacer(Modifier.height(36.dp))
         NoAccountButton(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally),
