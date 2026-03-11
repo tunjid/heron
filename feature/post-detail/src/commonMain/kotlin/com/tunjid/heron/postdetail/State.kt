@@ -22,6 +22,7 @@ import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
+import com.tunjid.heron.data.core.models.ReplyViewMode
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.appliedLabels
@@ -41,6 +42,8 @@ data class State(
     val sharedElementPrefix: String,
     @Transient
     val order: TimelineItem.Thread.Order? = null,
+    @Transient
+    val replyViewMode: ReplyViewMode = ReplyViewMode.Linear,
     @Transient
     val source: Timeline.Source? = null,
     @Transient
@@ -96,6 +99,9 @@ sealed class Action(val key: String) {
         data object Initial : Load()
         data class Order(
             val order: TimelineItem.Thread.Order,
+        ) : Load()
+        data class ViewMode(
+            val mode: ReplyViewMode,
         ) : Load()
     }
 
