@@ -46,6 +46,7 @@ import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideRepo
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.ReplyNode
+import com.tunjid.heron.data.core.models.ReplyViewMode
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.id
@@ -186,6 +187,7 @@ interface TimelineRepository {
     fun postThreadedItems(
         postUri: PostUri,
         order: TimelineItem.Thread.Order,
+        replyViewMode: ReplyViewMode,
     ): Flow<List<TimelineItem>>
 
     suspend fun updatePreferredPresentation(
@@ -520,6 +522,7 @@ internal class OfflineTimelineRepository(
     override fun postThreadedItems(
         postUri: PostUri,
         order: TimelineItem.Thread.Order,
+        replyViewMode: ReplyViewMode,
     ): Flow<List<TimelineItem>> = savedStateDataSource.singleSessionFlow { signedInProfileId ->
         postDao.postThread(
             postUri = postUri.uri,
@@ -539,7 +542,10 @@ internal class OfflineTimelineRepository(
                     associatedProfileIds = {
                         emptyList()
                     },
-                    block = ::spinReplyTree,
+                    block = when (replyViewMode) {
+                        ReplyViewMode.Linear -> ::spinThread
+                        ReplyViewMode.Threaded -> ::spinReplyTree
+                    },
                 )
             }
             .withRefresh {
