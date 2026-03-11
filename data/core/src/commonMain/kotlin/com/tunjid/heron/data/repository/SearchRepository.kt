@@ -51,6 +51,7 @@ import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.models.post
 import com.tunjid.heron.data.network.models.profile
@@ -61,11 +62,13 @@ import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.sortedWithNetworkList
 import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 
@@ -138,6 +141,8 @@ interface SearchRepository {
 }
 
 internal class OfflineSearchRepository @Inject constructor(
+    @param:IODispatcher
+    private val ioDispatcher: CoroutineDispatcher,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
     private val savedStateDataSource: SavedStateDataSource,
@@ -215,6 +220,7 @@ internal class OfflineSearchRepository @Inject constructor(
                 )
             }
         }
+            .flowOn(ioDispatcher)
 
     override fun profileSearch(
         query: SearchQuery.OfProfiles,
@@ -238,6 +244,7 @@ internal class OfflineSearchRepository @Inject constructor(
                 responseCursor = SearchActorsResponse::cursor,
             )
         }
+            .flowOn(ioDispatcher)
 
     override fun feedGeneratorSearch(
         query: SearchQuery.OfFeedGenerators,
@@ -286,6 +293,7 @@ internal class OfflineSearchRepository @Inject constructor(
                     },
             )
         }
+            .flowOn(ioDispatcher)
 
     override fun autoCompleteProfileSearch(
         query: SearchQuery.OfProfiles,
@@ -326,6 +334,7 @@ internal class OfflineSearchRepository @Inject constructor(
                 responseCursor = { null },
             )
         }
+            .flowOn(ioDispatcher)
 
     override fun trends(): Flow<List<Trend>> = flow {
         networkService.runCatchingWithMonitoredNetworkRetry {
@@ -340,6 +349,7 @@ internal class OfflineSearchRepository @Inject constructor(
                 emit(it)
             }
     }
+        .flowOn(ioDispatcher)
 
     override fun suggestedProfiles(
         category: String?,
@@ -359,6 +369,7 @@ internal class OfflineSearchRepository @Inject constructor(
                 responseCursor = { null },
             )
         }
+            .flowOn(ioDispatcher)
 
     override fun suggestedStarterPacks(): Flow<List<StarterPack>> =
         savedStateDataSource.singleAuthorizedSessionFlow {
@@ -391,6 +402,7 @@ internal class OfflineSearchRepository @Inject constructor(
                 }
                 .distinctUntilChanged()
         }
+            .flowOn(ioDispatcher)
 
     override fun suggestedFeeds(): Flow<List<FeedGenerator>> =
         savedStateDataSource.singleSessionFlow { signedInProfileId ->
@@ -425,6 +437,7 @@ internal class OfflineSearchRepository @Inject constructor(
                 }
                 .distinctUntilChanged()
         }
+            .flowOn(ioDispatcher)
 }
 
 private fun TrendView.trend() = Trend(
