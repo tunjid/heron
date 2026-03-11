@@ -678,7 +678,7 @@ private fun TimelinePresentationSelector(
     val timeline = timelines.firstOrNull {
         it.uri == currentTabUri
     }
-    if (timeline != null && timeline.supportedPresentations.size > 1) Row(
+    if (timeline != null) Row(
         modifier = modifier.wrapContentWidth(),
         horizontalArrangement = Arrangement.aligned(Alignment.End),
     ) {
