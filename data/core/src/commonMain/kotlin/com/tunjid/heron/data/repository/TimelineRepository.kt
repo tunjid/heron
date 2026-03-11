@@ -570,6 +570,7 @@ internal class OfflineTimelineRepository(
             }
             .distinctUntilChanged()
     }
+        .flowOn(ioDispatcher)
 
     override val homeTimelines: Flow<List<Timeline.Home>>
         get() = savedStateDataSource.singleSessionFlow { signedInProfileId ->
@@ -625,6 +626,7 @@ internal class OfflineTimelineRepository(
                 }
                 .distinctUntilChanged()
         }
+            .flowOn(ioDispatcher)
 
     override fun timeline(
         request: TimelineRequest,

@@ -80,6 +80,7 @@ import com.tunjid.heron.data.database.entities.PopulatedStandardDocumentEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.AppMainScope
+import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.graze.GrazeDid
 import com.tunjid.heron.data.graze.GrazeFeed
 import com.tunjid.heron.data.network.FeedCreationService
@@ -98,6 +99,7 @@ import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -108,7 +110,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.plus
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
@@ -171,6 +175,8 @@ interface RecordRepository {
 internal class OfflineRecordRepository @Inject constructor(
     @AppMainScope
     appMainScope: CoroutineScope,
+    @param:IODispatcher
+    private val ioDispatcher: CoroutineDispatcher,
     private val postDao: PostDao,
     private val listDao: ListDao,
     private val labelDao: LabelDao,
@@ -197,6 +203,7 @@ internal class OfflineRecordRepository @Inject constructor(
                 offset = 0,
             ).distinctUntilChangedMap { it.map(PopulatedListEntity::asExternalModel) }
         }
+            .flowOn(ioDispatcher)
             .stateIn(
                 scope = appMainScope,
                 started = SharingStarted.WhileSubscribed(1_000),
@@ -242,6 +249,7 @@ internal class OfflineRecordRepository @Inject constructor(
             .withRefresh {
                 recordResolver.resolve(uri)
             }
+            .flowOn(ioDispatcher)
 
     override fun blocks(
         query: DataQuery,
@@ -263,6 +271,7 @@ internal class OfflineRecordRepository @Inject constructor(
                 responseCursor = GetBlocksResponse::cursor,
             )
         }
+            .flowOn(ioDispatcher)
 
     override fun starterPacks(
         query: ProfilesQuery,
@@ -304,6 +313,7 @@ internal class OfflineRecordRepository @Inject constructor(
             )
                 .distinctUntilChanged()
         }
+            .flowOn(ioDispatcher)
 
     override fun lists(
         query: ProfilesQuery,
@@ -345,6 +355,7 @@ internal class OfflineRecordRepository @Inject constructor(
             )
                 .distinctUntilChanged()
         }
+            .flowOn(ioDispatcher)
 
     override fun listMembers(
         query: ListMemberQuery,
@@ -389,6 +400,7 @@ internal class OfflineRecordRepository @Inject constructor(
             )
                 .distinctUntilChanged()
         }
+            .flowOn(ioDispatcher)
 
     override fun feedGenerators(
         query: ProfilesQuery,
@@ -430,6 +442,7 @@ internal class OfflineRecordRepository @Inject constructor(
             )
                 .distinctUntilChanged()
         }
+            .flowOn(ioDispatcher)
 
     override fun standardDocuments(
         query: ProfilesQuery,
@@ -497,6 +510,7 @@ internal class OfflineRecordRepository @Inject constructor(
             )
                 .distinctUntilChanged()
         }
+            .flowOn(ioDispatcher)
 
     override suspend fun updateGrazeFeed(
         update: GrazeFeed.Update,

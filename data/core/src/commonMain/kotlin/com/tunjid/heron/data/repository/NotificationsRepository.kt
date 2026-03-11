@@ -117,6 +117,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.plus
@@ -243,6 +244,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
                     )
                 }
         }
+            .flowOn(ioDispatcher)
 
     override fun notifications(
         query: NotificationsQuery,
@@ -285,6 +287,7 @@ internal class OfflineNotificationsRepository @Inject constructor(
             )
                 .distinctUntilChanged()
         }
+            .flowOn(ioDispatcher)
 
     override suspend fun markRead(at: Instant) {
         val lastReadAt = savedStateDataSource.savedState

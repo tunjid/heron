@@ -72,6 +72,7 @@ import com.tunjid.heron.data.database.entities.PostEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.asExternalModelWithViewerState
 import com.tunjid.heron.data.database.entities.profile.PostViewerStatisticsEntity
+import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.VideoUploadService
@@ -97,6 +98,7 @@ import io.ktor.utils.io.ByteReadChannel
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -108,6 +110,7 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.io.Source
 import kotlinx.serialization.Serializable
@@ -162,6 +165,8 @@ interface PostRepository {
 }
 
 internal class OfflinePostRepository @Inject constructor(
+    @param:IODispatcher
+    private val ioDispatcher: CoroutineDispatcher,
     private val postDao: PostDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
@@ -222,6 +227,7 @@ internal class OfflinePostRepository @Inject constructor(
                 ).distinctUntilChanged()
             }
         }
+            .flowOn(ioDispatcher)
 
     override fun repostedBy(
         query: PostDataQuery,
@@ -264,6 +270,7 @@ internal class OfflinePostRepository @Inject constructor(
                     .distinctUntilChanged()
             }
         }
+            .flowOn(ioDispatcher)
 
     override fun quotes(
         query: PostDataQuery,
@@ -332,6 +339,7 @@ internal class OfflinePostRepository @Inject constructor(
                 )
             }
         }
+            .flowOn(ioDispatcher)
 
     override fun saved(
         query: CursorQuery,
@@ -397,6 +405,7 @@ internal class OfflinePostRepository @Inject constructor(
                 ::CursorList,
             )
         }
+            .flowOn(ioDispatcher)
 
     override fun post(
         uri: PostUri,
@@ -412,6 +421,7 @@ internal class OfflinePostRepository @Inject constructor(
                     )
                 }
         }
+            .flowOn(ioDispatcher)
 
     override suspend fun createPost(
         request: Post.Create.Request,

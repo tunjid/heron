@@ -52,6 +52,7 @@ import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.entities.PopulatedConversationEntity
 import com.tunjid.heron.data.database.entities.PopulatedMessageEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.LazyList
 import com.tunjid.heron.data.utilities.distinctUntilChangedMap
@@ -67,6 +68,7 @@ import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -77,6 +79,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.take
@@ -123,6 +126,8 @@ interface MessageRepository {
 }
 
 internal class OfflineMessageRepository @Inject constructor(
+    @param:IODispatcher
+    private val ioDispatcher: CoroutineDispatcher,
     private val messageDao: MessageDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
@@ -171,6 +176,7 @@ internal class OfflineMessageRepository @Inject constructor(
             )
                 .distinctUntilChanged()
         }
+            .flowOn(ioDispatcher)
 
     override fun messages(
         query: MessageQuery,
@@ -244,6 +250,7 @@ internal class OfflineMessageRepository @Inject constructor(
             )
                 .distinctUntilChanged()
         }
+            .flowOn(ioDispatcher)
 
     override suspend fun monitorConversationLogs() {
         savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
