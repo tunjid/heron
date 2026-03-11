@@ -171,9 +171,10 @@ private fun NoAccountDialog(
 }
 
 private fun Server.webPage(): String = when (this) {
-    Server.Pckt -> "https://pckt.blog"
+    Server.BlueSky -> "https://bsky.social"
     Server.BlackSky -> "https://blacksky.community"
     Server.EuroSky -> "https://eurosky.tech"
+    Server.Pckt -> "https://pckt.blog"
     else -> endpoint
 }
 

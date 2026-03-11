@@ -82,7 +82,6 @@ fun ServerSelection(
     availableServers: List<Server>,
     onServerSelected: (Server) -> Unit,
 ) {
-    println(selectedServer)
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
