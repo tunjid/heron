@@ -75,7 +75,7 @@ internal fun postEmbedUnion(
     embeddedRecordReference: Record.Reference?,
     mediaBlobs: List<MediaBlob>,
 ): PostEmbedUnion? {
-    val record = embeddedRecordReference?.toRecord()
+    val record = embeddedRecordReference?.toStrongReferencedRecord()
     val video = mediaBlobs.video()
     val images = mediaBlobs.images()
 
@@ -124,13 +124,16 @@ internal fun List<Link>.facet(): List<Facet> = map { link ->
     )
 }
 
-private fun Record.Reference.toRecord(): BskyRecord =
-    BskyRecord(
-        record = StrongRef(
-            uri = AtUri(uri.uri),
-            cid = Cid(id.id),
-        ),
-    )
+internal fun Record.Reference.toStrongReferencedRecord(): BskyRecord? =
+    when (val id = id) {
+        null -> null
+        else -> BskyRecord(
+            record = StrongRef(
+                uri = AtUri(uri.uri),
+                cid = Cid(id.id),
+            ),
+        )
+    }
 
 private fun List<MediaBlob>.video(): BskyVideo? =
     filterIsInstance<MediaBlob.Video>()

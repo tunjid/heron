@@ -1,0 +1,23 @@
+{
+  "defs": {
+    "main": {
+      "description": "Record declaring a subscription to a publication",
+      "key": "tid",
+      "record": {
+        "properties": {
+          "publication": {
+            "format": "at-uri",
+            "type": "string"
+          }
+        },
+        "required": [
+          "publication"
+        ],
+        "type": "object"
+      },
+      "type": "record"
+    }
+  },
+  "id": "site.standard.graph.subscription",
+  "lexicon": 1
+}

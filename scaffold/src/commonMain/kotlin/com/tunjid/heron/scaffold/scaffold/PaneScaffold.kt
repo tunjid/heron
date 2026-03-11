@@ -222,18 +222,21 @@ fun PaneScaffoldState.PaneScaffold(
         },
         content = {
             Scaffold(
-                modifier = if (splitPaneState.paneAnchorState.hasInteractions) Modifier
-                else when (dismissBehavior) {
-                    AppState.DismissBehavior.None,
-                    AppState.DismissBehavior.Gesture.DragToPop,
-                    -> Modifier.animateBounds(lookaheadScope = this)
-                    AppState.DismissBehavior.Gesture.SlideToPop,
-                    AppState.DismissBehavior.Gesture.ScaleToPop,
-                    -> Modifier
-                }
-                    .padding(
-                        horizontal = if (hasSiblings) 8.dp else 0.dp,
-                    ),
+                modifier = when {
+                    splitPaneState.paneAnchorState.hasInteractions -> Modifier
+                    else -> when (dismissBehavior) {
+                        AppState.DismissBehavior.None,
+                        AppState.DismissBehavior.Gesture.DragToPop,
+                        -> Modifier.animateBounds(lookaheadScope = this)
+
+                        AppState.DismissBehavior.Gesture.SlideToPop,
+                        AppState.DismissBehavior.Gesture.ScaleToPop,
+                        -> Modifier
+                    }
+                        .padding(
+                            horizontal = if (hasSiblings) 8.dp else 0.dp,
+                        )
+                },
                 containerColor = containerColor,
                 topBar = {
                     topBar()

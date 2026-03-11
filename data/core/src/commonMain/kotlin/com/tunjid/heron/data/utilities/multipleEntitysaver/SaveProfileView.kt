@@ -135,6 +135,7 @@ internal fun MultipleEntitySaver.stubProfileEntity(
         createdFeedGeneratorCount = 0,
         createdStarterPackCount = 0,
     ),
+    status = null,
 )
 
 private fun unknownFollower(

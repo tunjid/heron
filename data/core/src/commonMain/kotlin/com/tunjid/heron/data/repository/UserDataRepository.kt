@@ -50,6 +50,10 @@ interface UserDataRepository {
     suspend fun setShowPostEngagementMetrics(
         showEngagementMetrics: Boolean,
     ): Outcome
+
+    suspend fun setShowTrendingTopics(
+        showTrendingTopics: Boolean,
+    ): Outcome
 }
 
 internal class OfflineUserDataRepository @Inject constructor(
@@ -119,6 +123,12 @@ internal class OfflineUserDataRepository @Inject constructor(
         showEngagementMetrics: Boolean,
     ): Outcome = updatePreferences {
         copy(local = local.copy(showPostEngagementMetrics = showEngagementMetrics))
+    }
+
+    override suspend fun setShowTrendingTopics(
+        showTrendingTopics: Boolean,
+    ): Outcome = updatePreferences {
+        copy(local = local.copy(showTrendingTopics = showTrendingTopics))
     }
 
     private suspend inline fun updatePreferences(

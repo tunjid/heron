@@ -41,6 +41,7 @@ kotlin {
                 implementation(project(":data:logging"))
                 implementation(project(":data:core"))
                 implementation(project(":ui:core"))
+                implementation(project(":ui:profile"))
                 implementation(project(":ui:media"))
 
                 implementation(libs.compose.multiplatform.animation)
@@ -62,9 +63,8 @@ kotlin {
                 implementation(libs.lifecycle.multiplatform.runtime.compose)
                 implementation(libs.lifecycle.multiplatform.viewmodel.navigation3)
 
-                implementation(libs.navigation.event)
                 implementation(libs.navigation.event.compose)
-                implementation(libs.navigation3.runtime)
+                implementation(libs.navigation3.multiplatform.ui)
 
                 implementation(libs.okio)
 

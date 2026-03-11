@@ -18,12 +18,10 @@ package com.tunjid.heron.settings
 
 import androidx.lifecycle.ViewModel
 import com.mikepenz.aboutlibraries.Libs
-import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.repository.AuthRepository
-import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
@@ -33,7 +31,7 @@ import com.tunjid.heron.scaffold.navigation.NavigationContext
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.scaffold.navigation.resetAuthNavigation
-import com.tunjid.heron.timeline.utilities.writeStatusMessage
+import com.tunjid.heron.timeline.utilities.enqueueMutations
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
@@ -131,6 +129,10 @@ class ActualSettingsViewModel(
                         userDataRepository = userDataRepository,
                     )
 
+                    is Action.SetShowTrendingTopics -> action.flow.toggleShowTrendingTopics(
+                        userDataRepository = userDataRepository,
+                    )
+
                     is Action.Navigate -> action.flow.consumeNavigationActions(
                         navigationMutationConsumer = navActions,
                     )
@@ -139,6 +141,9 @@ class ActualSettingsViewModel(
                         navActions = navActions,
                     )
                     is Action.UpdateFeedPreference -> action.flow.updateFeedPreferenceMutations(
+                        writeQueue = writeQueue,
+                    )
+                    is Action.UpdateThreadViewPreference -> action.flow.updateThreadPreferenceMutations(
                         writeQueue = writeQueue,
                     )
                     Action.SignOut -> action.flow.mapToManyMutations {
@@ -182,16 +187,33 @@ private fun Flow<Action.UpdateSection>.updateSectionMutations(): Flow<Mutation<S
 private fun Flow<Action.UpdateFeedPreference>.updateFeedPreferenceMutations(
     writeQueue: WriteQueue,
 ): Flow<Mutation<State>> =
-    mapLatestToManyMutations { action ->
-        val writable = Writable.TimelineUpdate(
-            update = Timeline.Update.OfFeedPreference.Add(
-                action.feedPreference,
-            ),
-        )
-        val status = writeQueue.enqueue(writable)
-        writable.writeStatusMessage(status)?.let {
-            emit { copy(messages = messages + it) }
-        }
+    this.enqueueMutations(
+        writeQueue,
+        toWritable = { action ->
+            Writable.TimelineUpdate(
+                update = Timeline.Update.OfFeedPreference.Add(
+                    action.feedPreference,
+                ),
+            )
+        },
+    ) { _, memo ->
+        if (memo != null) emit { copy(messages = messages + memo) }
+    }
+
+private fun Flow<Action.UpdateThreadViewPreference>.updateThreadPreferenceMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> =
+    this.enqueueMutations(
+        writeQueue,
+        toWritable = { action ->
+            Writable.TimelineUpdate(
+                update = Timeline.Update.OfThreadViewPreference.ThreadView(
+                    action.threadViewPreference,
+                ),
+            )
+        },
+    ) { _, memo ->
+        if (memo != null) emit { copy(messages = messages + memo) }
     }
 
 private fun Flow<Action.SwitchSession>.handleSwitchSessionMutations(
@@ -297,6 +319,13 @@ private fun Flow<Action.SetShowPostEngagementMetrics>.toggleShowPostEngagementMe
 ): Flow<Mutation<State>> =
     mapToManyMutations { (showPostEngagementMetrics) ->
         userDataRepository.setShowPostEngagementMetrics(showPostEngagementMetrics)
+    }
+
+private fun Flow<Action.SetShowTrendingTopics>.toggleShowTrendingTopics(
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> =
+    mapToManyMutations { (showTrendingTopics) ->
+        userDataRepository.setShowTrendingTopics(showTrendingTopics)
     }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =

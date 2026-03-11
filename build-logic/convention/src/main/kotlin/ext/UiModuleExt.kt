@@ -49,7 +49,6 @@ fun org.gradle.api.Project.configureUiModule(
 
                 api(libs.kotlinx.coroutines.core)
 
-                implementation(libs.navigation.event)
                 implementation(libs.navigation.event.compose)
 
                 api(libs.savedstate.multiplatform.savedstate)

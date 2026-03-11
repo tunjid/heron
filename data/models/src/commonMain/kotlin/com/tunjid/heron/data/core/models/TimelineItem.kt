@@ -64,6 +64,7 @@ sealed class TimelineItem {
             is Thread,
             is Single,
             is Placeholder,
+            is ReplyTree,
             -> post.indexedAt
 
             is Repost -> at
@@ -104,6 +105,24 @@ sealed class TimelineItem {
             get() = posts[anchorPostIndex]
         override val threadGate: ThreadGate?
             get() = postUrisToThreadGates[post.uri]
+
+        enum class Order(
+            val value: String,
+            val sortOrder: Int,
+        ) {
+            Oldest(
+                value = "oldest",
+                sortOrder = 0,
+            ),
+            Newest(
+                value = "newest",
+                sortOrder = 1,
+            ),
+            Top(
+                value = "most-likes",
+                sortOrder = 2,
+            ),
+        }
     }
 
     data class Single(
@@ -115,6 +134,15 @@ sealed class TimelineItem {
         override val signedInProfileId: ProfileId?,
     ) : TimelineItem()
 
+    data class ReplyTree(
+        override val id: String,
+        override val post: Post,
+        override val isMuted: Boolean,
+        override val threadGate: ThreadGate?,
+        override val appliedLabels: AppliedLabels,
+        override val signedInProfileId: ProfileId?,
+        val replies: List<ReplyNode>,
+    ) : TimelineItem()
     sealed class Placeholder : TimelineItem() {
         override val post: Post
             get() = LoadingPost
@@ -129,10 +157,17 @@ sealed class TimelineItem {
         override val id: String = Uuid.random().toString(),
     ) : Placeholder()
 
-    data class Empty(
-        val timeline: Timeline,
-    ) : Placeholder() {
-        override val id: String = timeline.sourceId
+    sealed class Empty : Placeholder() {
+        data object Thread : Empty() {
+            @OptIn(ExperimentalUuidApi::class)
+            override val id: String = Uuid.random().toString()
+        }
+
+        data class Timeline(
+            val timeline: com.tunjid.heron.data.core.models.Timeline,
+        ) : Empty() {
+            override val id: String = timeline.sourceId
+        }
     }
 
     companion object {
@@ -166,5 +201,19 @@ sealed class TimelineItem {
         )
 
         val LoadingItems = (0..16).map { Loading() }
+        val EmptyThreadItems = listOf(Empty.Thread)
     }
+}
+
+data class ReplyNode(
+    val post: Post,
+    val threadGate: ThreadGate?,
+    val appliedLabels: AppliedLabels,
+    val depth: Int,
+    val children: List<ReplyNode>,
+)
+
+enum class ReplyViewMode {
+    Linear,
+    Threaded,
 }

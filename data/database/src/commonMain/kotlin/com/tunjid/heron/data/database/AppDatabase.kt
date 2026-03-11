@@ -24,6 +24,7 @@ import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.tunjid.heron.data.database.callbacks.UnknownProfileInsertionCallback
+import com.tunjid.heron.data.database.daos.DatabaseCleanupDao
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
@@ -32,6 +33,7 @@ import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
+import com.tunjid.heron.data.database.daos.StandardSiteDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.ThreadGateDao
 import com.tunjid.heron.data.database.daos.TimelineDao
@@ -53,6 +55,9 @@ import com.tunjid.heron.data.database.entities.PostLikeEntity
 import com.tunjid.heron.data.database.entities.PostRepostEntity
 import com.tunjid.heron.data.database.entities.PostThreadEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
+import com.tunjid.heron.data.database.entities.StandardDocumentEntity
+import com.tunjid.heron.data.database.entities.StandardPublicationEntity
+import com.tunjid.heron.data.database.entities.StandardSubscriptionEntity
 import com.tunjid.heron.data.database.entities.StarterPackEntity
 import com.tunjid.heron.data.database.entities.ThreadGateAllowedListEntity
 import com.tunjid.heron.data.database.entities.ThreadGateEntity
@@ -92,7 +97,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 34,
+    version = 36,
     entities = [
         BookmarkEntity::class,
         ExternalEmbedEntity::class,
@@ -131,6 +136,9 @@ import kotlinx.coroutines.IO
         ThreadGateEntity::class,
         ThreadGateAllowedListEntity::class,
         ThreadGateHiddenPostEntity::class,
+        StandardPublicationEntity::class,
+        StandardDocumentEntity::class,
+        StandardSubscriptionEntity::class,
     ],
     autoMigrations = [
         // firstMigration
@@ -202,6 +210,10 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 31, to = 32),
         // Migration 32 - 33 is a manual migration
         // Migration 33 - 34 is a manual migration
+        // Add Profile Status
+        AutoMigration(from = 34, to = 35),
+        // Add standard site tables (publications, documents, subscriptions)
+        AutoMigration(from = 35, to = 36),
     ],
     exportSchema = true,
 )
@@ -223,6 +235,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun starterPackDao(): StarterPackDao
     abstract fun messagesDao(): MessageDao
     abstract fun threadGateDao(): ThreadGateDao
+    abstract fun standardSiteDao(): StandardSiteDao
+    abstract fun databaseCleanupDao(): DatabaseCleanupDao
 }
 
 // The Room compiler generates the `actual` implementations.

@@ -26,7 +26,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -51,7 +51,6 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.signin.oauth.rememberOauthFlowState
-import com.tunjid.heron.signin.ui.NoAccountButton
 import com.tunjid.heron.signin.ui.ServerSelection
 import com.tunjid.heron.signin.ui.ServerSelectionSheetState.Companion.rememberUpdatedServerSelectionState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -74,8 +73,8 @@ internal fun SignInScreen(
     val scrollState = rememberScrollState()
     Column(
         modifier = modifier
-            .fillMaxSize()
-            .widthIn(max = 360.dp)
+            .fillMaxHeight()
+            .widthIn(max = 600.dp)
             .padding(horizontal = 56.dp)
             .verticalScroll(state = scrollState),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -99,6 +98,8 @@ internal fun SignInScreen(
         state.fields.forEach { field ->
             key(field.id) {
                 AnimatedVisibility(
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally),
                     visible = state.isVisible(field),
                     enter = EnterTransition,
                     exit = ExitTransition,
@@ -134,6 +135,16 @@ internal fun SignInScreen(
                             }
                         },
                     )
+
+                    // Try to resolve the initial handle
+                    if (field.id == Username) LaunchedEffect(state.mostRecentSession) {
+                        if (state.mostRecentSession != null && field.value.isNotBlank()) actions(
+                            Action.FieldChanged(
+                                id = Username,
+                                text = field.value,
+                            ),
+                        )
+                    }
                 }
             }
         }
@@ -146,14 +157,14 @@ internal fun SignInScreen(
 
         ServerSelection(
             modifier = Modifier
-                .align(Alignment.End)
+                .padding(vertical = 32.dp)
+                .align(Alignment.CenterHorizontally)
                 .animateBounds(paneScaffoldState),
+            status = state.serverSelectionStatus,
             selectedServer = state.selectedServer,
             availableServers = state.availableServers,
             onServerSelected = serverSelectionSheetState::onServer,
         )
-
-        NoAccountButton()
 
         LaunchedEffect(Unit) {
             launch {

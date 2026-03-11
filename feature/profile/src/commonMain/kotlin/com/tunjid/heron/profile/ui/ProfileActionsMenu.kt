@@ -13,6 +13,7 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.rounded.PersonOff
+import androidx.compose.material.icons.rounded.Videocam
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
@@ -35,6 +36,8 @@ import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.isBlocked
 import com.tunjid.heron.data.core.models.isMuted
 import com.tunjid.heron.ui.text.CommonStrings
+import heron.ui.core.generated.resources.action_edit_live_status
+import heron.ui.core.generated.resources.action_go_live
 import heron.ui.core.generated.resources.more_options
 import heron.ui.core.generated.resources.viewer_state_block_account
 import heron.ui.core.generated.resources.viewer_state_mute_account
@@ -141,27 +144,41 @@ internal sealed class ProfileActionMenu {
     data object Divider : ProfileActionMenu()
 }
 
-internal fun ProfileViewerState?.profileActionMenuItems() = buildList {
-    if (this@profileActionMenuItems != null) {
-        if (!isBlocked) add(
-            ProfileActionMenu.Item(
-                title = CommonStrings.viewer_state_block_account,
-                icon = Icons.Rounded.PersonOff,
-                isDestructive = true,
-            ),
+internal fun ProfileViewerState?.profileActionMenuItems(
+    isSignedInProfile: Boolean,
+    isLive: Boolean,
+) = buildList {
+    when {
+        isSignedInProfile -> add(
+            when {
+                isLive -> ProfileActionMenu.Item(
+                    title = CommonStrings.action_edit_live_status,
+                    icon = Icons.Rounded.Videocam,
+                )
+                else -> ProfileActionMenu.Item(
+                    title = CommonStrings.action_go_live,
+                    icon = Icons.Rounded.Videocam,
+                )
+            },
         )
-
-        add(
-            if (isMuted) ProfileActionMenu.Item(
-                title = CommonStrings.viewer_state_unmute_account,
-                icon = Icons.AutoMirrored.Rounded.VolumeUp,
-                isDestructive = false,
+        this@profileActionMenuItems != null -> {
+            if (!isBlocked) add(
+                ProfileActionMenu.Item(
+                    title = CommonStrings.viewer_state_block_account,
+                    icon = Icons.Rounded.PersonOff,
+                    isDestructive = true,
+                ),
             )
-            else ProfileActionMenu.Item(
-                title = CommonStrings.viewer_state_mute_account,
-                icon = Icons.AutoMirrored.Rounded.VolumeOff,
-                isDestructive = false,
-            ),
-        )
+            add(
+                if (isMuted) ProfileActionMenu.Item(
+                    title = CommonStrings.viewer_state_unmute_account,
+                    icon = Icons.AutoMirrored.Rounded.VolumeUp,
+                )
+                else ProfileActionMenu.Item(
+                    title = CommonStrings.viewer_state_mute_account,
+                    icon = Icons.AutoMirrored.Rounded.VolumeOff,
+                ),
+            )
+        }
     }
 }

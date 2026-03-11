@@ -26,11 +26,14 @@ import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.Id
+import com.tunjid.heron.data.core.types.ImageUri
+import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.partial
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.partial
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -147,6 +150,34 @@ interface ProfileDao {
     @Update(entity = ProfileViewerStateEntity::class)
     suspend fun updatePartialProfileViewer(
         partial: ProfileViewerStateEntity.MutedPartial,
+    )
+
+    @Query(
+        """
+        UPDATE profiles SET
+            status_uri = :uri,
+            status_value = :value,
+            status_uriLink = :uriLink,
+            status_title = :title,
+            status_description = :description,
+            status_thumbnail = :thumbnail,
+            status_expiresAt = :expiresAt,
+            status_active = :active,
+            status_disabled = :disabled
+        WHERE did = :did
+    """,
+    )
+    suspend fun updateStatus(
+        did: ProfileId,
+        uri: String?,
+        value: String?,
+        uriLink: String?,
+        title: String?,
+        description: String?,
+        thumbnail: ImageUri?,
+        expiresAt: Instant?,
+        active: Boolean?,
+        disabled: Boolean?,
     )
 
     @Query(

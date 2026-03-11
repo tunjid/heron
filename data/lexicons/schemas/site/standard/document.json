@@ -1,0 +1,63 @@
+{
+  "defs": {
+    "main": {
+      "key": "tid",
+      "record": {
+        "properties": {
+          "bskyPostRef": {
+            "ref": "com.atproto.repo.strongRef",
+            "type": "ref"
+          },
+          "coverImage": {
+            "accept": ["image/*"],
+            "maxSize": 1000000,
+            "type": "blob"
+          },
+          "description": {
+            "maxGraphemes": 3000,
+            "maxLength": 30000,
+            "type": "string"
+          },
+          "path": {
+            "description": "combine with the publication url or the document site to construct a full url to the document",
+            "type": "string"
+          },
+          "publishedAt": {
+            "format": "datetime",
+            "type": "string"
+          },
+          "site": {
+            "description": "URI to the site or publication this document belongs to. Supports both AT-URIs (at://did/collection/rkey) for publication references and HTTPS URLs (https://example.com) for standalone documents or external sites.",
+            "format": "uri",
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "maxGraphemes": 50,
+              "maxLength": 100,
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "textContent": {
+            "type": "string"
+          },
+          "title": {
+            "maxGraphemes": 500,
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "datetime",
+            "type": "string"
+          }
+        },
+        "required": ["site", "title", "publishedAt"],
+        "type": "object"
+      },
+      "type": "record"
+    }
+  },
+  "id": "site.standard.document",
+  "lexicon": 1
+}

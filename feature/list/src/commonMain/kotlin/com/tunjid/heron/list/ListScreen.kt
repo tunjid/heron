@@ -19,6 +19,7 @@ package com.tunjid.heron.list
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
@@ -26,26 +27,32 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.RemoveCircle
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,10 +64,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
-import com.tunjid.composables.lazy.rememberLazyScrollableState
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.LinkTarget
+import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
@@ -68,6 +75,7 @@ import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.models.sourceId
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
@@ -103,21 +111,32 @@ import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememb
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
+import com.tunjid.heron.timeline.utilities.contentType
 import com.tunjid.heron.timeline.utilities.description
-import com.tunjid.heron.timeline.utilities.pendingOffsetFor
+import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
+import com.tunjid.heron.ui.DestructiveDialogButton
+import com.tunjid.heron.ui.NeutralDialogButton
+import com.tunjid.heron.ui.SimpleDialog
+import com.tunjid.heron.ui.SimpleDialogText
+import com.tunjid.heron.ui.SimpleDialogTitle
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.tabIndex
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
 import heron.feature.list.generated.resources.Res
 import heron.feature.list.generated.resources.people
 import heron.feature.list.generated.resources.posts
+import heron.feature.list.generated.resources.remove_list_member
+import heron.feature.list.generated.resources.remove_list_member_confirmation
+import heron.ui.core.generated.resources.no
+import heron.ui.core.generated.resources.yes
 import kotlin.math.floor
 import kotlin.math.roundToInt
 import kotlin.time.Clock
@@ -201,14 +220,20 @@ internal fun ListScreen(
                             )
                         },
                 ) {
-                    Text(
-                        modifier = Modifier
-                            .padding(
-                                horizontal = 16.dp,
-                                vertical = 8.dp,
-                            ),
-                        text = state.timelineState?.timeline?.description ?: "",
-                    )
+                    state.timelineState
+                        ?.timeline
+                        ?.description
+                        ?.takeIf(String::isNotBlank)
+                        ?.let { description ->
+                            Text(
+                                modifier = Modifier
+                                    .padding(
+                                        horizontal = 16.dp,
+                                        vertical = 8.dp,
+                                    ),
+                                text = description,
+                            )
+                        }
                     Tabs(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -262,6 +287,13 @@ internal fun ListScreen(
             },
         )
     }
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.currentPage }
+            .collect { currentPage ->
+                actions(Action.CurrentPageChanged(currentPage))
+            }
+    }
 }
 
 @Composable
@@ -272,14 +304,14 @@ private fun listTabs(
         isEmpty() -> {
             add(
                 Tab(
-                    title = stringResource(Res.string.people),
-                    hasUpdate = false,
+                    title = stringResource(Res.string.posts),
+                    hasUpdate = hasUpdate,
                 ),
             )
             add(
                 Tab(
-                    title = stringResource(Res.string.posts),
-                    hasUpdate = hasUpdate,
+                    title = stringResource(Res.string.people),
+                    hasUpdate = false,
                 ),
             )
         }
@@ -301,6 +333,9 @@ private fun ListMembers(
     val state by membersStateHolder.state.collectAsStateWithLifecycle()
     val updatedMembers by rememberUpdatedState(state.tiledItems)
     val listState = rememberLazyListState()
+
+    var listMemberToDelete by remember { mutableStateOf<ListMember?>(null) }
+
     LazyColumn(
         modifier = modifier
             .padding(horizontal = 8.dp)
@@ -317,43 +352,99 @@ private fun ListMembers(
             items = updatedMembers,
             key = { it.subject.did.id },
             itemContent = { item ->
-                ProfileWithViewerState(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .animateItem(),
-                    movableElementSharedTransitionScope = paneScaffoldState,
-                    signedInProfileId = null,
-                    profile = item.subject,
-                    viewerState = item.viewerState,
-                    profileSharedElementKey = Profile::listMemberAvatarSharedElementKey,
-                    onProfileClicked = { profile ->
-                        actions(
-                            Action.Navigate.To(
-                                profileDestination(
-                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                    profile = profile,
-                                    avatarSharedElementKey = item.subject.listMemberAvatarSharedElementKey(),
-                                ),
-                            ),
-                        )
-                    },
-                    onViewerStateClicked = { viewerState ->
-                        state.signedInProfileId?.let {
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    ProfileWithViewerState(
+                        modifier = Modifier
+                            .weight(1f),
+                        movableElementSharedTransitionScope = paneScaffoldState,
+                        signedInProfileId = null,
+                        profile = item.subject,
+                        viewerState = item.viewerState,
+                        profileSharedElementKey = Profile::listMemberAvatarSharedElementKey,
+                        onProfileClicked = { profile ->
                             actions(
-                                Action.ToggleViewerState(
-                                    signedInProfileId = it,
-                                    viewedProfileId = item.subject.did,
-                                    following = viewerState?.following,
-                                    followedBy = viewerState?.followedBy,
+                                Action.Navigate.To(
+                                    profileDestination(
+                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                        profile = profile,
+                                        avatarSharedElementKey = item.subject.listMemberAvatarSharedElementKey(),
+                                    ),
                                 ),
                             )
-                        }
+                        },
+                        onViewerStateClicked = { viewerState ->
+                            state.signedInProfileId?.let {
+                                actions(
+                                    Action.ToggleViewerState(
+                                        signedInProfileId = it,
+                                        viewedProfileId = item.subject.did,
+                                        following = viewerState?.following,
+                                        followedBy = viewerState?.followedBy,
+                                    ),
+                                )
+                            }
+                        },
+                    )
+                    if (state.signedInProfileId == state.listUri.profileId()) {
+                        IconButton(
+                            onClick = {
+                                listMemberToDelete = item
+                            },
+                            content = {
+                                Icon(
+                                    imageVector = Icons.Rounded.RemoveCircle,
+                                    contentDescription = stringResource(Res.string.remove_list_member),
+                                    tint = MaterialTheme.colorScheme.error,
+                                )
+                            },
+                        )
+                    }
+                }
+            },
+        )
+    }
+
+    listMemberToDelete?.let { member ->
+        SimpleDialog(
+            onDismissRequest = {
+                listMemberToDelete = null
+            },
+            title = {
+                SimpleDialogTitle(
+                    text = stringResource(Res.string.remove_list_member),
+                )
+            },
+            text = {
+                SimpleDialogText(
+                    text = stringResource(
+                        Res.string.remove_list_member_confirmation,
+                        member.subject.handle.id,
+                    ),
+                )
+            },
+            confirmButton = {
+                DestructiveDialogButton(
+                    text = stringResource(CommonStrings.yes),
+                ) {
+                    actions(Action.DeleteRecord(member.uri))
+                    listMemberToDelete = null
+                }
+            },
+            dismissButton = {
+                NeutralDialogButton(
+                    text = stringResource(CommonStrings.no),
+                    onClick = {
+                        listMemberToDelete = null
                     },
                 )
             },
         )
     }
-
     listState.PivotedTilingEffect(
         items = updatedMembers,
         onQueryChanged = { query ->
@@ -378,21 +469,11 @@ private fun ListTimeline(
     autoPlayTimelineVideos: Boolean,
     showEngagementMetrics: Boolean,
 ) {
-    var pendingScrollOffset by rememberSaveable { mutableIntStateOf(0) }
-    val gridState = rememberLazyScrollableState(
-        init = ::LazyStaggeredGridState,
-        firstVisibleItemIndex = LazyStaggeredGridState::firstVisibleItemIndex,
-        firstVisibleItemScrollOffset = LazyStaggeredGridState::firstVisibleItemScrollOffset,
-        restore = { firstVisibleItemIndex, firstVisibleItemScrollOffset ->
-            LazyStaggeredGridState(
-                initialFirstVisibleItemIndex = firstVisibleItemIndex,
-                initialFirstVisibleItemOffset = firstVisibleItemScrollOffset + pendingScrollOffset,
-            )
-        },
-    )
+    val gridState = rememberLazyStaggeredGridState()
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
     val items by rememberUpdatedState(timelineState.tiledItems)
 
+    val now = remember { Clock.System.now() }
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
     val presentation = timelineState.timeline.presentation
@@ -455,6 +536,7 @@ private fun ListTimeline(
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
+        onShown = { actions(Action.UpdateRecentConversations) },
         onOptionClicked = { option ->
             when (option) {
                 is PostOption.ShareInConversation ->
@@ -510,7 +592,7 @@ private fun ListTimeline(
                 },
             state = gridState,
             columns = StaggeredGridCells.Adaptive(presentation.cardSize),
-            verticalItemSpacing = 8.dp,
+            verticalItemSpacing = presentation.lazyGridVerticalItemSpacing,
             contentPadding = bottomNavAndInsetPaddingValues(
                 isCompact = paneScaffoldState.prefersCompactBottomNav,
             ),
@@ -520,6 +602,7 @@ private fun ListTimeline(
             items(
                 items = items,
                 key = TimelineItem::id,
+                contentType = TimelineItem::contentType,
                 itemContent = { item ->
                     TimelineItem(
                         modifier = Modifier
@@ -530,7 +613,7 @@ private fun ListTimeline(
                             ),
                         paneMovableElementSharedTransitionScope = paneScaffoldState,
                         presentationLookaheadScope = this@LookaheadScope,
-                        now = remember { Clock.System.now() },
+                        now = now,
                         item = item,
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                         showEngagementMetrics = showEngagementMetrics,
@@ -552,7 +635,6 @@ private fun ListTimeline(
 
                                     is PostAction.OfPost -> {
                                         val post = action.post
-                                        pendingScrollOffset = gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
                                                 recordDestination(
@@ -575,7 +657,6 @@ private fun ListTimeline(
                                         val profile = action.profile
                                         val post = action.post
                                         val quotingPostUri = action.quotingPostUri
-                                        pendingScrollOffset = gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
                                                 profileDestination(
@@ -595,7 +676,6 @@ private fun ListTimeline(
                                     is PostAction.OfRecord -> {
                                         val record = action.record
                                         val owningPostUri = action.owningPostUri
-                                        pendingScrollOffset = gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
                                                 recordDestination(
@@ -614,7 +694,6 @@ private fun ListTimeline(
                                         val index = action.index
                                         val post = action.post
                                         val quotingPostUri = action.quotingPostUri
-                                        pendingScrollOffset = gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
                                                 galleryDestination(
@@ -638,7 +717,6 @@ private fun ListTimeline(
 
                                     is PostAction.OfReply -> {
                                         val post = action.post
-                                        pendingScrollOffset = gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
                                                 if (paneScaffoldState.isSignedOut) signInDestination()

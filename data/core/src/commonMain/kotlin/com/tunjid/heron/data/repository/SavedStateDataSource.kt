@@ -27,7 +27,7 @@ import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.types.ExpiredSessionException
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
-import com.tunjid.heron.data.core.utilities.Outcome
+import com.tunjid.heron.data.core.utilities.asFailureOutcome
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedState
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
 import com.tunjid.heron.data.di.AppMainScope
@@ -37,12 +37,14 @@ import com.tunjid.heron.data.utilities.updateOrPutValue
 import com.tunjid.heron.data.utilities.writequeue.FailedWrite
 import com.tunjid.heron.data.utilities.writequeue.Writable
 import dev.zacsweers.metro.Inject
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -458,18 +460,16 @@ internal suspend fun SavedStateDataSource.updateSignedInUserNotifications(
  * Runs the [block] in the context of a single profile's session
  */
 internal suspend inline fun <T> SavedStateDataSource.inCurrentProfileSession(
-    crossinline block: suspend (ProfileId?) -> T,
+    crossinline block: suspend SessionContext.Current.(ProfileId?) -> T,
 ): T? {
     val state = savedState.first { it != InitialSavedState }
     val currentProfileId = state.signedInProfileId
     val profileData = currentProfileId?.let { state.profileData(it) }
-
-    return withContext(
-        SessionContext.Current(
-            tokens = profileData?.auth,
-            profileData = profileData ?: SavedState.ProfileData.defaultGuestData,
-        ),
-    ) {
+    val context = SessionContext.Current(
+        tokens = profileData?.auth,
+        profileData = profileData ?: SavedState.ProfileData.defaultGuestData,
+    )
+    return withContext(context) {
         coroutineScope {
             select {
                 async {
@@ -477,7 +477,7 @@ internal suspend inline fun <T> SavedStateDataSource.inCurrentProfileSession(
                     null
                 }.onAwait { it }
                 async {
-                    block(currentProfileId)
+                    block(context, currentProfileId)
                 }.onAwait { it }
             }.also { coroutineContext.cancelChildren() }
         }
@@ -515,7 +515,7 @@ internal inline fun <T> SavedStateDataSource.singleAuthorizedSessionFlow(
 
         block(profileId)
             .flowOn(
-                SessionContext.Current(
+                contextWithExistingDispatcher() + SessionContext.Current(
                     tokens = profileData.auth,
                     profileData = profileData,
                 ),
@@ -532,7 +532,7 @@ internal inline fun <T> SavedStateDataSource.singleSessionFlow(
         val profileData = profileId?.let { savedState.value.profileData(it) }
         block(profileId)
             .flowOn(
-                SessionContext.Current(
+                contextWithExistingDispatcher() + SessionContext.Current(
                     tokens = profileData?.auth,
                     profileData = profileData ?: SavedState.ProfileData.defaultGuestData,
                 ),
@@ -545,23 +545,39 @@ internal inline fun <T> SavedStateDataSource.singleSessionFlow(
  */
 internal suspend inline fun <T> SavedStateDataSource.inPastSession(
     profileId: ProfileId,
-    crossinline block: suspend (SavedState.AuthTokens.Authenticated) -> T,
+    crossinline block: suspend SessionContext.Previous.() -> T,
 ): T? {
     val state = savedState.first { it != InitialSavedState }
 
     val profileData = state.profileData(profileId) ?: return null
     val auth = profileData.auth as? SavedState.AuthTokens.Authenticated ?: return null
-
-    return withContext(
-        SessionContext.Previous(
-            tokens = auth,
-            profileData = profileData,
-        ),
-    ) {
-        block(auth)
+    val context = SessionContext.Previous(
+        tokens = auth,
+        profileData = profileData,
+    )
+    return withContext(context) {
+        block(context)
     }
 }
 
-internal fun expiredSessionOutcome() = Outcome.Failure(ExpiredSessionException())
+internal suspend inline fun <T> SavedStateDataSource.inProfileSession(
+    profileId: ProfileId,
+    crossinline block: suspend SessionContext.(ProfileId) -> T,
+): T? {
+    val state = savedState.first { it != InitialSavedState }
+    val currentProfileId = state.signedInProfileId
+
+    return if (currentProfileId == profileId) inCurrentProfileSession { signedInProfileId ->
+        if (signedInProfileId == null) null else block(profileId)
+    }
+    else inPastSession(profileId) {
+        block(profileId)
+    }
+}
+
+internal fun expiredSessionOutcome() = ExpiredSessionException().asFailureOutcome()
 
 internal fun <T> expiredSessionResult() = Result.failure<T>(ExpiredSessionException())
+
+private suspend fun contextWithExistingDispatcher() =
+    currentCoroutineContext()[CoroutineDispatcher] ?: EmptyCoroutineContext

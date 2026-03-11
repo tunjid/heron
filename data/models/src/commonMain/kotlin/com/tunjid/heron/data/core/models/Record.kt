@@ -43,7 +43,7 @@ sealed interface Record {
 
     @Serializable
     data class Reference(
-        val id: Id,
+        val id: Id?,
         val uri: RecordUri,
     )
 }

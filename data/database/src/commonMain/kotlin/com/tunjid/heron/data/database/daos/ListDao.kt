@@ -23,6 +23,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.Upsert
+import com.tunjid.heron.data.core.types.ListMemberUri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.database.entities.ListEntity
 import com.tunjid.heron.data.database.entities.ListMemberEntity
@@ -133,5 +134,15 @@ interface ListDao {
     )
     suspend fun deleteList(
         uri: ListUri,
+    )
+
+    @Query(
+        """
+            DELETE FROM listMembers
+            WHERE uri = :uri
+        """,
+    )
+    suspend fun deleteListMember(
+        uri: ListMemberUri,
     )
 }

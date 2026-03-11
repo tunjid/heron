@@ -220,6 +220,7 @@ internal fun SearchScreen(
                     .fillMaxSize()
                     .padding(top = 16.dp),
                 paneScaffoldState = paneScaffoldState,
+                showTrendingTopics = state.preferences.local.showTrendingTopics,
                 trends = state.trends,
                 suggestedProfiles = state.categoriesToSuggestedProfiles[state.suggestedProfileCategory]
                     ?: emptyList(),
@@ -253,6 +254,9 @@ internal fun SearchScreen(
                 paneScaffoldState = paneScaffoldState,
                 onRequestRecentLists = {
                     actions(Action.UpdateRecentLists)
+                },
+                onRequestRecentConversations = {
+                    actions(Action.UpdateRecentConversations)
                 },
                 onProfileClicked = onProfileClicked,
                 onViewerStateClicked = onViewerStateClicked,

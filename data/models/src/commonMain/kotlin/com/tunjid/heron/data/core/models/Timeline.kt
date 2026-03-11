@@ -323,6 +323,14 @@ sealed interface Timeline {
                 val feedPreference: FeedPreference,
             ) : OfFeedPreference()
         }
+
+        @Serializable
+        sealed class OfThreadViewPreference : Update {
+            @Serializable
+            data class ThreadView(
+                val threadViewPreference: ThreadViewPreference,
+            ) : OfThreadViewPreference()
+        }
     }
 
     @Serializable

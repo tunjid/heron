@@ -351,6 +351,8 @@ private fun Writable.writeTimeout() =
         is Writable.Send,
         is Writable.TimelineUpdate,
         is Writable.RecordDeletion,
+        is Writable.FeedList,
+        is Writable.StatusUpdate,
         -> BasicWriteTimeout
     }
 

@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -48,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.signin.DomainRegex
 import com.tunjid.heron.ui.ItemSelection
+import com.tunjid.heron.ui.Status
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
@@ -64,6 +66,7 @@ import heron.feature.auth.generated.resources.bluesky_server
 import heron.feature.auth.generated.resources.cancel
 import heron.feature.auth.generated.resources.custom_server
 import heron.feature.auth.generated.resources.empty_form
+import heron.feature.auth.generated.resources.eurosky_server
 import heron.feature.auth.generated.resources.invalid_domain
 import heron.feature.auth.generated.resources.submit
 import org.jetbrains.compose.resources.stringResource
@@ -71,19 +74,31 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun ServerSelection(
     modifier: Modifier = Modifier,
+    status: Status,
     selectedServer: Server,
     availableServers: List<Server>,
     onServerSelected: (Server) -> Unit,
 ) {
-    ItemSelection(
+    Column(
         modifier = modifier,
-        selectedItem = selectedServer,
-        availableItems = availableServers,
-        key = Server::key,
-        icon = Server::logo,
-        stringResource = Server::stringResource,
-        onItemSelected = onServerSelected,
-    )
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(36.dp),
+    ) {
+        ItemSelection(
+            status = status,
+            selectedItem = selectedServer,
+            availableItems = availableServers,
+            key = Server::key,
+            icon = Server::logo,
+            iconSize = 30.dp,
+            stringResource = Server::stringResource,
+            onItemSelected = onServerSelected,
+        )
+        NoAccountButton(
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally),
+        )
+    }
 }
 
 @Stable
@@ -133,6 +148,7 @@ private fun ServerSelectionBottomSheet(
             null -> Unit
             Server.BlueSky.endpoint,
             Server.BlackSky.endpoint,
+            Server.EuroSky.endpoint,
             -> {
                 onServerConfirmed(server)
                 state.currentServer = null
@@ -254,6 +270,7 @@ private val Server.logo
     get() = when (endpoint) {
         Server.BlueSky.endpoint -> Bluesky
         Server.BlackSky.endpoint -> Blacksky
+        Server.EuroSky.endpoint -> Eurosky
         else -> Icons.Rounded.Public
     }
 
@@ -261,5 +278,6 @@ internal val Server.stringResource
     get() = when (endpoint) {
         Server.BlueSky.endpoint -> Res.string.bluesky_server
         Server.BlackSky.endpoint -> Res.string.blacksky_server
+        Server.EuroSky.endpoint -> Res.string.eurosky_server
         else -> Res.string.custom_server
     }

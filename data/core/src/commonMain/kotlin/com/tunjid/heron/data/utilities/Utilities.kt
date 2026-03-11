@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onStart
@@ -133,6 +134,9 @@ internal value class LazyList<T>(
     val list: List<T>
         get() = if (lazyList.isInitialized()) lazyList.value else emptyList()
 
+    val isNotEmpty: Boolean
+        get() = lazyList.isInitialized() && lazyList.value.isNotEmpty()
+
     fun add(element: T): Boolean =
         lazyList.value.add(element)
 }
@@ -182,15 +186,20 @@ internal inline fun <T, R> Collection<T>.toDistinctUntilChangedFlowOrEmpty(
         .onStart { emit(emptyList()) }
         .distinctUntilChanged()
 
-internal inline fun <T, R> Flow<T>.mapDistinctUntilChanged(
+internal inline fun <T, R> Flow<T>.distinctUntilChangedMap(
     crossinline transform: suspend (value: T) -> R,
-) = map(transform)
-    .distinctUntilChanged()
+) = distinctUntilChanged()
+    .map(transform)
 
-internal inline fun <T, R> Flow<T>.mapNotNullDistinctUntilChanged(
+internal inline fun <T, R> Flow<T>.distinctUntilChangedMapNotNull(
     crossinline transform: suspend (value: T) -> R?,
-) = mapNotNull(transform)
-    .distinctUntilChanged()
+) = distinctUntilChanged()
+    .mapNotNull(transform)
+
+internal inline fun <T, R> Flow<T>.distinctUntilChangedFlatMapLatest(
+    crossinline transform: suspend (value: T) -> Flow<R>,
+) = distinctUntilChanged()
+    .flatMapLatest(transform)
 
 internal inline fun <T, R, K> List<T>.sortedWithNetworkList(
     networkList: List<R>,

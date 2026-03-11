@@ -20,6 +20,7 @@ import com.mikepenz.aboutlibraries.Libs
 import com.tunjid.heron.data.core.models.FeedPreference
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.SessionSummary
+import com.tunjid.heron.data.core.models.ThreadViewPreference
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
@@ -60,9 +61,20 @@ sealed class Section {
         }
     }
 
+    data class ThreadPreferences(
+        val threadViewPreference: ThreadViewPreference?,
+    ) : Section() {
+        // Using the Companion as the key is deliberate.
+        companion object : Key {
+            override val isRoot: Boolean
+                get() = false
+        }
+    }
+
     val key: PaneScaffoldState.NestedNavigationKey
         get() = when (this) {
             is FeedPreferences -> FeedPreferences
+            is ThreadPreferences -> ThreadPreferences
             Main -> Main
         }
 }
@@ -104,6 +116,10 @@ sealed class Action(val key: String) {
         val showPostEngagementMetrics: Boolean,
     ) : Action(key = "SetShowPostEngagementMetrics")
 
+    data class SetShowTrendingTopics(
+        val showTrendingTopics: Boolean,
+    ) : Action(key = "SetShowTrendingTopics")
+
     data class SnackbarDismissed(
         val message: Memo,
     ) : Action(key = "SnackbarDismissed")
@@ -115,6 +131,10 @@ sealed class Action(val key: String) {
     data class UpdateFeedPreference(
         val feedPreference: FeedPreference,
     ) : Action(key = "UpdateFeedPreference")
+
+    data class UpdateThreadViewPreference(
+        val threadViewPreference: ThreadViewPreference,
+    ) : Action(key = "UpdateThreadViewPreference")
 
     data object SignOut : Action(key = "SignOut")
 

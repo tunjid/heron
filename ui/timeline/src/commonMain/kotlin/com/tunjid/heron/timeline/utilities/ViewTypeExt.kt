@@ -16,9 +16,6 @@
 
 package com.tunjid.heron.timeline.utilities
 
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -33,13 +30,25 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.ui.modifiers.blockClickEvents
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
+
+val TimelineItem.contentType: String
+    get() = when (this) {
+        is TimelineItem.Pinned,
+        is TimelineItem.Repost,
+        is TimelineItem.Single,
+        -> "post"
+
+        is TimelineItem.Thread -> "thread"
+        is TimelineItem.Loading -> "loading"
+        is TimelineItem.Empty -> "empty"
+        is TimelineItem.ReplyTree -> "tree"
+    }
 
 internal fun Modifier.sensitiveContentBlur(
     shape: Shape,

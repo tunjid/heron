@@ -23,20 +23,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,7 +42,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.tunjid.composables.lazy.rememberLazyScrollableState
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.LinkTarget
@@ -89,9 +85,9 @@ import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememb
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
+import com.tunjid.heron.timeline.utilities.contentType
 import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
 import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
-import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.UiTokens
@@ -145,21 +141,11 @@ private fun FeedTimeline(
     autoPlayTimelineVideos: Boolean,
     showEngagementMetrics: Boolean,
 ) {
-    var pendingScrollOffset by rememberSaveable { mutableIntStateOf(0) }
-    val gridState = rememberLazyScrollableState(
-        init = ::LazyStaggeredGridState,
-        firstVisibleItemIndex = LazyStaggeredGridState::firstVisibleItemIndex,
-        firstVisibleItemScrollOffset = LazyStaggeredGridState::firstVisibleItemScrollOffset,
-        restore = { firstVisibleItemIndex, firstVisibleItemScrollOffset ->
-            LazyStaggeredGridState(
-                initialFirstVisibleItemIndex = firstVisibleItemIndex,
-                initialFirstVisibleItemOffset = firstVisibleItemScrollOffset + pendingScrollOffset,
-            )
-        },
-    )
+    val gridState = rememberLazyStaggeredGridState()
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
     val items by rememberUpdatedState(timelineState.tiledItems)
 
+    val now = remember { Clock.System.now() }
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
     val presentation = timelineState.timeline.presentation
@@ -223,6 +209,7 @@ private fun FeedTimeline(
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
+        onShown = { actions(Action.UpdateRecentConversations) },
         onOptionClicked = { option ->
             when (option) {
                 is PostOption.ShareInConversation ->
@@ -316,6 +303,7 @@ private fun FeedTimeline(
                 items(
                     items = items,
                     key = TimelineItem::id,
+                    contentType = TimelineItem::contentType,
                     itemContent = { item ->
                         TimelineItem(
                             modifier = Modifier
@@ -326,7 +314,7 @@ private fun FeedTimeline(
                                 ),
                             paneMovableElementSharedTransitionScope = paneScaffoldState,
                             presentationLookaheadScope = this@LookaheadScope,
-                            now = remember { Clock.System.now() },
+                            now = now,
                             item = item,
                             sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                             showEngagementMetrics = showEngagementMetrics,
@@ -347,7 +335,6 @@ private fun FeedTimeline(
                                         }
 
                                         is PostAction.OfPost -> {
-                                            pendingScrollOffset = gridState.pendingOffsetFor(item)
                                             actions(
                                                 Action.Navigate.To(
                                                     recordDestination(
@@ -367,7 +354,6 @@ private fun FeedTimeline(
                                         }
 
                                         is PostAction.OfProfile -> {
-                                            pendingScrollOffset = gridState.pendingOffsetFor(item)
                                             actions(
                                                 Action.Navigate.To(
                                                     profileDestination(
@@ -385,7 +371,6 @@ private fun FeedTimeline(
                                         }
 
                                         is PostAction.OfRecord -> {
-                                            pendingScrollOffset = gridState.pendingOffsetFor(item)
                                             actions(
                                                 Action.Navigate.To(
                                                     recordDestination(
@@ -400,7 +385,6 @@ private fun FeedTimeline(
                                         }
 
                                         is PostAction.OfMedia -> {
-                                            pendingScrollOffset = gridState.pendingOffsetFor(item)
                                             actions(
                                                 Action.Navigate.To(
                                                     galleryDestination(
@@ -423,7 +407,6 @@ private fun FeedTimeline(
                                         }
 
                                         is PostAction.OfReply -> {
-                                            pendingScrollOffset = gridState.pendingOffsetFor(item)
                                             actions(
                                                 Action.Navigate.To(
                                                     if (paneScaffoldState.isSignedOut) signInDestination()

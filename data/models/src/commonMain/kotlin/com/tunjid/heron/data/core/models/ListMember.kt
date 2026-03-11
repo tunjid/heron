@@ -18,6 +18,7 @@ package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.ListMemberUri
 import com.tunjid.heron.data.core.types.ListUri
+import com.tunjid.heron.data.core.types.ProfileId
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
@@ -28,4 +29,17 @@ data class ListMember(
     val listUri: ListUri,
     val createdAt: Instant,
     val viewerState: ProfileViewerState?,
-)
+) : Record {
+
+    override val reference: Record.Reference
+        get() = Record.Reference(
+            id = null,
+            uri = uri,
+        )
+
+    @Serializable
+    data class Create(
+        val subjectId: ProfileId,
+        val listUri: ListUri,
+    )
+}

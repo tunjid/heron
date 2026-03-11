@@ -24,6 +24,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -40,6 +41,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,6 +64,7 @@ import com.tunjid.heron.ui.rememberLatchedState
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.collapse_icon
 import heron.ui.core.generated.resources.expand_icon
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -224,6 +227,44 @@ fun SettingsToggleItem(
             checked = latchedCheckedState.value,
             onCheckedChange = null,
         )
+    }
+}
+
+@Composable
+fun <T> SettingsRadioButtons(
+    modifier: Modifier = Modifier,
+    selectedItem: T,
+    items: List<T>,
+    itemStringResource: (T) -> StringResource,
+    onItemClicked: (T) -> Unit,
+) {
+    val latchedCheckedState = rememberLatchedState(selectedItem)
+
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        items.forEach { item ->
+            Row(
+                modifier = Modifier
+                    .settingsItemClip()
+                    .clickable {
+                        latchedCheckedState.latch(item)
+                        onItemClicked(item)
+                    }
+                    .settingsItemPaddingAndMinHeight(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                RadioButton(
+                    selected = item == latchedCheckedState.value,
+                    onClick = null,
+                )
+                Text(
+                    text = stringResource(itemStringResource(item)),
+                )
+            }
+        }
     }
 }
 

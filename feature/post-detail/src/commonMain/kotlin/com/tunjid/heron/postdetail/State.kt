@@ -22,6 +22,7 @@ import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.MutedWordPreference
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
+import com.tunjid.heron.data.core.models.ReplyViewMode
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.appliedLabels
@@ -39,6 +40,10 @@ import kotlinx.serialization.Transient
 data class State(
     val anchorPost: Post?,
     val sharedElementPrefix: String,
+    @Transient
+    val order: TimelineItem.Thread.Order? = null,
+    @Transient
+    val replyViewMode: ReplyViewMode = ReplyViewMode.Linear,
     @Transient
     val source: Timeline.Source? = null,
     @Transient
@@ -90,6 +95,16 @@ fun State(route: Route): State {
 
 sealed class Action(val key: String) {
 
+    sealed class Load : Action(key = "Load") {
+        data object Initial : Load()
+        data class Order(
+            val order: TimelineItem.Thread.Order,
+        ) : Load()
+        data class ViewMode(
+            val mode: ReplyViewMode,
+        ) : Load()
+    }
+
     data class UpdateMutedWord(
         val mutedWordPreference: List<MutedWordPreference>,
     ) : Action(key = "UpdateMutedWord")
@@ -117,6 +132,8 @@ sealed class Action(val key: String) {
     ) : Action(key = "SnackbarDismissed")
 
     data object UpdateRecentLists : Action(key = "UpdateRecentLists")
+
+    data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
 
     sealed class Navigate :
         Action(key = "Navigate"),

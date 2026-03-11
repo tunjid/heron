@@ -35,12 +35,11 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.refreshedStatus
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
-import com.tunjid.heron.timeline.utilities.writeStatusMessage
+import com.tunjid.heron.timeline.utilities.enqueueMutations
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.mapLatestToManyMutations
 import com.tunjid.mutator.coroutines.mapToManyMutations
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
@@ -53,6 +52,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 
 internal typealias NotificationsStateHolder = ActionStateMutator<Action, StateFlow<State>>
@@ -88,9 +88,6 @@ class ActualNotificationsViewModel(
             ),
             loadProfileMutations(
                 authRepository,
-            ),
-            recentConversationMutations(
-                messageRepository = messageRepository,
             ),
             canShowRequestPermissionsButtonMutations(
                 notificationsRepository,
@@ -130,6 +127,9 @@ class ActualNotificationsViewModel(
                     is Action.MuteAccount -> action.flow.muteAccountMutations(
                         writeQueue = writeQueue,
                     )
+                    is Action.UpdateRecentConversations -> action.flow.recentConversationMutations(
+                        messageRepository = messageRepository,
+                    )
                     is Action.DeleteRecord -> action.flow.deleteRecordMutations(
                         writeQueue = writeQueue,
                     )
@@ -145,13 +145,15 @@ private fun loadProfileMutations(
         copy(signedInProfile = it)
     }
 
-fun recentConversationMutations(
+fun Flow<Action.UpdateRecentConversations>.recentConversationMutations(
     messageRepository: MessageRepository,
 ): Flow<Mutation<State>> =
-    messageRepository.recentConversations()
-        .mapToMutation { conversations ->
-            copy(recentConversations = conversations)
-        }
+    flatMapLatest {
+        messageRepository.recentConversations()
+            .mapToMutation { conversations ->
+                copy(recentConversations = conversations)
+            }
+    }
 
 fun loadPreferencesMutations(
     userDataRepository: UserDataRepository,
@@ -190,70 +192,72 @@ fun canShowRequestPermissionsButtonMutations(
 
 private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = mapToManyMutations {
-    val writable = Writable.TimelineUpdate(
-        Timeline.Update.OfMutedWord.ReplaceAll(
-            mutedWordPreferences = it.mutedWordPreference,
-        ),
-    )
-    val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
+    toWritable = {
+        Writable.TimelineUpdate(
+            Timeline.Update.OfMutedWord.ReplaceAll(
+                mutedWordPreferences = it.mutedWordPreference,
+            ),
+        )
+    },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
 }
 
 private fun Flow<Action.BlockAccount>.blockAccountMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
-    val writable = Writable.Restriction(
-        Profile.Restriction.Block.Add(
-            signedInProfileId = action.signedInProfileId,
-            profileId = action.profileId,
-        ),
-    )
-    val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
+    toWritable = { action ->
+        Writable.Restriction(
+            Profile.Restriction.Block.Add(
+                signedInProfileId = action.signedInProfileId,
+                profileId = action.profileId,
+            ),
+        )
+    },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
 }
 
 private fun Flow<Action.MuteAccount>.muteAccountMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
-    val writable = Writable.Restriction(
-        Profile.Restriction.Mute.Add(
-            signedInProfileId = action.signedInProfileId,
-            profileId = action.profileId,
-        ),
-    )
-    val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
+    toWritable = { action ->
+        Writable.Restriction(
+            Profile.Restriction.Mute.Add(
+                signedInProfileId = action.signedInProfileId,
+                profileId = action.profileId,
+            ),
+        )
+    },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
 }
 
 private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = mapToManyMutations { action ->
-    val writable = Writable.RecordDeletion(
-        recordUri = action.recordUri,
-    )
-    val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
+    toWritable = { action ->
+        Writable.RecordDeletion(
+            recordUri = action.recordUri,
+        )
+    },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
 }
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        val writable = Writable.Interaction(action.interaction)
-        val status = writeQueue.enqueue(writable)
-        writable.writeStatusMessage(status)?.let {
-            emit { copy(messages = messages + it) }
-        }
-    }
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
+    toWritable = { action -> Writable.Interaction(action.interaction) },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
+}
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->

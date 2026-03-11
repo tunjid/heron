@@ -71,6 +71,7 @@ import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememb
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
+import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.tiler.compose.PivotedTilingEffect
@@ -94,6 +95,7 @@ internal fun PostSearchResults(
     videoStates: ThreadedVideoPositionStates<SearchResult.OfPost>,
     paneScaffoldState: PaneScaffoldState,
     onRequestRecentLists: () -> Unit,
+    onRequestRecentConversations: () -> Unit,
     onLinkTargetClicked: (LinkTarget) -> Unit,
     onPostSearchResultProfileClicked: (profile: Profile, post: Post, sharedElementPrefix: String) -> Unit,
     onPostSearchResultClicked: (post: Post, sharedElementPrefix: String) -> Unit,
@@ -156,6 +158,7 @@ internal fun PostSearchResults(
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
+        onShown = onRequestRecentConversations,
         onOptionClicked = { option ->
             when (option) {
                 is PostOption.ShareInConversation ->
@@ -237,7 +240,7 @@ internal fun PostSearchResults(
         columns = StaggeredGridCells.Adaptive(
             Timeline.Presentation.Text.WithEmbed.cardSize,
         ),
-        verticalItemSpacing = 16.dp,
+        verticalItemSpacing = Timeline.Presentation.Text.WithEmbed.lazyGridVerticalItemSpacing,
         contentPadding = bottomNavAndInsetPaddingValues(
             top = UiTokens.statusBarHeight + UiTokens.toolbarHeight + UiTokens.tabsHeight,
             isCompact = paneScaffoldState.prefersCompactBottomNav,

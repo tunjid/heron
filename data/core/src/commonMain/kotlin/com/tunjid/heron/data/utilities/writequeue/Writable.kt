@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.data.utilities.writequeue
 
+import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.data.core.models.Post
@@ -113,6 +114,21 @@ sealed interface Writable {
     }
 
     @Serializable
+    sealed interface FeedList {
+        @Serializable
+        data class AddMember(
+            val create: ListMember.Create,
+        ) : FeedList,
+            Writable {
+            override val queueId: String
+                get() = "add-list-member-$this"
+
+            override suspend fun WriteQueue.write(): Outcome =
+                recordRepository.addListMember(create)
+        }
+    }
+
+    @Serializable
     data class Restriction(
         val restriction: Profile.Restriction,
     ) : Writable {
@@ -127,6 +143,18 @@ sealed interface Writable {
 
         override suspend fun WriteQueue.write(): Outcome =
             profileRepository.updateRestriction(restriction)
+    }
+
+    @Serializable
+    data class StatusUpdate(
+        val update: Profile.StatusUpdate,
+    ) : Writable {
+
+        override val queueId: String
+            get() = "status-update-${update.signedInProfileId}"
+
+        override suspend fun WriteQueue.write(): Outcome =
+            profileRepository.updateProfileStatus(update)
     }
 
     @Serializable
@@ -148,6 +176,7 @@ sealed interface Writable {
                 is Timeline.Update.OfMutedWord -> "muted-words-change-$update"
                 is Timeline.Update.OfInteractionSettings -> "interaction-settings-$update"
                 is Timeline.Update.OfFeedPreference.Add -> "feed-preference-$update"
+                is Timeline.Update.OfThreadViewPreference.ThreadView -> "thread-view-preference-$update"
             }
 
         override suspend fun WriteQueue.write(): Outcome =

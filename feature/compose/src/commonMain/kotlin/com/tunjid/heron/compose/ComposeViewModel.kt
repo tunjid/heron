@@ -279,9 +279,8 @@ private fun Flow<Action.CreatePost>.createPostMutations(
         )
 
         val status = writeQueue.enqueue(postWrite)
-        postWrite.writeStatusMessage(status)?.let {
-            emit { copy(messages = messages + it) }
-        }
+        val memo = postWrite.writeStatusMessage(status)
+        if (memo != null) emit { copy(messages = messages + memo) }
 
         if (status !is WriteQueue.Status.Enqueued) return@mapToManyMutations
 

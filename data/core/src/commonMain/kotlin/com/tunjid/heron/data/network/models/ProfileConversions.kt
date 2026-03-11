@@ -22,8 +22,11 @@ import app.bsky.actor.ProfileAssociatedChatAllowIncoming
 import app.bsky.actor.ProfileView
 import app.bsky.actor.ProfileViewBasic
 import app.bsky.actor.ProfileViewDetailed
+import app.bsky.actor.StatusView
+import app.bsky.actor.StatusViewEmbedUnion
 import app.bsky.actor.ViewerState
 import app.bsky.feed.BlockedAuthor
+import com.atproto.label.Label
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.types.BlockUri
@@ -57,6 +60,7 @@ internal fun ProfileView.profileEntity(): ProfileEntity =
             labeler = associated?.labeler,
             allowDms = associated?.chat?.allowIncoming?.value,
         ),
+        status = status?.statusEntity(),
     )
 
 internal fun ProfileViewBasic.profileEntity(): ProfileEntity =
@@ -80,6 +84,7 @@ internal fun ProfileViewBasic.profileEntity(): ProfileEntity =
             labeler = associated?.labeler,
             allowDms = associated?.chat?.allowIncoming?.value,
         ),
+        status = status?.statusEntity(),
     )
 
 internal fun ProfileViewDetailed.profileEntity(): ProfileEntity =
@@ -103,6 +108,7 @@ internal fun ProfileViewDetailed.profileEntity(): ProfileEntity =
             labeler = associated?.labeler,
             allowDms = associated?.chat?.allowIncoming?.value,
         ),
+        status = status?.statusEntity(),
     )
 
 internal fun BlockedAuthor.profileEntity(): ProfileEntity =
@@ -124,6 +130,7 @@ internal fun BlockedAuthor.profileEntity(): ProfileEntity =
             createdFeedGeneratorCount = 0,
             createdStarterPackCount = 0,
         ),
+        status = null,
     )
 
 internal fun ProfileViewBasic.profileViewerStateEntity(
@@ -183,8 +190,9 @@ internal fun ProfileViewBasic.profile() = Profile(
             allowed = associated.allowedChat(),
         ),
     ),
-    labels = labels?.map(com.atproto.label.Label::asExternalModel) ?: emptyList(),
+    labels = labels?.map(Label::asExternalModel) ?: emptyList(),
     isLabeler = associated?.labeler ?: false,
+    status = status.asExternalModel(),
 )
 
 internal fun ProfileView.profile() = Profile(
@@ -208,9 +216,30 @@ internal fun ProfileView.profile() = Profile(
             allowed = associated.allowedChat(),
         ),
     ),
-    labels = labels?.map(com.atproto.label.Label::asExternalModel) ?: emptyList(),
+    labels = labels?.map(Label::asExternalModel) ?: emptyList(),
     isLabeler = associated?.labeler ?: false,
+    status = status.asExternalModel(),
 )
+
+private fun StatusView?.asExternalModel(): Profile.ProfileStatus? {
+    if (this == null) return null
+
+    val external = (embed as? StatusViewEmbedUnion.View)
+        ?.value
+        ?.external
+
+    return Profile.ProfileStatus(
+        uri = uri?.atUri,
+        status = status,
+        embedUri = external?.uri?.uri ?: "",
+        embedTitle = external?.title ?: "",
+        embedDescription = external?.description ?: "",
+        embedThumb = external?.thumb?.uri?.let(::ImageUri),
+        expiresAt = expiresAt,
+        isActive = isActive,
+        isDisabled = isDisabled,
+    )
+}
 
 private fun ProfileAssociated?.allowedChat(): Profile.ChatInfo.Allowed =
     when (this?.chat?.allowIncoming) {
@@ -250,4 +279,19 @@ private fun KnownFollowers?.profileViewers(
             viewingProfileId = viewingProfileId,
         )
     }
+}
+
+internal fun StatusView.statusEntity(): ProfileEntity.Status {
+    val embed = (embed as? StatusViewEmbedUnion.View)?.value?.external
+    return ProfileEntity.Status(
+        uri = uri?.atUri,
+        value = status,
+        uriLink = embed?.uri?.uri,
+        title = embed?.title,
+        description = embed?.description,
+        thumbnail = embed?.thumb?.uri?.let(::ImageUri),
+        expiresAt = expiresAt,
+        active = isActive,
+        disabled = isDisabled,
+    )
 }

@@ -20,7 +20,9 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.models.SessionRequest
+import com.tunjid.heron.data.core.models.normalized
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
@@ -52,7 +54,10 @@ import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.shareIn
 
 internal typealias SignInStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -94,7 +99,10 @@ class ActualSignInViewModel(
                 keySelector = Action::key,
             ) {
                 when (val action = type()) {
-                    is Action.FieldChanged -> action.flow.formEditMutations()
+                    is Action.FieldChanged -> action.flow.formEditMutations(
+                        scope = scope,
+                        authRepository = authRepository,
+                    )
                     is Action.TogglePasswordPreference -> action.flow.passwordPreferenceMutations()
                     is Action.MessageConsumed -> action.flow.messageConsumptionMutations()
                     is Action.CreateSession -> action.flow.submissionMutations(
@@ -166,14 +174,44 @@ private fun authDeeplinkMutations(
     )
 }
 
-private fun Flow<Action.FieldChanged>.formEditMutations(): Flow<Mutation<State>> =
-    mapToMutation { (id, text) ->
-        copy(fields = fields.copyWithValidation(id, text))
-    }
+private fun Flow<Action.FieldChanged>.formEditMutations(
+    scope: CoroutineScope,
+    authRepository: AuthRepository,
+): Flow<Mutation<State>> {
+    val shared = shareIn(
+        scope = scope,
+        started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
+        replay = 1,
+    )
+    return merge(
+        shared.mapToMutation { (id, text) ->
+            copy(fields = fields.copyWithValidation(id, text))
+        },
+        shared.filter { it.id == Username && DomainRegex.matches(it.text) }
+            .debounce(HandleResolutionDebounceMs)
+            .mapLatestToManyMutations { (_, text) ->
+                val server = authRepository.resolveServer(ProfileHandle(text))
+                    .getOrNull()
+                    ?.normalized()
+
+                emit {
+                    copy(
+                        isServerResolvedFromHandle = server != null,
+                        selectedServer = server ?: selectedServer,
+                        availableServers = when (server) {
+                            null -> StartingServers
+                            else -> listOf(server)
+                        },
+                    )
+                }
+            },
+    )
+}
 
 private fun Flow<Action.SetServer>.setServerMutations(): Flow<Mutation<State>> =
     mapToMutation { (server) ->
         copy(
+            isServerResolvedFromHandle = false,
             selectedServer = server,
             availableServers = when (server) {
                 // Do not accidentally duplicate a custom server with an
@@ -295,4 +333,5 @@ private suspend fun FlowCollector<Mutation<State>>.createSessionMutations(
     emit { copy(isSubmitting = false) }
 }
 
+private const val HandleResolutionDebounceMs = 500L
 private const val PLACEHOLDER_OAUTH_HOST = "https://placeholder.com"

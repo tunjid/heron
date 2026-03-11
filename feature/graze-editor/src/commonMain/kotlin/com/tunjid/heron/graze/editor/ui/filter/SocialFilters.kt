@@ -30,8 +30,8 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.FeedList
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.graze.Filter
-import com.tunjid.heron.graze.editor.ui.SelectTextSheetState.Companion.rememberSelectProfileHandleState
 import com.tunjid.heron.timeline.ui.SelectListSheetState.Companion.rememberSelectListSheetState
+import com.tunjid.heron.timeline.ui.sheets.SelectTextSheetState.Companion.rememberSelectProfileHandleState
 import heron.feature.graze_editor.generated.resources.Res
 import heron.feature.graze_editor.generated.resources.add_profile
 import heron.feature.graze_editor.generated.resources.direction

@@ -289,11 +289,12 @@ private fun BrokenTimeline(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
     Column(
         modifier
             .fillMaxWidth()
             .clickable(
-                interactionSource = NoOpInteractionSource,
+                interactionSource = interactionSource,
                 indication = null,
                 onClick = onClick,
             ),
@@ -393,14 +394,20 @@ fun TimelineCard(
         else presentation.timelineCardPadding
 
     val isEmpty = item is TimelineItem.Empty
-    val isFlat = isEmpty || cornerRadius == 0.dp
+    val isFlat = cornerRadius == 0.dp
 
-    ElevatedCard(
-        modifier = modifier
-            .ifTrue(
-                predicate = isEmpty,
-                block = Modifier::fillMaxHeight,
-            ),
+    val itemModifier = modifier
+        .ifTrue(
+            predicate = isEmpty,
+            block = Modifier::fillMaxHeight,
+        )
+
+    if (isEmpty) Box(
+        modifier = itemModifier,
+        content = { content() },
+    )
+    else ElevatedCard(
+        modifier = itemModifier,
         shape = animateDpAsState(cornerRadius).value.let(::RoundedCornerShape),
         colors =
         if (isFlat) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -478,7 +485,5 @@ private val TimelineItem.isThreadedAnchor
 
 private val TimelineItem.isThreadedAncestorOrAnchor
     get() = isThreadedAncestor || isThreadedAnchor
-
-private val NoOpInteractionSource = MutableInteractionSource()
 
 private const val DefaultMaxPostsInThread = 3

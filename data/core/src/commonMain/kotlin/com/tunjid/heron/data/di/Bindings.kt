@@ -22,6 +22,7 @@ import androidx.room.useWriterConnection
 import com.tunjid.heron.data.database.AppDatabase
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.configureAndBuild
+import com.tunjid.heron.data.database.daos.DatabaseCleanupDao
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
 import com.tunjid.heron.data.database.daos.LabelDao
@@ -30,6 +31,7 @@ import com.tunjid.heron.data.database.daos.MessageDao
 import com.tunjid.heron.data.database.daos.NotificationsDao
 import com.tunjid.heron.data.database.daos.PostDao
 import com.tunjid.heron.data.database.daos.ProfileDao
+import com.tunjid.heron.data.database.daos.StandardSiteDao
 import com.tunjid.heron.data.database.daos.StarterPackDao
 import com.tunjid.heron.data.database.daos.ThreadGateDao
 import com.tunjid.heron.data.database.daos.TimelineDao
@@ -43,7 +45,9 @@ import com.tunjid.heron.data.network.KtorNetworkService
 import com.tunjid.heron.data.network.NetworkConnectionException
 import com.tunjid.heron.data.network.NetworkMonitor
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.network.PdsResolver
 import com.tunjid.heron.data.network.PersistedSessionManager
+import com.tunjid.heron.data.network.PlcDirectoryPdsResolver
 import com.tunjid.heron.data.network.SessionManager
 import com.tunjid.heron.data.network.SuspendingVideoUploadService
 import com.tunjid.heron.data.network.VideoUploadService
@@ -169,12 +173,20 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
+    internal fun providePdsResolver(
+        plcDirectoryPdsResolver: PlcDirectoryPdsResolver,
+    ): PdsResolver = plcDirectoryPdsResolver
+
+    @SingleIn(AppScope::class)
+    @Provides
     internal fun provideSessionManager(
         httpClient: HttpClient,
         savedStateDataSource: SavedStateDataSource,
+        pdsResolver: PdsResolver,
     ): SessionManager = PersistedSessionManager(
         httpClient = httpClient,
         savedStateDataSource = savedStateDataSource,
+        pdsResolver = pdsResolver,
     )
 
     @SingleIn(AppScope::class)
@@ -315,6 +327,18 @@ class DataBindings(
     fun provideThreadGateDao(
         database: AppDatabase,
     ): ThreadGateDao = database.threadGateDao()
+
+    @SingleIn(AppScope::class)
+    @Provides
+    fun provideStandardSiteDao(
+        database: AppDatabase,
+    ): StandardSiteDao = database.standardSiteDao()
+
+    @SingleIn(AppScope::class)
+    @Provides
+    fun provideDatabaseCleanupDao(
+        database: AppDatabase,
+    ): DatabaseCleanupDao = database.databaseCleanupDao()
 
     @SingleIn(AppScope::class)
     @Provides

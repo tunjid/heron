@@ -65,6 +65,7 @@ fun EmbeddedRecord(
     movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     postActions: PostActions,
 ) {
+    val now = remember { Clock.System.now() }
     OutlinedCard(
         modifier = modifier,
     ) {
@@ -77,7 +78,7 @@ fun EmbeddedRecord(
             )
             is Post -> QuotedPost(
                 paneMovableElementSharedTransitionScope = movableElementSharedTransitionScope,
-                now = remember { Clock.System.now() },
+                now = now,
                 quotedPost = record,
                 isBlurred = false,
                 sharedElementPrefix = sharedElementPrefix,
@@ -203,6 +204,13 @@ internal val ListCollectionShape by lazy {
 internal val StarterPackCollectionShape by lazy {
     RoundedPolygonShape.Custom(
         polygon = MaterialShapes.Cookie9Sided,
+    )
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+internal val DocumentCollectionShape by lazy {
+    RoundedPolygonShape.Custom(
+        polygon = MaterialShapes.Square,
     )
 }
 

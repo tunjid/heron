@@ -73,6 +73,8 @@ data class Preferences(
         val autoPlayTimelineVideos: Boolean = true,
         @ProtoNumber(7)
         val showPostEngagementMetrics: Boolean = true,
+        @ProtoNumber(8)
+        val showTrendingTopics: Boolean = true,
     )
 
     companion object {
@@ -178,7 +180,14 @@ data class DeclaredAgePreference(
 @Serializable
 data class ThreadViewPreference(
     val sort: String? = null,
-)
+) {
+    companion object {
+        fun ThreadViewPreference?.order() = this?.let {
+            TimelineItem.Thread.Order.entries
+                .firstOrNull { it.value == sort }
+        } ?: TimelineItem.Thread.Order.Top
+    }
+}
 
 @Serializable
 data class PostInteractionSettingsPreference(

@@ -17,14 +17,16 @@
 package com.tunjid.heron.data.repository
 
 import app.bsky.actor.Profile as BskyProfile
+import app.bsky.actor.Status
+import app.bsky.actor.StatusEmbedUnion
+import app.bsky.embed.External
+import app.bsky.embed.ExternalExternal
 import app.bsky.graph.Block as BskyBlock
 import app.bsky.graph.Follow as BskyFollow
 import app.bsky.graph.GetFollowersQueryParams
 import app.bsky.graph.GetFollowersResponse
 import app.bsky.graph.GetFollowsQueryParams
 import app.bsky.graph.GetFollowsResponse
-import app.bsky.graph.GetListQueryParams
-import app.bsky.graph.GetListResponse
 import app.bsky.graph.GetMutesQueryParams
 import app.bsky.graph.GetMutesResponse
 import app.bsky.graph.MuteActorRequest
@@ -38,55 +40,49 @@ import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.DataQuery
-import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.ProfileWithViewerState
-import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.BlockUri
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.Id
-import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.RecordCreationException
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.utilities.Outcome
-import com.tunjid.heron.data.database.daos.ListDao
 import com.tunjid.heron.data.database.daos.ProfileDao
-import com.tunjid.heron.data.database.entities.PopulatedListMemberEntity
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.database.entities.profile.ProfileViewerStateEntity
 import com.tunjid.heron.data.database.entities.profile.asExternalModel
+import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.files.FileManager
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.asJsonContent
+import com.tunjid.heron.data.utilities.distinctUntilChangedMap
+import com.tunjid.heron.data.utilities.distinctUntilChangedMapNotNull
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
-import com.tunjid.heron.data.utilities.mapNotNullDistinctUntilChanged
-import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
-import com.tunjid.heron.data.utilities.multipleEntitysaver.add
-import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import io.ktor.utils.io.ByteReadChannel
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.serialization.Serializable
-import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
+import sh.christian.ozone.api.Uri as LexiconUri
 
 @Serializable
 data class ProfilesQuery(
@@ -115,11 +111,6 @@ interface ProfileRepository {
         limit: Long,
     ): Flow<List<Profile>>
 
-    fun listMembers(
-        query: ListMemberQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<ListMember>>
-
     fun followers(
         query: ProfilesQuery,
         cursor: Cursor,
@@ -146,12 +137,16 @@ interface ProfileRepository {
     suspend fun updateProfile(
         update: Profile.Update,
     ): Outcome
+
+    suspend fun updateProfileStatus(
+        update: Profile.StatusUpdate,
+    ): Outcome
 }
 
 internal class OfflineProfileRepository @Inject constructor(
+    @param:IODispatcher
+    private val ioDispatcher: CoroutineDispatcher,
     private val profileDao: ProfileDao,
-    private val listDao: ListDao,
-    private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val profileLookup: ProfileLookup,
     private val networkService: NetworkService,
     private val fileManager: FileManager,
@@ -164,8 +159,9 @@ internal class OfflineProfileRepository @Inject constructor(
                 signedInProfiledId = signedInProfileId.id,
                 ids = listOf(signedInProfileId),
             )
-                .mapNotNullDistinctUntilChanged { it.firstOrNull()?.asExternalModel() }
+                .distinctUntilChangedMapNotNull { it.firstOrNull()?.asExternalModel() }
         }
+            .flowOn(ioDispatcher)
 
     override fun profile(
         profileId: Id.Profile,
@@ -175,7 +171,7 @@ internal class OfflineProfileRepository @Inject constructor(
                 signedInProfiledId = signedInProfileId?.id,
                 ids = listOf(profileId),
             )
-                .mapNotNullDistinctUntilChanged { it.firstOrNull()?.asExternalModel() }
+                .distinctUntilChangedMapNotNull { it.firstOrNull()?.asExternalModel() }
                 .withRefresh {
                     profileLookup.refreshProfile(
                         signedInProfileId = signedInProfileId,
@@ -183,6 +179,7 @@ internal class OfflineProfileRepository @Inject constructor(
                     )
                 }
         }
+            .flowOn(ioDispatcher)
 
     override fun profileRelationships(
         profileIds: Set<Id.Profile>,
@@ -192,8 +189,7 @@ internal class OfflineProfileRepository @Inject constructor(
                 profileId = it.id,
                 otherProfileIds = profileIds,
             )
-                .distinctUntilChanged()
-                .map { viewerEntities ->
+                .distinctUntilChangedMap { viewerEntities ->
                     viewerEntities.map(ProfileViewerStateEntity::asExternalModel)
                 }
         }
@@ -212,54 +208,9 @@ internal class OfflineProfileRepository @Inject constructor(
                 otherProfileId = otherProfileResolvedId,
                 limit = limit,
             )
-                .distinctUntilChanged()
-                .map { profileEntities ->
+                .distinctUntilChangedMap { profileEntities ->
                     profileEntities.map(PopulatedProfileEntity::asExternalModel)
                 }
-        }
-
-    override fun listMembers(
-        query: ListMemberQuery,
-        cursor: Cursor,
-    ): Flow<CursorList<ListMember>> =
-        savedStateDataSource.singleAuthorizedSessionFlow { signedInProfileId ->
-            combine(
-                listDao.listMembers(
-                    listUri = query.listUri.uri,
-                    signedInUserId = signedInProfileId.id,
-                    offset = query.data.offset,
-                    limit = query.data.limit,
-                )
-                    .map {
-                        it.map(PopulatedListMemberEntity::asExternalModel)
-                    },
-                networkService.nextCursorFlow(
-                    currentCursor = cursor,
-                    currentRequestWithNextCursor = {
-                        getList(
-                            GetListQueryParams(
-                                list = query.listUri.uri.let(::AtUri),
-                                limit = query.data.limit,
-                                cursor = cursor.value,
-                            ),
-                        )
-                    },
-                    nextCursor = GetListResponse::cursor,
-                    onResponse = {
-                        multipleEntitySaverProvider.saveInTransaction {
-                            add(list)
-                            items.forEach { listItemView ->
-                                add(
-                                    listUri = list.uri.atUri.let(::ListUri),
-                                    listItemView = listItemView,
-                                )
-                            }
-                        }
-                    },
-                ),
-                ::CursorList,
-            )
-                .distinctUntilChanged()
         }
 
     override fun followers(
@@ -516,6 +467,76 @@ internal class OfflineProfileRepository @Inject constructor(
                     )
                 }
                 .toOutcome()
+        }
+    } ?: expiredSessionOutcome()
+
+    override suspend fun updateProfileStatus(
+        update: Profile.StatusUpdate,
+    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+
+        when (update) {
+            is Profile.StatusUpdate.GoLive -> networkService.runCatchingWithMonitoredNetworkRetry {
+                putRecord(
+                    PutRecordRequest(
+                        repo = update.signedInProfileId.id.let(::Did),
+                        collection = Nsid(Collections.ProfileStatus),
+                        rkey = RKey(Collections.SelfRecordKey.rkey),
+                        record = Status(
+                            status = Profile.ProfileStatus.STATUS_LIVE,
+                            durationMinutes = update.durationMinutes.toLong(),
+                            embed = StatusEmbedUnion.AppBskyEmbedExternal(
+                                value = External(
+                                    external = ExternalExternal(
+                                        uri = LexiconUri(update.streamUrl),
+                                        title = "",
+                                        description = "",
+                                    ),
+                                ),
+                            ),
+                            createdAt = Clock.System.now(),
+                        ).asJsonContent(Status.serializer()),
+                    ),
+                )
+            }.toOutcome {
+                val now = Clock.System.now()
+                val expiresAt = now.plus(update.durationMinutes.minutes)
+                profileDao.updateStatus(
+                    did = update.signedInProfileId,
+                    uri = null,
+                    value = Profile.ProfileStatus.STATUS_LIVE,
+                    uriLink = update.streamUrl,
+                    title = "",
+                    description = "",
+                    thumbnail = null,
+                    expiresAt = expiresAt,
+                    active = true,
+                    disabled = false,
+                )
+            }
+
+            is Profile.StatusUpdate.EndLive -> networkService.runCatchingWithMonitoredNetworkRetry {
+                deleteRecord(
+                    DeleteRecordRequest(
+                        repo = update.signedInProfileId.id.let(::Did),
+                        collection = Nsid(Collections.ProfileStatus),
+                        rkey = RKey(Collections.SelfRecordKey.rkey),
+                    ),
+                )
+            }.toOutcome {
+                profileDao.updateStatus(
+                    did = update.signedInProfileId,
+                    uri = null,
+                    value = null,
+                    uriLink = null,
+                    title = null,
+                    description = null,
+                    thumbnail = null,
+                    expiresAt = null,
+                    active = null,
+                    disabled = null,
+                )
+            }
         }
     } ?: expiredSessionOutcome()
 }

@@ -45,6 +45,8 @@ import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideRepl
 import com.tunjid.heron.data.core.models.FeedPreference.Companion.shouldHideReposts
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
+import com.tunjid.heron.data.core.models.ReplyNode
+import com.tunjid.heron.data.core.models.ReplyViewMode
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.id
@@ -76,7 +78,7 @@ import com.tunjid.heron.data.database.entities.preferredPresentationPartial
 import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.lexicons.BlueskyApi
 import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.utilities.mapDistinctUntilChanged
+import com.tunjid.heron.data.utilities.distinctUntilChangedMap
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
@@ -184,6 +186,8 @@ interface TimelineRepository {
 
     fun postThreadedItems(
         postUri: PostUri,
+        order: TimelineItem.Thread.Order,
+        replyViewMode: ReplyViewMode,
     ): Flow<List<TimelineItem>>
 
     suspend fun updatePreferredPresentation(
@@ -517,9 +521,12 @@ internal class OfflineTimelineRepository(
 
     override fun postThreadedItems(
         postUri: PostUri,
+        order: TimelineItem.Thread.Order,
+        replyViewMode: ReplyViewMode,
     ): Flow<List<TimelineItem>> = savedStateDataSource.singleSessionFlow { signedInProfileId ->
         postDao.postThread(
             postUri = postUri.uri,
+            sortOrder = order.sortOrder,
         )
             .distinctUntilChanged()
             .flatMapLatest { postThread ->
@@ -535,7 +542,10 @@ internal class OfflineTimelineRepository(
                     associatedProfileIds = {
                         emptyList()
                     },
-                    block = ::spinThread,
+                    block = when (replyViewMode) {
+                        ReplyViewMode.Linear -> ::spinThread
+                        ReplyViewMode.Threaded -> ::spinReplyTree
+                    },
                 )
             }
             .withRefresh {
@@ -737,6 +747,7 @@ internal class OfflineTimelineRepository(
                 }
             }
     }
+        .flowOn(ioDispatcher)
 
     override suspend fun updatePreferredPresentation(
         timeline: Timeline,
@@ -893,6 +904,7 @@ internal class OfflineTimelineRepository(
                     }
                 }
         }
+        .flowOn(ioDispatcher)
 
     private fun observeAndRefreshTimeline(
         query: TimelineQuery,
@@ -1227,6 +1239,96 @@ internal class OfflineTimelineRepository(
             else -> Unit
         }
     }
+
+    private fun spinReplyTree(
+        context: RecordResolver.TimelineItemCreationContext,
+        thread: ThreadedPostEntity,
+    ) = with(context) {
+        val lastItem = list.lastOrNull()
+        when {
+            // Anchor post — start a ReplyTree with an empty reply list.
+            // Descendants (generation > 0) will be inserted as they arrive.
+            thread.generation == 0L -> list += TimelineItem.ReplyTree(
+                id = thread.entity.uri.uri,
+                post = post,
+                isMuted = isMuted(post),
+                threadGate = threadGate(post.uri),
+                appliedLabels = appliedLabels,
+                signedInProfileId = signedInProfileId,
+                replies = emptyList(),
+            )
+
+            // Ancestor posts — most distant arrives first per SQL ordering.
+            // First ancestor starts a Thread; subsequent ancestors append to it.
+            thread.generation < 0L -> when (lastItem) {
+                is TimelineItem.Thread -> list[list.lastIndex] = lastItem.copy(
+                    posts = lastItem.posts + post,
+                    isMuted = lastItem.isMuted || isMuted(post),
+                    postUrisToThreadGates = lastItem.postUrisToThreadGates + (
+                        post.uri to threadGate(post.uri)
+                        ),
+                )
+                else -> list += TimelineItem.Thread(
+                    id = thread.entity.uri.uri,
+                    generation = thread.generation,
+                    isMuted = isMuted(post),
+                    anchorPostIndex = 0,
+                    hasBreak = false,
+                    posts = listOf(post),
+                    appliedLabels = appliedLabels,
+                    signedInProfileId = signedInProfileId,
+                    postUrisToThreadGates = mapOf(post.uri to threadGate(post.uri)),
+                )
+            }
+
+            // Descendant posts, insert into the ReplyTree using parentPostUri.
+            thread.generation > 0L -> {
+                // ReplyTree must exist from the anchor post — skip if data is malformed.
+                val replyTree = list.lastOrNull() as? TimelineItem.ReplyTree ?: return@with
+                // parentPostUri must be present on every descendant — skip if malformed.
+                val parentUri = thread.parentPostUri ?: return@with
+
+                val newNode = ReplyNode(
+                    post = post,
+                    threadGate = threadGate(post.uri),
+                    appliedLabels = appliedLabels,
+                    depth = thread.generation.toInt(),
+                    children = emptyList(),
+                )
+
+                list[list.lastIndex] = replyTree.copy(
+                    isMuted = replyTree.isMuted || isMuted(post),
+                    replies = when (parentUri) {
+                        replyTree.post.uri -> replyTree.replies + newNode
+                        else -> replyTree.replies.withInsertedNode(
+                            node = newNode,
+                            parentPostUri = parentUri,
+                        )
+                    },
+                )
+            }
+        }
+    }
+
+    // Recursively finds the node matching parentPostUri and appends newNode as its child.
+    private fun List<ReplyNode>.withInsertedNode(
+        node: ReplyNode,
+        parentPostUri: PostUri,
+    ): List<ReplyNode> = map { existingNode ->
+        when {
+            existingNode.post.uri == parentPostUri ->
+                existingNode.copy(children = existingNode.children + node)
+            existingNode.children.isEmpty() ->
+                existingNode
+            else ->
+                existingNode.copy(
+                    children = existingNode.children.withInsertedNode(
+                        node = node,
+                        parentPostUri = parentPostUri,
+                    ),
+                )
+        }
+    }
 }
 
 private fun SavedStateDataSource.timelineFeedPreference(
@@ -1234,7 +1336,7 @@ private fun SavedStateDataSource.timelineFeedPreference(
 ): Flow<FeedPreference> =
     // Only the following timeline currently has this setting
     if (source is Timeline.Source.Following) savedState
-        .mapDistinctUntilChanged {
+        .distinctUntilChangedMap {
             it.signedProfilePreferencesOrDefault().feedPreferences.homeFeedOrDefault()
         }
     else flowOf(FeedPreference(source.id))

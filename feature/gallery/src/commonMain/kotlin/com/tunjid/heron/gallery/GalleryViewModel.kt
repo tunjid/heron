@@ -17,9 +17,13 @@
 package com.tunjid.heron.gallery
 
 import androidx.lifecycle.ViewModel
+import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.ReplyViewMode
+import com.tunjid.heron.data.core.models.ThreadViewPreference.Companion.order
 import com.tunjid.heron.data.core.models.Timeline
+import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.types.Id
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.MessageRepository
@@ -41,12 +45,12 @@ import com.tunjid.heron.scaffold.navigation.model
 import com.tunjid.heron.scaffold.navigation.sharedElementPrefix
 import com.tunjid.heron.timeline.state.TimelineStateHolder
 import com.tunjid.heron.timeline.state.timelineStateHolder
-import com.tunjid.heron.timeline.utilities.writeStatusMessage
+import com.tunjid.heron.timeline.utilities.enqueueMutations
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
 import com.tunjid.mutator.coroutines.mapLatestToManyMutations
-import com.tunjid.mutator.coroutines.mapToManyMutations
+import com.tunjid.mutator.coroutines.mapLatestToMutation
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.mutator.coroutines.toMutationStream
 import com.tunjid.tiler.map
@@ -54,15 +58,18 @@ import com.tunjid.treenav.strings.Route
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -99,9 +106,6 @@ class ActualGalleryViewModel(
             loadSignedInProfileIdMutations(
                 authRepository = authRepository,
             ),
-            recentConversationMutations(
-                messageRepository = messageRepository,
-            ),
             loadPreferencesMutations(
                 userDataRepository = userDataRepository,
             ),
@@ -132,8 +136,20 @@ class ActualGalleryViewModel(
                         is Action.MuteAccount -> action.flow.muteAccountMutations(
                             writeQueue = writeQueue,
                         )
+                        is Action.UpdateRecentConversations -> action.flow.recentConversationMutations(
+                            messageRepository = messageRepository,
+                        )
                         is Action.DeleteRecord -> action.flow.deleteRecordMutations(
                             writeQueue = writeQueue,
+                        )
+                        is Action.TextChanged -> action.flow.inputTextChangeMutations()
+                        is Action.SendReply -> action.flow.sendReplyMutations(
+                            writeQueue = writeQueue,
+                        )
+                        is Action.LoadComments -> action.flow.loadCommentsMutations(
+                            state = state,
+                            timelineRepository = timelineRepository,
+                            userDataRepository = userDataRepository,
                         )
                     }
                 },
@@ -200,13 +216,15 @@ private fun loadPreferencesMutations(
             copy(preferences = it)
         }
 
-fun recentConversationMutations(
+fun Flow<Action.UpdateRecentConversations>.recentConversationMutations(
     messageRepository: MessageRepository,
 ): Flow<Mutation<State>> =
-    messageRepository.recentConversations()
-        .mapToMutation { conversations ->
-            copy(recentConversations = conversations)
-        }
+    flatMapLatest {
+        messageRepository.recentConversations()
+            .mapToMutation { conversations ->
+                copy(recentConversations = conversations)
+            }
+    }
 
 private fun loadSignedInProfileIdMutations(
     authRepository: AuthRepository,
@@ -238,76 +256,75 @@ private fun profileRelationshipMutations(
 
 private fun Flow<Action.SendPostInteraction>.postInteractionMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        val writable = Writable.Interaction(action.interaction)
-        val status = writeQueue.enqueue(writable)
-        writable.writeStatusMessage(status)?.let {
-            emit { copy(messages = messages + it) }
-        }
-    }
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
+    toWritable = { Writable.Interaction(it.interaction) },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
+}
 
 private fun Flow<Action.UpdateMutedWord>.updateMutedWordMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = mapToManyMutations {
-    val writable = Writable.TimelineUpdate(
-        Timeline.Update.OfMutedWord.ReplaceAll(
-            mutedWordPreferences = it.mutedWordPreference,
-        ),
-    )
-    val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
+    toWritable = {
+        Writable.TimelineUpdate(
+            Timeline.Update.OfMutedWord.ReplaceAll(
+                mutedWordPreferences = it.mutedWordPreference,
+            ),
+        )
+    },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
 }
 
 private fun Flow<Action.BlockAccount>.blockAccountMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
-    val writable = Writable.Restriction(
-        Profile.Restriction.Block.Add(
-            signedInProfileId = action.signedInProfileId,
-            profileId = action.profileId,
-        ),
-    )
-    val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
+    toWritable = {
+        Writable.Restriction(
+            Profile.Restriction.Block.Add(
+                signedInProfileId = it.signedInProfileId,
+                profileId = it.profileId,
+            ),
+        )
+    },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
 }
 
 private fun Flow<Action.MuteAccount>.muteAccountMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = mapLatestToManyMutations { action ->
-    val writable = Writable.Restriction(
-        Profile.Restriction.Mute.Add(
-            signedInProfileId = action.signedInProfileId,
-            profileId = action.profileId,
-        ),
-    )
-    val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
+    toWritable = {
+        Writable.Restriction(
+            Profile.Restriction.Mute.Add(
+                signedInProfileId = it.signedInProfileId,
+                profileId = it.profileId,
+            ),
+        )
+    },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
 }
 
 private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> = mapToManyMutations { action ->
-    val writable = Writable.RecordDeletion(
-        recordUri = action.recordUri,
-    )
-    val status = writeQueue.enqueue(writable)
-    writable.writeStatusMessage(status)?.let {
-        emit { copy(messages = messages + it) }
-    }
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
+    toWritable = { Writable.RecordDeletion(recordUri = it.recordUri) },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
 }
 
 private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
     writeQueue: WriteQueue,
-): Flow<Mutation<State>> =
-    mapToManyMutations { action ->
-        val writable = Writable.Connection(
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
+    toWritable = { action ->
+        Writable.Connection(
             when (val following = action.following) {
                 null -> Profile.Connection.Follow(
                     signedInProfileId = action.signedInProfileId,
@@ -323,16 +340,99 @@ private fun Flow<Action.ToggleViewerState>.toggleViewerStateMutations(
                 )
             },
         )
-        val status = writeQueue.enqueue(writable)
-        writable.writeStatusMessage(status)?.let {
-            emit { copy(messages = messages + it) }
-        }
+    },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
+}
+
+private fun Flow<Action.TextChanged>.inputTextChangeMutations(): Flow<Mutation<State>> =
+    mapLatestToMutation { action ->
+        copy(inputText = action.inputText)
     }
+
+private fun Flow<Action.SendReply>.sendReplyMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
+    toWritable = { action ->
+        Writable.Create(
+            request = Post.Create.Request(
+                authorId = action.authorId,
+                text = action.text,
+                links = action.links,
+                metadata = Post.Create.Metadata(
+                    reply = Post.Create.Reply(
+                        parent = action.parent,
+                    ),
+                ),
+            ),
+        )
+    },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
+    // Clear the input text after sending the reply.
+    emit { copy(inputText = androidx.compose.ui.text.input.TextFieldValue()) }
+}
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(messages = messages - action.message)
     }
+
+fun Flow<Action.LoadComments>.loadCommentsMutations(
+    state: suspend () -> State,
+    timelineRepository: TimelineRepository,
+    userDataRepository: UserDataRepository,
+): Flow<Mutation<State>> = flatMapLatest { action ->
+    val post = action.post
+    val order = action.order
+        ?: state().order
+        ?: userDataRepository.preferences
+            .first()
+            .threadViewPreferences
+            .order()
+
+    flow {
+        emit {
+            copy(
+                order = order,
+                commentsPost = post,
+                comments = TimelineItem.LoadingItems,
+            )
+        }
+        emitAll(
+            timelineRepository.postThreadedItems(
+                postUri = post.uri,
+                order = order,
+                replyViewMode = ReplyViewMode.Linear, // always flat in gallery
+            )
+                .mapLatestToManyMutations { timelineItems ->
+                    if (timelineItems.isEmpty()) {
+                        // Delay to prevent false positives
+                        delay(3.seconds)
+                        emit {
+                            copy(
+                                comments = TimelineItem.EmptyThreadItems,
+                            )
+                        }
+                    } else {
+                        val fetchingPostIndex = timelineItems.indexOfFirst {
+                            it.post.uri == post.uri
+                        }
+                        emit {
+                            copy(
+                                // Drop the fetching post from comments
+                                comments =
+                                if (fetchingPostIndex < 0) TimelineItem.EmptyThreadItems
+                                else timelineItems.drop(fetchingPostIndex + 1)
+                                    .ifEmpty(TimelineItem::EmptyThreadItems),
+                            )
+                        }
+                    }
+                },
+        )
+    }
+}
 
 private fun verticalTimelineMutations(
     route: Route,
@@ -346,6 +446,9 @@ private fun verticalTimelineMutations(
     // items for vertical scroll will fetch items other than
     // that being viewed and cause a disruptive experience
     state.cursorData ?: return@flow
+
+    // Allow shared element transition to complete before fetching vertical items
+    delay(VerticalItemDelay)
 
     val timelineStateHolder = when (
         val existing = state.timelineStateHolder
@@ -387,7 +490,7 @@ private fun verticalTimelineMutations(
                 val missingInitialItem = initialItem != null &&
                     fetched.none { it.post.uri == initialItem.post.uri }
 
-                // If the the tile containing the initial item
+                // If the tile containing the initial item
                 // is missing, wait for the tiling pipeline to catch up
                 if (missingInitialItem) this
                 else copy(
@@ -454,3 +557,5 @@ private fun CoroutineScope.galleryTimelineStateHolder(
     startNumColumns = 1,
     timelineRepository = timelineRepository,
 )
+
+private val VerticalItemDelay = 1.4.seconds

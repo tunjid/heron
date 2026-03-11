@@ -1,3 +1,5 @@
+import java.net.URI
+
 /*
  *    Copyright 2024 Adetunji Dahunsi
  *

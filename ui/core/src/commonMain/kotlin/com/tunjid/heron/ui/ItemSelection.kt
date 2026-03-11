@@ -27,6 +27,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ElevatedCard
@@ -45,14 +46,37 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.LookaheadScope
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.StringResource
+
+sealed interface Status {
+    sealed interface Enabled : Status {
+        data object AlwaysExpanded : Enabled
+        data object Collapsible : Enabled
+    }
+
+    sealed interface Disabled : Status {
+        data object AlwaysExpanded : Disabled
+        data object Collapsible : Disabled
+    }
+}
+
+@PublishedApi
+internal val Status.alwaysExpanded
+    get() = when (this) {
+        Status.Disabled.AlwaysExpanded -> true
+        Status.Disabled.Collapsible -> false
+        Status.Enabled.AlwaysExpanded -> true
+        Status.Enabled.Collapsible -> false
+    }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 inline fun <T> ItemSelection(
     modifier: Modifier = Modifier,
-    alwaysExpanded: Boolean = false,
+    status: Status = Status.Enabled.Collapsible,
+    iconSize: Dp = 24.dp,
     selectedItem: T,
     availableItems: List<T>,
     crossinline key: T.() -> String,
@@ -60,6 +84,7 @@ inline fun <T> ItemSelection(
     crossinline stringResource: T.() -> StringResource,
     crossinline onItemSelected: (T) -> Unit,
 ) {
+    val alwaysExpanded = status.alwaysExpanded
     var expandedItem by remember {
         mutableStateOf(
             if (alwaysExpanded) selectedItem
@@ -77,7 +102,7 @@ inline fun <T> ItemSelection(
                 horizontalArrangement = Arrangement.aligned(Alignment.End),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (availableItems.size > 1) availableItems.forEach { item ->
+                availableItems.forEach { item ->
                     androidx.compose.runtime.key(item.key()) {
                         val isSelected = selectedItem == item
                         AnimatedVisibility(
@@ -95,7 +120,8 @@ inline fun <T> ItemSelection(
                                     .graphicsLayer {
                                         alpha = progress.value
                                     }
-                                    .size(40.dp),
+                                    .size(iconSize * 5 / 3),
+                                enabled = status is Status.Enabled,
                                 onClick = {
                                     when (expandedItem) {
                                         null -> expandedItem = item
@@ -106,7 +132,7 @@ inline fun <T> ItemSelection(
                                 content = {
                                     Icon(
                                         modifier = Modifier
-                                            .size(24.dp),
+                                            .size(iconSize),
                                         imageVector = item.icon(),
                                         contentDescription = org.jetbrains.compose.resources.stringResource(
                                             item.stringResource(),
@@ -128,11 +154,13 @@ inline fun <T> ItemSelection(
         }
     }
 
-    DisposableEffect(expandedItem, selectedItem, alwaysExpanded) {
+    DisposableEffect(expandedItem, selectedItem, status) {
         if (!alwaysExpanded) {
             if (expandedItem != null && expandedItem != selectedItem) {
                 expandedItem = null
             }
+        } else {
+            expandedItem = selectedItem
         }
         onDispose { }
     }

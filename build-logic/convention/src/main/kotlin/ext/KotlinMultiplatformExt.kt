@@ -25,7 +25,6 @@ fun Project.configureKotlinMultiplatform(
     kotlinMultiplatformExtension.apply {
         androidTarget()
         jvm("desktop")
-        iosX64()
         iosArm64()
         iosSimulatorArm64()
 

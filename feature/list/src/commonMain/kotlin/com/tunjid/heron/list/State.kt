@@ -27,6 +27,7 @@ import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.types.FollowUri
+import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.repository.ListMemberQuery
@@ -63,6 +64,10 @@ data class State(
     val stateHolders: List<ListScreenStateHolders> = emptyList(),
     @Transient
     val recentLists: List<FeedList> = emptyList(),
+    @Transient
+    val isOnProfilesTab: Boolean = false,
+    @Transient
+    val suggestedProfiles: List<Profile> = emptyList(),
     @Transient
     val messages: List<Memo> = emptyList(),
 )
@@ -148,6 +153,7 @@ sealed class ListScreenStateHolders {
 
 data class MemberState(
     val signedInProfileId: ProfileId?,
+    val listUri: ListUri,
     override val tilingData: TilingState.Data<ListMemberQuery, ListMember>,
 ) : TilingState<ListMemberQuery, ListMember>
 
@@ -188,11 +194,26 @@ sealed class Action(val key: String) {
         val followedBy: FollowUri?,
     ) : Action(key = "ToggleViewerState")
 
+    data class AddListMember(
+        val profileId: ProfileId,
+        val listUri: ListUri,
+    ) : Action(key = "AddListMember")
+
+    data class SearchProfiles(
+        val query: String,
+    ) : Action(key = "SearchProfiles")
+
+    data class CurrentPageChanged(
+        val currentPage: Int,
+    ) : Action(key = "CurrentPageChanged")
+
     data class UpdateFeedListStatus(
         val update: Timeline.Update,
     ) : Action(key = "UpdateFeedGeneratorStatus")
 
     data object UpdateRecentLists : Action(key = "UpdateRecentLists")
+
+    data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
 
     sealed class Navigate :
         Action(key = "Navigate"),

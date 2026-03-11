@@ -35,10 +35,10 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -59,13 +59,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -79,6 +77,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
@@ -91,7 +90,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tunjid.composables.collapsingheader.CollapsingHeaderLayout
 import com.tunjid.composables.collapsingheader.CollapsingHeaderState
 import com.tunjid.composables.collapsingheader.rememberCollapsingHeaderState
-import com.tunjid.composables.lazy.rememberLazyScrollableState
 import com.tunjid.composables.ui.lerp
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedList
@@ -105,17 +103,21 @@ import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.id
+import com.tunjid.heron.data.core.models.link
 import com.tunjid.heron.data.core.models.path
 import com.tunjid.heron.data.core.models.stubProfile
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.ProfileUri.Companion.asSelfLabelerUri
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.Uri
+import com.tunjid.heron.data.core.types.takeIfIs
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
+import com.tunjid.heron.profile.ProfileLiveStatusSheetState.Companion.rememberUpdatedProfileLiveStatusSheetState
 import com.tunjid.heron.profile.ui.LabelerSettings
 import com.tunjid.heron.profile.ui.LabelerState
 import com.tunjid.heron.profile.ui.ProfileActionsMenu
@@ -161,16 +163,17 @@ import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
+import com.tunjid.heron.timeline.ui.standard.Document
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.canAutoPlayVideo
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.collectionShape
+import com.tunjid.heron.timeline.utilities.contentType
 import com.tunjid.heron.timeline.utilities.displayName
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
 import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
 import com.tunjid.heron.timeline.utilities.orDefault
-import com.tunjid.heron.timeline.utilities.pendingOffsetFor
 import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.AttributionLayout
@@ -180,6 +183,7 @@ import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blur
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.navigableLinkTargetHandler
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
@@ -195,6 +199,8 @@ import heron.feature.profile.generated.resources.followed_by_profiles
 import heron.feature.profile.generated.resources.follows_you
 import heron.feature.profile.generated.resources.labels
 import heron.feature.profile.generated.resources.posts
+import heron.ui.core.generated.resources.action_edit_live_status
+import heron.ui.core.generated.resources.action_go_live
 import heron.ui.core.generated.resources.followers
 import heron.ui.core.generated.resources.following
 import heron.ui.core.generated.resources.viewer_state_block_account
@@ -248,6 +254,26 @@ internal fun ProfileScreen(
             .isRefreshing
             .collect { value = it }
     }
+
+    val profileUpdateLiveStatusSheetState = rememberUpdatedProfileLiveStatusSheetState(
+        profile = state.profile,
+        onGoLive = { streamUrl, duration ->
+            actions(
+                Action.UpdateLiveStatus.GoLive(
+                    signedInProfileId = state.profile.did,
+                    streamUrl = streamUrl,
+                    duration = duration,
+                ),
+            )
+        },
+        onEndLive = {
+            actions(
+                Action.UpdateLiveStatus.EndLive(
+                    signedInProfileId = state.profile.did,
+                ),
+            )
+        },
+    )
 
     CollapsingHeaderLayout(
         modifier = modifier
@@ -357,6 +383,7 @@ internal fun ProfileScreen(
                     )
                 },
                 onModerationAction = actions,
+                onUpdateProfileLiveStatus = profileUpdateLiveStatusSheetState::show,
             )
         },
         body = {
@@ -472,6 +499,30 @@ internal fun ProfileScreen(
                                 },
                             )
 
+                            is ProfileScreenStateHolders.Records.Documents -> RecordList(
+                                collectionStateHolder = stateHolder,
+                                prefersCompactBottomNav = paneScaffoldState.prefersCompactBottomNav,
+                                itemKey = { it.uri.uri },
+                                itemContent = { document ->
+                                    val uriHandler = LocalUriHandler.current
+                                    Document(
+                                        modifier = Modifier
+                                            .fillParentMaxWidth()
+                                            .clip(RecordShape)
+                                            .animateItem()
+                                            .clickable {
+                                                runCatching {
+                                                    document.link
+                                                        ?.takeIfIs(Uri.Host.Https)
+                                                        ?.let(uriHandler::openUri)
+                                                }
+                                            }
+                                            .recordPadding(),
+                                        document = document,
+                                    )
+                                },
+                            )
+
                             is ProfileScreenStateHolders.Timeline -> ProfileTimeline(
                                 bottomPadding = collapsedHeight,
                                 signedInProfileId = state.signedInProfileId,
@@ -555,6 +606,7 @@ private fun ProfileHeader(
     onEditClick: () -> Unit,
     onToggleLabelerSubscription: (ProfileId, Boolean) -> Unit,
     onModerationAction: (Action.Moderation) -> Unit,
+    onUpdateProfileLiveStatus: () -> Unit,
 ) = with(paneScaffoldState) {
     Box(
         modifier = modifier
@@ -625,6 +677,7 @@ private fun ProfileHeader(
                     onEditClick = onEditClick,
                     onToggleLabelerSubscription = onToggleLabelerSubscription,
                     onModerationAction = onModerationAction,
+                    onUpdateProfileLiveStatus = onUpdateProfileLiveStatus,
                 )
                 ProfileStats(
                     modifier = Modifier.fillMaxWidth(),
@@ -778,6 +831,7 @@ private fun ProfileAvatar(
     onProfileAvatarClicked: () -> Unit,
 ) = with(paneScaffoldState) {
     val statusBarHeight = UiTokens.statusBarHeight
+    val isLive = profile.status?.isLive == true
     Box(
         modifier = modifier
             .padding(top = headerState.avatarTopPadding)
@@ -788,6 +842,7 @@ private fun ProfileAvatar(
                     statusBarHeight = statusBarHeight,
                 )
             },
+        contentAlignment = Alignment.BottomCenter,
     ) {
         val showWave = isRefreshing || pullToRefreshState.distanceFraction >= 1f
         val scale = animateFloatAsState(
@@ -809,20 +864,21 @@ private fun ProfileAvatar(
                 progress = { if (isRefreshing) 1f else pullToRefreshState.distanceFraction },
                 trackColor = MaterialTheme.colorScheme.surface,
                 amplitude = { if (showWave) 1f else 0f },
-                modifier = Modifier
-                    .fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
             )
         }
         paneScaffoldState.UpdatedMovableStickySharedElementOf(
             sharedContentState = with(paneScaffoldState) {
-                rememberSharedContentState(
-                    key = avatarSharedElementKey,
-                )
+                rememberSharedContentState(key = avatarSharedElementKey)
             },
             zIndexInOverlay = AvatarZIndex,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(headerState.avatarPadding)
+                .ifTrue(
+                    predicate = isLive,
+                    block = Modifier::profileLiveAvatarBorder,
+                )
                 .clickable { onProfileAvatarClicked() },
             state = remember(
                 key1 = profile.avatar?.uri,
@@ -833,8 +889,7 @@ private fun ProfileAvatar(
                     url = profile.avatar.orDefault.uri,
                     contentScale = ContentScale.Crop,
                     contentDescription = profile.displayName ?: profile.handle.id,
-                    shape =
-                    if (profile.isLabeler) profile.did.asSelfLabelerUri().collectionShape()
+                    shape = if (profile.isLabeler) profile.did.asSelfLabelerUri().collectionShape()
                     else RoundedPolygonShape.Circle,
                 )
             },
@@ -842,6 +897,16 @@ private fun ProfileAvatar(
                 AsyncImage(state, modifier)
             },
         )
+        if (isLive) PaneStickySharedElement(
+            modifier = Modifier
+                .align(Alignment.BottomCenter),
+            sharedContentState = rememberSharedContentState(
+                key = avatarSharedElementKey.withProfileAvatarLiveSharedElementPrefix(),
+            ),
+            zIndexInOverlay = AvatarLiveZIndex,
+        ) {
+            ProfileLiveChip()
+        }
     }
 }
 
@@ -857,6 +922,7 @@ private fun ProfileHeadline(
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
     onToggleLabelerSubscription: (ProfileId, Boolean) -> Unit,
     onModerationAction: (Action.Moderation) -> Unit,
+    onUpdateProfileLiveStatus: () -> Unit,
 ) {
     val profileRestrictionsDialogState = rememberProfileRestrictionsDialogState(
         onApproved = onModerationAction,
@@ -929,11 +995,17 @@ private fun ProfileHeadline(
                                     else onViewerStateClicked(viewerState)
                                 },
                             )
-                            if (!isSignedInProfile && signedInProfileId != null) {
+                            if (signedInProfileId != null) {
                                 ProfileActionsMenu(
-                                    items = viewerState.profileActionMenuItems(),
+                                    items = viewerState.profileActionMenuItems(
+                                        isSignedInProfile = isSignedInProfile,
+                                        isLive = profile.status?.isLive == true,
+                                    ),
                                     onItemClicked = { item ->
                                         when (item.title) {
+                                            CommonStrings.action_go_live,
+                                            CommonStrings.action_edit_live_status,
+                                            -> onUpdateProfileLiveStatus()
                                             CommonStrings.viewer_state_block_account ->
                                                 profileRestrictionsDialogState.show(
                                                     Action.Block.Add(
@@ -1163,21 +1235,11 @@ private fun ProfileTimeline(
     autoPlayTimelineVideos: Boolean,
     showEngagementMetrics: Boolean,
 ) {
-    var pendingScrollOffset by rememberSaveable { mutableIntStateOf(0) }
-    val gridState = rememberLazyScrollableState(
-        init = ::LazyStaggeredGridState,
-        firstVisibleItemIndex = LazyStaggeredGridState::firstVisibleItemIndex,
-        firstVisibleItemScrollOffset = LazyStaggeredGridState::firstVisibleItemScrollOffset,
-        restore = { firstVisibleItemIndex, firstVisibleItemScrollOffset ->
-            LazyStaggeredGridState(
-                initialFirstVisibleItemIndex = firstVisibleItemIndex,
-                initialFirstVisibleItemOffset = firstVisibleItemScrollOffset + pendingScrollOffset,
-            )
-        },
-    )
+    val gridState = rememberLazyStaggeredGridState()
     val timelineState by timelineStateHolder.state.collectAsStateWithLifecycle()
     val items by rememberUpdatedState(timelineState.tiledItems)
 
+    val now = remember { Clock.System.now() }
     val density = LocalDensity.current
     val videoStates = remember { ThreadedVideoPositionStates(TimelineItem::id) }
     val presentation = timelineState.timeline.presentation
@@ -1240,6 +1302,7 @@ private fun ProfileTimeline(
     val postOptionsSheetState = rememberUpdatedPostOptionsSheetState(
         signedInProfileId = signedInProfileId,
         recentConversations = recentConversations,
+        onShown = { actions(Action.UpdateRecentConversations) },
         onOptionClicked = { option ->
             when (option) {
                 is PostOption.ShareInConversation ->
@@ -1306,6 +1369,7 @@ private fun ProfileTimeline(
             items(
                 items = items,
                 key = TimelineItem::id,
+                contentType = TimelineItem::contentType,
                 itemContent = { item ->
                     TimelineItem(
                         modifier = Modifier
@@ -1316,7 +1380,7 @@ private fun ProfileTimeline(
                             ),
                         paneMovableElementSharedTransitionScope = paneScaffoldState,
                         presentationLookaheadScope = this@LookaheadScope,
-                        now = remember { Clock.System.now() },
+                        now = now,
                         item = item,
                         sharedElementPrefix = timelineState.timeline.sharedElementPrefix,
                         showEngagementMetrics = showEngagementMetrics,
@@ -1337,7 +1401,6 @@ private fun ProfileTimeline(
                                     }
 
                                     is PostAction.OfPost -> {
-                                        pendingScrollOffset = gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
                                                 recordDestination(
@@ -1357,7 +1420,6 @@ private fun ProfileTimeline(
                                     }
 
                                     is PostAction.OfProfile -> {
-                                        pendingScrollOffset = gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
                                                 profileDestination(
@@ -1375,7 +1437,6 @@ private fun ProfileTimeline(
                                     }
 
                                     is PostAction.OfRecord -> {
-                                        pendingScrollOffset = gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
                                                 recordDestination(
@@ -1390,7 +1451,6 @@ private fun ProfileTimeline(
                                     }
 
                                     is PostAction.OfMedia -> {
-                                        pendingScrollOffset = gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
                                                 galleryDestination(
@@ -1413,7 +1473,6 @@ private fun ProfileTimeline(
                                     }
 
                                     is PostAction.OfReply -> {
-                                        pendingScrollOffset = gridState.pendingOffsetFor(item)
                                         actions(
                                             Action.Navigate.To(
                                                 if (paneScaffoldState.isSignedOut) signInDestination()

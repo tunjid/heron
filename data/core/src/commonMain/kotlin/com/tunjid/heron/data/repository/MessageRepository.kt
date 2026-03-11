@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.data.repository
 
-import app.bsky.embed.Record as BskyRecord
 import chat.bsky.convo.AddReactionRequest
 import chat.bsky.convo.AddReactionResponse
 import chat.bsky.convo.DeletedMessageView
@@ -38,7 +37,6 @@ import chat.bsky.convo.MessageView
 import chat.bsky.convo.RemoveReactionRequest
 import chat.bsky.convo.RemoveReactionResponse
 import chat.bsky.convo.SendMessageRequest
-import com.atproto.repo.StrongRef
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
@@ -56,6 +54,7 @@ import com.tunjid.heron.data.database.entities.PopulatedMessageEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.utilities.LazyList
+import com.tunjid.heron.data.utilities.distinctUntilChangedMap
 import com.tunjid.heron.data.utilities.facet
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
@@ -63,21 +62,26 @@ import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.toOutcome
+import com.tunjid.heron.data.utilities.toStrongReferencedRecord
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.scan
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.timeout
 import kotlinx.serialization.Serializable
-import sh.christian.ozone.api.AtUri
-import sh.christian.ozone.api.Cid
 import sh.christian.ozone.api.Did
 
 @Serializable
@@ -138,7 +142,7 @@ internal class OfflineMessageRepository @Inject constructor(
                     offset = query.data.offset,
                     limit = query.data.limit,
                 )
-                    .map { populatedConversationEntities ->
+                    .distinctUntilChangedMap { populatedConversationEntities ->
                         populatedConversationEntities.map(PopulatedConversationEntity::asExternalModel)
                     },
                 networkService.nextCursorFlow(
@@ -361,16 +365,9 @@ internal class OfflineMessageRepository @Inject constructor(
                     message = MessageInput(
                         text = message.text,
                         facets = resolvedLinks.facet(),
-                        embed = message.recordReference?.let { ref ->
-                            MessageInputEmbedUnion.AppBskyEmbedRecord(
-                                value = BskyRecord(
-                                    record = StrongRef(
-                                        uri = ref.uri.uri.let(::AtUri),
-                                        cid = ref.id.id.let(::Cid),
-                                    ),
-                                ),
-                            )
-                        },
+                        embed = message.recordReference
+                            ?.toStrongReferencedRecord()
+                            ?.let(MessageInputEmbedUnion::AppBskyEmbedRecord),
                     ),
                 ),
             )
@@ -418,7 +415,10 @@ internal class OfflineMessageRepository @Inject constructor(
     } ?: expiredSessionOutcome()
 }
 
-fun MessageRepository.recentConversations(): Flow<List<Conversation>> =
+fun MessageRepository.recentConversations(
+    emissions: Int = DefaultRecentConversationsMaxEmissions,
+    timeout: Duration = DefaultRecentConversationsTimeout,
+): Flow<List<Conversation>> =
     conversations(
         query = ConversationQuery(
             data = CursorQuery.Data(
@@ -429,6 +429,13 @@ fun MessageRepository.recentConversations(): Flow<List<Conversation>> =
         ),
         cursor = Cursor.Initial,
     )
+        .filter<List<Conversation>>(List<Conversation>::isNotEmpty)
+        .take(emissions)
+        .timeout(timeout)
+        .catch { throwable ->
+            if (throwable is TimeoutCancellationException) emit(emptyList())
+            else throw throwable
+        }
 
 private const val RecentConversationLimit = 8L
 
@@ -505,3 +512,6 @@ private fun PopulatedMessageEntity.embeddedRecordUri() =
         ?: list?.listUri
         ?: starterPack?.starterPackUri
         ?: post?.postUri
+
+private val DefaultRecentConversationsTimeout = 3.seconds
+private const val DefaultRecentConversationsMaxEmissions = 1

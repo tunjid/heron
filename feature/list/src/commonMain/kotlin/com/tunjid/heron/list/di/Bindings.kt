@@ -16,20 +16,32 @@
 
 package com.tunjid.heron.list.di
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.ListUri
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.asEmbeddableRecordUriOrNull
+import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.di.DataBindings
 import com.tunjid.heron.data.repository.TimelineRequest
 import com.tunjid.heron.data.utilities.asGenericUri
@@ -46,9 +58,11 @@ import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOptio
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.conversationDestination
+import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
+import com.tunjid.heron.scaffold.scaffold.isFabExpanded
 import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransformProvider
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
@@ -57,7 +71,9 @@ import com.tunjid.heron.timeline.state.TimelineState
 import com.tunjid.heron.timeline.ui.EmbeddableRecordOptionsSheetState.Companion.rememberUpdatedEmbeddableRecordOptionsState
 import com.tunjid.heron.timeline.ui.ShareRecordButton
 import com.tunjid.heron.timeline.ui.list.FeedListStatus
+import com.tunjid.heron.timeline.ui.sheets.SelectTextSheetState.Companion.rememberSelectProfileIdState
 import com.tunjid.heron.timeline.utilities.TimelineTitle
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -76,6 +92,9 @@ import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
+import heron.feature.list.generated.resources.Res
+import heron.feature.list.generated.resources.add_list_member
+import org.jetbrains.compose.resources.stringResource
 
 private const val ListRoutePattern = "/profile/{profileId}/lists/{listUriSuffix}"
 private const val ListRouteUriPattern = "/{listUriPrefix}/app.bsky.graph.list/{listUriSuffix}"
@@ -244,38 +263,23 @@ class ListBindings(
             val state by viewModel.state.collectAsStateWithLifecycle()
             val paneScaffoldState = rememberPaneScaffoldState()
 
-            val recordOptionsSheetState = rememberUpdatedEmbeddableRecordOptionsState(
-                signedInProfileId = state.signedInProfileId,
-                recentConversations = state.recentConversations,
-                editTitle = null,
-                onEditClicked = {},
-                onShareInConversationClicked = { recordUri, conversation ->
-                    viewModel.accept(
-                        Action.Navigate.To(
-                            conversationDestination(
-                                id = conversation.id,
-                                members = conversation.members,
-                                sharedElementPrefix = conversation.id.id,
-                                sharedUri = recordUri.asGenericUri(),
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                            ),
-                        ),
+            val fabExpansionNestedScrollConnection = rememberAccumulatedOffsetNestedScrollConnection(
+                invert = true,
+                maxOffset = maxOffset@{
+                    Offset(
+                        x = 0f,
+                        y = UiTokens.bottomNavHeight(
+                            isCompact = paneScaffoldState.prefersCompactBottomNav,
+                        ).toPx(),
                     )
                 },
-                onShareInPostClicked = { recordUri ->
-                    viewModel.accept(
-                        Action.Navigate.To(
-                            composePostDestination(
-                                sharedUri = recordUri.asGenericUri(),
-                            ),
-                        ),
-                    )
-                },
+                minOffset = { Offset.Zero },
             )
 
             paneScaffoldState.PaneScaffold(
                 modifier = Modifier
                     .fillMaxSize()
+                    .nestedScroll(fabExpansionNestedScrollConnection)
                     .predictiveBackPlacement(paneScaffoldState = paneScaffoldState),
                 showNavigation = true,
                 snackBarMessages = state.messages,
@@ -283,6 +287,34 @@ class ListBindings(
                     viewModel.accept(Action.SnackbarDismissed(it))
                 },
                 topBar = {
+                    val recordOptionsSheetState = rememberUpdatedEmbeddableRecordOptionsState(
+                        signedInProfileId = state.signedInProfileId,
+                        recentConversations = state.recentConversations,
+                        editTitle = null,
+                        onEditClicked = {},
+                        onShareInConversationClicked = { recordUri, conversation ->
+                            viewModel.accept(
+                                Action.Navigate.To(
+                                    conversationDestination(
+                                        id = conversation.id,
+                                        members = conversation.members,
+                                        sharedElementPrefix = conversation.id.id,
+                                        sharedUri = recordUri.asGenericUri(),
+                                        referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                    ),
+                                ),
+                            )
+                        },
+                        onShareInPostClicked = { recordUri ->
+                            viewModel.accept(
+                                Action.Navigate.To(
+                                    composePostDestination(
+                                        sharedUri = recordUri.asGenericUri(),
+                                    ),
+                                ),
+                            )
+                        },
+                    )
                     PoppableDestinationTopAppBar(
                         modifier = Modifier
                             .background(MaterialTheme.colorScheme.surface),
@@ -332,6 +364,53 @@ class ListBindings(
                         },
                     )
                 },
+                floatingActionButton = {
+                    val signedInProfileId = state.signedInProfileId
+                    val listUri = state.timelineState?.timeline
+                        ?.withListTimelineOrNull { it.feedList.uri }
+
+                    val addListMemberSheetState = rememberSelectProfileIdState(
+                        title = stringResource(Res.string.add_list_member),
+                        suggestedProfiles = state.suggestedProfiles,
+                        onProfileIdSelected = { profileId ->
+                            listUri?.let { uri ->
+                                viewModel.accept(
+                                    Action.AddListMember(
+                                        profileId = profileId,
+                                        listUri = uri,
+                                    ),
+                                )
+                            }
+                        },
+                    )
+
+                    AnimatedVisibility(
+                        visible = state.isOnProfilesTab && remember(
+                            signedInProfileId,
+                            listUri,
+                        ) {
+                            signedInProfileId != null && signedInProfileId == listUri?.profileId()
+                        },
+                        enter = FabEnter,
+                        exit = FabExit,
+                    ) {
+                        PaneFab(
+                            text = stringResource(Res.string.add_list_member),
+                            icon = Icons.Rounded.Add,
+                            expanded = isFabExpanded {
+                                fabExpansionNestedScrollConnection.offset
+                            },
+                            onClick = addListMemberSheetState::show,
+                        )
+
+                        LaunchedEffect(Unit) {
+                            snapshotFlow { addListMemberSheetState.options.text }
+                                .collect { query ->
+                                    viewModel.accept(Action.SearchProfiles(query))
+                                }
+                        }
+                    }
+                },
                 content = { paddingValues ->
                     ListScreen(
                         paneScaffoldState = this,
@@ -348,3 +427,6 @@ class ListBindings(
         },
     )
 }
+
+private val FabEnter = slideInVertically(initialOffsetY = { it })
+private val FabExit = slideOutVertically(targetOffsetY = { it * 2 })

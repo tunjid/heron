@@ -69,6 +69,7 @@ import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.pathDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
+import com.tunjid.heron.scaffold.ui.theme.Theme
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.post.MediaPostInteractions
 import com.tunjid.heron.timeline.ui.post.PostText
@@ -234,38 +235,45 @@ internal fun MediaOverlay(
     isVisible: Boolean,
     content: @Composable (item: GalleryItem.Media) -> Unit,
 ) {
-    val visible by rememberUpdatedState(media != null && isVisible)
-    val alphaState = animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-    )
-    val zIndex by remember {
-        derivedStateOf {
-            when {
-                // When animating in, raise the z index of the overlay
-                isVisible -> VisibleOverlayZIndex
-                // Only when fully transparent is the zIndex dropped below the actual media
-                alphaState.value == 0f -> InVisibleOverlayZIndex
-                // Animating out, keep on top
-                else -> VisibleOverlayZIndex
+    val currentTheme = MaterialTheme
+    MaterialTheme(
+        colorScheme = Theme.Default.dark,
+        shapes = currentTheme.shapes,
+        typography = currentTheme.typography,
+    ) {
+        val visible by rememberUpdatedState(media != null && isVisible)
+        val alphaState = animateFloatAsState(
+            targetValue = if (visible) 1f else 0f,
+            animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        )
+        val zIndex by remember {
+            derivedStateOf {
+                when {
+                    // When animating in, raise the z index of the overlay
+                    isVisible -> VisibleOverlayZIndex
+                    // Only when fully transparent is the zIndex dropped below the actual media
+                    alphaState.value == 0f -> InVisibleOverlayZIndex
+                    // Animating out, keep on top
+                    else -> VisibleOverlayZIndex
+                }
             }
         }
-    }
 
-    // The Overlay is stateful, so it should not be removed from the composition.
-    // So instead of AnimatedVisibility, alpha and zIndices are  manipulated.
-    Column(
-        modifier = modifier
-            .zIndex(zIndex)
-            .fillMaxSize()
-            .graphicsLayer { alpha = alphaState.value }
-            .background(color = Color.Black.copy(alpha = 0.8f)),
-        verticalArrangement = Arrangement.SpaceBetween,
-        horizontalAlignment = Alignment.End,
-        content = {
-            if (media != null) content(media)
-        },
-    )
+        // The Overlay is stateful, so it should not be removed from the composition.
+        // So instead of AnimatedVisibility, alpha and zIndices are  manipulated.
+        Column(
+            modifier = modifier
+                .zIndex(zIndex)
+                .fillMaxSize()
+                .graphicsLayer { alpha = alphaState.value }
+                .background(color = Color.Black.copy(alpha = 0.8f)),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.End,
+            content = {
+                if (media != null) content(media)
+            },
+        )
+    }
 }
 
 @Composable

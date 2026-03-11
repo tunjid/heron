@@ -46,7 +46,7 @@ val Timeline.Presentation.lazyGridHorizontalItemSpacing
 
 val Timeline.Presentation.lazyGridVerticalItemSpacing
     get() = when (this) {
-        Timeline.Presentation.Text.WithEmbed -> 8.dp
+        Timeline.Presentation.Text.WithEmbed -> 12.dp
         Timeline.Presentation.Media.Condensed -> 4.dp
         Timeline.Presentation.Media.Expanded -> 8.dp
         Timeline.Presentation.Media.Grid -> 2.dp

@@ -188,16 +188,16 @@ private fun timelineUpdateMutations(
                 emit {
                     if (this@emit.timeline.isEmpty()) {
                         copy(
-                            tilingData = tilingData.copy(
+                            tilingData = this@emit.tilingData.copy(
                                 items = buildTiledList {
                                     add(
                                         query = tilingData.currentQuery,
-                                        item = TimelineItem.Empty(this@emit.timeline),
+                                        item = TimelineItem.Empty.Timeline(this@emit.timeline),
                                     )
                                 },
                             ),
                         )
-                    } else this
+                    } else this@emit
                 }
             }
         }
@@ -246,10 +246,12 @@ private fun TiledList<TimelineQuery, TimelineItem>.filterThreadDuplicates(): Til
             }
 
             is TimelineItem.Single -> !threadRootIds.contains(item.post.cid)
-            is TimelineItem.Placeholder -> false
+            is TimelineItem.Placeholder,
+            is TimelineItem.ReplyTree,
+            -> false
         }
     }
         .distinctBy(TimelineItem::id)
 }
 
-private val EMPTY_STATE_DELAY = 1.4.seconds
+private val EMPTY_STATE_DELAY = 2.8.seconds

@@ -28,6 +28,7 @@ import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.ProfileViewerState
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.sourceId
@@ -121,6 +122,10 @@ sealed class ProfileScreenStateHolders {
         class StarterPacks(
             mutator: RecordStateHolder<StarterPack>,
         ) : Records<StarterPack>(mutator)
+
+        class Documents(
+            mutator: RecordStateHolder<StandardDocument>,
+        ) : Records<StandardDocument>(mutator)
     }
 
     class Timeline(
@@ -149,6 +154,7 @@ sealed class ProfileScreenStateHolders {
             is Records.Feeds -> "Feeds"
             is Records.Lists -> "Lists"
             is Records.StarterPacks -> "StarterPacks"
+            is Records.Documents -> "Documents"
             is Timeline -> state.value.timeline.sourceId
             is LabelerSettings -> "LabelerSettings"
         }
@@ -199,6 +205,18 @@ sealed class Action(val key: String) {
     data class BioLinkClicked(
         val target: LinkTarget,
     ) : Action(key = "BioLinkClicked")
+
+    sealed class UpdateLiveStatus(key: String) : Action(key) {
+        data class GoLive(
+            val signedInProfileId: ProfileId,
+            val streamUrl: String,
+            val duration: Int,
+        ) : UpdateLiveStatus(key = "GoLive")
+
+        data class EndLive(
+            val signedInProfileId: ProfileId,
+        ) : UpdateLiveStatus(key = "EndLive")
+    }
 
     sealed class Moderation(
         key: String,
@@ -266,6 +284,8 @@ sealed class Action(val key: String) {
     ) : Action(key = "UpdatePreferences")
 
     data object UpdateRecentLists : Action(key = "UpdateRecentLists")
+
+    data object UpdateRecentConversations : Action(key = "UpdateRecentConversations")
 
     sealed class Navigate :
         Action(key = "Navigate"),
