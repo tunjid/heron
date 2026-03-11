@@ -193,6 +193,7 @@ internal class OfflineProfileRepository @Inject constructor(
                     viewerEntities.map(ProfileViewerStateEntity::asExternalModel)
                 }
         }
+            .flowOn(ioDispatcher)
 
     override fun commonFollowers(
         otherProfileId: Id.Profile,
@@ -212,6 +213,7 @@ internal class OfflineProfileRepository @Inject constructor(
                     profileEntities.map(PopulatedProfileEntity::asExternalModel)
                 }
         }
+            .flowOn(ioDispatcher)
 
     override fun followers(
         query: ProfilesQuery,
@@ -238,6 +240,7 @@ internal class OfflineProfileRepository @Inject constructor(
                 responseCursor = GetFollowersResponse::cursor,
             )
         }
+            .flowOn(ioDispatcher)
 
     override fun following(
         query: ProfilesQuery,
@@ -264,6 +267,7 @@ internal class OfflineProfileRepository @Inject constructor(
                 responseCursor = GetFollowsResponse::cursor,
             )
         }
+            .flowOn(ioDispatcher)
 
     override fun mutes(
         query: DataQuery,
@@ -285,6 +289,7 @@ internal class OfflineProfileRepository @Inject constructor(
                 responseCursor = GetMutesResponse::cursor,
             )
         }
+            .flowOn(ioDispatcher)
 
     override suspend fun sendConnection(
         connection: Profile.Connection,
