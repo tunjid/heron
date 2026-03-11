@@ -26,6 +26,7 @@ import androidx.room.Upsert
 import com.tunjid.heron.data.database.entities.TimelineItemEntity
 import com.tunjid.heron.data.database.entities.TimelinePreferencesEntity
 import com.tunjid.heron.data.database.entities.fetchedAtPartial
+import com.tunjid.heron.data.database.entities.withoutSort
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 
@@ -45,6 +46,26 @@ interface TimelineDao {
     @Upsert
     suspend fun upsertTimelineItems(
         entities: List<TimelineItemEntity>,
+    )
+
+    @Transaction
+    suspend fun insertOrPartiallyUpdateTimelineItems(
+        entities: List<TimelineItemEntity>,
+    ) = partialUpsert(
+        items = entities,
+        partialMapper = TimelineItemEntity::withoutSort,
+        insertEntities = ::insertOrIgnoreTimelineItems,
+        updatePartials = ::updateTimelineItemsKeepingSort,
+    )
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertOrIgnoreTimelineItems(
+        entities: List<TimelineItemEntity>,
+    ): List<Long>
+
+    @Update(entity = TimelineItemEntity::class)
+    suspend fun updateTimelineItemsKeepingSort(
+        entities: List<TimelineItemEntity.WithoutSort>,
     )
 
     @Query(
