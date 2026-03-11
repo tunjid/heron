@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.signin.DomainRegex
 import com.tunjid.heron.ui.ItemSelection
+import com.tunjid.heron.ui.Status
 import com.tunjid.heron.ui.sheets.BottomSheetScope
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
@@ -73,6 +74,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun ServerSelection(
     modifier: Modifier = Modifier,
+    status: Status,
     selectedServer: Server,
     availableServers: List<Server>,
     onServerSelected: (Server) -> Unit,
@@ -83,7 +85,7 @@ fun ServerSelection(
         verticalArrangement = Arrangement.spacedBy(36.dp),
     ) {
         ItemSelection(
-            alwaysExpanded = true,
+            status = status,
             selectedItem = selectedServer,
             availableItems = availableServers,
             key = Server::key,

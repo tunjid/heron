@@ -33,6 +33,7 @@ import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.signin.oauth.OauthFlowResult
+import com.tunjid.heron.ui.Status
 import com.tunjid.heron.ui.text.FormField
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.Validator
@@ -73,6 +74,7 @@ data class State(
     val isSubmitting: Boolean = false,
     val prefersPassword: Boolean = false,
     val isOauthAvailable: Boolean = false,
+    val isServerResolvedFromHandle: Boolean = false,
     val oauthRequestUri: GenericUri? = null,
     val selectedServer: Server = Server.BlueSky,
     val availableServers: List<Server> = StartingServers,
@@ -181,6 +183,10 @@ fun State.createSessionAction() = when {
         )
     }
 }
+
+val State.serverSelectionStatus: Status
+    get() = if (isServerResolvedFromHandle) Status.Disabled.Collapsible
+    else Status.Enabled.AlwaysExpanded
 
 fun State.isVisible(field: FormField) =
     field.id != Password || authMode == AuthMode.Password

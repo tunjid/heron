@@ -135,6 +135,21 @@ internal fun SignInScreen(
                             }
                         },
                     )
+
+                    // Try to resolve the initial handle
+                    LaunchedEffect(state.mostRecentSession) {
+                        if (
+                            state.mostRecentSession == null ||
+                            field.id != Username ||
+                            field.value.isBlank()
+                        ) return@LaunchedEffect
+                        actions(
+                            Action.FieldChanged(
+                                id = Username,
+                                text = field.value,
+                            ),
+                        )
+                    }
                 }
             }
         }
@@ -150,6 +165,7 @@ internal fun SignInScreen(
                 .padding(vertical = 32.dp)
                 .align(Alignment.CenterHorizontally)
                 .animateBounds(paneScaffoldState),
+            status = state.serverSelectionStatus,
             selectedServer = state.selectedServer,
             availableServers = state.availableServers,
             onServerSelected = serverSelectionSheetState::onServer,

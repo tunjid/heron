@@ -43,7 +43,7 @@ fun TimelinePresentationSelector(
     ItemSelection(
         modifier = modifier,
         selectedItem = selected,
-        availableItems = available,
+        availableItems = if (available.size > 1) available else emptyList(),
         key = Timeline.Presentation::key,
         icon = Timeline.Presentation::icon,
         stringResource = Timeline.Presentation::textResource,

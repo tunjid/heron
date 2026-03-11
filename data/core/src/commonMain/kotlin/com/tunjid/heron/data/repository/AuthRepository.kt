@@ -23,10 +23,12 @@ import app.bsky.feed.GetFeedGeneratorQueryParams
 import app.bsky.graph.GetListQueryParams
 import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.models.SessionRequest
 import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.SessionSwitchException
 import com.tunjid.heron.data.core.utilities.Outcome
@@ -36,6 +38,7 @@ import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.network.PdsResolver
 import com.tunjid.heron.data.network.SessionManager
 import com.tunjid.heron.data.network.models.profileEntity
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
@@ -59,6 +62,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.supervisorScope
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
+import sh.christian.ozone.api.Handle
 
 interface AuthRepository {
     val isSignedIn: Flow<Boolean>
@@ -86,6 +90,8 @@ interface AuthRepository {
     suspend fun signOut()
 
     suspend fun updateSignedInUser(): Outcome
+
+    suspend fun resolveServer(handle: ProfileHandle): Result<Server>
 }
 
 @Inject
@@ -93,6 +99,7 @@ internal class AuthTokenRepository(
     private val profileDao: ProfileDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
+    private val pdsResolver: PdsResolver,
     private val preferenceUpdater: PreferenceUpdater,
     private val notificationPreferenceUpdater: NotificationPreferenceUpdater,
     private val savedStateDataSource: SavedStateDataSource,
@@ -358,5 +365,12 @@ internal class AuthTokenRepository(
                 lastRefreshed = Clock.System.now(),
             )
         }
+    }
+
+    override suspend fun resolveServer(
+        handle: ProfileHandle,
+    ): Result<Server> = runCatchingUnlessCancelled {
+        pdsResolver.resolveServer(Handle(handle.id))
+            ?: throw IllegalStateException("Could not resolve server for handle: ${handle.id}")
     }
 }
