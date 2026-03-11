@@ -137,13 +137,8 @@ internal fun SignInScreen(
                     )
 
                     // Try to resolve the initial handle
-                    LaunchedEffect(state.mostRecentSession) {
-                        if (
-                            state.mostRecentSession == null ||
-                            field.id != Username ||
-                            field.value.isBlank()
-                        ) return@LaunchedEffect
-                        actions(
+                    if (field.id == Username) LaunchedEffect(state.mostRecentSession) {
+                        if (state.mostRecentSession != null && field.value.isNotBlank()) actions(
                             Action.FieldChanged(
                                 id = Username,
                                 text = field.value,

@@ -18,6 +18,7 @@ package com.tunjid.heron.data.network
 
 import com.atproto.identity.ResolveHandleResponse
 import com.tunjid.heron.data.core.models.Server
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
@@ -98,10 +99,13 @@ internal class PlcDirectoryPdsResolver @Inject constructor(
 
         Server.KnownServers
             .firstOrNull { it.endpoint == endpoint }
-            ?: Server(
-                endpoint = endpoint,
-                supportsOauth = true,
-            )
+            ?: endpoint.takeIf { it.startsWith(Uri.Host.Https.prefix) }
+                ?.let {
+                    Server(
+                        endpoint = it,
+                        supportsOauth = true,
+                    )
+                }
     }.getOrNull()
 }
 
