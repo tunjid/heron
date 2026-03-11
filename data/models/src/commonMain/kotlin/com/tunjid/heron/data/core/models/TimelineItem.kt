@@ -212,3 +212,8 @@ data class ReplyNode(
     val depth: Int,
     val children: List<ReplyNode>,
 )
+
+enum class ReplyViewMode {
+    Linear,
+    Threaded,
+}
