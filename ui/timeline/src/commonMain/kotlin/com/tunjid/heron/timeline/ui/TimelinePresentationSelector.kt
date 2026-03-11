@@ -40,10 +40,10 @@ fun TimelinePresentationSelector(
     available: List<Timeline.Presentation>,
     onPresentationSelected: (Timeline.Presentation) -> Unit,
 ) {
-    ItemSelection(
+    if (available.isNotEmpty()) ItemSelection(
         modifier = modifier,
         selectedItem = selected,
-        availableItems = if (available.size > 1) available else emptyList(),
+        availableItems = available,
         key = Timeline.Presentation::key,
         icon = Timeline.Presentation::icon,
         stringResource = Timeline.Presentation::textResource,

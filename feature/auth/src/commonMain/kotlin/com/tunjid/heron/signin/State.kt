@@ -185,7 +185,7 @@ fun State.createSessionAction() = when {
 }
 
 val State.serverSelectionStatus: Status
-    get() = if (isServerResolvedFromHandle) Status.Disabled.Collapsible
+    get() = if (isServerResolvedFromHandle) Status.Enabled.Collapsible
     else Status.Enabled.AlwaysExpanded
 
 fun State.isVisible(field: FormField) =
