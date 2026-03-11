@@ -20,6 +20,7 @@ import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.PostUri
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.ReplyViewMode
 import com.tunjid.heron.data.core.models.ThreadViewPreference.Companion.order
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
@@ -403,6 +404,7 @@ fun Flow<Action.LoadComments>.loadCommentsMutations(
             timelineRepository.postThreadedItems(
                 postUri = post.uri,
                 order = order,
+                replyViewMode = ReplyViewMode.Linear, // always flat in gallery
             )
                 .mapLatestToManyMutations { timelineItems ->
                     if (timelineItems.isEmpty()) {

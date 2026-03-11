@@ -162,6 +162,15 @@ fun Flow<Action.Load>.postThreadsMutations(
             .threadViewPreferences
             .order()
         is Action.Load.Order -> action.order
+        is Action.Load.ViewMode -> state().order ?: userDataRepository.preferences
+            .first()
+            .threadViewPreferences
+            .order()
+    }
+    val replyViewMode = when (action) {
+        Action.Load.Initial -> state().replyViewMode
+        is Action.Load.Order -> state().replyViewMode
+        is Action.Load.ViewMode -> action.mode
     }
 
     flow {
@@ -170,6 +179,7 @@ fun Flow<Action.Load>.postThreadsMutations(
             timelineRepository.postThreadedItems(
                 postUri = postUri,
                 order = order,
+                replyViewMode = replyViewMode,
             )
                 .mapToMutation { timelineItems ->
                     if (timelineItems.isEmpty()) this
