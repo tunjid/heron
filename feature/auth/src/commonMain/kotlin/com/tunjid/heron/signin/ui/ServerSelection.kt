@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AlternateEmail
 import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -61,6 +62,7 @@ import com.tunjid.heron.ui.text.copyWithValidation
 import com.tunjid.heron.ui.text.isValid
 import com.tunjid.heron.ui.text.validated
 import heron.feature.auth.generated.resources.Res
+import heron.feature.auth.generated.resources.at_proto
 import heron.feature.auth.generated.resources.blacksky_server
 import heron.feature.auth.generated.resources.bluesky_server
 import heron.feature.auth.generated.resources.cancel
@@ -68,6 +70,7 @@ import heron.feature.auth.generated.resources.custom_server
 import heron.feature.auth.generated.resources.empty_form
 import heron.feature.auth.generated.resources.eurosky_server
 import heron.feature.auth.generated.resources.invalid_domain
+import heron.feature.auth.generated.resources.pckt_server
 import heron.feature.auth.generated.resources.submit
 import org.jetbrains.compose.resources.stringResource
 
@@ -79,6 +82,7 @@ fun ServerSelection(
     availableServers: List<Server>,
     onServerSelected: (Server) -> Unit,
 ) {
+    println(selectedServer)
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -149,6 +153,7 @@ private fun ServerSelectionBottomSheet(
             Server.BlueSky.endpoint,
             Server.BlackSky.endpoint,
             Server.EuroSky.endpoint,
+            Server.Pckt.endpoint,
             -> {
                 onServerConfirmed(server)
                 state.currentServer = null
@@ -266,18 +271,27 @@ private val Server.key
         else -> "custom"
     }
 
-private val Server.logo
+internal val Server.logo
     get() = when (endpoint) {
         Server.BlueSky.endpoint -> Bluesky
         Server.BlackSky.endpoint -> Blacksky
         Server.EuroSky.endpoint -> Eurosky
+        Server.Pckt.endpoint -> Pckt
+        AtProtoServer.endpoint -> Icons.Rounded.AlternateEmail
         else -> Icons.Rounded.Public
     }
+
+internal val AtProtoServer = Server(
+    endpoint = "https://atproto.com/",
+    supportsOauth = false,
+)
 
 internal val Server.stringResource
     get() = when (endpoint) {
         Server.BlueSky.endpoint -> Res.string.bluesky_server
         Server.BlackSky.endpoint -> Res.string.blacksky_server
         Server.EuroSky.endpoint -> Res.string.eurosky_server
+        Server.Pckt.endpoint -> Res.string.pckt_server
+        AtProtoServer.endpoint -> Res.string.at_proto
         else -> Res.string.custom_server
     }

@@ -74,10 +74,16 @@ data class Server(
             supportsOauth = true,
         )
 
+        val Pckt = Server(
+            endpoint = "https://pds.pckt.cafe",
+            supportsOauth = true,
+        )
+
         val KnownServers = setOf(
             BlueSky,
             BlackSky,
             EuroSky,
+            Pckt,
         )
     }
 }
