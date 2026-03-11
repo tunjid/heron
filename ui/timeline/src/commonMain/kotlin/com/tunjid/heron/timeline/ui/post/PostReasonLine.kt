@@ -58,6 +58,7 @@ internal fun PostReasonLine(
             },
         )
 
+        is TimelineItem.ReplyTree,
         is TimelineItem.Thread,
         is TimelineItem.Single,
         is TimelineItem.Placeholder,

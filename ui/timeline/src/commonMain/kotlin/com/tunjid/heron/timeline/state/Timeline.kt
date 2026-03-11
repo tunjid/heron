@@ -246,7 +246,9 @@ private fun TiledList<TimelineQuery, TimelineItem>.filterThreadDuplicates(): Til
             }
 
             is TimelineItem.Single -> !threadRootIds.contains(item.post.cid)
-            is TimelineItem.Placeholder -> false
+            is TimelineItem.Placeholder,
+            is TimelineItem.ReplyTree,
+            -> false
         }
     }
         .distinctBy(TimelineItem::id)
