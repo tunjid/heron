@@ -47,6 +47,7 @@ val TimelineItem.contentType: String
         is TimelineItem.Thread -> "thread"
         is TimelineItem.Loading -> "loading"
         is TimelineItem.Empty -> "empty"
+        is TimelineItem.ReplyTree -> "tree"
     }
 
 internal fun Modifier.sensitiveContentBlur(
