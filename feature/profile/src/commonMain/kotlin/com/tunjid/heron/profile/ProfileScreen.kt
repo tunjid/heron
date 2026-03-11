@@ -1558,7 +1558,7 @@ private fun TimelinePresentationSelector(
         }
     }.value
 
-    if (timeline != null) TimelinePresentationSelector(
+    if (timeline != null && timeline.supportedPresentations.size > 1) TimelinePresentationSelector(
         modifier = modifier,
         selected = timeline.presentation,
         available = timeline.supportedPresentations,
