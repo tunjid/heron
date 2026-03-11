@@ -18,6 +18,8 @@ package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.GenericUri
 import com.tunjid.heron.data.core.types.ProfileHandle
+import io.ktor.http.URLProtocol
+import io.ktor.http.Url
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -79,3 +81,13 @@ data class Server(
         )
     }
 }
+
+fun Server.normalized(): Server {
+    val url = Url(endpoint)
+    return when {
+        url.protocol == URLProtocol.HTTPS && url.host.endsWith(BskyNetwork) -> Server.BlueSky
+        else -> this
+    }
+}
+
+private const val BskyNetwork = "host.bsky.network"
