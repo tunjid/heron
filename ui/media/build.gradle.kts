@@ -70,16 +70,17 @@ kotlin {
         desktopMain {
             dependencies {
                 implementation(libs.ktor.client.java)
+                val osName = System.getProperty("os.name")
                 val fxClassifier = when {
-                    org.gradle.internal.os.OperatingSystem.current().isMacOsX ->
+                    osName.startsWith("Mac OS X") ->
                         if (System.getProperty("os.arch") == "aarch64") "mac-aarch64" else "mac"
-                    org.gradle.internal.os.OperatingSystem.current().isWindows -> "win"
+                    osName.startsWith("Windows") -> "win"
                     else -> "linux"
                 }
-                implementation("org.openjfx:javafx-base:${libs.versions.javafx.get()}:$fxClassifier")
-                implementation("org.openjfx:javafx-media:${libs.versions.javafx.get()}:$fxClassifier")
-                implementation("org.openjfx:javafx-swing:${libs.versions.javafx.get()}:$fxClassifier")
-                implementation("org.openjfx:javafx-graphics:${libs.versions.javafx.get()}:$fxClassifier")
+                implementation("${libs.javafx.base.get().module}:${libs.versions.javafx.get()}:$fxClassifier")
+                implementation("${libs.javafx.media.get().module}:${libs.versions.javafx.get()}:$fxClassifier")
+                implementation("${libs.javafx.swing.get().module}:${libs.versions.javafx.get()}:$fxClassifier")
+                implementation("${libs.javafx.graphics.get().module}:${libs.versions.javafx.get()}:$fxClassifier")
             }
         }
 //        iosMain {

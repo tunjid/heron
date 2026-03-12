@@ -176,6 +176,7 @@ tunjid-treenav-compose-threepane = { group = "com.tunjid.treenav", name = "compo
 tunjid-treenav-core = { group = "com.tunjid.treenav", name = "treenav", version.ref = "tunjid-tree-nav" }
 tunjid-treenav-strings = { group = "com.tunjid.treenav", name = "strings", version.ref = "tunjid-tree-nav" }
 javafx-base = { group = "org.openjfx", name = "javafx-base", version.ref = "javafx" }
+javafx-graphics = { group = "org.openjfx", name = "javafx-graphics", version.ref = "javafx" }
 javafx-media = { group = "org.openjfx", name = "javafx-media", version.ref = "javafx" }
 javafx-swing = { group = "org.openjfx", name = "javafx-swing", version.ref = "javafx" }
 

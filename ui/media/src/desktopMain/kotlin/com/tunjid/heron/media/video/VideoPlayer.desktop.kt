@@ -18,12 +18,13 @@ package com.tunjid.heron.media.video
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.IntSize
 import javafx.application.Platform
 import javafx.embed.swing.JFXPanel
@@ -79,8 +80,14 @@ private fun JavaFxVideoSurface(
     modifier: Modifier,
     state: JavaFxPlayerState,
 ) {
+    val surfaceColor = MaterialTheme.colorScheme
+        .surface
+    val surfaceColorHex = surfaceColor
+        .toArgb()
+        .toHexString()
+
     SwingPanel(
-        background = Color.Black,
+        background = surfaceColor,
         modifier = modifier,
         factory = {
             JFXPanel().also { jfxPanel ->
@@ -91,7 +98,9 @@ private fun JavaFxVideoSurface(
                         mediaPlayer = state.mediaPlayer
                     }
                     state.mediaView = mediaView
-                    val root = StackPane(mediaView)
+                    val root = StackPane(mediaView).apply {
+                        style = "-fx-background-color: #$surfaceColorHex;"
+                    }
                     jfxPanel.scene = Scene(root)
                 }
             }
