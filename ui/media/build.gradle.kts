@@ -70,7 +70,16 @@ kotlin {
         desktopMain {
             dependencies {
                 implementation(libs.ktor.client.java)
-                implementation(libs.vlc.java)
+                val fxClassifier = when {
+                    org.gradle.internal.os.OperatingSystem.current().isMacOsX ->
+                        if (System.getProperty("os.arch") == "aarch64") "mac-aarch64" else "mac"
+                    org.gradle.internal.os.OperatingSystem.current().isWindows -> "win"
+                    else -> "linux"
+                }
+                implementation("org.openjfx:javafx-base:${libs.versions.javafx.get()}:$fxClassifier")
+                implementation("org.openjfx:javafx-media:${libs.versions.javafx.get()}:$fxClassifier")
+                implementation("org.openjfx:javafx-swing:${libs.versions.javafx.get()}:$fxClassifier")
+                implementation("org.openjfx:javafx-graphics:${libs.versions.javafx.get()}:$fxClassifier")
             }
         }
 //        iosMain {

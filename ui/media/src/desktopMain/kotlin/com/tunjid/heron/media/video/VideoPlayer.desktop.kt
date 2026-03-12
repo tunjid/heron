@@ -25,8 +25,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.IntSize
-import java.awt.Canvas
-import java.awt.Color as AwtColor
+import javafx.application.Platform
+import javafx.embed.swing.JFXPanel
+import javafx.scene.Scene
+import javafx.scene.layout.StackPane
+import javafx.scene.media.MediaView
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 
@@ -35,11 +38,11 @@ actual fun VideoPlayer(
     modifier: Modifier,
     state: VideoPlayerState,
 ) {
-    check(state is VlcPlayerState)
+    check(state is JavaFxPlayerState)
 
     Box(modifier = modifier) {
         if (state.canShowVideo) {
-            VideoSurface(
+            JavaFxVideoSurface(
                 modifier = Modifier.fillMaxSize(),
                 state = state,
             )
@@ -72,32 +75,46 @@ actual fun VideoPlayer(
 }
 
 @Composable
-private fun VideoSurface(
+private fun JavaFxVideoSurface(
     modifier: Modifier,
-    state: VlcPlayerState,
+    state: JavaFxPlayerState,
 ) {
     SwingPanel(
         background = Color.Black,
         modifier = modifier,
         factory = {
-            Canvas().apply {
-                background = AwtColor.BLACK
+            JFXPanel().also { jfxPanel ->
+                Platform.runLater {
+                    jfxPanel.isEnabled = false
+                    val mediaView = MediaView().apply {
+                        isPreserveRatio = true
+                        mediaPlayer = state.mediaPlayer
+                    }
+                    state.mediaView = mediaView
+                    val root = StackPane(mediaView)
+                    jfxPanel.scene = Scene(root)
+                }
             }
         },
-        update = { canvas ->
-            state.setVideoSurface(canvas)
+        update = { jfxPanel ->
+            Platform.runLater {
+                val mediaView = state.mediaView ?: return@runLater
+                mediaView.mediaPlayer = state.mediaPlayer
+                mediaView.fitWidth = jfxPanel.width.toDouble()
+                mediaView.fitHeight = jfxPanel.height.toDouble()
+            }
         },
     )
 }
 
-private val VlcPlayerState.canShowVideo
+private val JavaFxPlayerState.canShowVideo
     get() = when (status) {
         is PlayerStatus.Idle -> false
         is PlayerStatus.Play -> true
         is PlayerStatus.Pause -> true
     }
 
-private val VlcPlayerState.canShowStill
+private val JavaFxPlayerState.canShowStill
     get() = videoSize == IntSize.Zero ||
         !hasRenderedFirstFrame ||
         when (status) {
