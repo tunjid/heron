@@ -27,18 +27,23 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.BottomAppBarDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -181,30 +186,43 @@ internal fun AppState.PaneNavigationRail(
     modifier: Modifier = Modifier,
     onNavItemReselected: () -> Boolean,
 ) {
-    NavigationRail(
-        modifier = modifier,
+    Box(
+        modifier = modifier
+            .fillMaxSize(),
     ) {
-        navItems.forEach { item ->
-            NavigationRailItem(
-                selected = item.selected,
-                icon = {
-                    BadgedBox(
-                        badge = {
-                            Badge(item.badgeCount)
-                        },
-                        content = {
-                            Icon(
-                                imageVector = item.stack.icon,
-                                contentDescription = stringResource(item.stack.titleRes),
+        ElevatedCard(
+            modifier = Modifier
+                .align(Alignment.Center),
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                navItems.forEach { item ->
+                    NavigationRailItem(
+                        selected = item.selected,
+                        icon = {
+                            BadgedBox(
+                                badge = {
+                                    Badge(item.badgeCount)
+                                },
+                                content = {
+                                    Icon(
+                                        imageVector = item.stack.icon,
+                                        contentDescription = stringResource(item.stack.titleRes),
+                                    )
+                                },
                             )
                         },
+                        onClick = {
+                            if (item.selected && onNavItemReselected()) return@NavigationRailItem
+                            onNavItemSelected(item)
+                        },
                     )
-                },
-                onClick = {
-                    if (item.selected && onNavItemReselected()) return@NavigationRailItem
-                    onNavItemSelected(item)
-                },
-            )
+                }
+            }
         }
     }
 }

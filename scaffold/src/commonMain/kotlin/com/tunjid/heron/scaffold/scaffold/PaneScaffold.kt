@@ -23,8 +23,9 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -233,9 +234,6 @@ fun PaneScaffoldState.PaneScaffold(
                         AppState.DismissBehavior.Gesture.ScaleToPop,
                         -> Modifier
                     }
-                        .padding(
-                            horizontal = if (hasSiblings) 8.dp else 0.dp,
-                        )
                 },
                 containerColor = containerColor,
                 topBar = {
@@ -302,6 +300,7 @@ private inline fun PaneNavigationRailScaffold(
     Row(
         modifier = modifier,
         content = {
+            Spacer(Modifier.width(8.dp))
             Box(
                 modifier = Modifier
                     .widthIn(max = 80.dp)

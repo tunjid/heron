@@ -34,6 +34,11 @@ fun main() = application {
         ),
         title = "heron",
     ) {
+        window.rootPane.apply {
+            rootPane.putClientProperty("apple.awt.fullWindowContent", true)
+            rootPane.putClientProperty("apple.awt.transparentTitleBar", true)
+            rootPane.putClientProperty("apple.awt.windowTitleVisible", false)
+        }
         App(
             appState = remember { createAppState() },
             modifier = Modifier.fillMaxSize(),
