@@ -33,7 +33,7 @@ internal fun org.gradle.api.Project.configureKotlinJvm() {
         targetCompatibility = ProjectJavaVersion
 
         toolchain {
-            languageVersion.set(JavaLanguageVersion.of(17))
+            languageVersion.set(JavaLanguageVersion.of(21))
         }
     }
     configureKotlin()
@@ -46,7 +46,7 @@ private fun org.gradle.api.Project.configureKotlin() {
     // Use withType to workaround https://youtrack.jetbrains.com/issue/KT-55947
     tasks.withType<KotlinCompile>().configureEach {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
+            jvmTarget.set(JvmTarget.JVM_21)
             freeCompilerArgs.set(
                 freeCompilerArgs.get() + listOf(
                     "-opt-in=androidx.compose.animation.ExperimentalAnimationApi",
@@ -60,4 +60,4 @@ private fun org.gradle.api.Project.configureKotlin() {
     }
 }
 
-internal val ProjectJavaVersion = JavaVersion.VERSION_17
+internal val ProjectJavaVersion = JavaVersion.VERSION_21
