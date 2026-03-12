@@ -23,49 +23,43 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import javafx.application.Platform
+import javafx.embed.swing.JFXPanel
+import javafx.scene.media.Media
+import javafx.scene.media.MediaPlayer
+import javafx.util.Duration
+import javax.swing.SwingUtilities
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import uk.co.caprica.vlcj.factory.MediaPlayerFactory
-import uk.co.caprica.vlcj.player.base.MediaPlayer
-import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter
 
 @Stable
-class VlcPlayerController(
+class JavaFxPlayerController(
     scope: CoroutineScope,
 ) : VideoPlayerController {
 
     override var isMuted: Boolean by mutableStateOf(true)
 
-    private val idsToStates = mutableStateMapOf<String, VlcPlayerState>()
+    private val idsToStates = mutableStateMapOf<String, JavaFxPlayerState>()
     private var activeVideoId: String by mutableStateOf("")
-
-    private val factory = MediaPlayerFactory()
-    private val player = factory.mediaPlayers().newEmbeddedMediaPlayer()
+    private val mediaPlayers = mutableMapOf<String, MediaPlayer>()
 
     init {
+        System.setProperty("compose.interop.blending", "true")
+
+        // Initialize JavaFX toolkit and prevent implicit exit
+        SwingUtilities.invokeLater {
+            JFXPanel() // Force toolkit init
+            Platform.setImplicitExit(false)
+        }
+
         snapshotFlow { isMuted }
-            .onEach { player.audio().setMute(it) }
-            .launchIn(scope)
-
-        snapshotFlow { idsToStates[activeVideoId]?.status }
-            .map { it == null || it is PlayerStatus.Idle }
-            .filter { it }
-            .onEach { player.controls().pause() }
-            .launchIn(scope)
-
-        player.events().addMediaPlayerEventListener(object : MediaPlayerEventAdapter() {
-            override fun finished(mediaPlayer: MediaPlayer?) {
-                val activeState = idsToStates[activeVideoId] ?: return
-                if (activeState.isLooping) {
-                    player.submit {
-                        player.controls().play()
-                    }
+            .onEach { muted ->
+                Platform.runLater {
+                    mediaPlayers[activeVideoId]?.isMute = muted
                 }
             }
-        })
+            .launchIn(scope)
     }
 
     override fun registerVideo(
@@ -79,17 +73,13 @@ class VlcPlayerController(
 
         trim()
 
-        val videoPlayerState = VlcPlayerState(
-            factory = factory,
+        val videoPlayerState = JavaFxPlayerState(
             videoUrl = videoUrl,
             videoId = videoId,
             thumbnail = thumbnail,
             autoplay = autoplay,
             isLooping = isLooping,
             isMuted = derivedStateOf { isMuted },
-            mediaPlayerState = derivedStateOf {
-                player.takeIf { isCurrentMediaItem(videoId) }
-            },
         )
 
         idsToStates[videoId] = videoPlayerState
@@ -105,31 +95,31 @@ class VlcPlayerController(
 
         setActiveVideo(playerIdToPlay)
 
-        val alreadyPlaying = stateToPlay.status is PlayerStatus.Play.Confirmed
+        Platform.runLater {
+            val player = getOrCreatePlayer(stateToPlay)
+            val alreadyPlaying = stateToPlay.status is PlayerStatus.Play.Confirmed
 
-        // Resume if paused and same video
-        if (stateToPlay.status is PlayerStatus.Pause && seekToMs == null && isCurrentMediaItem(playerIdToPlay)) {
-            player.controls().play()
-            return
-        }
+            // Resume if paused and same video
+            if (stateToPlay.status is PlayerStatus.Pause && seekToMs == null) {
+                player.play()
+                return@runLater
+            }
 
-        // Already playing and not seeking, do nothing
-        if (alreadyPlaying && seekToMs == null && isCurrentMediaItem(playerIdToPlay)) return
+            // Already playing and not seeking
+            if (alreadyPlaying && seekToMs == null) return@runLater
 
-        // If we are just seeking in the same video
-        if (alreadyPlaying && seekToMs != null && isCurrentMediaItem(playerIdToPlay)) {
-            player.controls().setTime(seekToMs)
-            return
-        }
+            // Seeking in same video
+            if (alreadyPlaying && seekToMs != null) {
+                player.seek(Duration.millis(seekToMs.toDouble()))
+                return@runLater
+            }
 
-        // Otherwise load and play (or restart)
-        player.media().play(stateToPlay.videoUrl)
-
-        if (seekToMs != null) {
-            player.controls().setTime(seekToMs)
-        } else {
-            val pos = stateToPlay.seekPositionOnPlayMs(null)
-            if (pos > 0) player.controls().setTime(pos)
+            // Start playback
+            val position = stateToPlay.seekPositionOnPlayMs(seekToMs)
+            if (position > 0) {
+                player.seek(Duration.millis(position.toDouble()))
+            }
+            player.play()
         }
     }
 
@@ -137,16 +127,24 @@ class VlcPlayerController(
         activeVideoId.let(idsToStates::get)?.apply {
             status = PlayerStatus.Pause.Requested
         }
-        player.controls().pause()
+        Platform.runLater {
+            mediaPlayers[activeVideoId]?.pause()
+        }
     }
 
     override fun seekTo(position: Long) {
-        player.controls().setTime(position)
+        Platform.runLater {
+            mediaPlayers[activeVideoId]?.seek(Duration.millis(position.toDouble()))
+        }
     }
 
     override fun getVideoStateById(videoId: String): VideoPlayerState? = idsToStates[videoId]
 
     override fun retry(videoId: String) {
+        // Dispose existing player so it gets recreated
+        Platform.runLater {
+            mediaPlayers.remove(videoId)?.dispose()
+        }
         setActiveVideo(videoId)
         play(videoId)
     }
@@ -155,10 +153,11 @@ class VlcPlayerController(
         idsToStates
             .filterNot { retainedVideoIds.contains(it.key) }
             .forEach { (id, videoState) ->
-                if (activeVideoId == id) {
-                    player.controls().stop()
+                Platform.runLater {
+                    val player = mediaPlayers.remove(id)
+                    player?.unbind(videoState)
+                    player?.dispose()
                 }
-                player.unbind(videoState)
                 idsToStates.remove(id)
             }
         return retainedVideoIds - idsToStates.keys
@@ -171,15 +170,42 @@ class VlcPlayerController(
 
         if (previousId == activeVideoId) return
 
-        idsToStates[previousId]?.let { player.unbind(it) }
-        player.bind(activeState)
+        idsToStates[previousId]?.let { previousState ->
+            Platform.runLater {
+                mediaPlayers[previousId]?.let { player ->
+                    player.pause()
+                    player.unbind(previousState)
+                }
+            }
+        }
+
+        Platform.runLater {
+            mediaPlayers[videoId]?.bind(activeState)
+        }
     }
 
-    private fun isCurrentMediaItem(videoId: String) = activeVideoId == videoId
+    private fun getOrCreatePlayer(state: JavaFxPlayerState): MediaPlayer {
+        mediaPlayers[state.videoId]?.let { existing ->
+            if (existing != state.mediaPlayer) {
+                existing.bind(state)
+            }
+            return existing
+        }
+
+        val media = Media(state.videoUrl)
+        val player = MediaPlayer(media).apply {
+            isMute = this@JavaFxPlayerController.isMuted
+        }
+        mediaPlayers[state.videoId] = player
+        player.bind(state)
+        return player
+    }
 
     internal fun teardown() {
-        player.release()
-        factory.release()
+        Platform.runLater {
+            mediaPlayers.values.forEach { it.dispose() }
+            mediaPlayers.clear()
+        }
     }
 
     private fun trim() {
@@ -189,7 +215,12 @@ class VlcPlayerController(
             state?.status is PlayerStatus.Idle.Evicted
         }
             .take(size - MaxVideoStates)
-            .forEach(idsToStates::remove)
+            .forEach { id ->
+                Platform.runLater {
+                    mediaPlayers.remove(id)?.dispose()
+                }
+                idsToStates.remove(id)
+            }
     }
 }
 
