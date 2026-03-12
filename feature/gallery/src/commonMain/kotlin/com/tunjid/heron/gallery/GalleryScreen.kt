@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.VerticalPager
@@ -107,6 +106,7 @@ import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememb
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.Indicator
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.platformStatusBars
 import com.tunjid.heron.ui.text.links
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlin.math.absoluteValue
@@ -491,7 +491,7 @@ private fun HorizontalItems(
             val viewedProfileId = item.post.author.did
             MediaPoster(
                 modifier = Modifier
-                    .statusBarsPadding()
+                    .windowInsetsPadding(WindowInsets.platformStatusBars)
                     .padding(
                         horizontal = 16.dp,
                         vertical = 20.dp,
