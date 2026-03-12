@@ -115,14 +115,11 @@ class JavaFxPlayerController(
             }
 
             // Start playback
-            val pos = stateToPlay.seekPositionOnPlayMs(seekToMs)
-            if (pos > 0) {
-                player.startTime = Duration.millis(pos.toDouble())
+            val position = stateToPlay.seekPositionOnPlayMs(seekToMs)
+            if (position > 0) {
+                player.seek(Duration.millis(position.toDouble()))
             }
             player.play()
-            if (pos > 0) {
-                player.seek(Duration.millis(pos.toDouble()))
-            }
         }
     }
 
