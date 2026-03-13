@@ -227,11 +227,7 @@ fun PaneScaffoldState.PaneScaffold(
                         AppState.DismissBehavior.Gesture.ScaleToPop,
                         -> Modifier
                     }
-                }.constrainedSizePlacement(
-                    orientation = Orientation.Horizontal,
-                    minSize = splitPaneState.minPaneWidth,
-                    atStart = paneState.pane == ThreePane.Secondary,
-                ),
+                },
                 containerColor = containerColor,
                 topBar = {
                     topBar()
@@ -246,7 +242,16 @@ fun PaneScaffoldState.PaneScaffold(
                     snackBarHost()
                 },
                 content = { paddingValues ->
-                    content(paddingValues)
+                    Box(
+                        modifier = Modifier
+                            .constrainedSizePlacement(
+                                orientation = Orientation.Horizontal,
+                                minSize = splitPaneState.minPaneWidth,
+                                atStart = paneState.pane == ThreePane.Secondary,
+                            ),
+                    ) {
+                        content(paddingValues)
+                    }
                 },
             )
         },
