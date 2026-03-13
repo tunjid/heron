@@ -23,9 +23,7 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -212,12 +210,7 @@ fun PaneScaffoldState.PaneScaffold(
     content: @Composable PaneScaffoldState.(PaddingValues) -> Unit,
 ) {
     PaneNavigationRailScaffold(
-        modifier = modifier
-            .constrainedSizePlacement(
-                orientation = Orientation.Horizontal,
-                minSize = splitPaneState.minPaneWidth,
-                atStart = paneState.pane == ThreePane.Secondary,
-            ),
+        modifier = modifier,
         navigationRail = {
             navigationRail()
         },
@@ -234,7 +227,11 @@ fun PaneScaffoldState.PaneScaffold(
                         AppState.DismissBehavior.Gesture.ScaleToPop,
                         -> Modifier
                     }
-                },
+                }.constrainedSizePlacement(
+                    orientation = Orientation.Horizontal,
+                    minSize = splitPaneState.minPaneWidth,
+                    atStart = paneState.pane == ThreePane.Secondary,
+                ),
                 containerColor = containerColor,
                 topBar = {
                     topBar()
