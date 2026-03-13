@@ -36,7 +36,7 @@ internal fun interface EndOfPlaybackCallback : Callback {
 /**
  * JNA direct mapping to the AVFoundationVideoPlayer library (AVFoundation on macOS).
  */
-internal object SharedVideoPlayer {
+internal object AVFoundationVideoPlayer {
     init {
         Native.register("AVFoundationVideoPlayer")
     }

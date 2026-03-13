@@ -93,7 +93,7 @@ internal class AVFoundationPlayerState(
             !isLooping
 
     // Native player pointer — initialized eagerly since JNA calls are synchronous
-    internal var playerPointer: Pointer? = SharedVideoPlayer.createVideoPlayer()
+    internal var playerPointer: Pointer? = AVFoundationVideoPlayer.createVideoPlayer()
     internal var mediaOpenCalled: Boolean = false
 
     // Frame rendering state
@@ -134,7 +134,7 @@ internal class AVFoundationPlayerState(
     }
 
     private val endOfPlaybackCallback = EndOfPlaybackCallback { _ ->
-        if (isLooping) SharedVideoPlayer.seekTo(
+        if (isLooping) AVFoundationVideoPlayer.seekTo(
             context = playerPointer ?: return@EndOfPlaybackCallback,
             time = 0.0,
         )
@@ -148,7 +148,7 @@ internal class AVFoundationPlayerState(
 
     internal fun openMedia(uri: String) {
         val ptr = playerPointer ?: return
-        SharedVideoPlayer.openUri(
+        AVFoundationVideoPlayer.openUri(
             context = ptr,
             uri = uri,
         )
@@ -157,9 +157,9 @@ internal class AVFoundationPlayerState(
 
     internal fun updateMetadata() {
         val ptr = playerPointer ?: return
-        val width = SharedVideoPlayer.getFrameWidth(ptr)
-        val height = SharedVideoPlayer.getFrameHeight(ptr)
-        val duration = SharedVideoPlayer.getVideoDuration(ptr)
+        val width = AVFoundationVideoPlayer.getFrameWidth(ptr)
+        val height = AVFoundationVideoPlayer.getFrameHeight(ptr)
+        val duration = AVFoundationVideoPlayer.getVideoDuration(ptr)
 
         if (duration > 0) totalDuration = duration.secondsToMs()
         if (width > 0 && height > 0) videoSize = IntSize(
@@ -173,23 +173,23 @@ internal class AVFoundationPlayerState(
      */
     internal fun registerCallbacks() {
         val ptr = playerPointer ?: return
-        SharedVideoPlayer.registerStatusCallback(
+        AVFoundationVideoPlayer.registerStatusCallback(
             context = ptr,
             callbackCtx = null,
             callback = statusCallback,
         )
-        SharedVideoPlayer.registerTimeCallback(
+        AVFoundationVideoPlayer.registerTimeCallback(
             context = ptr,
             callbackCtx = null,
             callback = timeCallback,
             interval = TIME_OBSERVER_INTERVAL_SECONDS,
         )
-        SharedVideoPlayer.registerFrameCallback(
+        AVFoundationVideoPlayer.registerFrameCallback(
             context = ptr,
             callbackCtx = null,
             callback = frameCallback,
         )
-        SharedVideoPlayer.registerEndOfPlaybackCallback(
+        AVFoundationVideoPlayer.registerEndOfPlaybackCallback(
             context = ptr,
             callbackCtx = null,
             callback = endOfPlaybackCallback,
@@ -201,25 +201,25 @@ internal class AVFoundationPlayerState(
      */
     internal fun unregisterCallbacks() {
         val ptr = playerPointer ?: return
-        SharedVideoPlayer.unregisterStatusCallback(ptr)
-        SharedVideoPlayer.unregisterTimeCallback(ptr)
-        SharedVideoPlayer.unregisterFrameCallback(ptr)
-        SharedVideoPlayer.unregisterEndOfPlaybackCallback(ptr)
+        AVFoundationVideoPlayer.unregisterStatusCallback(ptr)
+        AVFoundationVideoPlayer.unregisterTimeCallback(ptr)
+        AVFoundationVideoPlayer.unregisterFrameCallback(ptr)
+        AVFoundationVideoPlayer.unregisterEndOfPlaybackCallback(ptr)
     }
 
     internal fun playNative() {
         val ptr = playerPointer ?: return
-        SharedVideoPlayer.playVideo(ptr)
+        AVFoundationVideoPlayer.playVideo(ptr)
     }
 
     internal fun pauseNative() {
         val ptr = playerPointer ?: return
-        SharedVideoPlayer.pauseVideo(ptr)
+        AVFoundationVideoPlayer.pauseVideo(ptr)
     }
 
     internal fun seekToNative(positionMs: Long) {
         val ptr = playerPointer ?: return
-        SharedVideoPlayer.seekTo(
+        AVFoundationVideoPlayer.seekTo(
             context = ptr,
             time = positionMs.msToSeconds(),
         )
@@ -227,7 +227,7 @@ internal class AVFoundationPlayerState(
 
     internal fun applyVolume() {
         val ptr = playerPointer ?: return
-        SharedVideoPlayer.setVolume(
+        AVFoundationVideoPlayer.setVolume(
             context = ptr,
             volume = if (isMuted) 0f else 1f,
         )
@@ -236,11 +236,11 @@ internal class AVFoundationPlayerState(
     private suspend fun updateFrameAsync() {
         val ptr = playerPointer ?: return
 
-        val width = SharedVideoPlayer.getFrameWidth(ptr)
-        val height = SharedVideoPlayer.getFrameHeight(ptr)
+        val width = AVFoundationVideoPlayer.getFrameWidth(ptr)
+        val height = AVFoundationVideoPlayer.getFrameHeight(ptr)
         if (width <= 0 || height <= 0) return
 
-        val framePtr = SharedVideoPlayer.getLatestFrame(ptr) ?: return
+        val framePtr = AVFoundationVideoPlayer.getLatestFrame(ptr) ?: return
 
         val pixelCount = width * height
         val frameSizeBytes = pixelCount.toLong() * 4L
@@ -301,7 +301,7 @@ internal class AVFoundationPlayerState(
      * Re-creates the native player after [dispose]. Used by retry flows.
      */
     internal fun reinitialize() {
-        playerPointer = SharedVideoPlayer.createVideoPlayer()
+        playerPointer = AVFoundationVideoPlayer.createVideoPlayer()
         mediaOpenCalled = false
         applyVolume()
         registerCallbacks()
@@ -322,7 +322,7 @@ internal class AVFoundationPlayerState(
         skiaBitmapHeight = 0
         nextSkiaBitmapA = true
 
-        pointerToDispose?.let(SharedVideoPlayer::disposeVideoPlayer)
+        pointerToDispose?.let(AVFoundationVideoPlayer::disposeVideoPlayer)
 
         currentFrame = null
     }
