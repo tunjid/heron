@@ -30,10 +30,15 @@ fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
         state = rememberWindowState(
-            size = DpSize(450.dp, 800.dp),
+            size = DpSize(1000.dp, 800.dp),
         ),
         title = "heron",
     ) {
+        window.rootPane.apply {
+            putClientProperty("apple.awt.fullWindowContent", true)
+            putClientProperty("apple.awt.transparentTitleBar", true)
+            putClientProperty("apple.awt.windowTitleVisible", false)
+        }
         App(
             appState = remember { createAppState() },
             modifier = Modifier.fillMaxSize(),

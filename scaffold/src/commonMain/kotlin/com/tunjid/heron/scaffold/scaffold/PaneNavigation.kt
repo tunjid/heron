@@ -21,35 +21,47 @@ import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.animateBounds
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.times
+import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.compose.Adaptation
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -181,30 +193,53 @@ internal fun AppState.PaneNavigationRail(
     modifier: Modifier = Modifier,
     onNavItemReselected: () -> Boolean,
 ) {
-    NavigationRail(
-        modifier = modifier,
+    Box(
+        modifier = modifier
+            .padding(start = 8.dp)
+            .fillMaxSize(),
     ) {
-        navItems.forEach { item ->
-            NavigationRailItem(
-                selected = item.selected,
-                icon = {
-                    BadgedBox(
-                        badge = {
-                            Badge(item.badgeCount)
-                        },
-                        content = {
-                            Icon(
-                                imageVector = item.stack.icon,
-                                contentDescription = stringResource(item.stack.titleRes),
-                            )
-                        },
-                    )
-                },
-                onClick = {
-                    if (item.selected && onNavItemReselected()) return@NavigationRailItem
-                    onNavItemSelected(item)
-                },
-            )
+        val color by animateColorAsState(
+            if (LocalSplitPaneState.current.shouldElevateNavRail()) MaterialTheme.colorScheme.surfaceContainerHigh
+            else MaterialTheme.colorScheme.surface,
+        )
+        Column(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .constrainedSizePlacement(
+                    orientation = Orientation.Horizontal,
+                    minSize = NavRailWidth,
+                    atStart = true,
+                )
+                .background(
+                    color = color,
+                    shape = NavRailShape,
+                )
+                .padding(vertical = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            navItems.forEach { item ->
+                NavigationRailItem(
+                    selected = item.selected,
+                    icon = {
+                        BadgedBox(
+                            badge = {
+                                Badge(item.badgeCount)
+                            },
+                            content = {
+                                Icon(
+                                    imageVector = item.stack.icon,
+                                    contentDescription = stringResource(item.stack.titleRes),
+                                )
+                            },
+                        )
+                    },
+                    onClick = {
+                        if (item.selected && onNavItemReselected()) return@NavigationRailItem
+                        onNavItemSelected(item)
+                    },
+                )
+            }
         }
     }
 }
@@ -251,11 +286,22 @@ fun navigationBarShape(
     )
 }
 
+@Composable
+private fun SplitPaneState.shouldElevateNavRail(): Boolean = remember(this) {
+    derivedStateOf {
+        ((splitLayoutState.weightAt(0) * splitLayoutState.size) - NavRailWidth) < minPaneWidth
+    }
+}.value
+
 private data object NavigationBarSharedElementKey
 private data object NavigationRailSharedElementKey
 
 private val CompactCornerSize = 0.dp
 private val RegularCornerSize = 16.dp
+
+private val NavRailWidth = 72.dp
+
+private val NavRailShape = RoundedCornerShape(NavRailWidth)
 
 private const val MaxBadgeCount = 100L
 
