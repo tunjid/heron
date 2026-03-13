@@ -51,8 +51,6 @@ internal object SharedVideoPlayer {
 
     @JvmStatic external fun setVolume(context: Pointer?, volume: Float)
 
-    @JvmStatic external fun getVolume(context: Pointer?): Float
-
     @JvmStatic external fun getLatestFrame(context: Pointer?): Pointer?
 
     @JvmStatic external fun getFrameWidth(context: Pointer?): Int
@@ -60,8 +58,6 @@ internal object SharedVideoPlayer {
     @JvmStatic external fun getFrameHeight(context: Pointer?): Int
 
     @JvmStatic external fun getVideoDuration(context: Pointer?): Double
-
-    @JvmStatic external fun getCurrentTime(context: Pointer?): Double
 
     @JvmStatic external fun seekTo(context: Pointer?, time: Double)
 

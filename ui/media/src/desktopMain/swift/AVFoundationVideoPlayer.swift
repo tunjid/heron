@@ -64,20 +64,6 @@ class SharedVideoPlayer {
     private var isReadyForPlayback = false
     private var pendingPlay = false
 
-    // Two properties to store the left and right audio levels.
-    private var leftAudioLevel: Float = 0.0
-    private var rightAudioLevel: Float = 0.0
-
-    // Playback speed control (1.0 is normal speed)
-    private var playbackSpeed: Float = 1.0
-
-    // Metadata properties
-    private var videoTitle: String? = nil
-    private var videoBitrate: Int64 = 0
-    private var videoMimeType: String? = nil
-    private var audioChannels: Int = 0
-    private var audioSampleRate: Int = 0
-
     // HLS-specific properties
     private var isHLSStream: Bool = false
     private var availableBitrates: [Float] = []
@@ -98,6 +84,11 @@ class SharedVideoPlayer {
     // HLS Error tracking
     private var lastError: String? = nil
     private var errorCount: Int = 0
+
+    // Status code constants
+    private let STATUS_CODE_PAUSED: Int32 = 0
+    private let STATUS_CODE_PLAYING: Int32 = 1
+    private let STATUS_CODE_BUFFERING: Int32 = 2
 
     // JNA callback types and storage
     private var statusCallback: (@convention(c) (UnsafeRawPointer?, Int32) -> Void)?
@@ -249,15 +240,15 @@ class SharedVideoPlayer {
         switch status {
         case .paused:
             networkStatus = "Paused"
-            statusCallback?(callbackContext, 0)
+            statusCallback?(callbackContext, STATUS_CODE_PAUSED)
         case .waitingToPlayAtSpecifiedRate:
             networkStatus = "Buffering"
             isBuffering = true
-            statusCallback?(callbackContext, 2)
+            statusCallback?(callbackContext, STATUS_CODE_BUFFERING)
         case .playing:
             networkStatus = "Playing"
             isBuffering = false
-            statusCallback?(callbackContext, 1)
+            statusCallback?(callbackContext, STATUS_CODE_PLAYING)
         @unknown default:
             networkStatus = "Unknown"
         }
@@ -323,13 +314,8 @@ class SharedVideoPlayer {
 
     /// Handles playback stalls
     @objc private func handlePlaybackStall(_ notification: Notification) {
-        print("HLS: Playback stalled, attempting to recover...")
+        print("HLS: Playback stalled")
         isBuffering = true
-
-        // Attempt to recover from stall
-        if let player = player {
-            player.play()
-        }
     }
 
     /// Extracts available bitrates from HLS variants
@@ -355,297 +341,6 @@ class SharedVideoPlayer {
                     }
                 } catch {
                     print("Error loading HLS variants: \(error.localizedDescription)")
-                }
-            }
-        }
-    }
-
-    /// Sets the preferred maximum bitrate for HLS streams
-    func setPreferredMaxBitrate(_ bitrate: Double) {
-        preferredPeakBitRate = bitrate
-        player?.currentItem?.preferredPeakBitRate = bitrate
-        print("HLS: Set preferred max bitrate to \(bitrate) bps")
-    }
-
-    /// Forces a specific bitrate (if available)
-    func forceQuality(bitrate: Float) {
-        guard isHLSStream else { return }
-
-        // Find the closest available bitrate
-        let closest = availableBitrates.min(by: { abs($0 - bitrate) < abs($1 - bitrate) })
-
-        if let targetBitrate = closest {
-            setPreferredMaxBitrate(Double(targetBitrate))
-        }
-    }
-
-    /// Detects the MIME type of a file by reading its magic bytes (file signature)
-    private func detectMimeType(at url: URL) -> String? {
-        guard url.isFileURL else { return nil }
-
-        do {
-            let fileHandle = try FileHandle(forReadingFrom: url)
-            defer { try? fileHandle.close() }
-
-            // Read the first 12 bytes to identify the file format
-            guard let data = try fileHandle.read(upToCount: 12), data.count >= 4 else {
-                return nil
-            }
-
-            let bytes = [UInt8](data)
-
-            // MP4/MOV files start with size and 'ftyp' box
-            if data.count >= 8 {
-                let fourcc = String(bytes: bytes[4..<8], encoding: .ascii) ?? ""
-                if fourcc == "ftyp" {
-                    // Check the brand to differentiate between MP4 and MOV
-                    if data.count >= 12 {
-                        let brand = String(bytes: bytes[8..<12], encoding: .ascii) ?? ""
-                        if brand.contains("qt") {
-                            return "video/quicktime"
-                        }
-                    }
-                    return "video/mp4"
-                }
-            }
-
-            // WebM/Matroska files start with 0x1A 0x45 0xDF 0xA3
-            if bytes.count >= 4 && bytes[0] == 0x1A && bytes[1] == 0x45 && bytes[2] == 0xDF && bytes[3] == 0xA3 {
-                return "video/webm"
-            }
-
-            // FLV files start with 'FLV'
-            if bytes.count >= 3 && bytes[0] == 0x46 && bytes[1] == 0x4C && bytes[2] == 0x56 {
-                return "video/x-flv"
-            }
-
-            // AVI files start with 'RIFF' ... 'AVI '
-            if bytes.count >= 12 && bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46 &&
-               bytes[8] == 0x41 && bytes[9] == 0x56 && bytes[10] == 0x49 && bytes[11] == 0x20 {
-                return "video/x-msvideo"
-            }
-
-            // MPEG-TS files start with 0x47 (sync byte)
-            if bytes[0] == 0x47 {
-                return "video/mp2t"
-            }
-
-            return nil
-        } catch {
-            print("Error detecting MIME type: \(error.localizedDescription)")
-            return nil
-        }
-    }
-
-
-    /// Extracts metadata from the asset
-    private func extractMetadata(from asset: AVAsset) {
-        // Reset metadata values
-        videoTitle = nil
-        videoBitrate = 0
-        videoMimeType = nil
-        audioChannels = 0
-        audioSampleRate = 0
-
-        // Extract title from metadata
-        if #available(macOS 13.0, *) {
-            Task {
-                do {
-                    let commonMetadata = try await asset.load(.commonMetadata)
-                    if let titleItem = AVMetadataItem.metadataItems(from: commonMetadata, filteredByIdentifier: .commonIdentifierTitle).first {
-                        let titleValue = try await titleItem.load(.value)
-                        if let title = titleValue as? String {
-                            videoTitle = title
-                        }
-                    }
-                } catch {
-                    print("Error loading metadata: \(error.localizedDescription)")
-                }
-            }
-        } else {
-            // Fallback for older OS versions
-            let commonMetadata = asset.commonMetadata
-            if let titleItem = AVMetadataItem.metadataItems(from: commonMetadata, filteredByIdentifier: .commonIdentifierTitle).first,
-               let title = titleItem.value as? String {
-                videoTitle = title
-            }
-        }
-
-        // For HLS streams, extract variant information
-        if isHLSStream {
-            extractHLSVariants(from: asset)
-            videoMimeType = "application/x-mpegURL"
-        }
-
-        // Try to get bitrate from the asset directly
-        if let urlAsset = asset as? AVURLAsset, !isHLSStream {
-            // Try to get file size for non-HLS content
-            do {
-                let fileAttributes = try FileManager.default.attributesOfItem(atPath: urlAsset.url.path)
-                if let fileSize = fileAttributes[.size] as? NSNumber {
-                    let fileSizeInBytes = fileSize.int64Value
-
-                    // Get duration in seconds
-                    if #available(macOS 13.0, *) {
-                        Task {
-                            do {
-                                let duration = try await asset.load(.duration)
-                                let durationInSeconds = CMTimeGetSeconds(duration)
-
-                                if durationInSeconds > 0 {
-                                    // Calculate bitrate: (fileSize * 8) / durationInSeconds
-                                    let calculatedBitrate = Int64(Double(fileSizeInBytes * 8) / durationInSeconds)
-                                    videoBitrate = calculatedBitrate
-                                    print("Calculated bitrate from file size: \(calculatedBitrate) bits/s")
-                                }
-                            } catch {
-                                print("Error loading duration: \(error.localizedDescription)")
-                            }
-                        }
-                    } else {
-                        let durationInSeconds = CMTimeGetSeconds(asset.duration)
-
-                        if durationInSeconds > 0 {
-                            // Calculate bitrate: (fileSize * 8) / durationInSeconds
-                            let calculatedBitrate = Int64(Double(fileSizeInBytes * 8) / durationInSeconds)
-                            videoBitrate = calculatedBitrate
-                            print("Calculated bitrate from file size: \(calculatedBitrate) bits/s")
-                        }
-                    }
-                }
-            } catch {
-                // This is expected for HLS streams
-                if !isHLSStream {
-                    print("Error getting file attributes: \(error.localizedDescription)")
-                }
-            }
-        }
-
-        // Extract format information
-        if #available(macOS 13.0, *) {
-            Task {
-                do {
-                    // Load tracks asynchronously
-                    let videoTracks = try await asset.loadTracks(withMediaType: .video)
-                    let audioTracks = try await asset.loadTracks(withMediaType: .audio)
-
-                    // Extract video bitrate and format
-                    if let videoTrack = videoTracks.first {
-                        // Try to get estimated data rate directly from the track
-                        if #available(macOS 13.0, *) {
-                            do {
-                                let estimatedDataRate = try await videoTrack.load(.estimatedDataRate)
-                                if estimatedDataRate > 0 && !isHLSStream {
-                                    videoBitrate = Int64(estimatedDataRate)
-                                    print("Got bitrate from estimatedDataRate: \(videoBitrate) bits/s")
-                                }
-                            } catch {
-                                print("Error getting estimatedDataRate: \(error.localizedDescription)")
-                            }
-                        }
-
-                        // Get estimated data rate (bitrate) from format description
-                        let formatDescriptions = try await videoTrack.load(.formatDescriptions)
-                        if let formatDescription = formatDescriptions.first {
-                            let extensions = CMFormatDescriptionGetExtensions(formatDescription) as Dictionary?
-                            if let dict = extensions,
-                               let bitrate = dict[kCMFormatDescriptionExtension_VerbatimSampleDescription] as? Dictionary<String, Any>,
-                               let avgBitrate = bitrate["avg-bitrate"] as? Int64 {
-                                videoBitrate = avgBitrate
-                                print("Got bitrate from format description: \(videoBitrate) bits/s")
-                            }
-
-                            // Get MIME type for non-HLS content
-                            if !isHLSStream {
-                                let mediaSubType = CMFormatDescriptionGetMediaSubType(formatDescription)
-                                let mediaType = CMFormatDescriptionGetMediaType(formatDescription)
-
-                                if mediaType == kCMMediaType_Video {
-                                    switch mediaSubType {
-                                    case kCMVideoCodecType_H264:
-                                        videoMimeType = "video/h264"
-                                    case kCMVideoCodecType_HEVC:
-                                        videoMimeType = "video/hevc"
-                                    case kCMVideoCodecType_MPEG4Video:
-                                        videoMimeType = "video/mp4v-es"
-                                    case kCMVideoCodecType_MPEG2Video:
-                                        videoMimeType = "video/mpeg2"
-                                    default:
-                                        videoMimeType = "video/mp4"
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Extract audio channels and sample rate
-                    if let audioTrack = audioTracks.first {
-                        let formatDescriptions = try await audioTrack.load(.formatDescriptions)
-                        if let formatDescription = formatDescriptions.first  {
-                            let basicDescription = CMAudioFormatDescriptionGetStreamBasicDescription(formatDescription)
-                            if let basicDesc = basicDescription {
-                                audioChannels = Int(basicDesc.pointee.mChannelsPerFrame)
-                                audioSampleRate = Int(basicDesc.pointee.mSampleRate)
-                            }
-                        }
-                    }
-                } catch {
-                    print("Error extracting metadata: \(error.localizedDescription)")
-                }
-            }
-        } else {
-            // Fallback for older OS versions
-            // Extract video bitrate and format
-            if let videoTrack = asset.tracks(withMediaType: .video).first {
-                // Try to get estimated data rate directly from the track
-                let estimatedDataRate = videoTrack.estimatedDataRate
-                if estimatedDataRate > 0 && !isHLSStream {
-                    videoBitrate = Int64(estimatedDataRate)
-                    print("Got bitrate from estimatedDataRate (legacy): \(videoBitrate) bits/s")
-                }
-
-                if let formatDescriptions = videoTrack.formatDescriptions as? [CMFormatDescription],
-                   let formatDescription = formatDescriptions.first {
-                    let extensions = CMFormatDescriptionGetExtensions(formatDescription) as Dictionary?
-                    if let dict = extensions,
-                       let bitrate = dict[kCMFormatDescriptionExtension_VerbatimSampleDescription] as? Dictionary<String, Any>,
-                       let avgBitrate = bitrate["avg-bitrate"] as? Int64 {
-                        videoBitrate = avgBitrate
-                        print("Got bitrate from format description (legacy): \(videoBitrate) bits/s")
-                    }
-
-                    // Get MIME type for non-HLS content
-                    if !isHLSStream {
-                        let mediaSubType = CMFormatDescriptionGetMediaSubType(formatDescription)
-                        let mediaType = CMFormatDescriptionGetMediaType(formatDescription)
-
-                        if mediaType == kCMMediaType_Video {
-                            switch mediaSubType {
-                            case kCMVideoCodecType_H264:
-                                videoMimeType = "video/h264"
-                            case kCMVideoCodecType_HEVC:
-                                videoMimeType = "video/hevc"
-                            case kCMVideoCodecType_MPEG4Video:
-                                videoMimeType = "video/mp4v-es"
-                            case kCMVideoCodecType_MPEG2Video:
-                                videoMimeType = "video/mpeg2"
-                            default:
-                                videoMimeType = "video/mp4"
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Extract audio channels and sample rate
-            if let audioTrack = asset.tracks(withMediaType: .audio).first {
-                if let formatDescriptions = audioTrack.formatDescriptions as? [CMAudioFormatDescription],
-                   let formatDescription = formatDescriptions.first {
-                    let basicDescription = CMAudioFormatDescriptionGetStreamBasicDescription(formatDescription)
-                    if let basicDesc = basicDescription {
-                        audioChannels = Int(basicDesc.pointee.mChannelsPerFrame)
-                        audioSampleRate = Int(basicDesc.pointee.mSampleRate)
-                    }
                 }
             }
         }
@@ -735,15 +430,11 @@ class SharedVideoPlayer {
             print("Detected HLS stream: \(url)")
         }
 
-        let mimeType = detectMimeType(at:url)
-        var asset = AVURLAsset(url: url, options: mimeType != nil ? ["AVURLAssetOutOfBandMIMETypeKey": mimeType!] : nil)
+        var asset = AVURLAsset(url: url)
         // Configure asset for HLS if needed
         if isHLSStream {
             asset = configureHLSAsset(asset)
         }
-
-        // Extract metadata from the asset
-        extractMetadata(from: asset)
 
         // Detect video frame rate
         detectVideoFrameRate(from: asset)
@@ -866,8 +557,6 @@ class SharedVideoPlayer {
             player?.automaticallyWaitsToMinimizeStalling = true
         }
 
-        setupAudioTap(for: item)
-
         // Set initial volume
         player?.volume = volume
 
@@ -924,7 +613,7 @@ class SharedVideoPlayer {
     @objc private func captureFrame() {
         guard let output = videoOutput,
               let item = player?.currentItem,
-              isPlaying == true
+              isPlaying
         else { return }  // Skip capture if video is not playing
 
         let currentTime = item.currentTime()
@@ -974,153 +663,6 @@ class SharedVideoPlayer {
         }
     }
 
-    /// Retrieve the audio levels.
-    func getLeftAudioLevel() -> Float {
-        return leftAudioLevel
-    }
-
-    func getRightAudioLevel() -> Float {
-        return rightAudioLevel
-    }
-
-    // MARK: - Audio Tap Callbacks
-
-    /// Callback: Initialization of the tap.
-    private let tapInit: MTAudioProcessingTapInitCallback = { (tap, clientInfo, tapStorageOut) in
-        // Initialize tap storage (e.g. to store cumulative values if needed)
-        tapStorageOut.pointee = clientInfo
-    }
-
-    /// Callback: Finalize the tap.
-    private let tapFinalize: MTAudioProcessingTapFinalizeCallback = { (tap) in
-        // Cleanup if necessary.
-    }
-
-    /// Callback: Prepare the tap (called before processing).
-    private let tapPrepare: MTAudioProcessingTapPrepareCallback = {
-        (tap, maxFrames, processingFormat) in
-        // You can set up buffers or other resources here if needed.
-    }
-
-    /// Callback: Unprepare the tap (called after processing).
-    private let tapUnprepare: MTAudioProcessingTapUnprepareCallback = { (tap) in
-        // Release any resources allocated in prepare.
-    }
-
-    /// Callback: Process audio. This is where you calculate the audio levels.
-    private let tapProcess: MTAudioProcessingTapProcessCallback = {
-        (tap, numberFrames, flags, bufferListInOut, numberFramesOut, flagsOut) in
-
-        // Get the tap context (the SharedVideoPlayer instance)
-        let opaqueSelf = MTAudioProcessingTapGetStorage(tap)
-        let mySelf = Unmanaged<SharedVideoPlayer>.fromOpaque(opaqueSelf).takeUnretainedValue()
-
-        var localFrames = numberFrames
-
-        // Retrieve the audio buffers
-        let status = MTAudioProcessingTapGetSourceAudio(
-            tap, localFrames, bufferListInOut, flagsOut, nil, nil)
-        if status != noErr {
-            print("MTAudioProcessingTapGetSourceAudio failed with status: \(status)")
-            return
-        }
-
-        // Process the audio buffers to calculate left and right channel levels.
-        let bufferList = bufferListInOut.pointee
-
-        // Vérifier que les buffers sont valides
-        guard bufferList.mNumberBuffers > 0 else {
-            print("No audio buffers available")
-            return
-        }
-
-        // Vérifier le format audio (nous attendons du Float32)
-        guard let mBuffers = bufferList.mBuffers.mData,
-              bufferList.mBuffers.mDataByteSize > 0 else {
-            print("Invalid audio buffer data")
-            return
-        }
-
-        // Assuming interleaved float data (adjust if using a different format)
-        let data = mBuffers.bindMemory(
-            to: Float.self, capacity: Int(bufferList.mBuffers.mDataByteSize / 4))
-        let frameCount = Int(localFrames)
-        var leftSum: Float = 0.0
-        var rightSum: Float = 0.0
-        var leftCount = 0
-        var rightCount = 0
-
-        // Assuming stereo (2 channels)
-        if frameCount > 0 {
-            for frame in 0..<frameCount {
-                if frame * 2 + 1 < Int(bufferList.mBuffers.mDataByteSize / 4) {
-                    let leftSample = data[frame * 2]
-                    let rightSample = data[frame * 2 + 1]
-                    leftSum += abs(leftSample)
-                    rightSum += abs(rightSample)
-                    leftCount += 1
-                    rightCount += 1
-                }
-            }
-
-            // Calculate average level for each channel
-            let avgLeft = leftCount > 0 ? leftSum / Float(leftCount) : 0.0
-            let avgRight = rightCount > 0 ? rightSum / Float(rightCount) : 0.0
-
-            // Update the properties
-            mySelf.leftAudioLevel = avgLeft
-            mySelf.rightAudioLevel = avgRight
-        }
-
-        numberFramesOut.pointee = localFrames
-    }
-
-    // Dans la méthode setupAudioTap, ajoutez une vérification du format audio et un log
-    private func setupAudioTap(for playerItem: AVPlayerItem) {
-        guard let asset = playerItem.asset as? AVURLAsset else {
-            print("Asset is not an AVURLAsset")
-            return
-        }
-
-        // Load audio tracks asynchronously
-        asset.loadTracks(withMediaType: .audio) { tracks, error in
-            guard let audioTrack = tracks?.first, error == nil else {
-                print("No audio track found or error: \(error?.localizedDescription ?? "unknown")")
-                return
-            }
-
-            print("Audio track found, setting up tap")
-
-            // Create input parameters with a processing tap
-            let inputParams = AVMutableAudioMixInputParameters(track: audioTrack)
-
-            var callbacks = MTAudioProcessingTapCallbacks(
-                version: kMTAudioProcessingTapCallbacksVersion_0,
-                clientInfo: UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque()),
-                init: self.tapInit,
-                finalize: self.tapFinalize,
-                prepare: self.tapPrepare,
-                unprepare: self.tapUnprepare,
-                process: self.tapProcess
-            )
-
-            // Create the audio processing tap
-            var tapRef: MTAudioProcessingTap?
-            let status = MTAudioProcessingTapCreate(
-                kCFAllocatorDefault, &callbacks, kMTAudioProcessingTapCreationFlag_PostEffects, &tapRef
-            )
-            if status == noErr, let createdTap = tapRef {
-                print("Audio tap created successfully")
-                inputParams.audioTapProcessor = createdTap
-                let audioMix = AVMutableAudioMix()
-                audioMix.inputParameters = [inputParams]
-                playerItem.audioMix = audioMix
-            } else {
-                print("Audio Tap creation failed with status: \(status)")
-            }
-        }
-    }
-
     /// Starts video playback and begins frame capture at the optimized frame rate.
     func play() {
         if isReadyForPlayback {
@@ -1154,57 +696,8 @@ class SharedVideoPlayer {
     /// Sets the volume level (0.0 to 1.0)
     func setVolume(level: Float) {
         volume = max(0.0, min(1.0, level))  // Clamp between 0.0 and 1.0
-
-        // Manage the multi-channel case (>2 channels)
-        if let playerItem = player?.currentItem, audioChannels > 2 {
-            // Apply volume via an AudioMix if we have more than 2 channels
-            if #available(macOS 13.0, *) {
-                Task { @MainActor in
-                    do {
-                        let audioTracks = try await playerItem.asset.loadTracks(withMediaType: .audio)
-                        if let audioTrack = audioTracks.first {
-                            let parameters = AVMutableAudioMixInputParameters(track: audioTrack)
-                            parameters.setVolume(volume, at: CMTime.zero)
-
-                            let audioMix = AVMutableAudioMix()
-                            audioMix.inputParameters = [parameters]
-                            playerItem.audioMix = audioMix
-                        }
-                    } catch {
-                        print("Error loading audio tracks for volume adjustment: \(error.localizedDescription)")
-                    }
-                }
-            } else {
-                // Fallback for older OS versions
-                if let audioTrack = playerItem.asset.tracks(withMediaType: .audio).first {
-                    let parameters = AVMutableAudioMixInputParameters(track: audioTrack)
-                    parameters.setVolume(volume, at: CMTime.zero)
-
-                    let audioMix = AVMutableAudioMix()
-                    audioMix.inputParameters = [parameters]
-                    playerItem.audioMix = audioMix
-                }
-            }
-        } else {
-            // For stereo and mono channels, use the standard method
-            player?.volume = volume
-        }
-    }
-
-    /// Gets the current volume level (0.0 to 1.0)
-    func getVolume() -> Float {
-        return volume
-    }
-
-    /// Sets the playback speed (0.5 to 2.0, where 1.0 is normal speed)
-    func setPlaybackSpeed(speed: Float) {
-        playbackSpeed = max(0.5, min(2.0, speed))  // Clamp between 0.5 and 2.0
-        player?.rate = playbackSpeed
-    }
-
-    /// Gets the current playback speed (0.5 to 2.0, where 1.0 is normal speed)
-    func getPlaybackSpeed() -> Float {
-        return playbackSpeed
+        // Use the standard method
+        player?.volume = volume
     }
 
     /// Returns a pointer to the shared frame buffer. The caller should not free this pointer.
@@ -1218,51 +711,6 @@ class SharedVideoPlayer {
     /// Returns the height of the video frame in pixels
     func getFrameHeight() -> Int { return frameHeight }
 
-    /// Returns the detected video frame rate
-    func getVideoFrameRate() -> Float { return videoFrameRate }
-
-    /// Returns the detected screen refresh rate
-    func getScreenRefreshRate() -> Float { return screenRefreshRate }
-
-    /// Returns the current capture frame rate (minimum of video and screen rates)
-    func getCaptureFrameRate() -> Float { return captureFrameRate }
-
-    /// Returns the video title if available
-    func getVideoTitle() -> String? { return videoTitle }
-
-    /// Returns the video bitrate in bits per second
-    func getVideoBitrate() -> Int64 { return videoBitrate }
-
-    /// Returns the video MIME type if available
-    func getVideoMimeType() -> String? { return videoMimeType }
-
-    /// Returns the number of audio channels
-    func getAudioChannels() -> Int { return audioChannels }
-
-    /// Returns the audio sample rate in Hz
-    func getAudioSampleRate() -> Int { return audioSampleRate }
-
-    /// Returns true if this is an HLS stream
-    func getIsHLSStream() -> Bool { return isHLSStream }
-
-    /// Returns available bitrates for HLS streams
-    func getAvailableBitrates() -> [Float] { return availableBitrates }
-
-    /// Returns current bitrate for HLS streams
-    func getCurrentBitrate() -> Float { return currentBitrate }
-
-    /// Returns buffer status (0.0 to 1.0)
-    func getBufferStatus() -> Float { return bufferStatus }
-
-    /// Returns whether the player is currently buffering
-    func getIsBuffering() -> Bool { return isBuffering }
-
-    /// Returns network status string
-    func getNetworkStatus() -> String { return networkStatus }
-
-    /// Returns last error if any
-    func getLastError() -> String? { return lastError }
-
     /// Returns the duration of the video in seconds.
     func getDuration() -> Double {
         guard let item = player?.currentItem else { return 0 }
@@ -1274,12 +722,6 @@ class SharedVideoPlayer {
 
         // Use item.duration which is not deprecated
         return CMTimeGetSeconds(item.duration)
-    }
-
-    /// Returns the current playback time in seconds.
-    func getCurrentTime() -> Double {
-        guard let item = player?.currentItem else { return 0 }
-        return CMTimeGetSeconds(item.currentTime())
     }
 
     /// Seeks to the specified time (in seconds).
@@ -1311,14 +753,7 @@ class SharedVideoPlayer {
     func registerStatusCallback(_ ctx: UnsafeRawPointer?, _ callback: (@convention(c) (UnsafeRawPointer?, Int32) -> Void)?) {
         callbackContext = ctx
         statusCallback = callback
-
-        timeControlStatusObserver?.invalidate()
-        timeControlStatusObserver = nil
-
-        guard callback != nil, let player = player else { return }
-        timeControlStatusObserver = player.observe(\.timeControlStatus, options: [.new]) { [weak self] player, _ in
-            self?.handleTimeControlStatus(player.timeControlStatus)
-        }
+        attachCallbackObservers()
     }
 
     func unregisterStatusCallback() {
@@ -1331,20 +766,12 @@ class SharedVideoPlayer {
         callbackContext = ctx
         timeCallback = callback
         timeObserverInterval = interval
-
+        // Remove old observer if re-registering
         if let observer = periodicTimeObserver {
             player?.removeTimeObserver(observer)
             periodicTimeObserver = nil
         }
-
-        guard let callback = callback, let player = player else { return }
-        let cmInterval = CMTime(seconds: interval, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
-        periodicTimeObserver = player.addPeriodicTimeObserver(forInterval: cmInterval, queue: .main) { [weak self] time in
-            guard let self = self else { return }
-            let currentTime = CMTimeGetSeconds(time)
-            let duration = CMTimeGetSeconds(self.player?.currentItem?.duration ?? CMTime.zero)
-            callback(self.callbackContext, currentTime, duration.isNaN ? 0.0 : duration)
-        }
+        attachCallbackObservers()
     }
 
     func unregisterTimeCallback() {
@@ -1367,21 +794,12 @@ class SharedVideoPlayer {
     func registerEndOfPlaybackCallback(_ ctx: UnsafeRawPointer?, _ callback: (@convention(c) (UnsafeRawPointer?) -> Void)?) {
         callbackContext = ctx
         endOfPlaybackCallback = callback
-
+        // Remove old observer if re-registering
         if let observer = endOfPlaybackObserver {
             NotificationCenter.default.removeObserver(observer)
             endOfPlaybackObserver = nil
         }
-
-        guard let callback = callback else { return }
-        endOfPlaybackObserver = NotificationCenter.default.addObserver(
-            forName: .AVPlayerItemDidPlayToEndTime,
-            object: player?.currentItem,
-            queue: .main
-        ) { [weak self] _ in
-            guard let self = self else { return }
-            callback(self.callbackContext)
-        }
+        attachCallbackObservers()
     }
 
     func unregisterEndOfPlaybackCallback() {
@@ -1439,11 +857,9 @@ class SharedVideoPlayer {
     private func cleanupObservers() {
         playerItemObserver?.invalidate()
         playerObserver?.invalidate()
-        timeControlStatusObserver?.invalidate()
         bufferEmptyObserver?.invalidate()
         bufferLikelyToKeepUpObserver?.invalidate()
         bufferFullObserver?.invalidate()
-
         NotificationCenter.default.removeObserver(self)
     }
 
@@ -1513,13 +929,6 @@ public func setVolume(_ context: UnsafeMutableRawPointer?, _ volume: Float) {
     }
 }
 
-@_cdecl("getVolume")
-public func getVolume(_ context: UnsafeMutableRawPointer?) -> Float {
-    guard let context = context else { return 0.0 }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    return player.getVolume()
-}
-
 @_cdecl("getLatestFrame")
 public func getLatestFrame(_ context: UnsafeMutableRawPointer?) -> UnsafeMutableRawPointer? {
     guard let context = context else { return nil }
@@ -1544,39 +953,11 @@ public func getFrameHeight(_ context: UnsafeMutableRawPointer?) -> Int32 {
     return Int32(player.getFrameHeight())
 }
 
-@_cdecl("getVideoFrameRate")
-public func getVideoFrameRate(_ context: UnsafeMutableRawPointer?) -> Float {
-    guard let context = context else { return 0.0 }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    return player.getVideoFrameRate()
-}
-
-@_cdecl("getScreenRefreshRate")
-public func getScreenRefreshRate(_ context: UnsafeMutableRawPointer?) -> Float {
-    guard let context = context else { return 0.0 }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    return player.getScreenRefreshRate()
-}
-
-@_cdecl("getCaptureFrameRate")
-public func getCaptureFrameRate(_ context: UnsafeMutableRawPointer?) -> Float {
-    guard let context = context else { return 0.0 }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    return player.getCaptureFrameRate()
-}
-
 @_cdecl("getVideoDuration")
 public func getVideoDuration(_ context: UnsafeMutableRawPointer?) -> Double {
     guard let context = context else { return 0 }
     let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
     return player.getDuration()
-}
-
-@_cdecl("getCurrentTime")
-public func getCurrentTime(_ context: UnsafeMutableRawPointer?) -> Double {
-    guard let context = context else { return 0 }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    return player.getCurrentTime()
 }
 
 @_cdecl("seekTo")
@@ -1595,158 +976,6 @@ public func disposeVideoPlayer(_ context: UnsafeMutableRawPointer?) {
     DispatchQueue.main.async {
         player.dispose()
     }
-}
-
-@_cdecl("getLeftAudioLevel")
-public func getLeftAudioLevel(_ context: UnsafeMutableRawPointer?) -> Float {
-    guard let context = context else { return 0.0 }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    return player.getLeftAudioLevel()
-}
-
-@_cdecl("getRightAudioLevel")
-public func getRightAudioLevel(_ context: UnsafeMutableRawPointer?) -> Float {
-    guard let context = context else { return 0.0 }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    return player.getRightAudioLevel()
-}
-
-@_cdecl("setPlaybackSpeed")
-public func setPlaybackSpeed(_ context: UnsafeMutableRawPointer?, _ speed: Float) {
-    guard let context = context else { return }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    DispatchQueue.main.async {
-        player.setPlaybackSpeed(speed: speed)
-    }
-}
-
-@_cdecl("getPlaybackSpeed")
-public func getPlaybackSpeed(_ context: UnsafeMutableRawPointer?) -> Float {
-    guard let context = context else { return 1.0 }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    return player.getPlaybackSpeed()
-}
-
-@_cdecl("getVideoTitle")
-public func getVideoTitle(_ context: UnsafeMutableRawPointer?) -> UnsafePointer<CChar>? {
-    guard let context = context else { return nil }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    if let title = player.getVideoTitle() {
-        let cString = strdup(title)
-        return UnsafePointer<CChar>(cString)
-    }
-    return nil
-}
-
-@_cdecl("getVideoBitrate")
-public func getVideoBitrate(_ context: UnsafeMutableRawPointer?) -> Int64 {
-    guard let context = context else { return 0 }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    return player.getVideoBitrate()
-}
-
-@_cdecl("getVideoMimeType")
-public func getVideoMimeType(_ context: UnsafeMutableRawPointer?) -> UnsafePointer<CChar>? {
-    guard let context = context else { return nil }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    if let mimeType = player.getVideoMimeType() {
-        let cString = strdup(mimeType)
-        return UnsafePointer<CChar>(cString)
-    }
-    return nil
-}
-
-@_cdecl("getAudioChannels")
-public func getAudioChannels(_ context: UnsafeMutableRawPointer?) -> Int32 {
-    guard let context = context else { return 0 }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    return Int32(player.getAudioChannels())
-}
-
-@_cdecl("getAudioSampleRate")
-public func getAudioSampleRate(_ context: UnsafeMutableRawPointer?) -> Int32 {
-    guard let context = context else { return 0 }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    return Int32(player.getAudioSampleRate())
-}
-
-// HLS-specific C exports
-@_cdecl("getIsHLSStream")
-public func getIsHLSStream(_ context: UnsafeMutableRawPointer?) -> Bool {
-    guard let context = context else { return false }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    return player.getIsHLSStream()
-}
-
-@_cdecl("getAvailableBitrates")
-public func getAvailableBitrates(_ context: UnsafeMutableRawPointer?, _ buffer: UnsafeMutablePointer<Float>?, _ maxCount: Int32) -> Int32 {
-    guard let context = context, let buffer = buffer else { return 0 }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    let bitrates = player.getAvailableBitrates()
-    let count = min(Int(maxCount), bitrates.count)
-    for i in 0..<count {
-        buffer[i] = bitrates[i]
-    }
-    return Int32(count)
-}
-
-@_cdecl("getCurrentBitrate")
-public func getCurrentBitrate(_ context: UnsafeMutableRawPointer?) -> Float {
-    guard let context = context else { return 0 }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    return player.getCurrentBitrate()
-}
-
-@_cdecl("setPreferredMaxBitrate")
-public func setPreferredMaxBitrate(_ context: UnsafeMutableRawPointer?, _ bitrate: Double) {
-    guard let context = context else { return }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    DispatchQueue.main.async {
-        player.setPreferredMaxBitrate(bitrate)
-    }
-}
-
-@_cdecl("forceQuality")
-public func forceQuality(_ context: UnsafeMutableRawPointer?, _ bitrate: Float) {
-    guard let context = context else { return }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    DispatchQueue.main.async {
-        player.forceQuality(bitrate: bitrate)
-    }
-}
-
-@_cdecl("getBufferStatus")
-public func getBufferStatus(_ context: UnsafeMutableRawPointer?) -> Float {
-    guard let context = context else { return 0 }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    return player.getBufferStatus()
-}
-
-@_cdecl("getIsBuffering")
-public func getIsBuffering(_ context: UnsafeMutableRawPointer?) -> Bool {
-    guard let context = context else { return false }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    return player.getIsBuffering()
-}
-
-@_cdecl("getNetworkStatus")
-public func getNetworkStatus(_ context: UnsafeMutableRawPointer?) -> UnsafePointer<CChar>? {
-    guard let context = context else { return nil }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    let status = player.getNetworkStatus()
-    let cString = strdup(status)
-    return UnsafePointer<CChar>(cString)
-}
-
-@_cdecl("getLastError")
-public func getLastError(_ context: UnsafeMutableRawPointer?) -> UnsafePointer<CChar>? {
-    guard let context = context else { return nil }
-    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
-    if let error = player.getLastError() {
-        let cString = strdup(error)
-        return UnsafePointer<CChar>(cString)
-    }
-    return nil
 }
 
 // MARK: - Callback Registration C Exports
@@ -1814,4 +1043,3 @@ public func unregisterEndOfPlaybackCallback(_ context: UnsafeMutableRawPointer?)
         player.unregisterEndOfPlaybackCallback()
     }
 }
-
