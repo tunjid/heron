@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.media.video
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -26,6 +27,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.roundToIntSize
+import com.tunjid.heron.media.video.javafx.JavaFxPlayerState
+import com.tunjid.heron.media.video.mac.AVFoundationPlayerState
+import com.tunjid.heron.scaleAndAlignTo
 import javafx.application.Platform
 import javafx.embed.swing.JFXPanel
 import javafx.scene.Scene
@@ -39,8 +44,59 @@ actual fun VideoPlayer(
     modifier: Modifier,
     state: VideoPlayerState,
 ) {
-    check(state is JavaFxPlayerState)
+    when (state) {
+        is AVFoundationPlayerState -> AVFoundationVideoPlayer(modifier, state)
+        is JavaFxPlayerState -> JavaFxVideoPlayer(modifier, state)
+        else -> error("Unsupported VideoPlayerState: ${state::class}")
+    }
+}
 
+@Composable
+private fun AVFoundationVideoPlayer(
+    modifier: Modifier,
+    state: AVFoundationPlayerState,
+) {
+    Box(modifier = modifier) {
+        if (state.canShowVideo) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                state.currentFrame?.let { frame ->
+                    scaleAndAlignTo(
+                        srcSize = IntSize(
+                            width = frame.width,
+                            height = frame.height,
+                        ),
+                        destSize = size.roundToIntSize(),
+                        contentScale = state.contentScale,
+                        alignment = state.alignment,
+                        block = {
+                            drawImage(image = frame)
+                        },
+                    )
+                }
+            }
+        }
+        if (state.canShowStill) {
+            VideoStill(
+                modifier = Modifier.fillMaxSize(),
+                state = state,
+            )
+        }
+    }
+
+    DisposableEffect(state) {
+        state.status = PlayerStatus.Idle.Initial
+        onDispose {
+            state.hasRenderedFirstFrame = false
+            state.status = PlayerStatus.Idle.Evicted
+        }
+    }
+}
+
+@Composable
+private fun JavaFxVideoPlayer(
+    modifier: Modifier,
+    state: JavaFxPlayerState,
+) {
     Box(modifier = modifier) {
         if (state.canShowVideo) {
             JavaFxVideoSurface(
@@ -56,7 +112,6 @@ actual fun VideoPlayer(
         }
     }
 
-    // Keep player position up to date
     LaunchedEffect(state) {
         while (true) {
             if (state.status is PlayerStatus.Play) {
@@ -115,6 +170,27 @@ private fun JavaFxVideoSurface(
         },
     )
 }
+
+// Native player helpers
+
+private val AVFoundationPlayerState.canShowVideo
+    get() = when (status) {
+        is PlayerStatus.Idle -> false
+        is PlayerStatus.Play -> true
+        is PlayerStatus.Pause -> true
+    }
+
+private val AVFoundationPlayerState.canShowStill
+    get() = videoSize == IntSize.Zero ||
+        !hasRenderedFirstFrame ||
+        when (status) {
+            is PlayerStatus.Idle -> true
+            is PlayerStatus.Pause -> false
+            PlayerStatus.Play.Requested -> true
+            PlayerStatus.Play.Confirmed -> false
+        }
+
+// JavaFx player helpers
 
 private val JavaFxPlayerState.canShowVideo
     get() = when (status) {

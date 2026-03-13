@@ -1,0 +1,6 @@
+# Swift build artifacts — rebuild with ./gradlew buildAVFoundationMacArm / buildAVFoundationMacX64
+*.dylib
+*.swiftmodule
+*.swiftdoc
+*.swiftsourceinfo
+*.abi.json

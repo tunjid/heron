@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.media.video
+package com.tunjid.heron.media.video.javafx
 
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
@@ -27,6 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.IntSize
+import com.tunjid.heron.media.video.PlayerStatus
+import com.tunjid.heron.media.video.VideoPlayerState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import javafx.beans.value.ChangeListener
 import javafx.scene.media.Media
