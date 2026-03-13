@@ -107,6 +107,7 @@ class SharedVideoPlayer {
     private var callbackContext: UnsafeRawPointer?
     private var periodicTimeObserver: Any?
     private var endOfPlaybackObserver: NSObjectProtocol?
+    private var timeObserverInterval: Double = 0.25
 
     init() {
         // Detect screen refresh rate
@@ -193,13 +194,6 @@ class SharedVideoPlayer {
         // Monitor loaded time ranges for buffer status
         playerItemObserver = item.observe(\.loadedTimeRanges, options: [.new]) { [weak self] item, _ in
             self?.updateBufferStatus(from: item)
-        }
-
-        // Monitor player time control status
-        if let player = player {
-            timeControlStatusObserver = player.observe(\.timeControlStatus, options: [.new]) { [weak self] player, _ in
-                self?.handleTimeControlStatus(player.timeControlStatus)
-            }
         }
 
         // Monitor access log for bitrate changes
@@ -864,6 +858,9 @@ class SharedVideoPlayer {
 
         player = AVPlayer(playerItem: item)
 
+        // Attach observers for callbacks that were registered before the player existed
+        attachCallbackObservers()
+
         // Configure player for HLS
         if isHLSStream {
             player?.automaticallyWaitsToMinimizeStalling = true
@@ -1314,15 +1311,26 @@ class SharedVideoPlayer {
     func registerStatusCallback(_ ctx: UnsafeRawPointer?, _ callback: (@convention(c) (UnsafeRawPointer?, Int32) -> Void)?) {
         callbackContext = ctx
         statusCallback = callback
+
+        timeControlStatusObserver?.invalidate()
+        timeControlStatusObserver = nil
+
+        guard callback != nil, let player = player else { return }
+        timeControlStatusObserver = player.observe(\.timeControlStatus, options: [.new]) { [weak self] player, _ in
+            self?.handleTimeControlStatus(player.timeControlStatus)
+        }
     }
 
     func unregisterStatusCallback() {
+        timeControlStatusObserver?.invalidate()
+        timeControlStatusObserver = nil
         statusCallback = nil
     }
 
     func registerTimeCallback(_ ctx: UnsafeRawPointer?, _ callback: (@convention(c) (UnsafeRawPointer?, Double, Double) -> Void)?, _ interval: Double) {
         callbackContext = ctx
         timeCallback = callback
+        timeObserverInterval = interval
 
         if let observer = periodicTimeObserver {
             player?.removeTimeObserver(observer)
@@ -1382,6 +1390,42 @@ class SharedVideoPlayer {
             endOfPlaybackObserver = nil
         }
         endOfPlaybackCallback = nil
+    }
+
+    /// Attaches observers for any callbacks that were registered before the player existed.
+    /// Called from setupVideoOutputAndPlayer once the AVPlayer instance is ready.
+    private func attachCallbackObservers() {
+        guard let player = player else { return }
+
+        // Status: KVO on timeControlStatus
+        if statusCallback != nil && timeControlStatusObserver == nil {
+            timeControlStatusObserver = player.observe(\.timeControlStatus, options: [.new]) { [weak self] player, _ in
+                self?.handleTimeControlStatus(player.timeControlStatus)
+            }
+        }
+
+        // Time: periodic time observer
+        if timeCallback != nil && periodicTimeObserver == nil {
+            let cmInterval = CMTime(seconds: timeObserverInterval, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
+            periodicTimeObserver = player.addPeriodicTimeObserver(forInterval: cmInterval, queue: .main) { [weak self] time in
+                guard let self = self else { return }
+                let currentTime = CMTimeGetSeconds(time)
+                let duration = CMTimeGetSeconds(self.player?.currentItem?.duration ?? CMTime.zero)
+                self.timeCallback?(self.callbackContext, currentTime, duration.isNaN ? 0.0 : duration)
+            }
+        }
+
+        // End of playback: notification observer
+        if endOfPlaybackCallback != nil && endOfPlaybackObserver == nil {
+            endOfPlaybackObserver = NotificationCenter.default.addObserver(
+                forName: .AVPlayerItemDidPlayToEndTime,
+                object: player.currentItem,
+                queue: .main
+            ) { [weak self] _ in
+                guard let self = self else { return }
+                self.endOfPlaybackCallback?(self.callbackContext)
+            }
+        }
     }
 
     private func unregisterAllCallbacks() {

@@ -134,8 +134,6 @@ internal class AVFoundationPlayerState(
     }
 
     private val frameCallback = FrameCallback { _ ->
-        updateMetadata()
-        status = PlayerStatus.Play.Confirmed
         appMainScope.launch {
             updateFrameAsync()
         }
