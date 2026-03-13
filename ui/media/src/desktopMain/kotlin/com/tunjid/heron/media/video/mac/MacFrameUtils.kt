@@ -12,17 +12,6 @@ package com.tunjid.heron.media.video.mac
 
 import java.nio.ByteBuffer
 
-internal fun calculateFrameHash(buffer: ByteBuffer, pixelCount: Int): Int {
-    if (pixelCount <= 0) return 0
-
-    var hash = 1
-    val step = if (pixelCount <= 200) 1 else pixelCount / 200
-    for (i in 0 until pixelCount step step) {
-        hash = 31 * hash + buffer.getInt(i * 4)
-    }
-    return hash
-}
-
 internal fun copyBgraFrame(
     src: ByteBuffer,
     dst: ByteBuffer,

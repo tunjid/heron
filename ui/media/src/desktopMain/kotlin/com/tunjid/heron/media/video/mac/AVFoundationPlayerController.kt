@@ -21,26 +21,23 @@ import com.tunjid.heron.media.video.PlayerStatus
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.media.video.VideoPlayerState
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 @Stable
 class AVFoundationPlayerController(
-    scope: CoroutineScope,
+    private val appMainScope: CoroutineScope,
 ) : VideoPlayerController {
 
     override var isMuted: Boolean by mutableStateOf(true)
 
-    private val coroutineScope = scope
     private val idsToStates = mutableStateMapOf<String, AVFoundationPlayerState>()
-    private val uiUpdateJobs = mutableMapOf<String, Job>()
     private var activeVideoId: String by mutableStateOf("")
 
     init {
         snapshotFlow { isMuted }
             .onEach { idsToStates[activeVideoId]?.applyVolume() }
-            .launchIn(scope)
+            .launchIn(appMainScope)
     }
 
     override fun registerVideo(
@@ -61,7 +58,7 @@ class AVFoundationPlayerController(
             autoplay = autoplay,
             isLooping = isLooping,
             isMuted = derivedStateOf { isMuted },
-            frameProcessingScope = coroutineScope,
+            appMainScope = appMainScope,
         )
 
         idsToStates[videoId] = videoPlayerState
@@ -80,7 +77,6 @@ class AVFoundationPlayerController(
         // Open media if not yet called
         if (!stateToPlay.mediaOpenCalled) {
             stateToPlay.openMedia(stateToPlay.videoUrl)
-            startUIUpdateJobIfNeeded(playerIdToPlay, stateToPlay)
             stateToPlay.playNative()
             return
         }
@@ -89,7 +85,6 @@ class AVFoundationPlayerController(
 
         // Resume if paused and same video
         if (stateToPlay.status is PlayerStatus.Pause && seekToMs == null) {
-            startUIUpdateJobIfNeeded(playerIdToPlay, stateToPlay)
             stateToPlay.playNative()
             return
         }
@@ -108,7 +103,6 @@ class AVFoundationPlayerController(
         if (position > 0) {
             stateToPlay.seekToNative(position)
         }
-        startUIUpdateJobIfNeeded(playerIdToPlay, stateToPlay)
         stateToPlay.playNative()
     }
 
@@ -117,7 +111,6 @@ class AVFoundationPlayerController(
             status = PlayerStatus.Pause.Requested
             pauseNative()
         }
-        uiUpdateJobs.remove(activeVideoId)?.cancel()
     }
 
     override fun seekTo(position: Long) {
@@ -128,12 +121,10 @@ class AVFoundationPlayerController(
 
     override fun retry(videoId: String) {
         val stateToRetry = idsToStates[videoId] ?: return
-        uiUpdateJobs.remove(videoId)?.cancel()
         setActiveVideo(videoId)
         stateToRetry.dispose()
         stateToRetry.reinitialize()
         stateToRetry.openMedia(stateToRetry.videoUrl)
-        startUIUpdateJobIfNeeded(videoId, stateToRetry)
         stateToRetry.playNative()
     }
 
@@ -141,7 +132,6 @@ class AVFoundationPlayerController(
         val toDispose = idsToStates
             .filterNot { retainedVideoIds.contains(it.key) }
         toDispose.keys.forEach { id ->
-            uiUpdateJobs.remove(id)?.cancel()
             idsToStates.remove(id)
         }
         toDispose.values.forEach { it.dispose() }
@@ -158,16 +148,6 @@ class AVFoundationPlayerController(
         idsToStates[previousId]?.let { previousState ->
             previousState.status = PlayerStatus.Pause.Requested
             previousState.pauseNative()
-            uiUpdateJobs.remove(previousId)?.cancel()
-        }
-    }
-
-    private fun startUIUpdateJobIfNeeded(
-        videoId: String,
-        state: AVFoundationPlayerState,
-    ) {
-        if (uiUpdateJobs[videoId]?.isActive != true) {
-            uiUpdateJobs[videoId] = state.startUIUpdateJob(coroutineScope)
         }
     }
 
@@ -178,7 +158,6 @@ class AVFoundationPlayerController(
             .filter { idsToStates[it]?.status is PlayerStatus.Idle.Evicted }
             .take(size - MaxVideoStates)
             .mapNotNull { id ->
-                uiUpdateJobs.remove(id)?.cancel()
                 idsToStates.remove(id)
             }
         toDispose.forEach { it.dispose() }

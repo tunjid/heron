@@ -48,7 +48,7 @@ fun createAppState(): AppState =
         videoPlayerController = { appMainScope ->
             if (System.getProperty("os.name").startsWith("Mac")) {
                 AVFoundationPlayerController(
-                    scope = appMainScope,
+                    appMainScope = appMainScope,
                 )
             } else {
                 JavaFxPlayerController(

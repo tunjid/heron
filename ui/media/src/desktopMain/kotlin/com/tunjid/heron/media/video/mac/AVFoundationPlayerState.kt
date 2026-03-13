@@ -10,7 +10,6 @@
 
 package com.tunjid.heron.media.video.mac
 
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -29,11 +28,6 @@ import com.tunjid.heron.media.video.VideoPlayerState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.skia.Bitmap
@@ -49,7 +43,7 @@ internal class AVFoundationPlayerState(
     isLooping: Boolean,
     autoplay: Boolean,
     isMuted: State<Boolean>,
-    private val frameProcessingScope: CoroutineScope,
+    private val appMainScope: CoroutineScope,
 ) : VideoPlayerState {
 
     override var thumbnailUrl by mutableStateOf(thumbnail)
@@ -103,20 +97,17 @@ internal class AVFoundationPlayerState(
     internal var mediaOpenCalled: Boolean = false
 
     // Frame rendering state
-    private val currentFrameFlow = MutableStateFlow<ImageBitmap?>(null)
-    internal val currentFrameState: MutableState<ImageBitmap?> = mutableStateOf(null)
+    internal var currentFrame by mutableStateOf<ImageBitmap?>(null)
     private var skiaBitmapWidth: Int = 0
     private var skiaBitmapHeight: Int = 0
     private var skiaBitmapA: Bitmap? = null
     private var skiaBitmapB: Bitmap? = null
     private var nextSkiaBitmapA: Boolean = true
-    private var lastFrameHash: Int = Int.MIN_VALUE
     private var lastFrameUpdateTime: Long = 0
 
     // Callback properties — held as fields to prevent GC.
     // Compose mutableStateOf writes are thread-safe via the snapshot system.
     private val statusCallback = StatusCallback { _, statusCode ->
-        println("statusCode: $statusCode")
         when (statusCode) {
             0 -> status = PlayerStatus.Pause.Confirmed
             1 -> {
@@ -129,8 +120,6 @@ internal class AVFoundationPlayerState(
     }
 
     private val timeCallback = TimeCallback { _, currentTime, duration ->
-        println("time")
-
         if (currentTime >= 0) lastPositionMs = (currentTime * 1000).toLong()
         if (duration > 0) totalDuration = (duration * 1000).toLong()
     }
@@ -138,15 +127,12 @@ internal class AVFoundationPlayerState(
     private val frameCallback = FrameCallback { _ ->
         updateMetadata()
         status = PlayerStatus.Play.Confirmed
-
-        frameProcessingScope.launch {
+        appMainScope.launch {
             updateFrameAsync()
         }
     }
 
     private val endOfPlaybackCallback = EndOfPlaybackCallback { _ ->
-        println("end")
-
         if (isLooping) {
             val loopPtr = playerPointer ?: return@EndOfPlaybackCallback
             SharedVideoPlayer.seekTo(
@@ -155,15 +141,6 @@ internal class AVFoundationPlayerState(
             )
         } else {
             status = PlayerStatus.Pause.Confirmed
-        }
-    }
-
-    internal fun startUIUpdateJob(scope: CoroutineScope): Job = scope.launch {
-        currentFrameFlow.debounce(1).collect { newFrame ->
-            ensureActive()
-            withContext(Dispatchers.Main) {
-                currentFrameState.value = newFrame
-            }
         }
     }
 
@@ -278,13 +255,6 @@ internal class AVFoundationPlayerState(
         withContext(Dispatchers.Default) {
             val srcBuf = framePtr.getByteBuffer(0, frameSizeBytes)
 
-            val newHash = calculateFrameHash(
-                buffer = srcBuf,
-                pixelCount = pixelCount,
-            )
-            if (newHash == lastFrameHash) return@withContext
-            lastFrameHash = newHash
-
             if (skiaBitmapA == null || skiaBitmapWidth != width || skiaBitmapHeight != height) {
                 skiaBitmapA?.close()
                 skiaBitmapB?.close()
@@ -305,7 +275,7 @@ internal class AVFoundationPlayerState(
             if (pixelsAddr == 0L) return@withContext
 
             srcBuf.rewind()
-            val destRowBytes = pixmap.rowBytes.toInt()
+            val destRowBytes = pixmap.rowBytes
             val destSizeBytes = destRowBytes.toLong() * height.toLong()
             val destBuf = Pointer(pixelsAddr).getByteBuffer(0, destSizeBytes)
             copyBgraFrame(
@@ -316,7 +286,7 @@ internal class AVFoundationPlayerState(
                 dstRowBytes = destRowBytes,
             )
 
-            currentFrameFlow.value = targetBitmap.asComposeImageBitmap()
+            currentFrame = targetBitmap.asComposeImageBitmap()
         }
 
         lastFrameUpdateTime = System.currentTimeMillis()
@@ -350,10 +320,9 @@ internal class AVFoundationPlayerState(
         skiaBitmapWidth = 0
         skiaBitmapHeight = 0
         nextSkiaBitmapA = true
-        lastFrameHash = Int.MIN_VALUE
 
         ptrToDispose?.let(SharedVideoPlayer::disposeVideoPlayer)
 
-        currentFrameFlow.value = null
+        currentFrame = null
     }
 }

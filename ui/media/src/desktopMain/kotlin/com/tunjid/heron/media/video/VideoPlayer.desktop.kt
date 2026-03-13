@@ -23,7 +23,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.graphics.ImageBitmap
@@ -62,7 +61,7 @@ private fun AVFoundationVideoPlayer(
     Box(modifier = modifier) {
         if (state.canShowVideo) {
             Canvas(modifier = Modifier.fillMaxSize()) {
-                state.currentFrameState.value?.let { frame ->
+                state.currentFrame?.let { frame ->
                     drawScaledImage(
                         image = frame,
                         dstSize = IntSize(
