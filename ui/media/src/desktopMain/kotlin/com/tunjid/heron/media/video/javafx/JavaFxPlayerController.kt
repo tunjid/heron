@@ -38,7 +38,7 @@ import kotlinx.coroutines.flow.onEach
 
 @Stable
 class JavaFxPlayerController(
-    scope: CoroutineScope,
+    appMainScope: CoroutineScope,
 ) : VideoPlayerController {
 
     override var isMuted: Boolean by mutableStateOf(true)
@@ -62,7 +62,7 @@ class JavaFxPlayerController(
                     mediaPlayers[activeVideoId]?.isMute = muted
                 }
             }
-            .launchIn(scope)
+            .launchIn(appMainScope)
     }
 
     override fun registerVideo(

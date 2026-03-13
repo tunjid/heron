@@ -46,15 +46,12 @@ fun createAppState(): AppState =
             JvmLogger()
         },
         videoPlayerController = { appMainScope ->
-            if (System.getProperty("os.name").startsWith("Mac")) {
-                AVFoundationPlayerController(
-                    appMainScope = appMainScope,
-                )
-            } else {
-                JavaFxPlayerController(
-                    scope = appMainScope,
-                )
-            }
+            if (System.getProperty("os.name").startsWith("Mac")) AVFoundationPlayerController(
+                appMainScope = appMainScope,
+            )
+            else JavaFxPlayerController(
+                appMainScope = appMainScope,
+            )
         },
         args = { appMainScope ->
             DataBindingArgs(
