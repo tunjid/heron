@@ -70,25 +70,34 @@ internal object SharedVideoPlayer {
     // Callback registration
 
     @JvmStatic external fun registerStatusCallback(
-        context: Pointer?, callbackCtx: Pointer?, callback: StatusCallback?
+        context: Pointer?,
+        callbackCtx: Pointer?,
+        callback: StatusCallback?,
     )
 
     @JvmStatic external fun unregisterStatusCallback(context: Pointer?)
 
     @JvmStatic external fun registerTimeCallback(
-        context: Pointer?, callbackCtx: Pointer?, callback: TimeCallback?, interval: Double
+        context: Pointer?,
+        callbackCtx: Pointer?,
+        callback: TimeCallback?,
+        interval: Double,
     )
 
     @JvmStatic external fun unregisterTimeCallback(context: Pointer?)
 
     @JvmStatic external fun registerFrameCallback(
-        context: Pointer?, callbackCtx: Pointer?, callback: FrameCallback?
+        context: Pointer?,
+        callbackCtx: Pointer?,
+        callback: FrameCallback?,
     )
 
     @JvmStatic external fun unregisterFrameCallback(context: Pointer?)
 
     @JvmStatic external fun registerEndOfPlaybackCallback(
-        context: Pointer?, callbackCtx: Pointer?, callback: EndOfPlaybackCallback?
+        context: Pointer?,
+        callbackCtx: Pointer?,
+        callback: EndOfPlaybackCallback?,
     )
 
     @JvmStatic external fun unregisterEndOfPlaybackCallback(context: Pointer?)

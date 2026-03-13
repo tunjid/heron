@@ -35,6 +35,12 @@ import org.jetbrains.skia.ColorAlphaType
 import org.jetbrains.skia.ColorType
 import org.jetbrains.skia.ImageInfo
 
+private const val TIME_OBSERVER_INTERVAL_SECONDS = 0.25
+
+private fun Double.secondsToMs(): Long = (this * 1000).toLong()
+
+private fun Long.msToSeconds(): Double = this.toDouble() / 1000.0
+
 @Stable
 internal class AVFoundationPlayerState(
     videoId: String,
@@ -123,8 +129,8 @@ internal class AVFoundationPlayerState(
     }
 
     private val timeCallback = TimeCallback { _, currentTime, duration ->
-        if (currentTime >= 0) lastPositionMs = (currentTime * 1000).toLong()
-        if (duration > 0) totalDuration = (duration * 1000).toLong()
+        if (currentTime >= 0) lastPositionMs = currentTime.secondsToMs()
+        if (duration > 0) totalDuration = duration.secondsToMs()
     }
 
     private val frameCallback = FrameCallback { _ ->
@@ -137,9 +143,9 @@ internal class AVFoundationPlayerState(
 
     private val endOfPlaybackCallback = EndOfPlaybackCallback { _ ->
         if (isLooping) SharedVideoPlayer.seekTo(
-                context = playerPointer ?: return@EndOfPlaybackCallback,
-                time = 0.0,
-            )
+            context = playerPointer ?: return@EndOfPlaybackCallback,
+            time = 0.0,
+        )
         else status = PlayerStatus.Pause.Confirmed
     }
 
@@ -163,15 +169,11 @@ internal class AVFoundationPlayerState(
         val height = SharedVideoPlayer.getFrameHeight(ptr)
         val duration = SharedVideoPlayer.getVideoDuration(ptr)
 
-        if (width > 0 && height > 0) {
-            videoSize = IntSize(
-                width = width,
-                height = height,
-            )
-        }
-        if (duration > 0) {
-            totalDuration = (duration * 1000).toLong()
-        }
+        if (duration > 0) totalDuration = duration.secondsToMs()
+        if (width > 0 && height > 0) videoSize = IntSize(
+            width = width,
+            height = height,
+        )
     }
 
     /**
@@ -188,7 +190,7 @@ internal class AVFoundationPlayerState(
             context = ptr,
             callbackCtx = null,
             callback = timeCallback,
-            interval = 0.25,
+            interval = TIME_OBSERVER_INTERVAL_SECONDS,
         )
         SharedVideoPlayer.registerFrameCallback(
             context = ptr,
@@ -227,7 +229,7 @@ internal class AVFoundationPlayerState(
         val ptr = playerPointer ?: return
         SharedVideoPlayer.seekTo(
             context = ptr,
-            time = positionMs.toDouble() / 1000.0,
+            time = positionMs.msToSeconds(),
         )
     }
 
@@ -258,7 +260,12 @@ internal class AVFoundationPlayerState(
                 skiaBitmapA?.close()
                 skiaBitmapB?.close()
 
-                val imageInfo = ImageInfo(width, height, ColorType.BGRA_8888, ColorAlphaType.OPAQUE)
+                val imageInfo = ImageInfo(
+                    width = width,
+                    height = height,
+                    colorType = ColorType.BGRA_8888,
+                    alphaType = ColorAlphaType.OPAQUE,
+                )
                 skiaBitmapA = Bitmap().apply { allocPixels(imageInfo) }
                 skiaBitmapB = Bitmap().apply { allocPixels(imageInfo) }
                 skiaBitmapWidth = width
@@ -266,7 +273,10 @@ internal class AVFoundationPlayerState(
                 nextSkiaBitmapA = true
             }
 
-            val targetBitmap = if (nextSkiaBitmapA) skiaBitmapA!! else skiaBitmapB!!
+            val targetBitmap =
+                if (nextSkiaBitmapA) requireNotNull(skiaBitmapA)
+                else requireNotNull(skiaBitmapB)
+
             nextSkiaBitmapA = !nextSkiaBitmapA
 
             val pixmap = targetBitmap.peekPixels() ?: return@withContext
@@ -308,7 +318,7 @@ internal class AVFoundationPlayerState(
     internal fun dispose() {
         unregisterCallbacks()
 
-        val ptrToDispose = playerPointer
+        val pointerToDispose = playerPointer
         playerPointer = null
         mediaOpenCalled = false
 
@@ -320,7 +330,7 @@ internal class AVFoundationPlayerState(
         skiaBitmapHeight = 0
         nextSkiaBitmapA = true
 
-        ptrToDispose?.let(SharedVideoPlayer::disposeVideoPlayer)
+        pointerToDispose?.let(SharedVideoPlayer::disposeVideoPlayer)
 
         currentFrame = null
     }
