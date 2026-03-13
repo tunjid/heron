@@ -104,6 +104,9 @@ internal class AVFoundationPlayerState(
     private var skiaBitmapB: Bitmap? = null
     private var nextSkiaBitmapA: Boolean = true
     private var lastFrameUpdateTime: Long = 0
+    private val serialDispatcher = Dispatchers.Default.limitedParallelism(
+        parallelism = 1,
+    )
 
     // Callback properties — held as fields to prevent GC.
     // Compose mutableStateOf writes are thread-safe via the snapshot system.
@@ -133,15 +136,11 @@ internal class AVFoundationPlayerState(
     }
 
     private val endOfPlaybackCallback = EndOfPlaybackCallback { _ ->
-        if (isLooping) {
-            val loopPtr = playerPointer ?: return@EndOfPlaybackCallback
-            SharedVideoPlayer.seekTo(
-                context = loopPtr,
+        if (isLooping) SharedVideoPlayer.seekTo(
+                context = playerPointer ?: return@EndOfPlaybackCallback,
                 time = 0.0,
             )
-        } else {
-            status = PlayerStatus.Pause.Confirmed
-        }
+        else status = PlayerStatus.Pause.Confirmed
     }
 
     init {
@@ -252,7 +251,7 @@ internal class AVFoundationPlayerState(
         val pixelCount = width * height
         val frameSizeBytes = pixelCount.toLong() * 4L
 
-        withContext(Dispatchers.Default) {
+        withContext(serialDispatcher) {
             val srcBuf = framePtr.getByteBuffer(0, frameSizeBytes)
 
             if (skiaBitmapA == null || skiaBitmapWidth != width || skiaBitmapHeight != height) {
