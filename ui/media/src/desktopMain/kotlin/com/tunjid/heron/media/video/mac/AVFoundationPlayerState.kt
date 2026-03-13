@@ -35,12 +35,6 @@ import org.jetbrains.skia.ColorAlphaType
 import org.jetbrains.skia.ColorType
 import org.jetbrains.skia.ImageInfo
 
-private const val TIME_OBSERVER_INTERVAL_SECONDS = 0.25
-
-private fun Double.secondsToMs(): Long = (this * 1000).toLong()
-
-private fun Long.msToSeconds(): Double = this.toDouble() / 1000.0
-
 @Stable
 internal class AVFoundationPlayerState(
     videoId: String,
@@ -118,13 +112,13 @@ internal class AVFoundationPlayerState(
     // Compose mutableStateOf writes are thread-safe via the snapshot system.
     private val statusCallback = StatusCallback { _, statusCode ->
         when (statusCode) {
-            0 -> status = PlayerStatus.Pause.Confirmed
-            1 -> {
+            STATUS_CODE_PAUSED -> status = PlayerStatus.Pause.Confirmed
+            STATUS_CODE_PLAYING -> {
                 status = PlayerStatus.Play.Confirmed
                 updateMetadata()
                 if (!hasRenderedFirstFrame) hasRenderedFirstFrame = true
             }
-            // 2 = waiting/buffering — keep current status
+            STATUS_CODE_BUFFERING -> Unit // keep current status
         }
     }
 
@@ -333,3 +327,13 @@ internal class AVFoundationPlayerState(
         currentFrame = null
     }
 }
+
+private const val TIME_OBSERVER_INTERVAL_SECONDS = 0.25
+
+private const val STATUS_CODE_PAUSED = 0
+private const val STATUS_CODE_PLAYING = 1
+private const val STATUS_CODE_BUFFERING = 2
+
+private fun Double.secondsToMs(): Long = (this * 1000).toLong()
+
+private fun Long.msToSeconds(): Double = this.toDouble() / 1000.0
