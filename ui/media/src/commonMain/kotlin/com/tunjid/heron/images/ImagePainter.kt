@@ -17,17 +17,14 @@
 package com.tunjid.heron.images
 
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.drawscope.scale
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.roundToIntSize
 import androidx.compose.ui.unit.toSize
+import com.tunjid.heron.scaleAndAlignTo
 
 /**
  * A [Painter] that draws the latest image available to it.
@@ -76,40 +73,4 @@ internal class ImagePainter(
             is CoilImage -> image.size.toSize()
             null -> Size.Unspecified
         }
-}
-
-private inline fun DrawScope.scaleAndAlignTo(
-    srcSize: IntSize,
-    destSize: IntSize,
-    contentScale: ContentScale,
-    alignment: Alignment,
-    crossinline block: DrawScope.() -> Unit,
-) {
-    val scaleFactor = contentScale.computeScaleFactor(
-        srcSize = srcSize.toSize(),
-        dstSize = destSize.toSize(),
-    )
-
-    val alignmentOffset = alignment.align(
-        size = srcSize,
-        space = destSize,
-        layoutDirection = layoutDirection,
-    )
-
-    val translationOffset = Offset(
-        x = alignmentOffset.x * scaleFactor.scaleX,
-        y = alignmentOffset.y * scaleFactor.scaleY,
-    )
-
-    translate(
-        left = translationOffset.x,
-        top = translationOffset.y,
-        block = {
-            scale(
-                scaleX = scaleFactor.scaleX,
-                scaleY = scaleFactor.scaleY,
-                block = block,
-            )
-        },
-    )
 }

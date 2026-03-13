@@ -25,14 +25,12 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.roundToIntSize
 import com.tunjid.heron.media.video.javafx.JavaFxPlayerState
 import com.tunjid.heron.media.video.mac.AVFoundationPlayerState
+import com.tunjid.heron.scaleAndAlignTo
 import javafx.application.Platform
 import javafx.embed.swing.JFXPanel
 import javafx.scene.Scene
@@ -62,13 +60,17 @@ private fun AVFoundationVideoPlayer(
         if (state.canShowVideo) {
             Canvas(modifier = Modifier.fillMaxSize()) {
                 state.currentFrame?.let { frame ->
-                    drawScaledImage(
-                        image = frame,
-                        dstSize = IntSize(
-                            width = size.width.toInt(),
-                            height = size.height.toInt(),
+                    scaleAndAlignTo(
+                        srcSize = IntSize(
+                            width = frame.width,
+                            height = frame.height,
                         ),
+                        destSize = size.roundToIntSize(),
                         contentScale = state.contentScale,
+                        alignment = state.alignment,
+                        block = {
+                            drawImage(image = frame)
+                        },
                     )
                 }
             }
@@ -206,36 +208,3 @@ private val JavaFxPlayerState.canShowStill
             PlayerStatus.Play.Requested -> true
             PlayerStatus.Play.Confirmed -> false
         }
-
-private fun DrawScope.drawScaledImage(
-    image: ImageBitmap,
-    dstSize: IntSize,
-    contentScale: ContentScale,
-) {
-    if (contentScale == ContentScale.Crop) {
-        val frameW = image.width
-        val frameH = image.height
-
-        val scale = maxOf(
-            dstSize.width / frameW.toFloat(),
-            dstSize.height / frameH.toFloat(),
-        )
-
-        val srcW = (dstSize.width / scale).toInt()
-        val srcH = (dstSize.height / scale).toInt()
-        val srcX = ((frameW - srcW) / 2).coerceAtLeast(0)
-        val srcY = ((frameH - srcH) / 2).coerceAtLeast(0)
-
-        drawImage(
-            image = image,
-            srcOffset = IntOffset(srcX, srcY),
-            srcSize = IntSize(srcW, srcH),
-            dstSize = dstSize,
-        )
-    } else {
-        drawImage(
-            image = image,
-            dstSize = dstSize,
-        )
-    }
-}
