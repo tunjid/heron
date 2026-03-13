@@ -53,6 +53,7 @@ tunjid-tree-nav = "0.0.52"
 tunjid-composables = "0.0.27"
 vinceglb-filekit = "0.13.0"
 javafx = "21"
+jna = "5.17.0"
 aboutLibraries = "13.2.1"
 
 
@@ -175,6 +176,8 @@ tunjid-treenav-compose = { group = "com.tunjid.treenav", name = "compose", versi
 tunjid-treenav-compose-threepane = { group = "com.tunjid.treenav", name = "compose-threepane", version.ref = "tunjid-tree-nav" }
 tunjid-treenav-core = { group = "com.tunjid.treenav", name = "treenav", version.ref = "tunjid-tree-nav" }
 tunjid-treenav-strings = { group = "com.tunjid.treenav", name = "strings", version.ref = "tunjid-tree-nav" }
+jna = { group = "net.java.dev.jna", name = "jna", version.ref = "jna" }
+jna-platform = { group = "net.java.dev.jna", name = "jna-platform", version.ref = "jna" }
 javafx-base = { group = "org.openjfx", name = "javafx-base", version.ref = "javafx" }
 javafx-graphics = { group = "org.openjfx", name = "javafx-graphics", version.ref = "javafx" }
 javafx-media = { group = "org.openjfx", name = "javafx-media", version.ref = "javafx" }

@@ -20,7 +20,8 @@ import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.data.logging.JvmLogger
 import com.tunjid.heron.images.imageLoader
-import com.tunjid.heron.media.video.JavaFxPlayerController
+import com.tunjid.heron.media.video.javafx.JavaFxPlayerController
+import com.tunjid.heron.media.video.mac.AVFoundationPlayerController
 import com.tunjid.heron.scaffold.notifications.NoOpNotifier
 import com.tunjid.heron.scaffold.scaffold.AppState
 import dev.jordond.connectivity.Connectivity
@@ -45,9 +46,15 @@ fun createAppState(): AppState =
             JvmLogger()
         },
         videoPlayerController = { appMainScope ->
-            JavaFxPlayerController(
-                scope = appMainScope,
-            )
+            if (System.getProperty("os.name").startsWith("Mac")) {
+                AVFoundationPlayerController(
+                    scope = appMainScope,
+                )
+            } else {
+                JavaFxPlayerController(
+                    scope = appMainScope,
+                )
+            }
         },
         args = { appMainScope ->
             DataBindingArgs(

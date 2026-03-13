@@ -70,6 +70,8 @@ kotlin {
         desktopMain {
             dependencies {
                 implementation(libs.ktor.client.java)
+                implementation(libs.jna)
+                implementation(libs.jna.platform)
                 val osName = System.getProperty("os.name")
                 val fxClassifier = when {
                     osName.startsWith("Mac OS X") ->
@@ -89,4 +91,28 @@ kotlin {
 //            }
 //        }
     }
+}
+
+tasks.register<Exec>("buildAVFoundationMacArm") {
+    onlyIf { System.getProperty("os.name").startsWith("Mac") }
+    workingDir(rootDir)
+    commandLine(
+        "swiftc", "-emit-library", "-emit-module", "-module-name", "AVFoundationVideoPlayer",
+        "-target", "arm64-apple-macosx14.0",
+        "-o", "ui/media/src/desktopMain/resources/darwin-aarch64/libAVFoundationVideoPlayer.dylib",
+        "ui/media/src/desktopMain/swift/AVFoundationVideoPlayer.swift",
+        "-O", "-whole-module-optimization",
+    )
+}
+
+tasks.register<Exec>("buildAVFoundationMacX64") {
+    onlyIf { System.getProperty("os.name").startsWith("Mac") }
+    workingDir(rootDir)
+    commandLine(
+        "swiftc", "-emit-library", "-emit-module", "-module-name", "AVFoundationVideoPlayer",
+        "-target", "x86_64-apple-macosx14.0",
+        "-o", "ui/media/src/desktopMain/resources/darwin-x86-64/libAVFoundationVideoPlayer.dylib",
+        "ui/media/src/desktopMain/swift/AVFoundationVideoPlayer.swift",
+        "-O", "-whole-module-optimization",
+    )
 }

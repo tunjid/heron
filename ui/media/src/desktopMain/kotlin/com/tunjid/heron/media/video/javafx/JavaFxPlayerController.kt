@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.media.video
+package com.tunjid.heron.media.video.javafx
 
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
@@ -23,6 +23,9 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import com.tunjid.heron.media.video.PlayerStatus
+import com.tunjid.heron.media.video.VideoPlayerController
+import com.tunjid.heron.media.video.VideoPlayerState
 import javafx.application.Platform
 import javafx.embed.swing.JFXPanel
 import javafx.scene.media.Media

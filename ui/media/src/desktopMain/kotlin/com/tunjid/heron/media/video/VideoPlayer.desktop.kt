@@ -16,16 +16,24 @@
 
 package com.tunjid.heron.media.video
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
+import com.tunjid.heron.media.video.javafx.JavaFxPlayerState
+import com.tunjid.heron.media.video.mac.AVFoundationPlayerState
 import javafx.application.Platform
 import javafx.embed.swing.JFXPanel
 import javafx.scene.Scene
@@ -39,8 +47,53 @@ actual fun VideoPlayer(
     modifier: Modifier,
     state: VideoPlayerState,
 ) {
-    check(state is JavaFxPlayerState)
+    when (state) {
+        is AVFoundationPlayerState -> AVFoundationVideoPlayer(modifier, state)
+        is JavaFxPlayerState -> JavaFxVideoPlayer(modifier, state)
+        else -> error("Unsupported VideoPlayerState: ${state::class}")
+    }
+}
 
+@Composable
+private fun AVFoundationVideoPlayer(
+    modifier: Modifier,
+    state: AVFoundationPlayerState,
+) {
+    Box(modifier = modifier) {
+        if (state.canShowVideo) {
+            val currentFrame by state.currentFrameState
+            currentFrame?.let { frame ->
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    drawScaledImage(
+                        image = frame,
+                        dstSize = IntSize(size.width.toInt(), size.height.toInt()),
+                        contentScale = state.contentScale,
+                    )
+                }
+            }
+        }
+        if (state.canShowStill) {
+            VideoStill(
+                modifier = Modifier.fillMaxSize(),
+                state = state,
+            )
+        }
+    }
+
+    DisposableEffect(state) {
+        state.status = PlayerStatus.Idle.Initial
+        onDispose {
+            state.hasRenderedFirstFrame = false
+            state.status = PlayerStatus.Idle.Evicted
+        }
+    }
+}
+
+@Composable
+private fun JavaFxVideoPlayer(
+    modifier: Modifier,
+    state: JavaFxPlayerState,
+) {
     Box(modifier = modifier) {
         if (state.canShowVideo) {
             JavaFxVideoSurface(
@@ -56,7 +109,6 @@ actual fun VideoPlayer(
         }
     }
 
-    // Keep player position up to date
     LaunchedEffect(state) {
         while (true) {
             if (state.status is PlayerStatus.Play) {
@@ -116,6 +168,27 @@ private fun JavaFxVideoSurface(
     )
 }
 
+// Native player helpers
+
+private val AVFoundationPlayerState.canShowVideo
+    get() = when (status) {
+        is PlayerStatus.Idle -> false
+        is PlayerStatus.Play -> true
+        is PlayerStatus.Pause -> true
+    }
+
+private val AVFoundationPlayerState.canShowStill
+    get() = videoSize == IntSize.Zero ||
+        !hasRenderedFirstFrame ||
+        when (status) {
+            is PlayerStatus.Idle -> true
+            is PlayerStatus.Pause -> false
+            PlayerStatus.Play.Requested -> true
+            PlayerStatus.Play.Confirmed -> false
+        }
+
+// JavaFx player helpers
+
 private val JavaFxPlayerState.canShowVideo
     get() = when (status) {
         is PlayerStatus.Idle -> false
@@ -132,3 +205,36 @@ private val JavaFxPlayerState.canShowStill
             PlayerStatus.Play.Requested -> true
             PlayerStatus.Play.Confirmed -> false
         }
+
+private fun DrawScope.drawScaledImage(
+    image: ImageBitmap,
+    dstSize: IntSize,
+    contentScale: ContentScale,
+) {
+    if (contentScale == ContentScale.Crop) {
+        val frameW = image.width
+        val frameH = image.height
+
+        val scale = maxOf(
+            dstSize.width / frameW.toFloat(),
+            dstSize.height / frameH.toFloat(),
+        )
+
+        val srcW = (dstSize.width / scale).toInt()
+        val srcH = (dstSize.height / scale).toInt()
+        val srcX = ((frameW - srcW) / 2).coerceAtLeast(0)
+        val srcY = ((frameH - srcH) / 2).coerceAtLeast(0)
+
+        drawImage(
+            image = image,
+            srcOffset = IntOffset(srcX, srcY),
+            srcSize = IntSize(srcW, srcH),
+            dstSize = dstSize,
+        )
+    } else {
+        drawImage(
+            image = image,
+            dstSize = dstSize,
+        )
+    }
+}
