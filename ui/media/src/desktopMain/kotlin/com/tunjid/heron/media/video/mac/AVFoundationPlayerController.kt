@@ -21,11 +21,9 @@ import com.tunjid.heron.media.video.PlayerStatus
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.media.video.VideoPlayerState
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 
 @Stable
 class AVFoundationPlayerController(
@@ -34,17 +32,14 @@ class AVFoundationPlayerController(
 
     override var isMuted: Boolean by mutableStateOf(true)
 
-    private val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val coroutineScope = scope
     private val idsToStates = mutableStateMapOf<String, AVFoundationPlayerState>()
+    private val uiUpdateJobs = mutableMapOf<String, Job>()
     private var activeVideoId: String by mutableStateOf("")
 
     init {
         snapshotFlow { isMuted }
-            .onEach { muted ->
-                idsToStates[activeVideoId]?.let { state ->
-                    ioScope.launch { state.applyVolume() }
-                }
-            }
+            .onEach { idsToStates[activeVideoId]?.applyVolume() }
             .launchIn(scope)
     }
 
@@ -66,6 +61,7 @@ class AVFoundationPlayerController(
             autoplay = autoplay,
             isLooping = isLooping,
             isMuted = derivedStateOf { isMuted },
+            frameProcessingScope = coroutineScope,
         )
 
         idsToStates[videoId] = videoPlayerState
@@ -81,80 +77,74 @@ class AVFoundationPlayerController(
 
         setActiveVideo(playerIdToPlay)
 
-        ioScope.launch {
-            // Initialize native player if needed
-            if (stateToPlay.playerPtr == null) {
-                stateToPlay.initNativePlayer()
-                stateToPlay.openMedia(stateToPlay.videoUrl)
-            }
-
-            val alreadyPlaying = stateToPlay.status is PlayerStatus.Play.Confirmed
-
-            // Resume if paused and same video
-            if (stateToPlay.status is PlayerStatus.Pause && seekToMs == null) {
-                stateToPlay.startUIUpdateJob(ioScope)
-                stateToPlay.playNative(ioScope)
-                return@launch
-            }
-
-            // Already playing and not seeking
-            if (alreadyPlaying && seekToMs == null) return@launch
-
-            // Seeking in same video
-            if (alreadyPlaying && seekToMs != null) {
-                stateToPlay.seekToNative(seekToMs)
-                return@launch
-            }
-
-            // Start playback
-            val position = stateToPlay.seekPositionOnPlayMs(seekToMs)
-            if (position > 0) {
-                stateToPlay.seekToNative(position)
-            }
-            stateToPlay.startUIUpdateJob(ioScope)
-            stateToPlay.playNative(ioScope)
+        // Open media if not yet called
+        if (!stateToPlay.mediaOpenCalled) {
+            stateToPlay.openMedia(stateToPlay.videoUrl)
+            startUIUpdateJobIfNeeded(playerIdToPlay, stateToPlay)
+            stateToPlay.playNative()
+            return
         }
+
+        val alreadyPlaying = stateToPlay.status is PlayerStatus.Play.Confirmed
+
+        // Resume if paused and same video
+        if (stateToPlay.status is PlayerStatus.Pause && seekToMs == null) {
+            startUIUpdateJobIfNeeded(playerIdToPlay, stateToPlay)
+            stateToPlay.playNative()
+            return
+        }
+
+        // Already playing and not seeking
+        if (alreadyPlaying && seekToMs == null) return
+
+        // Seeking in same video
+        if (alreadyPlaying && seekToMs != null) {
+            stateToPlay.seekToNative(seekToMs)
+            return
+        }
+
+        // Start playback
+        val position = stateToPlay.seekPositionOnPlayMs(seekToMs)
+        if (position > 0) {
+            stateToPlay.seekToNative(position)
+        }
+        startUIUpdateJobIfNeeded(playerIdToPlay, stateToPlay)
+        stateToPlay.playNative()
     }
 
     override fun pauseActiveVideo() {
         idsToStates[activeVideoId]?.apply {
             status = PlayerStatus.Pause.Requested
+            pauseNative()
         }
-        ioScope.launch {
-            idsToStates[activeVideoId]?.pauseNative()
-        }
+        uiUpdateJobs.remove(activeVideoId)?.cancel()
     }
 
     override fun seekTo(position: Long) {
-        ioScope.launch {
-            idsToStates[activeVideoId]?.seekToNative(position)
-        }
+        idsToStates[activeVideoId]?.seekToNative(position)
     }
 
     override fun getVideoStateById(videoId: String): VideoPlayerState? = idsToStates[videoId]
 
     override fun retry(videoId: String) {
         val stateToRetry = idsToStates[videoId] ?: return
+        uiUpdateJobs.remove(videoId)?.cancel()
         setActiveVideo(videoId)
-        ioScope.launch {
-            stateToRetry.dispose()
-            // Re-initialize and play
-            stateToRetry.initNativePlayer()
-            stateToRetry.openMedia(stateToRetry.videoUrl)
-            stateToRetry.startUIUpdateJob(ioScope)
-            stateToRetry.playNative(ioScope)
-        }
+        stateToRetry.dispose()
+        stateToRetry.reinitialize()
+        stateToRetry.openMedia(stateToRetry.videoUrl)
+        startUIUpdateJobIfNeeded(videoId, stateToRetry)
+        stateToRetry.playNative()
     }
 
     override fun unregisterAll(retainedVideoIds: Set<String>): Set<String> {
         val toDispose = idsToStates
             .filterNot { retainedVideoIds.contains(it.key) }
         toDispose.keys.forEach { id ->
+            uiUpdateJobs.remove(id)?.cancel()
             idsToStates.remove(id)
         }
-        ioScope.launch {
-            toDispose.values.forEach { it.dispose() }
-        }
+        toDispose.values.forEach { it.dispose() }
         return retainedVideoIds - idsToStates.keys
     }
 
@@ -167,9 +157,17 @@ class AVFoundationPlayerController(
 
         idsToStates[previousId]?.let { previousState ->
             previousState.status = PlayerStatus.Pause.Requested
-            ioScope.launch {
-                previousState.pauseNative()
-            }
+            previousState.pauseNative()
+            uiUpdateJobs.remove(previousId)?.cancel()
+        }
+    }
+
+    private fun startUIUpdateJobIfNeeded(
+        videoId: String,
+        state: AVFoundationPlayerState,
+    ) {
+        if (uiUpdateJobs[videoId]?.isActive != true) {
+            uiUpdateJobs[videoId] = state.startUIUpdateJob(coroutineScope)
         }
     }
 
@@ -180,11 +178,10 @@ class AVFoundationPlayerController(
             .filter { idsToStates[it]?.status is PlayerStatus.Idle.Evicted }
             .take(size - MaxVideoStates)
             .mapNotNull { id ->
+                uiUpdateJobs.remove(id)?.cancel()
                 idsToStates.remove(id)
             }
-        ioScope.launch {
-            toDispose.forEach { it.dispose() }
-        }
+        toDispose.forEach { it.dispose() }
     }
 }
 

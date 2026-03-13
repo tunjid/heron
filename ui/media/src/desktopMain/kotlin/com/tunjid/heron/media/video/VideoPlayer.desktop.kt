@@ -61,12 +61,14 @@ private fun AVFoundationVideoPlayer(
 ) {
     Box(modifier = modifier) {
         if (state.canShowVideo) {
-            val currentFrame by state.currentFrameState
-            currentFrame?.let { frame ->
-                Canvas(modifier = Modifier.fillMaxSize()) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                state.currentFrameState.value?.let { frame ->
                     drawScaledImage(
                         image = frame,
-                        dstSize = IntSize(size.width.toInt(), size.height.toInt()),
+                        dstSize = IntSize(
+                            width = size.width.toInt(),
+                            height = size.height.toInt(),
+                        ),
                         contentScale = state.contentScale,
                     )
                 }

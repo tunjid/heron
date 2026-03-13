@@ -99,6 +99,15 @@ class SharedVideoPlayer {
     private var lastError: String? = nil
     private var errorCount: Int = 0
 
+    // JNA callback types and storage
+    private var statusCallback: (@convention(c) (UnsafeRawPointer?, Int32) -> Void)?
+    private var timeCallback: (@convention(c) (UnsafeRawPointer?, Double, Double) -> Void)?
+    private var frameCallback: (@convention(c) (UnsafeRawPointer?) -> Void)?
+    private var endOfPlaybackCallback: (@convention(c) (UnsafeRawPointer?) -> Void)?
+    private var callbackContext: UnsafeRawPointer?
+    private var periodicTimeObserver: Any?
+    private var endOfPlaybackObserver: NSObjectProtocol?
+
     init() {
         // Detect screen refresh rate
         detectScreenRefreshRate()
@@ -246,12 +255,15 @@ class SharedVideoPlayer {
         switch status {
         case .paused:
             networkStatus = "Paused"
+            statusCallback?(callbackContext, 0)
         case .waitingToPlayAtSpecifiedRate:
             networkStatus = "Buffering"
             isBuffering = true
+            statusCallback?(callbackContext, 2)
         case .playing:
             networkStatus = "Playing"
             isBuffering = false
+            statusCallback?(callbackContext, 1)
         @unknown default:
             networkStatus = "Unknown"
         }
@@ -924,6 +936,7 @@ class SharedVideoPlayer {
                forItemTime: currentTime, itemTimeForDisplay: nil)
         {
             updateLatestFrameData(from: pixelBuffer)
+            frameCallback?(callbackContext)
         }
     }
 
@@ -1296,6 +1309,89 @@ class SharedVideoPlayer {
         }
     }
 
+    // MARK: - Callback Registration
+
+    func registerStatusCallback(_ ctx: UnsafeRawPointer?, _ callback: (@convention(c) (UnsafeRawPointer?, Int32) -> Void)?) {
+        callbackContext = ctx
+        statusCallback = callback
+    }
+
+    func unregisterStatusCallback() {
+        statusCallback = nil
+    }
+
+    func registerTimeCallback(_ ctx: UnsafeRawPointer?, _ callback: (@convention(c) (UnsafeRawPointer?, Double, Double) -> Void)?, _ interval: Double) {
+        callbackContext = ctx
+        timeCallback = callback
+
+        if let observer = periodicTimeObserver {
+            player?.removeTimeObserver(observer)
+            periodicTimeObserver = nil
+        }
+
+        guard let callback = callback, let player = player else { return }
+        let cmInterval = CMTime(seconds: interval, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
+        periodicTimeObserver = player.addPeriodicTimeObserver(forInterval: cmInterval, queue: .main) { [weak self] time in
+            guard let self = self else { return }
+            let currentTime = CMTimeGetSeconds(time)
+            let duration = CMTimeGetSeconds(self.player?.currentItem?.duration ?? CMTime.zero)
+            callback(self.callbackContext, currentTime, duration.isNaN ? 0.0 : duration)
+        }
+    }
+
+    func unregisterTimeCallback() {
+        if let observer = periodicTimeObserver {
+            player?.removeTimeObserver(observer)
+            periodicTimeObserver = nil
+        }
+        timeCallback = nil
+    }
+
+    func registerFrameCallback(_ ctx: UnsafeRawPointer?, _ callback: (@convention(c) (UnsafeRawPointer?) -> Void)?) {
+        callbackContext = ctx
+        frameCallback = callback
+    }
+
+    func unregisterFrameCallback() {
+        frameCallback = nil
+    }
+
+    func registerEndOfPlaybackCallback(_ ctx: UnsafeRawPointer?, _ callback: (@convention(c) (UnsafeRawPointer?) -> Void)?) {
+        callbackContext = ctx
+        endOfPlaybackCallback = callback
+
+        if let observer = endOfPlaybackObserver {
+            NotificationCenter.default.removeObserver(observer)
+            endOfPlaybackObserver = nil
+        }
+
+        guard let callback = callback else { return }
+        endOfPlaybackObserver = NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: player?.currentItem,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            callback(self.callbackContext)
+        }
+    }
+
+    func unregisterEndOfPlaybackCallback() {
+        if let observer = endOfPlaybackObserver {
+            NotificationCenter.default.removeObserver(observer)
+            endOfPlaybackObserver = nil
+        }
+        endOfPlaybackCallback = nil
+    }
+
+    private func unregisterAllCallbacks() {
+        unregisterStatusCallback()
+        unregisterTimeCallback()
+        unregisterFrameCallback()
+        unregisterEndOfPlaybackCallback()
+        callbackContext = nil
+    }
+
     private func cleanupObservers() {
         playerItemObserver?.invalidate()
         playerObserver?.invalidate()
@@ -1310,6 +1406,7 @@ class SharedVideoPlayer {
     /// Disposes of the video player and releases resources.
     func dispose() {
         pause()
+        unregisterAllCallbacks()
         cleanupObservers()
         player = nil
         videoOutput = nil
@@ -1606,5 +1703,71 @@ public func getLastError(_ context: UnsafeMutableRawPointer?) -> UnsafePointer<C
         return UnsafePointer<CChar>(cString)
     }
     return nil
+}
+
+// MARK: - Callback Registration C Exports
+
+@_cdecl("registerStatusCallback")
+public func registerStatusCallback(_ context: UnsafeMutableRawPointer?, _ callbackCtx: UnsafeRawPointer?, _ callback: (@convention(c) (UnsafeRawPointer?, Int32) -> Void)?) {
+    guard let context = context else { return }
+    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
+    player.registerStatusCallback(callbackCtx, callback)
+}
+
+@_cdecl("unregisterStatusCallback")
+public func unregisterStatusCallback(_ context: UnsafeMutableRawPointer?) {
+    guard let context = context else { return }
+    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
+    player.unregisterStatusCallback()
+}
+
+@_cdecl("registerTimeCallback")
+public func registerTimeCallback(_ context: UnsafeMutableRawPointer?, _ callbackCtx: UnsafeRawPointer?, _ callback: (@convention(c) (UnsafeRawPointer?, Double, Double) -> Void)?, _ interval: Double) {
+    guard let context = context else { return }
+    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
+    DispatchQueue.main.async {
+        player.registerTimeCallback(callbackCtx, callback, interval)
+    }
+}
+
+@_cdecl("unregisterTimeCallback")
+public func unregisterTimeCallback(_ context: UnsafeMutableRawPointer?) {
+    guard let context = context else { return }
+    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
+    DispatchQueue.main.async {
+        player.unregisterTimeCallback()
+    }
+}
+
+@_cdecl("registerFrameCallback")
+public func registerFrameCallback(_ context: UnsafeMutableRawPointer?, _ callbackCtx: UnsafeRawPointer?, _ callback: (@convention(c) (UnsafeRawPointer?) -> Void)?) {
+    guard let context = context else { return }
+    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
+    player.registerFrameCallback(callbackCtx, callback)
+}
+
+@_cdecl("unregisterFrameCallback")
+public func unregisterFrameCallback(_ context: UnsafeMutableRawPointer?) {
+    guard let context = context else { return }
+    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
+    player.unregisterFrameCallback()
+}
+
+@_cdecl("registerEndOfPlaybackCallback")
+public func registerEndOfPlaybackCallback(_ context: UnsafeMutableRawPointer?, _ callbackCtx: UnsafeRawPointer?, _ callback: (@convention(c) (UnsafeRawPointer?) -> Void)?) {
+    guard let context = context else { return }
+    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
+    DispatchQueue.main.async {
+        player.registerEndOfPlaybackCallback(callbackCtx, callback)
+    }
+}
+
+@_cdecl("unregisterEndOfPlaybackCallback")
+public func unregisterEndOfPlaybackCallback(_ context: UnsafeMutableRawPointer?) {
+    guard let context = context else { return }
+    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
+    DispatchQueue.main.async {
+        player.unregisterEndOfPlaybackCallback()
+    }
 }
 
