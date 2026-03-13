@@ -41,7 +41,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.BottomAppBarDefaults
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRailItem
@@ -188,40 +187,37 @@ internal fun AppState.PaneNavigationRail(
 ) {
     Box(
         modifier = modifier
+            .padding(start = 8.dp)
             .fillMaxSize(),
     ) {
-        ElevatedCard(
+        Column(
             modifier = Modifier
-                .align(Alignment.Center),
+                .align(Alignment.Center)
+                .padding(vertical = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(vertical = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                navItems.forEach { item ->
-                    NavigationRailItem(
-                        selected = item.selected,
-                        icon = {
-                            BadgedBox(
-                                badge = {
-                                    Badge(item.badgeCount)
-                                },
-                                content = {
-                                    Icon(
-                                        imageVector = item.stack.icon,
-                                        contentDescription = stringResource(item.stack.titleRes),
-                                    )
-                                },
-                            )
-                        },
-                        onClick = {
-                            if (item.selected && onNavItemReselected()) return@NavigationRailItem
-                            onNavItemSelected(item)
-                        },
-                    )
-                }
+            navItems.forEach { item ->
+                NavigationRailItem(
+                    selected = item.selected,
+                    icon = {
+                        BadgedBox(
+                            badge = {
+                                Badge(item.badgeCount)
+                            },
+                            content = {
+                                Icon(
+                                    imageVector = item.stack.icon,
+                                    contentDescription = stringResource(item.stack.titleRes),
+                                )
+                            },
+                        )
+                    },
+                    onClick = {
+                        if (item.selected && onNavItemReselected()) return@NavigationRailItem
+                        onNavItemSelected(item)
+                    },
+                )
             }
         }
     }

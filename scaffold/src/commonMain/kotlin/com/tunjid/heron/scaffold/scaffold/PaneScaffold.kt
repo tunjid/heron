@@ -300,7 +300,6 @@ private inline fun PaneNavigationRailScaffold(
     Row(
         modifier = modifier,
         content = {
-            Spacer(Modifier.width(8.dp))
             Box(
                 modifier = Modifier
                     .widthIn(max = 80.dp)
