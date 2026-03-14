@@ -158,4 +158,11 @@
     <string name="empty_timeline_media_description">This user hasn't posted any photos or videos yet.</string>
     <string name="empty_timeline_videos">No videos yet</string>
     <string name="empty_timeline_videos_description">This user hasn't posted any videos yet.</string>
+
+    <string name="bluesky_server">Bluesky</string>
+    <string name="blacksky_server">Blacksky</string>
+    <string name="eurosky_server">Eurosky</string>
+    <string name="pckt_server">Pckt.blog</string>
+    <string name="custom_server">Custom server</string>
+    <string name="at_proto">ATProto</string>
 </resources>
