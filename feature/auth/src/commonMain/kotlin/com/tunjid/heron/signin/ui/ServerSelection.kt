@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AlternateEmail
 import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -49,6 +48,9 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.signin.DomainRegex
+import com.tunjid.heron.timeline.ui.icons.AtProtoServer
+import com.tunjid.heron.timeline.ui.icons.logo
+import com.tunjid.heron.timeline.ui.icons.stringResource
 import com.tunjid.heron.ui.ItemSelection
 import com.tunjid.heron.ui.Status
 import com.tunjid.heron.ui.sheets.BottomSheetScope
@@ -62,15 +64,10 @@ import com.tunjid.heron.ui.text.copyWithValidation
 import com.tunjid.heron.ui.text.isValid
 import com.tunjid.heron.ui.text.validated
 import heron.feature.auth.generated.resources.Res
-import heron.feature.auth.generated.resources.at_proto
-import heron.feature.auth.generated.resources.blacksky_server
-import heron.feature.auth.generated.resources.bluesky_server
 import heron.feature.auth.generated.resources.cancel
 import heron.feature.auth.generated.resources.custom_server
 import heron.feature.auth.generated.resources.empty_form
-import heron.feature.auth.generated.resources.eurosky_server
 import heron.feature.auth.generated.resources.invalid_domain
-import heron.feature.auth.generated.resources.pckt_server
 import heron.feature.auth.generated.resources.submit
 import org.jetbrains.compose.resources.stringResource
 
@@ -268,29 +265,4 @@ private val Server.key
     get() = when (this) {
         in Server.KnownServers -> endpoint
         else -> "custom"
-    }
-
-internal val Server.logo
-    get() = when (endpoint) {
-        Server.BlueSky.endpoint -> Bluesky
-        Server.BlackSky.endpoint -> Blacksky
-        Server.EuroSky.endpoint -> Eurosky
-        Server.Pckt.endpoint -> Pckt
-        AtProtoServer.endpoint -> Icons.Rounded.AlternateEmail
-        else -> Icons.Rounded.Public
-    }
-
-internal val AtProtoServer = Server(
-    endpoint = "https://atproto.com/",
-    supportsOauth = false,
-)
-
-internal val Server.stringResource
-    get() = when (endpoint) {
-        Server.BlueSky.endpoint -> Res.string.bluesky_server
-        Server.BlackSky.endpoint -> Res.string.blacksky_server
-        Server.EuroSky.endpoint -> Res.string.eurosky_server
-        Server.Pckt.endpoint -> Res.string.pckt_server
-        AtProtoServer.endpoint -> Res.string.at_proto
-        else -> Res.string.custom_server
     }

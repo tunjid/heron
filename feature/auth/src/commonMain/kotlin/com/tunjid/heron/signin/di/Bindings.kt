@@ -68,7 +68,7 @@ import com.tunjid.heron.signin.canSignInLater
 import com.tunjid.heron.signin.canSwitchAccount
 import com.tunjid.heron.signin.createSessionAction
 import com.tunjid.heron.signin.submitButtonEnabled
-import com.tunjid.heron.signin.ui.stringResource
+import com.tunjid.heron.timeline.ui.icons.stringResource
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry

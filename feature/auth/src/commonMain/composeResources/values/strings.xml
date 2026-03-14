@@ -29,17 +29,12 @@
     <string name="invalid_domain">Invalid domain</string>
     <string name="empty_form">%1$s should not be empty</string>
     <string name="account_host">Where are you @?</string>
-    <string name="bluesky_server">Bluesky</string>
-    <string name="blacksky_server">Blacksky</string>
-    <string name="eurosky_server">Eurosky</string>
-    <string name="pckt_server">Pckt.blog</string>
     <string name="custom_server">Custom server</string>
     <string name="signing_in">Signing in…</string>
     <string name="no_account_help_content_description">Help creating an account</string>
     <string name="no_account_help_button">I don't have an account</string>
     <string name="no_account_dialog_title">About Heron</string>
     <string name="no_account_dialog_details">Heron is a client app for the Authenticated Transfer Protocol (ATProto), an open, decentralized network for building social applications. As a result, it currently does not administer sign ups.\n\nPlease sign up with your preferred provider and then return here to sign in.\n\nYou can learn more about ATProto, or any of the providers below by tapping learn more.</string>
-    <string name="at_proto">ATProto</string>
     <string name="learn_more">Learn more about %1$s</string>
     <string name="okay">Okay</string>
 </resources>
