@@ -29,15 +29,17 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * A loopback HTTP server that listens on 127.0.0.1 for OAuth redirects.
  * The port is dynamically assigned by the OS.
  */
-class LoopbackRedirect : OauthRedirect() {
+private class LoopbackRedirect : OauthRedirect() {
 
     private var server: EmbeddedServer<*, *>? = null
-
+    private val mutex = Mutex()
     private val requests = MutableSharedFlow<SessionRequest.Oauth>(
         extraBufferCapacity = 1,
     )
@@ -48,7 +50,7 @@ class LoopbackRedirect : OauthRedirect() {
 
     override val sessionRequests: Flow<SessionRequest.Oauth> = requests
 
-    override suspend fun initializeOAuthClient(): OAuthClient {
+    override suspend fun initializeOAuthClient(): OAuthClient = mutex.withLock {
         stop()
 
         val embeddedServer = embeddedServer(
@@ -94,7 +96,10 @@ class LoopbackRedirect : OauthRedirect() {
     }
 
     private fun stop() {
-        server?.stop(gracePeriodMillis = 0, timeoutMillis = 0)
+        server?.stop(
+            gracePeriodMillis = 0,
+            timeoutMillis = 0,
+        )
         server = null
     }
 }
