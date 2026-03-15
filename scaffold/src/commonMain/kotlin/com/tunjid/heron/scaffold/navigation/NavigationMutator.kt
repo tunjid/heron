@@ -74,7 +74,6 @@ import heron.scaffold.generated.resources.messages
 import heron.scaffold.generated.resources.notifications
 import heron.scaffold.generated.resources.search
 import heron.scaffold.generated.resources.splash
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -502,7 +501,7 @@ class PersistedNavigationStateHolder(
                                 ),
                             )
                         },
-                        forceSignOutMutations(
+                        authNavigationMutations(
                             authRepository = authRepository,
                             userDataRepository = userDataRepository,
                         ),
@@ -523,10 +522,6 @@ class PersistedNavigationStateHolder(
         },
     )
 
-@Suppress("UnusedReceiverParameter")
-fun NavigationContext.resetAuthNavigation(): MultiStackNav =
-    SignedInNavigationState
-
 /**
  * A helper function for generic state producers to consume navigation actions
  */
@@ -537,7 +532,7 @@ fun <Action : NavigationAction, State> Flow<Action>.consumeNavigationActions(
     emptyFlow<Mutation<State>>()
 }
 
-private fun forceSignOutMutations(
+private fun authNavigationMutations(
     authRepository: AuthRepository,
     userDataRepository: UserDataRepository,
 ): Flow<Mutation<MultiStackNav>> =
@@ -547,14 +542,19 @@ private fun forceSignOutMutations(
         userDataRepository.navigation,
         ::Triple,
     )
-        .filter { (isSignedIn, isGuest, navigation) ->
-            // No auth token and is displaying main navigation
-            !isSignedIn && !isGuest && navigation != EmptyNavigation
+        .filter { (_, isGuest, navigation) ->
+            !isGuest && navigation != EmptyNavigation
         }
-        .mapLatestToMutation {
-            when (stacks[currentIndex].name) {
-                // If on the auth stack already, keep the navigation state as is
-                AppStack.Auth.stackName -> this
+        .mapLatestToMutation { (isSignedIn) ->
+            val isOnAuthStack = stacks[currentIndex].name == AppStack.Auth.stackName
+            when {
+                // Signed in and on auth stack, redirect to signed-in navigation
+                isSignedIn && isOnAuthStack -> SignedInNavigationState
+                // Signed in but not on auth stack, keep as is
+                isSignedIn -> this
+                // Not signed in and already on auth stack, keep as is
+                isOnAuthStack -> this
+                // Not signed in and not on auth stack, force sign out
                 else -> SignedOutNavigationState
             }
         }
