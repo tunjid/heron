@@ -26,7 +26,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -73,8 +73,7 @@ internal fun SignInScreen(
     val scrollState = rememberScrollState()
     Column(
         modifier = modifier
-            .fillMaxHeight()
-            .widthIn(max = 600.dp)
+            .fillMaxSize()
             .padding(horizontal = 56.dp)
             .verticalScroll(state = scrollState),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -106,6 +105,7 @@ internal fun SignInScreen(
                 ) {
                     FormField(
                         modifier = Modifier
+                            .widthIn(max = SignInItemMaxWidth)
                             .fillMaxWidth(),
                         field = field,
                         leadingIcon = {
@@ -159,6 +159,7 @@ internal fun SignInScreen(
             modifier = Modifier
                 .padding(vertical = 32.dp)
                 .align(Alignment.CenterHorizontally)
+                .widthIn(max = SignInItemMaxWidth)
                 .animateBounds(paneScaffoldState),
             status = state.serverSelectionStatus,
             selectedServer = state.selectedServer,
@@ -221,3 +222,5 @@ private fun LoadingIcon(
 private val EnterTransition = fadeIn() + slideInVertically { -it }
 private val ExitTransition =
     shrinkOut { IntSize(it.width, 0) } + slideOutVertically { -it } + fadeOut()
+
+private val SignInItemMaxWidth = 600.dp
