@@ -69,6 +69,8 @@ import com.tunjid.heron.signin.canSwitchAccount
 import com.tunjid.heron.signin.createSessionAction
 import com.tunjid.heron.signin.submitButtonEnabled
 import com.tunjid.heron.timeline.ui.icons.stringResource
+import com.tunjid.heron.ui.platformStatusBars
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -89,6 +91,7 @@ import heron.feature.auth.generated.resources.sign_in_later
 import heron.feature.auth.generated.resources.sign_with_oauth
 import heron.feature.auth.generated.resources.sign_with_password
 import heron.feature.auth.generated.resources.signing_in
+import heron.ui.core.generated.resources.more_options
 import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/auth"
@@ -246,6 +249,7 @@ private fun PaneScaffoldState.TopBar(
                 title = stringResource(Res.string.sign_in),
             )
         },
+        windowInsets = WindowInsets.platformStatusBars,
         actions = {
             if (oauthAvailable) Box(
                 modifier = Modifier
@@ -261,7 +265,7 @@ private fun PaneScaffoldState.TopBar(
                     content = {
                         Icon(
                             imageVector = Icons.Rounded.MoreVert,
-                            contentDescription = "More options",
+                            contentDescription = stringResource(CommonStrings.more_options),
                         )
                     },
                 )
