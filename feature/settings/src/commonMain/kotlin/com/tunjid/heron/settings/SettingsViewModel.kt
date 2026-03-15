@@ -27,7 +27,6 @@ import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.timeline.utilities.enqueueMutations
@@ -137,7 +136,6 @@ class ActualSettingsViewModel(
                     )
                     is Action.SwitchSession -> action.flow.handleSwitchSessionMutations(
                         authRepository = authRepository,
-                        navActions = navActions,
                     )
                     is Action.UpdateFeedPreference -> action.flow.updateFeedPreferenceMutations(
                         writeQueue = writeQueue,
@@ -217,21 +215,18 @@ private fun Flow<Action.UpdateThreadViewPreference>.updateThreadPreferenceMutati
 
 private fun Flow<Action.SwitchSession>.handleSwitchSessionMutations(
     authRepository: AuthRepository,
-    navActions: (NavigationMutation) -> Unit,
 ): Flow<Mutation<State>> =
     debounce(SwitchActionDebounce)
         .mapLatestToManyMutations {
             switchSessionMutation(
                 authRepository = authRepository,
                 sessionSummary = it.sessionSummary,
-                navActions = navActions,
             )
         }
 
 private suspend fun FlowCollector<Mutation<State>>.switchSessionMutation(
     authRepository: AuthRepository,
     sessionSummary: SessionSummary,
-    navActions: (NavigationMutation) -> Unit,
 ) {
     emit {
         copy(

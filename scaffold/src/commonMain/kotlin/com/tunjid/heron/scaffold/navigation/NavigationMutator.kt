@@ -562,15 +562,11 @@ private fun authNavigationMutations(
                 previousProfileId != currentProfileId
             val freshSignIn = previousProfileId == null && currentProfileId != null
             when {
-                // Profile changed (session switch), reset to signed-in navigation
-                profileChanged -> SignedInNavigationState
-                // Fresh sign-in while on auth stack, redirect to signed-in navigation
-                freshSignIn && isOnAuthStack -> SignedInNavigationState
-                // Signed in but not on auth stack, keep as is
-                isSignedIn -> this
-                // Not signed in and already on auth stack, keep as is
-                isOnAuthStack -> this
-                // Not signed in and not on auth stack, force sign out
+                // Profile changed (session switch) or a fresh sign-in on the auth stack, reset to signed-in navigation
+                profileChanged || (freshSignIn && isOnAuthStack) -> SignedInNavigationState
+                // If signed in or already on the auth stack, keep navigation as is
+                isSignedIn || isOnAuthStack -> this
+                // Otherwise, the user is not signed in and not on the auth stack, so force sign out
                 else -> SignedOutNavigationState
             }
         }
