@@ -44,6 +44,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -109,6 +110,7 @@ import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.fillMaxRestrictedWidth
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.home.generated.resources.Res
@@ -331,11 +333,13 @@ private fun ExpandedTabs(
         FlowRow(
             modifier = with(animatedContentScope) {
                 Modifier
+                    .align(Alignment.Center)
                     .animateEnterExit(
                         enter = ExpandedTabsContentEnterAnimation,
                     )
             }
-                .fillMaxSize()
+                .fillMaxHeight()
+                .fillMaxRestrictedWidth()
                 .padding(
                     top = 40.dp,
                     start = 16.dp,

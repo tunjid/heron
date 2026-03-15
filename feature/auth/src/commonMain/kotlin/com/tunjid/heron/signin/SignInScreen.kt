@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -53,6 +52,8 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.signin.oauth.rememberOauthFlowState
 import com.tunjid.heron.signin.ui.ServerSelection
 import com.tunjid.heron.signin.ui.ServerSelectionSheetState.Companion.rememberUpdatedServerSelectionState
+import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.fillMaxRestrictedWidth
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.FormField
@@ -105,8 +106,7 @@ internal fun SignInScreen(
                 ) {
                     FormField(
                         modifier = Modifier
-                            .widthIn(max = SignInItemMaxWidth)
-                            .fillMaxWidth(),
+                            .fillMaxRestrictedWidth(),
                         field = field,
                         leadingIcon = {
                             LoadingIcon(
@@ -159,7 +159,7 @@ internal fun SignInScreen(
             modifier = Modifier
                 .padding(vertical = 32.dp)
                 .align(Alignment.CenterHorizontally)
-                .widthIn(max = SignInItemMaxWidth)
+                .widthIn(max = UiTokens.restrictedPaneWidth)
                 .animateBounds(paneScaffoldState),
             status = state.serverSelectionStatus,
             selectedServer = state.selectedServer,
@@ -222,5 +222,3 @@ private fun LoadingIcon(
 private val EnterTransition = fadeIn() + slideInVertically { -it }
 private val ExitTransition =
     shrinkOut { IntSize(it.width, 0) } + slideOutVertically { -it } + fadeOut()
-
-private val SignInItemMaxWidth = 600.dp
