@@ -208,6 +208,7 @@ class ProfileBindings(
                             else topAppBarNestedScrollConnection.offset * -1f
                         },
                         state = profileFabState(state),
+                        profileHandle = state.profile.handle,
                         onStateClicked = { fabState ->
                             viewModel.accept(
                                 Action.Navigate.To(

@@ -43,6 +43,7 @@
     <string name="label_show_badge">Show badge</string>
     <string name="label_hide">Hide</string>
     <string name="write_something">Write something</string>
+    <string name="import_rss_blog">Import your RSS blog</string>
     <string name="publish_with_pckt">Publish with Pckt</string>
     <string name="publish_with_leaflet">Publish with Leaflet</string>
 </resources>

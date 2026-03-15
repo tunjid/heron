@@ -31,6 +31,7 @@ import androidx.compose.material.icons.automirrored.rounded.Login
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.AlternateEmail
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.RssFeed
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -47,11 +48,14 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.timeline.ui.icons.AtmosphereIcons
+import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.profile.generated.resources.Res
+import heron.feature.profile.generated.resources.import_rss_blog
 import heron.feature.profile.generated.resources.mention
 import heron.feature.profile.generated.resources.post
 import heron.feature.profile.generated.resources.publish_with_leaflet
@@ -99,6 +103,36 @@ sealed class ProfileFabState(
     }
 }
 
+private data class WritingItem(
+    val icon: ImageVector,
+    val stringRes: StringResource,
+    val url: String,
+    val matchesParentWidth: Boolean,
+) {
+    companion object {
+        val items = listOf(
+            WritingItem(
+                icon = Icons.Rounded.RssFeed,
+                stringRes = Res.string.import_rss_blog,
+                url = HeronImportBlog,
+                matchesParentWidth = false,
+            ),
+            WritingItem(
+                icon = AtmosphereIcons.Leaflet,
+                stringRes = Res.string.publish_with_leaflet,
+                url = LeafletPage,
+                matchesParentWidth = true,
+            ),
+            WritingItem(
+                icon = AtmosphereIcons.Pckt,
+                stringRes = Res.string.publish_with_pckt,
+                url = PcktPage,
+                matchesParentWidth = true,
+            ),
+        )
+    }
+}
+
 private data object WritingsFabSharedElementKey
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -107,6 +141,7 @@ fun PaneScaffoldState.ProfileFab(
     modifier: Modifier = Modifier,
     state: ProfileFabState,
     fabExpanded: Boolean,
+    profileHandle: ProfileHandle?,
     onStateClicked: (ProfileFabState) -> Unit,
 ) {
     var isExpanded by remember { mutableStateOf(false) }
@@ -132,25 +167,26 @@ fun PaneScaffoldState.ProfileFab(
                     modifier = Modifier
                         .wrapContentWidth(),
                 ) {
-                    WritingsOptionItem(
-                        modifier = Modifier,
-                        icon = AtmosphereIcons.Leaflet,
-                        text = stringResource(Res.string.publish_with_leaflet),
-                        onClick = {
-                            isExpanded = false
-                            uriHandler.openUri(LeafletPage)
-                        },
-                    )
-                    WritingsOptionItem(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        icon = AtmosphereIcons.Pckt,
-                        text = stringResource(Res.string.publish_with_pckt),
-                        onClick = {
-                            isExpanded = false
-                            uriHandler.openUri(PcktPage)
-                        },
-                    )
+                    WritingItem.items.forEach { item ->
+                        // Items with `matchesParentWidth` will match the
+                        // width of the container, which will be the width
+                        // of the item without `matchesParentWidth`
+                        WritingsOptionItem(
+                            modifier = Modifier
+                                .ifTrue(
+                                    predicate = item.matchesParentWidth,
+                                    block = Modifier::fillMaxWidth,
+                                ),
+                            icon = item.icon,
+                            text = stringResource(item.stringRes),
+                            onClick = {
+                                isExpanded = false
+                                uriHandler.openUri(
+                                    item.url.withHandleHint(profileHandle),
+                                )
+                            },
+                        )
+                    }
                 }
             },
         )
@@ -235,5 +271,10 @@ fun SameWidthColumn(
     }
 }
 
+private fun String.withHandleHint(
+    handle: ProfileHandle?,
+) = if (handle != null) "$this?login_hint=${handle.id}" else this
+
+private const val HeronImportBlog = "https://heron.tunji.dev/import/writing"
 private const val LeafletPage = "https://leaflet.pub/home"
 private const val PcktPage = "https://pckt.blog/atproto/identify"
