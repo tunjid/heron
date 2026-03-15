@@ -83,6 +83,8 @@ kotlin {
             dependencies {
                 implementation(libs.crypto.jdk)
                 implementation(libs.ktor.client.java)
+                implementation(libs.ktor.server.core)
+                implementation(libs.ktor.server.cio)
             }
         }
         commonTest {
