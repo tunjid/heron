@@ -35,6 +35,7 @@ import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
@@ -42,6 +43,7 @@ import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.network.PdsResolver
 import com.tunjid.heron.data.network.SessionManager
 import com.tunjid.heron.data.network.models.profileEntity
+import com.tunjid.heron.data.network.oauth.OauthRedirect
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
@@ -53,15 +55,20 @@ import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
@@ -99,6 +106,9 @@ interface AuthRepository {
 
 @Inject
 internal class AuthTokenRepository(
+    @AppMainScope
+    appMainScope: CoroutineScope,
+    oauthRedirect: OauthRedirect,
     @param:IODispatcher
     private val ioDispatcher: CoroutineDispatcher,
     private val profileDao: ProfileDao,
@@ -110,6 +120,13 @@ internal class AuthTokenRepository(
     private val savedStateDataSource: SavedStateDataSource,
     private val sessionManager: SessionManager,
 ) : AuthRepository {
+
+    init {
+        appMainScope.launch {
+            oauthRedirect.sessionRequests
+                .collectLatest(::createSession)
+        }
+    }
 
     override val isSignedIn: Flow<Boolean> =
         savedStateDataSource.signedInAuth.map {

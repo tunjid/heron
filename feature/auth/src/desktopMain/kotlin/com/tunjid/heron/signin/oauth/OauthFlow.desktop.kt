@@ -18,16 +18,19 @@ package com.tunjid.heron.signin.oauth
 
 import androidx.compose.runtime.Composable
 import com.tunjid.heron.data.core.types.GenericUri
+import java.net.URI
 
 @Composable
 actual fun rememberOauthFlowState(onResult: (OauthFlowResult) -> Unit): OauthFlowState =
-    NoOpOauthFlowState
+    LoopbackOauthFlowState
 
-private object NoOpOauthFlowState : OauthFlowState {
+private object LoopbackOauthFlowState : OauthFlowState {
 
-    override val supportsOauth: Boolean
-        get() = false
+    override val supportsOauth: Boolean = true
 
-    override fun launch(uri: GenericUri) =
-        throw UnsupportedOperationException("Oauth flow is not supported")
+    override fun launch(uri: GenericUri) {
+        // Auth callback is handled in the data layer via loopback server.
+        // This just opens the system browser for the user to authenticate.
+        java.awt.Desktop.getDesktop().browse(URI(uri.uri))
+    }
 }
