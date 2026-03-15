@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -100,6 +101,7 @@ import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.fillMaxRestrictedWidth
 import com.tunjid.heron.ui.text.withFormattedTextPost
 import heron.feature.gallery.generated.resources.Res
 import heron.feature.gallery.generated.resources.reply_hint
@@ -214,9 +216,11 @@ fun Comments(
         ElevatedCard(
             shape = TopShape,
             modifier = Modifier
+                .align(Alignment.Center)
                 .offset(y = UiTokens.statusBarHeight)
                 .offset { state.contentOffset }
-                .fillMaxSize()
+                .fillMaxHeight()
+                .fillMaxRestrictedWidth()
                 .anchoredDraggable(
                     enabled = false,
                     reverseDirection = true,

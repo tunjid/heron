@@ -19,12 +19,15 @@ package com.tunjid.heron.ui
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -44,6 +47,8 @@ object UiTokens {
     val appBarButtonSize = 40.dp
 
     val appBarBlurRadius = 60.dp
+
+    val restrictedPaneWidth = 600.dp
 
     val LikeRed: Color = Color(0xFFE0245E)
 
@@ -98,6 +103,10 @@ object UiTokens {
         dimmed: Boolean,
     ) = if (dimmed) copy(alpha = 0.6f) else this
 }
+
+fun Modifier.fillMaxRestrictedWidth() =
+    widthIn(max = UiTokens.restrictedPaneWidth)
+        .fillMaxWidth()
 
 private fun PaddingValues.height(): Dp = calculateTopPadding() + calculateBottomPadding()
 
