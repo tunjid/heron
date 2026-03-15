@@ -248,7 +248,6 @@ private suspend fun FlowCollector<Mutation<State>>.switchSessionMutation(
         is Outcome.Success -> {
             emit { copy(switchPhase = AccountSwitchPhase.SUCCESS) }
             delay(AccountSwitchPhase.SUCCESS.changeDelay)
-            navActions(NavigationAction.Pop.navigationMutation)
         }
 
         is Outcome.Failure -> {

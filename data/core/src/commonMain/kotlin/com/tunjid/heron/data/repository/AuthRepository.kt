@@ -59,6 +59,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -68,7 +69,10 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import kotlinx.coroutines.supervisorScope
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
@@ -152,7 +156,11 @@ internal class AuthTokenRepository(
                 .map { it.first().asExternalModel() }
                 .withRefresh(::updateSignedInUser)
         }
-            .flowOn(ioDispatcher)
+            .shareIn(
+                scope = appMainScope + ioDispatcher,
+                started = SharingStarted.WhileSubscribed(5_000),
+                replay = 1,
+            )
 
     override val pastSessions: Flow<List<SessionSummary>> =
         savedStateDataSource.savedState

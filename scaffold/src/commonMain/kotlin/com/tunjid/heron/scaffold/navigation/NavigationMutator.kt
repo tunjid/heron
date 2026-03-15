@@ -83,14 +83,17 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 
@@ -537,7 +540,12 @@ private fun authNavigationMutations(
     userDataRepository: UserDataRepository,
 ): Flow<Mutation<MultiStackNav>> =
     combine(
-        authRepository.isSignedIn,
+        authRepository.signedInUser
+            .map { it?.did }
+            .distinctUntilChanged()
+            .scan(null as ProfileId? to null as ProfileId?) { (_, previous), current ->
+                previous to current
+            },
         authRepository.isGuest,
         userDataRepository.navigation,
         ::Triple,
@@ -545,11 +553,19 @@ private fun authNavigationMutations(
         .filter { (_, isGuest, navigation) ->
             !isGuest && navigation != EmptyNavigation
         }
-        .mapLatestToMutation { (isSignedIn) ->
+        .mapLatestToMutation { (profileTransition) ->
+            val (previousProfileId, currentProfileId) = profileTransition
+            val isSignedIn = currentProfileId != null
             val isOnAuthStack = stacks[currentIndex].name == AppStack.Auth.stackName
+            val profileChanged = previousProfileId != null &&
+                currentProfileId != null &&
+                previousProfileId != currentProfileId
+            val freshSignIn = previousProfileId == null && currentProfileId != null
             when {
-                // Signed in and on auth stack, redirect to signed-in navigation
-                isSignedIn && isOnAuthStack -> SignedInNavigationState
+                // Profile changed (session switch), reset to signed-in navigation
+                profileChanged -> SignedInNavigationState
+                // Fresh sign-in while on auth stack, redirect to signed-in navigation
+                freshSignIn && isOnAuthStack -> SignedInNavigationState
                 // Signed in but not on auth stack, keep as is
                 isSignedIn -> this
                 // Not signed in and already on auth stack, keep as is
