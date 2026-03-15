@@ -27,10 +27,8 @@ import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.scaffold.navigation.NavigationContext
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
-import com.tunjid.heron.scaffold.navigation.resetAuthNavigation
 import com.tunjid.heron.signin.di.iss
 import com.tunjid.heron.signin.oauth.OauthFlowResult
 import com.tunjid.heron.ui.text.Memo
@@ -91,7 +89,6 @@ class ActualSignInViewModel(
             authDeeplinkMutations(
                 route = route,
                 authRepository = authRepository,
-                navActions = navActions,
             ),
         ),
         actionTransform = { actions ->
@@ -114,7 +111,6 @@ class ActualSignInViewModel(
                     )
                     is Action.OauthFlowResultAvailable -> action.flow.oauthFlowResultMutations(
                         authRepository = authRepository,
-                        navActions = navActions,
                     )
                     is Action.OauthAvailabilityChanged -> action.flow.oauthAvailabilityChangedMutations()
                     is Action.SetServer -> action.flow.setServerMutations()
@@ -154,7 +150,6 @@ private fun pastSessionMutations(
 private fun authDeeplinkMutations(
     route: Route,
     authRepository: AuthRepository,
-    navActions: (NavigationMutation) -> Unit,
 ) = flow {
     if (route.routeParams.queryParams.isEmpty()) return@flow
     val oauthTokenIssuer = route.iss ?: return@flow
@@ -170,7 +165,6 @@ private fun authDeeplinkMutations(
             ),
         ),
         authRepository = authRepository,
-        navActions = navActions,
     )
 }
 
@@ -230,7 +224,6 @@ private fun Flow<Action.OauthAvailabilityChanged>.oauthAvailabilityChangedMutati
 
 private fun Flow<Action.OauthFlowResultAvailable>.oauthFlowResultMutations(
     authRepository: AuthRepository,
-    navActions: (NavigationMutation) -> Unit,
 ): Flow<Mutation<State>> =
     mapLatestToManyMutations { action ->
         when (val result = action.result) {
@@ -249,7 +242,6 @@ private fun Flow<Action.OauthFlowResultAvailable>.oauthFlowResultMutations(
                         ),
                     ),
                     authRepository = authRepository,
-                    navActions = navActions,
                 )
             }
         }
@@ -307,18 +299,16 @@ private fun Flow<Action.CreateSession>.submissionMutations(
             createSessionMutations(
                 request = sessionRequest,
                 authRepository = authRepository,
-                navActions = navActions,
             )
         }
 
 private suspend fun FlowCollector<Mutation<State>>.createSessionMutations(
     request: SessionRequest,
     authRepository: AuthRepository,
-    navActions: (NavigationMutation) -> Unit,
 ) {
     emit { copy(isSubmitting = true) }
     when (val outcome = authRepository.createSession(request)) {
-        is Outcome.Success -> navActions(NavigationContext::resetAuthNavigation)
+        is Outcome.Success -> Unit
         is Outcome.Failure -> emit {
             copy(
                 messages = messages.plus(

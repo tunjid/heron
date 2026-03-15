@@ -74,7 +74,6 @@ import heron.scaffold.generated.resources.messages
 import heron.scaffold.generated.resources.notifications
 import heron.scaffold.generated.resources.search
 import heron.scaffold.generated.resources.splash
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -84,14 +83,17 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 
@@ -502,7 +504,7 @@ class PersistedNavigationStateHolder(
                                 ),
                             )
                         },
-                        forceSignOutMutations(
+                        authNavigationMutations(
                             authRepository = authRepository,
                             userDataRepository = userDataRepository,
                         ),
@@ -523,10 +525,6 @@ class PersistedNavigationStateHolder(
         },
     )
 
-@Suppress("UnusedReceiverParameter")
-fun NavigationContext.resetAuthNavigation(): MultiStackNav =
-    SignedInNavigationState
-
 /**
  * A helper function for generic state producers to consume navigation actions
  */
@@ -537,24 +535,38 @@ fun <Action : NavigationAction, State> Flow<Action>.consumeNavigationActions(
     emptyFlow<Mutation<State>>()
 }
 
-private fun forceSignOutMutations(
+private fun authNavigationMutations(
     authRepository: AuthRepository,
     userDataRepository: UserDataRepository,
 ): Flow<Mutation<MultiStackNav>> =
     combine(
-        authRepository.isSignedIn,
+        authRepository.signedInUser
+            .map { it?.did }
+            .distinctUntilChanged()
+            .scan(null as ProfileId? to null as ProfileId?) { (_, previous), current ->
+                previous to current
+            },
         authRepository.isGuest,
         userDataRepository.navigation,
         ::Triple,
     )
-        .filter { (isSignedIn, isGuest, navigation) ->
-            // No auth token and is displaying main navigation
-            !isSignedIn && !isGuest && navigation != EmptyNavigation
+        .filter { (_, isGuest, navigation) ->
+            !isGuest && navigation != EmptyNavigation
         }
-        .mapLatestToMutation {
-            when (stacks[currentIndex].name) {
-                // If on the auth stack already, keep the navigation state as is
-                AppStack.Auth.stackName -> this
+        .mapLatestToMutation { (profileTransition) ->
+            val (previousProfileId, currentProfileId) = profileTransition
+            val isSignedIn = currentProfileId != null
+            val isOnAuthStack = stacks[currentIndex].name == AppStack.Auth.stackName
+            val profileChanged = previousProfileId != null &&
+                currentProfileId != null &&
+                previousProfileId != currentProfileId
+            val freshSignIn = previousProfileId == null && currentProfileId != null
+            when {
+                // Profile changed (session switch) or a fresh sign-in on the auth stack, reset to signed-in navigation
+                profileChanged || (freshSignIn && isOnAuthStack) -> SignedInNavigationState
+                // If signed in or already on the auth stack, keep navigation as is
+                isSignedIn || isOnAuthStack -> this
+                // Otherwise, the user is not signed in and not on the auth stack, so force sign out
                 else -> SignedOutNavigationState
             }
         }
