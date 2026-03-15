@@ -95,10 +95,10 @@ private class LoopbackRedirect : OauthRedirect() {
         ).also(::initializedClient::set)
     }
 
-    private fun stop() {
-        server?.stop(
-            gracePeriodMillis = 0,
-            timeoutMillis = 0,
+    private suspend fun stop() {
+        server?.stopSuspend(
+            gracePeriodMillis = ServerStopGracePeriodMillis,
+            timeoutMillis = ServerStopTimeoutMillis,
         )
         server = null
     }
@@ -133,3 +133,6 @@ private val ErrorHtml = """
 private const val LoopbackHost = "127.0.0.1"
 private const val CallbackPath = "/oauth/callback"
 private const val IssuerParameter = "iss"
+
+private const val ServerStopGracePeriodMillis = 1000L
+private const val ServerStopTimeoutMillis = 1000L
