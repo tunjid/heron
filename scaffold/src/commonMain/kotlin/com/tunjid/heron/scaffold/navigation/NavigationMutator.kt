@@ -50,7 +50,6 @@ import com.tunjid.heron.ui.UiTokens
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.actionStateFlowMutator
-import com.tunjid.mutator.coroutines.mapLatestToMutation
 import com.tunjid.mutator.coroutines.mapToMutation
 import com.tunjid.treenav.MultiStackNav
 import com.tunjid.treenav.StackNav
@@ -542,10 +541,7 @@ private fun authNavigationMutations(
     combine(
         authRepository.signedInUser
             .map { it?.did }
-            .distinctUntilChanged()
-            .scan(null as ProfileId? to null as ProfileId?) { (_, previous), current ->
-                previous to current
-            },
+            .distinctUntilChanged(),
         authRepository.isGuest,
         userDataRepository.navigation,
         ::Triple,
@@ -553,23 +549,13 @@ private fun authNavigationMutations(
         .filter { (_, isGuest, navigation) ->
             !isGuest && navigation != EmptyNavigation
         }
-        .mapLatestToMutation { (profileTransition) ->
-            val (previousProfileId, currentProfileId) = profileTransition
-            val isSignedIn = currentProfileId != null
-            val isOnAuthStack = stacks[currentIndex].name == AppStack.Auth.stackName
-            val profileChanged = previousProfileId != null &&
-                currentProfileId != null &&
-                previousProfileId != currentProfileId
-            val freshSignIn = previousProfileId == null && currentProfileId != null
-            when {
-                // Profile changed (session switch) or a fresh sign-in on the auth stack, reset to signed-in navigation
-                profileChanged || (freshSignIn && isOnAuthStack) -> SignedInNavigationState
-                // If signed in or already on the auth stack, keep navigation as is
-                isSignedIn || isOnAuthStack -> this
-                // Otherwise, the user is not signed in and not on the auth stack, so force sign out
-                else -> SignedOutNavigationState
-            }
-        }
+        .scan(
+            initial = AuthNavigationEventState(),
+            operation = AuthNavigationEventState::process,
+        )
+        .map(
+            transform = AuthNavigationEventState::navigationMutation,
+        )
 
 private fun CoroutineScope.persistNavigationState(
     navigationState: MultiStackNav,
@@ -708,6 +694,64 @@ private fun AppStack.toStackNav() = StackNav(
     name = stackName,
     children = listOf(rootRoute),
 )
+
+private class AuthNavigationEventState {
+
+    private var profileId: ProfileId? = null
+    private var navigationSavedState: SavedState.Navigation = SavedState.Navigation()
+    private val events = mutableSetOf<Event>()
+
+    fun process(
+        digest: Triple<ProfileId?, Boolean, SavedState.Navigation>,
+    ): AuthNavigationEventState {
+        val (currentProfileId, _, currentNavigation) = digest
+        when {
+            profileId == null && currentProfileId != null -> {
+                events.add(Event.SignIn)
+            }
+            profileId != null && currentProfileId != null && currentProfileId != profileId -> {
+                events.add(Event.SessionSwitch(currentNavigation.hashCode()))
+            }
+        }
+
+        profileId = currentProfileId
+        navigationSavedState = currentNavigation
+
+        return this
+    }
+
+    fun navigationMutation(): Mutation<MultiStackNav> = {
+        val isSignedIn = profileId != null
+        val isOnAuthStack = stacks[currentIndex].name == AppStack.Auth.stackName
+
+        val freshSignIn = events.remove(
+            element = Event.SignIn,
+        )
+        // Don't compute the hash if not necessary
+        val sessionSwitched = if (events.isNotEmpty()) events.remove(
+            element = Event.SessionSwitch(navigationSavedState.hashCode()),
+        ) else false
+
+        // Wipe after processing
+        events.clear()
+
+        when {
+            // Session switch or a fresh sign-in on the auth stack, reset to signed-in navigation
+            sessionSwitched || (freshSignIn && isOnAuthStack) -> SignedInNavigationState
+            // If signed in or already on the auth stack, keep navigation as is
+            isSignedIn || isOnAuthStack -> this
+            // Otherwise, the user is not signed in and not on the auth stack, so force sign out
+            else -> SignedOutNavigationState
+        }
+    }
+
+    private sealed interface Event {
+        data object SignIn : Event
+        data class SessionSwitch(
+            val navigationHash: Int,
+        ) : Event
+    }
+}
 
 private const val ReferringRouteQueryParam = "referringRoute"
 private const val OAuthUrlPathSegment = "oauth"
