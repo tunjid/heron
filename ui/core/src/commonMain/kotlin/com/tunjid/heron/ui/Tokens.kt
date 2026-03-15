@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
@@ -66,14 +67,10 @@ object UiTokens {
     ) = appBarSharedElementZIndex + ((index + 1) * ZIndexIncrement)
 
     val statusBarHeight: Dp
-        @Composable get() = WindowInsets.statusBars.asPaddingValues().run {
-            calculateTopPadding() + calculateBottomPadding()
-        }
+        @Composable get() = WindowInsets.platformStatusBars.asPaddingValues().height()
 
     val navigationBarHeight: Dp
-        @Composable get() = WindowInsets.navigationBars.asPaddingValues().run {
-            calculateTopPadding() + calculateBottomPadding()
-        }
+        @Composable get() = WindowInsets.navigationBars.asPaddingValues().height()
 
     fun bottomNavHeight(
         isCompact: Boolean,
@@ -101,5 +98,15 @@ object UiTokens {
         dimmed: Boolean,
     ) = if (dimmed) copy(alpha = 0.6f) else this
 }
+
+private fun PaddingValues.height(): Dp = calculateTopPadding() + calculateBottomPadding()
+
+val WindowInsets.Companion.platformStatusBars
+    @Composable get() = WindowInsets.statusBars.union(WindowInsets.platformExtraStatusBars)
+
+internal expect val WindowInsets.Companion.platformExtraStatusBars: WindowInsets
+    @Composable get
+
+internal val EmptyWindowInsets = WindowInsets()
 
 private const val ZIndexIncrement = 0.01f

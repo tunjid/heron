@@ -70,7 +70,19 @@ kotlin {
         desktopMain {
             dependencies {
                 implementation(libs.ktor.client.java)
-                implementation(libs.vlc.java)
+                implementation(libs.jna)
+                implementation(libs.jna.platform)
+                val osName = System.getProperty("os.name")
+                val fxClassifier = when {
+                    osName.startsWith("Mac OS X") ->
+                        if (System.getProperty("os.arch") == "aarch64") "mac-aarch64" else "mac"
+                    osName.startsWith("Windows") -> "win"
+                    else -> "linux"
+                }
+                implementation("${libs.javafx.base.get().module}:${libs.versions.javafx.get()}:$fxClassifier")
+                implementation("${libs.javafx.media.get().module}:${libs.versions.javafx.get()}:$fxClassifier")
+                implementation("${libs.javafx.swing.get().module}:${libs.versions.javafx.get()}:$fxClassifier")
+                implementation("${libs.javafx.graphics.get().module}:${libs.versions.javafx.get()}:$fxClassifier")
             }
         }
 //        iosMain {
@@ -80,3 +92,24 @@ kotlin {
 //        }
     }
 }
+
+val macTargets = listOf(
+    Triple("Arm", "arm64-apple-macosx14.0", "aarch64"),
+    Triple("X64", "x86_64-apple-macosx14.0", "x86-64"),
+)
+
+macTargets.forEach { (name, target, arch) ->
+    tasks.register<Exec>("buildAVFoundationMac$name") {
+        onlyIf { System.getProperty("os.name").startsWith("Mac") }
+        workingDir(rootDir)
+        commandLine(
+            "swiftc", "-emit-library", "-emit-module", "-module-name", "AVFoundationVideoPlayer",
+            "-target", target,
+            "-o", "ui/media/src/desktopMain/resources/darwin-$arch/libAVFoundationVideoPlayer.dylib",
+            "ui/media/src/desktopMain/swift/AVFoundationVideoPlayer.swift",
+            "-O", "-whole-module-optimization",
+        )
+    }
+}
+
+fun osName() = System.getProperty("os.name")

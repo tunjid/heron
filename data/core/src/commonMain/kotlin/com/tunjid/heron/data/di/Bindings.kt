@@ -52,7 +52,9 @@ import com.tunjid.heron.data.network.SessionManager
 import com.tunjid.heron.data.network.SuspendingVideoUploadService
 import com.tunjid.heron.data.network.VideoUploadService
 import com.tunjid.heron.data.network.isNetworkConnectionError
+import com.tunjid.heron.data.network.oauth.OauthRedirect
 import com.tunjid.heron.data.network.oauth.crypto.platformCryptographyProvider
+import com.tunjid.heron.data.network.oauth.oauthRedirect
 import com.tunjid.heron.data.repository.AuthRepository
 import com.tunjid.heron.data.repository.AuthTokenRepository
 import com.tunjid.heron.data.repository.DataStoreSavedStateDataSource
@@ -179,14 +181,21 @@ class DataBindings(
 
     @SingleIn(AppScope::class)
     @Provides
+    internal fun provideOauthRedirect(): OauthRedirect =
+        oauthRedirect()
+
+    @SingleIn(AppScope::class)
+    @Provides
     internal fun provideSessionManager(
         httpClient: HttpClient,
         savedStateDataSource: SavedStateDataSource,
         pdsResolver: PdsResolver,
+        oauthRedirect: OauthRedirect,
     ): SessionManager = PersistedSessionManager(
         httpClient = httpClient,
         savedStateDataSource = savedStateDataSource,
         pdsResolver = pdsResolver,
+        oauthRedirect = oauthRedirect,
     )
 
     @SingleIn(AppScope::class)

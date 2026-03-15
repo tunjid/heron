@@ -16,6 +16,9 @@
 
 package com.tunjid.heron.data.network
 
+import com.atproto.identity.ResolveHandleResponse
+import com.tunjid.heron.data.core.models.Server
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.di.AppMainScope
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
@@ -24,13 +27,16 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.Url
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.async
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import sh.christian.ozone.api.Did
+import sh.christian.ozone.api.Handle
 
 internal interface PdsResolver {
     suspend fun resolve(did: Did): Url?
+    suspend fun resolveServer(handle: Handle): Server?
 }
 
 internal class PlcDirectoryPdsResolver @Inject constructor(
@@ -67,7 +73,42 @@ internal class PlcDirectoryPdsResolver @Inject constructor(
 
         return deferred.await()
     }
+
+    override suspend fun resolveServer(
+        handle: Handle,
+    ): Server? = runCatchingUnlessCancelled {
+        val handleResponse: ResolveHandleResponse = httpClient.get(
+            urlString = "$PublicApiUrl/xrpc/com.atproto.identity.resolveHandle?handle=${handle.handle}",
+        )
+            .takeIf { it.status.isSuccess() }
+            ?.bodyAsText()
+            ?.let(BlueskyJson::decodeFromString)
+            ?: return@runCatchingUnlessCancelled null
+
+        val didDoc: SavedState.AuthTokens.DidDoc = httpClient.get(
+            urlString = "$PlcDirectoryUrl/${handleResponse.did.did}",
+        )
+            .takeIf { it.status.isSuccess() }
+            ?.bodyAsText()
+            ?.let(BlueskyJson::decodeFromString)
+            ?: return@runCatchingUnlessCancelled null
+
+        val endpoint = didDoc.service
+            .firstOrNull()
+            ?.serviceEndpoint ?: return null
+
+        Server.KnownServers
+            .firstOrNull { it.endpoint == endpoint }
+            ?: endpoint.takeIf { it.startsWith(Uri.Host.Https.prefix) }
+                ?.let {
+                    Server(
+                        endpoint = it,
+                        supportsOauth = true,
+                    )
+                }
+    }.getOrNull()
 }
 
+private const val PublicApiUrl = "https://public.api.bsky.app"
 private const val PlcDirectoryUrl = "https://plc.directory"
 private const val MaxCacheSize = 20

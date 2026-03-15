@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -211,12 +210,7 @@ fun PaneScaffoldState.PaneScaffold(
     content: @Composable PaneScaffoldState.(PaddingValues) -> Unit,
 ) {
     PaneNavigationRailScaffold(
-        modifier = modifier
-            .constrainedSizePlacement(
-                orientation = Orientation.Horizontal,
-                minSize = splitPaneState.minPaneWidth,
-                atStart = paneState.pane == ThreePane.Secondary,
-            ),
+        modifier = modifier,
         navigationRail = {
             navigationRail()
         },
@@ -233,9 +227,6 @@ fun PaneScaffoldState.PaneScaffold(
                         AppState.DismissBehavior.Gesture.ScaleToPop,
                         -> Modifier
                     }
-                        .padding(
-                            horizontal = if (hasSiblings) 8.dp else 0.dp,
-                        )
                 },
                 containerColor = containerColor,
                 topBar = {
@@ -251,7 +242,16 @@ fun PaneScaffoldState.PaneScaffold(
                     snackBarHost()
                 },
                 content = { paddingValues ->
-                    content(paddingValues)
+                    Box(
+                        modifier = Modifier
+                            .constrainedSizePlacement(
+                                orientation = Orientation.Horizontal,
+                                minSize = splitPaneState.minPaneWidth,
+                                atStart = paneState.pane == ThreePane.Secondary,
+                            ),
+                    ) {
+                        content(paddingValues)
+                    }
                 },
             )
         },

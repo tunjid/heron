@@ -19,11 +19,6 @@ package com.tunjid.heron.profile.di
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Login
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.AlternateEmail
-import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -40,16 +35,19 @@ import com.tunjid.heron.profile.ActualProfileViewModel
 import com.tunjid.heron.profile.ProfileScreen
 import com.tunjid.heron.profile.ProfileScreenStateHolders
 import com.tunjid.heron.profile.RouteViewModelInitializer
+import com.tunjid.heron.profile.State
+import com.tunjid.heron.profile.ui.ProfileFab
+import com.tunjid.heron.profile.ui.ProfileFabState
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.grazeEditorDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
-import com.tunjid.heron.scaffold.scaffold.PaneFab
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationBar
 import com.tunjid.heron.scaffold.scaffold.PaneNavigationRail
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
+import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.PaneSnackbarHost
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
@@ -62,7 +60,6 @@ import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.modifiers.ifTrue
-import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -79,12 +76,6 @@ import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
-import heron.feature.profile.generated.resources.Res
-import heron.feature.profile.generated.resources.mention
-import heron.feature.profile.generated.resources.post
-import heron.ui.core.generated.resources.feed_generator_create
-import heron.ui.core.generated.resources.sign_in
-import org.jetbrains.compose.resources.stringResource
 
 private const val RoutePattern = "/profile/{profileHandleOrId}"
 private const val LabelerPattern = "/{profileHandleOrId}/${LabelerUri.NAMESPACE}/self"
@@ -207,48 +198,32 @@ class ProfileBindings(
                     )
                 },
                 floatingActionButton = {
-                    val isSignedInProfile = state.isSignedInProfile
-                    val isFeedTab = state.stateHolders.getOrNull(state.currentPage) is ProfileScreenStateHolders.Records.Feeds
-
-                    PaneFab(
+                    ProfileFab(
                         modifier = Modifier
                             .offset {
                                 fabOffset(bottomNavigationNestedScrollConnection.offset)
                             },
-                        text = stringResource(
-                            when {
-                                isSignedOut -> CommonStrings.sign_in
-                                isSignedInProfile ->
-                                    if (isFeedTab) CommonStrings.feed_generator_create
-                                    else Res.string.post
-                                else -> Res.string.mention
-                            },
-                        ),
-                        icon = when {
-                            isSignedOut -> Icons.AutoMirrored.Rounded.Login
-                            isSignedInProfile ->
-                                if (isFeedTab) Icons.Rounded.Add
-                                else Icons.Rounded.Edit
-                            else -> Icons.Rounded.AlternateEmail
-                        },
-                        expanded = isFabExpanded {
+                        fabExpanded = isFabExpanded {
                             if (prefersAutoHidingBottomNav) bottomNavigationNestedScrollConnection.offset
                             else topAppBarNestedScrollConnection.offset * -1f
                         },
-                        onClick = {
+                        state = profileFabState(state),
+                        profileHandle = state.profile.handle,
+                        onStateClicked = { fabState ->
                             viewModel.accept(
                                 Action.Navigate.To(
-                                    when {
-                                        isSignedOut -> signInDestination()
-                                        isSignedInProfile && isFeedTab -> grazeEditorDestination()
-                                        isSignedInProfile -> composePostDestination(
+                                    when (fabState) {
+                                        ProfileFabState.SignedOut -> signInDestination()
+                                        ProfileFabState.SignedIn.Feed -> grazeEditorDestination()
+                                        ProfileFabState.SignedIn.Edit -> composePostDestination(
                                             type = Post.Create.Timeline,
                                             sharedElementPrefix = null,
                                         )
-                                        else -> composePostDestination(
+                                        ProfileFabState.SignedIn.Mention -> composePostDestination(
                                             type = Post.Create.Mention(state.profile),
                                             sharedElementPrefix = null,
                                         )
+                                        ProfileFabState.SignedIn.Writing -> error("Handled above")
                                     },
                                 ),
                             )
@@ -281,4 +256,16 @@ class ProfileBindings(
             )
         },
     )
+}
+
+private fun PaneScaffoldState.profileFabState(
+    state: State,
+): ProfileFabState = when {
+    isSignedOut -> ProfileFabState.SignedOut
+    state.isSignedInProfile -> when (state.stateHolders.getOrNull(state.currentPage)) {
+        is ProfileScreenStateHolders.Records.Feeds -> ProfileFabState.SignedIn.Feed
+        is ProfileScreenStateHolders.Records.Documents -> ProfileFabState.SignedIn.Writing
+        else -> ProfileFabState.SignedIn.Edit
+    }
+    else -> ProfileFabState.SignedIn.Mention
 }

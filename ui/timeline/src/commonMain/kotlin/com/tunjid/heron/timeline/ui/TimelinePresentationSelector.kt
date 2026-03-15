@@ -16,6 +16,11 @@
 
 package com.tunjid.heron.timeline.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.icons.rounded.Dashboard
@@ -40,15 +45,21 @@ fun TimelinePresentationSelector(
     available: List<Timeline.Presentation>,
     onPresentationSelected: (Timeline.Presentation) -> Unit,
 ) {
-    ItemSelection(
+    AnimatedVisibility(
         modifier = modifier,
-        selectedItem = selected,
-        availableItems = available,
-        key = Timeline.Presentation::key,
-        icon = Timeline.Presentation::icon,
-        stringResource = Timeline.Presentation::textResource,
-        onItemSelected = onPresentationSelected,
-    )
+        visible = available.size > 1,
+        enter = fadeIn() + scaleIn(),
+        exit = fadeOut() + scaleOut(),
+    ) {
+        ItemSelection(
+            selectedItem = selected,
+            availableItems = available,
+            key = Timeline.Presentation::key,
+            icon = Timeline.Presentation::icon,
+            stringResource = Timeline.Presentation::textResource,
+            onItemSelected = onPresentationSelected,
+        )
+    }
 }
 
 private val Timeline.Presentation.textResource: StringResource

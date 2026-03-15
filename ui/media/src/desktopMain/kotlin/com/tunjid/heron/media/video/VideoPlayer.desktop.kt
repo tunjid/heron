@@ -16,17 +16,26 @@
 
 package com.tunjid.heron.media.video
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.IntSize
-import java.awt.Canvas
-import java.awt.Color as AwtColor
+import androidx.compose.ui.unit.roundToIntSize
+import com.tunjid.heron.media.video.javafx.JavaFxPlayerState
+import com.tunjid.heron.media.video.mac.AVFoundationPlayerState
+import com.tunjid.heron.scaleAndAlignTo
+import javafx.application.Platform
+import javafx.embed.swing.JFXPanel
+import javafx.scene.Scene
+import javafx.scene.layout.StackPane
+import javafx.scene.media.MediaView
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 
@@ -35,11 +44,62 @@ actual fun VideoPlayer(
     modifier: Modifier,
     state: VideoPlayerState,
 ) {
-    check(state is VlcPlayerState)
+    when (state) {
+        is AVFoundationPlayerState -> AVFoundationVideoPlayer(modifier, state)
+        is JavaFxPlayerState -> JavaFxVideoPlayer(modifier, state)
+        else -> error("Unsupported VideoPlayerState: ${state::class}")
+    }
+}
 
+@Composable
+private fun AVFoundationVideoPlayer(
+    modifier: Modifier,
+    state: AVFoundationPlayerState,
+) {
     Box(modifier = modifier) {
         if (state.canShowVideo) {
-            VideoSurface(
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                state.currentFrame?.let { frame ->
+                    scaleAndAlignTo(
+                        srcSize = IntSize(
+                            width = frame.width,
+                            height = frame.height,
+                        ),
+                        destSize = size.roundToIntSize(),
+                        contentScale = state.contentScale,
+                        alignment = state.alignment,
+                        block = {
+                            drawImage(image = frame)
+                        },
+                    )
+                }
+            }
+        }
+        if (state.canShowStill) {
+            VideoStill(
+                modifier = Modifier.fillMaxSize(),
+                state = state,
+            )
+        }
+    }
+
+    DisposableEffect(state) {
+        state.status = PlayerStatus.Idle.Initial
+        onDispose {
+            state.hasRenderedFirstFrame = false
+            state.status = PlayerStatus.Idle.Evicted
+        }
+    }
+}
+
+@Composable
+private fun JavaFxVideoPlayer(
+    modifier: Modifier,
+    state: JavaFxPlayerState,
+) {
+    Box(modifier = modifier) {
+        if (state.canShowVideo) {
+            JavaFxVideoSurface(
                 modifier = Modifier.fillMaxSize(),
                 state = state,
             )
@@ -52,7 +112,6 @@ actual fun VideoPlayer(
         }
     }
 
-    // Keep player position up to date
     LaunchedEffect(state) {
         while (true) {
             if (state.status is PlayerStatus.Play) {
@@ -72,32 +131,75 @@ actual fun VideoPlayer(
 }
 
 @Composable
-private fun VideoSurface(
+private fun JavaFxVideoSurface(
     modifier: Modifier,
-    state: VlcPlayerState,
+    state: JavaFxPlayerState,
 ) {
+    val surfaceColor = MaterialTheme.colorScheme
+        .surface
+    val surfaceColorHex = surfaceColor
+        .toArgb()
+        .toHexString()
+
     SwingPanel(
-        background = Color.Black,
+        background = surfaceColor,
         modifier = modifier,
         factory = {
-            Canvas().apply {
-                background = AwtColor.BLACK
+            JFXPanel().also { jfxPanel ->
+                Platform.runLater {
+                    jfxPanel.isEnabled = false
+                    val mediaView = MediaView().apply {
+                        isPreserveRatio = true
+                        mediaPlayer = state.mediaPlayer
+                    }
+                    state.mediaView = mediaView
+                    val root = StackPane(mediaView).apply {
+                        style = "-fx-background-color: #$surfaceColorHex;"
+                    }
+                    jfxPanel.scene = Scene(root)
+                }
             }
         },
-        update = { canvas ->
-            state.setVideoSurface(canvas)
+        update = { jfxPanel ->
+            Platform.runLater {
+                val mediaView = state.mediaView ?: return@runLater
+                mediaView.mediaPlayer = state.mediaPlayer
+                mediaView.fitWidth = jfxPanel.width.toDouble()
+                mediaView.fitHeight = jfxPanel.height.toDouble()
+            }
         },
     )
 }
 
-private val VlcPlayerState.canShowVideo
+// Native player helpers
+
+private val AVFoundationPlayerState.canShowVideo
     get() = when (status) {
         is PlayerStatus.Idle -> false
         is PlayerStatus.Play -> true
         is PlayerStatus.Pause -> true
     }
 
-private val VlcPlayerState.canShowStill
+private val AVFoundationPlayerState.canShowStill
+    get() = videoSize == IntSize.Zero ||
+        !hasRenderedFirstFrame ||
+        when (status) {
+            is PlayerStatus.Idle -> true
+            is PlayerStatus.Pause -> false
+            PlayerStatus.Play.Requested -> true
+            PlayerStatus.Play.Confirmed -> false
+        }
+
+// JavaFx player helpers
+
+private val JavaFxPlayerState.canShowVideo
+    get() = when (status) {
+        is PlayerStatus.Idle -> false
+        is PlayerStatus.Play -> true
+        is PlayerStatus.Pause -> true
+    }
+
+private val JavaFxPlayerState.canShowStill
     get() = videoSize == IntSize.Zero ||
         !hasRenderedFirstFrame ||
         when (status) {

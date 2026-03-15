@@ -29,9 +29,9 @@ import com.tunjid.heron.data.lexicons.XrpcBlueskyApi
 import com.tunjid.heron.data.lexicons.XrpcSerializersModule
 import com.tunjid.heron.data.network.oauth.DpopKeyPair
 import com.tunjid.heron.data.network.oauth.OAuthApi
-import com.tunjid.heron.data.network.oauth.OAuthClient
 import com.tunjid.heron.data.network.oauth.OAuthScope
 import com.tunjid.heron.data.network.oauth.OAuthToken
+import com.tunjid.heron.data.network.oauth.OauthRedirect
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.signedInAuth
@@ -99,6 +99,7 @@ internal class PersistedSessionManager @Inject constructor(
     httpClient: HttpClient,
     private val savedStateDataSource: SavedStateDataSource,
     private val pdsResolver: PdsResolver,
+    private val oauthRedirect: OauthRedirect,
 ) : SessionManager {
 
     private val sessionRequestUrl = MutableStateFlow<Url?>(null)
@@ -136,7 +137,7 @@ internal class PersistedSessionManager @Inject constructor(
     ): SavedState.AuthTokens.Pending {
         sessionRequestUrl.update { Url(request.server.endpoint) }
         return oAuthApi.buildAuthorizationRequest(
-            oauthClient = HeronOauthClient,
+            oauthClient = oauthRedirect.initializeOAuthClient(),
             scopes = HeronOauthScopes,
             loginHandleHint = request.handle.id,
         )
@@ -205,7 +206,7 @@ internal class PersistedSessionManager @Inject constructor(
                     ?: throw IllegalStateException("No auth code")
 
                 val oAuthToken = oAuthApi.requestToken(
-                    oauthClient = HeronOauthClient,
+                    oauthClient = oauthRedirect.initializedClient,
                     nonce = pendingRequest.nonce,
                     codeVerifier = pendingRequest.codeVerifier,
                     code = code,
@@ -236,7 +237,7 @@ internal class PersistedSessionManager @Inject constructor(
             is SavedState.AuthTokens.Authenticated.Bearer -> api.deleteSession()
             is SavedState.AuthTokens.Authenticated.DPoP -> oAuthApi.revokeToken(
                 accessToken = authTokens.auth,
-                clientId = HeronOauthClient.clientId,
+                clientId = oauthRedirect.clientId,
                 nonce = authTokens.nonce,
                 keyPair = authTokens.toKeyPair(),
             )
@@ -609,11 +610,6 @@ internal val BlueskyJson: Json = Json(
 
 private val HttpClientCall.newDPoPNonce
     get() = response.headers[DPoPNonceHeaderKey]
-
-private val HeronOauthClient = OAuthClient(
-    clientId = "https://heron.tunji.dev/oauth-client.json",
-    redirectUri = "https://heron.tunji.dev/oauth/callback",
-)
 
 private val HeronOauthScopes = listOf(
     OAuthScope.AtProto,

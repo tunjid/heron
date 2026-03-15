@@ -32,6 +32,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -69,6 +70,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.constrain
 import androidx.compose.ui.unit.dp
+import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.ui.UiTokens
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -86,6 +88,12 @@ fun PaneScaffoldState.PaneFab(
     onClick: () -> Unit,
 ) {
     AnimatedVisibility(
+        modifier = Modifier
+            .constrainedSizePlacement(
+                orientation = Orientation.Horizontal,
+                minSize = 56.dp,
+                atStart = false,
+            ),
         visible = canShowFab,
         enter = enterTransition,
         exit = exitTransition,

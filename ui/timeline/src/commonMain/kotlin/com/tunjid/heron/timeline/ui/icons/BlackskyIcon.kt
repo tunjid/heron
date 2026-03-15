@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.signin.ui
+package com.tunjid.heron.timeline.ui.icons
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -24,7 +24,7 @@ import androidx.compose.ui.graphics.vector.group
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
-val Blacksky: ImageVector
+internal val Blacksky: ImageVector
     get() {
         if (_Blacksky != null) {
             return _Blacksky!!

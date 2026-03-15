@@ -319,7 +319,7 @@ internal class MultipleEntitySaver(
         }
 
         if (timelineItemEntities.isNotEmpty) {
-            timelineDao.upsertTimelineItems(timelineItemEntities.list)
+            timelineDao.insertOrPartiallyUpdateTimelineItems(timelineItemEntities.list)
         }
 
         if (conversationEntities.isNotEmpty) {

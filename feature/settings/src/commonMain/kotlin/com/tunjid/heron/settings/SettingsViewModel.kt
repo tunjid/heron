@@ -27,10 +27,8 @@ import com.tunjid.heron.data.utilities.writequeue.Writable
 import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
-import com.tunjid.heron.scaffold.navigation.NavigationContext
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
-import com.tunjid.heron.scaffold.navigation.resetAuthNavigation
 import com.tunjid.heron.timeline.utilities.enqueueMutations
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.mutator.ActionStateMutator
@@ -138,7 +136,6 @@ class ActualSettingsViewModel(
                     )
                     is Action.SwitchSession -> action.flow.handleSwitchSessionMutations(
                         authRepository = authRepository,
-                        navActions = navActions,
                     )
                     is Action.UpdateFeedPreference -> action.flow.updateFeedPreferenceMutations(
                         writeQueue = writeQueue,
@@ -218,21 +215,18 @@ private fun Flow<Action.UpdateThreadViewPreference>.updateThreadPreferenceMutati
 
 private fun Flow<Action.SwitchSession>.handleSwitchSessionMutations(
     authRepository: AuthRepository,
-    navActions: (NavigationMutation) -> Unit,
 ): Flow<Mutation<State>> =
     debounce(SwitchActionDebounce)
         .mapLatestToManyMutations {
             switchSessionMutation(
                 authRepository = authRepository,
                 sessionSummary = it.sessionSummary,
-                navActions = navActions,
             )
         }
 
 private suspend fun FlowCollector<Mutation<State>>.switchSessionMutation(
     authRepository: AuthRepository,
     sessionSummary: SessionSummary,
-    navActions: (NavigationMutation) -> Unit,
 ) {
     emit {
         copy(
@@ -248,10 +242,7 @@ private suspend fun FlowCollector<Mutation<State>>.switchSessionMutation(
     when (val outcome = authRepository.switchSession(sessionSummary)) {
         is Outcome.Success -> {
             emit { copy(switchPhase = AccountSwitchPhase.SUCCESS) }
-
             delay(AccountSwitchPhase.SUCCESS.changeDelay)
-
-            navActions(NavigationContext::resetAuthNavigation)
         }
 
         is Outcome.Failure -> {

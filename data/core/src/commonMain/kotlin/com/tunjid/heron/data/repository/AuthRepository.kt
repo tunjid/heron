@@ -23,21 +23,27 @@ import app.bsky.feed.GetFeedGeneratorQueryParams
 import app.bsky.graph.GetListQueryParams
 import com.tunjid.heron.data.core.models.OauthUriRequest
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.Server
 import com.tunjid.heron.data.core.models.SessionRequest
 import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.models.TimelinePreference
 import com.tunjid.heron.data.core.types.GenericUri
+import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.SessionSwitchException
 import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.ProfileDao
 import com.tunjid.heron.data.database.entities.PopulatedProfileEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
+import com.tunjid.heron.data.di.AppMainScope
+import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.network.NetworkService
+import com.tunjid.heron.data.network.PdsResolver
 import com.tunjid.heron.data.network.SessionManager
 import com.tunjid.heron.data.network.models.profileEntity
+import com.tunjid.heron.data.network.oauth.OauthRedirect
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
@@ -48,17 +54,29 @@ import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import kotlinx.coroutines.supervisorScope
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
+import sh.christian.ozone.api.Handle
 
 interface AuthRepository {
     val isSignedIn: Flow<Boolean>
@@ -86,18 +104,33 @@ interface AuthRepository {
     suspend fun signOut()
 
     suspend fun updateSignedInUser(): Outcome
+
+    suspend fun resolveServer(handle: ProfileHandle): Result<Server>
 }
 
 @Inject
 internal class AuthTokenRepository(
+    @AppMainScope
+    appMainScope: CoroutineScope,
+    oauthRedirect: OauthRedirect,
+    @param:IODispatcher
+    private val ioDispatcher: CoroutineDispatcher,
     private val profileDao: ProfileDao,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
+    private val pdsResolver: PdsResolver,
     private val preferenceUpdater: PreferenceUpdater,
     private val notificationPreferenceUpdater: NotificationPreferenceUpdater,
     private val savedStateDataSource: SavedStateDataSource,
     private val sessionManager: SessionManager,
 ) : AuthRepository {
+
+    init {
+        appMainScope.launch {
+            oauthRedirect.sessionRequests
+                .collectLatest(::createSession)
+        }
+    }
 
     override val isSignedIn: Flow<Boolean> =
         savedStateDataSource.signedInAuth.map {
@@ -123,6 +156,11 @@ internal class AuthTokenRepository(
                 .map { it.first().asExternalModel() }
                 .withRefresh(::updateSignedInUser)
         }
+            .shareIn(
+                scope = appMainScope + ioDispatcher,
+                started = SharingStarted.WhileSubscribed(5_000),
+                replay = 1,
+            )
 
     override val pastSessions: Flow<List<SessionSummary>> =
         savedStateDataSource.savedState
@@ -358,5 +396,12 @@ internal class AuthTokenRepository(
                 lastRefreshed = Clock.System.now(),
             )
         }
+    }
+
+    override suspend fun resolveServer(
+        handle: ProfileHandle,
+    ): Result<Server> = runCatchingUnlessCancelled {
+        pdsResolver.resolveServer(Handle(handle.id))
+            ?: throw IllegalStateException("Could not resolve server for handle: ${handle.id}")
     }
 }

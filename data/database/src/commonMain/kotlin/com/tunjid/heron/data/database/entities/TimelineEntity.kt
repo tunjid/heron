@@ -88,6 +88,40 @@ data class TimelineItemEntity(
     // Timeline items are unique to the profile viewing them, and these other fields
     @PrimaryKey
     val id: String = "${viewingProfileId?.id}-$sourceId-${postUri.uri}-${reposter?.id}",
+) {
+    /**
+     * Partial update class that includes all fields except [itemSort].
+     * Used with [partialUpsert] to preserve the existing sort key on conflict,
+     * preventing sort key jumbling from concurrent writers (polling, pagination, refresh)
+     * that use different cursor anchors.
+     */
+    data class WithoutSort(
+        val id: String,
+        val postUri: PostUri,
+        val viewingProfileId: ProfileId?,
+        val sourceId: String,
+        val embeddedRecordUri: EmbeddableRecordUri?,
+        @Embedded
+        val reply: FeedReplyEntity?,
+        val reposter: ProfileId?,
+        @ColumnInfo(defaultValue = "false")
+        val hasMedia: Boolean,
+        val isPinned: Boolean,
+        val indexedAt: Instant,
+    )
+}
+
+internal fun TimelineItemEntity.withoutSort() = TimelineItemEntity.WithoutSort(
+    id = id,
+    postUri = postUri,
+    viewingProfileId = viewingProfileId,
+    sourceId = sourceId,
+    embeddedRecordUri = embeddedRecordUri,
+    reply = reply,
+    reposter = reposter,
+    hasMedia = hasMedia,
+    isPinned = isPinned,
+    indexedAt = indexedAt,
 )
 
 data class FeedReplyEntity(
