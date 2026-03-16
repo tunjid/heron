@@ -89,6 +89,7 @@ import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
+import kotlin.collections.mutableListOf
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -1246,89 +1247,89 @@ internal class OfflineTimelineRepository(
         context: RecordResolver.TimelineItemCreationContext,
         thread: ThreadedPostEntity,
     ) = with(context) {
-        val lastItem = list.lastOrNull()
         when {
-            // Anchor post — start a ReplyTree with an empty reply list.
-            // Descendants (generation > 0) will be inserted as they arrive.
-            thread.generation == 0L -> list += TimelineItem.ReplyTree(
-                id = thread.entity.uri.uri,
-                post = post,
-                isMuted = isMuted(post),
-                threadGate = threadGate(post.uri),
-                appliedLabels = appliedLabels,
-                signedInProfileId = signedInProfileId,
-                replies = emptyList(),
-            )
-
-            // Ancestor posts — most distant arrives first per SQL ordering.
-            // First ancestor starts a Thread; subsequent ancestors append to it.
-            thread.generation < 0L -> when (lastItem) {
-                is TimelineItem.Thread -> list[list.lastIndex] = lastItem.copy(
-                    posts = lastItem.posts + post,
-                    isMuted = lastItem.isMuted || isMuted(post),
-                    postUrisToThreadGates = lastItem.postUrisToThreadGates + (
-                        post.uri to threadGate(post.uri)
-                        ),
-                )
-                else -> list += TimelineItem.Thread(
-                    id = thread.entity.uri.uri,
-                    generation = thread.generation,
-                    isMuted = isMuted(post),
-                    anchorPostIndex = 0,
-                    hasBreak = false,
-                    posts = listOf(post),
-                    appliedLabels = appliedLabels,
-                    signedInProfileId = signedInProfileId,
-                    postUrisToThreadGates = mapOf(post.uri to threadGate(post.uri)),
-                )
+            // Ancestors (generation < 0)
+            // Append each one so ancestors list is oldest → newest when anchor arrives.
+            thread.generation < 0L -> {
+                when (val last = list.lastOrNull()) {
+                    is TimelineItem.ReplyTree -> list[list.lastIndex] = last.copy(
+                        ancestors = last.ancestors + post,
+                        isMuted = last.isMuted || isMuted(post),
+                    )
+                    else -> list += TimelineItem.ReplyTree(
+                        id = thread.entity.uri.uri,
+                        post = post,
+                        ancestors = listOf(post),
+                        replies = emptyList(),
+                        isMuted = isMuted(post),
+                        threadGate = threadGate(post.uri),
+                        appliedLabels = appliedLabels,
+                        signedInProfileId = signedInProfileId,
+                    )
+                }
             }
 
-            // Descendant posts, insert into the ReplyTree using parentPostUri.
+            // Anchor (generation == 0)
+            // Register anchor's children bucket BEFORE any descendants arrive so
+            thread.generation == 0L -> {
+                replyNodeIndex[post.uri] = mutableListOf()
+
+                when (val last = list.lastOrNull()) {
+                    is TimelineItem.ReplyTree -> list[list.lastIndex] = last.copy(
+                        id = thread.entity.uri.uri,
+                        post = post,
+                        isMuted = last.isMuted || isMuted(post),
+                        threadGate = threadGate(post.uri),
+                        appliedLabels = appliedLabels,
+                        signedInProfileId = signedInProfileId,
+                    )
+                    else -> list += TimelineItem.ReplyTree(
+                        id = thread.entity.uri.uri,
+                        post = post,
+                        ancestors = emptyList(),
+                        replies = emptyList(),
+                        isMuted = isMuted(post),
+                        threadGate = threadGate(post.uri),
+                        appliedLabels = appliedLabels,
+                        signedInProfileId = signedInProfileId,
+                    )
+                }
+            }
+
+            //  Descendants (generation > 0)
             thread.generation > 0L -> {
-                // ReplyTree must exist from the anchor post — skip if data is malformed.
                 val replyTree = list.lastOrNull() as? TimelineItem.ReplyTree ?: return@with
-                // parentPostUri must be present on every descendant — skip if malformed.
                 val parentUri = thread.parentPostUri ?: return@with
+
+                // Drop anything too deep
+                if (thread.generation > MAX_REPLY_DEPTH) return@with
+
+                val myChildrenBucket = replyNodeIndex.getOrPut(post.uri) { mutableListOf() }
 
                 val newNode = ReplyNode(
                     post = post,
                     threadGate = threadGate(post.uri),
                     appliedLabels = appliedLabels,
+                    isMuted = isMuted(post),
                     depth = thread.generation.toInt(),
-                    children = emptyList(),
+                    children = myChildrenBucket,
                 )
 
-                list[list.lastIndex] = replyTree.copy(
-                    isMuted = replyTree.isMuted || isMuted(post),
-                    replies = when (parentUri) {
-                        replyTree.post.uri -> replyTree.replies + newNode
-                        else -> replyTree.replies.withInsertedNode(
-                            node = newNode,
-                            parentPostUri = parentUri,
-                        )
-                    },
-                )
+                val parentBucket = replyNodeIndex[parentUri] ?: return@with
+
+                // Drop siblings beyond the cap (data is already sorted by your
+                // chosen Order, so you keep the "best" ones automatically)
+                if (parentBucket.size >= MAX_SIBLINGS_PER_NODE) return@with
+
+                parentBucket.add(newNode)
+
+                if (parentUri == replyTree.post.uri) {
+                    list[list.lastIndex] = replyTree.copy(
+                        isMuted = replyTree.isMuted || isMuted(post),
+                        replies = parentBucket,
+                    )
+                }
             }
-        }
-    }
-
-    // Recursively finds the node matching parentPostUri and appends newNode as its child.
-    private fun List<ReplyNode>.withInsertedNode(
-        node: ReplyNode,
-        parentPostUri: PostUri,
-    ): List<ReplyNode> = map { existingNode ->
-        when {
-            existingNode.post.uri == parentPostUri ->
-                existingNode.copy(children = existingNode.children + node)
-            existingNode.children.isEmpty() ->
-                existingNode
-            else ->
-                existingNode.copy(
-                    children = existingNode.children.withInsertedNode(
-                        node = node,
-                        parentPostUri = parentPostUri,
-                    ),
-                )
         }
     }
 }
@@ -1401,3 +1402,6 @@ private val MEDIA_CONTENT_MODES = setOf(
     "dev.tunji.heron.defs#contentModeImage",
     "dev.tunji.heron.defs#contentModeMedia",
 )
+
+private const val MAX_REPLY_DEPTH = 3
+private const val MAX_SIBLINGS_PER_NODE = 3

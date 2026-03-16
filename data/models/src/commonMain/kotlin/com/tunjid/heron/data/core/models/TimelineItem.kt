@@ -137,11 +137,12 @@ sealed class TimelineItem {
     data class ReplyTree(
         override val id: String,
         override val post: Post,
+        val ancestors: List<Post>,
+        val replies: List<ReplyNode>,
         override val isMuted: Boolean,
         override val threadGate: ThreadGate?,
         override val appliedLabels: AppliedLabels,
         override val signedInProfileId: ProfileId?,
-        val replies: List<ReplyNode>,
     ) : TimelineItem()
     sealed class Placeholder : TimelineItem() {
         override val post: Post
@@ -209,6 +210,7 @@ data class ReplyNode(
     val post: Post,
     val threadGate: ThreadGate?,
     val appliedLabels: AppliedLabels,
+    val isMuted: Boolean,
     val depth: Int,
     val children: List<ReplyNode>,
 )

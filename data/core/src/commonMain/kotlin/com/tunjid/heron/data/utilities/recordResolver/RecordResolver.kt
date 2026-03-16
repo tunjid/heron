@@ -43,6 +43,7 @@ import com.tunjid.heron.data.core.models.ListMember
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.ReplyNode
 import com.tunjid.heron.data.core.models.Repost
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
@@ -173,6 +174,7 @@ internal interface RecordResolver {
         val post: Post
         val appliedLabels: AppliedLabels
         val signedInProfileId: ProfileId?
+        val replyNodeIndex: MutableMap<PostUri, MutableList<ReplyNode>>
 
         fun record(recordUri: EmbeddableRecordUri): Record?
         fun profile(profileId: ProfileId): Profile?

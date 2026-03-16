@@ -23,6 +23,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Preferences
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.ReplyNode
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
 import com.tunjid.heron.data.core.models.isMuted
@@ -55,6 +56,7 @@ internal class MutableTimelineItemCreationContext(
         contentLabelPreferences = emptyList(),
     )
 
+    override val replyNodeIndex: MutableMap<PostUri, MutableList<ReplyNode>> = mutableMapOf()
     private var currentPost: Post? = null
 
     private val recordUrisToRecords =
