@@ -174,7 +174,16 @@ fun Flow<Action.Load>.postThreadsMutations(
     }
 
     flow {
-        emit { copy(order = order) }
+        emit {
+            copy(
+                order = order,
+                replyViewMode = replyViewMode,
+                scrollToTopToken = if (action is Action.Load.ViewMode)
+                    scrollToTopToken + 1
+                else
+                    scrollToTopToken,
+            )
+        }
         emitAll(
             timelineRepository.postThreadedItems(
                 postUri = postUri,
