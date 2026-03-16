@@ -51,7 +51,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -283,186 +291,6 @@ private fun ThreadedPost(
 }
 
 @Composable
-private fun ReplyTreePost(
-    modifier: Modifier = Modifier,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
-    presentationLookaheadScope: LookaheadScope,
-    item: TimelineItem.ReplyTree,
-    sharedElementPrefix: String,
-    now: Instant,
-    showEngagementMetrics: Boolean,
-    presentation: Timeline.Presentation,
-    postActions: PostActions,
-) {
-    var showAllReplies by rememberSaveable { mutableStateOf(false) }
-    val visibleReplies = remember(item.replies, showAllReplies) {
-        if (showAllReplies) item.replies else item.replies.take(MaxReplyTreeSiblings)
-    }
-
-    Column(modifier = modifier) {
-        Post(
-            modifier = Modifier.fillMaxWidth(),
-            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-            presentationLookaheadScope = presentationLookaheadScope,
-            hasMutedWords = item.isMuted && !item.post.authorMuted,
-            now = now,
-            post = item.post,
-            threadGate = item.threadGate,
-            isAnchoredInTimeline = true,
-            isMainPost = true,
-            showEngagementMetrics = showEngagementMetrics,
-            avatarShape = RoundedPolygonShape.Circle,
-            sharedElementPrefix = sharedElementPrefix,
-            createdAt = item.post.createdAt,
-            presentation = presentation,
-            appliedLabels = item.appliedLabels,
-            postActions = postActions,
-            timeline = {
-                if (item.replies.isNotEmpty()) Timeline(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .padding(top = 60.dp),
-                )
-            },
-        )
-
-        visibleReplies.forEachIndexed { index, node ->
-            key(node.post.uri.uri) {
-                Timeline(
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                        .height(if (index == 0) ReplyTreeFirstLineHeight else ReplyTreeSubsequentLineHeight)
-                        .childThreadNode(videoId = null),
-                )
-                ReplyTreeItem(
-                    modifier = Modifier.fillMaxWidth(),
-                    node = node,
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                    presentationLookaheadScope = presentationLookaheadScope,
-                    sharedElementPrefix = sharedElementPrefix,
-                    now = now,
-                    showEngagementMetrics = showEngagementMetrics,
-                    presentation = presentation,
-                    postActions = postActions,
-                    isMuted = item.isMuted,
-                )
-            }
-        }
-
-        // Inline expander for more root siblings
-        if (item.replies.size > MaxReplyTreeSiblings && !showAllReplies) {
-            ShowMore { showAllReplies = true }
-        }
-    }
-}
-
-@Composable
-private fun ReplyTreeItem(
-    modifier: Modifier = Modifier,
-    node: ReplyNode,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
-    presentationLookaheadScope: LookaheadScope,
-    sharedElementPrefix: String,
-    now: Instant,
-    showEngagementMetrics: Boolean,
-    presentation: Timeline.Presentation,
-    postActions: PostActions,
-    isMuted: Boolean,
-) {
-    val atDepthLimit = node.depth >= MaxReplyTreeDepth
-    val hasChildrenToShow = node.children.isNotEmpty() && !atDepthLimit
-    var showAllChildren by rememberSaveable { mutableStateOf(false) }
-    val visibleChildren = remember(node.children, showAllChildren, hasChildrenToShow) {
-        when {
-            !hasChildrenToShow -> emptyList()
-            showAllChildren -> node.children
-            else -> node.children.take(MaxReplyTreeSiblings)
-        }
-    }
-
-    // Indent the entire node (post + its children's connectors) based on depth.
-    Column(
-        modifier = modifier.padding(
-            start = maxOf(0, node.depth - 1) * ReplyTreeIndent,
-        ),
-    ) {
-        Post(
-            modifier = Modifier.fillMaxWidth(),
-            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-            presentationLookaheadScope = presentationLookaheadScope,
-            hasMutedWords = isMuted && !node.post.authorMuted,
-            now = now,
-            post = node.post,
-            threadGate = node.threadGate,
-            isAnchoredInTimeline = false,
-            isMainPost = false,
-            showEngagementMetrics = showEngagementMetrics,
-            avatarShape = when {
-                // Has children to display below, flatten avatar bottom to connect to line
-                hasChildrenToShow -> ReplyThreadStartImageShape
-                else -> RoundedPolygonShape.Circle
-            },
-            sharedElementPrefix = sharedElementPrefix,
-            createdAt = node.post.createdAt,
-            presentation = presentation,
-            appliedLabels = node.appliedLabels,
-            postActions = postActions,
-            timeline = {
-                // Draw line down through avatar area only if children will be shown below
-                if (hasChildrenToShow) Timeline(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .padding(top = 60.dp),
-                )
-            },
-        )
-
-        // At depth limit with children show "Continue thread" that navigates
-        // into the post's own detail screen instead of recursing further.
-        if (atDepthLimit && node.children.isNotEmpty()) {
-            ShowMore {
-                postActions.onPostAction(
-                    PostAction.OfPost(
-                        post = node.post,
-                        isMainPost = false,
-                        warnedAppliedLabels = node.appliedLabels.warned(),
-                    ),
-                )
-            }
-        }
-
-        // Render visible children recursively
-        visibleChildren.forEachIndexed { index, child ->
-            key(child.post.uri.uri) {
-                Timeline(
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                        .height(if (index == 0) ReplyTreeFirstLineHeight else ReplyTreeSubsequentLineHeight)
-                        .childThreadNode(videoId = null),
-                )
-                ReplyTreeItem(
-                    modifier = Modifier.fillMaxWidth(),
-                    node = child,
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                    presentationLookaheadScope = presentationLookaheadScope,
-                    sharedElementPrefix = sharedElementPrefix,
-                    now = now,
-                    showEngagementMetrics = showEngagementMetrics,
-                    presentation = presentation,
-                    postActions = postActions,
-                    isMuted = isMuted,
-                )
-            }
-        }
-
-        // Inline expander for more siblings
-        if (hasChildrenToShow && node.children.size > MaxReplyTreeSiblings && !showAllChildren) {
-            ShowMore { showAllChildren = true }
-        }
-    }
-}
-
-@Composable
 private fun Timeline(
     modifier: Modifier = Modifier,
 ) {
@@ -610,6 +438,365 @@ fun TimelineCard(
     )
 }
 
+@Composable
+private fun ReplyTreePost(
+    modifier: Modifier = Modifier,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    presentationLookaheadScope: LookaheadScope,
+    item: TimelineItem.ReplyTree,
+    sharedElementPrefix: String,
+    now: Instant,
+    showEngagementMetrics: Boolean,
+    presentation: Timeline.Presentation,
+    postActions: PostActions,
+) {
+    Column(modifier) {
+        item.ancestors.forEachIndexed { index, ancestor ->
+            key(ancestor.uri.uri) {
+                Post(
+                    modifier = Modifier.fillMaxWidth(),
+                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    presentationLookaheadScope = presentationLookaheadScope,
+                    hasMutedWords = item.isMuted && !ancestor.authorMuted,
+                    now = now,
+                    post = ancestor,
+                    threadGate = null,
+                    isAnchoredInTimeline = false,
+                    isMainPost = false,
+                    showEngagementMetrics = false,
+                    avatarShape = when (index) {
+                        0 -> ReplyThreadStartImageShape
+                        else -> ReplyThreadImageShape
+                    },
+                    sharedElementPrefix = sharedElementPrefix,
+                    createdAt = ancestor.createdAt,
+                    presentation = presentation,
+                    appliedLabels = item.appliedLabels,
+                    postActions = postActions,
+                    timeline = {
+                        Timeline(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .padding(top = 60.dp),
+                        )
+                    },
+                )
+            }
+        }
+
+        key(item.post.uri.uri) {
+            Post(
+                modifier = Modifier.fillMaxWidth(),
+                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                presentationLookaheadScope = presentationLookaheadScope,
+                hasMutedWords = item.isMuted && !item.post.authorMuted,
+                now = now,
+                post = item.post,
+                threadGate = item.threadGate,
+                isAnchoredInTimeline = true,
+                isMainPost = true,
+                showEngagementMetrics = showEngagementMetrics,
+                avatarShape = RoundedPolygonShape.Circle,
+                sharedElementPrefix = sharedElementPrefix,
+                createdAt = item.post.createdAt,
+                presentation = presentation,
+                appliedLabels = item.appliedLabels,
+                postActions = postActions,
+            )
+        }
+
+        item.replies.forEach { node ->
+            key(node.post.uri.uri) {
+                ReplyNodeCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
+                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    presentationLookaheadScope = presentationLookaheadScope,
+                    node = node,
+                    sharedElementPrefix = sharedElementPrefix,
+                    now = now,
+                    showEngagementMetrics = showEngagementMetrics,
+                    presentation = presentation,
+                    postActions = postActions,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReplyNodeCard(
+    modifier: Modifier = Modifier,
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    presentationLookaheadScope: LookaheadScope,
+    node: ReplyNode,
+    sharedElementPrefix: String,
+    now: Instant,
+    showEngagementMetrics: Boolean,
+    presentation: Timeline.Presentation,
+    postActions: PostActions,
+) {
+    val flatRows = remember(node.post.uri, node.children) {
+        flattenReplyNodes(node.children, depth = 1)
+    }
+
+    ElevatedCard(
+        modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.elevatedCardColors(),
+        elevation = CardDefaults.cardElevation(),
+    ) {
+        Column {
+            Post(
+                modifier = Modifier.fillMaxWidth(),
+                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                presentationLookaheadScope = presentationLookaheadScope,
+                hasMutedWords = node.isMuted && !node.post.authorMuted,
+                now = now,
+                post = node.post,
+                threadGate = node.threadGate,
+                isAnchoredInTimeline = false,
+                isMainPost = false,
+                showEngagementMetrics = showEngagementMetrics,
+                avatarShape = RoundedPolygonShape.Circle,
+                sharedElementPrefix = sharedElementPrefix,
+                createdAt = node.post.createdAt,
+                presentation = presentation,
+                appliedLabels = node.appliedLabels,
+                postActions = postActions,
+                timeline = {
+                    if (node.children.isNotEmpty()) {
+                        Timeline(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .padding(top = 60.dp),
+                        )
+                    }
+                },
+            )
+
+            flatRows.forEach { row ->
+                key(row.node.post.uri.uri) {
+                    FlatReplyRow(
+                        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                        presentationLookaheadScope = presentationLookaheadScope,
+                        row = row,
+                        sharedElementPrefix = sharedElementPrefix,
+                        now = now,
+                        showEngagementMetrics = showEngagementMetrics,
+                        presentation = presentation,
+                        postActions = postActions,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FlatReplyRow(
+    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    presentationLookaheadScope: LookaheadScope,
+    row: FlatReplyRow,
+    sharedElementPrefix: String,
+    now: Instant,
+    showEngagementMetrics: Boolean,
+    presentation: Timeline.Presentation,
+    postActions: PostActions,
+) {
+    val connectorColor = MaterialTheme.colorScheme.surfaceContainerHighest
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .drawBehind {
+                drawReplyConnectors(
+                    depth = row.depth,
+                    ancestorContinuations = row.ancestorContinuations,
+                    isLastSibling = row.isLastSibling,
+                    hasChildren = row.hasChildren,
+                    indentPerDepthPx = IndentPerDepth.toPx(),
+                    threadLineXOffsetPx = ThreadLineXOffset.toPx(),
+                    curveRadiusPx = CurveRadius.toPx(),
+                    strokeWidthPx = ConnectorStrokeWidth.toPx(),
+                    avatarCenterFromTopPx = AvatarCenterFromTop.toPx(),
+                    rowOverlapPx = RowOverlap.toPx(),
+                    color = connectorColor,
+                )
+            },
+    ) {
+        Post(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = row.depth * IndentPerDepth),
+            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+            presentationLookaheadScope = presentationLookaheadScope,
+            hasMutedWords = row.node.isMuted && !row.node.post.authorMuted,
+            now = now,
+            post = row.node.post,
+            threadGate = row.node.threadGate,
+            isAnchoredInTimeline = false,
+            isMainPost = false,
+            showEngagementMetrics = showEngagementMetrics,
+            avatarShape = RoundedPolygonShape.Circle,
+            sharedElementPrefix = sharedElementPrefix,
+            createdAt = row.node.post.createdAt,
+            presentation = presentation,
+            appliedLabels = row.node.appliedLabels,
+            postActions = postActions,
+            timeline = {
+                if (row.hasChildren) {
+                    Timeline(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .padding(top = 60.dp),
+                    )
+                }
+            },
+        )
+    }
+}
+
+private data class FlatReplyRow(
+    val node: ReplyNode,
+    val depth: Int,
+    val isLastSibling: Boolean,
+    val ancestorContinuations: BooleanArray,
+    val hasChildren: Boolean,
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is FlatReplyRow) return false
+        return node == other.node &&
+            depth == other.depth &&
+            isLastSibling == other.isLastSibling &&
+            ancestorContinuations.contentEquals(other.ancestorContinuations) &&
+            hasChildren == other.hasChildren
+    }
+
+    override fun hashCode(): Int {
+        var r = node.hashCode()
+        r = 31 * r + depth
+        r = 31 * r + isLastSibling.hashCode()
+        r = 31 * r + ancestorContinuations.contentHashCode()
+        r = 31 * r + hasChildren.hashCode()
+        return r
+    }
+}
+
+private fun flattenReplyNodes(
+    nodes: List<ReplyNode>,
+    depth: Int = 0,
+    ancestorContinuations: BooleanArray = booleanArrayOf(),
+    // Thread a mutable counter through every recursive call so the
+    // ceiling is global, not per-branch.
+    remaining: IntArray = intArrayOf(MAX_FLAT_REPLY_ROWS),
+): List<FlatReplyRow> = buildList {
+    for ((index, node) in nodes.withIndex()) {
+        if (remaining[0] <= 0) break // when global ceiling is hit, stop
+        remaining[0]--
+
+        val isLastSibling = index == nodes.lastIndex
+        add(
+            FlatReplyRow(
+                node = node,
+                depth = depth,
+                isLastSibling = isLastSibling,
+                ancestorContinuations = ancestorContinuations,
+                hasChildren = node.children.isNotEmpty(),
+            ),
+        )
+        if (node.children.isNotEmpty()) {
+            addAll(
+                flattenReplyNodes(
+                    nodes = node.children,
+                    depth = depth + 1,
+                    ancestorContinuations = ancestorContinuations + !isLastSibling,
+                    remaining = remaining, // same array, shared across recursion
+                ),
+            )
+        }
+    }
+}
+
+private fun DrawScope.drawReplyConnectors(
+    depth: Int,
+    ancestorContinuations: BooleanArray,
+    isLastSibling: Boolean,
+    hasChildren: Boolean,
+    indentPerDepthPx: Float,
+    threadLineXOffsetPx: Float,
+    curveRadiusPx: Float,
+    strokeWidthPx: Float,
+    avatarCenterFromTopPx: Float,
+    rowOverlapPx: Float,
+    color: Color,
+) {
+    val stroke = Stroke(
+        width = strokeWidthPx,
+        cap = StrokeCap.Butt,
+        join = StrokeJoin.Round,
+    )
+
+    fun lineX(level: Int) = threadLineXOffsetPx + level * indentPerDepthPx
+
+    val parentLineX = lineX(depth - 1)
+    val childLineX = lineX(depth)
+    val curveTopY = avatarCenterFromTopPx - curveRadiusPx
+
+    for (level in 0 until depth - 1) {
+        if (ancestorContinuations[level]) {
+            drawLine(
+                color = color,
+                start = Offset(lineX(level), -rowOverlapPx),
+                end = Offset(lineX(level), size.height),
+                strokeWidth = strokeWidthPx,
+                cap = StrokeCap.Butt,
+            )
+        }
+    }
+
+    if (!isLastSibling) {
+        drawLine(
+            color = color,
+            start = Offset(parentLineX, -rowOverlapPx),
+            end = Offset(parentLineX, size.height),
+            strokeWidth = strokeWidthPx,
+            cap = StrokeCap.Butt,
+        )
+    }
+
+    drawPath(
+        path = Path().apply {
+            moveTo(parentLineX, -rowOverlapPx)
+            lineTo(parentLineX, curveTopY)
+            quadraticTo(
+                x1 = parentLineX,
+                y1 = avatarCenterFromTopPx,
+                x2 = parentLineX + curveRadiusPx,
+                y2 = avatarCenterFromTopPx, // end
+            )
+            lineTo(childLineX, avatarCenterFromTopPx)
+        },
+        color = color,
+        style = stroke,
+    )
+
+    if (hasChildren) {
+        drawLine(
+            color = color,
+            start = Offset(childLineX, avatarCenterFromTopPx),
+            end = Offset(childLineX, size.height),
+            strokeWidth = strokeWidthPx,
+            cap = StrokeCap.Butt,
+        )
+    }
+}
+
+private operator fun BooleanArray.plus(element: Boolean): BooleanArray =
+    copyOf(size + 1).also { it[size] = element }
+
 private val ReplyThreadStartImageShape =
     RoundedPolygonShape.RoundedRectangle(
         topStartPercent = 1f,
@@ -680,8 +867,10 @@ private val TimelineItem.isThreadedAncestorOrAnchor
     get() = isThreadedAncestor || isThreadedAnchor || this is TimelineItem.ReplyTree
 
 private const val DefaultMaxPostsInThread = 3
-private const val MaxReplyTreeDepth = 4
-private const val MaxReplyTreeSiblings = 3
-private val ReplyTreeIndent = 16.dp
-private val ReplyTreeFirstLineHeight = 16.dp
-private val ReplyTreeSubsequentLineHeight = 12.dp
+private val IndentPerDepth = 24.dp
+private val ThreadLineXOffset = 13.dp
+private val ConnectorStrokeWidth = 2.dp
+private val CurveRadius = 10.dp
+private val AvatarCenterFromTop = 28.dp
+private val RowOverlap = 6.dp
+private const val MAX_FLAT_REPLY_ROWS = 24
