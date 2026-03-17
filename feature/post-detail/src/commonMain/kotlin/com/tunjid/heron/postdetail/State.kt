@@ -39,6 +39,7 @@ import kotlinx.serialization.Transient
 data class State(
     val anchorPost: Post?,
     val sharedElementPrefix: String,
+    val scrollToTopToken: Int = 0,
     @Transient
     val order: TimelineItem.Threaded.Order? = null,
     @Transient
