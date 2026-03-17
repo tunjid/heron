@@ -36,7 +36,7 @@ import com.tunjid.heron.postdetail.Action
 import com.tunjid.heron.postdetail.ActualPostDetailViewModel
 import com.tunjid.heron.postdetail.PostDetailScreen
 import com.tunjid.heron.postdetail.RouteViewModelInitializer
-import com.tunjid.heron.postdetail.ui.TimelineOrder
+import com.tunjid.heron.postdetail.ui.ThreadDisplayOptions
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
@@ -204,10 +204,14 @@ class PostDetailBindings(
                         },
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                         actions = {
-                            TimelineOrder(
+                            ThreadDisplayOptions(
                                 order = state.order,
+                                viewMode = state.viewMode,
                                 onOrderChanged = {
                                     viewModel.accept(Action.Load.Order(it))
+                                },
+                                onViewModeChanged = {
+                                    viewModel.accept(Action.Load.ViewMode(it))
                                 },
                             )
                         },

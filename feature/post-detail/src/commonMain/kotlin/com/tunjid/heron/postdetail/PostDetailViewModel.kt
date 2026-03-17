@@ -178,6 +178,10 @@ fun Flow<Action.Load>.postThreadsMutations(
             copy(
                 order = order,
                 viewMode = viewMode,
+                scrollToTopToken = if (action is Action.Load.ViewMode)
+                    scrollToTopToken + 1
+                else
+                    scrollToTopToken,
             )
         }
         emitAll(
