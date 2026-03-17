@@ -173,6 +173,7 @@ internal interface RecordResolver {
         val post: Post
         val appliedLabels: AppliedLabels
         val signedInProfileId: ProfileId?
+        val replyNodeIndex: MutableMap<PostUri, MutableList<TimelineItem.Threaded.Tree.Node>>
 
         fun record(recordUri: EmbeddableRecordUri): Record?
         fun profile(profileId: ProfileId): Profile?

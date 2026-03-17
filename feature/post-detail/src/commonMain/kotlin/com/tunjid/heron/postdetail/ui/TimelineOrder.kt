@@ -44,8 +44,8 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun TimelineOrder(
-    order: TimelineItem.Thread.Order?,
-    onOrderChanged: (TimelineItem.Thread.Order) -> Unit,
+    order: TimelineItem.Threaded.Order?,
+    onOrderChanged: (TimelineItem.Threaded.Order) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     order?.let {
@@ -62,7 +62,7 @@ fun TimelineOrder(
             modifier = Modifier
                 .widthIn(min = 200.dp),
         ) {
-            TimelineItem.Thread.Order.entries.forEach { item ->
+            TimelineItem.Threaded.Order.entries.forEach { item ->
                 DropdownMenuItem(
                     onClick = {
                         expanded = false
@@ -72,9 +72,9 @@ fun TimelineOrder(
                         Text(
                             text = stringResource(
                                 when (item) {
-                                    TimelineItem.Thread.Order.Oldest -> CommonStrings.timeline_thread_oldest_first
-                                    TimelineItem.Thread.Order.Newest -> CommonStrings.timeline_thread_newest_first
-                                    TimelineItem.Thread.Order.Top -> CommonStrings.timeline_thread_top_first
+                                    TimelineItem.Threaded.Order.Oldest -> CommonStrings.timeline_thread_oldest_first
+                                    TimelineItem.Threaded.Order.Newest -> CommonStrings.timeline_thread_newest_first
+                                    TimelineItem.Threaded.Order.Top -> CommonStrings.timeline_thread_top_first
                                 },
                             ),
                             style = MaterialTheme.typography.bodyMedium,

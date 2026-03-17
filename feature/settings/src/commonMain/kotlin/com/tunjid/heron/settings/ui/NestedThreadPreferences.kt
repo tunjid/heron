@@ -52,8 +52,8 @@ fun ThreadPreferencesSection(
         )
         SettingsRadioButtons(
             selectedItem = threadViewPreference.order(),
-            items = TimelineItem.Thread.Order.entries,
-            itemStringResource = TimelineItem.Thread.Order::stringResource,
+            items = TimelineItem.Threaded.Order.entries,
+            itemStringResource = TimelineItem.Threaded.Order::stringResource,
             onItemClicked = {
                 onPreferenceUpdated(ThreadViewPreference(sort = it.value))
             },
@@ -61,9 +61,9 @@ fun ThreadPreferencesSection(
     }
 }
 
-private fun TimelineItem.Thread.Order.stringResource(): StringResource =
+private fun TimelineItem.Threaded.Order.stringResource(): StringResource =
     when (this) {
-        TimelineItem.Thread.Order.Oldest -> CommonStrings.timeline_thread_oldest_first
-        TimelineItem.Thread.Order.Newest -> CommonStrings.timeline_thread_newest_first
-        TimelineItem.Thread.Order.Top -> CommonStrings.timeline_thread_top_first
+        TimelineItem.Threaded.Order.Oldest -> CommonStrings.timeline_thread_oldest_first
+        TimelineItem.Threaded.Order.Newest -> CommonStrings.timeline_thread_newest_first
+        TimelineItem.Threaded.Order.Top -> CommonStrings.timeline_thread_top_first
     }

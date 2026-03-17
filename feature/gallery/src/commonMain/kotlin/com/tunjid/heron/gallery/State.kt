@@ -70,7 +70,7 @@ data class State(
     @Serializable(with = TextFieldValueSerializer::class)
     val inputText: TextFieldValue = TextFieldValue(),
     @Transient
-    val order: TimelineItem.Thread.Order? = null,
+    val order: TimelineItem.Threaded.Order? = null,
     @Transient
     val preferences: Preferences = Preferences.EmptyPreferences,
     @Transient
@@ -190,7 +190,7 @@ sealed class Action(val key: String) {
 
     data class LoadComments(
         val post: Post,
-        val order: TimelineItem.Thread.Order?,
+        val order: TimelineItem.Threaded.Order?,
     ) : Action(key = "Load")
 
     data class BlockAccount(

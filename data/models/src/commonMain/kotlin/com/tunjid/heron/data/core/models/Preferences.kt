@@ -183,9 +183,9 @@ data class ThreadViewPreference(
 ) {
     companion object {
         fun ThreadViewPreference?.order() = this?.let {
-            TimelineItem.Thread.Order.entries
+            TimelineItem.Threaded.Order.entries
                 .firstOrNull { it.value == sort }
-        } ?: TimelineItem.Thread.Order.Top
+        } ?: TimelineItem.Threaded.Order.Top
     }
 }
 

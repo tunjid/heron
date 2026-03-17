@@ -61,7 +61,7 @@ sealed class TimelineItem {
     val indexedAt
         get() = when (this) {
             is Pinned,
-            is Thread,
+            is Threaded,
             is Single,
             is Placeholder,
             -> post.indexedAt
@@ -89,21 +89,43 @@ sealed class TimelineItem {
         val at: Instant,
     ) : TimelineItem()
 
-    data class Thread(
-        override val id: String,
-        override val isMuted: Boolean,
-        override val appliedLabels: AppliedLabels,
-        override val signedInProfileId: ProfileId?,
-        val anchorPostIndex: Int,
-        val posts: List<Post>,
-        val postUrisToThreadGates: Map<PostUri, ThreadGate?>,
-        val generation: Long?,
-        val hasBreak: Boolean,
-    ) : TimelineItem() {
-        override val post: Post
-            get() = posts[anchorPostIndex]
-        override val threadGate: ThreadGate?
-            get() = postUrisToThreadGates[post.uri]
+    sealed class Threaded : TimelineItem() {
+        data class Linear(
+            override val id: String,
+            override val isMuted: Boolean,
+            override val appliedLabels: AppliedLabels,
+            override val signedInProfileId: ProfileId?,
+            val anchorPostIndex: Int,
+            val posts: List<Post>,
+            val postUrisToThreadGates: Map<PostUri, ThreadGate?>,
+            val generation: Long?,
+            val hasBreak: Boolean,
+        ) : Threaded() {
+            override val post: Post
+                get() = posts[anchorPostIndex]
+            override val threadGate: ThreadGate?
+                get() = postUrisToThreadGates[post.uri]
+        }
+
+        data class Tree(
+            override val id: String,
+            override val post: Post,
+            val ancestors: List<Post>,
+            val replies: List<Node>,
+            override val isMuted: Boolean,
+            override val threadGate: ThreadGate?,
+            override val appliedLabels: AppliedLabels,
+            override val signedInProfileId: ProfileId?,
+        ) : Threaded() {
+            data class Node(
+                val post: Post,
+                val threadGate: ThreadGate?,
+                val appliedLabels: AppliedLabels,
+                val isMuted: Boolean,
+                val depth: Int,
+                val children: List<Node>,
+            )
+        }
 
         enum class Order(
             val value: String,
@@ -121,6 +143,11 @@ sealed class TimelineItem {
                 value = "most-likes",
                 sortOrder = 2,
             ),
+        }
+
+        enum class ViewMode {
+            Linear,
+            Tree,
         }
     }
 

@@ -54,6 +54,7 @@ internal class MutableTimelineItemCreationContext(
         labelers = emptyList(),
         contentLabelPreferences = emptyList(),
     )
+    override val replyNodeIndex: MutableMap<PostUri, MutableList<TimelineItem.Threaded.Tree.Node>> = mutableMapOf()
 
     private var currentPost: Post? = null
 

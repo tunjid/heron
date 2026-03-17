@@ -58,7 +58,7 @@ internal fun PostReasonLine(
             },
         )
 
-        is TimelineItem.Thread,
+        is TimelineItem.Threaded,
         is TimelineItem.Single,
         is TimelineItem.Placeholder,
         -> Unit

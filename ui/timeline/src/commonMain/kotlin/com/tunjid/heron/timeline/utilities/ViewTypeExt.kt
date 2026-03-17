@@ -44,7 +44,7 @@ val TimelineItem.contentType: String
         is TimelineItem.Single,
         -> "post"
 
-        is TimelineItem.Thread -> "thread"
+        is TimelineItem.Threaded -> "threaded"
         is TimelineItem.Loading -> "loading"
         is TimelineItem.Empty -> "empty"
     }

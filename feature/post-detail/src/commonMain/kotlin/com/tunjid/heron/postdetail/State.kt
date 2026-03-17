@@ -40,7 +40,9 @@ data class State(
     val anchorPost: Post?,
     val sharedElementPrefix: String,
     @Transient
-    val order: TimelineItem.Thread.Order? = null,
+    val order: TimelineItem.Threaded.Order? = null,
+    @Transient
+    val viewMode: TimelineItem.Threaded.ViewMode = TimelineItem.Threaded.ViewMode.Linear,
     @Transient
     val source: Timeline.Source? = null,
     @Transient
@@ -69,7 +71,7 @@ fun State(route: Route): State {
         items = when (anchorPost) {
             null -> TimelineItem.LoadingItems
             else -> listOf(
-                TimelineItem.Thread(
+                TimelineItem.Threaded.Linear(
                     id = anchorPost.uri.uri,
                     isMuted = false,
                     anchorPostIndex = 0,
@@ -95,7 +97,10 @@ sealed class Action(val key: String) {
     sealed class Load : Action(key = "Load") {
         data object Initial : Load()
         data class Order(
-            val order: TimelineItem.Thread.Order,
+            val order: TimelineItem.Threaded.Order,
+        ) : Load()
+        data class ViewMode(
+            val viewMode: TimelineItem.Threaded.ViewMode,
         ) : Load()
     }
 
