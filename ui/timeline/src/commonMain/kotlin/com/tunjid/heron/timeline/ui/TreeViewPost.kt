@@ -271,7 +271,7 @@ private fun flattenTreeNodes(
         fun doAddAll(
             innerNodes: List<TimelineItem.Threaded.Tree.Node>,
             innerDepth: Int,
-            innerAncestorContinuations: List<Boolean>
+            innerAncestorContinuations: List<Boolean>,
         ) {
             for ((index, node) in innerNodes.withIndex()) {
                 if (remaining <= 0) return
@@ -285,7 +285,7 @@ private fun flattenTreeNodes(
                         isLastSibling = isLastSibling,
                         ancestorContinuations = innerAncestorContinuations,
                         hasChildren = node.children.isNotEmpty(),
-                    )
+                    ),
                 )
                 if (node.children.isNotEmpty()) {
                     doAddAll(
