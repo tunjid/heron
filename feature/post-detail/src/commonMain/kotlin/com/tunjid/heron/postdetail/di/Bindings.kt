@@ -37,7 +37,6 @@ import com.tunjid.heron.postdetail.ActualPostDetailViewModel
 import com.tunjid.heron.postdetail.PostDetailScreen
 import com.tunjid.heron.postdetail.RouteViewModelInitializer
 import com.tunjid.heron.postdetail.ui.ThreadDisplayOptions
-import com.tunjid.heron.postdetail.ui.TimelineOrder
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
