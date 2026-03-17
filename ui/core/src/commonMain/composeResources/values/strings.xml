@@ -86,6 +86,11 @@
     <string name="timeline_thread_top_first">Top replies first</string>
     <string name="timeline_thread_order">Thread reply order</string>
 
+    <string name="timeline_thread_show_replies_as_title">Show replies as</string>
+    <string name="timeline_thread_reply_sorting_title">Reply sorting</string>
+    <string name="timeline_thread_linear">Linear</string>
+    <string name="timeline_thread_threaded">Thread</string>
+
     <string name="notifications_followed_you_description">Followed you</string>
     <string name="notifications_followed_you">%1$s followed you</string>
     <string name="notifications_multiple_followed">%1$s and %2$d others followed you</string>

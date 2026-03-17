@@ -141,6 +141,17 @@ fun TimelineItem(
                         presentation = presentation,
                         postActions = postActions,
                     )
+                    is TimelineItem.Threaded.Tree if presentation == Timeline.Presentation.Text.WithEmbed -> TreePost(
+                        modifier = Modifier.fillMaxWidth(),
+                        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                        presentationLookaheadScope = presentationLookaheadScope,
+                        item = item,
+                        sharedElementPrefix = sharedElementPrefix,
+                        now = now,
+                        showEngagementMetrics = showEngagementMetrics,
+                        presentation = presentation,
+                        postActions = postActions,
+                    )
                     else -> Post(
                         modifier = Modifier
                             .fillMaxWidth(),
@@ -270,7 +281,7 @@ private fun ThreadedPost(
 }
 
 @Composable
-private fun Timeline(
+fun Timeline(
     modifier: Modifier = Modifier,
 ) {
     Box(modifier) {
@@ -417,7 +428,7 @@ fun TimelineCard(
     )
 }
 
-private val ReplyThreadStartImageShape =
+val ReplyThreadStartImageShape =
     RoundedPolygonShape.RoundedRectangle(
         topStartPercent = 1f,
         topEndPercent = 1f,
@@ -425,7 +436,7 @@ private val ReplyThreadStartImageShape =
         bottomEndPercent = 1f,
     )
 
-private val ReplyThreadImageShape =
+val ReplyThreadImageShape =
     RoundedPolygonShape.Polygon(
         cornerSizePercentAtIndex = (0..4).map { index ->
             if (index == 2 || index == 3) 2f / 3
