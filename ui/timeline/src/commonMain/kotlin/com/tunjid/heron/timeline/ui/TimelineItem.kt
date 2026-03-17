@@ -129,7 +129,7 @@ fun TimelineItem(
                             .fillMaxWidth(),
                         item = item,
                     )
-                    is TimelineItem.Thread if presentation == Timeline.Presentation.Text.WithEmbed -> ThreadedPost(
+                    is TimelineItem.Threaded.Linear if presentation == Timeline.Presentation.Text.WithEmbed -> ThreadedPost(
                         modifier = Modifier
                             .fillMaxWidth(),
                         paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
@@ -171,7 +171,7 @@ private fun ThreadedPost(
     modifier: Modifier = Modifier,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     presentationLookaheadScope: LookaheadScope,
-    item: TimelineItem.Thread,
+    item: TimelineItem.Threaded.Linear,
     sharedElementPrefix: String,
     now: Instant,
     showEngagementMetrics: Boolean,
@@ -475,13 +475,13 @@ fun String.withQuotingPostUriPrefix(
     ?: this
 
 private val TimelineItem.isThreadedAncestor
-    get() = this is TimelineItem.Thread && when (val gen = generation) {
+    get() = this is TimelineItem.Threaded.Linear && when (val gen = generation) {
         null -> false
         else -> gen <= -1
     }
 
 private val TimelineItem.isThreadedAnchor
-    get() = this is TimelineItem.Thread && generation == 0L
+    get() = this is TimelineItem.Threaded.Linear && generation == 0L
 
 private val TimelineItem.isThreadedAncestorOrAnchor
     get() = isThreadedAncestor || isThreadedAnchor

@@ -180,10 +180,11 @@ fun Flow<Action.Load>.postThreadsMutations(
                                 is TimelineItem.Pinned,
                                 is TimelineItem.Repost,
                                 is TimelineItem.Single,
+                                is TimelineItem.Threaded.Tree,
                                 -> item.post.takeIf {
                                     it.uri.recordKey == route.postRecordKey
                                 }
-                                is TimelineItem.Thread -> item.posts.firstOrNull {
+                                is TimelineItem.Threaded.Linear -> item.posts.firstOrNull {
                                     it.uri.recordKey == route.postRecordKey
                                 }
                                 is TimelineItem.Placeholder -> null

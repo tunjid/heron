@@ -184,7 +184,7 @@ interface TimelineRepository {
 
     fun postThreadedItems(
         postUri: PostUri,
-        order: TimelineItem.Thread.Order,
+        order: TimelineItem.Threaded.Order,
     ): Flow<List<TimelineItem>>
 
     suspend fun updatePreferredPresentation(
@@ -518,7 +518,7 @@ internal class OfflineTimelineRepository(
 
     override fun postThreadedItems(
         postUri: PostUri,
-        order: TimelineItem.Thread.Order,
+        order: TimelineItem.Threaded.Order,
     ): Flow<List<TimelineItem>> = savedStateDataSource.singleSessionFlow { signedInProfileId ->
         postDao.postThread(
             postUri = postUri.uri,
@@ -970,7 +970,7 @@ internal class OfflineTimelineRepository(
                                     val repostedBy = entity.reposter?.let(::profile)
 
                                     list += when {
-                                        replyRoot != null && replyParent != null -> TimelineItem.Thread(
+                                        replyRoot != null && replyParent != null -> TimelineItem.Threaded.Linear(
                                             id = entity.id,
                                             isMuted = isMuted,
                                             generation = null,
@@ -1181,7 +1181,7 @@ internal class OfflineTimelineRepository(
         val lastItem = list.lastOrNull()
         when {
             // To start or for the OP, start a new thread
-            lastItem == null || thread.generation == 0L -> list += TimelineItem.Thread(
+            lastItem == null || thread.generation == 0L -> list += TimelineItem.Threaded.Linear(
                 id = thread.entity.uri.uri,
                 generation = thread.generation,
                 isMuted = isMuted(post),
@@ -1194,7 +1194,7 @@ internal class OfflineTimelineRepository(
             )
             // For parents, edit the head
             thread.generation <= -1L ->
-                if (lastItem is TimelineItem.Thread) list[list.lastIndex] = lastItem.copy(
+                if (lastItem is TimelineItem.Threaded.Linear) list[list.lastIndex] = lastItem.copy(
                     posts = lastItem.posts + post,
                     isMuted = lastItem.isMuted || isMuted(post),
                     postUrisToThreadGates = lastItem.postUrisToThreadGates + Pair(
@@ -1205,8 +1205,8 @@ internal class OfflineTimelineRepository(
                 else Unit
 
             // New reply to the OP, start its own thread
-            lastItem is TimelineItem.Thread &&
-                lastItem.posts.first().uri != thread.rootPostUri -> list += TimelineItem.Thread(
+            lastItem is TimelineItem.Threaded.Linear &&
+                lastItem.posts.first().uri != thread.rootPostUri -> list += TimelineItem.Threaded.Linear(
                 id = thread.entity.uri.uri,
                 generation = thread.generation,
                 isMuted = isMuted(post),
@@ -1218,7 +1218,7 @@ internal class OfflineTimelineRepository(
                 postUrisToThreadGates = mapOf(post.uri to threadGate(post.uri)),
             )
             // Just tack the post to the current thread
-            lastItem is TimelineItem.Thread ->
+            lastItem is TimelineItem.Threaded.Linear ->
                 // Make sure only consecutive generations are added to the thread.
                 // Nonconsecutive generations are dropped. Users can see these replies by
                 // diving into the thread.
@@ -1246,7 +1246,7 @@ private fun SavedStateDataSource.timelineFeedPreference(
         }
     else flowOf(FeedPreference(source.id))
 
-private val TimelineItem.Thread.nextGeneration
+private val TimelineItem.Threaded.Linear.nextGeneration
     get() = generation?.let { it + posts.size }
 
 private fun TimelinePreferencesEntity?.preferredPresentation(): Timeline.Presentation =

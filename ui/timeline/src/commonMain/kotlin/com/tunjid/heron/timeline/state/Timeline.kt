@@ -236,7 +236,7 @@ private fun TiledList<TimelineQuery, TimelineItem>.filterThreadDuplicates(): Til
     return filter { item ->
         when (item) {
             is TimelineItem.Pinned -> true
-            is TimelineItem.Thread -> !threadRootIds.contains(item.posts.first().cid)
+            is TimelineItem.Threaded.Linear -> !threadRootIds.contains(item.posts.first().cid)
                 .also { contains ->
                     if (!contains) threadRootIds.add(item.posts.first().cid)
                 }
@@ -246,7 +246,9 @@ private fun TiledList<TimelineQuery, TimelineItem>.filterThreadDuplicates(): Til
             }
 
             is TimelineItem.Single -> !threadRootIds.contains(item.post.cid)
-            is TimelineItem.Placeholder -> false
+            is TimelineItem.Placeholder,
+            is TimelineItem.Threaded.Tree,
+            -> false
         }
     }
         .distinctBy(TimelineItem::id)
