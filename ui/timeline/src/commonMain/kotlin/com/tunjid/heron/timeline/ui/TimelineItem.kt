@@ -481,7 +481,7 @@ private val TimelineItem.isThreadedAncestor
     }
 
 private val TimelineItem.isThreadedAnchor
-    get() = this is TimelineItem.Threaded.Linear && generation == 0L
+    get() = this is TimelineItem.Threaded.Tree || (this is TimelineItem.Threaded.Linear && generation == 0L)
 
 private val TimelineItem.isThreadedAncestorOrAnchor
     get() = isThreadedAncestor || isThreadedAnchor
