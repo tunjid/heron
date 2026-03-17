@@ -18,7 +18,6 @@ package com.tunjid.heron.moderation.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -162,15 +161,11 @@ class ModerationBindings(
                 navigationRail = {
                     PaneNavigationRail()
                 },
-                content = { paddingValues ->
+                content = {
                     ModerationScreen(
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
-                        modifier = Modifier
-                            .padding(
-                                top = paddingValues.calculateTopPadding(),
-                            ),
                     )
                     SecondaryPaneCloseBackHandler()
                 },

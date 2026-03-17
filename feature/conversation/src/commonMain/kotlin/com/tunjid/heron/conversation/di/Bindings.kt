@@ -53,6 +53,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.text.links
@@ -213,13 +214,14 @@ class ConversationBindings(
                 navigationRail = {
                     PaneNavigationRail()
                 },
-                content = { paddingValues ->
+                content = {
                     ConversationScreen(
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier
-                            .padding(paddingValues),
+                            .padding(top = UiTokens.toolbarHeight + UiTokens.statusBarHeight)
+                            .imePadding(),
                     )
                 },
             )

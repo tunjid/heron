@@ -69,6 +69,7 @@ import com.tunjid.heron.signin.canSwitchAccount
 import com.tunjid.heron.signin.createSessionAction
 import com.tunjid.heron.signin.submitButtonEnabled
 import com.tunjid.heron.timeline.ui.icons.stringResource
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.platformStatusBars
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.PaneEntry
@@ -214,13 +215,13 @@ class SignInBindings(
                         },
                     )
                 },
-                content = { paddingValues ->
+                content = {
                     SignInScreen(
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier
-                            .padding(paddingValues = paddingValues),
+                            .padding(top = UiTokens.toolbarHeight + UiTokens.statusBarHeight),
                     )
                 },
             )
