@@ -255,10 +255,11 @@ fun PaneScaffoldState.PaneScaffold(
                         .fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
+                    snackBarHost()
                     Box(
                         modifier = Modifier
-                            .padding(16.dp)
-                            .fillMaxWidth(),
+                            .fillMaxWidth()
+                            .padding(16.dp),
                         contentAlignment = when (LocalLayoutDirection.current) {
                             LayoutDirection.Ltr -> Alignment.CenterEnd
                             LayoutDirection.Rtl -> Alignment.CenterStart
@@ -266,7 +267,6 @@ fun PaneScaffoldState.PaneScaffold(
                     ) {
                         floatingActionButton()
                     }
-                    snackBarHost()
                     navigationBar()
                 }
             }
