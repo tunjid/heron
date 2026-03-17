@@ -411,13 +411,11 @@ class ListBindings(
                         }
                     }
                 },
-                content = { paddingValues ->
+                content = {
                     ListScreen(
                         paneScaffoldState = this,
                         modifier = Modifier
-                            .padding(
-                                top = paddingValues.calculateTopPadding(),
-                            ),
+                            .padding(top = UiTokens.toolbarHeight + UiTokens.statusBarHeight),
                         state = state,
                         actions = viewModel.accept,
                     )

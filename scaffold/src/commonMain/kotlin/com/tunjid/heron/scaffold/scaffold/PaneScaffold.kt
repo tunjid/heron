@@ -19,15 +19,17 @@ package com.tunjid.heron.scaffold.scaffold
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.animateBounds
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -39,10 +41,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.zIndex
@@ -115,9 +120,6 @@ class PaneScaffoldState internal constructor(
             ThreePane.Overlay -> false
             null -> false
         }
-
-    internal val hasSiblings
-        get() = splitPaneState.filteredPaneOrder.size > 1
 
     internal val backPreviewState = BackPreviewState(
         minScale = 0.75f,
@@ -207,7 +209,7 @@ fun PaneScaffoldState.PaneScaffold(
     floatingActionButton: @Composable PaneScaffoldState.() -> Unit = {},
     navigationBar: @Composable PaneScaffoldState.() -> Unit = {},
     navigationRail: @Composable PaneScaffoldState.() -> Unit = {},
-    content: @Composable PaneScaffoldState.(PaddingValues) -> Unit,
+    content: @Composable PaneScaffoldState.() -> Unit,
 ) {
     PaneNavigationRailScaffold(
         modifier = modifier,
@@ -215,7 +217,7 @@ fun PaneScaffoldState.PaneScaffold(
             navigationRail()
         },
         content = {
-            Scaffold(
+            Box(
                 modifier = when {
                     splitPaneState.paneAnchorState.hasInteractions -> Modifier
                     else -> when (dismissBehavior) {
@@ -227,33 +229,47 @@ fun PaneScaffoldState.PaneScaffold(
                         AppState.DismissBehavior.Gesture.ScaleToPop,
                         -> Modifier
                     }
-                },
-                containerColor = containerColor,
-                topBar = {
+                }
+                    .background(containerColor)
+                    .fillMaxSize(),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .constrainedSizePlacement(
+                            orientation = Orientation.Horizontal,
+                            minSize = splitPaneState.minPaneWidth,
+                            atStart = paneState.pane == ThreePane.Secondary,
+                        ),
+                ) {
+                    content()
+                }
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart),
+                ) {
                     topBar()
-                },
-                floatingActionButton = {
-                    floatingActionButton()
-                },
-                bottomBar = {
-                    navigationBar()
-                },
-                snackbarHost = {
+                }
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
                     snackBarHost()
-                },
-                content = { paddingValues ->
                     Box(
                         modifier = Modifier
-                            .constrainedSizePlacement(
-                                orientation = Orientation.Horizontal,
-                                minSize = splitPaneState.minPaneWidth,
-                                atStart = paneState.pane == ThreePane.Secondary,
-                            ),
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = when (LocalLayoutDirection.current) {
+                            LayoutDirection.Ltr -> Alignment.CenterEnd
+                            LayoutDirection.Rtl -> Alignment.CenterStart
+                        },
                     ) {
-                        content(paddingValues)
+                        floatingActionButton()
                     }
-                },
-            )
+                    navigationBar()
+                }
+            }
         },
     )
     val updatedMessages = rememberUpdatedState(snackBarMessages.firstOrNull())

@@ -48,6 +48,7 @@ import com.tunjid.heron.scaffold.scaffold.predictiveBackContentTransformProvider
 import com.tunjid.heron.scaffold.scaffold.predictiveBackPlacement
 import com.tunjid.heron.scaffold.scaffold.rememberPaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.viewModelCoroutineScope
+import com.tunjid.heron.ui.UiTokens
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
@@ -255,10 +256,10 @@ class GrazeEditorBindings(
                         onClick = addFilterSheetState::show,
                     )
                 },
-                content = { contentPadding ->
+                content = {
                     GrazeEditorScreen(
                         modifier = Modifier
-                            .padding(top = contentPadding.calculateTopPadding()),
+                            .padding(top = UiTokens.toolbarHeight + UiTokens.statusBarHeight),
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
