@@ -42,6 +42,8 @@ data class State(
     @Transient
     val order: TimelineItem.Threaded.Order? = null,
     @Transient
+    val viewMode: TimelineItem.Threaded.ViewMode = TimelineItem.Threaded.ViewMode.Linear,
+    @Transient
     val source: Timeline.Source? = null,
     @Transient
     val timelinePosition: CursorQuery.Data? = null,
@@ -96,6 +98,9 @@ sealed class Action(val key: String) {
         data object Initial : Load()
         data class Order(
             val order: TimelineItem.Threaded.Order,
+        ) : Load()
+        data class ViewMode(
+            val viewMode: TimelineItem.Threaded.ViewMode,
         ) : Load()
     }
 

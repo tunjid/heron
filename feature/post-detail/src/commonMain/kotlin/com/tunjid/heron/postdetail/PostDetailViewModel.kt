@@ -162,14 +162,29 @@ fun Flow<Action.Load>.postThreadsMutations(
             .threadViewPreferences
             .order()
         is Action.Load.Order -> action.order
+        is Action.Load.ViewMode -> state().order ?: userDataRepository.preferences
+            .first()
+            .threadViewPreferences
+            .order()
+    }
+    val viewMode = when (action) {
+        Action.Load.Initial -> state().viewMode
+        is Action.Load.Order -> state().viewMode
+        is Action.Load.ViewMode -> action.viewMode
     }
 
     flow {
-        emit { copy(order = order) }
+        emit {
+            copy(
+                order = order,
+                viewMode = viewMode,
+            )
+        }
         emitAll(
             timelineRepository.postThreadedItems(
                 postUri = postUri,
                 order = order,
+                viewMode = viewMode,
             )
                 .mapToMutation { timelineItems ->
                     if (timelineItems.isEmpty()) this

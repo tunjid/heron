@@ -185,6 +185,7 @@ interface TimelineRepository {
     fun postThreadedItems(
         postUri: PostUri,
         order: TimelineItem.Threaded.Order,
+        viewMode: TimelineItem.Threaded.ViewMode,
     ): Flow<List<TimelineItem>>
 
     suspend fun updatePreferredPresentation(
@@ -519,6 +520,7 @@ internal class OfflineTimelineRepository(
     override fun postThreadedItems(
         postUri: PostUri,
         order: TimelineItem.Threaded.Order,
+        viewMode: TimelineItem.Threaded.ViewMode,
     ): Flow<List<TimelineItem>> = savedStateDataSource.singleSessionFlow { signedInProfileId ->
         postDao.postThread(
             postUri = postUri.uri,
@@ -538,7 +540,10 @@ internal class OfflineTimelineRepository(
                     associatedProfileIds = {
                         emptyList()
                     },
-                    block = ::spinThread,
+                    block = when (viewMode) {
+                        TimelineItem.Threaded.ViewMode.Linear -> ::spinThread
+                        TimelineItem.Threaded.ViewMode.Tree -> ::spinReplyTree
+                    },
                 )
             }
             .withRefresh {
@@ -1234,6 +1239,96 @@ internal class OfflineTimelineRepository(
             else -> Unit
         }
     }
+
+    private fun spinReplyTree(
+        context: RecordResolver.TimelineItemCreationContext,
+        thread: ThreadedPostEntity,
+    ) = with(context) {
+        when {
+            // Ancestors (generation < 0)
+            // Append each one so ancestors list is oldest → newest when anchor arrives.
+            thread.generation < 0L -> {
+                when (val last = list.lastOrNull()) {
+                    is TimelineItem.Threaded.Tree -> list[list.lastIndex] = last.copy(
+                        ancestors = last.ancestors + post,
+                        isMuted = last.isMuted || isMuted(post),
+                    )
+                    else -> list += TimelineItem.Threaded.Tree(
+                        id = thread.entity.uri.uri,
+                        post = post,
+                        ancestors = listOf(post),
+                        replies = emptyList(),
+                        isMuted = isMuted(post),
+                        threadGate = threadGate(post.uri),
+                        appliedLabels = appliedLabels,
+                        signedInProfileId = signedInProfileId,
+                    )
+                }
+            }
+
+            // Anchor (generation == 0)
+            // Register anchor's children bucket BEFORE any descendants arrive so
+            thread.generation == 0L -> {
+                replyNodeIndex[post.uri] = mutableListOf()
+
+                when (val last = list.lastOrNull()) {
+                    is TimelineItem.Threaded.Tree -> list[list.lastIndex] = last.copy(
+                        id = thread.entity.uri.uri,
+                        post = post,
+                        isMuted = last.isMuted || isMuted(post),
+                        threadGate = threadGate(post.uri),
+                        appliedLabels = appliedLabels,
+                        signedInProfileId = signedInProfileId,
+                    )
+                    else -> list += TimelineItem.Threaded.Tree(
+                        id = thread.entity.uri.uri,
+                        post = post,
+                        ancestors = emptyList(),
+                        replies = emptyList(),
+                        isMuted = isMuted(post),
+                        threadGate = threadGate(post.uri),
+                        appliedLabels = appliedLabels,
+                        signedInProfileId = signedInProfileId,
+                    )
+                }
+            }
+
+            //  Descendants (generation > 0)
+            thread.generation > 0L -> {
+                val replyTree = list.lastOrNull() as? TimelineItem.Threaded.Tree ?: return@with
+                val parentUri = thread.parentPostUri ?: return@with
+
+                // Drop anything too deep
+                if (thread.generation > MAX_REPLY_DEPTH) return@with
+
+                val myChildrenBucket = replyNodeIndex.getOrPut(post.uri) { mutableListOf() }
+
+                val newNode = TimelineItem.Threaded.Tree.Node(
+                    post = post,
+                    threadGate = threadGate(post.uri),
+                    appliedLabels = appliedLabels,
+                    isMuted = isMuted(post),
+                    depth = thread.generation.toInt(),
+                    children = myChildrenBucket,
+                )
+
+                val parentBucket = replyNodeIndex[parentUri] ?: return@with
+
+                // Drop siblings beyond the cap (data is already sorted by your
+                // chosen Order, so you keep the "best" ones automatically)
+                if (parentBucket.size >= MAX_SIBLINGS_PER_NODE) return@with
+
+                parentBucket.add(newNode)
+
+                if (parentUri == replyTree.post.uri) {
+                    list[list.lastIndex] = replyTree.copy(
+                        isMuted = replyTree.isMuted || isMuted(post),
+                        replies = parentBucket,
+                    )
+                }
+            }
+        }
+    }
 }
 
 private fun SavedStateDataSource.timelineFeedPreference(
@@ -1304,3 +1399,5 @@ private val MEDIA_CONTENT_MODES = setOf(
     "dev.tunji.heron.defs#contentModeImage",
     "dev.tunji.heron.defs#contentModeMedia",
 )
+private const val MAX_REPLY_DEPTH = 3
+private const val MAX_SIBLINGS_PER_NODE = 3
