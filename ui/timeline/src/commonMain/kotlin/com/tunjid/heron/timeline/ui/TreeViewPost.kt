@@ -265,32 +265,38 @@ private fun flattenTreeNodes(
     nodes: List<TimelineItem.Threaded.Tree.Node>,
     depth: Int = 0,
     ancestorContinuations: List<Boolean> = emptyList(),
-    remaining: IntArray = intArrayOf(MAX_FLAT_REPLY_ROWS),
-): List<FlatNodeRow> = buildList {
-    for ((index, node) in nodes.withIndex()) {
-        if (remaining[0] <= 0) break
-        remaining[0]--
+): List<FlatNodeRow> {
+    var remaining = MAX_FLAT_REPLY_ROWS
+    return buildList {
+        fun doAddAll(
+            innerNodes: List<TimelineItem.Threaded.Tree.Node>,
+            innerDepth: Int,
+            innerAncestorContinuations: List<Boolean>
+        ) {
+            for ((index, node) in innerNodes.withIndex()) {
+                if (remaining <= 0) return
+                remaining--
 
-        val isLastSibling = index == nodes.lastIndex
-        add(
-            FlatNodeRow(
-                node = node,
-                depth = depth,
-                isLastSibling = isLastSibling,
-                ancestorContinuations = ancestorContinuations,
-                hasChildren = node.children.isNotEmpty(),
-            ),
-        )
-        if (node.children.isNotEmpty()) {
-            addAll(
-                flattenTreeNodes(
-                    nodes = node.children,
-                    depth = depth + 1,
-                    ancestorContinuations = ancestorContinuations + !isLastSibling,
-                    remaining = remaining,
-                ),
-            )
+                val isLastSibling = index == innerNodes.lastIndex
+                add(
+                    FlatNodeRow(
+                        node = node,
+                        depth = innerDepth,
+                        isLastSibling = isLastSibling,
+                        ancestorContinuations = innerAncestorContinuations,
+                        hasChildren = node.children.isNotEmpty(),
+                    )
+                )
+                if (node.children.isNotEmpty()) {
+                    doAddAll(
+                        innerNodes = node.children,
+                        innerDepth = innerDepth + 1,
+                        innerAncestorContinuations = innerAncestorContinuations + !isLastSibling,
+                    )
+                }
+            }
         }
+        doAddAll(nodes, depth, ancestorContinuations)
     }
 }
 
