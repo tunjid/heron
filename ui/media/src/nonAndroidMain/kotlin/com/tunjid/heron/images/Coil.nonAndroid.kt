@@ -18,20 +18,17 @@ package com.tunjid.heron.images
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.asComposeImageBitmap
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.skiaCanvas
 import coil3.BitmapImage
 import coil3.ComponentRegistry
 import coil3.PlatformContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 internal actual fun coil3.Image.renderInto(
