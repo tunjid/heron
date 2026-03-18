@@ -17,7 +17,9 @@
 package com.tunjid.heron.images
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Canvas
@@ -60,18 +62,19 @@ internal actual fun coil3.Image.AnimationEffect() {
     val image = this as? AnimatedSkiaImage ?: return
     if (image.frameCount <= 1) return
 
-    LaunchedEffect(image) {
-        coroutineScope {
-            // Decode remaining frames in the background
-            launch(Dispatchers.Default) {
-                for (index in image.frames.indices) {
-                    if (image.frames[index] == null) {
-                        image.frames[index] = image.decodeFrame(index)
-                    }
+    val scope = rememberCoroutineScope()
+    DisposableEffect(image, scope) {
+        // Decode remaining frames in the background
+        val decodeJob = scope.launch(Dispatchers.Default) {
+            for (index in image.frames.indices) {
+                if (image.frames[index] == null) {
+                    image.frames[index] = image.decodeFrame(index)
                 }
-                image.closeTempBitmap()
             }
+            image.closeTempBitmap()
+        }
 
+        val animationJob = scope.launch {
             // Advance frames using the Compose frame clock
             var startNanos = -1L
             while (true) {
@@ -97,6 +100,12 @@ internal actual fun coil3.Image.AnimationEffect() {
                     image.currentFrameIndex = frameIndex.coerceIn(0, cumulative.lastIndex)
                 }
             }
+        }
+
+        onDispose {
+            decodeJob.cancel()
+            animationJob.cancel()
+            image.close()
         }
     }
 }

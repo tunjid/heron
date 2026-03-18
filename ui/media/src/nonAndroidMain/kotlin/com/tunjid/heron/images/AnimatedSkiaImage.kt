@@ -99,6 +99,12 @@ internal class AnimatedSkiaImage(
     internal fun closeTempBitmap() {
         if (!tempBitmap.isClosed) tempBitmap.close()
     }
+
+    internal fun close() {
+        closeTempBitmap()
+        frames.forEach { it?.close() }
+        codec.close()
+    }
 }
 
 private val AnimationFrameInfo.safeFrameDuration: Int
