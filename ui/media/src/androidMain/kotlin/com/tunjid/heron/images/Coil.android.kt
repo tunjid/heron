@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.nativeCanvas
+import coil3.ComponentRegistry
 import coil3.DrawableImage
 
 internal actual fun coil3.Image.renderInto(
@@ -33,6 +34,8 @@ fun imageLoader(
 ): ImageLoader = CoilImageLoader.create(
     context = context,
 )
+
+internal actual fun ComponentRegistry.Builder.addPlatformDecoders() = Unit
 
 @Composable
 internal actual fun coil3.Image.AnimationEffect() {

@@ -169,6 +169,7 @@ internal class CoilImageLoader private constructor(
                 coil3.ImageLoader.Builder(context)
                     .components {
                         addPlatformFileSupport()
+                        addPlatformDecoders()
                         add(KtorNetworkFetcherFactory(httpClient))
                     }
                     .build()
@@ -182,6 +183,8 @@ internal class CoilImageLoader private constructor(
 }
 
 internal expect fun coil3.Image.renderInto(canvas: Canvas)
+
+internal expect fun coil3.ComponentRegistry.Builder.addPlatformDecoders()
 
 @Composable
 internal expect fun coil3.Image.AnimationEffect()

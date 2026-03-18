@@ -27,6 +27,15 @@ android {
 }
 
 kotlin {
+    applyDefaultHierarchyTemplate {
+        common {
+            group("nonAndroid") {
+                withJvm()
+                withIosArm64()
+                withIosSimulatorArm64()
+            }
+        }
+    }
     sourceSets {
         commonMain {
             dependencies {
@@ -67,6 +76,12 @@ kotlin {
                 implementation(libs.coil.gif.android)
             }
         }
+        val nonAndroidMain by getting {
+            dependencies {
+                implementation(libs.coil.compose)
+                implementation(libs.skiko)
+            }
+        }
         desktopMain {
             dependencies {
                 implementation(libs.ktor.client.java)
@@ -85,11 +100,11 @@ kotlin {
                 implementation("${libs.javafx.graphics.get().module}:${libs.versions.javafx.get()}:$fxClassifier")
             }
         }
-//        iosMain {
-//            dependencies {
-//                implementation(libs.ktor.client.darwin)
-//            }
-//        }
+        iosMain {
+            dependencies {
+                implementation(libs.ktor.client.darwin)
+            }
+        }
     }
 }
 
