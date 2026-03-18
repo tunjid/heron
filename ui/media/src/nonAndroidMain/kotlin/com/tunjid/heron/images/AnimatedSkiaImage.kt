@@ -91,14 +91,8 @@ internal class AnimatedSkiaImage(
     internal fun decodeFrame(frameIndex: Int): org.jetbrains.skia.Image {
         check(!tempBitmap.isClosed) { "Cannot decode frame: the bitmap is closed." }
         codec.readPixels(tempBitmap, frameIndex)
-        val bytes = tempBitmap.readPixels(
-            dstInfo = codec.imageInfo,
-            dstRowBytes = codec.imageInfo.minRowBytes,
-        )!!
-        return org.jetbrains.skia.Image.makeRaster(
-            imageInfo = codec.imageInfo,
-            bytes = bytes,
-            rowBytes = codec.imageInfo.minRowBytes,
+        return org.jetbrains.skia.Image.makeFromBitmap(
+            tempBitmap,
         )
     }
 

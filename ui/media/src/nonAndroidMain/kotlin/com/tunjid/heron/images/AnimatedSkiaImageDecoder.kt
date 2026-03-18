@@ -78,11 +78,11 @@ class AnimatedSkiaImageDecoder(
         }
 
         private fun isAnimatedWebP(source: BufferedSource): Boolean {
-            return source.rangeEquals(0, WEBP_HEADER_RIFF) &&
-                source.rangeEquals(8, WEBP_HEADER_WEBP) &&
-                source.rangeEquals(12, WEBP_HEADER_VPX8) &&
-                source.request(21) &&
-                (source.buffer[20] and 0b00000010) > 0
+            return source.rangeEquals(WEBP_RIFF_HEADER_OFFSET, WEBP_HEADER_RIFF) &&
+                source.rangeEquals(WEBP_HEADER_OFFSET, WEBP_HEADER_WEBP) &&
+                source.rangeEquals(VP8X_HEADER_OFFSET, WEBP_HEADER_VPX8) &&
+                source.request(VP8X_FLAGS_OFFSET + 1) &&
+                (source.buffer[VP8X_FLAGS_OFFSET] and ANIMATION_FLAG_MASK) > 0
         }
     }
 }
@@ -92,4 +92,10 @@ private val GIF_HEADER_89A = "GIF89a".encodeUtf8()
 private val WEBP_HEADER_RIFF = "RIFF".encodeUtf8()
 private val WEBP_HEADER_WEBP = "WEBP".encodeUtf8()
 private val WEBP_HEADER_VPX8 = "VP8X".encodeUtf8()
+
+private const val WEBP_RIFF_HEADER_OFFSET = 0L
+private const val WEBP_HEADER_OFFSET = 8L
+private const val VP8X_HEADER_OFFSET = 12L
+private const val VP8X_FLAGS_OFFSET = 20L
+private const val ANIMATION_FLAG_MASK: Byte = 0b00000010
 private const val DEFAULT_BUFFERED_FRAMES_COUNT = 5
