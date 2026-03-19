@@ -55,6 +55,7 @@ skiko = "0.144.4"
 vinceglb-filekit = "0.13.0"
 javafx = "21"
 jna = "5.17.0"
+gstreamer-java = "1.4.0"
 aboutLibraries = "13.2.1"
 
 
@@ -186,6 +187,7 @@ javafx-base = { group = "org.openjfx", name = "javafx-base", version.ref = "java
 javafx-graphics = { group = "org.openjfx", name = "javafx-graphics", version.ref = "javafx" }
 javafx-media = { group = "org.openjfx", name = "javafx-media", version.ref = "javafx" }
 javafx-swing = { group = "org.openjfx", name = "javafx-swing", version.ref = "javafx" }
+gstreamer-java-core = { module = "org.freedesktop.gstreamer:gst1-java-core", version.ref = "gstreamer-java" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
