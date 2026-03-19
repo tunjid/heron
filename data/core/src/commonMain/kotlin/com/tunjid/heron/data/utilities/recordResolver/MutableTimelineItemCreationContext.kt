@@ -43,7 +43,15 @@ internal class MutableTimelineItemCreationContext(
 ) : RecordResolver.TimelineItemCreationContext,
     MutableList<TimelineItem> by mutableListOf() {
 
-    override var list: MutableList<TimelineItem> = this
+    override val top: TimelineItem? get() = lastOrNull()
+
+    override infix fun push(item: TimelineItem) {
+        add(item)
+    }
+
+    override fun swapTop(item: TimelineItem) {
+        this[lastIndex] = item
+    }
 
     override val post: Post
         get() = requireNotNull(currentPost)

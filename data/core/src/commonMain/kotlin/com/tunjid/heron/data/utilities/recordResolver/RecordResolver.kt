@@ -169,11 +169,14 @@ internal interface RecordResolver {
     ): Outcome
 
     interface TimelineItemCreationContext {
-        val list: MutableList<TimelineItem>
+        val top: TimelineItem?
         val post: Post
         val appliedLabels: AppliedLabels
         val signedInProfileId: ProfileId?
         val replyNodeIndex: MutableMap<PostUri, MutableList<TimelineItem.Threaded.Tree.Node>>
+
+        infix fun push(item: TimelineItem)
+        fun swapTop(item: TimelineItem)
 
         fun record(recordUri: EmbeddableRecordUri): Record?
         fun profile(profileId: ProfileId): Profile?
