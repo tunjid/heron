@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.roundToIntSize
 import com.tunjid.heron.media.video.javafx.JavaFxPlayerState
+import com.tunjid.heron.media.video.linux.GStreamerPlayerState
 import com.tunjid.heron.media.video.mac.AVFoundationPlayerState
 import com.tunjid.heron.scaleAndAlignTo
 import javafx.application.Platform
@@ -47,6 +48,7 @@ actual fun VideoPlayer(
     when (state) {
         is AVFoundationPlayerState -> AVFoundationVideoPlayer(modifier, state)
         is JavaFxPlayerState -> JavaFxVideoPlayer(modifier, state)
+        is GStreamerPlayerState -> GStreamerVideoPlayer(modifier, state)
         else -> error("Unsupported VideoPlayerState: ${state::class}")
     }
 }
@@ -55,6 +57,47 @@ actual fun VideoPlayer(
 private fun AVFoundationVideoPlayer(
     modifier: Modifier,
     state: AVFoundationPlayerState,
+) {
+    Box(modifier = modifier) {
+        if (state.canShowVideo) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                state.currentFrame?.let { frame ->
+                    scaleAndAlignTo(
+                        srcSize = IntSize(
+                            width = frame.width,
+                            height = frame.height,
+                        ),
+                        destSize = size.roundToIntSize(),
+                        contentScale = state.contentScale,
+                        alignment = state.alignment,
+                        block = {
+                            drawImage(image = frame)
+                        },
+                    )
+                }
+            }
+        }
+        if (state.canShowStill) {
+            VideoStill(
+                modifier = Modifier.fillMaxSize(),
+                state = state,
+            )
+        }
+    }
+
+    DisposableEffect(state) {
+        state.status = PlayerStatus.Idle.Initial
+        onDispose {
+            state.hasRenderedFirstFrame = false
+            state.status = PlayerStatus.Idle.Evicted
+        }
+    }
+}
+
+@Composable
+private fun GStreamerVideoPlayer(
+    modifier: Modifier,
+    state: GStreamerPlayerState,
 ) {
     Box(modifier = modifier) {
         if (state.canShowVideo) {
@@ -181,6 +224,23 @@ private val AVFoundationPlayerState.canShowVideo
     }
 
 private val AVFoundationPlayerState.canShowStill
+    get() = videoSize == IntSize.Zero ||
+        !hasRenderedFirstFrame ||
+        when (status) {
+            is PlayerStatus.Idle -> true
+            is PlayerStatus.Pause -> false
+            PlayerStatus.Play.Requested -> true
+            PlayerStatus.Play.Confirmed -> false
+        }
+
+private val GStreamerPlayerState.canShowVideo
+    get() = when (status) {
+        is PlayerStatus.Idle -> false
+        is PlayerStatus.Play -> true
+        is PlayerStatus.Pause -> true
+    }
+
+private val GStreamerPlayerState.canShowStill
     get() = videoSize == IntSize.Zero ||
         !hasRenderedFirstFrame ||
         when (status) {
