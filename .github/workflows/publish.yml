@@ -92,3 +92,65 @@ jobs:
           files: composeApp/build/outputs/apk/release/universal.apk
           draft: true
           allow_updates: true
+
+  publish-mac-app:
+    runs-on: macos-latest
+    permissions:
+      contents: 'write'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v5
+
+      - name: Setup java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Cache KMP tooling
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.konan
+          key: ${{ runner.os }}-v1-${{ hashFiles('gradle/libs.versions.toml') }}
+
+      - name: Import signing certificate
+        uses: apple-actions/import-codesign-certs@v2
+        with:
+          p12-file-base64: ${{ secrets.SIGNING_CERTIFICATE_P12_DATA_MACOS }}
+          p12-password: ${{ secrets.SIGNING_CERTIFICATE_PASSWORD_MACOS }}
+
+      - name: Build release DMG
+        env:
+          HERON_ENDPOINT: ${{ secrets.HERON_ENDPOINT }}
+        run: |
+          ./gradlew packageReleaseDmg \
+            -Pheron.versionCode=${{ github.run_number }} \
+            -Pheron.endpoint="$HERON_ENDPOINT"
+
+      - name: Notarize DMG
+        env:
+          APPLE_ID_NOTARIZATION: ${{ secrets.APPLE_ID_NOTARIZATION }}
+          APPSTORE_TEAM_ID: ${{ secrets.APPSTORE_TEAM_ID }}
+          NOTARIZATION_PWD: ${{ secrets.NOTARIZATION_PWD }}
+        run: |
+          DMG_PATH=$(find composeApp/build/release/main-release/dmg -name "*.dmg" | head -1)
+          xcrun notarytool submit "$DMG_PATH" \
+            --apple-id "$APPLE_ID_NOTARIZATION" \
+            --password "$NOTARIZATION_PWD" \
+            --team-id "$APPSTORE_TEAM_ID" \
+            --wait
+          xcrun stapler staple "$DMG_PATH"
+          echo "DMG_PATH=$DMG_PATH" >> $GITHUB_ENV
+
+      - name: Upload to GitHub releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Heron v${{ github.run_number }}
+          files: ${{ env.DMG_PATH }}
+          draft: true
+          allow_updates: true
