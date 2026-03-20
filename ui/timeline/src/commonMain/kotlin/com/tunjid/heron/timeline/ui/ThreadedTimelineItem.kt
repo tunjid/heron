@@ -24,7 +24,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -59,6 +58,7 @@ import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.see_more_posts
 import heron.ui.timeline.generated.resources.show_more
+import kotlin.jvm.JvmInline
 import kotlin.math.min
 import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
@@ -73,16 +73,24 @@ import org.jetbrains.compose.resources.stringResource
  * when toggling between views.
  *
  * Iteration is delegated to [ThreadedItemIterator.onEachNode], which walks the node
- * hierarchy and invokes an inline lambda with per-node metadata (depth, avatar shape,
- * connector info, etc.) passed as parameters. Because the values are lambda parameters
- * rather than mutable properties, they are safe to capture in deferred lambdas like
+ * hierarchy and invokes an inline lambda with five parameters per node:
+ * - [TimelineItem.Threaded.Node] — the post data
+ * - [NodePosition] — packed index and depth (two [Int]s in a [Long])
+ * - [NodeFlags] — bitmask of boolean metadata (main post, anchored, timeline visibility,
+ *   sibling/child status, and ancestor continuation lines)
+ * - [RoundedPolygonShape] — avatar shape
+ * - [NodeDecorations] — bitmask of decorations to render after the post
+ *
+ * Because all per-node values are lambda parameters (not mutable properties), they are
+ * safe to capture in deferred lambdas like
  * [Modifier.drawBehind][androidx.compose.ui.draw.drawBehind].
  *
  * - **Tree mode**: Posts are indented by depth × [IndentPerDepth] and connected with
- *   curved reply connector lines drawn in [drawReplyConnectors].
+ *   curved reply connector lines drawn in [drawReplyConnectors]. Ancestor continuation
+ *   lines are encoded in [NodeFlags] and read via [NodeFlags.hasAncestorContinuation].
  * - **Linear mode**: Posts are rendered flat (depth 0) with inter-post decorations
  *   between them — [BrokenTimeline], [Timeline] spacers, [Spacer] gaps, or [ShowMore]
- *   buttons — populated by the iterator in [ThreadedItemIterator.interPostDecorations].
+ *   buttons — driven by the [NodeDecorations] bitmask.
  *
  * For linear mode, the number of visible nodes is limited by a saveable `maxNodes` state
  * and can be expanded with the "Show more" button.
@@ -105,23 +113,18 @@ internal fun ThreadedTimelineItem(
         mutableStateOf(if (isLinear) DefaultMaxPostsInLinearThread else Int.MAX_VALUE)
     }
 
-    val iterator = remember(::ThreadedItemIterator)
-
-    iterator.onEachNode(
+    ThreadedItemIterator.onEachNode(
         item = item,
         maxItems = maxNodes,
     ) {
             node,
-            index,
-            depth,
-            isMainPost,
-            isAnchoredInTimeline,
+            position,
+            flags,
+            decorations,
             avatarShape,
-            showTimeline,
-            ancestorContinuations,
-            isLastSibling,
-            hasChildren,
         ->
+        val index = position[NodeDimension.Index]
+        val depth = position[NodeDimension.Depth]
         key(node.post.uri.uri) {
             Post(
                 modifier = Modifier
@@ -129,9 +132,7 @@ internal fun ThreadedTimelineItem(
                         drawBehind {
                             drawReplyConnectors(
                                 depth = depth,
-                                ancestorContinuations = ancestorContinuations,
-                                isLastSibling = isLastSibling,
-                                hasChildren = hasChildren,
+                                flags = flags,
                                 indentPerDepthPx = IndentPerDepth.toPx(),
                                 threadLineXOffsetPx = ThreadLineXOffset.toPx(),
                                 curveRadiusPx = CurveRadius.toPx(),
@@ -151,8 +152,8 @@ internal fun ThreadedTimelineItem(
                 now = now,
                 post = node.post,
                 threadGate = node.threadGate,
-                isAnchoredInTimeline = isAnchoredInTimeline,
-                isMainPost = isMainPost,
+                isAnchoredInTimeline = flags.isAnchoredInTimeline,
+                isMainPost = flags.isMainPost,
                 showEngagementMetrics = showEngagementMetrics,
                 avatarShape = avatarShape,
                 sharedElementPrefix = sharedElementPrefix,
@@ -161,7 +162,7 @@ internal fun ThreadedTimelineItem(
                 appliedLabels = node.appliedLabels,
                 postActions = postActions,
                 timeline = {
-                    if (showTimeline) {
+                    if (flags.showTimeline) {
                         Timeline(
                             modifier = Modifier
                                 .matchParentSize()
@@ -171,53 +172,51 @@ internal fun ThreadedTimelineItem(
                 },
             )
         }
-        for (decoration in iterator.interPostDecorations) {
-            when (decoration) {
-                ThreadedItemIterator.InterPostDecoration.BrokenTimeline ->
-                    key(node.decorationKey(decoration)) {
-                        BrokenTimeline(
-                            modifier = Modifier
-                                .padding(start = 8.dp)
-                                .childThreadNode(videoId = null),
-                            onClick = {
-                                postActions.onPostAction(
-                                    PostAction.OfPost(
-                                        post = node.post,
-                                        isMainPost = isMainPost,
-                                        warnedAppliedLabels = node.appliedLabels.warned(),
-                                    ),
-                                )
-                            },
+        if (decorations.has(NodeDecoration.BrokenTimeline)) {
+            key(node.decorationKey(NodeDecoration.BrokenTimeline)) {
+                BrokenTimeline(
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .childThreadNode(videoId = null),
+                    onClick = {
+                        postActions.onPostAction(
+                            PostAction.OfPost(
+                                post = node.post,
+                                isMainPost = flags.isMainPost,
+                                warnedAppliedLabels = node.appliedLabels.warned(),
+                            ),
                         )
-                    }
-
-                ThreadedItemIterator.InterPostDecoration.ExtraTimeline ->
-                    key(node.decorationKey(decoration)) {
-                        Timeline(
-                            modifier = Modifier
-                                .padding(start = 8.dp)
-                                .height(
-                                    if (index == 0) 16.dp
-                                    else 12.dp,
-                                )
-                                .childThreadNode(videoId = null),
+                    },
+                )
+            }
+        }
+        if (decorations.has(NodeDecoration.ExtraTimeline)) {
+            key(node.decorationKey(NodeDecoration.ExtraTimeline)) {
+                Timeline(
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .height(
+                            if (index == 0) 16.dp
+                            else 12.dp,
                         )
-                    }
-                ThreadedItemIterator.InterPostDecoration.ExtraSpacer ->
-                    key(node.decorationKey(decoration)) {
-                        Spacer(
-                            Modifier
-                                .height(2.dp)
-                                .childThreadNode(videoId = null),
-                        )
-                    }
-
-                ThreadedItemIterator.InterPostDecoration.ShowMore ->
-                    key(node.decorationKey(decoration)) {
-                        ShowMore {
-                            maxNodes += DefaultMaxPostsInLinearThread
-                        }
-                    }
+                        .childThreadNode(videoId = null),
+                )
+            }
+        }
+        if (decorations.has(NodeDecoration.ExtraSpacer)) {
+            key(node.decorationKey(NodeDecoration.ExtraSpacer)) {
+                Spacer(
+                    Modifier
+                        .height(2.dp)
+                        .childThreadNode(videoId = null),
+                )
+            }
+        }
+        if (decorations.has(NodeDecoration.ShowMore)) {
+            key(node.decorationKey(NodeDecoration.ShowMore)) {
+                ShowMore {
+                    maxNodes += DefaultMaxPostsInLinearThread
+                }
             }
         }
     }
@@ -321,15 +320,9 @@ private fun ShowMore(
     }
 }
 
-private fun TimelineItem.Threaded.Node.decorationKey(
-    decoration: ThreadedItemIterator.InterPostDecoration,
-) = "${post.uri.uri}-$decoration"
-
 private fun DrawScope.drawReplyConnectors(
     depth: Int,
-    ancestorContinuations: List<Boolean>,
-    isLastSibling: Boolean,
-    hasChildren: Boolean,
+    flags: NodeFlags,
     indentPerDepthPx: Float,
     threadLineXOffsetPx: Float,
     curveRadiusPx: Float,
@@ -351,7 +344,7 @@ private fun DrawScope.drawReplyConnectors(
     val curveTopY = avatarCenterFromTopPx - curveRadiusPx
 
     for (level in 0 until depth - 1) {
-        if (ancestorContinuations[level]) {
+        if (flags.hasAncestorContinuation(level)) {
             drawLine(
                 color = color,
                 start = Offset(lineX(level), -rowOverlapPx),
@@ -362,7 +355,7 @@ private fun DrawScope.drawReplyConnectors(
         }
     }
 
-    if (!isLastSibling) {
+    if (!flags.isLastSibling) {
         drawLine(
             color = color,
             start = Offset(parentLineX, -rowOverlapPx),
@@ -388,7 +381,7 @@ private fun DrawScope.drawReplyConnectors(
         style = stroke,
     )
 
-    if (hasChildren) {
+    if (flags.hasChildren) {
         drawLine(
             color = color,
             start = Offset(childLineX, avatarCenterFromTopPx),
@@ -399,32 +392,114 @@ private fun DrawScope.drawReplyConnectors(
     }
 }
 
-@Stable
-internal class ThreadedItemIterator {
+private enum class NodeDimension(val shift: Int) {
+    Index(shift = 0),
+    Depth(shift = 32),
+}
 
-    enum class InterPostDecoration {
-        BrokenTimeline,
-        ExtraTimeline,
-        ExtraSpacer,
-        ShowMore,
+/**
+ * Packed pair of [Int] values identified by [NodeDimension] entries.
+ * Uses a [Long] backing field — lower 32 bits for [NodeDimension.Index],
+ * upper 32 bits for [NodeDimension.Depth].
+ */
+@JvmInline
+private value class NodePosition(val packed: Long = 0L) {
+
+    operator fun get(dimension: NodeDimension): Int =
+        (packed ushr dimension.shift).toInt()
+}
+
+@Suppress("NOTHING_TO_INLINE")
+private inline fun NodePosition(
+    index: Int,
+    depth: Int,
+): NodePosition = NodePosition(
+    (index.toLong() and 0xFFFFFFFFL) or ((depth.toLong() and 0xFFFFFFFFL) shl 32),
+)
+
+/**
+ * Bitmask of boolean flags describing a node's role in the thread.
+ * Uses a [Long] backing field to avoid boxing.
+ */
+@JvmInline
+private value class NodeFlags(val mask: Long = 0L) {
+
+    val isMainPost: Boolean get() = mask and IS_MAIN_POST != 0L
+    val isAnchoredInTimeline: Boolean get() = mask and IS_ANCHORED_IN_TIMELINE != 0L
+    val showTimeline: Boolean get() = mask and SHOW_TIMELINE != 0L
+    val isLastSibling: Boolean get() = mask and IS_LAST_SIBLING != 0L
+    val hasChildren: Boolean get() = mask and HAS_CHILDREN != 0L
+
+    fun hasAncestorContinuation(level: Int): Boolean =
+        mask and (1L shl (ANCESTOR_CONTINUATION_BASE_SHIFT + level)) != 0L
+
+    companion object {
+        const val IS_MAIN_POST = 1L shl 0
+        const val IS_ANCHORED_IN_TIMELINE = 1L shl 1
+        const val SHOW_TIMELINE = 1L shl 2
+        const val IS_LAST_SIBLING = 1L shl 3
+        const val HAS_CHILDREN = 1L shl 4
+        const val ANCESTOR_CONTINUATION_BASE_SHIFT = 5
+        const val ANCESTOR_CONTINUATION_LEVEL_1 = 1L shl 5
+        const val ANCESTOR_CONTINUATION_LEVEL_2 = 1L shl 6
     }
+}
 
-    val interPostDecorations: MutableList<InterPostDecoration> = mutableListOf()
+@Suppress("NOTHING_TO_INLINE")
+private inline fun NodeFlags(
+    isMainPost: Boolean = false,
+    isAnchoredInTimeline: Boolean = false,
+    showTimeline: Boolean = false,
+    isLastSibling: Boolean = false,
+    hasChildren: Boolean = false,
+    ancestorContinuationFirstLevel: Boolean = false,
+    ancestorContinuationSecondLevel: Boolean = false,
+): NodeFlags = NodeFlags(
+    (if (isMainPost) NodeFlags.IS_MAIN_POST else 0L)
+        or (if (isAnchoredInTimeline) NodeFlags.IS_ANCHORED_IN_TIMELINE else 0L)
+        or (if (showTimeline) NodeFlags.SHOW_TIMELINE else 0L)
+        or (if (isLastSibling) NodeFlags.IS_LAST_SIBLING else 0L)
+        or (if (hasChildren) NodeFlags.HAS_CHILDREN else 0L)
+        or (if (ancestorContinuationFirstLevel) NodeFlags.ANCESTOR_CONTINUATION_LEVEL_1 else 0L)
+        or (if (ancestorContinuationSecondLevel) NodeFlags.ANCESTOR_CONTINUATION_LEVEL_2 else 0L),
+)
+
+private enum class NodeDecoration {
+    BrokenTimeline,
+    ExtraTimeline,
+    ExtraSpacer,
+    ShowMore,
+}
+
+/**
+ * Bitmask of [NodeDecoration] values that should be rendered after a given node.
+ * Uses a [Long] backing field to avoid list allocations during iteration.
+ */
+@JvmInline
+private value class NodeDecorations(val mask: Long = 0L) {
+
+    fun has(decoration: NodeDecoration): Boolean =
+        mask and (1L shl decoration.ordinal) != 0L
+
+    operator fun plus(decoration: NodeDecoration): NodeDecorations =
+        NodeDecorations(mask or (1L shl decoration.ordinal))
+}
+
+private fun TimelineItem.Threaded.Node.decorationKey(
+    decoration: NodeDecoration,
+) = "${post.uri.uri}-$decoration"
+
+private object ThreadedItemIterator {
 
     inline fun onEachNode(
         item: TimelineItem.Threaded,
         maxItems: Int,
         block: (
             node: TimelineItem.Threaded.Node,
-            index: Int,
-            depth: Int,
-            isMainPost: Boolean,
-            isAnchoredInTimeline: Boolean,
+            position: NodePosition,
+            flags: NodeFlags,
+            nodeDecorations: NodeDecorations,
             avatarShape: RoundedPolygonShape,
-            showTimeline: Boolean,
-            ancestorContinuations: List<Boolean>,
-            isLastSibling: Boolean,
-            hasChildren: Boolean,
         ) -> Unit,
     ) {
         when (item) {
@@ -433,36 +508,35 @@ internal class ThreadedItemIterator {
         }
     }
 
-    @PublishedApi
-    internal inline fun onEachTreeNode(
+    inline fun onEachTreeNode(
         item: TimelineItem.Threaded.Tree,
         block: (
             node: TimelineItem.Threaded.Node,
-            index: Int,
-            depth: Int,
-            isMainPost: Boolean,
-            isAnchoredInTimeline: Boolean,
+            position: NodePosition,
+            flags: NodeFlags,
+            nodeDecorations: NodeDecorations,
             avatarShape: RoundedPolygonShape,
-            showTimeline: Boolean,
-            ancestorContinuations: List<Boolean>,
-            isLastSibling: Boolean,
-            hasChildren: Boolean,
         ) -> Unit,
     ) {
+        val noDecorations = NodeDecorations()
+        val hasReplies = item.replies.isNotEmpty()
+
         // Anchor at depth 0
         block(
             item.anchor,
-            0,
-            0,
-            true,
-            false,
+            NodePosition(
+                index = 0,
+                depth = 0,
+            ),
+            NodeFlags(
+                isMainPost = true,
+                isLastSibling = true,
+                showTimeline = hasReplies,
+                hasChildren = hasReplies,
+            ),
+            noDecorations,
             RoundedPolygonShape.Circle,
-            item.replies.isNotEmpty(),
-            emptyList(),
-            true,
-            item.replies.isNotEmpty(),
         )
-        interPostDecorations.clear()
 
         // Replies at depth 1
         item.replies.forEachIndexed { replyIndex, reply ->
@@ -471,17 +545,15 @@ internal class ThreadedItemIterator {
 
             block(
                 reply,
-                replyIndex,
-                1,
-                false,
-                false,
+                NodePosition(index = replyIndex, depth = 1),
+                NodeFlags(
+                    showTimeline = replyHasChildren,
+                    hasChildren = replyHasChildren,
+                    isLastSibling = replyIsLastSibling,
+                ),
+                noDecorations,
                 RoundedPolygonShape.Circle,
-                replyHasChildren,
-                emptyList(),
-                replyIsLastSibling,
-                replyHasChildren,
             )
-            interPostDecorations.clear()
 
             // Children at depth 2
             reply.children.forEachIndexed { childIndex, child ->
@@ -490,53 +562,50 @@ internal class ThreadedItemIterator {
 
                 block(
                     child,
-                    childIndex,
-                    2,
-                    false,
-                    false,
+                    NodePosition(
+                        index = childIndex,
+                        depth = 2,
+                    ),
+                    NodeFlags(
+                        showTimeline = childHasChildren,
+                        hasChildren = childHasChildren,
+                        isLastSibling = childIsLastSibling,
+                        ancestorContinuationFirstLevel = !replyIsLastSibling,
+                    ),
+                    noDecorations,
                     RoundedPolygonShape.Circle,
-                    childHasChildren,
-                    listOf(!replyIsLastSibling),
-                    childIsLastSibling,
-                    childHasChildren,
                 )
-                interPostDecorations.clear()
 
                 // Grandchildren at depth 3
                 child.children.forEachIndexed { grandchildIndex, grandchild ->
                     block(
                         grandchild,
-                        grandchildIndex,
-                        3,
-                        false,
-                        false,
+                        NodePosition(
+                            index = grandchildIndex,
+                            depth = 3,
+                        ),
+                        NodeFlags(
+                            isLastSibling = grandchildIndex == child.children.lastIndex,
+                            ancestorContinuationFirstLevel = !replyIsLastSibling,
+                            ancestorContinuationSecondLevel = !childIsLastSibling,
+                        ),
+                        noDecorations,
                         RoundedPolygonShape.Circle,
-                        false,
-                        listOf(!replyIsLastSibling, !childIsLastSibling),
-                        grandchildIndex == child.children.lastIndex,
-                        false,
                     )
-                    interPostDecorations.clear()
                 }
             }
         }
     }
 
-    @PublishedApi
-    internal inline fun onEachLinearNode(
+    inline fun onEachLinearNode(
         item: TimelineItem.Threaded.Linear,
         maxItems: Int,
         block: (
             node: TimelineItem.Threaded.Node,
-            index: Int,
-            depth: Int,
-            isMainPost: Boolean,
-            isAnchoredInTimeline: Boolean,
+            position: NodePosition,
+            flags: NodeFlags,
+            nodeDecorations: NodeDecorations,
             avatarShape: RoundedPolygonShape,
-            showTimeline: Boolean,
-            ancestorContinuations: List<Boolean>,
-            isLastSibling: Boolean,
-            hasChildren: Boolean,
         ) -> Unit,
     ) {
         val isAncestor = item.isThreadedAncestor
@@ -567,34 +636,34 @@ internal class ThreadedItemIterator {
                 }
             }
 
-            // Populate inter-post decorations
+            // Build inter-post decorations bitmask
+            var decorations = NodeDecorations()
             if (nodeIndex != nodes.lastIndex) {
-                if (nodeIndex == 0 && item.hasBreak) {
-                    interPostDecorations.add(InterPostDecoration.BrokenTimeline)
-                } else {
-                    interPostDecorations.add(InterPostDecoration.ExtraTimeline)
-                }
+                decorations +=
+                    if (nodeIndex == 0 && item.hasBreak) NodeDecoration.BrokenTimeline
+                    else NodeDecoration.ExtraTimeline
             }
             if (nodeIndex == nodes.lastIndex - 1 && !isAncestorOrAnchor && maxItems >= nodes.size) {
-                interPostDecorations.add(InterPostDecoration.ExtraSpacer)
+                decorations += NodeDecoration.ExtraSpacer
             }
             if (nodeIndex == limit - 1 && nodes.size > maxItems) {
-                interPostDecorations.add(InterPostDecoration.ShowMore)
+                decorations += NodeDecoration.ShowMore
             }
 
             block(
                 currentNode,
-                nodeIndex,
-                0,
-                currentNode.post == item.post,
-                isAnchor,
+                NodePosition(
+                    index = nodeIndex,
+                    depth = 0,
+                ),
+                NodeFlags(
+                    isMainPost = currentNode.post == item.post,
+                    isAnchoredInTimeline = isAnchor,
+                    showTimeline = nodeIndex != nodes.lastIndex || isAncestor,
+                ),
+                decorations,
                 avatarShape,
-                nodeIndex != nodes.lastIndex || isAncestor,
-                emptyList(),
-                false,
-                false,
             )
-            interPostDecorations.clear()
         }
     }
 }
