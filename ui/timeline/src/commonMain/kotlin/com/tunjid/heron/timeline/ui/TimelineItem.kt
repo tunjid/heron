@@ -31,7 +31,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.Dp
@@ -139,34 +138,6 @@ fun TimelineItem(
             }
         },
     )
-}
-
-@Composable
-private fun ThreadedPost(
-    modifier: Modifier = Modifier,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
-    presentationLookaheadScope: LookaheadScope,
-    item: TimelineItem.Threaded,
-    sharedElementPrefix: String,
-    now: Instant,
-    showEngagementMetrics: Boolean,
-    presentation: Timeline.Presentation,
-    postActions: PostActions,
-) {
-    Column(
-        modifier = modifier,
-    ) {
-        ThreadedTimelineItem(
-            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-            presentationLookaheadScope = presentationLookaheadScope,
-            item = item,
-            sharedElementPrefix = sharedElementPrefix,
-            now = now,
-            showEngagementMetrics = showEngagementMetrics,
-            presentation = presentation,
-            postActions = postActions,
-        )
-    }
 }
 
 @Composable
