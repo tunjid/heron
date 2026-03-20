@@ -1,12 +1,7 @@
 package com.tunjid.heron.timeline.ui
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
@@ -33,8 +28,7 @@ import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import kotlin.time.Instant
 
 @Composable
-fun TreePost(
-    modifier: Modifier = Modifier,
+internal fun ThreadedTreeItem(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     presentationLookaheadScope: LookaheadScope,
     item: TimelineItem.Threaded.Tree,
@@ -44,170 +38,27 @@ fun TreePost(
     presentation: Timeline.Presentation,
     postActions: PostActions,
 ) {
-    Column(modifier) {
-        key(item.post.uri.uri) {
-            Post(
-                modifier = Modifier.fillMaxWidth(),
-                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                presentationLookaheadScope = presentationLookaheadScope,
-                hasMutedWords = item.isMuted && !item.post.authorMuted,
-                now = now,
-                post = item.post,
-                threadGate = item.threadGate,
-                isAnchoredInTimeline = true,
-                isMainPost = true,
-                showEngagementMetrics = showEngagementMetrics,
-                avatarShape = RoundedPolygonShape.Circle,
-                sharedElementPrefix = sharedElementPrefix,
-                createdAt = item.post.createdAt,
-                presentation = presentation,
-                appliedLabels = item.appliedLabels,
-                postActions = postActions,
-            )
-        }
-
-        item.replies.forEach { node ->
-            key(node.post.uri.uri) {
-                NodeCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp),
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                    presentationLookaheadScope = presentationLookaheadScope,
-                    node = node,
-                    sharedElementPrefix = sharedElementPrefix,
-                    now = now,
-                    showEngagementMetrics = showEngagementMetrics,
-                    presentation = presentation,
-                    postActions = postActions,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun NodeCard(
-    modifier: Modifier = Modifier,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
-    presentationLookaheadScope: LookaheadScope,
-    node: TimelineItem.Threaded.Node,
-    sharedElementPrefix: String,
-    now: Instant,
-    showEngagementMetrics: Boolean,
-    presentation: Timeline.Presentation,
-    postActions: PostActions,
-) {
-    val flatRows = remember(node.post.uri, node.children) {
-        flattenTreeNodes(node.children, depth = 1)
-    }
-
-    ElevatedCard(
-        modifier = modifier,
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.elevatedCardColors(),
-        elevation = CardDefaults.cardElevation(),
-    ) {
-        Column {
-            Post(
-                modifier = Modifier.fillMaxWidth(),
-                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                presentationLookaheadScope = presentationLookaheadScope,
-                hasMutedWords = node.isMuted && !node.post.authorMuted,
-                now = now,
-                post = node.post,
-                threadGate = node.threadGate,
-                isAnchoredInTimeline = false,
-                isMainPost = false,
-                showEngagementMetrics = showEngagementMetrics,
-                avatarShape = RoundedPolygonShape.Circle,
-                sharedElementPrefix = sharedElementPrefix,
-                createdAt = node.post.createdAt,
-                presentation = presentation,
-                appliedLabels = node.appliedLabels,
-                postActions = postActions,
-                timeline = {
-                    if (node.children.isNotEmpty()) {
-                        Timeline(
-                            modifier = Modifier
-                                .matchParentSize()
-                                .padding(top = 60.dp),
-                        )
-                    }
-                },
-            )
-
-            flatRows.forEach { row ->
-                key(row.node.post.uri.uri) {
-                    FlatNodeRow(
-                        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                        presentationLookaheadScope = presentationLookaheadScope,
-                        row = row,
-                        sharedElementPrefix = sharedElementPrefix,
-                        now = now,
-                        showEngagementMetrics = showEngagementMetrics,
-                        presentation = presentation,
-                        postActions = postActions,
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun FlatNodeRow(
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
-    presentationLookaheadScope: LookaheadScope,
-    row: FlatNodeRow,
-    sharedElementPrefix: String,
-    now: Instant,
-    showEngagementMetrics: Boolean,
-    presentation: Timeline.Presentation,
-    postActions: PostActions,
-) {
-    val connectorColor = MaterialTheme.colorScheme.surfaceContainerHighest
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .drawBehind {
-                drawReplyConnectors(
-                    depth = row.depth,
-                    ancestorContinuations = row.ancestorContinuations,
-                    isLastSibling = row.isLastSibling,
-                    hasChildren = row.hasChildren,
-                    indentPerDepthPx = IndentPerDepth.toPx(),
-                    threadLineXOffsetPx = ThreadLineXOffset.toPx(),
-                    curveRadiusPx = CurveRadius.toPx(),
-                    strokeWidthPx = ConnectorStrokeWidth.toPx(),
-                    avatarCenterFromTopPx = AvatarCenterFromTop.toPx(),
-                    rowOverlapPx = RowOverlap.toPx(),
-                    color = connectorColor,
-                )
-            },
-    ) {
+    key(item.post.uri.uri) {
         Post(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = row.depth * IndentPerDepth),
+                .fillMaxWidth(),
             paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
             presentationLookaheadScope = presentationLookaheadScope,
-            hasMutedWords = row.node.isMuted && !row.node.post.authorMuted,
+            hasMutedWords = item.isMuted && !item.post.authorMuted,
             now = now,
-            post = row.node.post,
-            threadGate = row.node.threadGate,
+            post = item.post,
+            threadGate = item.threadGate,
             isAnchoredInTimeline = false,
-            isMainPost = false,
+            isMainPost = true,
             showEngagementMetrics = showEngagementMetrics,
             avatarShape = RoundedPolygonShape.Circle,
             sharedElementPrefix = sharedElementPrefix,
-            createdAt = row.node.post.createdAt,
+            createdAt = item.post.createdAt,
             presentation = presentation,
-            appliedLabels = row.node.appliedLabels,
+            appliedLabels = item.appliedLabels,
             postActions = postActions,
             timeline = {
-                if (row.hasChildren) {
+                if (item.replies.isNotEmpty()) {
                     Timeline(
                         modifier = Modifier
                             .matchParentSize()
@@ -216,6 +67,63 @@ private fun FlatNodeRow(
                 }
             },
         )
+    }
+
+    item.replies.forEach { node ->
+        val flatRows = remember(node.post.uri, node.children) {
+            flattenTreeNodes(listOf(node), depth = 1)
+        }
+
+        val connectorColor = MaterialTheme.colorScheme.surfaceContainerHighest
+
+        flatRows.forEach { row ->
+            key(row.node.post.uri.uri) {
+                Post(
+                    modifier = Modifier
+                        .drawBehind {
+                            drawReplyConnectors(
+                                depth = row.depth,
+                                ancestorContinuations = row.ancestorContinuations,
+                                isLastSibling = row.isLastSibling,
+                                hasChildren = row.hasChildren,
+                                indentPerDepthPx = IndentPerDepth.toPx(),
+                                threadLineXOffsetPx = ThreadLineXOffset.toPx(),
+                                curveRadiusPx = CurveRadius.toPx(),
+                                strokeWidthPx = ConnectorStrokeWidth.toPx(),
+                                avatarCenterFromTopPx = AvatarCenterFromTop.toPx(),
+                                rowOverlapPx = RowOverlap.toPx(),
+                                color = connectorColor,
+                            )
+                        }
+                        .fillMaxWidth()
+                        .padding(start = row.depth * IndentPerDepth),
+                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    presentationLookaheadScope = presentationLookaheadScope,
+                    hasMutedWords = row.node.isMuted && !row.node.post.authorMuted,
+                    now = now,
+                    post = row.node.post,
+                    threadGate = row.node.threadGate,
+                    isAnchoredInTimeline = false,
+                    isMainPost = false,
+                    showEngagementMetrics = showEngagementMetrics,
+                    avatarShape = RoundedPolygonShape.Circle,
+                    sharedElementPrefix = sharedElementPrefix,
+                    createdAt = row.node.post.createdAt,
+                    presentation = presentation,
+                    appliedLabels = row.node.appliedLabels,
+                    postActions = postActions,
+                    timeline = {
+                        if (row.hasChildren) {
+                            Timeline(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .padding(top = 60.dp),
+                            )
+                        }
+                    },
+                )
+            }
+        }
     }
 }
 
