@@ -31,6 +31,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.unit.Dp
@@ -156,26 +157,30 @@ private fun ThreadedPost(
         modifier = modifier,
     ) {
         when (item) {
-            is TimelineItem.Threaded.Linear -> ThreadedLinearItem(
-                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                presentationLookaheadScope = presentationLookaheadScope,
-                item = item,
-                sharedElementPrefix = sharedElementPrefix,
-                now = now,
-                showEngagementMetrics = showEngagementMetrics,
-                presentation = presentation,
-                postActions = postActions,
-            )
-            is TimelineItem.Threaded.Tree -> ThreadedTreeItem(
-                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                presentationLookaheadScope = presentationLookaheadScope,
-                item = item,
-                sharedElementPrefix = sharedElementPrefix,
-                now = now,
-                showEngagementMetrics = showEngagementMetrics,
-                presentation = presentation,
-                postActions = postActions,
-            )
+            is TimelineItem.Threaded.Linear -> key("${item.post.uri}-") {
+                ThreadedLinearItem(
+                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    presentationLookaheadScope = presentationLookaheadScope,
+                    item = item,
+                    sharedElementPrefix = sharedElementPrefix,
+                    now = now,
+                    showEngagementMetrics = showEngagementMetrics,
+                    presentation = presentation,
+                    postActions = postActions,
+                )
+            }
+            is TimelineItem.Threaded.Tree -> key("${item.post.uri}-") {
+                ThreadedTreeItem(
+                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    presentationLookaheadScope = presentationLookaheadScope,
+                    item = item,
+                    sharedElementPrefix = sharedElementPrefix,
+                    now = now,
+                    showEngagementMetrics = showEngagementMetrics,
+                    presentation = presentation,
+                    postActions = postActions,
+                )
+            }
         }
     }
 }

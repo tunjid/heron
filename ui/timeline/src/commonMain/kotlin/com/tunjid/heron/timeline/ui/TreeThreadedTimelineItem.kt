@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -27,8 +26,10 @@ import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import kotlin.time.Instant
 
+// We need the composition key to be the same, so it needs to be inline
+@Suppress("NOTHING_TO_INLINE")
 @Composable
-internal fun ThreadedTreeItem(
+internal inline fun ThreadedTreeItem(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     presentationLookaheadScope: LookaheadScope,
     item: TimelineItem.Threaded.Tree,
@@ -69,23 +70,72 @@ internal fun ThreadedTreeItem(
         )
     }
 
-    item.replies.forEach { node ->
-        val flatRows = remember(node.post.uri, node.children) {
-            flattenTreeNodes(listOf(node), depth = 1)
+    val connectorColor = MaterialTheme.colorScheme.surfaceContainerHighest
+
+    item.replies.forEachIndexed { replyIndex, reply ->
+        val replyIsLastSibling = replyIndex == item.replies.lastIndex
+        val replyHasChildren = reply.children.isNotEmpty()
+
+        key(reply.post.uri.uri) {
+            Post(
+                modifier = Modifier
+                    .drawBehind {
+                        drawReplyConnectors(
+                            depth = 1,
+                            ancestorContinuations = emptyList(),
+                            isLastSibling = replyIsLastSibling,
+                            hasChildren = replyHasChildren,
+                            indentPerDepthPx = IndentPerDepth.toPx(),
+                            threadLineXOffsetPx = ThreadLineXOffset.toPx(),
+                            curveRadiusPx = CurveRadius.toPx(),
+                            strokeWidthPx = ConnectorStrokeWidth.toPx(),
+                            avatarCenterFromTopPx = AvatarCenterFromTop.toPx(),
+                            rowOverlapPx = RowOverlap.toPx(),
+                            color = connectorColor,
+                        )
+                    }
+                    .fillMaxWidth()
+                    .padding(start = 1 * IndentPerDepth),
+                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                presentationLookaheadScope = presentationLookaheadScope,
+                hasMutedWords = reply.isMuted && !reply.post.authorMuted,
+                now = now,
+                post = reply.post,
+                threadGate = reply.threadGate,
+                isAnchoredInTimeline = false,
+                isMainPost = false,
+                showEngagementMetrics = showEngagementMetrics,
+                avatarShape = RoundedPolygonShape.Circle,
+                sharedElementPrefix = sharedElementPrefix,
+                createdAt = reply.post.createdAt,
+                presentation = presentation,
+                appliedLabels = reply.appliedLabels,
+                postActions = postActions,
+                timeline = {
+                    if (replyHasChildren) {
+                        Timeline(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .padding(top = 60.dp),
+                        )
+                    }
+                },
+            )
         }
 
-        val connectorColor = MaterialTheme.colorScheme.surfaceContainerHighest
+        reply.children.forEachIndexed { childIndex, child ->
+            val childIsLastSibling = childIndex == reply.children.lastIndex
+            val childHasChildren = child.children.isNotEmpty()
 
-        flatRows.forEach { row ->
-            key(row.node.post.uri.uri) {
+            key(child.post.uri.uri) {
                 Post(
                     modifier = Modifier
                         .drawBehind {
                             drawReplyConnectors(
-                                depth = row.depth,
-                                ancestorContinuations = row.ancestorContinuations,
-                                isLastSibling = row.isLastSibling,
-                                hasChildren = row.hasChildren,
+                                depth = 2,
+                                ancestorContinuations = listOf(!replyIsLastSibling),
+                                isLastSibling = childIsLastSibling,
+                                hasChildren = childHasChildren,
                                 indentPerDepthPx = IndentPerDepth.toPx(),
                                 threadLineXOffsetPx = ThreadLineXOffset.toPx(),
                                 curveRadiusPx = CurveRadius.toPx(),
@@ -96,24 +146,24 @@ internal fun ThreadedTreeItem(
                             )
                         }
                         .fillMaxWidth()
-                        .padding(start = row.depth * IndentPerDepth),
+                        .padding(start = 2 * IndentPerDepth),
                     paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                     presentationLookaheadScope = presentationLookaheadScope,
-                    hasMutedWords = row.node.isMuted && !row.node.post.authorMuted,
+                    hasMutedWords = child.isMuted && !child.post.authorMuted,
                     now = now,
-                    post = row.node.post,
-                    threadGate = row.node.threadGate,
+                    post = child.post,
+                    threadGate = child.threadGate,
                     isAnchoredInTimeline = false,
                     isMainPost = false,
                     showEngagementMetrics = showEngagementMetrics,
                     avatarShape = RoundedPolygonShape.Circle,
                     sharedElementPrefix = sharedElementPrefix,
-                    createdAt = row.node.post.createdAt,
+                    createdAt = child.post.createdAt,
                     presentation = presentation,
-                    appliedLabels = row.node.appliedLabels,
+                    appliedLabels = child.appliedLabels,
                     postActions = postActions,
                     timeline = {
-                        if (row.hasChildren) {
+                        if (childHasChildren) {
                             Timeline(
                                 modifier = Modifier
                                     .matchParentSize()
@@ -123,54 +173,49 @@ internal fun ThreadedTreeItem(
                     },
                 )
             }
-        }
-    }
-}
 
-private data class FlatNodeRow(
-    val node: TimelineItem.Threaded.Node,
-    val depth: Int,
-    val isLastSibling: Boolean,
-    val ancestorContinuations: List<Boolean>,
-    val hasChildren: Boolean,
-)
-
-private fun flattenTreeNodes(
-    nodes: List<TimelineItem.Threaded.Node>,
-    depth: Int = 0,
-    ancestorContinuations: List<Boolean> = emptyList(),
-): List<FlatNodeRow> {
-    var remaining = MAX_FLAT_REPLY_ROWS
-    return buildList {
-        fun doAddAll(
-            innerNodes: List<TimelineItem.Threaded.Node>,
-            innerDepth: Int,
-            innerAncestorContinuations: List<Boolean>,
-        ) {
-            for ((index, node) in innerNodes.withIndex()) {
-                if (remaining <= 0) return
-                remaining--
-
-                val isLastSibling = index == innerNodes.lastIndex
-                add(
-                    FlatNodeRow(
-                        node = node,
-                        depth = innerDepth,
-                        isLastSibling = isLastSibling,
-                        ancestorContinuations = innerAncestorContinuations,
-                        hasChildren = node.children.isNotEmpty(),
-                    ),
-                )
-                if (node.children.isNotEmpty()) {
-                    doAddAll(
-                        innerNodes = node.children,
-                        innerDepth = innerDepth + 1,
-                        innerAncestorContinuations = innerAncestorContinuations + !isLastSibling,
+            child.children.forEachIndexed { grandchildIndex, grandchild ->
+                val grandchildIsLastSibling = grandchildIndex == child.children.lastIndex
+                key(grandchild.post.uri.uri) {
+                    Post(
+                        modifier = Modifier
+                            .drawBehind {
+                                drawReplyConnectors(
+                                    depth = 3,
+                                    ancestorContinuations = listOf(!replyIsLastSibling, !childIsLastSibling),
+                                    isLastSibling = grandchildIsLastSibling,
+                                    hasChildren = false,
+                                    indentPerDepthPx = IndentPerDepth.toPx(),
+                                    threadLineXOffsetPx = ThreadLineXOffset.toPx(),
+                                    curveRadiusPx = CurveRadius.toPx(),
+                                    strokeWidthPx = ConnectorStrokeWidth.toPx(),
+                                    avatarCenterFromTopPx = AvatarCenterFromTop.toPx(),
+                                    rowOverlapPx = RowOverlap.toPx(),
+                                    color = connectorColor,
+                                )
+                            }
+                            .fillMaxWidth()
+                            .padding(start = 3 * IndentPerDepth),
+                        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                        presentationLookaheadScope = presentationLookaheadScope,
+                        hasMutedWords = grandchild.isMuted && !grandchild.post.authorMuted,
+                        now = now,
+                        post = grandchild.post,
+                        threadGate = grandchild.threadGate,
+                        isAnchoredInTimeline = false,
+                        isMainPost = false,
+                        showEngagementMetrics = showEngagementMetrics,
+                        avatarShape = RoundedPolygonShape.Circle,
+                        sharedElementPrefix = sharedElementPrefix,
+                        createdAt = grandchild.post.createdAt,
+                        presentation = presentation,
+                        appliedLabels = grandchild.appliedLabels,
+                        postActions = postActions,
+                        timeline = {},
                     )
                 }
             }
         }
-        doAddAll(nodes, depth, ancestorContinuations)
     }
 }
 
@@ -254,4 +299,3 @@ private val ConnectorStrokeWidth = 2.dp
 private val CurveRadius = 10.dp
 private val AvatarCenterFromTop = 28.dp
 private val RowOverlap = 6.dp
-private const val MAX_FLAT_REPLY_ROWS = 24

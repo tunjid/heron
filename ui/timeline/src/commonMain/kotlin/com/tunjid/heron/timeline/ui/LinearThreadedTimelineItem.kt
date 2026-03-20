@@ -66,8 +66,10 @@ import heron.ui.timeline.generated.resources.show_more
 import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 
+// We need the composition key to be the same, so it needs to be inline
+@Suppress("NOTHING_TO_INLINE")
 @Composable
-internal fun ThreadedLinearItem(
+internal inline fun ThreadedLinearItem(
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     presentationLookaheadScope: LookaheadScope,
     item: TimelineItem.Threaded.Linear,
