@@ -53,6 +53,19 @@ internal class MutableTimelineItemCreationContext(
         this[lastIndex] = item
     }
 
+    override fun threadedNode(
+        post: Post,
+        depth: Int,
+        children: List<TimelineItem.Threaded.Node>,
+    ): TimelineItem.Threaded.Node = TimelineItem.Threaded.Node(
+        post = post,
+        threadGate = threadGate(post.uri),
+        appliedLabels = appliedLabels,
+        isMuted = isMuted(post),
+        depth = depth,
+        children = children,
+    )
+
     override val post: Post
         get() = requireNotNull(currentPost)
 
@@ -62,7 +75,7 @@ internal class MutableTimelineItemCreationContext(
         labelers = emptyList(),
         contentLabelPreferences = emptyList(),
     )
-    override val replyNodeIndex: MutableMap<PostUri, MutableList<TimelineItem.Threaded.Tree.Node>> = mutableMapOf()
+    override val replyNodeIndex: MutableMap<PostUri, MutableList<TimelineItem.Threaded.Node>> = mutableMapOf()
 
     private var currentPost: Post? = null
 

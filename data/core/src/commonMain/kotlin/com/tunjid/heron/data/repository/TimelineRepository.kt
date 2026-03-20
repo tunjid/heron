@@ -87,6 +87,7 @@ import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
+import kotlin.collections.plus
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -976,25 +977,31 @@ internal class OfflineTimelineRepository(
 
                                     push(
                                         when {
-                                            replyRoot != null && replyParent != null -> TimelineItem.Threaded.Linear(
-                                                id = entity.id,
-                                                isMuted = isMuted,
-                                                generation = null,
-                                                anchorPostIndex = 2,
-                                                hasBreak = entity.reply?.grandParentPostAuthorId != null,
-                                                appliedLabels = appliedLabels,
-                                                signedInProfileId = signedInProfileId,
-                                                posts = listOfNotNull(
-                                                    replyRoot,
-                                                    replyParent,
-                                                    post,
-                                                ),
-                                                postUrisToThreadGates = buildMap {
-                                                    put(replyRoot.uri, threadGate(replyRoot.uri))
-                                                    put(replyParent.uri, threadGate(replyParent.uri))
-                                                    put(post.uri, threadGate(post.uri))
-                                                },
-                                            )
+                                            replyRoot != null && replyParent != null -> {
+                                                val hasBreak =
+                                                    entity.reply?.grandParentPostAuthorId != null
+                                                TimelineItem.Threaded.Linear(
+                                                    id = entity.id,
+                                                    generation = null,
+                                                    anchorPostIndex = 2,
+                                                    hasBreak = hasBreak,
+                                                    signedInProfileId = signedInProfileId,
+                                                    nodes = listOf(
+                                                        threadedNode(
+                                                            post = replyRoot,
+                                                            depth = if (hasBreak) Int.MIN_VALUE else -2,
+                                                        ),
+                                                        threadedNode(
+                                                            post = replyParent,
+                                                            depth = -1,
+                                                        ),
+                                                        threadedNode(
+                                                            post = post,
+                                                            depth = 0,
+                                                        ),
+                                                    ),
+                                                )
+                                            }
 
                                             repostedBy != null -> TimelineItem.Repost(
                                                 id = entity.id,
@@ -1187,47 +1194,39 @@ internal class OfflineTimelineRepository(
     ) = with(context) {
         val lastItem = top
         when {
-            // To start or for the OP, start a new thread
-            lastItem == null || thread.generation == 0L -> push(
+            thread.generation < 0L -> appendAncestorThreadItem(thread)
+
+            thread.generation == 0L -> push(
                 TimelineItem.Threaded.Linear(
                     id = thread.entity.uri.uri,
                     generation = thread.generation,
-                    isMuted = isMuted(post),
                     anchorPostIndex = 0,
                     hasBreak = false,
-                    posts = listOf(post),
-                    appliedLabels = appliedLabels,
                     signedInProfileId = signedInProfileId,
-                    postUrisToThreadGates = mapOf(post.uri to threadGate(post.uri)),
-                ),
-            )
-            // For parents, edit the head
-            thread.generation <= -1L ->
-                if (lastItem is TimelineItem.Threaded.Linear) swapTop(
-                    lastItem.copy(
-                        posts = lastItem.posts + post,
-                        isMuted = lastItem.isMuted || isMuted(post),
-                        postUrisToThreadGates = lastItem.postUrisToThreadGates + Pair(
-                            post.uri,
-                            threadGate(post.uri),
+                    nodes = listOf(
+                        threadedNode(
+                            post = post,
+                            depth = thread.generation.toInt(),
                         ),
                     ),
-                )
-                else Unit
+                ),
+            )
 
             // New reply to the OP, start its own thread
             lastItem is TimelineItem.Threaded.Linear &&
-                lastItem.posts.first().uri != thread.rootPostUri -> push(
+                lastItem.nodes.first().post.uri != thread.rootPostUri -> push(
                 TimelineItem.Threaded.Linear(
                     id = thread.entity.uri.uri,
                     generation = thread.generation,
-                    isMuted = isMuted(post),
                     anchorPostIndex = 0,
                     hasBreak = false,
-                    posts = listOf(post),
-                    appliedLabels = appliedLabels,
                     signedInProfileId = signedInProfileId,
-                    postUrisToThreadGates = mapOf(post.uri to threadGate(post.uri)),
+                    nodes = listOf(
+                        threadedNode(
+                            post = post,
+                            depth = thread.generation.toInt(),
+                        ),
+                    ),
                 ),
             )
             // Just tack the post to the current thread
@@ -1237,11 +1236,9 @@ internal class OfflineTimelineRepository(
                 // diving into the thread.
                 if (lastItem.nextGeneration == thread.generation) swapTop(
                     lastItem.copy(
-                        posts = lastItem.posts + post,
-                        isMuted = lastItem.isMuted || isMuted(post),
-                        postUrisToThreadGates = lastItem.postUrisToThreadGates + Pair(
-                            post.uri,
-                            threadGate(post.uri),
+                        nodes = lastItem.nodes + threadedNode(
+                            post = post,
+                            depth = thread.generation.toInt(),
                         ),
                     ),
                 )
@@ -1256,58 +1253,23 @@ internal class OfflineTimelineRepository(
         when {
             // Ancestors (generation < 0)
             // Append each one so ancestors list is oldest → newest when anchor arrives.
-            thread.generation < 0L -> {
-                when (val last = top) {
-                    is TimelineItem.Threaded.Tree -> swapTop(
-                        last.copy(
-                            ancestors = last.ancestors + post,
-                            isMuted = last.isMuted || isMuted(post),
-                        ),
-                    )
-                    else -> push(
-                        TimelineItem.Threaded.Tree(
-                            id = thread.entity.uri.uri,
-                            post = post,
-                            ancestors = listOf(post),
-                            replies = emptyList(),
-                            isMuted = isMuted(post),
-                            threadGate = threadGate(post.uri),
-                            appliedLabels = appliedLabels,
-                            signedInProfileId = signedInProfileId,
-                        ),
-                    )
-                }
-            }
+            thread.generation < 0L -> appendAncestorThreadItem(thread)
 
             // Anchor (generation == 0)
             // Register anchor's children bucket BEFORE any descendants arrive so
             thread.generation == 0L -> {
                 replyNodeIndex[post.uri] = mutableListOf()
-
-                when (val last = top) {
-                    is TimelineItem.Threaded.Tree -> swapTop(
-                        last.copy(
-                            id = thread.entity.uri.uri,
+                push(
+                    TimelineItem.Threaded.Tree(
+                        id = thread.entity.uri.uri,
+                        anchor = threadedNode(
                             post = post,
-                            isMuted = last.isMuted || isMuted(post),
-                            threadGate = threadGate(post.uri),
-                            appliedLabels = appliedLabels,
-                            signedInProfileId = signedInProfileId,
+                            depth = 0,
                         ),
-                    )
-                    else -> push(
-                        TimelineItem.Threaded.Tree(
-                            id = thread.entity.uri.uri,
-                            post = post,
-                            ancestors = emptyList(),
-                            replies = emptyList(),
-                            isMuted = isMuted(post),
-                            threadGate = threadGate(post.uri),
-                            appliedLabels = appliedLabels,
-                            signedInProfileId = signedInProfileId,
-                        ),
-                    )
-                }
+                        replies = emptyList(),
+                        signedInProfileId = signedInProfileId,
+                    ),
+                )
             }
 
             //  Descendants (generation > 0)
@@ -1320,33 +1282,56 @@ internal class OfflineTimelineRepository(
 
                 val myChildrenBucket = replyNodeIndex.getOrPut(post.uri) { mutableListOf() }
 
-                val newNode = TimelineItem.Threaded.Tree.Node(
-                    post = post,
-                    threadGate = threadGate(post.uri),
-                    appliedLabels = appliedLabels,
-                    isMuted = isMuted(post),
-                    depth = thread.generation.toInt(),
-                    children = myChildrenBucket,
-                )
-
                 val parentBucket = replyNodeIndex[parentUri] ?: return@with
 
                 // Drop siblings beyond the cap (data is already sorted by your
                 // chosen Order, so you keep the "best" ones automatically)
                 if (parentBucket.size >= MAX_SIBLINGS_PER_NODE) return@with
 
-                parentBucket.add(newNode)
+                parentBucket.add(
+                    threadedNode(
+                        post = post,
+                        depth = thread.generation.toInt(),
+                        children = myChildrenBucket,
+                    ),
+                )
 
                 if (parentUri == replyTree.post.uri) {
                     swapTop(
                         replyTree.copy(
-                            isMuted = replyTree.isMuted || isMuted(post),
                             replies = parentBucket,
                         ),
                     )
                 }
             }
         }
+    }
+    private fun RecordResolver.TimelineItemCreationContext.appendAncestorThreadItem(
+        thread: ThreadedPostEntity,
+    ) = when (val last = top) {
+        is TimelineItem.Threaded.Linear -> swapTop(
+            last.copy(
+                nodes = last.nodes + threadedNode(
+                    post = post,
+                    depth = thread.generation.toInt(),
+                ),
+            ),
+        )
+        else -> push(
+            TimelineItem.Threaded.Linear(
+                id = thread.entity.uri.uri,
+                generation = thread.generation,
+                anchorPostIndex = 0,
+                hasBreak = false,
+                signedInProfileId = signedInProfileId,
+                nodes = listOf(
+                    threadedNode(
+                        post = post,
+                        depth = thread.generation.toInt(),
+                    ),
+                ),
+            ),
+        )
     }
 }
 
@@ -1361,7 +1346,7 @@ private fun SavedStateDataSource.timelineFeedPreference(
     else flowOf(FeedPreference(source.id))
 
 private val TimelineItem.Threaded.Linear.nextGeneration
-    get() = generation?.let { it + posts.size }
+    get() = generation?.let { it + nodes.size }
 
 private fun TimelinePreferencesEntity?.preferredPresentation(): Timeline.Presentation =
     when (this?.preferredPresentation) {

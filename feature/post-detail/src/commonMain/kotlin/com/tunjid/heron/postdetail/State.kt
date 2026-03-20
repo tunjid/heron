@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.postdetail
 
+import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedList
@@ -74,19 +75,23 @@ fun State(route: Route): State {
             else -> listOf(
                 TimelineItem.Threaded.Linear(
                     id = anchorPost.uri.uri,
-                    isMuted = false,
                     anchorPostIndex = 0,
-                    posts = listOf(anchorPost),
+                    nodes = listOf(
+                        TimelineItem.Threaded.Node(
+                            post = anchorPost,
+                            threadGate = null,
+                            appliedLabels = route.model<AppliedLabels>()
+                                ?: anchorPost.appliedLabels(
+                                    adultContentEnabled = false,
+                                    labelers = emptyList(),
+                                    labelPreferences = emptyList(),
+                                ),
+                            isMuted = false,
+                        ),
+                    ),
                     generation = 0,
                     hasBreak = false,
                     signedInProfileId = null,
-                    postUrisToThreadGates = emptyMap(),
-                    appliedLabels = route.model()
-                        ?: anchorPost.appliedLabels(
-                            adultContentEnabled = false,
-                            labelers = emptyList(),
-                            labelPreferences = emptyList(),
-                        ),
                 ),
             )
         },

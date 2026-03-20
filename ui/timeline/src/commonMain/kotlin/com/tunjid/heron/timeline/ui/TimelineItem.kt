@@ -189,58 +189,58 @@ private fun ThreadedPost(
     presentation: Timeline.Presentation,
     postActions: PostActions,
 ) {
-    var maxPosts by rememberSaveable {
+    var maxNodes by rememberSaveable {
         mutableStateOf(DefaultMaxPostsInThread)
     }
     Column(
         modifier = modifier,
     ) {
-        val limitedPosts = remember(item.posts, maxPosts) {
-            item.posts.take(maxPosts)
+        val limitedNodes = remember(item.nodes, maxNodes) {
+            item.nodes.take(maxNodes)
         }
-        limitedPosts.forEachIndexed { index, post ->
-            key(post.uri.uri) {
-                if (index == 0 || item.posts[index].uri != item.posts[index - 1].uri) {
+        limitedNodes.forEachIndexed { index, node ->
+            key(node.post.uri.uri) {
+                if (index == 0 || item.nodes[index].post.uri != item.nodes[index - 1].post.uri) {
                     Post(
                         modifier = Modifier,
                         paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
                         presentationLookaheadScope = presentationLookaheadScope,
                         hasMutedWords = item.isMuted && !item.post.authorMuted,
                         now = now,
-                        post = post,
-                        threadGate = item.postUrisToThreadGates[post.uri],
+                        post = node.post,
+                        threadGate = node.threadGate,
                         isAnchoredInTimeline = item.generation == 0L,
-                        isMainPost = post == item.post,
+                        isMainPost = node.post == item.post,
                         avatarShape = when {
                             item.isThreadedAnchor -> RoundedPolygonShape.Circle
                             item.isThreadedAncestor ->
-                                if (item.posts.size == 1) ReplyThreadStartImageShape
+                                if (item.nodes.size == 1) ReplyThreadStartImageShape
                                 else ReplyThreadImageShape
 
                             else -> when (index) {
                                 0 ->
-                                    if (item.posts.size == 1) RoundedPolygonShape.Circle
+                                    if (item.nodes.size == 1) RoundedPolygonShape.Circle
                                     else ReplyThreadStartImageShape
 
-                                item.posts.lastIndex -> ReplyThreadEndImageShape
+                                item.nodes.lastIndex -> ReplyThreadEndImageShape
                                 else -> ReplyThreadImageShape
                             }
                         },
                         sharedElementPrefix = sharedElementPrefix,
-                        createdAt = post.createdAt,
+                        createdAt = node.post.createdAt,
                         presentation = presentation,
                         showEngagementMetrics = showEngagementMetrics,
-                        appliedLabels = item.appliedLabels,
+                        appliedLabels = node.appliedLabels,
                         postActions = postActions,
                         timeline = {
-                            if (index != item.posts.lastIndex || item.isThreadedAncestor) Timeline(
+                            if (index != item.nodes.lastIndex || item.isThreadedAncestor) Timeline(
                                 modifier = Modifier
                                     .matchParentSize()
                                     .padding(top = 60.dp),
                             )
                         },
                     )
-                    if (index != item.posts.lastIndex) {
+                    if (index != item.nodes.lastIndex) {
                         if (index == 0 && item.hasBreak) BrokenTimeline(
                             modifier = Modifier
                                 .padding(start = 8.dp)
@@ -248,9 +248,9 @@ private fun ThreadedPost(
                             onClick = {
                                 postActions.onPostAction(
                                     PostAction.OfPost(
-                                        post = post,
-                                        isMainPost = post == item.post,
-                                        warnedAppliedLabels = item.appliedLabels.warned(),
+                                        post = node.post,
+                                        isMainPost = node.post == item.post,
+                                        warnedAppliedLabels = node.appliedLabels.warned(),
                                     ),
                                 )
                             },
@@ -265,7 +265,7 @@ private fun ThreadedPost(
                                 .childThreadNode(videoId = null),
                         )
                     }
-                    if (index == item.posts.lastIndex - 1 && !item.isThreadedAncestorOrAnchor && maxPosts >= item.posts.size) Spacer(
+                    if (index == item.nodes.lastIndex - 1 && !item.isThreadedAncestorOrAnchor && maxNodes >= item.nodes.size) Spacer(
                         Modifier
                             .height(2.dp)
                             .childThreadNode(videoId = null),
@@ -274,8 +274,8 @@ private fun ThreadedPost(
             }
         }
 
-        if (item.posts.size > maxPosts) ShowMore {
-            maxPosts += DefaultMaxPostsInThread
+        if (item.nodes.size > maxNodes) ShowMore {
+            maxNodes += DefaultMaxPostsInThread
         }
     }
 }

@@ -17,7 +17,6 @@
 package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.models.Timeline.Source
-import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.Uri
 import kotlin.time.Instant
@@ -92,40 +91,46 @@ sealed class TimelineItem {
     sealed class Threaded : TimelineItem() {
         data class Linear(
             override val id: String,
-            override val isMuted: Boolean,
-            override val appliedLabels: AppliedLabels,
             override val signedInProfileId: ProfileId?,
             val anchorPostIndex: Int,
-            val posts: List<Post>,
-            val postUrisToThreadGates: Map<PostUri, ThreadGate?>,
+            val nodes: List<Node>,
             val generation: Long?,
             val hasBreak: Boolean,
         ) : Threaded() {
             override val post: Post
-                get() = posts[anchorPostIndex]
+                get() = nodes[anchorPostIndex].post
             override val threadGate: ThreadGate?
-                get() = postUrisToThreadGates[post.uri]
+                get() = nodes[anchorPostIndex].threadGate
+            override val appliedLabels: AppliedLabels
+                get() = nodes[anchorPostIndex].appliedLabels
+            override val isMuted: Boolean
+                get() = nodes.any { it.isMuted }
         }
 
         data class Tree(
             override val id: String,
-            override val post: Post,
-            val ancestors: List<Post>,
+            val anchor: Node,
             val replies: List<Node>,
-            override val isMuted: Boolean,
-            override val threadGate: ThreadGate?,
-            override val appliedLabels: AppliedLabels,
             override val signedInProfileId: ProfileId?,
         ) : Threaded() {
-            data class Node(
-                val post: Post,
-                val threadGate: ThreadGate?,
-                val appliedLabels: AppliedLabels,
-                val isMuted: Boolean,
-                val depth: Int,
-                val children: List<Node>,
-            )
+            override val post: Post
+                get() = anchor.post
+            override val threadGate: ThreadGate?
+                get() = anchor.threadGate
+            override val appliedLabels: AppliedLabels
+                get() = anchor.appliedLabels
+            override val isMuted: Boolean
+                get() = anchor.isMuted || replies.any { it.isMuted }
         }
+
+        data class Node(
+            val post: Post,
+            val threadGate: ThreadGate?,
+            val appliedLabels: AppliedLabels,
+            val isMuted: Boolean,
+            val depth: Int = 0,
+            val children: List<Node> = emptyList(),
+        )
 
         enum class Order(
             val value: String,
