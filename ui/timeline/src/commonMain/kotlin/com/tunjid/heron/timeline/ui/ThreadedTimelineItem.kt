@@ -545,7 +545,10 @@ private object ThreadedItemIterator {
 
             block(
                 reply,
-                NodePosition(index = replyIndex, depth = 1),
+                NodePosition(
+                    index = replyIndex,
+                    depth = 1,
+                ),
                 NodeFlags(
                     showTimeline = replyHasChildren,
                     hasChildren = replyHasChildren,
