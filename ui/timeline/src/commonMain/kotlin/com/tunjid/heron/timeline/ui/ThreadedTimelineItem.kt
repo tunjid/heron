@@ -539,8 +539,8 @@ internal class ThreadedItemIterator {
             hasChildren: Boolean,
         ) -> Unit,
     ) {
-        val isAncestor = item.generation != null && item.generation!! <= -1
-        val isAnchor = item.generation == 0L
+        val isAncestor = item.isThreadedAncestor
+        val isAnchor = item.isThreadedAnchor
         val isAncestorOrAnchor = isAncestor || isAnchor
         val nodes = item.nodes
         val limit = min(maxItems, nodes.size)
