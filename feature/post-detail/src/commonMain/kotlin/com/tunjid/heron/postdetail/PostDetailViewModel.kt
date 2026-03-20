@@ -203,9 +203,9 @@ fun Flow<Action.Load>.postThreadsMutations(
                                 -> item.post.takeIf {
                                     it.uri.recordKey == route.postRecordKey
                                 }
-                                is TimelineItem.Threaded.Linear -> item.posts.firstOrNull {
-                                    it.uri.recordKey == route.postRecordKey
-                                }
+                                is TimelineItem.Threaded.Linear -> item.nodes.firstOrNull {
+                                    it.post.uri.recordKey == route.postRecordKey
+                                }?.post
                                 is TimelineItem.Placeholder -> null
                             }
                         },

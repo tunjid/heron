@@ -45,40 +45,6 @@ fun TreePost(
     postActions: PostActions,
 ) {
     Column(modifier) {
-        item.ancestors.forEachIndexed { index, ancestor ->
-            key(ancestor.uri.uri) {
-                Post(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                    presentationLookaheadScope = presentationLookaheadScope,
-                    hasMutedWords = item.isMuted && !ancestor.authorMuted,
-                    now = now,
-                    post = ancestor,
-                    threadGate = null,
-                    isAnchoredInTimeline = false,
-                    isMainPost = false,
-                    showEngagementMetrics = false,
-                    avatarShape = when (index) {
-                        0 -> ReplyThreadStartImageShape
-                        else -> ReplyThreadImageShape
-                    },
-                    sharedElementPrefix = sharedElementPrefix,
-                    createdAt = ancestor.createdAt,
-                    presentation = presentation,
-                    appliedLabels = item.appliedLabels,
-                    postActions = postActions,
-                    timeline = {
-                        Timeline(
-                            modifier = Modifier
-                                .matchParentSize()
-                                .padding(top = 60.dp),
-                        )
-                    },
-                )
-            }
-        }
-
         key(item.post.uri.uri) {
             Post(
                 modifier = Modifier.fillMaxWidth(),
@@ -125,7 +91,7 @@ private fun NodeCard(
     modifier: Modifier = Modifier,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     presentationLookaheadScope: LookaheadScope,
-    node: TimelineItem.Threaded.Tree.Node,
+    node: TimelineItem.Threaded.Node,
     sharedElementPrefix: String,
     now: Instant,
     showEngagementMetrics: Boolean,
@@ -254,7 +220,7 @@ private fun FlatNodeRow(
 }
 
 private data class FlatNodeRow(
-    val node: TimelineItem.Threaded.Tree.Node,
+    val node: TimelineItem.Threaded.Node,
     val depth: Int,
     val isLastSibling: Boolean,
     val ancestorContinuations: List<Boolean>,
@@ -262,14 +228,14 @@ private data class FlatNodeRow(
 )
 
 private fun flattenTreeNodes(
-    nodes: List<TimelineItem.Threaded.Tree.Node>,
+    nodes: List<TimelineItem.Threaded.Node>,
     depth: Int = 0,
     ancestorContinuations: List<Boolean> = emptyList(),
 ): List<FlatNodeRow> {
     var remaining = MAX_FLAT_REPLY_ROWS
     return buildList {
         fun doAddAll(
-            innerNodes: List<TimelineItem.Threaded.Tree.Node>,
+            innerNodes: List<TimelineItem.Threaded.Node>,
             innerDepth: Int,
             innerAncestorContinuations: List<Boolean>,
         ) {
