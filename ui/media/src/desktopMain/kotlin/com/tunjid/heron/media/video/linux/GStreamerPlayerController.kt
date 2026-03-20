@@ -28,7 +28,7 @@ class GStreamerPlayerController(
     private var activeVideoId: String by mutableStateOf("")
 
     init {
-        GStreamer.ensureInitialized()
+        GStreamer.initialized
 
         snapshotFlow { isMuted }
             .onEach { idsToStates[activeVideoId]?.applyMute() }
