@@ -195,7 +195,6 @@ internal fun PostDetailScreen(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         userScrollEnabled = !paneScaffoldState.isTransitionActive,
     ) {
-        println("s: ${items.size}")
         items(
             items = items,
             key = TimelineItem::id,
