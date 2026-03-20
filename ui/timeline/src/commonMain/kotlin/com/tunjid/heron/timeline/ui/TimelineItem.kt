@@ -156,32 +156,16 @@ private fun ThreadedPost(
     Column(
         modifier = modifier,
     ) {
-        when (item) {
-            is TimelineItem.Threaded.Linear -> key("${item.post.uri}-") {
-                ThreadedLinearItem(
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                    presentationLookaheadScope = presentationLookaheadScope,
-                    item = item,
-                    sharedElementPrefix = sharedElementPrefix,
-                    now = now,
-                    showEngagementMetrics = showEngagementMetrics,
-                    presentation = presentation,
-                    postActions = postActions,
-                )
-            }
-            is TimelineItem.Threaded.Tree -> key("${item.post.uri}-") {
-                ThreadedTreeItem(
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                    presentationLookaheadScope = presentationLookaheadScope,
-                    item = item,
-                    sharedElementPrefix = sharedElementPrefix,
-                    now = now,
-                    showEngagementMetrics = showEngagementMetrics,
-                    presentation = presentation,
-                    postActions = postActions,
-                )
-            }
-        }
+        ThreadedTimelineItem(
+            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+            presentationLookaheadScope = presentationLookaheadScope,
+            item = item,
+            sharedElementPrefix = sharedElementPrefix,
+            now = now,
+            showEngagementMetrics = showEngagementMetrics,
+            presentation = presentation,
+            postActions = postActions,
+        )
     }
 }
 
