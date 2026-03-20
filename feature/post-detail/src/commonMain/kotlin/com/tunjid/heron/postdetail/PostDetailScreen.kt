@@ -28,7 +28,6 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -196,6 +195,7 @@ internal fun PostDetailScreen(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         userScrollEnabled = !paneScaffoldState.isTransitionActive,
     ) {
+        println("s: ${items.size}")
         items(
             items = items,
             key = TimelineItem::id,
@@ -306,8 +306,7 @@ internal fun PostDetailScreen(
                                 }
 
                                 is PostAction.OfMetadata -> {
-                                    val postMetadata = action.metadata
-                                    when (postMetadata) {
+                                    when (val postMetadata = action.metadata) {
                                         is PostMetadata.Likes -> navigateTo(
                                             postLikesDestination(
                                                 profileId = postMetadata.profileId,
@@ -373,10 +372,5 @@ internal fun PostDetailScreen(
                 ?.let(videoPlayerController::play)
                 ?: videoPlayerController.pauseActiveVideo()
         }
-    }
-
-    LaunchedEffect(state.scrollToTopToken) {
-        // Token starts at 0, only scroll when it has actually been bumped
-        if (state.scrollToTopToken > 0) gridState.scrollToItem(index = 0)
     }
 }
