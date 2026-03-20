@@ -97,7 +97,8 @@ import org.jetbrains.compose.resources.stringResource
  * and can be expanded with the "Show more" button.
  */
 @Composable
-internal fun ThreadedTimelineItem(
+internal fun ThreadedPost(
+    modifier: Modifier = Modifier,
     paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
     presentationLookaheadScope: LookaheadScope,
     item: TimelineItem.Threaded,
@@ -114,103 +115,112 @@ internal fun ThreadedTimelineItem(
         mutableStateOf(if (isLinear) DefaultMaxPostsInLinearThread else Int.MAX_VALUE)
     }
 
-    ThreadedItemIterator.onEachNode(
-        item = item,
-        maxItems = maxNodes,
-    ) { node, position, flags, decorations, avatarShape ->
-        val index = position[NodeDimension.Index]
-        val depth = position[NodeDimension.Depth]
-        key(node.post.uri.uri) {
-            Post(
-                modifier = Modifier
-                    .ifTrue(depth > 0) {
-                        drawBehind {
-                            drawReplyConnectors(
-                                depth = depth,
-                                flags = flags,
-                                indentPerDepthPx = IndentPerDepth.toPx(),
-                                threadLineXOffsetPx = ThreadLineXOffset.toPx(),
-                                curveRadiusPx = CurveRadius.toPx(),
-                                strokeWidthPx = ConnectorStrokeWidth.toPx(),
-                                avatarCenterFromTopPx = AvatarCenterFromTop.toPx(),
-                                rowOverlapPx = RowOverlap.toPx(),
-                                color = connectorColor,
+    Column(
+        modifier = modifier,
+    ) {
+        ThreadedItemIterator.onEachNode(
+            item = item,
+            maxItems = maxNodes,
+        ) { node, position, flags, decorations, avatarShape ->
+            val index = position[NodeDimension.Index]
+            val depth = position[NodeDimension.Depth]
+            key(node.post.uri.uri) {
+                Post(
+                    modifier = Modifier
+                        .ifTrue(depth > 0) {
+                            drawBehind {
+                                drawReplyConnectors(
+                                    depth = depth,
+                                    flags = flags,
+                                    indentPerDepthPx = IndentPerDepth.toPx(),
+                                    threadLineXOffsetPx = ThreadLineXOffset.toPx(),
+                                    curveRadiusPx = CurveRadius.toPx(),
+                                    strokeWidthPx = ConnectorStrokeWidth.toPx(),
+                                    avatarCenterFromTopPx = AvatarCenterFromTop.toPx(),
+                                    rowOverlapPx = RowOverlap.toPx(),
+                                    color = connectorColor,
+                                )
+                            }
+                        }
+                        .fillMaxWidth()
+                        .padding(start = depth * IndentPerDepth)
+                        .animateBounds(presentationLookaheadScope),
+                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    presentationLookaheadScope = presentationLookaheadScope,
+                    hasMutedWords = node.isMuted && !node.post.authorMuted,
+                    now = now,
+                    post = node.post,
+                    threadGate = node.threadGate,
+                    isAnchoredInTimeline = flags.isAnchoredInTimeline,
+                    isMainPost = flags.isMainPost,
+                    showEngagementMetrics = showEngagementMetrics,
+                    avatarShape = avatarShape,
+                    sharedElementPrefix = sharedElementPrefix,
+                    createdAt = node.post.createdAt,
+                    presentation = presentation,
+                    appliedLabels = node.appliedLabels,
+                    postActions = postActions,
+                    timeline = {
+                        if (flags.showTimeline) {
+                            Timeline(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .padding(top = 60.dp),
                             )
                         }
-                    }
-                    .fillMaxWidth()
-                    .padding(start = depth * IndentPerDepth)
-                    .animateBounds(presentationLookaheadScope),
-                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                presentationLookaheadScope = presentationLookaheadScope,
-                hasMutedWords = node.isMuted && !node.post.authorMuted,
-                now = now,
-                post = node.post,
-                threadGate = node.threadGate,
-                isAnchoredInTimeline = flags.isAnchoredInTimeline,
-                isMainPost = flags.isMainPost,
-                showEngagementMetrics = showEngagementMetrics,
-                avatarShape = avatarShape,
-                sharedElementPrefix = sharedElementPrefix,
-                createdAt = node.post.createdAt,
-                presentation = presentation,
-                appliedLabels = node.appliedLabels,
-                postActions = postActions,
-                timeline = {
-                    if (flags.showTimeline) {
-                        Timeline(
-                            modifier = Modifier
-                                .matchParentSize()
-                                .padding(top = 60.dp),
-                        )
-                    }
-                },
-            )
-        }
-        if (decorations.has(NodeDecoration.BrokenTimeline)) {
-            key(node.decorationKey(NodeDecoration.BrokenTimeline)) {
-                BrokenTimeline(
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                        .childThreadNode(videoId = null),
-                    onClick = {
-                        postActions.onPostAction(
-                            PostAction.OfPost(
-                                post = node.post,
-                                isMainPost = flags.isMainPost,
-                                warnedAppliedLabels = node.appliedLabels.warned(),
-                            ),
-                        )
                     },
                 )
             }
-        }
-        if (decorations.has(NodeDecoration.ExtraTimeline)) {
-            key(node.decorationKey(NodeDecoration.ExtraTimeline)) {
-                Timeline(
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                        .height(
-                            if (index == 0) 16.dp
-                            else 12.dp,
-                        )
-                        .childThreadNode(videoId = null),
-                )
+            if (decorations.has(NodeDecoration.BrokenTimeline)) {
+                key(node.decorationKey(NodeDecoration.BrokenTimeline)) {
+                    BrokenTimeline(
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .animateBounds(presentationLookaheadScope)
+                            .childThreadNode(videoId = null),
+                        onClick = {
+                            postActions.onPostAction(
+                                PostAction.OfPost(
+                                    post = node.post,
+                                    isMainPost = flags.isMainPost,
+                                    warnedAppliedLabels = node.appliedLabels.warned(),
+                                ),
+                            )
+                        },
+                    )
+                }
             }
-        }
-        if (decorations.has(NodeDecoration.ExtraSpacer)) {
-            key(node.decorationKey(NodeDecoration.ExtraSpacer)) {
-                Spacer(
-                    Modifier
-                        .height(2.dp)
-                        .childThreadNode(videoId = null),
-                )
+            if (decorations.has(NodeDecoration.ExtraTimeline)) {
+                key(node.decorationKey(NodeDecoration.ExtraTimeline)) {
+                    Timeline(
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .height(
+                                if (index == 0) 16.dp
+                                else 12.dp,
+                            )
+                            .animateBounds(presentationLookaheadScope)
+                            .childThreadNode(videoId = null),
+                    )
+                }
             }
-        }
-        if (decorations.has(NodeDecoration.ShowMore)) {
-            key(node.decorationKey(NodeDecoration.ShowMore)) {
-                ShowMore {
-                    maxNodes += DefaultMaxPostsInLinearThread
+            if (decorations.has(NodeDecoration.ExtraSpacer)) {
+                key(node.decorationKey(NodeDecoration.ExtraSpacer)) {
+                    Spacer(
+                        Modifier
+                            .height(2.dp)
+                            .childThreadNode(videoId = null),
+                    )
+                }
+            }
+            if (decorations.has(NodeDecoration.ShowMore)) {
+                key(node.decorationKey(NodeDecoration.ShowMore)) {
+                    ShowMore(
+                        modifier = Modifier
+                            .animateBounds(presentationLookaheadScope),
+                    ) {
+                        maxNodes += DefaultMaxPostsInLinearThread
+                    }
                 }
             }
         }
@@ -278,10 +288,11 @@ private fun BrokenTimeline(
 
 @Composable
 private fun ShowMore(
+    modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .height(IntrinsicSize.Min),
         verticalAlignment = Alignment.CenterVertically,
     ) {

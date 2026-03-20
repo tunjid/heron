@@ -16,10 +16,7 @@
 
 package com.tunjid.heron.timeline.ui.post
 
-import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.animateBounds
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,14 +40,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import com.tunjid.composables.ui.skipIf
 import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.AppliedLabels.Companion.warned
 import com.tunjid.heron.data.core.models.Embed
@@ -378,7 +373,6 @@ private fun TextContent(
                 )
                 .animateBounds(
                     lookaheadScope = data.presentationLookaheadScope,
-                    boundsTransform = data.boundsTransform,
                 )
                 .fillMaxWidth(),
             maxLines = when (data.presentation) {
@@ -428,7 +422,6 @@ private fun EmbedContent(
             )
             .animateBounds(
                 lookaheadScope = data.presentationLookaheadScope,
-                boundsTransform = data.boundsTransform,
             )
             .fillMaxWidth(),
         now = data.now,
@@ -505,7 +498,6 @@ private fun ActionsContent(
                 )
                 .animateBounds(
                     lookaheadScope = data.presentationLookaheadScope,
-                    boundsTransform = data.boundsTransform,
                 ),
             onInteraction = data.postActions::onPostAction,
         )
@@ -802,10 +794,6 @@ private class PostData(
             allowed = threadGate?.allowed,
         )
 
-    val boundsTransform = BoundsTransform { _, _ ->
-        SpringSpec.skipIf { !presentationChanged }
-    }
-
     fun sharedElementKey(
         label: Label,
     ) = "$sharedElementPrefix-${post.uri.uri}-${label.creatorId}-${label.value}"
@@ -841,10 +829,6 @@ private val Timeline.Presentation.contentOrder
         Timeline.Presentation.Media.Condensed -> CondensedMediaOrder
         Timeline.Presentation.Media.Grid -> GridMediaOrder
     }
-
-private val SpringSpec = spring<Rect>(
-    stiffness = Spring.StiffnessMediumLow,
-)
 
 private val TextAndEmbedOrder = listOf(
     PostContent.Attribution,
