@@ -474,14 +474,14 @@ class PersistedNavigationStateHolder(
                     // Wait for a non empty saved state to be read
                     .first { it != InitialNavigation }
 
-                val isSignedIn = authRepository.isSignedIn.first()
+                val signedInProfile = authRepository.signedInUser.first()
 
                 val multiStackNav = when {
                     savedNavigation == EmptyNavigation -> SignedOutNavigationState
-                    !isSignedIn -> SignedOutNavigationState
+                    signedInProfile == null -> SignedOutNavigationState
                     else -> routeParser.parseMultiStackNav(
                         navigation = savedNavigation,
-                        isSignedIn = isSignedIn,
+                        isSignedIn = true,
                     ).let {
                         val wasInOauthFlow = it.current?.id?.contains(OAuthUrlPathSegment) == true
                         if (wasInOauthFlow) SignedOutNavigationState else it
@@ -504,6 +504,7 @@ class PersistedNavigationStateHolder(
                             )
                         },
                         authNavigationMutations(
+                            initialProfileId = signedInProfile?.did,
                             authRepository = authRepository,
                             userDataRepository = userDataRepository,
                         ),
@@ -535,6 +536,7 @@ fun <Action : NavigationAction, State> Flow<Action>.consumeNavigationActions(
 }
 
 private fun authNavigationMutations(
+    initialProfileId: ProfileId?,
     authRepository: AuthRepository,
     userDataRepository: UserDataRepository,
 ): Flow<Mutation<MultiStackNav>> =
@@ -550,7 +552,7 @@ private fun authNavigationMutations(
             !isGuest && navigation != EmptyNavigation
         }
         .scan(
-            initial = AuthNavigationEventState(),
+            initial = AuthNavigationEventState(initialProfileId),
             operation = AuthNavigationEventState::process,
         )
         .map(
@@ -695,9 +697,10 @@ private fun AppStack.toStackNav() = StackNav(
     children = listOf(rootRoute),
 )
 
-private class AuthNavigationEventState {
+private class AuthNavigationEventState(
+    private var profileId: ProfileId?,
+) {
 
-    private var profileId: ProfileId? = null
     private var navigationSavedState: SavedState.Navigation = SavedState.Navigation()
     private val events = mutableSetOf<Event>()
 
