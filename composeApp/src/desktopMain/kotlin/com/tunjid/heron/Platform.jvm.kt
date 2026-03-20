@@ -47,11 +47,12 @@ fun createAppState(): AppState =
             JvmLogger()
         },
         videoPlayerController = { appMainScope ->
+            val osName = System.getProperty("os.name")
             when {
-                System.getProperty("os.name").startsWith("Mac") -> AVFoundationPlayerController(
+                osName.startsWith("Mac") -> AVFoundationPlayerController(
                     appMainScope = appMainScope,
                 )
-                System.getProperty("os.name").startsWith("Linux") -> GStreamerPlayerController(
+                osName.startsWith("Linux") -> GStreamerPlayerController(
                     appMainScope = appMainScope,
                 )
                 else -> JavaFxPlayerController(

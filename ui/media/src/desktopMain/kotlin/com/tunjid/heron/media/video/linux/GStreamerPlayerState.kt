@@ -77,7 +77,7 @@ internal class GStreamerPlayerState(
         policy = referentialEqualityPolicy(),
     )
     override val shouldReplay: Boolean
-        get() = (totalDuration - lastPositionMs) <= 200 &&
+        get() = (totalDuration - lastPositionMs) <= ReplayThresholdMs &&
             totalDuration != 0L &&
             !isLooping
 
@@ -129,9 +129,8 @@ internal class GStreamerPlayerState(
             },
         )
         pb.bus.connect(
-            Bus.ERROR { _, _, message ->
+            Bus.ERROR { _, _, _ ->
                 stopPositionPolling()
-                println("GStreamer error: $message")
                 status = PlayerStatus.Idle.Initial
             },
         )
@@ -294,3 +293,4 @@ internal class GStreamerPlayerState(
 
 private const val PositionPollIntervalMs = 250L
 private const val NsToMs = 1_000_000L
+private const val ReplayThresholdMs = 200L
