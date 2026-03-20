@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -70,7 +69,6 @@ import com.tunjid.heron.signin.canSwitchAccount
 import com.tunjid.heron.signin.createSessionAction
 import com.tunjid.heron.signin.submitButtonEnabled
 import com.tunjid.heron.timeline.ui.icons.stringResource
-import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.platformStatusBars
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.PaneEntry
@@ -192,7 +190,6 @@ class SignInBindings(
                     PaneFab(
                         modifier = Modifier
                             .animateBounds(lookaheadScope = this)
-                            .navigationBarsPadding()
                             .windowInsetsPadding(WindowInsets.ime),
                         text = stringResource(
                             when {
@@ -217,13 +214,13 @@ class SignInBindings(
                         },
                     )
                 },
-                content = {
+                content = { paddingValues ->
                     SignInScreen(
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier
-                            .padding(top = UiTokens.toolbarHeight + UiTokens.statusBarHeight),
+                            .padding(paddingValues = paddingValues),
                     )
                 },
             )

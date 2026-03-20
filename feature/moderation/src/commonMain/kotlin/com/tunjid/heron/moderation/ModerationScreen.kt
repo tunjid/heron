@@ -100,7 +100,6 @@ internal fun ModerationScreen(
         modifier = modifier
             .fillMaxWidth(),
         contentPadding = UiTokens.bottomNavAndInsetPaddingValues(
-            top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
             horizontal = 16.dp,
             isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),

@@ -46,7 +46,6 @@ import com.tunjid.heron.settings.ActualSettingsViewModel
 import com.tunjid.heron.settings.RouteViewModelInitializer
 import com.tunjid.heron.settings.Section
 import com.tunjid.heron.settings.SettingsScreen
-import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.bottomNavigationNestedScrollConnection
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.treenav.compose.PaneEntry
@@ -175,13 +174,15 @@ class SettingsBindings(
                 navigationRail = {
                     PaneNavigationRail()
                 },
-                content = {
+                content = { paddingValues ->
                     SettingsScreen(
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier
-                            .padding(top = UiTokens.toolbarHeight + UiTokens.statusBarHeight),
+                            .padding(
+                                top = paddingValues.calculateTopPadding(),
+                            ),
                     )
                     SecondaryPaneCloseBackHandler()
                 },
