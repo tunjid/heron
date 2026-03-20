@@ -98,6 +98,9 @@ internal class GStreamerPlayerState(
 
     private val serialDispatcher = Dispatchers.Default.limitedParallelism(1)
     private var positionPollingJob: Job? = null
+    private var stateChangedConnection: Bus.STATE_CHANGED? = null
+    private var eosConnection: Bus.EOS? = null
+    private var errorConnection: Bus.ERROR? = null
 
     internal fun createPipeline(url: String) {
         val sink = buildAppSink()
@@ -120,20 +123,27 @@ internal class GStreamerPlayerState(
     }
 
     private fun connectBus(pb: PlayBin) {
-        pb.bus.connect { source, old, current, _ ->
+        stateChangedConnection = Bus.STATE_CHANGED { source, old, current, _ ->
             if (source === pb) onStateChanged(pb, old, current)
-        }
-        pb.bus.connect(
-            Bus.EOS { _ ->
-                onEndOfStream(pb)
-            },
-        )
-        pb.bus.connect(
-            Bus.ERROR { _, _, _ ->
-                stopPositionPolling()
-                status = PlayerStatus.Idle.Initial
-            },
-        )
+        }.also { pb.bus.connect(it) }
+
+        eosConnection = Bus.EOS { _ ->
+            onEndOfStream(pb)
+        }.also { pb.bus.connect(it) }
+
+        errorConnection = Bus.ERROR { _, _, _ ->
+            stopPositionPolling()
+            status = PlayerStatus.Idle.Initial
+        }.also { pb.bus.connect(it) }
+    }
+
+    private fun disconnectBus(pb: PlayBin) {
+        stateChangedConnection?.let { pb.bus.disconnect(it) }
+        eosConnection?.let { pb.bus.disconnect(it) }
+        errorConnection?.let { pb.bus.disconnect(it) }
+        stateChangedConnection = null
+        eosConnection = null
+        errorConnection = null
     }
 
     private fun onStateChanged(pb: PlayBin, old: State, current: State) {
@@ -268,8 +278,11 @@ internal class GStreamerPlayerState(
         appSink = null
         isPipelineInitialized = false
 
-        pb?.stop()
-        pb?.dispose()
+        if (pb != null) {
+            disconnectBus(pb)
+            pb.stop()
+            pb.dispose()
+        }
 
         skiaBitmapA?.close()
         skiaBitmapB?.close()
