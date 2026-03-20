@@ -440,8 +440,8 @@ private value class NodeFlags(val mask: Long = 0L) {
         const val IS_LAST_SIBLING = 1L shl 3
         const val HAS_CHILDREN = 1L shl 4
         const val ANCESTOR_CONTINUATION_BASE_SHIFT = 5
-        const val ANCESTOR_CONTINUATION_LEVEL_1 = 1L shl 5
-        const val ANCESTOR_CONTINUATION_LEVEL_2 = 1L shl 6
+        const val ANCESTOR_CONTINUATION_DEPTH_0 = 1L shl 5
+        const val ANCESTOR_CONTINUATION_DEPTH_1 = 1L shl 6
     }
 }
 
@@ -452,16 +452,16 @@ private inline fun NodeFlags(
     showTimeline: Boolean = false,
     isLastSibling: Boolean = false,
     hasChildren: Boolean = false,
-    ancestorContinuationFirstLevel: Boolean = false,
-    ancestorContinuationSecondLevel: Boolean = false,
+    ancestorContinuationDepth0: Boolean = false,
+    ancestorContinuationDepth1: Boolean = false,
 ): NodeFlags = NodeFlags(
     (if (isMainPost) NodeFlags.IS_MAIN_POST else 0L)
         or (if (isAnchoredInTimeline) NodeFlags.IS_ANCHORED_IN_TIMELINE else 0L)
         or (if (showTimeline) NodeFlags.SHOW_TIMELINE else 0L)
         or (if (isLastSibling) NodeFlags.IS_LAST_SIBLING else 0L)
         or (if (hasChildren) NodeFlags.HAS_CHILDREN else 0L)
-        or (if (ancestorContinuationFirstLevel) NodeFlags.ANCESTOR_CONTINUATION_LEVEL_1 else 0L)
-        or (if (ancestorContinuationSecondLevel) NodeFlags.ANCESTOR_CONTINUATION_LEVEL_2 else 0L),
+        or (if (ancestorContinuationDepth0) NodeFlags.ANCESTOR_CONTINUATION_DEPTH_0 else 0L)
+        or (if (ancestorContinuationDepth1) NodeFlags.ANCESTOR_CONTINUATION_DEPTH_1 else 0L),
 )
 
 private enum class NodeDecoration {
@@ -570,7 +570,7 @@ private object ThreadedItemIterator {
                         showTimeline = childHasChildren,
                         hasChildren = childHasChildren,
                         isLastSibling = childIsLastSibling,
-                        ancestorContinuationFirstLevel = !replyIsLastSibling,
+                        ancestorContinuationDepth0 = !replyIsLastSibling,
                     ),
                     noDecorations,
                     RoundedPolygonShape.Circle,
@@ -586,8 +586,8 @@ private object ThreadedItemIterator {
                         ),
                         NodeFlags(
                             isLastSibling = grandchildIndex == child.children.lastIndex,
-                            ancestorContinuationFirstLevel = !replyIsLastSibling,
-                            ancestorContinuationSecondLevel = !childIsLastSibling,
+                            ancestorContinuationDepth0 = !replyIsLastSibling,
+                            ancestorContinuationDepth1 = !childIsLastSibling,
                         ),
                         noDecorations,
                         RoundedPolygonShape.Circle,
