@@ -117,13 +117,7 @@ internal fun ThreadedTimelineItem(
     ThreadedItemIterator.onEachNode(
         item = item,
         maxItems = maxNodes,
-    ) {
-            node,
-            position,
-            flags,
-            decorations,
-            avatarShape,
-        ->
+    ) { node, position, flags, decorations, avatarShape ->
         val index = position[NodeDimension.Index]
         val depth = position[NodeDimension.Depth]
         key(node.post.uri.uri) {
@@ -500,7 +494,7 @@ private object ThreadedItemIterator {
             node: TimelineItem.Threaded.Node,
             position: NodePosition,
             flags: NodeFlags,
-            nodeDecorations: NodeDecorations,
+            decorations: NodeDecorations,
             avatarShape: RoundedPolygonShape,
         ) -> Unit,
     ) {
@@ -609,7 +603,7 @@ private object ThreadedItemIterator {
             node: TimelineItem.Threaded.Node,
             position: NodePosition,
             flags: NodeFlags,
-            nodeDecorations: NodeDecorations,
+            decorations: NodeDecorations,
             avatarShape: RoundedPolygonShape,
         ) -> Unit,
     ) {
