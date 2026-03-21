@@ -93,8 +93,11 @@ enum class PaneAnchor(
 }
 
 @Stable
-internal class PaneAnchorState {
-    var maxWidth by mutableIntStateOf(1000)
+internal class PaneAnchorState(
+    initialMaxWidth: Int,
+    initialAnchor: PaneAnchor,
+) {
+    var maxWidth by mutableIntStateOf(initialMaxWidth)
         internal set
     val width
         get() = max(
@@ -119,7 +122,7 @@ internal class PaneAnchorState {
             return when (cappedFraction) {
                 in 0f..0.01f -> PaneAnchor.Zero
                 in Float.MIN_VALUE..PaneAnchor.OneThirds.fraction -> PaneAnchor.OneThirds
-                in PaneAnchor.OneThirds.fraction..PaneAnchor.TwoThirds.fraction -> PaneAnchor.Half
+                in PaneAnchor.OneThirds.fraction..<PaneAnchor.TwoThirds.fraction -> PaneAnchor.Half
                 in PaneAnchor.TwoThirds.fraction..0.99f -> PaneAnchor.TwoThirds
                 else -> PaneAnchor.Full
             }
@@ -130,7 +133,7 @@ internal class PaneAnchorState {
     val thumbInteractionSource: InteractionSource = thumbMutableInteractionSource
 
     private val anchoredDraggableState = AnchoredDraggableState(
-        initialValue = PaneAnchor.OneThirds,
+        initialValue = initialAnchor,
         anchors = currentAnchors(),
     )
 
