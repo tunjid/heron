@@ -232,7 +232,7 @@ private const val ASSOCIATED_DATA_STRING = "heron-saved-state"
 private val ASSOCIATED_DATA = ASSOCIATED_DATA_STRING.toByteArray()
 
 private const val KEK_ALGORITHM = "PBKDF2WithHmacSHA256"
-private const val KEK_ITERATIONS = 100_000
+private const val KEK_ITERATIONS = 600_000
 private const val KEK_KEY_LENGTH_BITS = 256
 private const val AES_ALGORITHM = "AES"
 private const val AES_GCM_TRANSFORMATION = "AES/GCM/NoPadding"

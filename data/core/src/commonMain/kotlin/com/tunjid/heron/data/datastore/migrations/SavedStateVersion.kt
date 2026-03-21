@@ -20,6 +20,9 @@ import androidx.datastore.core.okio.OkioSerializer
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.logging.LogPriority
+import com.tunjid.heron.data.logging.logcat
+import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.data.repository.SavedState
 import com.tunjid.heron.data.repository.SavedStateEncryption
 import kotlinx.serialization.Serializable
@@ -121,6 +124,9 @@ internal class VersionedSavedStateOkioSerializer(
         val data = try {
             encryption.decrypt(raw)
         } catch (e: Exception) {
+            logcat(LogPriority.ERROR) {
+                "SavedState decryption error: ${e.loggableText()}"
+            }
             // Decryption failed (wrong key, corrupted file, key rotation, etc.).
             // Fall back to empty state; the user will need to re-authenticate.
             return defaultValue
@@ -138,6 +144,9 @@ internal class VersionedSavedStateOkioSerializer(
                 else -> throw IllegalArgumentException("Unknown saved state version")
             }.toVersionedSavedState(CurrentVersion)
         } catch (e: Exception) {
+            logcat(LogPriority.ERROR) {
+                "SavedState decode error: ${e.loggableText()}"
+            }
             defaultValue
         }
     }
