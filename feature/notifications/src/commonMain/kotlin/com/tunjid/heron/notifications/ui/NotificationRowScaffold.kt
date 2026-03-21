@@ -130,7 +130,7 @@ fun NotificationAggregateScaffold(
             with(paneTransitionScope) {
                 Box(
                     modifier = Modifier
-                        .animateBounds(this)
+                        .animateBounds(lookaheadScope = this, boundsTransform = childBoundsTransform)
                         .clip(ExpandableAvatarRowShape),
                 ) {
                     if (isExpanded) Column(
@@ -157,6 +157,7 @@ fun NotificationAggregateScaffold(
             Box(
                 modifier = Modifier.animateBounds(
                     lookaheadScope = paneTransitionScope,
+                    boundsTransform = paneTransitionScope.childBoundsTransform,
                 ),
             ) {
                 content()
@@ -174,6 +175,7 @@ private fun PaneTransitionScope.ExpandButton(
         modifier = Modifier
             .animateBounds(
                 lookaheadScope = this@ExpandButton,
+                boundsTransform = childBoundsTransform,
             )
             .size(32.dp)
             .rotate(animateFloatAsState(if (isExpanded) 180f else 0f).value),
@@ -200,6 +202,7 @@ private fun PaneTransitionScope.ExpandableProfiles(
         Row(
             modifier = Modifier.animateBounds(
                 lookaheadScope = this@ExpandableProfiles,
+                boundsTransform = childBoundsTransform,
             ),
             verticalAlignment = Alignment.CenterVertically,
         ) {

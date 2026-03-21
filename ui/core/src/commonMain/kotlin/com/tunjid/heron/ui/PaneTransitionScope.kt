@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.ui
 
+import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
@@ -28,7 +29,9 @@ import com.tunjid.treenav.compose.PaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.strings.Route
 
-interface PaneTransitionScope : PaneMovableElementSharedTransitionScope<ThreePane, Route>
+interface PaneTransitionScope : PaneMovableElementSharedTransitionScope<ThreePane, Route> {
+    val childBoundsTransform: BoundsTransform
+}
 
 val PaneTransitionScope.isPrimaryOrActive
     get() = paneState.pane == ThreePane.Primary || isActive

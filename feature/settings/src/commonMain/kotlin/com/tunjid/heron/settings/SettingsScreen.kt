@@ -116,7 +116,10 @@ private fun MainSection(
         if (state.switchPhase == AccountSwitchPhase.IDLE) {
             ContentAndMediaItem(
                 modifier = Modifier
-                    .animateBounds(paneScaffoldState),
+                    .animateBounds(
+                        lookaheadScope = paneScaffoldState,
+                        boundsTransform = paneScaffoldState.childBoundsTransform,
+                    ),
                 signedInProfilePreferences = signedInProfilePreferences,
                 setRefreshHomeTimelineOnLaunch = {
                     actions(Action.SetRefreshHomeTimelinesOnLaunch(it))
@@ -136,19 +139,28 @@ private fun MainSection(
             )
             ModerationItem(
                 modifier = Modifier
-                    .animateBounds(paneScaffoldState),
+                    .animateBounds(
+                        lookaheadScope = paneScaffoldState,
+                        boundsTransform = paneScaffoldState.childBoundsTransform,
+                    ),
             ) {
                 actions(Action.Navigate.To(moderationDestination()))
             }
             NotificationSettingsItem(
                 modifier = Modifier
-                    .animateBounds(paneScaffoldState),
+                    .animateBounds(
+                        lookaheadScope = paneScaffoldState,
+                        boundsTransform = paneScaffoldState.childBoundsTransform,
+                    ),
             ) {
                 actions(Action.Navigate.To(notificationSettingsDestination()))
             }
             AppearanceItem(
                 modifier = Modifier
-                    .animateBounds(paneScaffoldState),
+                    .animateBounds(
+                        lookaheadScope = paneScaffoldState,
+                        boundsTransform = paneScaffoldState.childBoundsTransform,
+                    ),
                 signedInProfilePreferences = signedInProfilePreferences,
                 setDynamicThemingPreference = {
                     actions(Action.SetDynamicThemingPreference(it))
@@ -162,16 +174,25 @@ private fun MainSection(
             )
             FeedbackItem(
                 modifier = Modifier
-                    .animateBounds(paneScaffoldState),
+                    .animateBounds(
+                        lookaheadScope = paneScaffoldState,
+                        boundsTransform = paneScaffoldState.childBoundsTransform,
+                    ),
             )
             OpenSourceLibrariesItem(
                 modifier = Modifier
-                    .animateBounds(paneScaffoldState),
+                    .animateBounds(
+                        lookaheadScope = paneScaffoldState,
+                        boundsTransform = paneScaffoldState.childBoundsTransform,
+                    ),
                 libraries = state.openSourceLibraries,
             )
             SignOutItem(
                 modifier = Modifier
-                    .animateBounds(paneScaffoldState),
+                    .animateBounds(
+                        lookaheadScope = paneScaffoldState,
+                        boundsTransform = paneScaffoldState.childBoundsTransform,
+                    ),
             ) {
                 actions(Action.SignOut)
             }

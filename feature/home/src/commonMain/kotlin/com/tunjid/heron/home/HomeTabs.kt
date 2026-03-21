@@ -20,7 +20,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.BoundsTransform
-import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateBounds
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -105,6 +104,7 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
 import com.tunjid.heron.ui.AppBarButton
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState
@@ -143,7 +143,7 @@ internal fun HomeTabs(
     currentTabUri: Uri?,
     saveRequestId: String?,
     timelines: List<Timeline.Home>,
-    sharedTransitionScope: SharedTransitionScope,
+    sharedTransitionScope: PaneTransitionScope,
     sourceIdsToHasUpdates: Map<String, Boolean>,
     selectedTabIndex: () -> Float,
     onCollapsedTabSelected: (Int) -> Unit,
@@ -317,7 +317,7 @@ private fun ExpandedTabs(
     saveRequestId: String?,
     timelines: List<Timeline.Home>,
     tabsState: TabsState,
-    sharedTransitionScope: SharedTransitionScope,
+    sharedTransitionScope: PaneTransitionScope,
     animatedContentScope: AnimatedContentScope,
     onDismissed: () -> Unit,
     onTimelinePreferencesSaved: (List<Timeline.Home>) -> Unit,
@@ -370,7 +370,10 @@ private fun ExpandedTabs(
                 SectionTitle(
                     modifier = Modifier
                         .padding(top = 24.dp)
-                        .animateBounds(this@with),
+                        .animateBounds(
+                            lookaheadScope = this@with,
+                            boundsTransform = childBoundsTransform,
+                        ),
                     title = stringResource(Res.string.pinned),
                 )
             }
@@ -378,7 +381,10 @@ private fun ExpandedTabs(
                 key(timeline.sourceId) {
                     if (!editableTimelineState.isDraggedId(timeline.sourceId)) tabsState.ExpandedTab(
                         modifier = Modifier
-                            .animateBounds(this@with),
+                            .animateBounds(
+                                lookaheadScope = this@with,
+                                boundsTransform = childBoundsTransform,
+                            ),
                         editableTimelineState = editableTimelineState,
                         currentTimelines = timelines,
                         sharedTransitionScope = sharedTransitionScope,
@@ -391,7 +397,10 @@ private fun ExpandedTabs(
                 SectionTitle(
                     modifier = Modifier
                         .padding(top = 24.dp)
-                        .animateBounds(this@with),
+                        .animateBounds(
+                            lookaheadScope = this@with,
+                            boundsTransform = childBoundsTransform,
+                        ),
                     title = stringResource(Res.string.saved),
                 )
             }
@@ -399,7 +408,10 @@ private fun ExpandedTabs(
                 key(timeline.sourceId) {
                     if (!editableTimelineState.isDraggedId(timeline.sourceId)) tabsState.ExpandedTab(
                         modifier = Modifier
-                            .animateBounds(this@with),
+                            .animateBounds(
+                                lookaheadScope = this@with,
+                                boundsTransform = childBoundsTransform,
+                            ),
                         editableTimelineState = editableTimelineState,
                         currentTimelines = timelines,
                         sharedTransitionScope = sharedTransitionScope,
@@ -429,7 +441,10 @@ private fun ExpandedTabs(
                 Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
-                    .animateBounds(this@with),
+                    .animateBounds(
+                        lookaheadScope = this@with,
+                        boundsTransform = childBoundsTransform,
+                    ),
             ) {
                 FilledTonalButton(
                     modifier = Modifier
@@ -461,7 +476,7 @@ private fun ExpandedTabs(
 private fun CollapsedTabs(
     modifier: Modifier = Modifier,
     tabsState: TabsState,
-    sharedTransitionScope: SharedTransitionScope,
+    sharedTransitionScope: PaneTransitionScope,
     animatedContentScope: AnimatedContentScope,
     isSignedIn: Boolean,
     currentTabUri: Uri?,
@@ -518,7 +533,7 @@ private fun TabsState.ExpandedTab(
     modifier: Modifier = Modifier,
     editableTimelineState: EditableTimelineState,
     currentTimelines: List<Timeline.Home>,
-    sharedTransitionScope: SharedTransitionScope,
+    sharedTransitionScope: PaneTransitionScope,
     animatedContentScope: AnimatedContentScope,
     timeline: Timeline.Home,
 ) = with(sharedTransitionScope) {
@@ -595,7 +610,7 @@ private fun TabsState.ExpandedTab(
 @Composable
 private fun TabsState.CollapsedTab(
     tab: Tab,
-    sharedTransitionScope: SharedTransitionScope,
+    sharedTransitionScope: PaneTransitionScope,
     animatedContentScope: AnimatedContentScope,
 ) = with(sharedTransitionScope) {
     FilterChip(

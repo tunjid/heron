@@ -440,7 +440,10 @@ private fun ChatItemBubble(
                 key(reaction.value) {
                     Text(
                         modifier = Modifier
-                            .animateBounds(paneScaffoldState),
+                            .animateBounds(
+                                lookaheadScope = paneScaffoldState,
+                                boundsTransform = paneScaffoldState.childBoundsTransform,
+                            ),
                         text = reaction.value,
                         fontSize = 12.sp,
                     )

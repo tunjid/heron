@@ -303,6 +303,7 @@ internal fun NotificationsScreen(
                             .padding(horizontal = 8.dp)
                             .animateBounds(
                                 lookaheadScope = paneScaffoldState,
+                                boundsTransform = paneScaffoldState.childBoundsTransform,
                             )
                             .animateItem()
 

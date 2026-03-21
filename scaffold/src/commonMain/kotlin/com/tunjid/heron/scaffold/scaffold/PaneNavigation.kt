@@ -147,7 +147,9 @@ internal fun AppState.PaneNavigationBar(
         Surface(
             modifier = modifier
                 .fillMaxWidth()
-                .animateBounds(lookaheadScope = this@LookaheadScope),
+                .animateBounds(
+                    lookaheadScope = this@LookaheadScope,
+                ),
             color = BottomAppBarDefaults.containerColor.copy(alpha = BackgroundAlpha),
             contentColor = contentColorFor(BottomAppBarDefaults.containerColor),
             shape = navigationBarShape(prefersCompactBottomNav),

@@ -160,7 +160,10 @@ internal fun SignInScreen(
                 .padding(vertical = 32.dp)
                 .align(Alignment.CenterHorizontally)
                 .widthIn(max = UiTokens.restrictedPaneWidth)
-                .animateBounds(paneScaffoldState),
+                .animateBounds(
+                    lookaheadScope = paneScaffoldState,
+                    boundsTransform = paneScaffoldState.childBoundsTransform,
+                ),
             status = state.serverSelectionStatus,
             selectedServer = state.selectedServer,
             availableServers = state.availableServers,
