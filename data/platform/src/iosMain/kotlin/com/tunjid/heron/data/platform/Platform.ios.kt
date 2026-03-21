@@ -14,15 +14,13 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron
+package com.tunjid.heron.data.platform
 
-import com.tunjid.heron.data.platform.Platform
-import com.tunjid.heron.data.platform.current
+import platform.UIKit.UIDevice
 
-class Greeting {
-    private val platform = Platform.current
-
-    fun greet(): String {
-        return "Hello, ${platform.name}!"
-    }
+class IOSPlatform : Platform {
+    override val name: String =
+        UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
 }
+
+actual val Platform.Companion.current: Platform by lazy(::IOSPlatform)

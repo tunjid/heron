@@ -19,6 +19,10 @@ package com.tunjid.heron
 import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.data.logging.JvmLogger
+import com.tunjid.heron.data.platform.JVMPlatform
+import com.tunjid.heron.data.platform.JvmVariant
+import com.tunjid.heron.data.platform.Platform
+import com.tunjid.heron.data.platform.current
 import com.tunjid.heron.images.imageLoader
 import com.tunjid.heron.media.video.javafx.JavaFxPlayerController
 import com.tunjid.heron.media.video.linux.GStreamerPlayerController
@@ -31,12 +35,6 @@ import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toOkioPath
 
-class JVMPlatform : Platform {
-    override val name: String = "Java ${System.getProperty("java.version")}"
-}
-
-actual fun getPlatform(): Platform = JVMPlatform()
-
 fun createAppState(): AppState =
     createAppState(
         imageLoader = ::imageLoader,
@@ -47,12 +45,11 @@ fun createAppState(): AppState =
             JvmLogger()
         },
         videoPlayerController = { appMainScope ->
-            val osName = System.getProperty("os.name")
-            when {
-                osName.startsWith("Mac") -> AVFoundationPlayerController(
+            when ((Platform.current as JVMPlatform).variant) {
+                JvmVariant.Mac -> AVFoundationPlayerController(
                     appMainScope = appMainScope,
                 )
-                osName.startsWith("Linux") -> GStreamerPlayerController(
+                JvmVariant.Linux -> GStreamerPlayerController(
                     appMainScope = appMainScope,
                 )
                 else -> JavaFxPlayerController(

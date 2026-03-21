@@ -75,12 +75,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
-interface Platform {
-    val name: String
-}
-
-expect fun getPlatform(): Platform
-
 fun createAppState(
     imageLoader: () -> ImageLoader,
     notifier: (appMainScope: CoroutineScope) -> Notifier,

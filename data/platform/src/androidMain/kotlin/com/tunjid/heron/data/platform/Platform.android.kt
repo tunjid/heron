@@ -14,15 +14,12 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron
+package com.tunjid.heron.data.platform
 
-import com.tunjid.heron.data.platform.Platform
-import com.tunjid.heron.data.platform.current
+import android.os.Build
 
-class Greeting {
-    private val platform = Platform.current
-
-    fun greet(): String {
-        return "Hello, ${platform.name}!"
-    }
+class AndroidPlatform : Platform {
+    override val name: String = "Android ${Build.VERSION.SDK_INT}"
 }
+
+actual val Platform.Companion.current: Platform by lazy(::AndroidPlatform)
