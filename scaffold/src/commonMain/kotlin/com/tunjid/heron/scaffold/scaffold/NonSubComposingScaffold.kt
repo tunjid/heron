@@ -260,7 +260,9 @@ private inline fun ScaffoldLayout(
             bottomBarPlaceable.place(0, layoutHeight - bottomBarHeight)
             // Explicitly not using placeRelative here as `leftOffset` already accounts for RTL
             fabPlacement?.let { placement ->
-                fabPlaceable.place(placement.left, layoutHeight - fabOffsetFromBottom!!)
+                fabOffsetFromBottom?.let { fabOffset ->
+                    fabPlaceable.place(placement.left, layoutHeight - fabOffset)
+                }
             }
         }
     }
