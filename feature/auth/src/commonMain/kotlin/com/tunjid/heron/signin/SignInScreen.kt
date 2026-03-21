@@ -17,6 +17,7 @@
 package com.tunjid.heron.signin
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.animateBounds
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -160,7 +161,7 @@ internal fun SignInScreen(
                 .padding(vertical = 32.dp)
                 .align(Alignment.CenterHorizontally)
                 .widthIn(max = UiTokens.restrictedPaneWidth)
-                .animateBounds(paneScaffoldState),
+                .animateBounds(lookaheadScope = paneScaffoldState, boundsTransform = paneScaffoldState.resizeAwareBoundsTransform),
             status = state.serverSelectionStatus,
             selectedServer = state.selectedServer,
             availableServers = state.availableServers,

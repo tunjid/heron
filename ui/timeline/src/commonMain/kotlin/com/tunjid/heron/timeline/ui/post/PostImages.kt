@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.timeline.ui.post
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.aspectRatio
@@ -46,7 +45,6 @@ import com.tunjid.heron.ui.modifiers.trackOverlayClipBounds
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun PostImages(
     modifier: Modifier = Modifier,

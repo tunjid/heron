@@ -373,6 +373,7 @@ private fun TextContent(
                 )
                 .animateBounds(
                     lookaheadScope = data.presentationLookaheadScope,
+                    boundsTransform = data.paneTransitionScope.resizeAwareBoundsTransform,
                 )
                 .fillMaxWidth(),
             maxLines = when (data.presentation) {
@@ -498,6 +499,7 @@ private fun ActionsContent(
                 )
                 .animateBounds(
                     lookaheadScope = data.presentationLookaheadScope,
+                    boundsTransform = data.paneTransitionScope.resizeAwareBoundsTransform,
                 ),
             onInteraction = data.postActions::onPostAction,
         )

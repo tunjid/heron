@@ -144,7 +144,7 @@ internal fun ThreadedPost(
                         }
                         .fillMaxWidth()
                         .padding(start = depth * IndentPerDepth)
-                        .animateBounds(presentationLookaheadScope),
+                        .animateBounds(lookaheadScope = presentationLookaheadScope, boundsTransform = paneTransitionScope.resizeAwareBoundsTransform),
                     paneTransitionScope = paneTransitionScope,
                     presentationLookaheadScope = presentationLookaheadScope,
                     hasMutedWords = node.isMuted && !node.post.authorMuted,
@@ -176,7 +176,7 @@ internal fun ThreadedPost(
                     BrokenTimeline(
                         modifier = Modifier
                             .padding(start = 8.dp)
-                            .animateBounds(presentationLookaheadScope)
+                            .animateBounds(lookaheadScope = presentationLookaheadScope, boundsTransform = paneTransitionScope.resizeAwareBoundsTransform)
                             .childThreadNode(videoId = null),
                         onClick = {
                             postActions.onPostAction(
@@ -199,7 +199,7 @@ internal fun ThreadedPost(
                                 if (index == 0) 16.dp
                                 else 12.dp,
                             )
-                            .animateBounds(presentationLookaheadScope)
+                            .animateBounds(lookaheadScope = presentationLookaheadScope, boundsTransform = paneTransitionScope.resizeAwareBoundsTransform)
                             .childThreadNode(videoId = null),
                     )
                 }
@@ -217,7 +217,7 @@ internal fun ThreadedPost(
                 key(node.decorationKey(NodeDecoration.ShowMore)) {
                     ShowMore(
                         modifier = Modifier
-                            .animateBounds(presentationLookaheadScope),
+                            .animateBounds(lookaheadScope = presentationLookaheadScope, boundsTransform = paneTransitionScope.resizeAwareBoundsTransform),
                     ) {
                         maxNodes += DefaultMaxPostsInLinearThread
                     }

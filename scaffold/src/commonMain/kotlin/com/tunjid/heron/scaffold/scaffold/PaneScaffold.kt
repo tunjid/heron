@@ -16,9 +16,13 @@
 
 package com.tunjid.heron.scaffold.scaffold
 
+import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.animateBounds
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -41,6 +45,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
@@ -51,6 +56,7 @@ import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
+import com.tunjid.composables.ui.skipIf
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.message
@@ -70,6 +76,10 @@ class PaneScaffoldState internal constructor(
     paneMovableElementSharedTransitionScope: ThreePaneMovableElementSharedTransitionScope<Route>,
 ) : PaneTransitionScope,
     ThreePaneMovableElementSharedTransitionScope<Route> by paneMovableElementSharedTransitionScope {
+
+    override val resizeAwareBoundsTransform: BoundsTransform = { _, _ ->
+        BoundsTransformSpring.skipIf { splitPaneState.paneAnchorState.hasInteractions }
+    }
 
     internal val snackbarHostState = SnackbarHostState()
 
@@ -219,7 +229,7 @@ fun PaneScaffoldState.PaneScaffold(
                     else -> when (dismissBehavior) {
                         AppState.DismissBehavior.None,
                         AppState.DismissBehavior.Gesture.DragToPop,
-                        -> Modifier.animateBounds(lookaheadScope = this)
+                        -> Modifier.animateBounds(lookaheadScope = this, boundsTransform = resizeAwareBoundsTransform)
 
                         AppState.DismissBehavior.Gesture.SlideToPop,
                         AppState.DismissBehavior.Gesture.ScaleToPop,
@@ -328,4 +338,10 @@ private val PaneClipModifier = Modifier.clip(
         topStart = 16.dp,
         topEnd = 16.dp,
     ),
+)
+
+private val BoundsTransformSpring = spring(
+    dampingRatio = Spring.DampingRatioNoBouncy,
+    stiffness = Spring.StiffnessMediumLow,
+    visibilityThreshold = Rect.VisibilityThreshold,
 )

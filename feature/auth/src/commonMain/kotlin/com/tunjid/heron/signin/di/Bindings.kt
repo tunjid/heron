@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.signin.di
 
+import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.layout.Box
@@ -189,7 +190,7 @@ class SignInBindings(
                 floatingActionButton = {
                     PaneFab(
                         modifier = Modifier
-                            .animateBounds(lookaheadScope = this)
+                            .animateBounds(lookaheadScope = this, boundsTransform = resizeAwareBoundsTransform)
                             .windowInsetsPadding(WindowInsets.ime),
                         text = stringResource(
                             when {
