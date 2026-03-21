@@ -18,6 +18,7 @@ package com.tunjid.heron.notificationsettings.di
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.runtime.getValue
@@ -191,11 +192,15 @@ class NotificationSettingsBindings(
                 navigationRail = {
                     PaneNavigationRail()
                 },
-                content = {
+                content = { paddingValues ->
                     NotificationSettingsScreen(
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
+                        modifier = Modifier
+                            .padding(
+                                top = paddingValues.calculateTopPadding(),
+                            ),
                     )
                     SecondaryPaneCloseBackHandler()
                 },

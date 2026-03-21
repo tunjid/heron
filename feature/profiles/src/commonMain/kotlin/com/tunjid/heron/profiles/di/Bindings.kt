@@ -16,7 +16,9 @@
 
 package com.tunjid.heron.profiles.di
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -299,9 +301,13 @@ class ProfilesBindings(
                         },
                     )
                 },
-                content = {
+                content = { paddingValues ->
                     ProfilesScreen(
                         paneScaffoldState = this,
+                        modifier = Modifier
+                            .padding(
+                                top = paddingValues.calculateTopPadding(),
+                            ),
                         state = state,
                         actions = viewModel.accept,
                     )

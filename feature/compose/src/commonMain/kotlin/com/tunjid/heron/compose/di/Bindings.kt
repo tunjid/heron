@@ -188,12 +188,12 @@ class ComposeBindings(
                 navigationRail = {
                     PaneNavigationRail()
                 },
-                content = {
+                content = { paddingValues ->
                     ComposeScreen(
                         paneScaffoldState = this,
                         modifier = Modifier
+                            .padding(paddingValues)
                             .padding(
-                                top = UiTokens.toolbarHeight + UiTokens.statusBarHeight,
                                 // This padding is solely for the post interaction button
                                 bottom = UiTokens.toolbarHeight,
                             ),

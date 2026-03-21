@@ -213,13 +213,13 @@ class ConversationBindings(
                 navigationRail = {
                     PaneNavigationRail()
                 },
-                content = {
+                content = { paddingValues ->
                     ConversationScreen(
                         paneScaffoldState = this,
                         state = state,
                         actions = viewModel.accept,
                         modifier = Modifier
-                            .imePadding(),
+                            .padding(paddingValues),
                     )
                 },
             )
