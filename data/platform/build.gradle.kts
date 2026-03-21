@@ -14,15 +14,11 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron
+plugins {
+    id("android-library-convention")
+    id("kotlin-library-convention")
+}
 
-import com.tunjid.heron.data.platform.Platform
-import com.tunjid.heron.data.platform.current
-
-class Greeting {
-    private val platform = Platform.current
-
-    fun greet(): String {
-        return "Hello, ${platform.name}!"
-    }
+android {
+    namespace = "com.tunjid.heron.data.platform"
 }

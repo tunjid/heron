@@ -34,6 +34,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":data:models"))
+                implementation(project(":data:platform"))
 
                 implementation(libs.compose.multiplatform.components.resources)
                 implementation(libs.compose.multiplatform.animation)

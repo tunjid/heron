@@ -14,15 +14,26 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron
+package com.tunjid.heron.data.platform
 
-import com.tunjid.heron.data.platform.Platform
-import com.tunjid.heron.data.platform.current
+enum class JvmVariant {
+    Mac,
+    Linux,
+    Windows,
+    Unknown,
+}
 
-class Greeting {
-    private val platform = Platform.current
+class JVMPlatform internal constructor() : Platform {
+    override val name: String = "Java ${System.getProperty("java.version")}"
 
-    fun greet(): String {
-        return "Hello, ${platform.name}!"
+    val variant: JvmVariant = System.getProperty("os.name").lowercase().let { osName ->
+        when {
+            osName.startsWith("mac") -> JvmVariant.Mac
+            osName.startsWith("linux") -> JvmVariant.Linux
+            osName.contains("windows") -> JvmVariant.Windows
+            else -> JvmVariant.Unknown
+        }
     }
 }
+
+actual val Platform.Companion.current: Platform by lazy(::JVMPlatform)

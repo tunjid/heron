@@ -81,6 +81,7 @@ kotlin {
             implementation(project(":data:database"))
             implementation(project(":data:core"))
             implementation(project(":data:logging"))
+            implementation(project(":data:platform"))
             implementation(project(":scaffold"))
             implementation(project(":feature:auth"))
             implementation(project(":feature:compose"))
