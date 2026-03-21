@@ -198,14 +198,15 @@ compose.desktop {
             // Remove hyphenated suffixes if present
             packageVersion = scmVersion.version.split("-").first()
 
+            val resourcesDir = project.file("src/desktopMain/resources")
             macOS {
-                iconFile.set(project.file("src/desktopMain/resources/icon.icns"))
+                iconFile.set(resourcesDir.resolve("icon.icns"))
             }
             windows {
-                iconFile.set(project.file("src/desktopMain/resources/icon.ico"))
+                iconFile.set(resourcesDir.resolve("icon.ico"))
             }
             linux {
-                iconFile.set(project.file("src/desktopMain/resources/icon.png"))
+                iconFile.set(resourcesDir.resolve("icon.png"))
             }
         }
     }
