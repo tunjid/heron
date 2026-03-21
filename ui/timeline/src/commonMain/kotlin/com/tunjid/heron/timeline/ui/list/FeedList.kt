@@ -34,8 +34,8 @@ import com.tunjid.heron.timeline.utilities.ListCollectionShape
 import com.tunjid.heron.timeline.utilities.StarterPackCollectionShape
 import com.tunjid.heron.timeline.utilities.TimelineStatusSelection
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.RecordLayout
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.list_by
 import heron.ui.timeline.generated.resources.starter_pack_by
@@ -44,15 +44,15 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun FeedList(
     modifier: Modifier = Modifier,
-    movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     sharedElementPrefix: String,
     list: FeedList,
     status: Timeline.Home.Status?,
     onListStatusUpdated: (Update.OfList) -> Unit,
-) = with(movableElementSharedTransitionScope) {
+) = with(paneTransitionScope) {
     RecordLayout(
         modifier = modifier,
-        movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+        paneTransitionScope = paneTransitionScope,
         title = list.name,
         subtitle = stringResource(
             Res.string.list_by,
@@ -100,13 +100,13 @@ fun FeedList(
 @Composable
 fun StarterPack(
     modifier: Modifier = Modifier,
-    movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     sharedElementPrefix: String,
     starterPack: StarterPack,
-) = with(movableElementSharedTransitionScope) {
+) = with(paneTransitionScope) {
     RecordLayout(
         modifier = modifier,
-        movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+        paneTransitionScope = paneTransitionScope,
         title = starterPack.name,
         subtitle = stringResource(
             Res.string.starter_pack_by,

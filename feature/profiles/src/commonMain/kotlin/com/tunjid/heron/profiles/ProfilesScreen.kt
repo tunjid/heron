@@ -70,7 +70,7 @@ internal fun ProfilesScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .animateItem(),
-                    movableElementSharedTransitionScope = paneScaffoldState,
+                    paneTransitionScope = paneScaffoldState,
                     signedInProfileId = signedInProfileId,
                     profile = item.profile,
                     viewerState = item.viewerState,

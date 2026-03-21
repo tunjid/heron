@@ -72,10 +72,10 @@ import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.cardSize
 import com.tunjid.heron.timeline.utilities.lazyGridHorizontalItemSpacing
 import com.tunjid.heron.timeline.utilities.lazyGridVerticalItemSpacing
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.tiler.compose.PivotedTilingEffect
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.ThreePane
 import kotlin.math.floor
 import kotlin.time.Clock
@@ -259,7 +259,7 @@ internal fun PostSearchResults(
                             state = videoStates.getOrCreateStateFor(result),
                         )
                         .animateItem(),
-                    paneMovableElementSharedTransitionScope = paneScaffoldState,
+                    paneTransitionScope = paneScaffoldState,
                     now = now,
                     result = result,
                     sharedElementPrefix = state.sharedElementPrefix,
@@ -302,7 +302,7 @@ internal fun PostSearchResults(
 @Composable
 private fun PostSearchResult(
     modifier: Modifier = Modifier,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     now: Instant,
     result: SearchResult.OfPost,
     sharedElementPrefix: String,
@@ -328,8 +328,8 @@ private fun PostSearchResult(
                         top = 16.dp,
                         bottom = 8.dp,
                     ),
-                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-                presentationLookaheadScope = paneMovableElementSharedTransitionScope,
+                paneTransitionScope = paneTransitionScope,
+                presentationLookaheadScope = paneTransitionScope,
                 now = now,
                 item = result.timelineItem,
                 sharedElementPrefix = sharedElementPrefix,

@@ -61,10 +61,10 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.settings.AccountSwitchPhase
 import com.tunjid.heron.ui.OverlappingAvatarRow
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.add_another_account
 import heron.feature.settings.generated.resources.add_or_reauthenticate_account
@@ -113,7 +113,7 @@ fun AccountSwitchingItem(
                     modifier = Modifier
                         .settingsItemClip()
                         .clickable(onClick = state::toggleExpansion),
-                    paneMovableElementSharedTransitionScope = paneScaffoldState,
+                    paneTransitionScope = paneScaffoldState,
                     animatedVisibilityScope = this,
                     accountSwitchState = state,
                     onAddAccountClick = onAddAccountClick,
@@ -135,7 +135,7 @@ fun AccountSwitchingItem(
 
 @Composable
 private fun MultiSessionLayout(
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier,
     accountSwitchState: AccountSwitchState,
@@ -159,14 +159,14 @@ private fun MultiSessionLayout(
             }
         }
         val expandButtonContent = remember {
-            movableContentWithReceiverOf<MovableElementSharedTransitionScope, AccountSwitchState> { state ->
+            movableContentWithReceiverOf<PaneTransitionScope, AccountSwitchState> { state ->
                 ExpandButton(
                     accountSwitchState = state,
                 )
             }
         }
         val sessionSummariesContent = remember {
-            movableContentWithReceiverOf<MovableElementSharedTransitionScope, AccountSwitchState, AnimatedVisibilityScope> { state, scope ->
+            movableContentWithReceiverOf<PaneTransitionScope, AccountSwitchState, AnimatedVisibilityScope> { state, scope ->
                 SessionSummaries(
                     animatedVisibilityScope = scope,
                     accountSwitchState = state,
@@ -175,7 +175,7 @@ private fun MultiSessionLayout(
                 )
             }
         }
-        with(paneMovableElementSharedTransitionScope) {
+        with(paneTransitionScope) {
             Box(
                 modifier = Modifier
                     .animateBounds(this)
@@ -214,12 +214,12 @@ private fun MultiSessionLayout(
 }
 
 @Composable
-private fun MovableElementSharedTransitionScope.CollapsedSummaries(
+private fun PaneTransitionScope.CollapsedSummaries(
     animatedVisibilityScope: AnimatedVisibilityScope,
     accountSwitchState: AccountSwitchState,
     settingsItemRow: @Composable (Modifier) -> Unit,
-    expandButtonContent: @Composable MovableElementSharedTransitionScope.(AccountSwitchState) -> Unit,
-    sessionSummariesContent: @Composable MovableElementSharedTransitionScope.(AccountSwitchState, AnimatedVisibilityScope) -> Unit,
+    expandButtonContent: @Composable PaneTransitionScope.(AccountSwitchState) -> Unit,
+    sessionSummariesContent: @Composable PaneTransitionScope.(AccountSwitchState, AnimatedVisibilityScope) -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -251,12 +251,12 @@ private fun MovableElementSharedTransitionScope.CollapsedSummaries(
 }
 
 @Composable
-private fun MovableElementSharedTransitionScope.ExpandedSummaries(
+private fun PaneTransitionScope.ExpandedSummaries(
     animatedVisibilityScope: AnimatedVisibilityScope,
     accountSwitchState: AccountSwitchState,
     settingsItemRow: @Composable (Modifier) -> Unit,
-    expandButtonContent: @Composable MovableElementSharedTransitionScope.(AccountSwitchState) -> Unit,
-    sessionSummariesContent: @Composable MovableElementSharedTransitionScope.(AccountSwitchState, AnimatedVisibilityScope) -> Unit,
+    expandButtonContent: @Composable PaneTransitionScope.(AccountSwitchState) -> Unit,
+    sessionSummariesContent: @Composable PaneTransitionScope.(AccountSwitchState, AnimatedVisibilityScope) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -290,7 +290,7 @@ private fun MovableElementSharedTransitionScope.ExpandedSummaries(
 }
 
 @Composable
-private fun MovableElementSharedTransitionScope.ExpandButton(
+private fun PaneTransitionScope.ExpandButton(
     accountSwitchState: AccountSwitchState,
 ) {
     val rotation = animateFloatAsState(if (accountSwitchState.isExpanded) 180f else 0f)
@@ -308,7 +308,7 @@ private fun MovableElementSharedTransitionScope.ExpandButton(
 }
 
 @Composable
-private fun MovableElementSharedTransitionScope.SessionSummaries(
+private fun PaneTransitionScope.SessionSummaries(
     animatedVisibilityScope: AnimatedVisibilityScope,
     accountSwitchState: AccountSwitchState,
     onAccountSelected: (SessionSummary) -> Unit,

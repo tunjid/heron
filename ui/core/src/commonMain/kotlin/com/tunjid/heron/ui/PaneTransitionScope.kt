@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.ui
 
-import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
@@ -25,15 +24,18 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
+import com.tunjid.treenav.compose.PaneMovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.threepane.ThreePane
+import com.tunjid.treenav.strings.Route
 
-val MovableElementSharedTransitionScope.isPrimaryOrActive
+interface PaneTransitionScope : PaneMovableElementSharedTransitionScope<ThreePane, Route>
+
+val PaneTransitionScope.isPrimaryOrActive
     get() = paneState.pane == ThreePane.Primary || isActive
 
 // This should only be callable from this scope
 @Suppress("UnusedReceiverParameter")
-inline val MovableElementSharedTransitionScope.localOverlayClip: SharedTransitionScope.OverlayClip
+inline val PaneTransitionScope.localOverlayClip: SharedTransitionScope.OverlayClip
     @ReadOnlyComposable @Composable get() = LocalSharedElementOverlayClip.current
 
 val DefaultSharedElementOverlayClip = object : SharedTransitionScope.OverlayClip {
@@ -49,9 +51,4 @@ val DefaultSharedElementOverlayClip = object : SharedTransitionScope.OverlayClip
 
 val LocalSharedElementOverlayClip = staticCompositionLocalOf {
     DefaultSharedElementOverlayClip
-}
-
-interface LocalAnimations {
-    val sharedElementOverlayClip: SharedTransitionScope.OverlayClip
-    val paneAwareBoundsTransform: BoundsTransform
 }

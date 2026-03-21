@@ -22,13 +22,13 @@ import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.timeline.ui.PostAction
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
+import com.tunjid.heron.ui.PaneTransitionScope
 import kotlin.time.Instant
 
 @Composable
 fun ReplyRow(
     modifier: Modifier = Modifier,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     now: Instant,
     isRead: Boolean,
     showEngagementMetrics: Boolean,
@@ -40,7 +40,7 @@ fun ReplyRow(
 ) {
     NotificationPostScaffold(
         modifier = modifier,
-        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+        paneTransitionScope = paneTransitionScope,
         now = now,
         isRead = isRead,
         showEngagementMetrics = showEngagementMetrics,

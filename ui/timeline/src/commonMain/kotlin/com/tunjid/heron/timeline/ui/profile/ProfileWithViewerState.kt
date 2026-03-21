@@ -50,12 +50,12 @@ import com.tunjid.heron.timeline.utilities.LabelFlowRow
 import com.tunjid.heron.timeline.utilities.LabelIconSize
 import com.tunjid.heron.timeline.utilities.LabelText
 import com.tunjid.heron.ui.AttributionLayout
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.CommonStrings
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.ui.core.generated.resources.viewer_state_blocked
 import heron.ui.core.generated.resources.viewer_state_follows_you
@@ -65,14 +65,14 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun ProfileWithViewerState(
     modifier: Modifier,
-    movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     signedInProfileId: ProfileId?,
     profile: Profile,
     viewerState: ProfileViewerState?,
     profileSharedElementKey: (Profile) -> Any,
     onProfileClicked: (Profile) -> Unit,
     onViewerStateClicked: (ProfileViewerState?) -> Unit,
-) = with(movableElementSharedTransitionScope) {
+) = with(paneTransitionScope) {
     val profileClicked = {
         onProfileClicked(profile)
     }
@@ -96,7 +96,7 @@ fun ProfileWithViewerState(
                             )
                         }
                         .clickable(onClick = profileClicked),
-                    sharedContentState = with(movableElementSharedTransitionScope) {
+                    sharedContentState = with(paneTransitionScope) {
                         rememberSharedContentState(
                             key = profileSharedElementKey(profile),
                         )

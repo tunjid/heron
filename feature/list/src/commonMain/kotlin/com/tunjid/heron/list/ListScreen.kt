@@ -361,7 +361,7 @@ private fun ListMembers(
                     ProfileWithViewerState(
                         modifier = Modifier
                             .weight(1f),
-                        movableElementSharedTransitionScope = paneScaffoldState,
+                        paneTransitionScope = paneScaffoldState,
                         signedInProfileId = null,
                         profile = item.subject,
                         viewerState = item.viewerState,
@@ -611,7 +611,7 @@ private fun ListTimeline(
                             .threadedVideoPosition(
                                 state = videoStates.getOrCreateStateFor(item),
                             ),
-                        paneMovableElementSharedTransitionScope = paneScaffoldState,
+                        paneTransitionScope = paneScaffoldState,
                         presentationLookaheadScope = this@LookaheadScope,
                         now = now,
                         item = item,

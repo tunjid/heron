@@ -88,7 +88,7 @@ fun Title(
         when (currentTitle) {
             is Title.Created -> TimelineTitle(
                 modifier = Modifier,
-                movableElementSharedTransitionScope = paneScaffoldState,
+                paneTransitionScope = paneScaffoldState,
                 timeline = remember(currentTitle.feedGenerator) {
                     Timeline.Home.Feed.stub(currentTitle.feedGenerator)
                 },

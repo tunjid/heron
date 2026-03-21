@@ -239,7 +239,7 @@ internal fun SearchScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(top = 16.dp),
-                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                paneTransitionScope = paneScaffoldState,
                 results = state.autoCompletedProfiles,
                 onProfileClicked = onProfileClicked,
                 onViewerStateClicked = onViewerStateClicked,

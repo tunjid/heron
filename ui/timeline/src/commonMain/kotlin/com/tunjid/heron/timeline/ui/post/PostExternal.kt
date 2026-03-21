@@ -41,8 +41,8 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.post.feature.FeatureContainer
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 
 @Composable
 internal fun PostExternal(
@@ -51,9 +51,9 @@ internal fun PostExternal(
     sharedElementPrefix: String,
     presentation: Timeline.Presentation,
     isBlurred: Boolean,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     onClick: () -> Unit,
-) = with(paneMovableElementSharedTransitionScope) {
+) = with(paneTransitionScope) {
     val isGif = feature.isGif()
     FeatureContainer(
         modifier = Modifier,

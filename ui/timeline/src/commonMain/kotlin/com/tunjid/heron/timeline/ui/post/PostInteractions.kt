@@ -94,6 +94,7 @@ import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.icon
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.opportunisticallyChecks
 import com.tunjid.heron.timeline.ui.post.PostInteractionButton.Companion.stringResource
 import com.tunjid.heron.timeline.utilities.format
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens.BookmarkBlue
 import com.tunjid.heron.ui.UiTokens.LikeRed
 import com.tunjid.heron.ui.UiTokens.RepostGreen
@@ -104,7 +105,6 @@ import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.ModalBottomSheet
 import com.tunjid.heron.ui.sheets.BottomSheetScope.Companion.rememberBottomSheetState
 import com.tunjid.heron.ui.sheets.BottomSheetState
 import com.tunjid.heron.ui.text.CommonStrings
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.core.generated.resources.cancel
 import heron.ui.core.generated.resources.sign_in
 import heron.ui.timeline.generated.resources.Res
@@ -123,7 +123,7 @@ fun PostInteractions(
     sharedElementPrefix: String,
     showEngagementMetrics: Boolean,
     presentation: Timeline.Presentation,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     modifier: Modifier = Modifier,
     onInteraction: (PostAction.Options) -> Unit,
 ) {
@@ -139,7 +139,7 @@ fun PostInteractions(
             showEngagementMetrics = showEngagementMetrics,
             iconSize = animateDpAsState(presentation.actionIconSize).value,
             orientation = Orientation.Horizontal,
-            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+            paneTransitionScope = paneTransitionScope,
             onInteraction = onInteraction,
             prefixContent = spacer@{ button ->
                 if (button != PostInteractionButton.MoreOptions) return@spacer
@@ -156,7 +156,7 @@ fun MediaPostInteractions(
     post: Post,
     sharedElementPrefix: String,
     showEngagementMetrics: Boolean,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     modifier: Modifier = Modifier,
     onInteraction: (PostAction.Options) -> Unit,
 ) {
@@ -172,7 +172,7 @@ fun MediaPostInteractions(
             showEngagementMetrics = showEngagementMetrics,
             iconSize = 40.dp,
             orientation = Orientation.Vertical,
-            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+            paneTransitionScope = paneTransitionScope,
             onInteraction = onInteraction,
         )
     }
@@ -186,10 +186,10 @@ private inline fun PostInteractionsButtons(
     showEngagementMetrics: Boolean,
     iconSize: Dp,
     orientation: Orientation,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     crossinline onInteraction: (PostAction.Options) -> Unit,
     crossinline prefixContent: @Composable (PostInteractionButton) -> Unit = {},
-) = with(paneMovableElementSharedTransitionScope) {
+) = with(paneTransitionScope) {
     interactionButtons.forEach { button ->
         key("$button-prefix") {
             prefixContent(button)

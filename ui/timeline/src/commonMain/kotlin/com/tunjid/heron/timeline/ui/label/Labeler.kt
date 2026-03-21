@@ -28,21 +28,21 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.LabelerCollectionShape
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.orDefault
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.RecordLayout
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.timeline.generated.resources.labeling_service_by
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun Labeler(
     modifier: Modifier = Modifier,
-    movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     sharedElementPrefix: String,
     labeler: Labeler,
-) = with(movableElementSharedTransitionScope) {
+) = with(paneTransitionScope) {
     RecordLayout(
         modifier = modifier,
-        movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+        paneTransitionScope = paneTransitionScope,
         title = labeler.creator.displayName ?: "",
         subtitle = stringResource(
             heron.ui.timeline.generated.resources.Res.string.labeling_service_by,

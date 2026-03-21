@@ -44,15 +44,15 @@ import com.tunjid.heron.timeline.ui.post.feature.EmptyPost
 import com.tunjid.heron.timeline.ui.post.feature.LoadingPost
 import com.tunjid.heron.timeline.utilities.authorMuted
 import com.tunjid.heron.timeline.utilities.createdAt
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import kotlin.time.Instant
 
 @Composable
 fun TimelineItem(
     modifier: Modifier = Modifier,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     presentationLookaheadScope: LookaheadScope,
     now: Instant,
     item: TimelineItem,
@@ -106,7 +106,7 @@ fun TimelineItem(
                     is TimelineItem.Threaded if presentation == Timeline.Presentation.Text.WithEmbed -> ThreadedPost(
                         modifier = Modifier
                             .fillMaxWidth(),
-                        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                        paneTransitionScope = paneTransitionScope,
                         presentationLookaheadScope = presentationLookaheadScope,
                         item = item,
                         sharedElementPrefix = sharedElementPrefix,
@@ -118,7 +118,7 @@ fun TimelineItem(
                     else -> Post(
                         modifier = Modifier
                             .fillMaxWidth(),
-                        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                        paneTransitionScope = paneTransitionScope,
                         presentationLookaheadScope = presentationLookaheadScope,
                         hasMutedWords = item.isMuted && !item.post.authorMuted,
                         now = now,

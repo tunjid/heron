@@ -78,11 +78,11 @@ import com.tunjid.heron.timeline.utilities.forEach
 import com.tunjid.heron.timeline.utilities.icon
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.AttributionLayout
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.CommonStrings
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.ui.core.generated.resources.post_author_label
 import heron.ui.timeline.generated.resources.Res
@@ -93,7 +93,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun Post(
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     presentationLookaheadScope: LookaheadScope,
     modifier: Modifier = Modifier,
     now: Instant,
@@ -123,7 +123,7 @@ internal fun Post(
         )
         val postData = rememberUpdatedPostData(
             postActions = postActions,
-            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+            paneTransitionScope = paneTransitionScope,
             presentationLookaheadScope = presentationLookaheadScope,
             post = post,
             threadGate = threadGate,
@@ -181,7 +181,7 @@ internal fun Post(
 @Composable
 private fun AttributionContent(
     data: PostData,
-) = with(data.paneMovableElementSharedTransitionScope) {
+) = with(data.paneTransitionScope) {
     when (data.presentation) {
         Timeline.Presentation.Text.WithEmbed,
         Timeline.Presentation.Media.Expanded,
@@ -241,7 +241,7 @@ private fun AttributionContent(
                     author = data.post.author,
                     postId = data.post.cid,
                     sharedElementPrefix = data.sharedElementPrefix,
-                    paneMovableElementSharedTransitionScope = this,
+                    paneTransitionScope = this,
                     onPostClicked = {
                         data.postActions.onPostAction(
                             PostAction.OfPost(
@@ -272,7 +272,7 @@ private fun AttributionContent(
 @Composable
 private fun LabelContent(
     data: PostData,
-) = with(data.paneMovableElementSharedTransitionScope) {
+) = with(data.paneTransitionScope) {
     when (data.presentation) {
         Timeline.Presentation.Text.WithEmbed,
         Timeline.Presentation.Media.Expanded,
@@ -357,14 +357,14 @@ private fun LabelContent(
 @Composable
 private fun TextContent(
     data: PostData,
-) = with(data.paneMovableElementSharedTransitionScope) {
+) = with(data.paneTransitionScope) {
     when (data.presentation) {
         Timeline.Presentation.Text.WithEmbed,
         Timeline.Presentation.Media.Expanded,
         -> PostText(
             post = data.post,
             sharedElementPrefix = data.sharedElementPrefix,
-            paneMovableElementSharedTransitionScope = this,
+            paneTransitionScope = this,
             modifier = Modifier
                 .zIndex(TextContentZIndex)
                 .contentPresentationPadding(
@@ -435,7 +435,7 @@ private fun EmbedContent(
         appliedLabels = data.appliedLabels,
         presentation = data.presentation,
         sharedElementPrefix = data.sharedElementPrefix,
-        paneMovableElementSharedTransitionScope = data.paneMovableElementSharedTransitionScope,
+        paneTransitionScope = data.paneTransitionScope,
         onUnblurClicked = {
             data.hasClickedThroughSensitiveMedia = true
         },
@@ -490,7 +490,7 @@ private fun ActionsContent(
             sharedElementPrefix = data.sharedElementPrefix,
             presentation = data.presentation,
             showEngagementMetrics = data.showEngagementMetrics,
-            paneMovableElementSharedTransitionScope = data.paneMovableElementSharedTransitionScope,
+            paneTransitionScope = data.paneTransitionScope,
             modifier = Modifier
                 .contentPresentationPadding(
                     content = PostContent.Actions,
@@ -661,7 +661,7 @@ private fun Embed?.asPostContent() = when (this) {
 @Composable
 private fun rememberUpdatedPostData(
     postActions: PostActions,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     presentationLookaheadScope: LookaheadScope,
     post: Post,
     threadGate: ThreadGate?,
@@ -686,7 +686,7 @@ private fun rememberUpdatedPostData(
         restore = { (hasClickedThroughMutedWords, hasClickedThroughSensitiveMedia) ->
             PostData(
                 postActions = postActions,
-                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                paneTransitionScope = paneTransitionScope,
                 presentationLookaheadScope = presentationLookaheadScope,
                 post = post,
                 threadGate = threadGate,
@@ -708,7 +708,7 @@ private fun rememberUpdatedPostData(
 ) {
     PostData(
         postActions = postActions,
-        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+        paneTransitionScope = paneTransitionScope,
         presentationLookaheadScope = presentationLookaheadScope,
         post = post,
         threadGate = threadGate,
@@ -726,7 +726,7 @@ private fun rememberUpdatedPostData(
 }.also {
     if (it.presentation != presentation) it.presentationChanged = true
     it.postActions = postActions
-    it.paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope
+    it.paneTransitionScope = paneTransitionScope
     it.presentationLookaheadScope = presentationLookaheadScope
     it.post = post
     it.threadGate = threadGate
@@ -745,7 +745,7 @@ private fun rememberUpdatedPostData(
 @Stable
 private class PostData(
     postActions: PostActions,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     presentationLookaheadScope: LookaheadScope,
     post: Post,
     threadGate: ThreadGate?,
@@ -763,8 +763,8 @@ private class PostData(
     hasClickedThroughSensitiveMedia: Boolean = false,
 ) {
     var postActions by mutableStateOf(postActions)
-    var paneMovableElementSharedTransitionScope by mutableStateOf(
-        paneMovableElementSharedTransitionScope,
+    var paneTransitionScope by mutableStateOf(
+        paneTransitionScope,
     )
     var presentationLookaheadScope by mutableStateOf(presentationLookaheadScope)
     var post by mutableStateOf(post)

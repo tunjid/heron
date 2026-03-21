@@ -30,7 +30,7 @@ import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.timeline.ui.TimeDelta
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
+import com.tunjid.heron.ui.PaneTransitionScope
 import kotlin.time.Instant
 
 @Composable
@@ -40,10 +40,10 @@ fun PostHeadline(
     author: Profile,
     postId: PostId,
     sharedElementPrefix: String,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     onPostClicked: () -> Unit,
     onAuthorClicked: () -> Unit,
-) = with(paneMovableElementSharedTransitionScope) {
+) = with(paneTransitionScope) {
     Column {
         val primaryText = author.displayName ?: author.handle.id
         val secondaryText = author.handle.id.takeUnless { it == primaryText }

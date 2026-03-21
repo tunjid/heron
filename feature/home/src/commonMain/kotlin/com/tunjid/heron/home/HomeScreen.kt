@@ -468,7 +468,7 @@ private fun HomeTimeline(
                                 .threadedVideoPosition(
                                     state = videoStates.getOrCreateStateFor(item),
                                 ),
-                            paneMovableElementSharedTransitionScope = paneScaffoldState,
+                            paneTransitionScope = paneScaffoldState,
                             presentationLookaheadScope = this@LookaheadScope,
                             now = now,
                             item = item,

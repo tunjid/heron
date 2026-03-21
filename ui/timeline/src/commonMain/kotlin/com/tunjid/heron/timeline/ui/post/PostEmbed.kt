@@ -54,7 +54,7 @@ import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
 import com.tunjid.heron.timeline.ui.post.feature.UnknownPostPost
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.timeline.utilities.SensitiveContentBox
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
+import com.tunjid.heron.ui.PaneTransitionScope
 import kotlin.time.Instant
 
 @Composable
@@ -70,7 +70,7 @@ internal fun PostEmbed(
     blurIcon: ImageVector?,
     sharedElementPrefix: String,
     appliedLabels: AppliedLabels,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     onUnblurClicked: () -> Unit,
     onLinkTargetClicked: (Post, LinkTarget) -> Unit,
     onPostMediaClicked: (media: Embed.Media, index: Int, quote: Post?) -> Unit,
@@ -98,7 +98,7 @@ internal fun PostEmbed(
                     sharedElementPrefix = sharedElementPrefix,
                     presentation = presentation,
                     isBlurred = isBlurred,
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    paneTransitionScope = paneTransitionScope,
                     onClick = {
                         uriHandler.openUri(embed.uri.uri)
                     },
@@ -110,7 +110,7 @@ internal fun PostEmbed(
                     feature = embed,
                     postUri = postUri,
                     sharedElementPrefix = sharedElementPrefix,
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    paneTransitionScope = paneTransitionScope,
                     presentation = presentation,
                     isBlurred = isBlurred,
                     matchHeightConstraintsFirst = false,
@@ -125,7 +125,7 @@ internal fun PostEmbed(
                         .fillMaxWidth(),
                     video = embed,
                     postUri = postUri,
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    paneTransitionScope = paneTransitionScope,
                     sharedElementPrefix = sharedElementPrefix,
                     isBlurred = isBlurred,
                     matchHeightConstraintsFirst = false,
@@ -151,7 +151,7 @@ internal fun PostEmbed(
                                 quotingPostUri = postUri,
                             ),
                             isBlurred = appliedLabels.shouldBlurMedia,
-                            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                            paneTransitionScope = paneTransitionScope,
                             onLinkTargetClicked = onLinkTargetClicked,
                             onProfileClicked = onQuotedProfileClicked,
                             onPostMediaClicked = onPostMediaClicked,
@@ -165,7 +165,7 @@ internal fun PostEmbed(
                     ) {
                         FeedGenerator(
                             modifier = Modifier.padding(12.dp),
-                            movableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                            paneTransitionScope = paneTransitionScope,
                             sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
                                 quotingPostUri = postUri,
                             ),
@@ -179,7 +179,7 @@ internal fun PostEmbed(
                     ) {
                         FeedList(
                             modifier = Modifier.padding(12.dp),
-                            movableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                            paneTransitionScope = paneTransitionScope,
                             sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
                                 quotingPostUri = postUri,
                             ),
@@ -193,7 +193,7 @@ internal fun PostEmbed(
                     ) {
                         StarterPack(
                             modifier = Modifier.padding(12.dp),
-                            movableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                            paneTransitionScope = paneTransitionScope,
                             sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
                                 quotingPostUri = postUri,
                             ),
@@ -202,7 +202,7 @@ internal fun PostEmbed(
                     }
                     is Labeler -> Labeler(
                         modifier = Modifier.padding(12.dp),
-                        movableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                        paneTransitionScope = paneTransitionScope,
                         sharedElementPrefix = sharedElementPrefix.withQuotingPostUriPrefix(
                             quotingPostUri = postUri,
                         ),

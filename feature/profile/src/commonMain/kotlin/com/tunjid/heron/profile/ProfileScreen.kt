@@ -420,7 +420,7 @@ internal fun ProfileScreen(
                                                 )
                                             }
                                             .recordPadding(),
-                                        movableElementSharedTransitionScope = paneScaffoldState,
+                                        paneTransitionScope = paneScaffoldState,
                                         sharedElementPrefix = ProfileCollectionSharedElementPrefix,
                                         feedGenerator = feedGenerator,
                                         status = state.timelineRecordUrisToPinnedStatus.status(
@@ -457,7 +457,7 @@ internal fun ProfileScreen(
                                                 )
                                             }
                                             .recordPadding(),
-                                        movableElementSharedTransitionScope = paneScaffoldState,
+                                        paneTransitionScope = paneScaffoldState,
                                         sharedElementPrefix = ProfileCollectionSharedElementPrefix,
                                         starterPack = starterPack,
                                     )
@@ -487,7 +487,7 @@ internal fun ProfileScreen(
                                                 )
                                             }
                                             .recordPadding(),
-                                        movableElementSharedTransitionScope = paneScaffoldState,
+                                        paneTransitionScope = paneScaffoldState,
                                         sharedElementPrefix = ProfileCollectionSharedElementPrefix,
                                         list = list,
                                         status = state.timelineRecordUrisToPinnedStatus.status(list.uri),
@@ -1378,7 +1378,7 @@ private fun ProfileTimeline(
                             .threadedVideoPosition(
                                 state = videoStates.getOrCreateStateFor(item),
                             ),
-                        paneMovableElementSharedTransitionScope = paneScaffoldState,
+                        paneTransitionScope = paneScaffoldState,
                         presentationLookaheadScope = this@LookaheadScope,
                         now = now,
                         item = item,

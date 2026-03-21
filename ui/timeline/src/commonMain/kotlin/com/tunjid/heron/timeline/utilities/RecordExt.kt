@@ -53,8 +53,8 @@ import com.tunjid.heron.timeline.ui.label.Labeler
 import com.tunjid.heron.timeline.ui.list.FeedList
 import com.tunjid.heron.timeline.ui.list.StarterPack
 import com.tunjid.heron.timeline.ui.post.feature.QuotedPost
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import kotlin.time.Clock
 
 @Composable
@@ -62,7 +62,7 @@ fun EmbeddedRecord(
     modifier: Modifier = Modifier,
     record: Record.Embeddable,
     sharedElementPrefix: String,
-    movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     postActions: PostActions,
 ) {
     val now = remember { Clock.System.now() }
@@ -73,11 +73,11 @@ fun EmbeddedRecord(
             is Labeler -> Labeler(
                 modifier = NonPostRecordModifier,
                 sharedElementPrefix = sharedElementPrefix,
-                movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+                paneTransitionScope = paneTransitionScope,
                 labeler = record,
             )
             is Post -> QuotedPost(
-                paneMovableElementSharedTransitionScope = movableElementSharedTransitionScope,
+                paneTransitionScope = paneTransitionScope,
                 now = now,
                 quotedPost = record,
                 isBlurred = false,
@@ -123,7 +123,7 @@ fun EmbeddedRecord(
             is FeedGenerator -> FeedGenerator(
                 modifier = NonPostRecordModifier,
                 sharedElementPrefix = sharedElementPrefix,
-                movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+                paneTransitionScope = paneTransitionScope,
                 feedGenerator = record,
                 status = null,
                 onFeedGeneratorStatusUpdated = {},
@@ -131,7 +131,7 @@ fun EmbeddedRecord(
             is FeedList -> FeedList(
                 modifier = NonPostRecordModifier,
                 sharedElementPrefix = sharedElementPrefix,
-                movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+                paneTransitionScope = paneTransitionScope,
                 list = record,
                 status = null,
                 onListStatusUpdated = {},
@@ -139,7 +139,7 @@ fun EmbeddedRecord(
             is StarterPack -> StarterPack(
                 modifier = NonPostRecordModifier,
                 sharedElementPrefix = sharedElementPrefix,
-                movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+                paneTransitionScope = paneTransitionScope,
                 starterPack = record,
             )
         }

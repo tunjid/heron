@@ -59,15 +59,15 @@ import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun NotificationAggregateScaffold(
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     modifier: Modifier = Modifier,
     isRead: Boolean,
     notification: Notification,
@@ -104,7 +104,7 @@ fun NotificationAggregateScaffold(
                 }
             }
             val expandButton = remember {
-                movableContentWithReceiverOf<MovableElementSharedTransitionScope, Boolean> { expanded ->
+                movableContentWithReceiverOf<PaneTransitionScope, Boolean> { expanded ->
                     ExpandButton(
                         isExpanded = expanded,
                         onExpansionToggled = { isExpanded = it },
@@ -113,7 +113,7 @@ fun NotificationAggregateScaffold(
             }
             val items = remember {
                 movableContentWithReceiverOf<
-                    MovableElementSharedTransitionScope,
+                    PaneTransitionScope,
                     Boolean,
                     Notification,
                     List<Profile>,
@@ -127,7 +127,7 @@ fun NotificationAggregateScaffold(
                     )
                 }
             }
-            with(paneMovableElementSharedTransitionScope) {
+            with(paneTransitionScope) {
                 Box(
                     modifier = Modifier
                         .animateBounds(this)
@@ -156,7 +156,7 @@ fun NotificationAggregateScaffold(
             }
             Box(
                 modifier = Modifier.animateBounds(
-                    lookaheadScope = paneMovableElementSharedTransitionScope,
+                    lookaheadScope = paneTransitionScope,
                 ),
             ) {
                 content()
@@ -166,7 +166,7 @@ fun NotificationAggregateScaffold(
 }
 
 @Composable
-private fun MovableElementSharedTransitionScope.ExpandButton(
+private fun PaneTransitionScope.ExpandButton(
     isExpanded: Boolean,
     onExpansionToggled: (Boolean) -> Unit,
 ) {
@@ -190,7 +190,7 @@ private fun MovableElementSharedTransitionScope.ExpandButton(
 }
 
 @Composable
-private fun MovableElementSharedTransitionScope.ExpandableProfiles(
+private fun PaneTransitionScope.ExpandableProfiles(
     isExpanded: Boolean,
     notification: Notification,
     renderedProfiles: List<Profile>,

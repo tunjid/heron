@@ -37,13 +37,13 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.localOverlayClip
 import com.tunjid.heron.ui.modifiers.TrackingOverlayClip
 import com.tunjid.heron.ui.modifiers.ifNotNull
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.modifiers.trackOverlayClipBounds
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -55,7 +55,7 @@ internal fun PostImages(
     sharedElementPrefix: String,
     isBlurred: Boolean,
     matchHeightConstraintsFirst: Boolean,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     onImageClicked: (Int) -> Unit,
     presentation: Timeline.Presentation,
 ) {
@@ -82,7 +82,7 @@ internal fun PostImages(
             items = feature.images,
             key = { _, item -> item.thumb.uri },
             itemContent = { index, image ->
-                paneMovableElementSharedTransitionScope.UpdatedMovableStickySharedElementOf(
+                paneTransitionScope.UpdatedMovableStickySharedElementOf(
                     modifier = when (presentation) {
                         Timeline.Presentation.Text.WithEmbed -> when (feature.images.size) {
                             1 ->
@@ -116,8 +116,8 @@ internal fun PostImages(
                     }
                         .clip(shape)
                         .clickable { onImageClicked(index) },
-                    clipInOverlayDuringTransition = overlayClip ?: paneMovableElementSharedTransitionScope.localOverlayClip,
-                    sharedContentState = with(paneMovableElementSharedTransitionScope) {
+                    clipInOverlayDuringTransition = overlayClip ?: paneTransitionScope.localOverlayClip,
+                    sharedContentState = with(paneTransitionScope) {
                         rememberSharedContentState(
                             key = image.sharedElementKey(
                                 prefix = sharedElementPrefix,
