@@ -197,6 +197,16 @@ compose.desktop {
             packageName = "com.tunjid.heron"
             // Remove hyphenated suffixes if present
             packageVersion = scmVersion.version.split("-").first()
+
+            macOS {
+                iconFile.set(project.file("src/desktopMain/resources/icon.icns"))
+            }
+            windows {
+                iconFile.set(project.file("src/desktopMain/resources/icon.ico"))
+            }
+            linux {
+                iconFile.set(project.file("src/desktopMain/resources/icon.png"))
+            }
         }
     }
 }
