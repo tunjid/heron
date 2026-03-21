@@ -18,7 +18,7 @@ package com.tunjid.heron.data.platform
 
 import platform.UIKit.UIDevice
 
-class IOSPlatform : Platform {
+class IOSPlatform internal constructor() : Platform {
     override val name: String =
         UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
 }
