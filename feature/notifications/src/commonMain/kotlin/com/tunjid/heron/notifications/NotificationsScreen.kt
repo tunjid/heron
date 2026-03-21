@@ -309,7 +309,7 @@ internal fun NotificationsScreen(
                         when (val notification = item.notification) {
                             is Notification.Followed -> FollowRow(
                                 modifier = itemModifier,
-                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                paneTransitionScope = paneScaffoldState,
                                 now = now,
                                 isRead = item.isRead,
                                 notification = notification,
@@ -319,7 +319,7 @@ internal fun NotificationsScreen(
 
                             is Notification.JoinedStarterPack -> JoinedStarterPackRow(
                                 modifier = itemModifier,
-                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                paneTransitionScope = paneScaffoldState,
                                 now = now,
                                 isRead = item.isRead,
                                 notification = notification,
@@ -329,7 +329,7 @@ internal fun NotificationsScreen(
 
                             is Notification.Liked -> LikeRow(
                                 modifier = itemModifier,
-                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                paneTransitionScope = paneScaffoldState,
                                 now = now,
                                 isRead = item.isRead,
                                 notification = notification,
@@ -340,7 +340,7 @@ internal fun NotificationsScreen(
 
                             is Notification.Mentioned -> MentionRow(
                                 modifier = itemModifier,
-                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                paneTransitionScope = paneScaffoldState,
                                 now = now,
                                 isRead = item.isRead,
                                 showEngagementMetrics = showEngagementMetrics,
@@ -353,7 +353,7 @@ internal fun NotificationsScreen(
 
                             is Notification.Quoted -> QuoteRow(
                                 modifier = itemModifier,
-                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                paneTransitionScope = paneScaffoldState,
                                 now = now,
                                 isRead = item.isRead,
                                 showEngagementMetrics = showEngagementMetrics,
@@ -366,7 +366,7 @@ internal fun NotificationsScreen(
 
                             is Notification.RepliedTo -> ReplyRow(
                                 modifier = itemModifier,
-                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                paneTransitionScope = paneScaffoldState,
                                 now = now,
                                 isRead = item.isRead,
                                 showEngagementMetrics = showEngagementMetrics,
@@ -379,7 +379,7 @@ internal fun NotificationsScreen(
 
                             is Notification.Reposted -> RepostRow(
                                 modifier = itemModifier,
-                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                paneTransitionScope = paneScaffoldState,
                                 now = now,
                                 isRead = item.isRead,
                                 notification = notification,
@@ -391,7 +391,7 @@ internal fun NotificationsScreen(
                             is Notification.Unknown -> Unit
                             is Notification.Unverified -> ProfileVerificationRow(
                                 modifier = itemModifier,
-                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                paneTransitionScope = paneScaffoldState,
                                 now = now,
                                 isRead = item.isRead,
                                 isVerified = false,
@@ -401,7 +401,7 @@ internal fun NotificationsScreen(
 
                             is Notification.Verified -> ProfileVerificationRow(
                                 modifier = itemModifier,
-                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                paneTransitionScope = paneScaffoldState,
                                 now = now,
                                 isRead = item.isRead,
                                 isVerified = true,
@@ -410,7 +410,7 @@ internal fun NotificationsScreen(
                             )
                             is Notification.SubscribedPost -> SubscribedRow(
                                 modifier = itemModifier,
-                                paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                paneTransitionScope = paneScaffoldState,
                                 now = now,
                                 isRead = item.isRead,
                                 notification = notification,

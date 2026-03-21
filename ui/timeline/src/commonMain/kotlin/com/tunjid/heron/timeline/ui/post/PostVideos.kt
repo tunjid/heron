@@ -62,9 +62,9 @@ import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.formatVideoDuration
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.isPrimaryOrActive
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.mute_video
@@ -83,7 +83,7 @@ internal fun PostVideo(
     isBlurred: Boolean,
     matchHeightConstraintsFirst: Boolean,
     presentation: Timeline.Presentation,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     onClicked: () -> Unit,
 ) {
     val videoPlayerController = LocalVideoPlayerController.current
@@ -114,13 +114,13 @@ internal fun PostVideo(
                 videoPlayerController.play(videoId = video.playlist.uri)
                 onClicked()
             }
-        if (!paneMovableElementSharedTransitionScope.isPrimaryOrActive) VideoStill(
+        if (!paneTransitionScope.isPrimaryOrActive) VideoStill(
             modifier = videoModifier,
             state = videoPlayerState,
         )
-        else paneMovableElementSharedTransitionScope.UpdatedMovableStickySharedElementOf(
+        else paneTransitionScope.UpdatedMovableStickySharedElementOf(
             modifier = videoModifier,
-            sharedContentState = with(paneMovableElementSharedTransitionScope) {
+            sharedContentState = with(paneTransitionScope) {
                 rememberSharedContentState(
                     key = video.sharedElementKey(
                         prefix = sharedElementPrefix,

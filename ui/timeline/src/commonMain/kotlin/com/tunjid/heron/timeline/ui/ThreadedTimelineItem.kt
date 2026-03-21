@@ -53,9 +53,9 @@ import com.tunjid.heron.timeline.ui.post.Post
 import com.tunjid.heron.timeline.ui.post.threadtraversal.ThreadedVideoPositionState.Companion.childThreadNode
 import com.tunjid.heron.timeline.utilities.authorMuted
 import com.tunjid.heron.timeline.utilities.createdAt
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.modifiers.ifTrue
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.see_more_posts
 import heron.ui.timeline.generated.resources.show_more
@@ -99,7 +99,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun ThreadedPost(
     modifier: Modifier = Modifier,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     presentationLookaheadScope: LookaheadScope,
     item: TimelineItem.Threaded,
     sharedElementPrefix: String,
@@ -145,7 +145,7 @@ internal fun ThreadedPost(
                         .fillMaxWidth()
                         .padding(start = depth * IndentPerDepth)
                         .animateBounds(presentationLookaheadScope),
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    paneTransitionScope = paneTransitionScope,
                     presentationLookaheadScope = presentationLookaheadScope,
                     hasMutedWords = node.isMuted && !node.post.authorMuted,
                     now = now,

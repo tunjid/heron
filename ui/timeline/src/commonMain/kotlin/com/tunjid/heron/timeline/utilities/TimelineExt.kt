@@ -51,11 +51,11 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
 import com.tunjid.heron.timeline.ui.withQuotingPostUriPrefix
 import com.tunjid.heron.ui.ItemSelection
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.subtitleSharedElementKey
 import com.tunjid.heron.ui.titleSharedElementKey
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.feed_by
 import heron.ui.timeline.generated.resources.likes
@@ -90,12 +90,12 @@ fun Timeline.displayName() = when (this) {
 @Composable
 fun TimelineTitle(
     modifier: Modifier = Modifier,
-    movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     timeline: Timeline?,
     sharedElementPrefix: String?,
     hasUpdates: Boolean,
     onPresentationSelected: (Timeline, Timeline.Presentation) -> Unit,
-) = with(movableElementSharedTransitionScope) {
+) = with(paneTransitionScope) {
     if (timeline != null) Row(
         modifier = modifier
             .padding(

@@ -102,7 +102,7 @@ fun PaneScaffoldState.UserInput(
                         .weight(1f),
                     record = record,
                     sharedElementPrefix = SharedRecordPrefix,
-                    movableElementSharedTransitionScope = this@UserInput,
+                    paneTransitionScope = this@UserInput,
                     postActions = PostActions.NoOp,
                 )
                 FilledTonalIconButton(

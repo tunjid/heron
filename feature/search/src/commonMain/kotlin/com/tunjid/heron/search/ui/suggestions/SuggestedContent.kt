@@ -158,7 +158,7 @@ internal fun SuggestedContent(
                         }
                         .padding(horizontal = 16.dp)
                         .animateItem(),
-                    movableElementSharedTransitionScope = paneScaffoldState,
+                    paneTransitionScope = paneScaffoldState,
                     signedInProfileId = null,
                     profile = profileWithViewerState.profile,
                     viewerState = profileWithViewerState.viewerState,
@@ -193,7 +193,7 @@ internal fun SuggestedContent(
                         .fillParentMaxWidth()
                         .padding(horizontal = 16.dp)
                         .animateItem(),
-                    movableElementSharedTransitionScope = paneScaffoldState,
+                    paneTransitionScope = paneScaffoldState,
                     starterPackWithMembers = starterPackWithMember,
                     onListMemberClicked = onListMemberClicked,
                 )
@@ -226,7 +226,7 @@ internal fun SuggestedContent(
                             )
                         }
                         .animateItem(),
-                    movableElementSharedTransitionScope = paneScaffoldState,
+                    paneTransitionScope = paneScaffoldState,
                     sharedElementPrefix = SuggestedFeedsSharedElementPrefix,
                     feedGenerator = feedGenerator,
                     status = when (timelineRecordUrisToPinnedStatus[feedGenerator.uri]) {

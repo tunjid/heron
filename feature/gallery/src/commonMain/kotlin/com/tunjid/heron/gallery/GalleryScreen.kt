@@ -457,7 +457,7 @@ private fun HorizontalItems(
                                     windowSize = windowSize,
                                     aspectRatio = media.video,
                                 ),
-                            paneMovableElementSharedTransitionScope = paneScaffoldState,
+                            paneTransitionScope = paneScaffoldState,
                             item = media,
                             sharedElementPrefix = item.sharedElementPrefix,
                             postUri = item.post.uri,

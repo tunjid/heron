@@ -48,8 +48,8 @@ import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.search.ui.searchresults.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.OverlappingAvatarRow
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.feature.search.generated.resources.Res
 import heron.feature.search.generated.resources.by_creator
@@ -64,10 +64,10 @@ data class SuggestedStarterPack(
 @Composable
 fun SuggestedStarterPack(
     modifier: Modifier = Modifier,
-    movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     starterPackWithMembers: SuggestedStarterPack,
     onListMemberClicked: (ListMember) -> Unit,
-) = with(movableElementSharedTransitionScope) {
+) = with(paneTransitionScope) {
     OutlinedCard(
         modifier = modifier,
         content = {
@@ -102,7 +102,7 @@ fun SuggestedStarterPack(
                                     .fillMaxWidth()
                                     .aspectRatio(1f)
                                     .clickable { onListMemberClicked(listMember) },
-                                sharedContentState = with(movableElementSharedTransitionScope) {
+                                sharedContentState = with(paneTransitionScope) {
                                     rememberSharedContentState(
                                         key = listMember.avatarSharedElementKey(),
                                     )

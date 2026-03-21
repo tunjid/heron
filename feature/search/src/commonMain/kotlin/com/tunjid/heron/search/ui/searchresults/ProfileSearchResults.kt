@@ -46,16 +46,16 @@ import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.ui.profile.ProfileViewerState
 import com.tunjid.heron.ui.AttributionLayout
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.tiler.compose.PivotedTilingEffect
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 
 @Composable
 internal fun AutoCompleteProfileSearchResults(
-    paneMovableElementSharedTransitionScope: PaneScaffoldState,
+    paneTransitionScope: PaneScaffoldState,
     modifier: Modifier = Modifier,
     results: List<SearchResult.OfProfile>,
     onProfileClicked: (Profile, String) -> Unit,
@@ -67,7 +67,7 @@ internal fun AutoCompleteProfileSearchResults(
         contentPadding = bottomNavAndInsetPaddingValues(
             top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
             horizontal = 16.dp,
-            isCompact = paneMovableElementSharedTransitionScope.prefersCompactBottomNav,
+            isCompact = paneTransitionScope.prefersCompactBottomNav,
         ),
     ) {
         items(
@@ -75,7 +75,7 @@ internal fun AutoCompleteProfileSearchResults(
             key = { it.profileWithViewerState.profile.did.id },
             itemContent = { result ->
                 ProfileSearchResult(
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    paneTransitionScope = paneTransitionScope,
                     result = result,
                     sharedElementPrefix = AutoCompleteProfilesSharedElementPrefix,
                     onProfileClicked = onProfileClicked,
@@ -111,7 +111,7 @@ internal fun ProfileSearchResults(
             key = { it.profileWithViewerState.profile.did.id },
             itemContent = { result ->
                 ProfileSearchResult(
-                    paneMovableElementSharedTransitionScope = paneScaffoldState,
+                    paneTransitionScope = paneScaffoldState,
                     result = result,
                     sharedElementPrefix = state.sharedElementPrefix,
                     onProfileClicked = onProfileClicked,
@@ -137,12 +137,12 @@ internal fun ProfileSearchResults(
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ProfileSearchResult(
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     result: SearchResult.OfProfile,
     sharedElementPrefix: String,
     onProfileClicked: (Profile, String) -> Unit,
     onViewerStateClicked: (SearchResult.OfProfile) -> Unit,
-) = with(paneMovableElementSharedTransitionScope) {
+) = with(paneTransitionScope) {
     AttributionLayout(
         modifier = Modifier
             .clickable {
@@ -161,7 +161,7 @@ private fun ProfileSearchResult(
                             sharedElementPrefix,
                         )
                     },
-                sharedContentState = with(paneMovableElementSharedTransitionScope) {
+                sharedContentState = with(paneTransitionScope) {
                     rememberSharedContentState(
                         key = result.profileWithViewerState
                             .profile

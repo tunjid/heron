@@ -269,7 +269,7 @@ private fun LazyListScope.subscribedLabelersSection(
                             horizontal = 16.dp,
                             vertical = 8.dp,
                         ),
-                    movableElementSharedTransitionScope = paneScaffoldState,
+                    paneTransitionScope = paneScaffoldState,
                     sharedElementPrefix = Moderation,
                     labeler = labeler,
                 )

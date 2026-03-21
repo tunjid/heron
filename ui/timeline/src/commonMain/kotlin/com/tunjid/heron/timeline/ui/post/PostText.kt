@@ -32,19 +32,19 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.ExternalEmbed
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Post
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 
 @Composable
 fun PostText(
     post: Post,
     sharedElementPrefix: String,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     maxLines: Int = Int.MAX_VALUE,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     onLinkTargetClicked: (Post, LinkTarget) -> Unit,
-) = with(paneMovableElementSharedTransitionScope) {
+) = with(paneTransitionScope) {
     val maybeExternalLink = (post.embed as? ExternalEmbed)?.uri?.uri
     val text = post.record
         ?.text

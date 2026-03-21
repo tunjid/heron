@@ -469,7 +469,7 @@ private fun MessageRecord(
             .widthIn(max = 200.dp),
         record = record,
         sharedElementPrefix = item.id,
-        movableElementSharedTransitionScope = paneScaffoldState,
+        paneTransitionScope = paneScaffoldState,
         postActions = remember(item.id, actions) {
             PostActions { action ->
                 when (action) {

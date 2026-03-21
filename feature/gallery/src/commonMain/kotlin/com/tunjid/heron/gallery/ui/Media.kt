@@ -129,7 +129,7 @@ internal fun GalleryImage(
 @Composable
 internal fun GalleryVideo(
     modifier: Modifier = Modifier,
-    paneMovableElementSharedTransitionScope: PaneScaffoldState,
+    paneTransitionScope: PaneScaffoldState,
     item: GalleryItem.Media.Video,
     postUri: PostUri,
     sharedElementPrefix: String,
@@ -140,13 +140,13 @@ internal fun GalleryVideo(
         thumbnail = item.video.thumbnail?.uri,
         shape = RoundedPolygonShape.Rectangle,
     )
-    if (!paneMovableElementSharedTransitionScope.isPrimaryOrActive) VideoStill(
+    if (!paneTransitionScope.isPrimaryOrActive) VideoStill(
         modifier = modifier,
         state = videoPlayerState,
     )
-    else paneMovableElementSharedTransitionScope.UpdatedMovableStickySharedElementOf(
+    else paneTransitionScope.UpdatedMovableStickySharedElementOf(
         modifier = modifier,
-        sharedContentState = with(paneMovableElementSharedTransitionScope) {
+        sharedContentState = with(paneTransitionScope) {
             rememberSharedContentState(
                 key = item.video.sharedElementKey(
                     prefix = sharedElementPrefix,
@@ -291,7 +291,7 @@ internal fun MediaPoster(
 
     ProfileWithViewerState(
         modifier = modifier,
-        movableElementSharedTransitionScope = paneScaffoldState,
+        paneTransitionScope = paneScaffoldState,
         signedInProfileId = signedInProfileId,
         profile = post.author,
         viewerState = viewerState,
@@ -319,7 +319,7 @@ private fun GalleryText(
         modifier = modifier,
         post = post,
         sharedElementPrefix = UnmatchedPrefix,
-        paneMovableElementSharedTransitionScope = paneScaffoldState,
+        paneTransitionScope = paneScaffoldState,
         maxLines = 3,
         onClick = onClick,
         onLinkTargetClicked = onLinkTargetClicked,
@@ -340,7 +340,7 @@ internal fun MediaInteractions(
         post = post,
         sharedElementPrefix = UnmatchedPrefix,
         showEngagementMetrics = showEngagementMetrics,
-        paneMovableElementSharedTransitionScope = paneScaffoldState,
+        paneTransitionScope = paneScaffoldState,
         modifier = modifier,
         onInteraction = onPostInteraction,
     )

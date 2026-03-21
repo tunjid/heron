@@ -51,6 +51,7 @@ import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.message
 import com.tunjid.treenav.compose.PaneScope
@@ -67,7 +68,8 @@ class PaneScaffoldState internal constructor(
     internal val appState: AppState,
     internal val splitPaneState: SplitPaneState,
     paneMovableElementSharedTransitionScope: ThreePaneMovableElementSharedTransitionScope<Route>,
-) : ThreePaneMovableElementSharedTransitionScope<Route> by paneMovableElementSharedTransitionScope {
+) : PaneTransitionScope,
+    ThreePaneMovableElementSharedTransitionScope<Route> by paneMovableElementSharedTransitionScope {
 
     internal val snackbarHostState = SnackbarHostState()
 

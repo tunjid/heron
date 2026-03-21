@@ -33,8 +33,8 @@ import com.tunjid.heron.timeline.utilities.TimelineStatusSelection
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.timeline.utilities.orDefault
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.RecordLayout
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.feed_by
 import heron.ui.timeline.generated.resources.liked_by
@@ -43,15 +43,15 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun FeedGenerator(
     modifier: Modifier = Modifier,
-    movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     sharedElementPrefix: String,
     feedGenerator: FeedGenerator,
     status: Timeline.Home.Status?,
     onFeedGeneratorStatusUpdated: (Update.OfFeedGenerator) -> Unit,
-) = with(movableElementSharedTransitionScope) {
+) = with(paneTransitionScope) {
     RecordLayout(
         modifier = modifier,
-        movableElementSharedTransitionScope = movableElementSharedTransitionScope,
+        paneTransitionScope = paneTransitionScope,
         title = feedGenerator.displayName,
         subtitle = stringResource(
             Res.string.feed_by,

@@ -31,8 +31,8 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.timeline.ui.TimeDelta
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.text.CommonStrings
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.core.generated.resources.notifications_account_unverified
 import heron.ui.core.generated.resources.notifications_account_verified
 import heron.ui.core.generated.resources.notifications_joined_from_your_started_pack_description
@@ -42,7 +42,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun ProfileVerificationRow(
     modifier: Modifier = Modifier,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     now: Instant,
     isRead: Boolean,
     isVerified: Boolean,
@@ -50,7 +50,7 @@ fun ProfileVerificationRow(
     onProfileClicked: (Notification, Profile) -> Unit,
 ) {
     NotificationAggregateScaffold(
-        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+        paneTransitionScope = paneTransitionScope,
         modifier = modifier
             .clickable {
                 onProfileClicked(notification, notification.author)

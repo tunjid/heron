@@ -265,7 +265,7 @@ fun Comments(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .animateItem(),
-                                    paneMovableElementSharedTransitionScope = paneScaffoldState,
+                                    paneTransitionScope = paneScaffoldState,
                                     presentationLookaheadScope = this@LookaheadScope,
                                     now = now,
                                     item = item,
