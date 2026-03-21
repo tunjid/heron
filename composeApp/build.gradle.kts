@@ -129,6 +129,7 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.connectivity.http)
             implementation(libs.kotlinx.coroutines.swing)
+            implementation(libs.tink)
         }
         iosMain.dependencies {
             implementation(libs.connectivity.device)

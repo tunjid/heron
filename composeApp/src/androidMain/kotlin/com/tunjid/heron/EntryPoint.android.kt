@@ -20,6 +20,7 @@ import android.content.Context
 import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataBindingArgs
 import com.tunjid.heron.data.logging.AndroidLogger
+import com.tunjid.heron.data.repository.SavedStateEncryption
 import com.tunjid.heron.images.imageLoader
 import com.tunjid.heron.media.video.ExoplayerController
 import com.tunjid.heron.scaffold.notifications.AndroidNotifier
@@ -54,6 +55,7 @@ fun createAppState(context: Context): AppState =
                 connectivity = Connectivity(),
                 savedStatePath = context.savedStatePath(),
                 savedStateFileSystem = FileSystem.SYSTEM,
+                savedStateEncryption = SavedStateEncryption.None,
                 databaseBuilder = getDatabaseBuilder(context),
             )
         },

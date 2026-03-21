@@ -65,6 +65,18 @@ import okio.FileSystem
 import okio.Path
 import sh.christian.ozone.api.model.JsonContent
 
+interface SavedStateEncryption {
+    fun encrypt(data: ByteArray): ByteArray
+    fun decrypt(data: ByteArray): ByteArray
+
+    companion object {
+        val None = object : SavedStateEncryption {
+            override fun encrypt(data: ByteArray): ByteArray = data
+            override fun decrypt(data: ByteArray): ByteArray = data
+        }
+    }
+}
+
 @Serializable
 abstract class SavedState {
     abstract val auth: AuthTokens?
@@ -323,6 +335,7 @@ internal class DataStoreSavedStateDataSource(
     path: Path,
     fileSystem: FileSystem,
     protoBuf: ProtoBuf,
+    encryption: SavedStateEncryption,
     @AppMainScope
     appMainScope: CoroutineScope,
     @IODispatcher
@@ -334,7 +347,10 @@ internal class DataStoreSavedStateDataSource(
     private val dataStore: DataStore<VersionedSavedState> = DataStoreFactory.create(
         storage = OkioStorage(
             fileSystem = fileSystem,
-            serializer = VersionedSavedStateOkioSerializer(protoBuf),
+            serializer = VersionedSavedStateOkioSerializer(
+                protoBuf = protoBuf,
+                encryption = encryption,
+            ),
             producePath = { path },
         ),
         scope = scope,
