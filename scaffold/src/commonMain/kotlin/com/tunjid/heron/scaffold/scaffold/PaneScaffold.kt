@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -115,9 +114,6 @@ class PaneScaffoldState internal constructor(
             ThreePane.Overlay -> false
             null -> false
         }
-
-    internal val hasSiblings
-        get() = splitPaneState.filteredPaneOrder.size > 1
 
     internal val backPreviewState = BackPreviewState(
         minScale = 0.75f,
@@ -215,7 +211,7 @@ fun PaneScaffoldState.PaneScaffold(
             navigationRail()
         },
         content = {
-            Scaffold(
+            NonSubComposingScaffold(
                 modifier = when {
                     splitPaneState.paneAnchorState.hasInteractions -> Modifier
                     else -> when (dismissBehavior) {

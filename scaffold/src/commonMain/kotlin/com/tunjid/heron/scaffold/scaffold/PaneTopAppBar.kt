@@ -18,6 +18,7 @@ package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -42,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -69,6 +71,11 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
     val isLive = signedInProfile?.status?.isLive == true
     TopAppBar(
         modifier = modifier
+            .constrainedSizePlacement(
+                orientation = Orientation.Horizontal,
+                minSize = splitPaneState.minPaneWidth,
+                atStart = true,
+            )
             .rootAppBarBackground(
                 backgroundColor = MaterialTheme.colorScheme.surface,
                 progress = transparencyFactor,
@@ -168,6 +175,11 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
 ) {
     TopAppBar(
         modifier = modifier
+            .constrainedSizePlacement(
+                orientation = Orientation.Horizontal,
+                minSize = splitPaneState.minPaneWidth,
+                atStart = true,
+            )
             .renderInSharedTransitionScopeOverlay(
                 zIndexInOverlay = UiTokens.appBarSharedElementZIndex,
                 renderInOverlay = {
