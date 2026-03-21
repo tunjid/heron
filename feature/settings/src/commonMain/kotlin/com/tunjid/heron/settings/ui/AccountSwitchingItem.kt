@@ -178,7 +178,10 @@ private fun MultiSessionLayout(
         with(paneTransitionScope) {
             Box(
                 modifier = Modifier
-                    .animateBounds(lookaheadScope = this, boundsTransform = resizeAwareBoundsTransform)
+                    .animateBounds(
+                        lookaheadScope = this,
+                        boundsTransform = childBoundsTransform,
+                    )
                     .clip(ExpandableAvatarRowShape),
             ) {
                 if (accountSwitchState.isExpanded) ExpandedSummaries(
@@ -298,7 +301,7 @@ private fun PaneTransitionScope.ExpandButton(
         modifier = Modifier
             .animateBounds(
                 lookaheadScope = this@ExpandButton,
-                boundsTransform = resizeAwareBoundsTransform,
+                boundsTransform = childBoundsTransform,
             )
             .graphicsLayer {
                 rotationZ = rotation.value
@@ -318,7 +321,10 @@ private fun PaneTransitionScope.SessionSummaries(
     accountSwitchState.sessionSummaries.forEach { summary ->
         Row(
             modifier = Modifier
-                .animateBounds(lookaheadScope = this@SessionSummaries, boundsTransform = resizeAwareBoundsTransform)
+                .animateBounds(
+                    lookaheadScope = this@SessionSummaries,
+                    boundsTransform = childBoundsTransform,
+                )
                 .settingsItemClip()
                 .clickable {
                     if (accountSwitchState.isExpanded) onAccountSelected(summary)

@@ -77,8 +77,11 @@ class PaneScaffoldState internal constructor(
 ) : PaneTransitionScope,
     ThreePaneMovableElementSharedTransitionScope<Route> by paneMovableElementSharedTransitionScope {
 
-    override val resizeAwareBoundsTransform: BoundsTransform = { _, _ ->
-        BoundsTransformSpring.skipIf { splitPaneState.paneAnchorState.hasInteractions }
+    override val childBoundsTransform: BoundsTransform = { _, _ ->
+        BoundsTransformSpring.skipIf {
+            appState.dismissBehavior is AppState.DismissBehavior.Gesture.DragToPop ||
+                splitPaneState.paneAnchorState.hasInteractions
+        }
     }
 
     internal val snackbarHostState = SnackbarHostState()
@@ -229,7 +232,10 @@ fun PaneScaffoldState.PaneScaffold(
                     else -> when (dismissBehavior) {
                         AppState.DismissBehavior.None,
                         AppState.DismissBehavior.Gesture.DragToPop,
-                        -> Modifier.animateBounds(lookaheadScope = this, boundsTransform = resizeAwareBoundsTransform)
+                        -> Modifier.animateBounds(
+                            lookaheadScope = this,
+                            boundsTransform = childBoundsTransform,
+                        )
 
                         AppState.DismissBehavior.Gesture.SlideToPop,
                         AppState.DismissBehavior.Gesture.ScaleToPop,

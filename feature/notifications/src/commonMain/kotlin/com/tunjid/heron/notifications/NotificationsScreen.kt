@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.notifications
 
-import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -304,7 +303,7 @@ internal fun NotificationsScreen(
                             .padding(horizontal = 8.dp)
                             .animateBounds(
                                 lookaheadScope = paneScaffoldState,
-                                boundsTransform = paneScaffoldState.resizeAwareBoundsTransform,
+                                boundsTransform = paneScaffoldState.childBoundsTransform,
                             )
                             .animateItem()
 

@@ -30,7 +30,7 @@ import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.strings.Route
 
 interface PaneTransitionScope : PaneMovableElementSharedTransitionScope<ThreePane, Route> {
-    val resizeAwareBoundsTransform: BoundsTransform
+    val childBoundsTransform: BoundsTransform
 }
 
 val PaneTransitionScope.isPrimaryOrActive

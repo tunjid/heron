@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.settings
 
-import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -117,7 +116,10 @@ private fun MainSection(
         if (state.switchPhase == AccountSwitchPhase.IDLE) {
             ContentAndMediaItem(
                 modifier = Modifier
-                    .animateBounds(lookaheadScope = paneScaffoldState, boundsTransform = paneScaffoldState.resizeAwareBoundsTransform),
+                    .animateBounds(
+                        lookaheadScope = paneScaffoldState,
+                        boundsTransform = paneScaffoldState.childBoundsTransform,
+                    ),
                 signedInProfilePreferences = signedInProfilePreferences,
                 setRefreshHomeTimelineOnLaunch = {
                     actions(Action.SetRefreshHomeTimelinesOnLaunch(it))
@@ -137,19 +139,28 @@ private fun MainSection(
             )
             ModerationItem(
                 modifier = Modifier
-                    .animateBounds(lookaheadScope = paneScaffoldState, boundsTransform = paneScaffoldState.resizeAwareBoundsTransform),
+                    .animateBounds(
+                        lookaheadScope = paneScaffoldState,
+                        boundsTransform = paneScaffoldState.childBoundsTransform,
+                    ),
             ) {
                 actions(Action.Navigate.To(moderationDestination()))
             }
             NotificationSettingsItem(
                 modifier = Modifier
-                    .animateBounds(lookaheadScope = paneScaffoldState, boundsTransform = paneScaffoldState.resizeAwareBoundsTransform),
+                    .animateBounds(
+                        lookaheadScope = paneScaffoldState,
+                        boundsTransform = paneScaffoldState.childBoundsTransform,
+                    ),
             ) {
                 actions(Action.Navigate.To(notificationSettingsDestination()))
             }
             AppearanceItem(
                 modifier = Modifier
-                    .animateBounds(lookaheadScope = paneScaffoldState, boundsTransform = paneScaffoldState.resizeAwareBoundsTransform),
+                    .animateBounds(
+                        lookaheadScope = paneScaffoldState,
+                        boundsTransform = paneScaffoldState.childBoundsTransform,
+                    ),
                 signedInProfilePreferences = signedInProfilePreferences,
                 setDynamicThemingPreference = {
                     actions(Action.SetDynamicThemingPreference(it))
@@ -163,16 +174,25 @@ private fun MainSection(
             )
             FeedbackItem(
                 modifier = Modifier
-                    .animateBounds(lookaheadScope = paneScaffoldState, boundsTransform = paneScaffoldState.resizeAwareBoundsTransform),
+                    .animateBounds(
+                        lookaheadScope = paneScaffoldState,
+                        boundsTransform = paneScaffoldState.childBoundsTransform,
+                    ),
             )
             OpenSourceLibrariesItem(
                 modifier = Modifier
-                    .animateBounds(lookaheadScope = paneScaffoldState, boundsTransform = paneScaffoldState.resizeAwareBoundsTransform),
+                    .animateBounds(
+                        lookaheadScope = paneScaffoldState,
+                        boundsTransform = paneScaffoldState.childBoundsTransform,
+                    ),
                 libraries = state.openSourceLibraries,
             )
             SignOutItem(
                 modifier = Modifier
-                    .animateBounds(lookaheadScope = paneScaffoldState, boundsTransform = paneScaffoldState.resizeAwareBoundsTransform),
+                    .animateBounds(
+                        lookaheadScope = paneScaffoldState,
+                        boundsTransform = paneScaffoldState.childBoundsTransform,
+                    ),
             ) {
                 actions(Action.SignOut)
             }

@@ -373,7 +373,7 @@ private fun TextContent(
                 )
                 .animateBounds(
                     lookaheadScope = data.presentationLookaheadScope,
-                    boundsTransform = data.paneTransitionScope.resizeAwareBoundsTransform,
+                    boundsTransform = data.paneTransitionScope.childBoundsTransform,
                 )
                 .fillMaxWidth(),
             maxLines = when (data.presentation) {
@@ -423,6 +423,7 @@ private fun EmbedContent(
             )
             .animateBounds(
                 lookaheadScope = data.presentationLookaheadScope,
+                boundsTransform = data.paneTransitionScope.childBoundsTransform,
             )
             .fillMaxWidth(),
         now = data.now,
@@ -499,7 +500,7 @@ private fun ActionsContent(
                 )
                 .animateBounds(
                     lookaheadScope = data.presentationLookaheadScope,
-                    boundsTransform = data.paneTransitionScope.resizeAwareBoundsTransform,
+                    boundsTransform = data.paneTransitionScope.childBoundsTransform,
                 ),
             onInteraction = data.postActions::onPostAction,
         )

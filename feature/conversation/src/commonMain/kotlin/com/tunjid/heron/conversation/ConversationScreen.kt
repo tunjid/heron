@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.conversation
 
-import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -441,7 +440,10 @@ private fun ChatItemBubble(
                 key(reaction.value) {
                     Text(
                         modifier = Modifier
-                            .animateBounds(lookaheadScope = paneScaffoldState, boundsTransform = paneScaffoldState.resizeAwareBoundsTransform),
+                            .animateBounds(
+                                lookaheadScope = paneScaffoldState,
+                                boundsTransform = paneScaffoldState.childBoundsTransform,
+                            ),
                         text = reaction.value,
                         fontSize = 12.sp,
                     )
