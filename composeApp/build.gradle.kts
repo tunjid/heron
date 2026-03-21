@@ -197,6 +197,17 @@ compose.desktop {
             packageName = "com.tunjid.heron"
             // Remove hyphenated suffixes if present
             packageVersion = scmVersion.version.split("-").first()
+
+            val resourcesDir = project.file("src/desktopMain/resources")
+            macOS {
+                iconFile.set(resourcesDir.resolve("icon.icns"))
+            }
+            windows {
+                iconFile.set(resourcesDir.resolve("icon.ico"))
+            }
+            linux {
+                iconFile.set(resourcesDir.resolve("icon.png"))
+            }
         }
     }
 }

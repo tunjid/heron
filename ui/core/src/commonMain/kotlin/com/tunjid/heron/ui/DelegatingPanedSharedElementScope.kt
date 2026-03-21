@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.ui
 
+import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
@@ -48,4 +49,9 @@ val DefaultSharedElementOverlayClip = object : SharedTransitionScope.OverlayClip
 
 val LocalSharedElementOverlayClip = staticCompositionLocalOf {
     DefaultSharedElementOverlayClip
+}
+
+interface LocalAnimations {
+    val sharedElementOverlayClip: SharedTransitionScope.OverlayClip
+    val paneAwareBoundsTransform: BoundsTransform
 }
