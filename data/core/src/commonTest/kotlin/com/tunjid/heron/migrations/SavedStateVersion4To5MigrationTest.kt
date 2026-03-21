@@ -20,6 +20,7 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.datastore.migrations.SavedStateVersion4
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
 import com.tunjid.heron.data.repository.SavedState
+import com.tunjid.heron.data.repository.SavedStateEncryption
 import com.tunjid.heron.fakes.sampleNotifications
 import com.tunjid.heron.fakes.samplePreferences
 import com.tunjid.heron.helper.SavedStateSerializationHelper
@@ -35,7 +36,10 @@ import okio.Buffer
 class SavedStateVersion4To5MigrationTest {
 
     private val proto = SavedStateSerializationHelper.proto
-    private val serializer = VersionedSavedStateOkioSerializer(proto)
+    private val serializer = VersionedSavedStateOkioSerializer(
+        protoBuf = proto,
+        encryption = SavedStateEncryption.None,
+    )
 
     @Test
     fun migrateV4ToV5_withAuth() = runBlocking {

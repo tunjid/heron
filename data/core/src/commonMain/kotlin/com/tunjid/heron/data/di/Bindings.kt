@@ -72,6 +72,7 @@ import com.tunjid.heron.data.repository.PostRepository
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
 import com.tunjid.heron.data.repository.SavedStateDataSource
+import com.tunjid.heron.data.repository.SavedStateEncryption
 import com.tunjid.heron.data.repository.SearchRepository
 import com.tunjid.heron.data.repository.TimelineRepository
 import com.tunjid.heron.data.repository.UserDataRepository
@@ -126,6 +127,7 @@ class DataBindingArgs(
     val connectivity: Connectivity,
     val savedStatePath: Path,
     val savedStateFileSystem: FileSystem,
+    val savedStateEncryption: SavedStateEncryption,
     val databaseBuilder: RoomDatabase.Builder<AppDatabase>,
 )
 
@@ -160,6 +162,10 @@ class DataBindings(
     @SingleIn(AppScope::class)
     @Provides
     fun provideSavedStateFileSystem(): FileSystem = args.savedStateFileSystem
+
+    @SingleIn(AppScope::class)
+    @Provides
+    fun provideSavedStateEncryption(): SavedStateEncryption = args.savedStateEncryption
 
     @SingleIn(AppScope::class)
     @Provides
