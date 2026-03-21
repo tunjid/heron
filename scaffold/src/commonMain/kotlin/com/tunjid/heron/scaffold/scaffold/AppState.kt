@@ -69,6 +69,7 @@ import com.tunjid.treenav.compose.multiPaneDisplayBackstack
 import com.tunjid.treenav.compose.panedecorators.PaneDecorator
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.compose.threepane.threePaneEntry
+import com.tunjid.treenav.current
 import com.tunjid.treenav.pop
 import com.tunjid.treenav.requireCurrent
 import com.tunjid.treenav.strings.PathPattern
@@ -106,6 +107,7 @@ class AppState(
 
     var showPlatformSplashScreen by mutableStateOf(true)
         internal set
+
     internal val navItems by derivedStateOf {
         currentNavItems()
     }
@@ -113,6 +115,9 @@ class AppState(
     internal val navigation by multiStackNavState
 
     internal var dismissBehavior by mutableStateOf<DismissBehavior>(DismissBehavior.None)
+        private set
+
+    internal var lastPaneAnchor by mutableStateOf(PaneAnchor.Half)
         private set
 
     internal val movableNavigationBar =
@@ -247,6 +252,14 @@ class AppState(
             navState.pop()
         }
 
+    internal fun onPaneAnchorChanged(
+        anchor: PaneAnchor,
+        destinationId: String,
+    ) {
+        if (destinationId != navigation.current?.id || anchor == PaneAnchor.Full) return
+        lastPaneAnchor = anchor
+    }
+
     fun onDeepLink(uri: GenericUri) =
         navigationStateHolder.accept(deepLinkTo(uri))
 
@@ -315,12 +328,16 @@ private fun AppState.splashVisibilityNavEntryDecorator(): NavEntryDecorator<Rout
 internal class SplitPaneState(
     paneNavigationState: () -> PaneNavigationState<ThreePane, Route>,
     density: Density,
+    initialAnchor: PaneAnchor,
     private val windowWidth: State<Dp>,
     private val hasCompatBottomNav: () -> Boolean,
 ) {
     internal var density by mutableStateOf(density)
 
-    internal val paneAnchorState = PaneAnchorState()
+    internal val paneAnchorState = PaneAnchorState(
+        initialMaxWidth = with(density) { windowWidth.value.roundToPx() },
+        initialAnchor = initialAnchor,
+    )
 
     internal val filteredPaneOrder by derivedStateOf {
         PaneRenderOrder.filter { paneNavigationState().destinationIn(it) != null }

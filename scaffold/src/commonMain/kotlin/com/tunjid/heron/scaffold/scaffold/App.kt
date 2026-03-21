@@ -22,11 +22,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
@@ -108,6 +110,7 @@ fun App(
                                 paneNavigationState = { this.paneNavigationState },
                                 density = density,
                                 windowWidth = windowWidth,
+                                initialAnchor = appState.lastPaneAnchor,
                                 hasCompatBottomNav = {
                                     appState.prefersCompactBottomNav
                                 },
@@ -135,6 +138,16 @@ fun App(
                                     Destination(splitPaneState.filteredPaneOrder[index])
                                 },
                             )
+                        }
+                        LaunchedEffect(Unit) {
+                            snapshotFlow {
+                                splitPaneState.paneAnchorState.currentPaneAnchor
+                            }.collect { anchor ->
+                                appState.onPaneAnchorChanged(
+                                    anchor = anchor,
+                                    destinationId = paneNavigationState.destinationId,
+                                )
+                            }
                         }
                     }
                 }
