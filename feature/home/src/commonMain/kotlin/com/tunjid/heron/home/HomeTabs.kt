@@ -209,7 +209,7 @@ internal fun HomeTabs(
                             color = MaterialTheme.colorScheme.surface.copy(
                                 alpha = ExpandableTabsState.BackgroundAlpha,
                             ),
-                            shape = ExpandedTabsShape,
+                            shape = ExpandableTabsState.Shape,
                         )
                         .expandable(expandableTabsState),
                     saveRequestId = saveRequestId,
@@ -786,11 +786,6 @@ private val ExpandedTabsContentEnterAnimation =
     )
 
 private val CollapsedTabShape = RoundedCornerShape(16.dp)
-
-private val ExpandedTabsShape = RoundedCornerShape(
-    bottomStart = 16.dp,
-    bottomEnd = 16.dp,
-)
 
 private val ChipHeight = 32.dp
 

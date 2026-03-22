@@ -28,6 +28,7 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -187,6 +188,8 @@ class ExpandableTabsState(
 
         val FloatAnimationSpec =
             animationSpec(visibilityThreshold = 0.05f)
+
+        val Shape = RoundedCornerShape(16.dp)
 
         val BackgroundBlurRadius = 60.dp
         const val BackgroundAlpha = 0.9f

@@ -43,7 +43,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.layout.onSizeChanged
@@ -171,7 +170,7 @@ internal fun HomeScreen(
         HorizontalPager(
             modifier = Modifier
                 .blur(
-                    shape = RectangleShape,
+                    shape = ExpandableTabsState.Shape,
                     clip = { true },
                     radius = ExpandableTabsState::BackgroundBlurRadius,
                     progress = expandableTabsState::expansionProgress,
