@@ -192,11 +192,20 @@ compose.desktop {
     application {
         mainClass = "com.tunjid.heron.MainKt"
 
+        buildTypes.release {
+            proguard {
+                version.set("7.8.0")
+                configurationFiles.from(project.file("compose-desktop.pro"))
+            }
+        }
+
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+
             packageName = "com.tunjid.heron"
             // Remove hyphenated suffixes if present
             packageVersion = scmVersion.version.split("-").first()
+            outputBaseDir.set(layout.buildDirectory.dir("release"))
 
             val resourcesDir = project.file("src/desktopMain/resources")
             macOS {
