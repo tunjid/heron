@@ -280,9 +280,6 @@ internal fun HomeTabs(
                     .weight(1f)
                     .animateContentSize(),
             )
-            val buttonColors = CardDefaults.elevatedCardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            )
             if (expandableTabsState.isPartiallyOrFullyExpanded) {
                 val expandedOptionsModifier = remember {
                     Modifier
@@ -295,14 +292,14 @@ internal fun HomeTabs(
                 AppBarButton(
                     modifier = expandedOptionsModifier,
                     onClick = onSettingsIconClick,
-                    colors = buttonColors,
+                    colors = TabButtonColors,
                     icon = Icons.Rounded.Settings,
                     iconDescription = stringResource(Res.string.settings),
                 )
                 AppBarButton(
                     modifier = expandedOptionsModifier,
                     onClick = onBookmarkIconClick,
-                    colors = buttonColors,
+                    colors = TabButtonColors,
                     icon = Icons.Rounded.Bookmark,
                     iconDescription = stringResource(Res.string.bookmark),
                 )
@@ -316,7 +313,7 @@ internal fun HomeTabs(
                     .graphicsLayer {
                         rotationZ = expandableTabsState.expansionProgress * 180f
                     },
-                colors = buttonColors,
+                colors = TabButtonColors,
                 icon = Icons.Rounded.ArrowDropDown,
                 iconDescription = stringResource(
                     if (expandableTabsState.isPartiallyOrFullyExpanded) Res.string.collapse_timeline_settings
@@ -728,9 +725,7 @@ private fun TimelinePresentationSelector(
         TimelinePresentationSelector(
             selected = timeline.presentation,
             available = timeline.supportedPresentations,
-            colors = CardDefaults.elevatedCardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            ),
+            colors = TabButtonColors,
             onPresentationSelected = { presentation ->
                 val index = timelines.indexOfFirst {
                     it.uri == currentTabUri
@@ -821,6 +816,12 @@ private val TabButtonPaddingAnimationSpec = tween<Dp>(
 private val CollapsedTabShape = RoundedCornerShape(16.dp)
 
 private val ChipHeight = 32.dp
+
+private val TabButtonColors
+    @Composable
+    get() = CardDefaults.elevatedCardColors(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+    )
 
 private const val TabsSharedElementZIndex = 1f
 private const val HomeTimelineButtonSharedElementZIndex = 2f
