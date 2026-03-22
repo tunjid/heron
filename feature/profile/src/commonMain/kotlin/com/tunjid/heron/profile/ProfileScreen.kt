@@ -184,6 +184,7 @@ import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.navigableLinkTargetHandler
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
@@ -879,7 +880,7 @@ private fun ProfileAvatar(
                     predicate = isLive,
                     block = Modifier::profileLiveAvatarBorder,
                 )
-                .clickable { onProfileAvatarClicked() },
+                .shapedClickable(CircleShape) { onProfileAvatarClicked() },
             state = remember(
                 key1 = profile.avatar?.uri,
                 key2 = profile.displayName ?: profile.handle,

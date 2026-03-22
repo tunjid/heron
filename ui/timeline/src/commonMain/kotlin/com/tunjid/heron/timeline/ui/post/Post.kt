@@ -17,7 +17,6 @@
 package com.tunjid.heron.timeline.ui.post
 
 import androidx.compose.animation.animateBounds
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -25,6 +24,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.VisibilityOff
@@ -81,6 +81,7 @@ import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
@@ -197,7 +198,7 @@ private fun AttributionContent(
                         modifier = Modifier
                             .size(UiTokens.avatarSize)
                             .clip(data.avatarShape)
-                            .clickable {
+                            .shapedClickable(CircleShape) {
                                 data.postActions.onPostAction(
                                     PostAction.OfProfile(
                                         profile = data.post.author,
