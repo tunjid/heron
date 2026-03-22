@@ -55,6 +55,7 @@ import com.tunjid.heron.profile.withProfileAvatarLiveSharedElementPrefix
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.platformStatusBars
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -130,7 +131,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                                         predicate = isLive,
                                         block = Modifier::profileLiveAvatarBorder,
                                     )
-                                    .clickable {
+                                    .shapedClickable(CircleShape) {
                                         onSignedInProfileClicked(
                                             profile,
                                             UiTokens.SignedInUserAvatarSharedElementKey,
