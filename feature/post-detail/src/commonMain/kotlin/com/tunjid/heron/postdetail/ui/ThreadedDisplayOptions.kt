@@ -1,5 +1,6 @@
 package com.tunjid.heron.postdetail.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -34,36 +35,47 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ThreadDisplayOptions(
+    modifier: Modifier = Modifier,
     order: TimelineItem.Threaded.Order?,
     viewMode: TimelineItem.Threaded.ViewMode,
     onOrderChanged: (TimelineItem.Threaded.Order) -> Unit,
     onViewModeChanged: (TimelineItem.Threaded.ViewMode) -> Unit,
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    AppBarButton(
-        icon = Icons.AutoMirrored.Rounded.Sort,
-        iconDescription = stringResource(CommonStrings.timeline_thread_order),
-        onClick = { expanded = true },
-    )
-    DropdownMenu(
-        expanded = expanded,
-        onDismissRequest = { expanded = false },
-        shape = RoundedCornerShape(12.dp),
-        tonalElevation = 6.dp,
-        modifier = Modifier
-            .padding(5.dp)
-            .widthIn(min = 200.dp),
+    Box(
+        modifier = modifier,
     ) {
-        TimelineViewMode(
-            replyViewMode = viewMode,
-            onViewModeChanged = onViewModeChanged,
+        var expanded by remember { mutableStateOf(false) }
+        AppBarButton(
+            icon = Icons.AutoMirrored.Rounded.Sort,
+            iconDescription = stringResource(CommonStrings.timeline_thread_order),
+            onClick = { expanded = true },
         )
-        order?.let {
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-            TimelineOrder(
-                order = it,
-                onOrderChanged = onOrderChanged,
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            shape = RoundedCornerShape(12.dp),
+            tonalElevation = 6.dp,
+            modifier = Modifier
+                .padding(5.dp)
+                .widthIn(min = 200.dp),
+        ) {
+            TimelineViewMode(
+                replyViewMode = viewMode,
+                onViewModeChanged = {
+                    expanded = false
+                    onViewModeChanged(it)
+                },
             )
+            order?.let { order ->
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                TimelineOrder(
+                    order = order,
+                    onOrderChanged = {
+                        expanded = false
+                        onOrderChanged(it)
+                    },
+                )
+            }
         }
     }
 }
