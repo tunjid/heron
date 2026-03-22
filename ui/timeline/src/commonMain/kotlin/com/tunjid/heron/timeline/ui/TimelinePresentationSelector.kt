@@ -26,6 +26,8 @@ import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.GridOn
 import androidx.compose.material.icons.rounded.Splitscreen
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -43,6 +45,7 @@ fun TimelinePresentationSelector(
     modifier: Modifier = Modifier,
     selected: Timeline.Presentation,
     available: List<Timeline.Presentation>,
+    colors: CardColors = CardDefaults.elevatedCardColors(),
     onPresentationSelected: (Timeline.Presentation) -> Unit,
 ) {
     AnimatedVisibility(
@@ -57,6 +60,7 @@ fun TimelinePresentationSelector(
             key = Timeline.Presentation::key,
             icon = Timeline.Presentation::icon,
             stringResource = Timeline.Presentation::textResource,
+            colors = colors,
             onItemSelected = onPresentationSelected,
         )
     }

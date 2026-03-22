@@ -46,6 +46,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -57,6 +58,7 @@ import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
@@ -66,6 +68,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -86,7 +89,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.times
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.sourceId
 import com.tunjid.heron.data.core.models.uri
@@ -139,6 +144,7 @@ internal fun HomeTabs(
     modifier: Modifier = Modifier,
     tabLayout: TabLayout,
     isSignedIn: Boolean,
+    isOffset: Boolean,
     currentTabUri: Uri?,
     saveRequestId: String?,
     timelines: List<Timeline.Home>,
@@ -235,11 +241,17 @@ internal fun HomeTabs(
                 )
             }
         }
+        val extraPadding by animateDpAsState(
+            targetValue = if (isOffset) 8.dp else 0.dp,
+            animationSpec = TabButtonPaddingAnimationSpec,
+        )
+
         if (isSignedIn) Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    horizontal = 8.dp,
+                    // Inset horizontally by 8 dp so it doesn't touch timeline cards
+                    horizontal = 8.dp + extraPadding,
                     vertical = 4.dp,
                 ),
             verticalAlignment = Alignment.CenterVertically,
@@ -253,7 +265,13 @@ internal fun HomeTabs(
             Text(
                 modifier = Modifier
                     .then(alphaModifier)
-                    .padding(horizontal = 8.dp),
+                    .padding(horizontal = 8.dp)
+                    .offset {
+                        IntOffset(
+                            x = -(expandableTabsState.expansionProgress * 8.dp).roundToPx(),
+                            y = 0,
+                        )
+                    },
                 text = stringResource(Res.string.timeline_preferences),
                 style = MaterialTheme.typography.titleMediumEmphasized,
             )
@@ -274,12 +292,14 @@ internal fun HomeTabs(
                 AppBarButton(
                     modifier = expandedOptionsModifier,
                     onClick = onSettingsIconClick,
+                    colors = TabButtonColors,
                     icon = Icons.Rounded.Settings,
                     iconDescription = stringResource(Res.string.settings),
                 )
                 AppBarButton(
                     modifier = expandedOptionsModifier,
                     onClick = onBookmarkIconClick,
+                    colors = TabButtonColors,
                     icon = Icons.Rounded.Bookmark,
                     iconDescription = stringResource(Res.string.bookmark),
                 )
@@ -293,6 +313,7 @@ internal fun HomeTabs(
                     .graphicsLayer {
                         rotationZ = expandableTabsState.expansionProgress * 180f
                     },
+                colors = TabButtonColors,
                 icon = Icons.Rounded.ArrowDropDown,
                 iconDescription = stringResource(
                     if (expandableTabsState.isPartiallyOrFullyExpanded) Res.string.collapse_timeline_settings
@@ -493,7 +514,9 @@ private fun CollapsedTabs(
                     size = size.copy(width = size.width * backgroundProgress.value),
                 )
             }
-            .padding(horizontal = 8.dp),
+            // 8 dp would align perfectly with the scrolling content.
+            // Inset it by 8 dp.
+            .padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -702,6 +725,7 @@ private fun TimelinePresentationSelector(
         TimelinePresentationSelector(
             selected = timeline.presentation,
             available = timeline.supportedPresentations,
+            colors = TabButtonColors,
             onPresentationSelected = { presentation ->
                 val index = timelines.indexOfFirst {
                     it.uri == currentTabUri
@@ -785,9 +809,19 @@ private val ExpandedTabsContentEnterAnimation =
         ),
     )
 
+private val TabButtonPaddingAnimationSpec = tween<Dp>(
+    durationMillis = 400,
+)
+
 private val CollapsedTabShape = RoundedCornerShape(16.dp)
 
 private val ChipHeight = 32.dp
+
+private val TabButtonColors
+    @Composable
+    get() = CardDefaults.elevatedCardColors(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+    )
 
 private const val TabsSharedElementZIndex = 1f
 private const val HomeTimelineButtonSharedElementZIndex = 2f

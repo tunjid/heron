@@ -18,6 +18,8 @@ package com.tunjid.heron.ui
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -34,11 +36,13 @@ fun AppBarButton(
     iconDescription: String,
     enabled: Boolean = true,
     tint: Color = MaterialTheme.colorScheme.primary,
+    colors: CardColors = CardDefaults.elevatedCardColors(),
     onClick: () -> Unit,
 ) {
     ElevatedCard(
         modifier = modifier,
         shape = CircleShape,
+        colors = colors,
     ) {
         IconButton(
             enabled = enabled,
