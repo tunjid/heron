@@ -51,6 +51,7 @@ import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.modifiers.rootShapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import kotlin.time.Instant
@@ -70,7 +71,10 @@ internal fun NotificationPostScaffold(
     onPostInteraction: (Notification.PostAssociated, PostAction.Options) -> Unit,
 ) {
     Column(
-        modifier = modifier,
+        modifier = modifier
+            .rootShapedClickable {
+                onPostClicked(notification)
+            },
     ) {
         PostAttribution(
             paneTransitionScope = paneTransitionScope,

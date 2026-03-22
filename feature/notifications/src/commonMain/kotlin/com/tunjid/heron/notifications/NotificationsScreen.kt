@@ -296,11 +296,13 @@ internal fun NotificationsScreen(
                                     if (item.isRead) 0.dp else 2.dp,
                                 ),
                             )
-                            .padding(vertical = 8.dp)
                             .fillMaxWidth(),
                     ) {
                         val itemModifier = Modifier
-                            .padding(horizontal = 8.dp)
+                            .padding(
+                                horizontal = 8.dp,
+                                vertical = 8.dp,
+                            )
                             .animateBounds(
                                 lookaheadScope = paneScaffoldState,
                                 boundsTransform = paneScaffoldState.childBoundsTransform,
