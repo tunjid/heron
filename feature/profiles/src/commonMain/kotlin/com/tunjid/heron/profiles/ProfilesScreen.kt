@@ -37,6 +37,7 @@ import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
+import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.tiler.compose.PivotedTilingEffect
 
 @Composable
@@ -56,7 +57,7 @@ internal fun ProfilesScreen(
             .paneClip(),
         state = listState,
         contentPadding = bottomNavAndInsetPaddingValues(
-            horizontal = 8.dp,
+            horizontal = 4.dp,
             isCompact = paneScaffoldState.prefersCompactBottomNav,
         ),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -66,28 +67,33 @@ internal fun ProfilesScreen(
             items = items,
             key = { it.profile.did.id },
             itemContent = { item ->
+                val onProfileClicked = { profile: Profile ->
+                    actions(
+                        Action.Navigate.To(
+                            profileDestination(
+                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                                profile = profile,
+                                avatarSharedElementKey = item
+                                    .profile
+                                    .profileWithRelationshipAvatarSharedElementKey(),
+                            ),
+                        ),
+                    )
+                }
                 ProfileWithViewerState(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .shapedClickable {
+                            onProfileClicked(item.profile)
+                        }
+                        .padding(horizontal = 4.dp)
                         .animateItem(),
                     paneTransitionScope = paneScaffoldState,
                     signedInProfileId = signedInProfileId,
                     profile = item.profile,
                     viewerState = item.viewerState,
                     profileSharedElementKey = Profile::profileWithRelationshipAvatarSharedElementKey,
-                    onProfileClicked = { profile ->
-                        actions(
-                            Action.Navigate.To(
-                                profileDestination(
-                                    referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                                    profile = profile,
-                                    avatarSharedElementKey = item
-                                        .profile
-                                        .profileWithRelationshipAvatarSharedElementKey(),
-                                ),
-                            ),
-                        )
-                    },
+                    onProfileClicked = onProfileClicked,
                     onViewerStateClicked = { viewerState ->
                         state.signedInProfileId?.let {
                             actions(
