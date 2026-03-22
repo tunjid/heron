@@ -28,22 +28,29 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
 import com.tunjid.heron.home.TabLayout
 import com.tunjid.heron.ui.UiTokens
+import kotlin.math.min
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class ExpandableTabsState(
+    private val scope: CoroutineScope,
     private val transitionState: SeekableTransitionState<Boolean>,
     val transition: Transition<Boolean>,
     maxOffset: Float,
@@ -65,6 +72,12 @@ class ExpandableTabsState(
 
     val isPartiallyOrFullyExpanded by derivedStateOf {
         expansionProgress > FullyCollapsed
+    }
+
+    fun collapse() {
+        scope.launch {
+            animateTo(false)
+        }
     }
 
     private suspend fun animateTo(isExpanded: Boolean) {
@@ -129,8 +142,14 @@ class ExpandableTabsState(
                 }
             }
 
+            val scope = rememberCoroutineScope()
             val state = remember(seekingState, transition) {
-                ExpandableTabsState(seekingState, transition, maxOffset)
+                ExpandableTabsState(
+                    scope = scope,
+                    transitionState = seekingState,
+                    transition = transition,
+                    maxOffset = maxOffset,
+                )
             }.also { it.updateAnchors(maxOffset) }
 
             LaunchedEffect(state) {
@@ -169,6 +188,11 @@ class ExpandableTabsState(
 
         val FloatAnimationSpec =
             animationSpec(visibilityThreshold = 0.05f)
+
+        val Shape = RoundedCornerShape(16.dp)
+
+        val BackgroundBlurRadius = 60.dp
+        const val BackgroundAlpha = 0.9f
     }
 }
 

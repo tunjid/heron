@@ -97,7 +97,6 @@ import com.tunjid.heron.home.ui.EditableTimelineState.Companion.timelineEditDrag
 import com.tunjid.heron.home.ui.EditableTimelineState.Companion.timelineEditDropTarget
 import com.tunjid.heron.home.ui.ExpandableTabsState
 import com.tunjid.heron.home.ui.ExpandableTabsState.Companion.expandable
-import com.tunjid.heron.home.ui.ExpandableTabsState.Companion.rememberExpandableTabsState
 import com.tunjid.heron.home.ui.JiggleBox
 import com.tunjid.heron.home.ui.shouldRenderAppBarButtonsInOverlay
 import com.tunjid.heron.images.AsyncImage
@@ -143,7 +142,8 @@ internal fun HomeTabs(
     currentTabUri: Uri?,
     saveRequestId: String?,
     timelines: List<Timeline.Home>,
-    sharedTransitionScope: PaneTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
+    expandableTabsState: ExpandableTabsState,
     sourceIdsToHasUpdates: Map<String, Boolean>,
     selectedTabIndex: () -> Float,
     onCollapsedTabSelected: (Int) -> Unit,
@@ -155,11 +155,7 @@ internal fun HomeTabs(
     onSettingsIconClick: () -> Unit,
     onBookmarkIconClick: () -> Unit,
     onCreateFeedClicked: () -> Unit,
-) = with(sharedTransitionScope) {
-    val expandableTabsState = rememberExpandableTabsState(
-        tabLayout = tabLayout,
-        onTabLayoutChanged = onLayoutChanged,
-    )
+) = with(paneTransitionScope) {
     val collapsedTabsState = rememberTabsState(
         tabs = remember(sourceIdsToHasUpdates, timelines) {
             timelines
@@ -210,8 +206,10 @@ internal fun HomeTabs(
                 if (isExpanding) ExpandedTabs(
                     modifier = Modifier
                         .background(
-                            color = MaterialTheme.colorScheme.surface,
-                            shape = ExpandedTabsShape,
+                            color = MaterialTheme.colorScheme.surface.copy(
+                                alpha = ExpandableTabsState.BackgroundAlpha,
+                            ),
+                            shape = ExpandableTabsState.Shape,
                         )
                         .expandable(expandableTabsState),
                     saveRequestId = saveRequestId,
@@ -788,11 +786,6 @@ private val ExpandedTabsContentEnterAnimation =
     )
 
 private val CollapsedTabShape = RoundedCornerShape(16.dp)
-
-private val ExpandedTabsShape = RoundedCornerShape(
-    bottomStart = 16.dp,
-    bottomEnd = 16.dp,
-)
 
 private val ChipHeight = 32.dp
 
