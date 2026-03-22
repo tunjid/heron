@@ -35,6 +35,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -223,6 +224,11 @@ internal fun HomeScreen(
             saveRequestId = state.timelinePreferenceSaveRequestId,
             currentTabUri = state.currentTabUri,
             isSignedIn = state.signedInProfile != null,
+            isOffset = remember {
+                derivedStateOf {
+                    tabsOffsetNestedScrollConnection.offset.y < 0
+                }
+            }.value,
             tabLayout = state.tabLayout,
             timelines = state.timelines,
             sourceIdsToHasUpdates = state.sourceIdsToHasUpdates,

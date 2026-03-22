@@ -30,6 +30,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -79,6 +81,7 @@ inline fun <T> ItemSelection(
     iconSize: Dp = 24.dp,
     selectedItem: T,
     availableItems: List<T>,
+    colors: CardColors = CardDefaults.elevatedCardColors(),
     crossinline key: T.() -> String,
     crossinline icon: T.() -> ImageVector,
     crossinline stringResource: T.() -> StringResource,
@@ -95,6 +98,7 @@ inline fun <T> ItemSelection(
         ElevatedCard(
             modifier = modifier,
             shape = CircleShape,
+            colors = colors,
         ) {
             Row(
                 modifier = Modifier

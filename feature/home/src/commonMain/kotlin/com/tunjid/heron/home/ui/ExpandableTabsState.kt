@@ -44,7 +44,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.home.TabLayout
 import com.tunjid.heron.ui.UiTokens
-import kotlin.math.min
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -189,7 +188,10 @@ class ExpandableTabsState(
         val FloatAnimationSpec =
             animationSpec(visibilityThreshold = 0.05f)
 
-        val Shape = RoundedCornerShape(16.dp)
+        val Shape = RoundedCornerShape(
+            bottomStart = 16.dp,
+            bottomEnd = 16.dp,
+        )
 
         val BackgroundBlurRadius = 60.dp
         const val BackgroundAlpha = 0.9f
