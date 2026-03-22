@@ -54,6 +54,7 @@ import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
@@ -84,7 +85,7 @@ fun ProfileWithViewerState(
         AttributionLayout(
             modifier = Modifier,
             avatar = {
-                UpdatedMovableStickySharedElementOf(
+                PaneStickySharedElement(
                     modifier = Modifier
                         .size(UiTokens.avatarSize)
                         .ifTrue(viewerState.isBlocked) {
@@ -95,22 +96,28 @@ fun ProfileWithViewerState(
                                 progress = ::BlockedContentBlurProgress,
                             )
                         }
-                        .clickable(onClick = profileClicked),
+                        .shapedClickable(
+                            shape = CircleShape,
+                            onClick = profileClicked,
+                        ),
                     sharedContentState = with(paneTransitionScope) {
                         rememberSharedContentState(
                             key = profileSharedElementKey(profile),
                         )
                     },
-                    state = remember(profile.avatar) {
-                        ImageArgs(
-                            url = profile.avatar?.uri,
-                            contentScale = ContentScale.Crop,
-                            contentDescription = profile.contentDescription,
-                            shape = RoundedPolygonShape.Circle,
+                    content = {
+                        AsyncImage(
+                            modifier = Modifier
+                                .fillParentAxisIfFixedOrWrap(),
+                            args = remember(profile.avatar) {
+                                ImageArgs(
+                                    url = profile.avatar?.uri,
+                                    contentScale = ContentScale.Crop,
+                                    contentDescription = profile.contentDescription,
+                                    shape = RoundedPolygonShape.Circle,
+                                )
+                            },
                         )
-                    },
-                    sharedElement = { state, modifier ->
-                        AsyncImage(state, modifier)
                     },
                 )
             },
