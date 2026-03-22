@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.notifications.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
@@ -32,6 +31,7 @@ import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.timeline.ui.TimeDelta
 import com.tunjid.heron.ui.PaneTransitionScope
+import com.tunjid.heron.ui.modifiers.rootShapedClickable
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.notifications_followed_you
 import heron.ui.core.generated.resources.notifications_followed_you_description
@@ -52,7 +52,7 @@ fun FollowRow(
     NotificationAggregateScaffold(
         paneTransitionScope = paneTransitionScope,
         modifier = modifier
-            .clickable {
+            .rootShapedClickable {
                 onProfileClicked(notification, notification.author)
             },
         isRead = isRead,

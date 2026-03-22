@@ -64,6 +64,7 @@ import com.tunjid.heron.ui.OverlappingAvatarRow
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import heron.feature.settings.generated.resources.Res
 import heron.feature.settings.generated.resources.add_another_account
@@ -88,8 +89,7 @@ fun AccountSwitchingItem(
                 title = stringResource(Res.string.add_another_account),
                 icon = Icons.Default.PersonAdd,
                 modifier = modifier
-                    .settingsItemClip()
-                    .clickable(onClick = onAddAccountClick)
+                    .shapedClickable(onClick = onAddAccountClick)
                     .settingsItemPaddingAndMinHeight(),
             )
         }
@@ -111,8 +111,7 @@ fun AccountSwitchingItem(
             ) { session ->
                 if (session == null) MultiSessionLayout(
                     modifier = Modifier
-                        .settingsItemClip()
-                        .clickable(onClick = state::toggleExpansion),
+                        .shapedClickable(onClick = state::toggleExpansion),
                     paneTransitionScope = paneScaffoldState,
                     animatedVisibilityScope = this,
                     accountSwitchState = state,
@@ -325,8 +324,7 @@ private fun PaneTransitionScope.SessionSummaries(
                     lookaheadScope = this@SessionSummaries,
                     boundsTransform = childBoundsTransform,
                 )
-                .settingsItemClip()
-                .clickable {
+                .shapedClickable {
                     if (accountSwitchState.isExpanded) onAccountSelected(summary)
                     else onExpansionToggled()
                 }
