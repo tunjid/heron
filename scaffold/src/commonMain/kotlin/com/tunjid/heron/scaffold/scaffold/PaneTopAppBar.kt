@@ -75,7 +75,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
             .constrainedSizePlacement(
                 orientation = Orientation.Horizontal,
                 minSize = splitPaneState.minPaneWidth,
-                atStart = true,
+                atStart = splitPaneState.filteredPaneOrder.firstOrNull() == paneState.pane,
             )
             .rootAppBarBackground(
                 backgroundColor = MaterialTheme.colorScheme.surface,
@@ -179,7 +179,7 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
             .constrainedSizePlacement(
                 orientation = Orientation.Horizontal,
                 minSize = splitPaneState.minPaneWidth,
-                atStart = true,
+                atStart = splitPaneState.filteredPaneOrder.firstOrNull() == paneState.pane,
             )
             .renderInSharedTransitionScopeOverlay(
                 zIndexInOverlay = UiTokens.appBarSharedElementZIndex,
