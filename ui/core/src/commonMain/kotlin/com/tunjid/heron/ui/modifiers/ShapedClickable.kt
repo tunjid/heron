@@ -46,7 +46,7 @@ fun Modifier.shapedClickable(
 fun Modifier.rootShapedClickable(
     shape: Shape = DefaultClipShape,
     onClick: () -> Unit,
-) = shapedClickable(
+) = Modifier.shapedClickable(
     shape = shape,
     onClick = onClick,
 )
