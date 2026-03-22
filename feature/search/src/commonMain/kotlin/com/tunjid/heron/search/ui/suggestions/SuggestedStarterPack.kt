@@ -18,7 +18,6 @@ package com.tunjid.heron.search.ui.suggestions
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -49,8 +48,8 @@ import com.tunjid.heron.search.ui.searchresults.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.ui.OverlappingAvatarRow
 import com.tunjid.heron.ui.PaneTransitionScope
+import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.feature.search.generated.resources.Res
 import heron.feature.search.generated.resources.by_creator
 import org.jetbrains.compose.resources.stringResource
@@ -96,26 +95,31 @@ fun SuggestedStarterPack(
                     }
                     else starterPackWithMembers.members.take(count)
                         .forEachIndexed { index, listMember ->
-                            UpdatedMovableStickySharedElementOf(
+                            PaneStickySharedElement(
                                 modifier = Modifier
                                     .zIndex((MaxAvatars - index).toFloat())
                                     .fillMaxWidth()
                                     .aspectRatio(1f)
-                                    .clickable { onListMemberClicked(listMember) },
+                                    .shapedClickable(CircleShape) {
+                                        onListMemberClicked(listMember)
+                                    },
                                 sharedContentState = with(paneTransitionScope) {
                                     rememberSharedContentState(
                                         key = listMember.avatarSharedElementKey(),
                                     )
                                 },
-                                state = remember(listMember.subject.avatar) {
-                                    ImageArgs(
-                                        url = listMember.subject.avatar?.uri,
-                                        contentScale = ContentScale.Crop,
-                                        shape = RoundedPolygonShape.Circle,
+                                content = {
+                                    AsyncImage(
+                                        modifier = Modifier
+                                            .fillParentAxisIfFixedOrWrap(),
+                                        args = remember(listMember.subject.avatar) {
+                                            ImageArgs(
+                                                url = listMember.subject.avatar?.uri,
+                                                contentScale = ContentScale.Crop,
+                                                shape = RoundedPolygonShape.Circle,
+                                            )
+                                        },
                                     )
-                                },
-                                sharedElement = { state, modifier ->
-                                    AsyncImage(state, modifier)
                                 },
                             )
                         }

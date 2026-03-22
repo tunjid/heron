@@ -16,13 +16,14 @@
 
 package com.tunjid.heron.search.ui.suggestions
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
@@ -70,6 +71,7 @@ import com.tunjid.heron.timeline.utilities.format
 import com.tunjid.heron.timeline.utilities.roundComponent
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
+import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import heron.feature.search.generated.resources.Res
 import heron.feature.search.generated.resources.discover_feeds
@@ -103,7 +105,7 @@ internal fun SuggestedContent(
     val now = remember { Clock.System.now() }
     LazyColumn(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
         contentPadding = bottomNavAndInsetPaddingValues(
             top = UiTokens.statusBarHeight + UiTokens.toolbarHeight,
             isCompact = paneScaffoldState.prefersCompactBottomNav,
@@ -125,8 +127,8 @@ internal fun SuggestedContent(
                 Trend(
                     modifier = Modifier
                         .fillParentMaxWidth()
-                        .clickable { onTrendClicked(trend) }
-                        .padding(horizontal = 16.dp)
+                        .shapedClickable { onTrendClicked(trend) }
+                        .suggestedContentPadding()
                         .animateItem(),
                     index = index,
                     now = now,
@@ -150,13 +152,13 @@ internal fun SuggestedContent(
             itemContent = { profileWithViewerState ->
                 ProfileWithViewerState(
                     modifier = Modifier
-                        .clickable {
+                        .shapedClickable {
                             onProfileClicked(
                                 profileWithViewerState.profile,
                                 SuggestedProfilesSharedElementPrefix,
                             )
                         }
-                        .padding(horizontal = 16.dp)
+                        .suggestedContentPadding()
                         .animateItem(),
                     paneTransitionScope = paneScaffoldState,
                     signedInProfileId = null,
@@ -191,7 +193,7 @@ internal fun SuggestedContent(
                 SuggestedStarterPack(
                     modifier = Modifier
                         .fillParentMaxWidth()
-                        .padding(horizontal = 16.dp)
+                        .suggestedContentPadding()
                         .animateItem(),
                     paneTransitionScope = paneScaffoldState,
                     starterPackWithMembers = starterPackWithMember,
@@ -212,30 +214,36 @@ internal fun SuggestedContent(
             items = feedGenerators.take(5),
             key = { feedGenerator -> feedGenerator.cid.id },
             itemContent = { feedGenerator ->
-                FeedGenerator(
+                Box(
                     modifier = Modifier
                         .fillParentMaxWidth()
-                        .padding(
-                            vertical = 4.dp,
-                            horizontal = 16.dp,
-                        )
-                        .clickable {
-                            onFeedGeneratorClicked(
-                                feedGenerator,
-                                SuggestedFeedsSharedElementPrefix,
+                        .padding(vertical = 4.dp),
+                ) {
+                    FeedGenerator(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .shapedClickable {
+                                onFeedGeneratorClicked(
+                                    feedGenerator,
+                                    SuggestedFeedsSharedElementPrefix,
+                                )
+                            }
+                            .padding(
+                                vertical = 4.dp,
+                                horizontal = 16.dp,
                             )
-                        }
-                        .animateItem(),
-                    paneTransitionScope = paneScaffoldState,
-                    sharedElementPrefix = SuggestedFeedsSharedElementPrefix,
-                    feedGenerator = feedGenerator,
-                    status = when (timelineRecordUrisToPinnedStatus[feedGenerator.uri]) {
-                        true -> Timeline.Home.Status.Pinned
-                        false -> Timeline.Home.Status.Saved
-                        null -> Timeline.Home.Status.None
-                    },
-                    onFeedGeneratorStatusUpdated = onUpdateTimelineClicked,
-                )
+                            .animateItem(),
+                        paneTransitionScope = paneScaffoldState,
+                        sharedElementPrefix = SuggestedFeedsSharedElementPrefix,
+                        feedGenerator = feedGenerator,
+                        status = when (timelineRecordUrisToPinnedStatus[feedGenerator.uri]) {
+                            true -> Timeline.Home.Status.Pinned
+                            false -> Timeline.Home.Status.Saved
+                            null -> Timeline.Home.Status.None
+                        },
+                        onFeedGeneratorStatusUpdated = onUpdateTimelineClicked,
+                    )
+                }
             },
         )
         item {
@@ -391,6 +399,15 @@ private fun trendDetails(trend: Trend): String {
         else -> "$postCount · $category"
     }
 }
+
+private fun Modifier.suggestedContentPadding() =
+    this then SuggestedContentPadding
+
+private val SuggestedContentPadding =
+    Modifier.padding(
+        horizontal = 8.dp,
+        vertical = 8.dp,
+    )
 
 private const val SuggestedProfilesSharedElementPrefix = "suggested-profile"
 private const val SuggestedFeedsSharedElementPrefix = "suggested-feeds"

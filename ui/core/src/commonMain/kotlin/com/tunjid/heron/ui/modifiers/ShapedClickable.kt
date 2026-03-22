@@ -17,6 +17,7 @@
 package com.tunjid.heron.ui.modifiers
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,9 +54,16 @@ fun Modifier.rootShapedClickable(
     .then(this)
 
 private fun clipped(shape: Shape): Modifier =
-    if (shape == DefaultClipShape) DefaultClipModifier else Modifier.clip(shape)
+    when (shape) {
+        DefaultClipShape -> DefaultClipModifier
+        CircleShape -> CircleClipModifier
+        else -> Modifier.clip(shape)
+    }
 
 private val DefaultClipShape = RoundedCornerShape(8.dp)
 
 private val DefaultClipModifier = Modifier
     .clip(DefaultClipShape)
+
+private val CircleClipModifier = Modifier
+    .clip(CircleShape)
