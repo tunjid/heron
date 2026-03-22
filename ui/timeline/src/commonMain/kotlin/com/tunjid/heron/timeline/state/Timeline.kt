@@ -241,7 +241,7 @@ private fun TiledList<TimelineQuery, TimelineItem>.filterThreadDuplicates(): Til
             is TimelineItem.Pinned -> true
             is TimelineItem.Threaded.Linear,
             is TimelineItem.Repost,
-            -> !threadRootIds.add(item.post.uri)
+            -> threadRootIds.add(item.post.uri)
             is TimelineItem.Single -> !threadRootIds.contains(item.post.uri)
             is TimelineItem.Placeholder,
             // Threaded trees show up in post details, not regular timelines
