@@ -205,7 +205,7 @@ compose.desktop {
             packageName = "com.tunjid.heron"
             // Remove hyphenated suffixes if present
             packageVersion = scmVersion.version.split("-").first()
-            outputBaseDir.set(layout.buildDirectory.asFile.get().resolve("release"))
+            outputBaseDir.set(layout.buildDirectory.dir("release"))
 
             val resourcesDir = project.file("src/desktopMain/resources")
             macOS {
