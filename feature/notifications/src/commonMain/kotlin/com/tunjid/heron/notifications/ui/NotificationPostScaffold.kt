@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.notifications.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,7 +31,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Embed
@@ -49,16 +47,17 @@ import com.tunjid.heron.timeline.ui.post.PostInteractions
 import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.AttributionLayout
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.modifiers.rootShapedClickable
+import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import kotlin.time.Instant
 
 @Composable
 internal fun NotificationPostScaffold(
     modifier: Modifier = Modifier,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     now: Instant,
     isRead: Boolean,
     showEngagementMetrics: Boolean,
@@ -70,10 +69,13 @@ internal fun NotificationPostScaffold(
     onPostInteraction: (Notification.PostAssociated, PostAction.Options) -> Unit,
 ) {
     Column(
-        modifier = modifier,
+        modifier = modifier
+            .rootShapedClickable {
+                onPostClicked(notification)
+            },
     ) {
         PostAttribution(
-            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+            paneTransitionScope = paneTransitionScope,
             avatarShape = RoundedPolygonShape.Circle,
             onPostClicked = onPostClicked,
             onProfileClicked = onProfileClicked,
@@ -106,7 +108,7 @@ internal fun NotificationPostScaffold(
                 PostText(
                     post = notification.associatedPost,
                     sharedElementPrefix = notification.sharedElementPrefix(),
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    paneTransitionScope = paneTransitionScope,
                     modifier = Modifier
                         .fillMaxWidth(),
                     onClick = { onPostClicked(notification) },
@@ -130,7 +132,7 @@ internal fun NotificationPostScaffold(
                     sharedElementPrefix = notification.sharedElementPrefix(),
                     presentation = Timeline.Presentation.Text.WithEmbed,
                     showEngagementMetrics = showEngagementMetrics,
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    paneTransitionScope = paneTransitionScope,
                     onInteraction = { action ->
                         onPostInteraction(notification, action)
                     },
@@ -142,7 +144,7 @@ internal fun NotificationPostScaffold(
 
 @Composable
 private fun PostAttribution(
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     avatarShape: RoundedPolygonShape,
     onPostClicked: (Notification.PostAssociated) -> Unit,
     onProfileClicked: (Notification.PostAssociated, Profile) -> Unit,
@@ -150,30 +152,32 @@ private fun PostAttribution(
     sharedElementPrefix: String,
     now: Instant,
     createdAt: Instant,
-) = with(paneMovableElementSharedTransitionScope) {
+) = with(paneTransitionScope) {
     val post = notification.associatedPost
     AttributionLayout(
         avatar = {
-            UpdatedMovableStickySharedElementOf(
+            PaneStickySharedElement(
                 modifier = Modifier
                     .size(UiTokens.avatarSize)
-                    .clip(avatarShape)
-                    .clickable { onProfileClicked(notification, post.author) },
-                sharedContentState = with(paneMovableElementSharedTransitionScope) {
+                    .shapedClickable(avatarShape) { onProfileClicked(notification, post.author) },
+                sharedContentState = with(paneTransitionScope) {
                     rememberSharedContentState(
                         key = post.avatarSharedElementKey(sharedElementPrefix),
                     )
                 },
-                state = remember(post.author.avatar) {
-                    ImageArgs(
-                        url = post.author.avatar?.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = post.author.displayName ?: post.author.handle.id,
-                        shape = avatarShape,
+                content = {
+                    AsyncImage(
+                        modifier = Modifier
+                            .fillParentAxisIfFixedOrWrap(),
+                        args = remember(post.author.avatar) {
+                            ImageArgs(
+                                url = post.author.avatar?.uri,
+                                contentScale = ContentScale.Crop,
+                                contentDescription = post.author.displayName ?: post.author.handle.id,
+                                shape = avatarShape,
+                            )
+                        },
                     )
-                },
-                sharedElement = { state, modifier ->
-                    AsyncImage(state, modifier)
                 },
             )
         },
@@ -184,7 +188,7 @@ private fun PostAttribution(
                 author = post.author,
                 postId = post.cid,
                 sharedElementPrefix = sharedElementPrefix,
-                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                paneTransitionScope = paneTransitionScope,
                 onPostClicked = {
                     onPostClicked(notification)
                 },

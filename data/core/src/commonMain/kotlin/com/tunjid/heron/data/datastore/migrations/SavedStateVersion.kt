@@ -20,7 +20,11 @@ import androidx.datastore.core.okio.OkioSerializer
 import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.SessionSummary
 import com.tunjid.heron.data.core.types.ProfileId
+import com.tunjid.heron.data.logging.LogPriority
+import com.tunjid.heron.data.logging.logcat
+import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.data.repository.SavedState
+import com.tunjid.heron.data.repository.SavedStateEncryption
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
@@ -107,13 +111,26 @@ internal data class VersionedSavedState(
 
 internal class VersionedSavedStateOkioSerializer(
     private val protoBuf: ProtoBuf,
+    private val encryption: SavedStateEncryption,
 ) : OkioSerializer<VersionedSavedState> {
     override val defaultValue: VersionedSavedState = VersionedSavedState.Empty
 
     override suspend fun readFrom(
         source: BufferedSource,
     ): VersionedSavedState = with(protoBuf) {
-        val data = source.readByteArray()
+        val raw = source.readByteArray()
+        if (raw.isEmpty()) return defaultValue
+
+        val data = try {
+            encryption.decrypt(raw)
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR) {
+                "SavedState decryption error: ${e.loggableText()}"
+            }
+            // Decryption failed (wrong key, corrupted file, key rotation, etc.).
+            // Fall back to empty state; the user will need to re-authenticate.
+            return defaultValue
+        }
 
         return if (data.isEmpty()) defaultValue
         else try {
@@ -127,6 +144,9 @@ internal class VersionedSavedStateOkioSerializer(
                 else -> throw IllegalArgumentException("Unknown saved state version")
             }.toVersionedSavedState(CurrentVersion)
         } catch (e: Exception) {
+            logcat(LogPriority.ERROR) {
+                "SavedState decode error: ${e.loggableText()}"
+            }
             defaultValue
         }
     }
@@ -135,7 +155,8 @@ internal class VersionedSavedStateOkioSerializer(
         t: VersionedSavedState,
         sink: BufferedSink,
     ) {
-        sink.write(protoBuf.encodeToByteArray(value = t))
+        val raw = protoBuf.encodeToByteArray(value = t)
+        sink.write(encryption.encrypt(raw))
     }
 }
 

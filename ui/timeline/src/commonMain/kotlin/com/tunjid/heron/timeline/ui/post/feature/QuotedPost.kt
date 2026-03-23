@@ -50,8 +50,8 @@ import com.tunjid.heron.timeline.ui.post.PostImages
 import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.ui.post.PostVideo
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -62,12 +62,12 @@ fun QuotedPost(
     quotedPost: Post,
     sharedElementPrefix: String,
     isBlurred: Boolean,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     onClick: () -> Unit,
     onLinkTargetClicked: (Post, LinkTarget) -> Unit,
     onProfileClicked: (Post, Profile) -> Unit,
     onPostMediaClicked: (Embed.Media, Int, Post) -> Unit,
-) = with(paneMovableElementSharedTransitionScope) {
+) = with(paneTransitionScope) {
     val author = quotedPost.author
     Box(
         modifier = modifier,
@@ -107,7 +107,7 @@ fun QuotedPost(
                     author = author,
                     postId = quotedPost.cid,
                     sharedElementPrefix = sharedElementPrefix,
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    paneTransitionScope = paneTransitionScope,
                     onPostClicked = onClick,
                     onAuthorClicked = {
                         onProfileClicked(quotedPost, author)
@@ -118,7 +118,7 @@ fun QuotedPost(
             PostText(
                 post = quotedPost,
                 sharedElementPrefix = sharedElementPrefix,
-                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                paneTransitionScope = paneTransitionScope,
                 maxLines = 3,
                 modifier = Modifier,
                 onClick = onClick,
@@ -134,7 +134,7 @@ fun QuotedPost(
                     postUri = quotedPost.uri,
                     sharedElementPrefix = sharedElementPrefix,
                     isBlurred = isBlurred,
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    paneTransitionScope = paneTransitionScope,
                     // Quotes are exclusively in blog view types
                     presentation = Timeline.Presentation.Text.WithEmbed,
                     onClick = {
@@ -151,7 +151,7 @@ fun QuotedPost(
                     sharedElementPrefix = sharedElementPrefix,
                     isBlurred = isBlurred,
                     matchHeightConstraintsFirst = true,
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    paneTransitionScope = paneTransitionScope,
                     onImageClicked = { index ->
                         onPostMediaClicked(embed, index, quotedPost)
                     },
@@ -166,7 +166,7 @@ fun QuotedPost(
                         .heightIn(max = 140.dp),
                     video = embed,
                     postUri = quotedPost.uri,
-                    paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    paneTransitionScope = paneTransitionScope,
                     sharedElementPrefix = sharedElementPrefix,
                     isBlurred = isBlurred,
                     matchHeightConstraintsFirst = true,

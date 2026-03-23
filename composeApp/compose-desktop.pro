@@ -1,0 +1,13 @@
+-dontwarn com.google.api.client.**
+-dontwarn com.google.crypto.tink.util.KeysDownloader
+-dontwarn com.google.crypto.tink.util.KeysDownloader$Builder
+-dontwarn com.oracle.svm.core.annotate.**
+-dontwarn io.ktor.client.engine.cio.UtilsKt$readResponse$2
+-dontwarn okhttp3.internal.graal.**
+-dontwarn okhttp3.internal.platform.BouncyCastlePlatform
+-dontwarn okhttp3.internal.platform.ConscryptPlatform
+-dontwarn okhttp3.internal.platform.ConscryptPlatform$Companion
+-dontwarn okhttp3.internal.platform.ConscryptPlatform$DisabledHostnameVerifier
+-dontwarn okhttp3.internal.platform.OpenJSSEPlatform
+-dontwarn org.conscrypt.**
+-dontwarn org.graalvm.nativeimage.**

@@ -509,9 +509,9 @@ internal class ThingPreferenceUpdater @Inject constructor(
                     PreferencesUnion.ThreadViewPref(
                         value = ThreadViewPref(
                             sort = when (threadViewPreference.order()) {
-                                TimelineItem.Thread.Order.Oldest -> ThreadViewPrefSort.Oldest
-                                TimelineItem.Thread.Order.Newest -> ThreadViewPrefSort.Newest
-                                TimelineItem.Thread.Order.Top -> ThreadViewPrefSort.MostLikes
+                                TimelineItem.Threaded.Order.Oldest -> ThreadViewPrefSort.Oldest
+                                TimelineItem.Threaded.Order.Newest -> ThreadViewPrefSort.Newest
+                                TimelineItem.Threaded.Order.Top -> ThreadViewPrefSort.MostLikes
                             },
                         ),
                     ),

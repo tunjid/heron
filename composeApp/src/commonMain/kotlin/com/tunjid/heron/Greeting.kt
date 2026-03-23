@@ -16,8 +16,11 @@
 
 package com.tunjid.heron
 
+import com.tunjid.heron.data.platform.Platform
+import com.tunjid.heron.data.platform.current
+
 class Greeting {
-    private val platform = getPlatform()
+    private val platform = Platform.current
 
     fun greet(): String {
         return "Hello, ${platform.name}!"

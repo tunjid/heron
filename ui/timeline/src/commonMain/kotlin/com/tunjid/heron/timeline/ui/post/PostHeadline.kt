@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -30,7 +31,8 @@ import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.timeline.ui.TimeDelta
 import com.tunjid.heron.timeline.ui.profile.ProfileHandle
 import com.tunjid.heron.timeline.ui.profile.ProfileName
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
+import com.tunjid.heron.ui.PaneTransitionScope
+import com.tunjid.heron.ui.modifiers.shapedClickable
 import kotlin.time.Instant
 
 @Composable
@@ -40,10 +42,10 @@ fun PostHeadline(
     author: Profile,
     postId: PostId,
     sharedElementPrefix: String,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     onPostClicked: () -> Unit,
     onAuthorClicked: () -> Unit,
-) = with(paneMovableElementSharedTransitionScope) {
+) = with(paneTransitionScope) {
     Column {
         val primaryText = author.displayName ?: author.handle.id
         val secondaryText = author.handle.id.takeUnless { it == primaryText }
@@ -60,7 +62,8 @@ fun PostHeadline(
             ) {
                 ProfileName(
                     modifier = Modifier
-                        .clickable { onAuthorClicked() },
+                        .shapedClickable { onAuthorClicked() }
+                        .padding(horizontal = 2.dp),
                     profile = author,
                 )
             }
@@ -89,7 +92,8 @@ fun PostHeadline(
                 ) {
                     ProfileHandle(
                         modifier = Modifier
-                            .clickable { onAuthorClicked() },
+                            .shapedClickable { onAuthorClicked() }
+                            .padding(horizontal = 2.dp),
                         profile = author,
                     )
                 }

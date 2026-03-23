@@ -16,6 +16,7 @@
 
 package com.tunjid.heron.postdetail
 
+import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.FeedList
@@ -40,7 +41,9 @@ data class State(
     val anchorPost: Post?,
     val sharedElementPrefix: String,
     @Transient
-    val order: TimelineItem.Thread.Order? = null,
+    val order: TimelineItem.Threaded.Order? = null,
+    @Transient
+    val viewMode: TimelineItem.Threaded.ViewMode = TimelineItem.Threaded.ViewMode.Linear,
     @Transient
     val source: Timeline.Source? = null,
     @Transient
@@ -69,21 +72,25 @@ fun State(route: Route): State {
         items = when (anchorPost) {
             null -> TimelineItem.LoadingItems
             else -> listOf(
-                TimelineItem.Thread(
+                TimelineItem.Threaded.Linear(
                     id = anchorPost.uri.uri,
-                    isMuted = false,
                     anchorPostIndex = 0,
-                    posts = listOf(anchorPost),
+                    nodes = listOf(
+                        TimelineItem.Threaded.Node(
+                            post = anchorPost,
+                            threadGate = null,
+                            appliedLabels = route.model<AppliedLabels>()
+                                ?: anchorPost.appliedLabels(
+                                    adultContentEnabled = false,
+                                    labelers = emptyList(),
+                                    labelPreferences = emptyList(),
+                                ),
+                            isMuted = false,
+                        ),
+                    ),
                     generation = 0,
                     hasBreak = false,
                     signedInProfileId = null,
-                    postUrisToThreadGates = emptyMap(),
-                    appliedLabels = route.model()
-                        ?: anchorPost.appliedLabels(
-                            adultContentEnabled = false,
-                            labelers = emptyList(),
-                            labelPreferences = emptyList(),
-                        ),
                 ),
             )
         },
@@ -95,7 +102,10 @@ sealed class Action(val key: String) {
     sealed class Load : Action(key = "Load") {
         data object Initial : Load()
         data class Order(
-            val order: TimelineItem.Thread.Order,
+            val order: TimelineItem.Threaded.Order,
+        ) : Load()
+        data class ViewMode(
+            val viewMode: TimelineItem.Threaded.ViewMode,
         ) : Load()
     }
 

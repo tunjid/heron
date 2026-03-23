@@ -276,7 +276,7 @@ class FeedBindings(
                                             )
                                         },
                                     ),
-                                movableElementSharedTransitionScope = this,
+                                paneTransitionScope = this,
                                 timeline = state.timelineState?.timeline,
                                 sharedElementPrefix = state.sharedElementPrefix,
                                 hasUpdates = state.timelineState?.hasUpdates == true,

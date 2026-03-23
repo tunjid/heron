@@ -207,7 +207,7 @@ internal fun PostDetailScreen(
                         .threadedVideoPosition(
                             state = videoStates.getOrCreateStateFor(item),
                         ),
-                    paneMovableElementSharedTransitionScope = paneScaffoldState,
+                    paneTransitionScope = paneScaffoldState,
                     presentationLookaheadScope = paneScaffoldState,
                     now = now,
                     item = item,
@@ -305,8 +305,7 @@ internal fun PostDetailScreen(
                                 }
 
                                 is PostAction.OfMetadata -> {
-                                    val postMetadata = action.metadata
-                                    when (postMetadata) {
+                                    when (val postMetadata = action.metadata) {
                                         is PostMetadata.Likes -> navigateTo(
                                             postLikesDestination(
                                                 profileId = postMetadata.profileId,

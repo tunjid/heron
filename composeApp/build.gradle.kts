@@ -81,6 +81,7 @@ kotlin {
             implementation(project(":data:database"))
             implementation(project(":data:core"))
             implementation(project(":data:logging"))
+            implementation(project(":data:platform"))
             implementation(project(":scaffold"))
             implementation(project(":feature:auth"))
             implementation(project(":feature:compose"))
@@ -128,6 +129,7 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.connectivity.http)
             implementation(libs.kotlinx.coroutines.swing)
+            implementation(libs.tink)
         }
         iosMain.dependencies {
             implementation(libs.connectivity.device)
@@ -190,11 +192,31 @@ compose.desktop {
     application {
         mainClass = "com.tunjid.heron.MainKt"
 
+        buildTypes.release {
+            proguard {
+                version.set("7.8.0")
+                configurationFiles.from(project.file("compose-desktop.pro"))
+            }
+        }
+
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+
             packageName = "com.tunjid.heron"
             // Remove hyphenated suffixes if present
             packageVersion = scmVersion.version.split("-").first()
+            outputBaseDir.set(layout.buildDirectory.dir("release"))
+
+            val resourcesDir = project.file("src/desktopMain/resources")
+            macOS {
+                iconFile.set(resourcesDir.resolve("icon.icns"))
+            }
+            windows {
+                iconFile.set(resourcesDir.resolve("icon.ico"))
+            }
+            linux {
+                iconFile.set(resourcesDir.resolve("icon.png"))
+            }
         }
     }
 }

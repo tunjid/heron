@@ -24,7 +24,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -60,6 +59,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.rememberLatchedState
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.collapse_icon
@@ -247,8 +247,7 @@ fun <T> SettingsRadioButtons(
         items.forEach { item ->
             Row(
                 modifier = Modifier
-                    .settingsItemClip()
-                    .clickable {
+                    .shapedClickable {
                         latchedCheckedState.latch(item)
                         onItemClicked(item)
                     }
@@ -270,9 +269,6 @@ fun <T> SettingsRadioButtons(
 
 fun Modifier.settingsItemChildPadding() =
     padding(horizontal = 24.dp)
-
-fun Modifier.settingsItemClip() =
-    this then SettingsItemClipModifier
 
 fun Modifier.settingsItemMinHeight() =
     heightIn(min = 36.dp)

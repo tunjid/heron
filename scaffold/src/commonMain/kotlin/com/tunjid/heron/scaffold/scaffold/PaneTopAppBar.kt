@@ -18,6 +18,7 @@ package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -42,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
@@ -53,6 +55,7 @@ import com.tunjid.heron.profile.withProfileAvatarLiveSharedElementPrefix
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.platformStatusBars
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -69,6 +72,11 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
     val isLive = signedInProfile?.status?.isLive == true
     TopAppBar(
         modifier = modifier
+            .constrainedSizePlacement(
+                orientation = Orientation.Horizontal,
+                minSize = splitPaneState.minPaneWidth,
+                atStart = splitPaneState.filteredPaneOrder.firstOrNull() == paneState.pane,
+            )
             .rootAppBarBackground(
                 backgroundColor = MaterialTheme.colorScheme.surface,
                 progress = transparencyFactor,
@@ -123,7 +131,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
                                         predicate = isLive,
                                         block = Modifier::profileLiveAvatarBorder,
                                     )
-                                    .clickable {
+                                    .shapedClickable(CircleShape) {
                                         onSignedInProfileClicked(
                                             profile,
                                             UiTokens.SignedInUserAvatarSharedElementKey,
@@ -168,6 +176,11 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
 ) {
     TopAppBar(
         modifier = modifier
+            .constrainedSizePlacement(
+                orientation = Orientation.Horizontal,
+                minSize = splitPaneState.minPaneWidth,
+                atStart = splitPaneState.filteredPaneOrder.firstOrNull() == paneState.pane,
+            )
             .renderInSharedTransitionScopeOverlay(
                 zIndexInOverlay = UiTokens.appBarSharedElementZIndex,
                 renderInOverlay = {

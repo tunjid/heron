@@ -71,6 +71,7 @@ import com.tunjid.heron.timeline.ui.profile.ProfileSearchResults
 import com.tunjid.heron.timeline.utilities.EmbeddedRecord
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.AvatarSize
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.detectActiveLink
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -78,7 +79,6 @@ import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.heron.ui.text.formatTextPost
 import com.tunjid.heron.ui.text.insertMention
 import com.tunjid.heron.ui.text.links
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.feature.compose.generated.resources.Res
 import heron.feature.compose.generated.resources.remove_quoted_post
@@ -107,7 +107,7 @@ internal fun ComposeScreen(
     ) {
         val postText = state.postText
         ReplyingTo(
-            paneMovableElementSharedTransitionScope = paneScaffoldState,
+            paneTransitionScope = paneScaffoldState,
             type = state.postType,
             sharedElementPrefix = state.sharedElementPrefix,
         )
@@ -115,7 +115,7 @@ internal fun ComposeScreen(
             signedInProfile = state.signedInProfile,
             postText = postText,
             embeddedRecord = state.embeddedRecord,
-            paneMovableElementSharedTransitionScope = paneScaffoldState,
+            paneTransitionScope = paneScaffoldState,
             onPostTextChanged = { actions(Action.PostTextChanged(it)) },
             onMentionDetected = {
                 actions(Action.SearchProfiles(it))
@@ -171,7 +171,7 @@ private fun Post(
     signedInProfile: Profile?,
     postText: TextFieldValue,
     embeddedRecord: Record.Embeddable?,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     onPostTextChanged: (TextFieldValue) -> Unit,
     onMentionDetected: (String) -> Unit,
     onRemoveEmbeddedRecordClicked: () -> Unit,
@@ -218,7 +218,7 @@ private fun Post(
                         .weight(1f),
                     record = it,
                     sharedElementPrefix = NeverMatchedSharedElementPrefix,
-                    movableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                    paneTransitionScope = paneTransitionScope,
                     postActions = PostActions.NoOp,
                 )
                 val contentDescription = when (it) {
@@ -257,7 +257,7 @@ private fun Post(
 @Composable
 private fun ReplyingTo(
     modifier: Modifier = Modifier,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     type: Post.Create?,
     sharedElementPrefix: String?,
 ) {
@@ -266,10 +266,10 @@ private fun ReplyingTo(
         is Post.Create.Reply -> AuthorAndPost(
             modifier = modifier,
             avatar = {
-                paneMovableElementSharedTransitionScope.UpdatedMovableStickySharedElementOf(
+                paneTransitionScope.UpdatedMovableStickySharedElementOf(
                     modifier = Modifier
                         .size(AvatarSize),
-                    sharedContentState = with(paneMovableElementSharedTransitionScope) {
+                    sharedContentState = with(paneTransitionScope) {
                         rememberSharedContentState(
                             key = type.parent.avatarSharedElementKey(sharedElementPrefix),
                         )

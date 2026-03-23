@@ -18,22 +18,18 @@ package com.tunjid.heron.ui
 
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.platform.JVMPlatform
+import com.tunjid.heron.data.platform.JvmVariant
+import com.tunjid.heron.data.platform.Platform
+import com.tunjid.heron.data.platform.current
 
 internal actual val WindowInsets.Companion.platformExtraStatusBars: WindowInsets
-    @Composable get() = when {
-        remember(::platform).contains(
-            other = Mac,
-            ignoreCase = true,
-        ) -> MacWindowInsets
+    @Composable get() = when ((Platform.current as JVMPlatform).variant) {
+        JvmVariant.Mac -> MacWindowInsets
         else -> EmptyWindowInsets
     }
-
-private fun platform() = System.getProperty("os.name")
 
 private val MacWindowInsets = WindowInsets(
     top = 30.dp,
 )
-
-private const val Mac = "mac os"

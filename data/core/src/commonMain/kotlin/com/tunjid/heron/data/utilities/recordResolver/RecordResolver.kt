@@ -27,7 +27,6 @@ import app.bsky.graph.GetStarterPackQueryParams
 import app.bsky.graph.Listitem as BskyListMember
 import app.bsky.labeler.GetServicesQueryParams
 import app.bsky.labeler.GetServicesResponseViewUnion
-import com.atproto.identity.ResolveDidQueryParams
 import com.atproto.repo.DeleteRecordRequest
 import com.atproto.repo.GetRecordQueryParams
 import com.atproto.repo.GetRecordResponse
@@ -103,7 +102,6 @@ import com.tunjid.heron.data.network.currentSessionContext
 import com.tunjid.heron.data.network.models.asExternalModel
 import com.tunjid.heron.data.network.models.post
 import com.tunjid.heron.data.network.models.profileEntity
-import com.tunjid.heron.data.repository.SavedState.AuthTokens.DidDoc
 import com.tunjid.heron.data.repository.SavedStateDataSource
 import com.tunjid.heron.data.repository.distinctUntilChangedSignedProfilePreferencesOrDefault
 import com.tunjid.heron.data.repository.singleSessionFlow
@@ -169,10 +167,20 @@ internal interface RecordResolver {
     ): Outcome
 
     interface TimelineItemCreationContext {
-        val list: MutableList<TimelineItem>
+        val top: TimelineItem?
         val post: Post
         val appliedLabels: AppliedLabels
         val signedInProfileId: ProfileId?
+        val replyNodeIndex: MutableMap<PostUri, MutableList<TimelineItem.Threaded.Node>>
+
+        infix fun push(item: TimelineItem)
+        infix fun swapTop(item: TimelineItem)
+
+        fun threadedNode(
+            post: Post,
+            depth: Int,
+            children: List<TimelineItem.Threaded.Node> = emptyList(),
+        ): TimelineItem.Threaded.Node
 
         fun record(recordUri: EmbeddableRecordUri): Record?
         fun profile(profileId: ProfileId): Profile?

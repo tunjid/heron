@@ -43,7 +43,28 @@ internal class MutableTimelineItemCreationContext(
 ) : RecordResolver.TimelineItemCreationContext,
     MutableList<TimelineItem> by mutableListOf() {
 
-    override var list: MutableList<TimelineItem> = this
+    override val top: TimelineItem? get() = lastOrNull()
+
+    override infix fun push(item: TimelineItem) {
+        add(item)
+    }
+
+    override fun swapTop(item: TimelineItem) {
+        this[lastIndex] = item
+    }
+
+    override fun threadedNode(
+        post: Post,
+        depth: Int,
+        children: List<TimelineItem.Threaded.Node>,
+    ): TimelineItem.Threaded.Node = TimelineItem.Threaded.Node(
+        post = post,
+        threadGate = threadGate(post.uri),
+        appliedLabels = appliedLabels,
+        isMuted = isMuted(post),
+        depth = depth,
+        children = children,
+    )
 
     override val post: Post
         get() = requireNotNull(currentPost)
@@ -54,6 +75,7 @@ internal class MutableTimelineItemCreationContext(
         labelers = emptyList(),
         contentLabelPreferences = emptyList(),
     )
+    override val replyNodeIndex: MutableMap<PostUri, MutableList<TimelineItem.Threaded.Node>> = mutableMapOf()
 
     private var currentPost: Post? = null
 

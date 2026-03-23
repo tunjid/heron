@@ -20,7 +20,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.BoundsTransform
-import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateBounds
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -44,8 +43,10 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -57,6 +58,7 @@ import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
@@ -66,6 +68,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -86,7 +89,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.times
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.sourceId
 import com.tunjid.heron.data.core.models.uri
@@ -97,18 +102,19 @@ import com.tunjid.heron.home.ui.EditableTimelineState.Companion.timelineEditDrag
 import com.tunjid.heron.home.ui.EditableTimelineState.Companion.timelineEditDropTarget
 import com.tunjid.heron.home.ui.ExpandableTabsState
 import com.tunjid.heron.home.ui.ExpandableTabsState.Companion.expandable
-import com.tunjid.heron.home.ui.ExpandableTabsState.Companion.rememberExpandableTabsState
 import com.tunjid.heron.home.ui.JiggleBox
 import com.tunjid.heron.home.ui.shouldRenderAppBarButtonsInOverlay
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.ui.TimelinePresentationSelector
 import com.tunjid.heron.ui.AppBarButton
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.Tab
 import com.tunjid.heron.ui.Tabs
 import com.tunjid.heron.ui.TabsState
 import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.fillMaxRestrictedWidth
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.home.generated.resources.Res
@@ -138,10 +144,12 @@ internal fun HomeTabs(
     modifier: Modifier = Modifier,
     tabLayout: TabLayout,
     isSignedIn: Boolean,
+    isOffset: Boolean,
     currentTabUri: Uri?,
     saveRequestId: String?,
     timelines: List<Timeline.Home>,
-    sharedTransitionScope: SharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
+    expandableTabsState: ExpandableTabsState,
     sourceIdsToHasUpdates: Map<String, Boolean>,
     selectedTabIndex: () -> Float,
     onCollapsedTabSelected: (Int) -> Unit,
@@ -153,11 +161,7 @@ internal fun HomeTabs(
     onSettingsIconClick: () -> Unit,
     onBookmarkIconClick: () -> Unit,
     onCreateFeedClicked: () -> Unit,
-) = with(sharedTransitionScope) {
-    val expandableTabsState = rememberExpandableTabsState(
-        tabLayout = tabLayout,
-        onTabLayoutChanged = onLayoutChanged,
-    )
+) = with(paneTransitionScope) {
     val collapsedTabsState = rememberTabsState(
         tabs = remember(sourceIdsToHasUpdates, timelines) {
             timelines
@@ -208,8 +212,10 @@ internal fun HomeTabs(
                 if (isExpanding) ExpandedTabs(
                     modifier = Modifier
                         .background(
-                            color = MaterialTheme.colorScheme.surface,
-                            shape = ExpandedTabsShape,
+                            color = MaterialTheme.colorScheme.surface.copy(
+                                alpha = ExpandableTabsState.BackgroundAlpha,
+                            ),
+                            shape = ExpandableTabsState.Shape,
                         )
                         .expandable(expandableTabsState),
                     saveRequestId = saveRequestId,
@@ -235,11 +241,17 @@ internal fun HomeTabs(
                 )
             }
         }
+        val extraPadding by animateDpAsState(
+            targetValue = if (isOffset) 8.dp else 0.dp,
+            animationSpec = TabButtonPaddingAnimationSpec,
+        )
+
         if (isSignedIn) Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    horizontal = 8.dp,
+                    // Inset horizontally by 8 dp so it doesn't touch timeline cards
+                    horizontal = 8.dp + extraPadding,
                     vertical = 4.dp,
                 ),
             verticalAlignment = Alignment.CenterVertically,
@@ -253,7 +265,13 @@ internal fun HomeTabs(
             Text(
                 modifier = Modifier
                     .then(alphaModifier)
-                    .padding(horizontal = 8.dp),
+                    .padding(horizontal = 8.dp)
+                    .offset {
+                        IntOffset(
+                            x = -(expandableTabsState.expansionProgress * 8.dp).roundToPx(),
+                            y = 0,
+                        )
+                    },
                 text = stringResource(Res.string.timeline_preferences),
                 style = MaterialTheme.typography.titleMediumEmphasized,
             )
@@ -274,12 +292,14 @@ internal fun HomeTabs(
                 AppBarButton(
                     modifier = expandedOptionsModifier,
                     onClick = onSettingsIconClick,
+                    colors = TabButtonColors,
                     icon = Icons.Rounded.Settings,
                     iconDescription = stringResource(Res.string.settings),
                 )
                 AppBarButton(
                     modifier = expandedOptionsModifier,
                     onClick = onBookmarkIconClick,
+                    colors = TabButtonColors,
                     icon = Icons.Rounded.Bookmark,
                     iconDescription = stringResource(Res.string.bookmark),
                 )
@@ -293,6 +313,7 @@ internal fun HomeTabs(
                     .graphicsLayer {
                         rotationZ = expandableTabsState.expansionProgress * 180f
                     },
+                colors = TabButtonColors,
                 icon = Icons.Rounded.ArrowDropDown,
                 iconDescription = stringResource(
                     if (expandableTabsState.isPartiallyOrFullyExpanded) Res.string.collapse_timeline_settings
@@ -315,7 +336,7 @@ private fun ExpandedTabs(
     saveRequestId: String?,
     timelines: List<Timeline.Home>,
     tabsState: TabsState,
-    sharedTransitionScope: SharedTransitionScope,
+    sharedTransitionScope: PaneTransitionScope,
     animatedContentScope: AnimatedContentScope,
     onDismissed: () -> Unit,
     onTimelinePreferencesSaved: (List<Timeline.Home>) -> Unit,
@@ -331,11 +352,13 @@ private fun ExpandedTabs(
         FlowRow(
             modifier = with(animatedContentScope) {
                 Modifier
+                    .align(Alignment.Center)
                     .animateEnterExit(
                         enter = ExpandedTabsContentEnterAnimation,
                     )
             }
-                .fillMaxSize()
+                .fillMaxHeight()
+                .fillMaxRestrictedWidth()
                 .padding(
                     top = 40.dp,
                     start = 16.dp,
@@ -366,7 +389,10 @@ private fun ExpandedTabs(
                 SectionTitle(
                     modifier = Modifier
                         .padding(top = 24.dp)
-                        .animateBounds(this@with),
+                        .animateBounds(
+                            lookaheadScope = this@with,
+                            boundsTransform = childBoundsTransform,
+                        ),
                     title = stringResource(Res.string.pinned),
                 )
             }
@@ -374,7 +400,10 @@ private fun ExpandedTabs(
                 key(timeline.sourceId) {
                     if (!editableTimelineState.isDraggedId(timeline.sourceId)) tabsState.ExpandedTab(
                         modifier = Modifier
-                            .animateBounds(this@with),
+                            .animateBounds(
+                                lookaheadScope = this@with,
+                                boundsTransform = childBoundsTransform,
+                            ),
                         editableTimelineState = editableTimelineState,
                         currentTimelines = timelines,
                         sharedTransitionScope = sharedTransitionScope,
@@ -387,7 +416,10 @@ private fun ExpandedTabs(
                 SectionTitle(
                     modifier = Modifier
                         .padding(top = 24.dp)
-                        .animateBounds(this@with),
+                        .animateBounds(
+                            lookaheadScope = this@with,
+                            boundsTransform = childBoundsTransform,
+                        ),
                     title = stringResource(Res.string.saved),
                 )
             }
@@ -395,7 +427,10 @@ private fun ExpandedTabs(
                 key(timeline.sourceId) {
                     if (!editableTimelineState.isDraggedId(timeline.sourceId)) tabsState.ExpandedTab(
                         modifier = Modifier
-                            .animateBounds(this@with),
+                            .animateBounds(
+                                lookaheadScope = this@with,
+                                boundsTransform = childBoundsTransform,
+                            ),
                         editableTimelineState = editableTimelineState,
                         currentTimelines = timelines,
                         sharedTransitionScope = sharedTransitionScope,
@@ -425,7 +460,10 @@ private fun ExpandedTabs(
                 Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
-                    .animateBounds(this@with),
+                    .animateBounds(
+                        lookaheadScope = this@with,
+                        boundsTransform = childBoundsTransform,
+                    ),
             ) {
                 FilledTonalButton(
                     modifier = Modifier
@@ -457,7 +495,7 @@ private fun ExpandedTabs(
 private fun CollapsedTabs(
     modifier: Modifier = Modifier,
     tabsState: TabsState,
-    sharedTransitionScope: SharedTransitionScope,
+    sharedTransitionScope: PaneTransitionScope,
     animatedContentScope: AnimatedContentScope,
     isSignedIn: Boolean,
     currentTabUri: Uri?,
@@ -476,7 +514,9 @@ private fun CollapsedTabs(
                     size = size.copy(width = size.width * backgroundProgress.value),
                 )
             }
-            .padding(horizontal = 8.dp),
+            // 8 dp would align perfectly with the scrolling content.
+            // Inset it by 8 dp.
+            .padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -514,7 +554,7 @@ private fun TabsState.ExpandedTab(
     modifier: Modifier = Modifier,
     editableTimelineState: EditableTimelineState,
     currentTimelines: List<Timeline.Home>,
-    sharedTransitionScope: SharedTransitionScope,
+    sharedTransitionScope: PaneTransitionScope,
     animatedContentScope: AnimatedContentScope,
     timeline: Timeline.Home,
 ) = with(sharedTransitionScope) {
@@ -591,7 +631,7 @@ private fun TabsState.ExpandedTab(
 @Composable
 private fun TabsState.CollapsedTab(
     tab: Tab,
-    sharedTransitionScope: SharedTransitionScope,
+    sharedTransitionScope: PaneTransitionScope,
     animatedContentScope: AnimatedContentScope,
 ) = with(sharedTransitionScope) {
     FilterChip(
@@ -685,6 +725,7 @@ private fun TimelinePresentationSelector(
         TimelinePresentationSelector(
             selected = timeline.presentation,
             available = timeline.supportedPresentations,
+            colors = TabButtonColors,
             onPresentationSelected = { presentation ->
                 val index = timelines.indexOfFirst {
                     it.uri == currentTabUri
@@ -768,14 +809,19 @@ private val ExpandedTabsContentEnterAnimation =
         ),
     )
 
-private val CollapsedTabShape = RoundedCornerShape(16.dp)
-
-private val ExpandedTabsShape = RoundedCornerShape(
-    bottomStart = 16.dp,
-    bottomEnd = 16.dp,
+private val TabButtonPaddingAnimationSpec = tween<Dp>(
+    durationMillis = 400,
 )
 
+private val CollapsedTabShape = RoundedCornerShape(16.dp)
+
 private val ChipHeight = 32.dp
+
+private val TabButtonColors
+    @Composable
+    get() = CardDefaults.elevatedCardColors(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+    )
 
 private const val TabsSharedElementZIndex = 1f
 private const val HomeTimelineButtonSharedElementZIndex = 2f

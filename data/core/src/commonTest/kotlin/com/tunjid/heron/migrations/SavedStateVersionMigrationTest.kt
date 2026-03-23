@@ -14,6 +14,7 @@ import com.tunjid.heron.data.datastore.migrations.SavedStateVersion5
 import com.tunjid.heron.data.datastore.migrations.VersionedSavedStateOkioSerializer
 import com.tunjid.heron.data.datastore.migrations.migrated.ProfileDataV0
 import com.tunjid.heron.data.repository.SavedState
+import com.tunjid.heron.data.repository.SavedStateEncryption
 import com.tunjid.heron.fakes.sampleNotifications
 import com.tunjid.heron.fakes.samplePreferences
 import com.tunjid.heron.helper.SavedStateSerializationHelper
@@ -40,7 +41,10 @@ internal class SavedStateVersionMigrationTest(
 ) {
 
     private val proto = SavedStateSerializationHelper.proto
-    private val serializer = VersionedSavedStateOkioSerializer(proto)
+    private val serializer = VersionedSavedStateOkioSerializer(
+        protoBuf = proto,
+        encryption = SavedStateEncryption.None,
+    )
 
     @Test
     fun migrateToLatestVersion_noDataLoss() = runBlocking {

@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.notifications.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
@@ -31,8 +30,9 @@ import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.timeline.ui.TimeDelta
+import com.tunjid.heron.ui.PaneTransitionScope
+import com.tunjid.heron.ui.modifiers.rootShapedClickable
 import com.tunjid.heron.ui.text.CommonStrings
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.core.generated.resources.notifications_joined_from_your_started_pack_description
 import heron.ui.core.generated.resources.notifications_joined_from_your_starter_pack
 import heron.ui.core.generated.resources.notifications_multiple_joined_from_your_starter_pack
@@ -42,7 +42,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun JoinedStarterPackRow(
     modifier: Modifier = Modifier,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     now: Instant,
     isRead: Boolean,
     notification: Notification.JoinedStarterPack,
@@ -50,9 +50,9 @@ fun JoinedStarterPackRow(
     onProfileClicked: (Notification, Profile) -> Unit,
 ) {
     NotificationAggregateScaffold(
-        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+        paneTransitionScope = paneTransitionScope,
         modifier = modifier
-            .clickable {
+            .rootShapedClickable {
                 onProfileClicked(notification, notification.author)
             },
         isRead = isRead,

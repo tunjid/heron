@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.notifications.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,16 +27,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.timeline.ui.TimeDelta
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens.BookmarkBlue
+import com.tunjid.heron.ui.modifiers.rootShapedClickable
 import com.tunjid.heron.ui.text.CommonStrings
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import heron.ui.core.generated.resources.notifications_multiple_post_subscription
 import heron.ui.core.generated.resources.notifications_post_subscription
 import heron.ui.core.generated.resources.notifications_post_subscription_description
@@ -47,7 +46,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun SubscribedRow(
     modifier: Modifier = Modifier,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     now: Instant,
     isRead: Boolean,
     notification: Notification.SubscribedPost,
@@ -56,10 +55,11 @@ fun SubscribedRow(
     onPostClicked: (Notification.PostAssociated) -> Unit,
 ) {
     NotificationAggregateScaffold(
-        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
-        modifier = modifier.clickable {
-            onPostClicked(notification)
-        },
+        paneTransitionScope = paneTransitionScope,
+        modifier = modifier
+            .rootShapedClickable {
+                onPostClicked(notification)
+            },
         isRead = isRead,
         notification = notification,
         profiles = aggregatedProfiles,

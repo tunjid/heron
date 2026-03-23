@@ -19,6 +19,7 @@ package com.tunjid.heron
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -33,6 +34,7 @@ fun main() = application {
             size = DpSize(1000.dp, 800.dp),
         ),
         title = "heron",
+        icon = painterResource("icon.png"),
     ) {
         window.rootPane.apply {
             putClientProperty("apple.awt.fullWindowContent", true)

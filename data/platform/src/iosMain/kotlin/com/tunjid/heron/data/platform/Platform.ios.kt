@@ -14,20 +14,13 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.images
+package com.tunjid.heron.data.platform
 
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Canvas
-import androidx.compose.ui.graphics.nativeCanvas
-import coil3.PlatformContext
+import platform.UIKit.UIDevice
 
-internal actual fun coil3.Image.renderInto(
-    canvas: Canvas,
-) = draw(canvas.nativeCanvas)
+class IOSPlatform internal constructor() : Platform {
+    override val name: String =
+        UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
+}
 
-fun imageLoader(): ImageLoader = CoilImageLoader.create(
-    context = PlatformContext.INSTANCE,
-)
-
-@Composable
-internal actual fun coil3.Image.AnimationEffect() = Unit
+actual val Platform.Companion.current: Platform by lazy(::IOSPlatform)

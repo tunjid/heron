@@ -78,7 +78,7 @@ internal fun FeedSearchResults(
                         }
                         .padding(8.dp)
                         .animateItem(),
-                    movableElementSharedTransitionScope = paneScaffoldState,
+                    paneTransitionScope = paneScaffoldState,
                     sharedElementPrefix = state.sharedElementPrefix,
                     feedGenerator = result.feedGenerator,
                     status = when (timelineRecordUrisToPinnedStatus[result.feedGenerator.uri]) {

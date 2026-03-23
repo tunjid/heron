@@ -30,13 +30,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.ui.text.rememberFormattedTextPost
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
-
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun RecordLayout(
     modifier: Modifier = Modifier,
-    movableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     title: String,
     subtitle: String,
     description: String?,
@@ -45,7 +43,7 @@ fun RecordLayout(
     sharedElementType: RecordUri,
     avatar: @Composable () -> Unit,
     action: @Composable (() -> Unit)? = null,
-) = with(movableElementSharedTransitionScope) {
+) = with(paneTransitionScope) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),

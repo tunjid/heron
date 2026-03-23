@@ -18,6 +18,7 @@ package com.tunjid.heron.scaffold.scaffold
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.Animatable
@@ -62,9 +63,11 @@ import androidx.compose.ui.layout.LayoutModifier
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasureResult
 import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.node.LayoutModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.platform.InspectorInfo
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
@@ -72,6 +75,7 @@ import androidx.compose.ui.unit.constrain
 import androidx.compose.ui.unit.dp
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.modifiers.ifTrue
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
@@ -79,43 +83,68 @@ import kotlinx.coroutines.launch
 @Composable
 fun PaneScaffoldState.PaneFab(
     modifier: Modifier = Modifier,
-    enterTransition: EnterTransition = slideInVertically(initialOffsetY = { it }),
-    exitTransition: ExitTransition = slideOutVertically(targetOffsetY = { it }),
+    enterTransition: EnterTransition = DefaultEnterTransition,
+    exitTransition: ExitTransition = DefaultExitTransition,
     enabled: Boolean = true,
     text: String,
     icon: ImageVector?,
     expanded: Boolean,
     onClick: () -> Unit,
 ) {
+    val density = LocalDensity.current
+    val sharedContentState = rememberSharedContentState(
+        key = FabSharedElementKey,
+    )
+    var fabWidth by remember {
+        mutableStateOf(DefaultFabSize)
+    }
     AnimatedVisibility(
         modifier = Modifier
+            // Use the enter and exit transition on navigation
+            // level changes if in predictive back.
+            // This prevents the fab from suddenly appearing over content
+            .ifTrue(inPredictiveBack) {
+                animateEnterExit(enterTransition, exitTransition)
+            }
+            .onSizeChanged {
+                if (!splitPaneState.paneAnchorState.hasInteractions) {
+                    fabWidth = with(density) { it.width.toDp() }
+                }
+            }
+            .renderInSharedTransitionScopeOverlay(
+                zIndexInOverlay = UiTokens.appBarSharedElementZIndex,
+                renderInOverlay = {
+                    val isVisible = transition.targetState == EnterExitState.Visible
+                    val isVisibleInPredictiveBack = isVisible && inPredictiveBack
+                    (isVisibleInPredictiveBack || isActive) && !sharedContentState.isMatchFound
+                },
+            )
             .constrainedSizePlacement(
                 orientation = Orientation.Horizontal,
-                minSize = 56.dp,
+                minSize = fabWidth,
                 atStart = false,
             ),
         visible = canShowFab,
+        // Always use the enter and exit transition
+        // on changes to canShowFab
         enter = enterTransition,
         exit = exitTransition,
         content = {
             val fabAlpha = animateFloatAsState(
                 if (enabled) 1f else 0.6f,
             )
-
             // The material3 ExtendedFloatingActionButton does not allow for placing
             // Modifier.animateContentSize() on its row.
             PaneStickySharedElement(
                 modifier = Modifier
                     .animateFabSize()
                     .then(modifier),
-                sharedContentState = rememberSharedContentState(
-                    key = FabSharedElementKey,
-                ),
+                sharedContentState = sharedContentState,
                 zIndexInOverlay = UiTokens.fabSharedElementZIndex,
             ) {
                 FloatingActionButton(
                     modifier = Modifier
-                        .requiredHeight(56.dp)
+                        .requiredHeight(DefaultFabSize)
                         .graphicsLayer { alpha = fabAlpha.value },
                     onClick = { if (enabled) onClick() },
                     shape = MaterialTheme.shapes.small.copy(CornerSize(percent = 50)),
@@ -173,7 +202,7 @@ fun PaneScaffoldState.isFabExpanded(
 ): Boolean {
     val derivedState = remember(splitPaneState.density) {
         derivedStateOf {
-            offset().y < with(splitPaneState.density) { 56.dp.toPx() }
+            offset().y < with(splitPaneState.density) { DefaultFabSize.toPx() }
         }
     }
     return derivedState.value
@@ -371,3 +400,11 @@ private abstract class LayoutModifierNodeWithPassThroughIntrinsics :
         width: Int,
     ) = measurable.maxIntrinsicHeight(width)
 }
+
+private val DefaultEnterTransition: EnterTransition =
+    slideInVertically(initialOffsetY = { it })
+
+private val DefaultExitTransition: ExitTransition =
+    slideOutVertically(targetOffsetY = { it * 2 })
+
+private val DefaultFabSize = 56.dp

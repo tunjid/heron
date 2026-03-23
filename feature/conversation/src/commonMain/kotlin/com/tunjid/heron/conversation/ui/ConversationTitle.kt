@@ -16,14 +16,15 @@
 
 package com.tunjid.heron.conversation.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -43,6 +44,7 @@ import com.tunjid.heron.timeline.ui.profile.ProfileName
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.UpdatedMovableSharedElementOf
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
@@ -108,7 +110,7 @@ private fun MultipleParticipantTitle(
                 modifier = Modifier
                     .size(32.dp)
                     .offset(x = index * (-8).dp)
-                    .clickable { onProfileClicked(participant) },
+                    .shapedClickable(CircleShape) { onProfileClicked(participant) },
                 sharedElement = { args, innerModifier ->
                     AsyncImage(args, innerModifier)
                 },
@@ -135,13 +137,11 @@ private fun SingleMemberTitle(
 ) = with(paneScaffoldState) {
     val profile = participants.firstOrNull { it.did != signedInProfileId } ?: return
     AttributionLayout(
-        modifier = Modifier
-            .clickable { onProfileClicked(profile) },
         avatar = {
             UpdatedMovableStickySharedElementOf(
                 modifier = Modifier
                     .size(UiTokens.avatarSize)
-                    .clickable { onProfileClicked(profile) },
+                    .shapedClickable(CircleShape) { onProfileClicked(profile) },
                 sharedContentState = rememberSharedContentState(
                     key = profile.avatarSharedElementKey(
                         prefix = sharedElementPrefix,
@@ -163,6 +163,12 @@ private fun SingleMemberTitle(
         },
         label = {
             Column(
+                modifier = Modifier
+                    .shapedClickable { onProfileClicked(profile) }
+                    .padding(
+                        horizontal = 4.dp,
+                        vertical = 2.dp,
+                    ),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 ProfileName(

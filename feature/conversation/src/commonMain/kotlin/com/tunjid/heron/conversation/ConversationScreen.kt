@@ -440,7 +440,10 @@ private fun ChatItemBubble(
                 key(reaction.value) {
                     Text(
                         modifier = Modifier
-                            .animateBounds(paneScaffoldState),
+                            .animateBounds(
+                                lookaheadScope = paneScaffoldState,
+                                boundsTransform = paneScaffoldState.childBoundsTransform,
+                            ),
                         text = reaction.value,
                         fontSize = 12.sp,
                     )
@@ -469,7 +472,7 @@ private fun MessageRecord(
             .widthIn(max = 200.dp),
         record = record,
         sharedElementPrefix = item.id,
-        movableElementSharedTransitionScope = paneScaffoldState,
+        paneTransitionScope = paneScaffoldState,
         postActions = remember(item.id, actions) {
             PostActions { action ->
                 when (action) {

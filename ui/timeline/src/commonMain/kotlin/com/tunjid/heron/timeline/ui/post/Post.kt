@@ -16,11 +16,7 @@
 
 package com.tunjid.heron.timeline.ui.post
 
-import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.animateBounds
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -28,6 +24,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.VisibilityOff
@@ -43,14 +40,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import com.tunjid.composables.ui.skipIf
 import com.tunjid.heron.data.core.models.AppliedLabels
 import com.tunjid.heron.data.core.models.AppliedLabels.Companion.warned
 import com.tunjid.heron.data.core.models.Embed
@@ -83,11 +78,12 @@ import com.tunjid.heron.timeline.utilities.forEach
 import com.tunjid.heron.timeline.utilities.icon
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.AttributionLayout
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.text.CommonStrings
-import com.tunjid.treenav.compose.MovableElementSharedTransitionScope
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.ui.core.generated.resources.post_author_label
 import heron.ui.timeline.generated.resources.Res
@@ -98,7 +94,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun Post(
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     presentationLookaheadScope: LookaheadScope,
     modifier: Modifier = Modifier,
     now: Instant,
@@ -128,7 +124,7 @@ internal fun Post(
         )
         val postData = rememberUpdatedPostData(
             postActions = postActions,
-            paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+            paneTransitionScope = paneTransitionScope,
             presentationLookaheadScope = presentationLookaheadScope,
             post = post,
             threadGate = threadGate,
@@ -186,7 +182,7 @@ internal fun Post(
 @Composable
 private fun AttributionContent(
     data: PostData,
-) = with(data.paneMovableElementSharedTransitionScope) {
+) = with(data.paneTransitionScope) {
     when (data.presentation) {
         Timeline.Presentation.Text.WithEmbed,
         Timeline.Presentation.Media.Expanded,
@@ -202,7 +198,7 @@ private fun AttributionContent(
                         modifier = Modifier
                             .size(UiTokens.avatarSize)
                             .clip(data.avatarShape)
-                            .clickable {
+                            .shapedClickable(CircleShape) {
                                 data.postActions.onPostAction(
                                     PostAction.OfProfile(
                                         profile = data.post.author,
@@ -246,7 +242,7 @@ private fun AttributionContent(
                     author = data.post.author,
                     postId = data.post.cid,
                     sharedElementPrefix = data.sharedElementPrefix,
-                    paneMovableElementSharedTransitionScope = this,
+                    paneTransitionScope = this,
                     onPostClicked = {
                         data.postActions.onPostAction(
                             PostAction.OfPost(
@@ -277,7 +273,7 @@ private fun AttributionContent(
 @Composable
 private fun LabelContent(
     data: PostData,
-) = with(data.paneMovableElementSharedTransitionScope) {
+) = with(data.paneTransitionScope) {
     when (data.presentation) {
         Timeline.Presentation.Text.WithEmbed,
         Timeline.Presentation.Media.Expanded,
@@ -362,14 +358,14 @@ private fun LabelContent(
 @Composable
 private fun TextContent(
     data: PostData,
-) = with(data.paneMovableElementSharedTransitionScope) {
+) = with(data.paneTransitionScope) {
     when (data.presentation) {
         Timeline.Presentation.Text.WithEmbed,
         Timeline.Presentation.Media.Expanded,
         -> PostText(
             post = data.post,
             sharedElementPrefix = data.sharedElementPrefix,
-            paneMovableElementSharedTransitionScope = this,
+            paneTransitionScope = this,
             modifier = Modifier
                 .zIndex(TextContentZIndex)
                 .contentPresentationPadding(
@@ -378,7 +374,7 @@ private fun TextContent(
                 )
                 .animateBounds(
                     lookaheadScope = data.presentationLookaheadScope,
-                    boundsTransform = data.boundsTransform,
+                    boundsTransform = data.paneTransitionScope.childBoundsTransform,
                 )
                 .fillMaxWidth(),
             maxLines = when (data.presentation) {
@@ -428,7 +424,7 @@ private fun EmbedContent(
             )
             .animateBounds(
                 lookaheadScope = data.presentationLookaheadScope,
-                boundsTransform = data.boundsTransform,
+                boundsTransform = data.paneTransitionScope.childBoundsTransform,
             )
             .fillMaxWidth(),
         now = data.now,
@@ -442,7 +438,7 @@ private fun EmbedContent(
         appliedLabels = data.appliedLabels,
         presentation = data.presentation,
         sharedElementPrefix = data.sharedElementPrefix,
-        paneMovableElementSharedTransitionScope = data.paneMovableElementSharedTransitionScope,
+        paneTransitionScope = data.paneTransitionScope,
         onUnblurClicked = {
             data.hasClickedThroughSensitiveMedia = true
         },
@@ -497,7 +493,7 @@ private fun ActionsContent(
             sharedElementPrefix = data.sharedElementPrefix,
             presentation = data.presentation,
             showEngagementMetrics = data.showEngagementMetrics,
-            paneMovableElementSharedTransitionScope = data.paneMovableElementSharedTransitionScope,
+            paneTransitionScope = data.paneTransitionScope,
             modifier = Modifier
                 .contentPresentationPadding(
                     content = PostContent.Actions,
@@ -505,7 +501,7 @@ private fun ActionsContent(
                 )
                 .animateBounds(
                     lookaheadScope = data.presentationLookaheadScope,
-                    boundsTransform = data.boundsTransform,
+                    boundsTransform = data.paneTransitionScope.childBoundsTransform,
                 ),
             onInteraction = data.postActions::onPostAction,
         )
@@ -669,7 +665,7 @@ private fun Embed?.asPostContent() = when (this) {
 @Composable
 private fun rememberUpdatedPostData(
     postActions: PostActions,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     presentationLookaheadScope: LookaheadScope,
     post: Post,
     threadGate: ThreadGate?,
@@ -694,7 +690,7 @@ private fun rememberUpdatedPostData(
         restore = { (hasClickedThroughMutedWords, hasClickedThroughSensitiveMedia) ->
             PostData(
                 postActions = postActions,
-                paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+                paneTransitionScope = paneTransitionScope,
                 presentationLookaheadScope = presentationLookaheadScope,
                 post = post,
                 threadGate = threadGate,
@@ -716,7 +712,7 @@ private fun rememberUpdatedPostData(
 ) {
     PostData(
         postActions = postActions,
-        paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope,
+        paneTransitionScope = paneTransitionScope,
         presentationLookaheadScope = presentationLookaheadScope,
         post = post,
         threadGate = threadGate,
@@ -734,7 +730,7 @@ private fun rememberUpdatedPostData(
 }.also {
     if (it.presentation != presentation) it.presentationChanged = true
     it.postActions = postActions
-    it.paneMovableElementSharedTransitionScope = paneMovableElementSharedTransitionScope
+    it.paneTransitionScope = paneTransitionScope
     it.presentationLookaheadScope = presentationLookaheadScope
     it.post = post
     it.threadGate = threadGate
@@ -753,7 +749,7 @@ private fun rememberUpdatedPostData(
 @Stable
 private class PostData(
     postActions: PostActions,
-    paneMovableElementSharedTransitionScope: MovableElementSharedTransitionScope,
+    paneTransitionScope: PaneTransitionScope,
     presentationLookaheadScope: LookaheadScope,
     post: Post,
     threadGate: ThreadGate?,
@@ -771,8 +767,8 @@ private class PostData(
     hasClickedThroughSensitiveMedia: Boolean = false,
 ) {
     var postActions by mutableStateOf(postActions)
-    var paneMovableElementSharedTransitionScope by mutableStateOf(
-        paneMovableElementSharedTransitionScope,
+    var paneTransitionScope by mutableStateOf(
+        paneTransitionScope,
     )
     var presentationLookaheadScope by mutableStateOf(presentationLookaheadScope)
     var post by mutableStateOf(post)
@@ -801,10 +797,6 @@ private class PostData(
         get() = postInteractionStatus(
             allowed = threadGate?.allowed,
         )
-
-    val boundsTransform = BoundsTransform { _, _ ->
-        SpringSpec.skipIf { !presentationChanged }
-    }
 
     fun sharedElementKey(
         label: Label,
@@ -841,10 +833,6 @@ private val Timeline.Presentation.contentOrder
         Timeline.Presentation.Media.Condensed -> CondensedMediaOrder
         Timeline.Presentation.Media.Grid -> GridMediaOrder
     }
-
-private val SpringSpec = spring<Rect>(
-    stiffness = Spring.StiffnessMediumLow,
-)
 
 private val TextAndEmbedOrder = listOf(
     PostContent.Attribution,

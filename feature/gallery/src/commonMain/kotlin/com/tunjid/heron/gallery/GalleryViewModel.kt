@@ -403,6 +403,7 @@ fun Flow<Action.LoadComments>.loadCommentsMutations(
             timelineRepository.postThreadedItems(
                 postUri = post.uri,
                 order = order,
+                viewMode = TimelineItem.Threaded.ViewMode.Linear, // always flat in gallery
             )
                 .mapLatestToManyMutations { timelineItems ->
                     if (timelineItems.isEmpty()) {

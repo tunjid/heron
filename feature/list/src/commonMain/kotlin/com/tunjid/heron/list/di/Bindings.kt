@@ -320,7 +320,7 @@ class ListBindings(
                             .background(MaterialTheme.colorScheme.surface),
                         title = {
                             TimelineTitle(
-                                movableElementSharedTransitionScope = this,
+                                paneTransitionScope = this,
                                 timeline = state.timelineState?.timeline,
                                 sharedElementPrefix = state.sharedElementPrefix,
                                 // Indicated on the tab instead

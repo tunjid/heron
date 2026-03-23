@@ -184,6 +184,7 @@ import com.tunjid.heron.ui.TabsState.Companion.rememberTabsState
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.navigableLinkTargetHandler
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.heron.ui.tabIndex
@@ -420,7 +421,7 @@ internal fun ProfileScreen(
                                                 )
                                             }
                                             .recordPadding(),
-                                        movableElementSharedTransitionScope = paneScaffoldState,
+                                        paneTransitionScope = paneScaffoldState,
                                         sharedElementPrefix = ProfileCollectionSharedElementPrefix,
                                         feedGenerator = feedGenerator,
                                         status = state.timelineRecordUrisToPinnedStatus.status(
@@ -457,7 +458,7 @@ internal fun ProfileScreen(
                                                 )
                                             }
                                             .recordPadding(),
-                                        movableElementSharedTransitionScope = paneScaffoldState,
+                                        paneTransitionScope = paneScaffoldState,
                                         sharedElementPrefix = ProfileCollectionSharedElementPrefix,
                                         starterPack = starterPack,
                                     )
@@ -487,7 +488,7 @@ internal fun ProfileScreen(
                                                 )
                                             }
                                             .recordPadding(),
-                                        movableElementSharedTransitionScope = paneScaffoldState,
+                                        paneTransitionScope = paneScaffoldState,
                                         sharedElementPrefix = ProfileCollectionSharedElementPrefix,
                                         list = list,
                                         status = state.timelineRecordUrisToPinnedStatus.status(list.uri),
@@ -879,7 +880,7 @@ private fun ProfileAvatar(
                     predicate = isLive,
                     block = Modifier::profileLiveAvatarBorder,
                 )
-                .clickable { onProfileAvatarClicked() },
+                .shapedClickable(CircleShape) { onProfileAvatarClicked() },
             state = remember(
                 key1 = profile.avatar?.uri,
                 key2 = profile.displayName ?: profile.handle,
@@ -1378,7 +1379,7 @@ private fun ProfileTimeline(
                             .threadedVideoPosition(
                                 state = videoStates.getOrCreateStateFor(item),
                             ),
-                        paneMovableElementSharedTransitionScope = paneScaffoldState,
+                        paneTransitionScope = paneScaffoldState,
                         presentationLookaheadScope = this@LookaheadScope,
                         now = now,
                         item = item,

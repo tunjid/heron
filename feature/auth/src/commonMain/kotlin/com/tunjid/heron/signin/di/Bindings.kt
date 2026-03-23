@@ -189,7 +189,7 @@ class SignInBindings(
                 floatingActionButton = {
                     PaneFab(
                         modifier = Modifier
-                            .animateBounds(lookaheadScope = this)
+                            .animateBounds(lookaheadScope = this, boundsTransform = childBoundsTransform)
                             .windowInsetsPadding(WindowInsets.ime),
                         text = stringResource(
                             when {

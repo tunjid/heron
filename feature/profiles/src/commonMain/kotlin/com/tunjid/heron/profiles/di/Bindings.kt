@@ -306,9 +306,7 @@ class ProfilesBindings(
                         paneScaffoldState = this,
                         modifier = Modifier
                             .padding(
-                                paddingValues = PaddingValues(
-                                    top = paddingValues.calculateTopPadding(),
-                                ),
+                                top = paddingValues.calculateTopPadding(),
                             ),
                         state = state,
                         actions = viewModel.accept,

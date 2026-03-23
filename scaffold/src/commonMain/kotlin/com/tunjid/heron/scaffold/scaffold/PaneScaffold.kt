@@ -16,9 +16,13 @@
 
 package com.tunjid.heron.scaffold.scaffold
 
+import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.animateBounds
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -27,7 +31,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -42,6 +45,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
@@ -52,6 +56,8 @@ import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.tunjid.composables.backpreview.BackPreviewState
 import com.tunjid.composables.constrainedsize.constrainedSizePlacement
+import com.tunjid.composables.ui.skipIf
+import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.text.Memo
 import com.tunjid.heron.ui.text.message
 import com.tunjid.treenav.compose.PaneScope
@@ -68,7 +74,15 @@ class PaneScaffoldState internal constructor(
     internal val appState: AppState,
     internal val splitPaneState: SplitPaneState,
     paneMovableElementSharedTransitionScope: ThreePaneMovableElementSharedTransitionScope<Route>,
-) : ThreePaneMovableElementSharedTransitionScope<Route> by paneMovableElementSharedTransitionScope {
+) : PaneTransitionScope,
+    ThreePaneMovableElementSharedTransitionScope<Route> by paneMovableElementSharedTransitionScope {
+
+    override val childBoundsTransform: BoundsTransform = { _, _ ->
+        BoundsTransformSpring.skipIf {
+            appState.dismissBehavior is AppState.DismissBehavior.Gesture.DragToPop ||
+                splitPaneState.paneAnchorState.hasInteractions
+        }
+    }
 
     internal val snackbarHostState = SnackbarHostState()
 
@@ -115,9 +129,6 @@ class PaneScaffoldState internal constructor(
             ThreePane.Overlay -> false
             null -> false
         }
-
-    internal val hasSiblings
-        get() = splitPaneState.filteredPaneOrder.size > 1
 
     internal val backPreviewState = BackPreviewState(
         minScale = 0.75f,
@@ -215,13 +226,16 @@ fun PaneScaffoldState.PaneScaffold(
             navigationRail()
         },
         content = {
-            Scaffold(
+            NonSubComposingScaffold(
                 modifier = when {
                     splitPaneState.paneAnchorState.hasInteractions -> Modifier
                     else -> when (dismissBehavior) {
                         AppState.DismissBehavior.None,
                         AppState.DismissBehavior.Gesture.DragToPop,
-                        -> Modifier.animateBounds(lookaheadScope = this)
+                        -> Modifier.animateBounds(
+                            lookaheadScope = this,
+                            boundsTransform = childBoundsTransform,
+                        )
 
                         AppState.DismissBehavior.Gesture.SlideToPop,
                         AppState.DismissBehavior.Gesture.ScaleToPop,
@@ -330,4 +344,10 @@ private val PaneClipModifier = Modifier.clip(
         topStart = 16.dp,
         topEnd = 16.dp,
     ),
+)
+
+private val BoundsTransformSpring = spring(
+    dampingRatio = Spring.DampingRatioNoBouncy,
+    stiffness = Spring.StiffnessMediumLow,
+    visibilityThreshold = Rect.VisibilityThreshold,
 )

@@ -16,55 +16,50 @@
 
 package com.tunjid.heron
 
+import android.content.Context
 import com.tunjid.heron.data.database.getDatabaseBuilder
 import com.tunjid.heron.data.di.DataBindingArgs
-import com.tunjid.heron.data.logging.JvmLogger
+import com.tunjid.heron.data.logging.AndroidLogger
+import com.tunjid.heron.data.repository.SavedStateEncryption
 import com.tunjid.heron.images.imageLoader
-import com.tunjid.heron.media.video.javafx.JavaFxPlayerController
-import com.tunjid.heron.media.video.mac.AVFoundationPlayerController
-import com.tunjid.heron.scaffold.notifications.NoOpNotifier
+import com.tunjid.heron.media.video.ExoplayerController
+import com.tunjid.heron.scaffold.notifications.AndroidNotifier
 import com.tunjid.heron.scaffold.scaffold.AppState
 import dev.jordond.connectivity.Connectivity
-import java.io.File
+import kotlinx.coroutines.Dispatchers
 import okio.FileSystem
 import okio.Path
-import okio.Path.Companion.toOkioPath
+import okio.Path.Companion.toPath
 
-class JVMPlatform : Platform {
-    override val name: String = "Java ${System.getProperty("java.version")}"
-}
-
-actual fun getPlatform(): Platform = JVMPlatform()
-
-fun createAppState(): AppState =
+fun createAppState(context: Context): AppState =
     createAppState(
-        imageLoader = ::imageLoader,
+        imageLoader = {
+            imageLoader(context)
+        },
         notifier = {
-            NoOpNotifier
+            AndroidNotifier(context)
         },
         logger = {
-            JvmLogger()
+            AndroidLogger(context)
         },
         videoPlayerController = { appMainScope ->
-            if (System.getProperty("os.name").startsWith("Mac")) AVFoundationPlayerController(
-                appMainScope = appMainScope,
-            )
-            else JavaFxPlayerController(
-                appMainScope = appMainScope,
+            ExoplayerController(
+                context = context,
+                scope = appMainScope,
+                diffingDispatcher = Dispatchers.Default,
             )
         },
         args = { appMainScope ->
             DataBindingArgs(
                 appMainScope = appMainScope,
                 connectivity = Connectivity(),
-                savedStatePath = savedStatePath(),
+                savedStatePath = context.savedStatePath(),
                 savedStateFileSystem = FileSystem.SYSTEM,
-                databaseBuilder = getDatabaseBuilder(),
+                savedStateEncryption = SavedStateEncryption.None,
+                databaseBuilder = getDatabaseBuilder(context),
             )
         },
     )
 
-private fun savedStatePath(): Path = File(
-    System.getProperty("java.io.tmpdir"),
-    "tunji-heron-saved-state-21.ser",
-).toOkioPath()
+private fun Context.savedStatePath(): Path =
+    filesDir.resolve("savedState").absolutePath.toPath()

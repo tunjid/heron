@@ -35,6 +35,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,6 +51,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import com.tunjid.composables.accumulatedoffsetnestedscrollconnection.rememberAccumulatedOffsetNestedScrollConnection
 import com.tunjid.heron.data.core.models.Conversation
 import com.tunjid.heron.data.core.models.FeedList
@@ -63,6 +67,8 @@ import com.tunjid.heron.data.core.models.uri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.data.utilities.path
+import com.tunjid.heron.home.ui.ExpandableTabsState
+import com.tunjid.heron.home.ui.ExpandableTabsState.Companion.rememberExpandableTabsState
 import com.tunjid.heron.home.ui.RestoreLastViewedTabEffect
 import com.tunjid.heron.home.ui.TabsCollapseEffect
 import com.tunjid.heron.home.ui.TabsExpansionEffect
@@ -109,6 +115,7 @@ import com.tunjid.heron.timeline.utilities.sharedElementPrefix
 import com.tunjid.heron.timeline.utilities.timelineHorizontalPadding
 import com.tunjid.heron.ui.PagerTopGapCloseEffect
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.tabIndex
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.threepane.ThreePane
@@ -140,6 +147,20 @@ internal fun HomeScreen(
         timelines = state.timelines,
     )
 
+    val onLayoutChanged = { layout: TabLayout ->
+        actions(Action.SetTabLayout(layout = layout))
+    }
+    val expandableTabsState = rememberExpandableTabsState(
+        tabLayout = state.tabLayout,
+        onTabLayoutChanged = onLayoutChanged,
+    )
+
+    NavigationBackHandler(
+        state = rememberNavigationEventState(NavigationEventInfo.None),
+        isBackEnabled = expandableTabsState.isPartiallyOrFullyExpanded,
+        onBackCompleted = expandableTabsState::collapse,
+    )
+
     Box(
         modifier = modifier,
     ) {
@@ -149,6 +170,12 @@ internal fun HomeScreen(
         )
         HorizontalPager(
             modifier = Modifier
+                .blur(
+                    shape = ExpandableTabsState.Shape,
+                    clip = { true },
+                    radius = ExpandableTabsState::BackgroundBlurRadius,
+                    progress = expandableTabsState::expansionProgress,
+                )
                 .nestedScroll(tabsOffsetNestedScrollConnection)
                 .paneClip(),
             state = pagerState,
@@ -191,11 +218,17 @@ internal fun HomeScreen(
                         y = topClearance.roundToPx(),
                     ) + tabsOffsetNestedScrollConnection.offset.round()
                 },
-            sharedTransitionScope = paneScaffoldState,
+            paneTransitionScope = paneScaffoldState,
+            expandableTabsState = expandableTabsState,
             selectedTabIndex = pagerState::tabIndex,
             saveRequestId = state.timelinePreferenceSaveRequestId,
             currentTabUri = state.currentTabUri,
             isSignedIn = state.signedInProfile != null,
+            isOffset = remember {
+                derivedStateOf {
+                    tabsOffsetNestedScrollConnection.offset.y < 0
+                }
+            }.value,
             tabLayout = state.tabLayout,
             timelines = state.timelines,
             sourceIdsToHasUpdates = state.sourceIdsToHasUpdates,
@@ -227,9 +260,7 @@ internal fun HomeScreen(
                     null -> Unit
                 }
             },
-            onLayoutChanged = { layout ->
-                actions(Action.SetTabLayout(layout = layout))
-            },
+            onLayoutChanged = onLayoutChanged,
             onTimelinePresentationUpdated = click@{ index, presentation ->
                 val timelineStateHolder = updatedTimelineStateHolders.getOrNull(index)
                     ?: return@click
@@ -468,7 +499,7 @@ private fun HomeTimeline(
                                 .threadedVideoPosition(
                                     state = videoStates.getOrCreateStateFor(item),
                                 ),
-                            paneMovableElementSharedTransitionScope = paneScaffoldState,
+                            paneTransitionScope = paneScaffoldState,
                             presentationLookaheadScope = this@LookaheadScope,
                             now = now,
                             item = item,
