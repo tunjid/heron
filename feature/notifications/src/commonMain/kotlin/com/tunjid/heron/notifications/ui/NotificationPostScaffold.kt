@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.notifications.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +26,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Badge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -52,8 +52,8 @@ import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.rootShapedClickable
+import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
-import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import kotlin.time.Instant
 
 @Composable
@@ -158,26 +158,29 @@ private fun PostAttribution(
     val post = notification.associatedPost
     AttributionLayout(
         avatar = {
-            UpdatedMovableStickySharedElementOf(
+            PaneStickySharedElement(
                 modifier = Modifier
                     .size(UiTokens.avatarSize)
                     .clip(avatarShape)
-                    .clickable { onProfileClicked(notification, post.author) },
+                    .shapedClickable(CircleShape) { onProfileClicked(notification, post.author) },
                 sharedContentState = with(paneTransitionScope) {
                     rememberSharedContentState(
                         key = post.avatarSharedElementKey(sharedElementPrefix),
                     )
                 },
-                state = remember(post.author.avatar) {
-                    ImageArgs(
-                        url = post.author.avatar?.uri,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = post.author.displayName ?: post.author.handle.id,
-                        shape = avatarShape,
+                content = {
+                    AsyncImage(
+                        modifier = Modifier
+                            .fillParentAxisIfFixedOrWrap(),
+                        args = remember(post.author.avatar) {
+                            ImageArgs(
+                                url = post.author.avatar?.uri,
+                                contentScale = ContentScale.Crop,
+                                contentDescription = post.author.displayName ?: post.author.handle.id,
+                                shape = avatarShape,
+                            )
+                        },
                     )
-                },
-                sharedElement = { state, modifier ->
-                    AsyncImage(state, modifier)
                 },
             )
         },
