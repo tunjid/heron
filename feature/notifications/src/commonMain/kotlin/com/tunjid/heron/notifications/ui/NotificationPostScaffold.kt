@@ -26,13 +26,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Badge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Embed
@@ -161,8 +159,7 @@ private fun PostAttribution(
             PaneStickySharedElement(
                 modifier = Modifier
                     .size(UiTokens.avatarSize)
-                    .clip(avatarShape)
-                    .shapedClickable(CircleShape) { onProfileClicked(notification, post.author) },
+                    .shapedClickable(avatarShape) { onProfileClicked(notification, post.author) },
                 sharedContentState = with(paneTransitionScope) {
                     rememberSharedContentState(
                         key = post.avatarSharedElementKey(sharedElementPrefix),
