@@ -49,7 +49,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.buildAnnotatedString
@@ -61,6 +61,7 @@ import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
+import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -130,7 +131,10 @@ fun NotificationAggregateScaffold(
             with(paneTransitionScope) {
                 Box(
                     modifier = Modifier
-                        .animateBounds(lookaheadScope = this, boundsTransform = childBoundsTransform)
+                        .animateBounds(
+                            lookaheadScope = this,
+                            boundsTransform = childBoundsTransform,
+                        )
                         .clip(ExpandableAvatarRowShape),
                 ) {
                     if (isExpanded) Column(
@@ -171,6 +175,7 @@ private fun PaneTransitionScope.ExpandButton(
     isExpanded: Boolean,
     onExpansionToggled: (Boolean) -> Unit,
 ) {
+    val rotationState = animateFloatAsState(if (isExpanded) 180f else 0f)
     IconButton(
         modifier = Modifier
             .animateBounds(
@@ -178,7 +183,9 @@ private fun PaneTransitionScope.ExpandButton(
                 boundsTransform = childBoundsTransform,
             )
             .size(32.dp)
-            .rotate(animateFloatAsState(if (isExpanded) 180f else 0f).value),
+            .graphicsLayer {
+                rotationZ = rotationState.value
+            },
         onClick = {
             onExpansionToggled(!isExpanded)
         },
@@ -208,16 +215,18 @@ private fun PaneTransitionScope.ExpandableProfiles(
         ) {
             PaneStickySharedElement(
                 modifier = Modifier
-                    .size(ExpandableAvatarSize),
+                    .size(ExpandableAvatarSize)
+                    .clip(CircleShape)
+                    .shapedClickable(CircleShape) {
+                        onProfileClicked(notification, profile)
+                    },
                 sharedContentState = rememberSharedContentState(
                     key = notification.avatarSharedElementKey(profile),
                 ),
             ) {
                 AsyncImage(
                     modifier = Modifier
-                        .fillParentAxisIfFixedOrWrap()
-                        .clip(CircleShape)
-                        .clickable { onProfileClicked(notification, profile) },
+                        .fillParentAxisIfFixedOrWrap(),
                     args = ImageArgs(
                         url = profile.avatar?.uri,
                         contentScale = ContentScale.Crop,
