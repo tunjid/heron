@@ -212,7 +212,6 @@ internal fun MediaCreatorAndDescription(
     modifier: Modifier,
     signedInProfileId: ProfileId?,
     item: GalleryItem,
-    post: Post?,
     paneScaffoldState: PaneScaffoldState,
     actions: (Action) -> Unit,
 ) {
@@ -256,7 +255,7 @@ internal fun MediaCreatorAndDescription(
             },
         )
         GalleryText(
-            post = post,
+            post = item.post,
             paneScaffoldState = paneScaffoldState,
             onClick = {},
             onLinkTargetClicked = { _, target ->
