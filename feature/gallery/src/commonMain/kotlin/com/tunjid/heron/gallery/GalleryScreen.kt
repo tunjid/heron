@@ -22,7 +22,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.ScrollableState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -68,13 +71,12 @@ import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.utilities.asGenericUri
 import com.tunjid.heron.gallery.ui.Comments
 import com.tunjid.heron.gallery.ui.CommentsState
-import com.tunjid.heron.gallery.ui.GalleryFooter
 import com.tunjid.heron.gallery.ui.GalleryImage
 import com.tunjid.heron.gallery.ui.GalleryVideo
 import com.tunjid.heron.gallery.ui.ImageDownloadState
+import com.tunjid.heron.gallery.ui.MediaCreatorAndDescription
 import com.tunjid.heron.gallery.ui.MediaInteractions
-import com.tunjid.heron.gallery.ui.MediaOverlay
-import com.tunjid.heron.gallery.ui.MediaPoster
+import com.tunjid.heron.gallery.ui.MediaOverlayBox
 import com.tunjid.heron.gallery.ui.PagerStates
 import com.tunjid.heron.gallery.ui.galleryHeightFraction
 import com.tunjid.heron.gallery.ui.isNotCollapsed
@@ -82,12 +84,12 @@ import com.tunjid.heron.gallery.ui.rememberCommentsState
 import com.tunjid.heron.interpolatedVisibleIndexEffect
 import com.tunjid.heron.media.video.ControlsVisibilityEffect
 import com.tunjid.heron.media.video.LocalVideoPlayerController
+import com.tunjid.heron.media.video.PlaybackStatus
 import com.tunjid.heron.media.video.PlayerControlsUiState
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.composePostDestination
 import com.tunjid.heron.scaffold.navigation.conversationDestination
-import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
 import com.tunjid.heron.scaffold.scaffold.DragToPopState.Companion.dragToPop
 import com.tunjid.heron.scaffold.scaffold.DragToPopState.Companion.rememberDragToPopState
@@ -95,7 +97,6 @@ import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.tiledItems
 import com.tunjid.heron.timeline.state.TimelineState
-import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState.Companion.rememberUpdatedPostInteractionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostOption
@@ -103,7 +104,6 @@ import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState.Companion.rememberUpdatedPostOptionsSheetState
 import com.tunjid.heron.timeline.ui.profile.ProfileRestrictionDialogState.Companion.rememberProfileRestrictionDialogState
 import com.tunjid.heron.timeline.ui.sheets.MutedWordsSheetState.Companion.rememberUpdatedMutedWordsSheetState
-import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.Indicator
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.platformStatusBars
@@ -111,6 +111,7 @@ import com.tunjid.heron.ui.text.links
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @Composable
@@ -482,94 +483,68 @@ private fun HorizontalItems(
             )
         }
 
-        MediaOverlay(
+        MediaOverlayBox(
             modifier = Modifier
                 .fillMaxSize(),
             media = item.media.getOrNull(pagerState.currentPage),
             isVisible = playerControlsUiState.playerControlsVisible,
         ) { media ->
-            val viewedProfileId = item.post.author.did
-            MediaPoster(
+            Column(
                 modifier = Modifier
-                    .windowInsetsPadding(WindowInsets.platformStatusBars)
+                    .align(Alignment.BottomStart)
                     .padding(
-                        horizontal = 16.dp,
-                        vertical = 20.dp,
-                    ),
-                post = item.post,
-                signedInProfileId = signedInProfileId,
-                viewerState = item.viewerState,
-                sharedElementPrefix = item.posterSharedElementPrefix,
-                paneScaffoldState = paneScaffoldState,
-                onProfileClicked = { post ->
-                    actions(
-                        Action.Navigate.To(
-                            profileDestination(
-                                profile = post.author,
-                                avatarSharedElementKey = post.avatarSharedElementKey(
-                                    prefix = item.posterSharedElementPrefix,
-                                ),
-                                referringRouteOption = NavigationAction.ReferringRouteOption.Current,
-                            ),
-                        ),
+                        horizontal = 8.dp,
+                        vertical = 16.dp,
                     )
-                },
-                onViewerStateToggled = remember(signedInProfileId, viewedProfileId) {
-                    { viewerState ->
-                        signedInProfileId?.let {
-                            actions(
-                                Action.ToggleViewerState(
-                                    signedInProfileId = it,
-                                    viewedProfileId = viewedProfileId,
-                                    following = viewerState?.following,
-                                    followedBy = viewerState?.followedBy,
-                                ),
-                            )
-                        }
-                    }
-                },
-            )
-
-            MediaInteractions(
-                post = item.post,
-                paneScaffoldState = paneScaffoldState,
-                modifier = Modifier
-                    .padding(horizontal = 16.dp),
-                showEngagementMetrics = showEngagementMetrics,
-                onPostInteraction = { interaction ->
-                    when (interaction) {
-                        is PostAction.OfInteraction -> postInteractionSheetState.onInteraction(
-                            interaction,
-                        )
-                        is PostAction.OfMetadata -> Unit
-                        is PostAction.OfMore -> postOptionsSheetState.showOptions(
-                            interaction.post,
-                        )
-                        is PostAction.OfReply -> {
-                            commentsState.expand()
-                            actions(
-                                Action.LoadComments(
-                                    post = item.post,
-                                    order = null,
-                                ),
-                            )
-                        }
-                    }
-                },
-            )
-            GalleryFooter(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 24.dp)
                     .windowInsetsPadding(insets = WindowInsets.navigationBars),
-                item = media,
-                videoPlayerController = videoPlayerController,
-                imageDownloadState = imageDownloadState,
-                post = item.post,
-                paneScaffoldState = paneScaffoldState,
-                actions = actions,
-                playerControlsUiState = playerControlsUiState,
-            )
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    MediaCreatorAndDescription(
+                        modifier = Modifier
+                            .weight(1f),
+                        signedInProfileId = signedInProfileId,
+                        item = item,
+                        paneScaffoldState = paneScaffoldState,
+                        actions = actions,
+                    )
+                    MediaInteractions(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .windowInsetsPadding(WindowInsets.platformStatusBars),
+                        media = media,
+                        imageDownloadState = imageDownloadState,
+                        videoPlayerController = videoPlayerController,
+                        actions = actions,
+                        item = item,
+                        paneScaffoldState = paneScaffoldState,
+                        showEngagementMetrics = showEngagementMetrics,
+                        postInteractionSheetState = postInteractionSheetState,
+                        postOptionsSheetState = postOptionsSheetState,
+                        commentsState = commentsState,
+                    )
+                }
+                (item.media.firstOrNull() as? GalleryItem.Media.Video)
+                    ?.let { videoPlayerController.getVideoStateById(it.video.playlist.uri) }
+                    ?.let { videoPlayerState ->
+                        PlaybackStatus(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            videoPlayerState = videoPlayerState,
+                            controlsState = playerControlsUiState,
+                        )
+                        LaunchedEffect(Unit) {
+                            snapshotFlow { videoPlayerState.status }
+                                .collectLatest(playerControlsUiState::update)
+                        }
+                    }
+            }
         }
 
         pagerState.interpolatedVisibleIndexEffect(
