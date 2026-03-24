@@ -196,6 +196,7 @@ compose.desktop {
             proguard {
                 version.set("7.8.0")
                 configurationFiles.from(project.file("compose-desktop.pro"))
+                isEnabled = false
             }
         }
 
