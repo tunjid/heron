@@ -21,8 +21,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.DownloadDone
 import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -61,7 +61,7 @@ internal fun ImageDownloadState.DownloadButton(
     ) {
         val contentModifier = Modifier
             .align(Alignment.Center)
-            .size(40.dp)
+            .size(OverlayIconSize)
 
         val onDownloadClicked: () -> Unit = remember(item.image.fullsize) {
             {
@@ -78,7 +78,7 @@ internal fun ImageDownloadState.DownloadButton(
         ) { status ->
             when (status) {
                 DownloadStatus.Complete -> Icon(
-                    imageVector = Icons.Rounded.Check,
+                    imageVector = Icons.Rounded.DownloadDone,
                     contentDescription = stringResource(Res.string.download_complete),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = contentModifier,
