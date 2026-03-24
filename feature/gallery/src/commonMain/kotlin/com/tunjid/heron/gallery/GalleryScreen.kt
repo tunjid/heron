@@ -511,7 +511,6 @@ private fun HorizontalItems(
                             .weight(1f),
                         signedInProfileId = signedInProfileId,
                         item = item,
-                        post = item.post,
                         paneScaffoldState = paneScaffoldState,
                         actions = actions,
                     )
