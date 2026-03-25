@@ -191,10 +191,6 @@ internal class ExoPlayerState internal constructor(
 
 private fun VideoSize.toIntSize() = IntSize(width, height)
 
-internal fun VideoPlayerState.seekPositionOnPlayMs(seekToMs: Long?): Long {
-    return seekToMs ?: if (shouldReplay) 0L else lastPositionMs
-}
-
 internal fun ExoPlayer.unbind(state: ExoPlayerState) {
     state.status = PlayerStatus.Pause.Requested
     removeListener(state.playerListener)

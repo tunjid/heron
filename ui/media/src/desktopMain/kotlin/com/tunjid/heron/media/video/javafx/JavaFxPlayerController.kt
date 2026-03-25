@@ -18,14 +18,12 @@ package com.tunjid.heron.media.video.javafx
 
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import com.tunjid.heron.media.video.PlayerStatus
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.media.video.VideoPlayerState
+import com.tunjid.heron.media.video.VideoPlayerStates
+import com.tunjid.heron.media.video.seekPositionOnPlayMs
 import javafx.application.Platform
 import javafx.embed.swing.JFXPanel
 import javafx.scene.media.Media
@@ -41,11 +39,16 @@ class JavaFxPlayerController(
     appMainScope: CoroutineScope,
 ) : VideoPlayerController {
 
-    override var isMuted: Boolean by mutableStateOf(true)
-
-    private val idsToStates = mutableStateMapOf<String, JavaFxPlayerState>()
-    private var activeVideoId: String by mutableStateOf("")
     private val mediaPlayers = mutableMapOf<String, MediaPlayer>()
+    private val states = VideoPlayerStates<JavaFxPlayerState>(
+        onEvicted = { state ->
+            Platform.runLater {
+                mediaPlayers.remove(state.videoId)?.dispose()
+            }
+        },
+    )
+
+    override var isMuted: Boolean by states::isMuted
 
     init {
         System.setProperty("compose.interop.blending", "true")
@@ -59,7 +62,7 @@ class JavaFxPlayerController(
         snapshotFlow { isMuted }
             .onEach { muted ->
                 Platform.runLater {
-                    mediaPlayers[activeVideoId]?.isMute = muted
+                    mediaPlayers[states.activeVideoId]?.isMute = muted
                 }
             }
             .launchIn(appMainScope)
@@ -71,12 +74,10 @@ class JavaFxPlayerController(
         thumbnail: String?,
         isLooping: Boolean,
         autoplay: Boolean,
-    ): VideoPlayerState {
-        idsToStates[videoId]?.let { return it }
-
-        trim()
-
-        val videoPlayerState = JavaFxPlayerState(
+    ): VideoPlayerState = states.registerOrGet(
+        videoId = videoId,
+    ) {
+        JavaFxPlayerState(
             videoUrl = videoUrl,
             videoId = videoId,
             thumbnail = thumbnail,
@@ -84,17 +85,14 @@ class JavaFxPlayerController(
             isLooping = isLooping,
             isMuted = derivedStateOf { isMuted },
         )
-
-        idsToStates[videoId] = videoPlayerState
-        return videoPlayerState
     }
 
     override fun play(
         videoId: String?,
         seekToMs: Long?,
     ) {
-        val playerIdToPlay = videoId ?: activeVideoId
-        val stateToPlay = idsToStates[playerIdToPlay] ?: return
+        val playerIdToPlay = videoId ?: states.activeVideoId
+        val stateToPlay = states[playerIdToPlay] ?: return
 
         setActiveVideo(playerIdToPlay)
 
@@ -127,21 +125,21 @@ class JavaFxPlayerController(
     }
 
     override fun pauseActiveVideo() {
-        activeVideoId.let(idsToStates::get)?.apply {
+        states.activeState?.apply {
             status = PlayerStatus.Pause.Requested
         }
         Platform.runLater {
-            mediaPlayers[activeVideoId]?.pause()
+            mediaPlayers[states.activeVideoId]?.pause()
         }
     }
 
     override fun seekTo(position: Long) {
         Platform.runLater {
-            mediaPlayers[activeVideoId]?.seek(Duration.millis(position.toDouble()))
+            mediaPlayers[states.activeVideoId]?.seek(Duration.millis(position.toDouble()))
         }
     }
 
-    override fun getVideoStateById(videoId: String): VideoPlayerState? = idsToStates[videoId]
+    override fun getVideoStateById(videoId: String): VideoPlayerState? = states[videoId]
 
     override fun retry(videoId: String) {
         // Dispose existing player so it gets recreated
@@ -152,28 +150,14 @@ class JavaFxPlayerController(
         play(videoId)
     }
 
-    override fun unregisterAll(retainedVideoIds: Set<String>): Set<String> {
-        idsToStates
-            .filterNot { retainedVideoIds.contains(it.key) }
-            .forEach { (id, videoState) ->
-                Platform.runLater {
-                    val player = mediaPlayers.remove(id)
-                    player?.unbind(videoState)
-                    player?.dispose()
-                }
-                idsToStates.remove(id)
-            }
-        return retainedVideoIds - idsToStates.keys
-    }
-
     private fun setActiveVideo(videoId: String) {
-        val activeState = idsToStates[videoId] ?: return
-        val previousId = activeVideoId
-        activeVideoId = videoId
+        val activeState = states[videoId] ?: return
+        val previousId = states.activeVideoId
+        states.activeVideoId = videoId
 
-        if (previousId == activeVideoId) return
+        if (previousId == states.activeVideoId) return
 
-        idsToStates[previousId]?.let { previousState ->
+        states[previousId]?.let { previousState ->
             Platform.runLater {
                 mediaPlayers[previousId]?.let { player ->
                     player.pause()
@@ -210,25 +194,4 @@ class JavaFxPlayerController(
             mediaPlayers.clear()
         }
     }
-
-    private fun trim() {
-        val size = idsToStates.size
-        if (size >= MaxVideoStates) idsToStates.keys.filter {
-            val state = idsToStates[it]
-            state?.status is PlayerStatus.Idle.Evicted
-        }
-            .take(size - MaxVideoStates)
-            .forEach { id ->
-                Platform.runLater {
-                    mediaPlayers.remove(id)?.dispose()
-                }
-                idsToStates.remove(id)
-            }
-    }
 }
-
-private fun VideoPlayerState.seekPositionOnPlayMs(seekToMs: Long?): Long {
-    return seekToMs ?: if (shouldReplay) 0L else lastPositionMs
-}
-
-private const val MaxVideoStates = 30

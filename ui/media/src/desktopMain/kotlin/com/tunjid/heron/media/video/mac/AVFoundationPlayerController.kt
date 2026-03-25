@@ -12,14 +12,12 @@ package com.tunjid.heron.media.video.mac
 
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import com.tunjid.heron.media.video.PlayerStatus
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.media.video.VideoPlayerState
+import com.tunjid.heron.media.video.VideoPlayerStates
+import com.tunjid.heron.media.video.seekPositionOnPlayMs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -29,14 +27,15 @@ class AVFoundationPlayerController(
     private val appMainScope: CoroutineScope,
 ) : VideoPlayerController {
 
-    override var isMuted: Boolean by mutableStateOf(true)
+    private val states = VideoPlayerStates(
+        onEvicted = AVFoundationPlayerState::dispose,
+    )
 
-    private val idsToStates = mutableStateMapOf<String, AVFoundationPlayerState>()
-    private var activeVideoId: String by mutableStateOf("")
+    override var isMuted: Boolean by states::isMuted
 
     init {
         snapshotFlow { isMuted }
-            .onEach { idsToStates[activeVideoId]?.applyVolume() }
+            .onEach { states.activeState?.applyVolume() }
             .launchIn(appMainScope)
     }
 
@@ -46,12 +45,10 @@ class AVFoundationPlayerController(
         thumbnail: String?,
         isLooping: Boolean,
         autoplay: Boolean,
-    ): VideoPlayerState {
-        idsToStates[videoId]?.let { return it }
-
-        trim()
-
-        val videoPlayerState = AVFoundationPlayerState(
+    ): VideoPlayerState = states.registerOrGet(
+        videoId = videoId,
+    ) {
+        AVFoundationPlayerState(
             videoUrl = videoUrl,
             videoId = videoId,
             thumbnail = thumbnail,
@@ -60,17 +57,14 @@ class AVFoundationPlayerController(
             isMuted = derivedStateOf { isMuted },
             appMainScope = appMainScope,
         )
-
-        idsToStates[videoId] = videoPlayerState
-        return videoPlayerState
     }
 
     override fun play(
         videoId: String?,
         seekToMs: Long?,
     ) {
-        val playerIdToPlay = videoId ?: activeVideoId
-        val stateToPlay = idsToStates[playerIdToPlay] ?: return
+        val playerIdToPlay = videoId ?: states.activeVideoId
+        val stateToPlay = states[playerIdToPlay] ?: return
 
         setActiveVideo(playerIdToPlay)
 
@@ -107,20 +101,20 @@ class AVFoundationPlayerController(
     }
 
     override fun pauseActiveVideo() {
-        idsToStates[activeVideoId]?.apply {
+        states.activeState?.apply {
             status = PlayerStatus.Pause.Requested
             pauseNative()
         }
     }
 
     override fun seekTo(position: Long) {
-        idsToStates[activeVideoId]?.seekToNative(position)
+        states.activeState?.seekToNative(position)
     }
 
-    override fun getVideoStateById(videoId: String): VideoPlayerState? = idsToStates[videoId]
+    override fun getVideoStateById(videoId: String): VideoPlayerState? = states[videoId]
 
     override fun retry(videoId: String) {
-        val stateToRetry = idsToStates[videoId] ?: return
+        val stateToRetry = states[videoId] ?: return
         setActiveVideo(videoId)
         stateToRetry.dispose()
         stateToRetry.reinitialize()
@@ -128,44 +122,16 @@ class AVFoundationPlayerController(
         stateToRetry.playNative()
     }
 
-    override fun unregisterAll(retainedVideoIds: Set<String>): Set<String> {
-        val toDispose = idsToStates
-            .filterNot { retainedVideoIds.contains(it.key) }
-        toDispose.keys.forEach { id ->
-            idsToStates.remove(id)
-        }
-        toDispose.values.forEach { it.dispose() }
-        return retainedVideoIds - idsToStates.keys
-    }
-
     private fun setActiveVideo(videoId: String) {
-        idsToStates[videoId] ?: return
-        val previousId = activeVideoId
-        activeVideoId = videoId
+        states[videoId] ?: return
+        val previousId = states.activeVideoId
+        states.activeVideoId = videoId
 
-        if (previousId == activeVideoId) return
+        if (previousId == states.activeVideoId) return
 
-        idsToStates[previousId]?.let { previousState ->
+        states[previousId]?.let { previousState ->
             previousState.status = PlayerStatus.Pause.Requested
             previousState.pauseNative()
         }
     }
-
-    private fun trim() {
-        val size = idsToStates.size
-        if (size < MaxVideoStates) return
-        val toDispose = idsToStates.keys
-            .filter { idsToStates[it]?.status is PlayerStatus.Idle.Evicted }
-            .take(size - MaxVideoStates)
-            .mapNotNull { id ->
-                idsToStates.remove(id)
-            }
-        toDispose.forEach { it.dispose() }
-    }
 }
-
-private fun VideoPlayerState.seekPositionOnPlayMs(seekToMs: Long?): Long {
-    return seekToMs ?: if (shouldReplay) 0L else lastPositionMs
-}
-
-private const val MaxVideoStates = 30

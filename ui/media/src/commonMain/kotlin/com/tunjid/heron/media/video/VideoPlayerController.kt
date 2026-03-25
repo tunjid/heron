@@ -74,14 +74,6 @@ interface VideoPlayerController {
      * is different, sets the active video to the one with the given [videoId].
      */
     fun retry(videoId: String)
-
-    /**
-     * Unregisters all videos with IDs that are not present in [retainedVideoIds].
-     *
-     * @return A set of videoIds that are present in [retainedVideoIds] but not the video list
-     * (aka. IDs of videos that have not been registered)
-     */
-    fun unregisterAll(retainedVideoIds: Set<String>): Set<String>
 }
 
 val LocalVideoPlayerController = staticCompositionLocalOf<VideoPlayerController> {
