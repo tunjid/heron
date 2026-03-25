@@ -61,7 +61,7 @@ class VideoPlayerStates<S : VideoPlayerState>(
 
     private fun trim() {
         val size = idsToStates.size
-        if (size < MaxVideoStates) return
+        if (size <= MaxVideoStates) return
         idsToStates.keys
             .toList()
             .filter { idsToStates[it]?.status is PlayerStatus.Idle.Evicted }
