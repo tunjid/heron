@@ -21,7 +21,6 @@ import androidx.annotation.OptIn
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -71,8 +70,6 @@ class ExoplayerController(
 ) : VideoPlayerController,
     Player.Listener {
 
-    override var isMuted: Boolean by mutableStateOf(true)
-
     /**
      * A [Job] for diffing the [ExoPlayer] playlist such that changing the active video does not discard buffered
      * videos.
@@ -85,12 +82,9 @@ class ExoplayerController(
      */
     private val mediaItemMutationsChannel = Channel<(List<MediaItem>) -> List<MediaItem>>()
 
-    /**
-     * A map of ids registered in this [VideoPlayerController] and its associated
-     * [ExoPlayerState]s. Note that the presence of an id in this map is _not_ an indication
-     * that the backing media is available to play. For that information, reference [currentPlaylistIds].
-     */
-    private val idsToStates = mutableStateMapOf<String, ExoPlayerState>()
+    private val states = VideoPlayerStates<ExoPlayerState>()
+
+    override var isMuted: Boolean by states::isMuted
 
     /**
      * The ids of media available to play in the available [player] instance.
@@ -104,23 +98,17 @@ class ExoplayerController(
 
     private var player: ExoPlayer? by mutableStateOf(null)
 
-    private var activeVideoId: String by mutableStateOf("")
-
     // TODO: Revisit this. The Coroutine should be launched lazily instead of in an init block.
     init {
         player = exoPlayer(context = context).apply {
             // The first listener should always be the ExoplayerManager
             addListener(this@ExoplayerController)
             // Bind active video to restore its properties and attach its listener
-            val hasActiveVideo = idsToStates[activeVideoId]?.let(::bind) != null
-            // Restore the players playlist if it was previously saved
-            val restoredMediaItems = idsToStates.values.map { it.toMediaItem() }
-            addMediaItems(restoredMediaItems)
-            currentPlaylistIds = restoredMediaItems.map(MediaItem::mediaId).toSet()
-            playWhenReady = getVideoStateById(activeVideoId)?.autoplay == true
+            val hasActiveVideo = states.activeState?.let(::bind) != null
+            playWhenReady = states.activeState?.autoplay == true
             if (playWhenReady) {
                 prepare()
-                if (playWhenReady && hasActiveVideo) play(activeVideoId)
+                if (playWhenReady && hasActiveVideo) play(states.activeVideoId)
             }
         }
         diffingJob?.cancel()
@@ -141,7 +129,7 @@ class ExoplayerController(
         // TODO this should also be governed by coroutine launch semantics
         //  as the one used for list diffing
         // Pause playback when nothing is visible to play
-        snapshotFlow { idsToStates[activeVideoId]?.status }
+        snapshotFlow { states.activeState?.status }
             .map { it == null || it is PlayerStatus.Idle }
             .filter(true::equals)
             .onEach { player?.pause() }
@@ -156,10 +144,10 @@ class ExoplayerController(
         videoId: String,
         autoplay: Boolean,
     ) {
-        idsToStates[videoId]?.let {
+        states[videoId]?.let {
             it.autoplay = autoplay
         }
-        if (videoId != activeVideoId) return
+        if (videoId != states.activeVideoId) return
 
         if (!autoplay) {
             player?.pause()
@@ -172,10 +160,10 @@ class ExoplayerController(
         videoId: String?,
         seekToMs: Long?,
     ) {
-        val playerIdToPlay = videoId ?: activeVideoId
+        val playerIdToPlay = videoId ?: states.activeVideoId
 
         // Video has not been previously registered
-        val stateToPlay = idsToStates[playerIdToPlay] ?: return
+        val stateToPlay = states[playerIdToPlay] ?: return
 
         setActiveVideo(playerIdToPlay)
 
@@ -183,11 +171,14 @@ class ExoplayerController(
         if (stateToPlay.status is PlayerStatus.Play.Confirmed && seekToMs == null) return
 
         // Diffing is async. Suspend until the video to play is registered in the player
-        playAsync(playerIdToPlay, seekToMs)
+        playAsync(
+            playerIdToPlay = playerIdToPlay,
+            seekToMs = seekToMs,
+        )
     }
 
     override fun pauseActiveVideo() {
-        activeVideoId.let(idsToStates::get)?.apply {
+        states.activeState?.apply {
             status = PlayerStatus.Pause.Requested
         }
         player?.pause()
@@ -195,15 +186,15 @@ class ExoplayerController(
 
     private fun setActiveVideo(videoId: String) {
         // Video has not been previously registered
-        val activeState = idsToStates[videoId] ?: return
+        val activeState = states[videoId] ?: return
 
-        val previousId = activeVideoId
-        activeVideoId = videoId
+        val previousId = states.activeVideoId
+        states.activeVideoId = videoId
 
-        if (previousId == activeVideoId) return
+        if (previousId == states.activeVideoId) return
 
         player?.apply {
-            idsToStates[previousId]?.let(::unbind)
+            states[previousId]?.let(::unbind)
             bind(activeState)
         }
         // NOTE: Play must be called on the manager and not on the exoplayer instance itself.
@@ -221,7 +212,7 @@ class ExoplayerController(
         }
     }
 
-    override fun getVideoStateById(videoId: String): VideoPlayerState? = idsToStates[videoId]
+    override fun getVideoStateById(videoId: String): VideoPlayerState? = states[videoId]
 
     override fun retry(videoId: String) {
         setActiveVideo(videoId)
@@ -229,7 +220,10 @@ class ExoplayerController(
     }
 
     override fun seekTo(position: Long) {
-        play(videoId = activeVideoId, seekToMs = position)
+        play(
+            videoId = states.activeVideoId,
+            seekToMs = position,
+        )
     }
 
     override fun onPlaybackStateChanged(playbackState: Int) {
@@ -255,24 +249,24 @@ class ExoplayerController(
         isLooping: Boolean,
         autoplay: Boolean,
     ): VideoPlayerState {
-        idsToStates[videoId]?.let { return it }
+        states[videoId]?.let { return it }
 
-        trim()
-        val videoPlayerState = ExoPlayerState(
-            videoUrl = videoUrl,
-            videoId = videoId,
-            thumbnail = thumbnail,
-            autoplay = autoplay,
-            isLooping = isLooping,
-            isMuted = derivedStateOf {
-                isMuted
-            },
-            exoPlayerState = derivedStateOf {
-                player.takeIf { isCurrentMediaItem(videoId) }
-            },
-        )
+        val videoPlayerState = states.registerOrGet(videoId = videoId) {
+            ExoPlayerState(
+                videoUrl = videoUrl,
+                videoId = videoId,
+                thumbnail = thumbnail,
+                autoplay = autoplay,
+                isLooping = isLooping,
+                isMuted = derivedStateOf {
+                    isMuted
+                },
+                exoPlayerState = derivedStateOf {
+                    player.takeIf { isCurrentMediaItem(videoId) }
+                },
+            )
+        }
 
-        idsToStates[videoId] = videoPlayerState
         val mediaItem = videoPlayerState.toMediaItem()
 
         // Add the new media item to the ExoPlayer playlist.
@@ -291,30 +285,11 @@ class ExoplayerController(
         return videoPlayerState
     }
 
-    override fun unregisterAll(retainedVideoIds: Set<String>): Set<String> {
-        idsToStates
-            .filterNot { retainedVideoIds.contains(it.key) }
-            .forEach { (id, videoState) ->
-                if (activeVideoId == id) {
-                    player?.pause()
-                }
-                player?.unbind(videoState)
-                idsToStates.remove(id)
-            }
-        // Remove all videos that have not been retained from the playlist.In
-        scope.launch {
-            mediaItemMutationsChannel.send { existingItems ->
-                existingItems.filter { retainedVideoIds.contains(it.mediaId) }
-            }
-        }
-        return retainedVideoIds - idsToStates.keys
-    }
-
     internal fun teardown() {
         diffingJob?.cancel()
         player?.apply {
             removeListener(this@ExoplayerController)
-            idsToStates[activeVideoId]?.let {
+            states.activeState?.let {
                 removeListener(it.playerListener)
                 it.updateFromPlayer()
             }
@@ -332,7 +307,7 @@ class ExoplayerController(
     ) {
         scope.launch {
             // Do this only while playerId is the activeVideo
-            snapshotFlow { activeVideoId == playerIdToPlay }
+            snapshotFlow { states.activeVideoId == playerIdToPlay }
                 .flatMapLatest { isActiveVideo ->
                     if (isActiveVideo) {
                         snapshotFlow { currentPlaylistIds.contains(playerIdToPlay) }
@@ -354,16 +329,6 @@ class ExoplayerController(
                 }
             }
         }
-    }
-
-    private fun trim() {
-        val size = idsToStates.size
-        if (size >= MaxVideoStates) idsToStates.keys.filter {
-            val state = idsToStates[it]
-            state?.status is PlayerStatus.Idle.Evicted
-        }
-            .take(size - MaxVideoStates)
-            .forEach(idsToStates::remove)
     }
 
     /**
@@ -392,7 +357,7 @@ class ExoplayerController(
     }
 
     private fun isCurrentMediaItem(videoId: String) =
-        activeVideoId == videoId && currentMediaItem?.mediaId == videoId
+        states.activeVideoId == videoId && currentMediaItem?.mediaId == videoId
 
     private val Player.currentMediaItems: List<MediaItem>
         get() = List(mediaItemCount, ::getMediaItemAt)
@@ -445,5 +410,3 @@ private fun VideoPlayerState.toMediaItem() =
         .setUri(videoUrl)
         .setMediaId(videoId)
         .build()
-
-private const val MaxVideoStates = 30

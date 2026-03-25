@@ -2,14 +2,12 @@ package com.tunjid.heron.media.video.linux
 
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import com.tunjid.heron.media.video.PlayerStatus
 import com.tunjid.heron.media.video.VideoPlayerController
 import com.tunjid.heron.media.video.VideoPlayerState
+import com.tunjid.heron.media.video.VideoPlayerStates
+import com.tunjid.heron.media.video.seekPositionOnPlayMs
 import java.util.EnumSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
@@ -22,16 +20,17 @@ class GStreamerPlayerController(
     private val appMainScope: CoroutineScope,
 ) : VideoPlayerController {
 
-    override var isMuted: Boolean by mutableStateOf(true)
+    private val states = VideoPlayerStates(
+        onEvicted = GStreamerPlayerState::dispose,
+    )
 
-    private val idsToStates = mutableStateMapOf<String, GStreamerPlayerState>()
-    private var activeVideoId: String by mutableStateOf("")
+    override var isMuted: Boolean by states::isMuted
 
     init {
         GStreamer.initialized
 
         snapshotFlow { isMuted }
-            .onEach { idsToStates[activeVideoId]?.applyMute() }
+            .onEach { states.activeState?.applyMute() }
             .launchIn(appMainScope)
     }
 
@@ -41,12 +40,10 @@ class GStreamerPlayerController(
         thumbnail: String?,
         isLooping: Boolean,
         autoplay: Boolean,
-    ): VideoPlayerState {
-        idsToStates[videoId]?.let { return it }
-
-        trim()
-
-        val state = GStreamerPlayerState(
+    ): VideoPlayerState = states.registerOrGet(
+        videoId = videoId,
+    ) {
+        GStreamerPlayerState(
             videoUrl = videoUrl,
             videoId = videoId,
             thumbnail = thumbnail,
@@ -55,13 +52,14 @@ class GStreamerPlayerController(
             isMuted = derivedStateOf { isMuted },
             appMainScope = appMainScope,
         )
-        idsToStates[videoId] = state
-        return state
     }
 
-    override fun play(videoId: String?, seekToMs: Long?) {
-        val playerIdToPlay = videoId ?: activeVideoId
-        val stateToPlay = idsToStates[playerIdToPlay] ?: return
+    override fun play(
+        videoId: String?,
+        seekToMs: Long?,
+    ) {
+        val playerIdToPlay = videoId ?: states.activeVideoId
+        val stateToPlay = states[playerIdToPlay] ?: return
 
         setActiveVideo(playerIdToPlay)
 
@@ -91,20 +89,20 @@ class GStreamerPlayerController(
     }
 
     override fun pauseActiveVideo() {
-        idsToStates[activeVideoId]?.apply {
+        states.activeState?.apply {
             status = PlayerStatus.Pause.Requested
             playBin?.pause()
         }
     }
 
     override fun seekTo(position: Long) {
-        idsToStates[activeVideoId]?.seekNative(position)
+        states.activeState?.seekNative(position)
     }
 
-    override fun getVideoStateById(videoId: String): VideoPlayerState? = idsToStates[videoId]
+    override fun getVideoStateById(videoId: String): VideoPlayerState? = states[videoId]
 
     override fun retry(videoId: String) {
-        val stateToRetry = idsToStates[videoId] ?: return
+        val stateToRetry = states[videoId] ?: return
         setActiveVideo(videoId)
         stateToRetry.dispose()
         stateToRetry.reinitialize()
@@ -112,33 +110,16 @@ class GStreamerPlayerController(
         stateToRetry.playBin?.play()
     }
 
-    override fun unregisterAll(retainedVideoIds: Set<String>): Set<String> {
-        val toDispose = idsToStates.filterNot { retainedVideoIds.contains(it.key) }
-        toDispose.keys.forEach { idsToStates.remove(it) }
-        toDispose.values.forEach { it.dispose() }
-        return retainedVideoIds - idsToStates.keys
-    }
-
     private fun setActiveVideo(videoId: String) {
-        idsToStates[videoId] ?: return
-        val previousId = activeVideoId
-        activeVideoId = videoId
-        if (previousId == activeVideoId) return
+        states[videoId] ?: return
+        val previousId = states.activeVideoId
+        states.activeVideoId = videoId
+        if (previousId == states.activeVideoId) return
 
-        idsToStates[previousId]?.apply {
+        states[previousId]?.apply {
             status = PlayerStatus.Pause.Requested
             playBin?.pause()
         }
-    }
-
-    private fun trim() {
-        val size = idsToStates.size
-        if (size < MaxVideoStates) return
-        idsToStates.keys
-            .filter { idsToStates[it]?.status is PlayerStatus.Idle.Evicted }
-            .take(size - MaxVideoStates)
-            .mapNotNull { idsToStates.remove(it) }
-            .forEach { it.dispose() }
     }
 }
 
@@ -149,8 +130,3 @@ private fun GStreamerPlayerState.seekNative(positionMs: Long) {
         positionMs * 1_000_000L,
     )
 }
-
-private fun VideoPlayerState.seekPositionOnPlayMs(seekToMs: Long?): Long =
-    seekToMs ?: if (shouldReplay) 0L else lastPositionMs
-
-private const val MaxVideoStates = 30

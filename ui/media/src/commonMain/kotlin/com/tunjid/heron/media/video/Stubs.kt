@@ -61,10 +61,6 @@ object StubVideoPlayerController : VideoPlayerController {
     override fun getVideoStateById(videoId: String): VideoPlayerState? = null
 
     override fun retry(videoId: String) = Unit
-
-    override fun unregisterAll(
-        retainedVideoIds: Set<String>,
-    ): Set<String> = retainedVideoIds
 }
 
 private data class NoOpVideoPlayerState(
