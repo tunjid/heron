@@ -208,10 +208,17 @@ compose.desktop {
             packageVersion = scmVersion.version.split("-").first()
             outputBaseDir.set(layout.buildDirectory.dir("release"))
 
+            // Bundle pre-built native libraries (JNA dispatch + AVFoundation) into the
+            // .app package so the hardened runtime / sandbox can load them directly.
+            // Run copyNativeLibsForSandbox before packaging.
+            appResourcesRootDir.set(project.layout.projectDirectory.dir("resources"))
+
             val resourcesDir = project.file("src/desktopMain/resources")
             macOS {
                 bundleID = "com.tunjid.heron"
                 iconFile.set(resourcesDir.resolve("icon.icns"))
+                entitlementsFile.set(project.file("entitlements.plist"))
+                runtimeEntitlementsFile.set(project.file("runtime-entitlements.plist"))
 
                 providers.gradleProperty("heron.macOS.signing.identity")
                     .let { identityProperty ->
@@ -232,6 +239,36 @@ compose.desktop {
                 iconFile.set(resourcesDir.resolve("icon.png"))
             }
         }
+    }
+}
+
+// Copy native libraries into app resources for sandboxed App Store builds.
+// These are picked up by appResourcesRootDir and bundled into the .app package,
+// accessible at runtime via the compose.application.resources.dir system property.
+// The build and extraction tasks live in :ui:media; this module just copies the outputs.
+listOf(
+    "Arm" to ("aarch64" to "macos-arm64"),
+    "X64" to ("x86-64" to "macos-x86-64"),
+).forEach { (taskSuffix, archPair) ->
+    val (buildArch, resourceArch) = archPair
+    tasks.register<Copy>("copyNativeLibs${resourceArch.replace("-", "")}") {
+        from(project(":ui:media").file("src/desktopMain/resources/darwin-$buildArch"))
+        include("libAVFoundationVideoPlayer.dylib", "libjnidispatch.jnilib")
+        into(project.file("resources/$resourceArch"))
+        dependsOn(
+            ":ui:media:buildAVFoundationMac$taskSuffix",
+            ":ui:media:extractJnaNative$taskSuffix",
+        )
+    }
+}
+
+tasks.register("copyNativeLibsForSandbox") {
+    dependsOn("copyNativeLibsmacosarm64", "copyNativeLibsmacosx8664")
+}
+
+tasks.configureEach {
+    if (name == "packageDmg" || name == "packageReleaseDmg" || name == "prepareAppResources") {
+        dependsOn("copyNativeLibsForSandbox")
     }
 }
 

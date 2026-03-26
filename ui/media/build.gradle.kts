@@ -1,4 +1,5 @@
 import com.android.build.gradle.internal.ide.kmp.KotlinAndroidSourceSetMarker.Companion.android
+import java.util.zip.ZipFile
 
 /*
  *    Copyright 2024 Adetunji Dahunsi
@@ -115,17 +116,62 @@ val macTargets = listOf(
     Triple("X64", "x86_64-apple-macosx14.0", "x86-64"),
 )
 
+val swiftSourceFile = file("src/desktopMain/swift/AVFoundationVideoPlayer.swift")
+
 macTargets.forEach { (name, target, arch) ->
+    val dylibFile = file("src/desktopMain/resources/darwin-$arch/libAVFoundationVideoPlayer.dylib")
     tasks.register<Exec>("buildAVFoundationMac$name") {
         onlyIf { System.getProperty("os.name").startsWith("Mac") }
+        inputs.file(swiftSourceFile)
+        outputs.file(dylibFile)
         workingDir(rootDir)
         commandLine(
             "swiftc", "-emit-library", "-emit-module", "-module-name", "AVFoundationVideoPlayer",
             "-target", target,
-            "-o", "ui/media/src/desktopMain/resources/darwin-$arch/libAVFoundationVideoPlayer.dylib",
-            "ui/media/src/desktopMain/swift/AVFoundationVideoPlayer.swift",
+            "-o", dylibFile.absolutePath,
+            swiftSourceFile.absolutePath,
             "-O", "-whole-module-optimization",
         )
+    }
+}
+
+tasks.named("desktopProcessResources") {
+    if (System.getProperty("os.name").startsWith("Mac")) {
+        dependsOn(
+            "buildAVFoundationMacArm",
+            "buildAVFoundationMacX64",
+            "extractJnaNativeArm",
+            "extractJnaNativeX64",
+        )
+    }
+}
+
+// Extract JNA's native dispatch library from the JNA JAR for sandboxed App Store builds.
+// The extracted libjnidispatch.jnilib is placed alongside the AVFoundation dylib so that
+// composeApp can copy both into appResourcesRootDir.
+val jnaJar = configurations.named("desktopRuntimeClasspath").map { config ->
+    config.files.first { it.name.startsWith("jna-") && !it.name.contains("platform") }
+}
+
+macTargets.forEach { (name, _, arch) ->
+    tasks.register("extractJnaNative$name") {
+        val outputDir = file("src/desktopMain/resources/darwin-$arch")
+        val jnaJarFile = jnaJar
+        inputs.files(jnaJarFile)
+        outputs.file(outputDir.resolve("libjnidispatch.jnilib"))
+        doLast {
+            val jarFile = jnaJarFile.get()
+            val entryPath = "com/sun/jna/darwin-$arch/libjnidispatch.jnilib"
+            outputDir.mkdirs()
+            val outputFile = outputDir.resolve("libjnidispatch.jnilib")
+            val zip = ZipFile(jarFile)
+            val entry = zip.getEntry(entryPath)
+                ?: error("Entry $entryPath not found in ${jarFile.name}")
+            zip.getInputStream(entry).use { stream ->
+                outputFile.outputStream().use { out -> stream.copyTo(out) }
+            }
+            zip.close()
+        }
     }
 }
 

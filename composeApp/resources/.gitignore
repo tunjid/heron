@@ -1,0 +1,3 @@
+# Native libraries copied here by copyNativeLibsForSandbox task for sandboxed App Store builds
+*.dylib
+*.jnilib
