@@ -27,23 +27,33 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.tunjid.heron.scaffold.scaffold.App
 
-fun main() = application {
-    Window(
-        onCloseRequest = ::exitApplication,
-        state = rememberWindowState(
-            size = DpSize(1000.dp, 800.dp),
-        ),
-        title = "heron",
-        icon = painterResource("icon.png"),
-    ) {
-        window.rootPane.apply {
-            putClientProperty("apple.awt.fullWindowContent", true)
-            putClientProperty("apple.awt.transparentTitleBar", true)
-            putClientProperty("apple.awt.windowTitleVisible", false)
+fun main() {
+    // Point JNA to pre-bundled native libraries so it loads libjnidispatch.jnilib
+    // and libAVFoundationVideoPlayer.dylib from the app bundle instead of extracting
+    // unsigned copies from JARs (which the hardened runtime / sandbox blocks).
+    System.getProperty("compose.application.resources.dir")?.let { resourcesDir ->
+        System.setProperty("jna.boot.library.path", resourcesDir)
+        System.setProperty("jna.library.path", resourcesDir)
+    }
+
+    application {
+        Window(
+            onCloseRequest = ::exitApplication,
+            state = rememberWindowState(
+                size = DpSize(1000.dp, 800.dp),
+            ),
+            title = "heron",
+            icon = painterResource("icon.png"),
+        ) {
+            window.rootPane.apply {
+                putClientProperty("apple.awt.fullWindowContent", true)
+                putClientProperty("apple.awt.transparentTitleBar", true)
+                putClientProperty("apple.awt.windowTitleVisible", false)
+            }
+            App(
+                appState = remember { createAppState() },
+                modifier = Modifier.fillMaxSize(),
+            )
         }
-        App(
-            appState = remember { createAppState() },
-            modifier = Modifier.fillMaxSize(),
-        )
     }
 }
