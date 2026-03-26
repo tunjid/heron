@@ -210,7 +210,20 @@ compose.desktop {
 
             val resourcesDir = project.file("src/desktopMain/resources")
             macOS {
+                bundleID = "com.tunjid.heron"
                 iconFile.set(resourcesDir.resolve("icon.icns"))
+
+                providers.gradleProperty("heron.macOS.signing.identity")
+                    .let { identityProperty ->
+                        if (identityProperty.isPresent) signing {
+                            sign.set(true)
+                            identity.set(identityProperty)
+                        }
+                    }
+
+                // Notarization is handled externally via xcrun notarytool
+                // to maintain compatibility with Gradle configuration cache.
+                // See the publish workflow and README for details.
             }
             windows {
                 iconFile.set(resourcesDir.resolve("icon.ico"))
