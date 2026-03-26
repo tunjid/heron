@@ -154,6 +154,7 @@ fun PostInteractions(
 @Composable
 fun MediaPostInteractions(
     post: Post,
+    iconSize: Dp,
     sharedElementPrefix: String,
     showEngagementMetrics: Boolean,
     paneTransitionScope: PaneTransitionScope,
@@ -170,7 +171,7 @@ fun MediaPostInteractions(
             post = post,
             sharedElementPrefix = sharedElementPrefix,
             showEngagementMetrics = showEngagementMetrics,
-            iconSize = 40.dp,
+            iconSize = iconSize,
             orientation = Orientation.Vertical,
             paneTransitionScope = paneTransitionScope,
             onInteraction = onInteraction,

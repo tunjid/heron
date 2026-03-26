@@ -23,24 +23,23 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -56,33 +55,36 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.gallery.Action
 import com.tunjid.heron.gallery.GalleryItem
+import com.tunjid.heron.gallery.posterSharedElementPrefix
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.media.video.LocalVideoPlayerController
-import com.tunjid.heron.media.video.PlaybackStatus
-import com.tunjid.heron.media.video.PlayerControlsUiState
 import com.tunjid.heron.media.video.VideoPlayer
 import com.tunjid.heron.media.video.VideoPlayerController
-import com.tunjid.heron.media.video.VideoPlayerState
 import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.scaffold.navigation.pathDestination
+import com.tunjid.heron.scaffold.navigation.profileDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.ui.theme.Theme
 import com.tunjid.heron.timeline.ui.PostAction
 import com.tunjid.heron.timeline.ui.post.MediaPostInteractions
+import com.tunjid.heron.timeline.ui.post.PostInteractionsSheetState
+import com.tunjid.heron.timeline.ui.post.PostOptionsSheetState
 import com.tunjid.heron.timeline.ui.post.PostText
 import com.tunjid.heron.timeline.ui.post.sharedElementKey
 import com.tunjid.heron.timeline.ui.profile.ProfileWithViewerState
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.ui.isPrimaryOrActive
+import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import com.tunjid.heron.ui.text.CommonStrings
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
 import heron.feature.gallery.generated.resources.Res
 import heron.feature.gallery.generated.resources.mute_video
 import heron.feature.gallery.generated.resources.unmute_video
-import kotlinx.coroutines.flow.collectLatest
+import heron.ui.core.generated.resources.close
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -175,35 +177,86 @@ internal fun GalleryVideo(
 }
 
 @Composable
-internal fun GalleryFooter(
-    modifier: Modifier,
-    item: GalleryItem.Media,
-    videoPlayerController: VideoPlayerController,
+internal fun MediaActions(
+    modifier: Modifier = Modifier,
+    media: GalleryItem.Media,
     imageDownloadState: ImageDownloadState,
-    post: Post?,
+    videoPlayerController: VideoPlayerController,
+    onCloseClicked: () -> Unit,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.SpaceBetween,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Icon(
+            modifier = Modifier
+                .size(OverlayIconSize)
+                .shapedClickable(
+                    shape = CircleShape,
+                    onClick = onCloseClicked,
+                ),
+            imageVector = Icons.Rounded.Close,
+            tint = MaterialTheme.colorScheme.outline,
+            contentDescription = stringResource(CommonStrings.close),
+        )
+        when (media) {
+            is GalleryItem.Media.Photo -> imageDownloadState.DownloadButton(media)
+            is GalleryItem.Media.Video -> videoPlayerController.MuteButton()
+        }
+    }
+}
+
+@Composable
+internal fun MediaCreatorAndDescription(
+    modifier: Modifier,
+    signedInProfileId: ProfileId?,
+    item: GalleryItem,
     paneScaffoldState: PaneScaffoldState,
     actions: (Action) -> Unit,
-    playerControlsUiState: PlayerControlsUiState,
 ) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .align(Alignment.End)
-                .padding(horizontal = 16.dp),
-        ) {
-            when (item) {
-                is GalleryItem.Media.Photo -> imageDownloadState.DownloadButton(item)
-                is GalleryItem.Media.Video -> videoPlayerController.MuteButton()
-            }
-        }
-        GalleryText(
-            post = post,
+        val viewedProfileId = item.post.author.did
+        MediaPoster(
+            post = item.post,
+            signedInProfileId = signedInProfileId,
+            viewerState = item.viewerState,
+            sharedElementPrefix = item.posterSharedElementPrefix,
             paneScaffoldState = paneScaffoldState,
-            modifier = Modifier
-                .padding(horizontal = 16.dp),
+            onProfileClicked = { post ->
+                actions(
+                    Action.Navigate.To(
+                        profileDestination(
+                            profile = post.author,
+                            avatarSharedElementKey = post.avatarSharedElementKey(
+                                prefix = item.posterSharedElementPrefix,
+                            ),
+                            referringRouteOption = NavigationAction.ReferringRouteOption.Current,
+                        ),
+                    ),
+                )
+            },
+            onViewerStateToggled = remember(signedInProfileId, viewedProfileId) {
+                { viewerState ->
+                    signedInProfileId?.let {
+                        actions(
+                            Action.ToggleViewerState(
+                                signedInProfileId = it,
+                                viewedProfileId = viewedProfileId,
+                                following = viewerState?.following,
+                                followedBy = viewerState?.followedBy,
+                            ),
+                        )
+                    }
+                }
+            },
+        )
+        GalleryText(
+            post = item.post,
+            paneScaffoldState = paneScaffoldState,
             onClick = {},
             onLinkTargetClicked = { _, target ->
                 if (target is LinkTarget.Navigable) actions(
@@ -216,24 +269,15 @@ internal fun GalleryFooter(
                 )
             },
         )
-
-        (item as? GalleryItem.Media.Video)
-            ?.let { videoPlayerController.getVideoStateById(it.video.playlist.uri) }
-            ?.let {
-                VideoPlayerControls(
-                    videoPlayerState = it,
-                    playerControlsUiState = playerControlsUiState,
-                )
-            }
     }
 }
 
 @Composable
-internal fun MediaOverlay(
+internal fun MediaOverlayBox(
     modifier: Modifier = Modifier,
     media: GalleryItem.Media?,
     isVisible: Boolean,
-    content: @Composable (item: GalleryItem.Media) -> Unit,
+    content: @Composable BoxScope.(item: GalleryItem.Media) -> Unit,
 ) {
     val currentTheme = MaterialTheme
     MaterialTheme(
@@ -261,14 +305,12 @@ internal fun MediaOverlay(
 
         // The Overlay is stateful, so it should not be removed from the composition.
         // So instead of AnimatedVisibility, alpha and zIndices are  manipulated.
-        Column(
+        Box(
             modifier = modifier
                 .zIndex(zIndex)
                 .fillMaxSize()
                 .graphicsLayer { alpha = alphaState.value }
                 .background(color = Color.Black.copy(alpha = 0.8f)),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.End,
             content = {
                 if (media != null) content(media)
             },
@@ -328,22 +370,62 @@ private fun GalleryText(
 
 @Composable
 internal fun MediaInteractions(
-    post: Post?,
-    showEngagementMetrics: Boolean,
-    paneScaffoldState: PaneScaffoldState,
     modifier: Modifier = Modifier,
-    onPostInteraction: (PostAction.Options) -> Unit,
+    media: GalleryItem.Media,
+    imageDownloadState: ImageDownloadState,
+    videoPlayerController: VideoPlayerController,
+    actions: (Action) -> Unit,
+    item: GalleryItem,
+    paneScaffoldState: PaneScaffoldState,
+    showEngagementMetrics: Boolean,
+    postInteractionSheetState: PostInteractionsSheetState,
+    postOptionsSheetState: PostOptionsSheetState,
+    commentsState: CommentsState,
 ) {
-    if (post == null) return
-
-    MediaPostInteractions(
-        post = post,
-        sharedElementPrefix = UnmatchedPrefix,
-        showEngagementMetrics = showEngagementMetrics,
-        paneTransitionScope = paneScaffoldState,
+    Column(
         modifier = modifier,
-        onInteraction = onPostInteraction,
-    )
+        verticalArrangement = Arrangement.SpaceBetween,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        MediaActions(
+            modifier = Modifier
+                .weight(1f)
+                .padding(bottom = 8.dp),
+            media = media,
+            imageDownloadState = imageDownloadState,
+            videoPlayerController = videoPlayerController,
+            onCloseClicked = {
+                actions(Action.Navigate.Pop)
+            },
+        )
+        MediaPostInteractions(
+            post = item.post,
+            iconSize = OverlayIconSize,
+            sharedElementPrefix = UnmatchedPrefix,
+            showEngagementMetrics = showEngagementMetrics,
+            paneTransitionScope = paneScaffoldState,
+            onInteraction = { interaction ->
+                when (interaction) {
+                    is PostAction.OfInteraction -> postInteractionSheetState.onInteraction(
+                        interaction,
+                    )
+                    is PostAction.OfMetadata -> Unit
+                    is PostAction.OfMore -> postOptionsSheetState.showOptions(
+                        interaction.post,
+                    )
+                    is PostAction.OfReply -> {
+                        commentsState.expand()
+                        actions(
+                            Action.LoadComments(
+                                post = item.post,
+                                order = null,
+                            ),
+                        )
+                    }
+                }
+            },
+        )
+    }
 }
 
 @Composable
@@ -361,46 +443,27 @@ private fun viewportSharedContentConfig(
 }
 
 @Composable
-private fun VideoPlayerControls(
-    videoPlayerState: VideoPlayerState,
-    playerControlsUiState: PlayerControlsUiState,
-) {
-    PlaybackStatus(
-        modifier = Modifier
-            .padding(horizontal = 8.dp)
-            .fillMaxWidth(),
-        videoPlayerState = videoPlayerState,
-        controlsState = playerControlsUiState,
-    )
-    LaunchedEffect(Unit) {
-        snapshotFlow { videoPlayerState.status }
-            .collectLatest {
-                playerControlsUiState.update(it)
-            }
-    }
-}
-
-@Composable
 private fun VideoPlayerController.MuteButton(
     modifier: Modifier = Modifier,
 ) {
-    IconButton(
-        modifier = modifier,
-        onClick = { isMuted = !isMuted },
-    ) {
-        Icon(
-            imageVector =
-            if (isMuted) Icons.AutoMirrored.Rounded.VolumeOff
-            else Icons.AutoMirrored.Rounded.VolumeUp,
-            contentDescription = stringResource(
-                if (isMuted) Res.string.mute_video
-                else Res.string.unmute_video,
-            ),
-            tint = MaterialTheme.colorScheme.outline,
-            modifier = Modifier.size(40.dp),
-        )
-    }
+    Icon(
+        imageVector =
+        if (isMuted) Icons.AutoMirrored.Rounded.VolumeOff
+        else Icons.AutoMirrored.Rounded.VolumeUp,
+        contentDescription = stringResource(
+            if (isMuted) Res.string.mute_video
+            else Res.string.unmute_video,
+        ),
+        tint = MaterialTheme.colorScheme.outline,
+        modifier = modifier
+            .size(OverlayIconSize)
+            .shapedClickable(CircleShape) {
+                isMuted = !isMuted
+            },
+    )
 }
+
+internal val OverlayIconSize = 36.dp
 
 private const val UnmatchedPrefix = "UnmatchedPrefix"
 private const val VisibleOverlayZIndex = 1f
