@@ -75,7 +75,7 @@ internal fun PostImages(
             ),
         horizontalArrangement = spacedBy(8.dp),
     ) {
-        val tallestImage = feature.images.maxBy { it.aspectRatioOrSquare }
+        val tallestImage = feature.images.minBy { it.aspectRatioOrSquare }
 
         itemsIndexed(
             items = feature.images,
