@@ -119,7 +119,8 @@ val macTargets = listOf(
 val swiftSourceFile = file("src/desktopMain/swift/AVFoundationVideoPlayer.swift")
 
 macTargets.forEach { (name, target, arch) ->
-    val dylibFile = file("src/desktopMain/resources/darwin-$arch/libAVFoundationVideoPlayer.dylib")
+    val outputDir = layout.buildDirectory.dir("native-libs/darwin-$arch")
+    val dylibFile = layout.buildDirectory.file("native-libs/darwin-$arch/libAVFoundationVideoPlayer.dylib")
     tasks.register<Exec>("buildAVFoundationMac$name") {
         onlyIf { System.getProperty("os.name").startsWith("Mac") }
         inputs.file(swiftSourceFile)
@@ -128,11 +129,17 @@ macTargets.forEach { (name, target, arch) ->
         commandLine(
             "swiftc", "-emit-library", "-emit-module", "-module-name", "AVFoundationVideoPlayer",
             "-target", target,
-            "-o", dylibFile.absolutePath,
+            "-o", dylibFile.get().asFile.absolutePath,
             swiftSourceFile.absolutePath,
             "-O", "-whole-module-optimization",
         )
     }
+}
+
+// Add the native-libs build output as a resource directory so desktopProcessResources
+// picks up the dylib and jnilib for development runs (IDE run configurations).
+kotlin.sourceSets.named("desktopMain") {
+    resources.srcDir(layout.buildDirectory.dir("native-libs"))
 }
 
 tasks.named("desktopProcessResources") {
@@ -155,15 +162,15 @@ val jnaJar = configurations.named("desktopRuntimeClasspath").map { config ->
 
 macTargets.forEach { (name, _, arch) ->
     tasks.register("extractJnaNative$name") {
-        val outputDir = file("src/desktopMain/resources/darwin-$arch")
+        val outputDir = layout.buildDirectory.dir("native-libs/darwin-$arch")
         val jnaJarFile = jnaJar
         inputs.files(jnaJarFile)
-        outputs.file(outputDir.resolve("libjnidispatch.jnilib"))
+        outputs.file(outputDir.map { it.file("libjnidispatch.jnilib") })
         doLast {
             val jarFile = jnaJarFile.get()
             val entryPath = "com/sun/jna/darwin-$arch/libjnidispatch.jnilib"
-            outputDir.mkdirs()
-            val outputFile = outputDir.resolve("libjnidispatch.jnilib")
+            val dir = outputDir.get().asFile
+            val outputFile = dir.resolve("libjnidispatch.jnilib")
             ZipFile(jarFile).use { zip ->
                 val entry = zip.getEntry(entryPath)
                     ?: error("Entry $entryPath not found in ${jarFile.name}")

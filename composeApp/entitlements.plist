@@ -2,19 +2,25 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
     <dict>
+        <!-- Enable App Sandbox (required for Mac App Store distribution) -->
         <key>com.apple.security.app-sandbox</key>
         <true/>
+        <!-- Required by the JVM for JIT compilation -->
         <key>com.apple.security.cs.allow-jit</key>
         <true/>
+        <!-- Required by the JVM for memory management and garbage collection -->
         <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
         <true/>
+        <!-- Required to load JNA and other native libraries bundled in JARs -->
         <key>com.apple.security.cs.disable-library-validation</key>
         <true/>
+        <!-- Required by JNA to locate native libraries via jna.boot.library.path -->
         <key>com.apple.security.cs.allow-dyld-environment-variables</key>
         <true/>
+        <!-- Required for all network API calls (HTTP client) -->
         <key>com.apple.security.network.client</key>
         <true/>
-        <!-- Needed for oauth loopback -->
+        <!-- Required for OAuth loopback redirect (localhost server) -->
         <key>com.apple.security.network.server</key>
         <true/>
     </dict>

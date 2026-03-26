@@ -252,7 +252,7 @@ val copyNativeLibsTasks = listOf(
 ).map { (taskSuffix, archPair) ->
     val (buildArch, resourceArch) = archPair
     tasks.register<Copy>("copyNativeLibs${resourceArch.replace("-", "")}") {
-        from(project(":ui:media").file("src/desktopMain/resources/darwin-$buildArch"))
+        from(project(":ui:media").layout.buildDirectory.dir("native-libs/darwin-$buildArch"))
         include("libAVFoundationVideoPlayer.dylib", "libjnidispatch.jnilib")
         into(project.file("resources/$resourceArch"))
         dependsOn(
@@ -271,10 +271,8 @@ val nativeLibDependentTasks = setOf(
     "packageReleaseDmg",
     "prepareAppResources",
 )
-tasks.configureEach {
-    if (name in nativeLibDependentTasks) {
-        dependsOn(copyNativeLibsForSandbox)
-    }
+tasks.matching { it.name in nativeLibDependentTasks }.configureEach {
+    dependsOn(copyNativeLibsForSandbox)
 }
 
 configurations {
