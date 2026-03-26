@@ -61,6 +61,7 @@ import com.tunjid.heron.media.video.VideoPlayerState
 import com.tunjid.heron.media.video.VideoStill
 import com.tunjid.heron.media.video.formatVideoDuration
 import com.tunjid.heron.media.video.rememberUpdatedVideoPlayerState
+import com.tunjid.heron.timeline.utilities.bucketedRatio
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.isPrimaryOrActive
@@ -97,10 +98,12 @@ internal fun PostVideo(
             .aspectRatio(
                 ratio = when (presentation) {
                     Timeline.Presentation.Media.Condensed,
+                    -> video.bucketedRatio()
                     Timeline.Presentation.Media.Expanded,
                     Timeline.Presentation.Text.WithEmbed,
                     -> video.aspectRatioOrSquare
-                    Timeline.Presentation.Media.Grid -> 1f
+                    Timeline.Presentation.Media.Grid,
+                    -> 1f
                 },
                 matchHeightConstraintsFirst = matchHeightConstraintsFirst,
             ),

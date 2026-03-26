@@ -32,10 +32,13 @@ import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import com.tunjid.heron.data.core.models.AspectRatio
 import com.tunjid.heron.data.core.models.TimelineItem
+import com.tunjid.heron.data.core.models.aspectRatioOrSquare
 import com.tunjid.heron.ui.modifiers.blockClickEvents
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
+import kotlin.math.abs
 
 val TimelineItem.contentType: String
     get() = when (this) {
@@ -72,6 +75,11 @@ internal fun Modifier.sensitiveContentBlur(
         clip = ::SensitiveContentBlurClip,
         progress = { 1f },
     )
+
+internal fun AspectRatio.bucketedRatio() =
+    AspectRatioBuckets.minBy {
+        abs(it - aspectRatioOrSquare)
+    }
 
 @Composable
 internal fun SensitiveContentBox(
@@ -139,5 +147,15 @@ private fun SensitiveContentButton(
     )
 }
 
+private val AspectRatioBuckets = listOf(
+    Wide,
+    Square,
+    Tall,
+)
+
 private val SensitiveContentBlurRadius = 120.dp
 private const val SensitiveContentBlurClip = true
+
+private const val Wide = 16 / 9f
+private const val Square = 1f
+private const val Tall = 9 / 16f
