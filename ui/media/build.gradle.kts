@@ -164,13 +164,13 @@ macTargets.forEach { (name, _, arch) ->
             val entryPath = "com/sun/jna/darwin-$arch/libjnidispatch.jnilib"
             outputDir.mkdirs()
             val outputFile = outputDir.resolve("libjnidispatch.jnilib")
-            val zip = ZipFile(jarFile)
-            val entry = zip.getEntry(entryPath)
-                ?: error("Entry $entryPath not found in ${jarFile.name}")
-            zip.getInputStream(entry).use { stream ->
-                outputFile.outputStream().use { out -> stream.copyTo(out) }
+            ZipFile(jarFile).use { zip ->
+                val entry = zip.getEntry(entryPath)
+                    ?: error("Entry $entryPath not found in ${jarFile.name}")
+                zip.getInputStream(entry).use { stream ->
+                    outputFile.outputStream().use { out -> stream.copyTo(out) }
+                }
             }
-            zip.close()
         }
     }
 }

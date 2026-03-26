@@ -218,7 +218,7 @@ compose.desktop {
                 bundleID = "com.tunjid.heron"
                 iconFile.set(resourcesDir.resolve("icon.icns"))
                 entitlementsFile.set(project.file("entitlements.plist"))
-                runtimeEntitlementsFile.set(project.file("runtime-entitlements.plist"))
+                runtimeEntitlementsFile.set(project.file("entitlements.plist"))
 
                 providers.gradleProperty("heron.macOS.signing.identity")
                     .let { identityProperty ->
@@ -246,10 +246,10 @@ compose.desktop {
 // These are picked up by appResourcesRootDir and bundled into the .app package,
 // accessible at runtime via the compose.application.resources.dir system property.
 // The build and extraction tasks live in :ui:media; this module just copies the outputs.
-listOf(
+val copyNativeLibsTasks = listOf(
     "Arm" to ("aarch64" to "macos-arm64"),
     "X64" to ("x86-64" to "macos-x86-64"),
-).forEach { (taskSuffix, archPair) ->
+).map { (taskSuffix, archPair) ->
     val (buildArch, resourceArch) = archPair
     tasks.register<Copy>("copyNativeLibs${resourceArch.replace("-", "")}") {
         from(project(":ui:media").file("src/desktopMain/resources/darwin-$buildArch"))
@@ -262,13 +262,18 @@ listOf(
     }
 }
 
-tasks.register("copyNativeLibsForSandbox") {
-    dependsOn("copyNativeLibsmacosarm64", "copyNativeLibsmacosx8664")
+val copyNativeLibsForSandbox = tasks.register("copyNativeLibsForSandbox") {
+    dependsOn(copyNativeLibsTasks)
 }
 
+val nativeLibDependentTasks = setOf(
+    "packageDmg",
+    "packageReleaseDmg",
+    "prepareAppResources",
+)
 tasks.configureEach {
-    if (name == "packageDmg" || name == "packageReleaseDmg" || name == "prepareAppResources") {
-        dependsOn("copyNativeLibsForSandbox")
+    if (name in nativeLibDependentTasks) {
+        dependsOn(copyNativeLibsForSandbox)
     }
 }
 
