@@ -19,7 +19,6 @@ package com.tunjid.heron.timeline.state
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
-import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.repository.TimelineQuery
 import com.tunjid.heron.data.repository.TimelineRepository
@@ -234,15 +233,16 @@ private fun TimelineQuery.refresh(): TimelineQuery = copy(
 
 private fun TiledList<TimelineQuery, TimelineItem>.filterThreadDuplicates(): TiledList<TimelineQuery, TimelineItem> {
     val threadRootIds = mutableSetOf<PostUri>()
-    // The idea here, is if an item has been replied to in the timeline,
-    // the original item does not need to be shown as it is already in the timeline
+    // The idea here, is to ensure that a particular root item
+    // in a timeline only shows up once.
     return filter { item ->
         when (item) {
             is TimelineItem.Pinned -> true
             is TimelineItem.Threaded.Linear,
+            -> threadRootIds.add(item.nodes.first().post.uri)
             is TimelineItem.Repost,
+            is TimelineItem.Single,
             -> threadRootIds.add(item.post.uri)
-            is TimelineItem.Single -> !threadRootIds.contains(item.post.uri)
             is TimelineItem.Placeholder,
             // Threaded trees show up in post details, not regular timelines
             is TimelineItem.Threaded.Tree,
