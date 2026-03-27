@@ -16,13 +16,21 @@
 
 package com.tunjid.heron.data.logging
 
+import com.tunjid.heron.data.platform.Platform
+import com.tunjid.heron.data.platform.current
 import logcat.LogPriority as SquareLogPriority
+import logcat.LogcatLogger
+import logcat.PrintLogger
 import logcat.asLog as squareAsLog
 import logcat.logcat as squareLogcat
 
 class JvmLogger : Logger {
     override fun install() {
-        // no-op on JVM
+        val shouldLog = !Platform.current.isRelease
+        if (!LogcatLogger.isInstalled && shouldLog) {
+            LogcatLogger.install()
+            LogcatLogger.loggers += PrintLogger
+        }
     }
 }
 

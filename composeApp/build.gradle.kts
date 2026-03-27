@@ -154,7 +154,7 @@ android {
     }
     val releaseSigning = when {
         // Do not sign the build output, it will be signed on CI
-        providers.gradleProperty("heron.isPlayStore").orNull.toBoolean() -> null
+        providers.gradleProperty("heron.isRelease").orNull.toBoolean() -> null
         file("debugKeystore.properties").exists() -> signingConfigs.create("release") {
             val props = Properties()
             file("debugKeystore.properties")

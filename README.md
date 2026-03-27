@@ -125,12 +125,12 @@ persisted across app restarts.
 The following properties can be set in `~/.gradle/gradle.properties` or passed via `-P` flags.
 None are required for basic development builds.
 
-| Property | Description |
-|---|---|
-| `heron.versionCode` | Integer version code. Managed by CI via `github.run_number`. |
-| `heron.endpoint` | Backend endpoint URL for the app. |
-| `heron.isPlayStore` | Set to `true` when building for Play Store distribution. |
-| `heron.releaseBranch` | Branch prefix (`bugfix/`, `feature/`, `release/`) controlling version increments. |
+| Property | Description                                                                                                                                                           |
+|---|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `heron.versionCode` | Integer version code. Managed by CI via `github.run_number`.                                                                                                          |
+| `heron.endpoint` | Backend endpoint URL for the app.                                                                                                                                     |
+| `heron.isRelease` | Set to `true` when building release artifacts.                                                                                                                        |
+| `heron.releaseBranch` | Branch prefix (`bugfix/`, `feature/`, `release/`) controlling version increments.                                                                                     |
 | `heron.macOS.signing.identity` | Name of the Developer ID Application certificate in your Keychain (e.g. `Developer ID Application: Name (TEAM_ID)`). When present, the macOS DMG will be code signed. |
 macOS signing is only configured when `heron.macOS.signing.identity` is present,
 so contributors without an Apple Developer account can still build unsigned DMGs with

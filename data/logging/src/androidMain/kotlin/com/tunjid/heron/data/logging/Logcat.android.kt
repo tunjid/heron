@@ -17,6 +17,8 @@
 package com.tunjid.heron.data.logging
 
 import android.content.Context
+import com.tunjid.heron.data.platform.Platform
+import com.tunjid.heron.data.platform.current
 import logcat.AndroidLogcatLogger
 import logcat.LogPriority as SquareLogPriority
 import logcat.LogcatLogger
@@ -28,12 +30,7 @@ class AndroidLogger(
 ) : Logger {
 
     override fun install() {
-        val shouldLog = when (context.packageName.split(".").lastOrNull()?.lowercase()) {
-            DEBUG,
-            STAGING,
-            -> true
-            else -> false
-        }
+        val shouldLog = !Platform.current.isRelease
         if (!LogcatLogger.isInstalled && shouldLog) {
             LogcatLogger.install()
             LogcatLogger.loggers += AndroidLogcatLogger(SquareLogPriority.VERBOSE)
