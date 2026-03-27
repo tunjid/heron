@@ -157,14 +157,14 @@ internal class AVFoundationPlayerState(
 
     internal fun updateMetadata() {
         val ptr = playerPointer ?: return
-        val width = AVFoundationVideoPlayer.getFrameWidth(ptr)
-        val height = AVFoundationVideoPlayer.getFrameHeight(ptr)
+        val displayWidth = AVFoundationVideoPlayer.getDisplayWidth(ptr)
+        val displayHeight = AVFoundationVideoPlayer.getDisplayHeight(ptr)
         val duration = AVFoundationVideoPlayer.getVideoDuration(ptr)
 
         if (duration > 0) totalDuration = duration.secondsToMs()
-        if (width > 0 && height > 0) videoSize = IntSize(
-            width = width,
-            height = height,
+        if (displayWidth > 0 && displayHeight > 0) videoSize = IntSize(
+            width = displayWidth,
+            height = displayHeight,
         )
     }
 
