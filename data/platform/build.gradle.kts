@@ -32,11 +32,11 @@ buildConfig {
     }
 
     forClass("Build") {
-        providers.gradleProperty("heron.isRelease")
-            .orNull
-            .toBoolean()
-            .let { isRelease ->
-                buildConfigField("isRelease", isRelease)
-            }
+        buildConfigField(
+            name = "isRelease",
+            value = providers.gradleProperty("heron.isRelease")
+                .map(String::toBoolean)
+                .orElse(false),
+        )
     }
 }
