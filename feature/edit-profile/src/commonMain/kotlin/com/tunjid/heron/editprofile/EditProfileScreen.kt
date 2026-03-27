@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -66,9 +65,9 @@ import com.tunjid.heron.media.picker.MediaType
 import com.tunjid.heron.media.picker.rememberMediaPicker
 import com.tunjid.heron.profile.AvatarHaloZIndex
 import com.tunjid.heron.profile.AvatarZIndex
-import com.tunjid.heron.profile.BannerAspectRatio
 import com.tunjid.heron.profile.BannerZIndex
 import com.tunjid.heron.profile.SurfaceZIndex
+import com.tunjid.heron.profile.profileBannerSize
 import com.tunjid.heron.profile.profileBioTabBackground
 import com.tunjid.heron.profile.withProfileAvatarHaloSharedElementPrefix
 import com.tunjid.heron.profile.withProfileBannerSharedElementPrefix
@@ -206,8 +205,7 @@ fun EditProfileHeader(
     ) {
         ProfileBannerEditableImage(
             modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(BannerAspectRatio)
+                .profileBannerSize()
                 .align(Alignment.TopCenter),
             paneScaffoldState = paneScaffoldState,
             avatarSharedElementKey = avatarSharedElementKey,
