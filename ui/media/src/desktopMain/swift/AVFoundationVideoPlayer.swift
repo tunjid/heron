@@ -52,9 +52,13 @@ class SharedVideoPlayer {
     private var frameBuffer: UnsafeMutablePointer<UInt32>?
     private var bufferCapacity: Int = 0
 
-    // Frame dimensions
+    // Frame dimensions (actual decoded pixel buffer size)
     private var frameWidth: Int = 0
     private var frameHeight: Int = 0
+
+    // Display dimensions (intended presentation size from naturalSize)
+    private var displayWidth: Int = 0
+    private var displayHeight: Int = 0
 
     // Audio volume control (0.0 to 1.0)
     private var volume: Float = 1.0
@@ -447,6 +451,8 @@ class SharedVideoPlayer {
                 )
                 // For HLS streams without video track info yet, use default dimensions
                 if isHLSStream {
+                    displayWidth = 1920
+                    displayHeight = 1080
                     frameWidth = 1920
                     frameHeight = 1080
                     setupFrameBuffer()
@@ -464,8 +470,10 @@ class SharedVideoPlayer {
                         let transform = try await videoTrack.load(.preferredTransform)
 
                         let effectiveSize = naturalSize.applying(transform)
-                        self.frameWidth = Int(abs(effectiveSize.width))
-                        self.frameHeight = Int(abs(effectiveSize.height))
+                        self.displayWidth = Int(abs(effectiveSize.width))
+                        self.displayHeight = Int(abs(effectiveSize.height))
+                        self.frameWidth = self.displayWidth
+                        self.frameHeight = self.displayHeight
 
                         // Continue with buffer allocation and setup
                         self.setupFrameBuffer()
@@ -474,6 +482,8 @@ class SharedVideoPlayer {
                         print("Error loading video track properties: \(error.localizedDescription)")
                         // Use default dimensions for HLS if loading fails
                         if self.isHLSStream {
+                            self.displayWidth = 1920
+                            self.displayHeight = 1080
                             self.frameWidth = 1920
                             self.frameHeight = 1080
                             self.setupFrameBuffer()
@@ -487,8 +497,10 @@ class SharedVideoPlayer {
                 let transform = videoTrack.preferredTransform
 
                 let effectiveSize = naturalSize.applying(transform)
-                frameWidth = Int(abs(effectiveSize.width))
-                frameHeight = Int(abs(effectiveSize.height))
+                displayWidth = Int(abs(effectiveSize.width))
+                displayHeight = Int(abs(effectiveSize.height))
+                frameWidth = displayWidth
+                frameHeight = displayHeight
 
                 // Continue with buffer allocation and setup
                 setupFrameBuffer()
@@ -516,8 +528,6 @@ class SharedVideoPlayer {
         // Create attributes for the CVPixelBuffer (BGRA format) with IOSurface for better performance
         let pixelBufferAttributes: [String: Any] = [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
-            kCVPixelBufferWidthKey as String: frameWidth,
-            kCVPixelBufferHeightKey as String: frameHeight,
             kCVPixelBufferIOSurfacePropertiesKey as String: [:],
         ]
         videoOutput = AVPlayerItemVideoOutput(pixelBufferAttributes: pixelBufferAttributes)
@@ -638,18 +648,13 @@ class SharedVideoPlayer {
         let height = CVPixelBufferGetHeight(pixelBuffer)
         let srcBytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer)
 
-        // For HLS, dimensions might change dynamically
-        if isHLSStream && (width != frameWidth || height != frameHeight) {
-            print("HLS: Resolution changed from \(frameWidth)x\(frameHeight) to \(width)x\(height)")
+        // Adapt to actual decoded frame dimensions (handles letterboxing, HLS resolution changes, etc.)
+        if width != frameWidth || height != frameHeight {
+            print("Resolution adapted from \(frameWidth)x\(frameHeight) to \(width)x\(height)")
             frameWidth = width
             frameHeight = height
             setupFrameBuffer()
             guard frameBuffer != nil else { return }
-        }
-
-        guard width == frameWidth, height == frameHeight else {
-            print("Unexpected dimensions: \(width)x\(height)")
-            return
         }
 
         if srcBytesPerRow == width * 4 {
@@ -710,6 +715,12 @@ class SharedVideoPlayer {
 
     /// Returns the height of the video frame in pixels
     func getFrameHeight() -> Int { return frameHeight }
+
+    /// Returns the intended display width (from naturalSize)
+    func getDisplayWidth() -> Int { return displayWidth }
+
+    /// Returns the intended display height (from naturalSize)
+    func getDisplayHeight() -> Int { return displayHeight }
 
     /// Returns the duration of the video in seconds.
     func getDuration() -> Double {
@@ -951,6 +962,20 @@ public func getFrameHeight(_ context: UnsafeMutableRawPointer?) -> Int32 {
     guard let context = context else { return 0 }
     let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
     return Int32(player.getFrameHeight())
+}
+
+@_cdecl("getDisplayWidth")
+public func getDisplayWidth(_ context: UnsafeMutableRawPointer?) -> Int32 {
+    guard let context = context else { return 0 }
+    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
+    return Int32(player.getDisplayWidth())
+}
+
+@_cdecl("getDisplayHeight")
+public func getDisplayHeight(_ context: UnsafeMutableRawPointer?) -> Int32 {
+    guard let context = context else { return 0 }
+    let player = Unmanaged<SharedVideoPlayer>.fromOpaque(context).takeUnretainedValue()
+    return Int32(player.getDisplayHeight())
 }
 
 @_cdecl("getVideoDuration")

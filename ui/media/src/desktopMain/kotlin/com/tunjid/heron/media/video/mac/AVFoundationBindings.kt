@@ -57,6 +57,10 @@ internal object AVFoundationVideoPlayer {
 
     @JvmStatic external fun getFrameHeight(context: Pointer?): Int
 
+    @JvmStatic external fun getDisplayWidth(context: Pointer?): Int
+
+    @JvmStatic external fun getDisplayHeight(context: Pointer?): Int
+
     @JvmStatic external fun getVideoDuration(context: Pointer?): Double
 
     @JvmStatic external fun seekTo(context: Pointer?, time: Double)
