@@ -18,6 +18,8 @@ package com.tunjid.heron.data.platform
 
 interface Platform {
     val name: String
+    val isRelease: Boolean
+        get() = Build.isRelease
 
     companion object
 }

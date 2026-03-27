@@ -17,8 +17,26 @@
 plugins {
     id("android-library-convention")
     id("kotlin-library-convention")
+    alias(libs.plugins.buildConfig)
 }
 
 android {
     namespace = "com.tunjid.heron.data.platform"
+}
+
+buildConfig {
+    packageName("com.tunjid.heron.data.platform")
+
+    useKotlinOutput {
+        internalVisibility = true
+    }
+
+    forClass("Build") {
+        providers.gradleProperty("heron.isRelease")
+            .orNull
+            .toBoolean()
+            .let { isRelease ->
+                buildConfigField("isRelease", isRelease)
+            }
+    }
 }
