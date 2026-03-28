@@ -28,7 +28,6 @@ import androidx.compose.ui.graphics.skiaCanvas
 import coil3.BitmapImage
 import coil3.ComponentRegistry
 import coil3.PlatformContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 internal actual fun coil3.Image.renderInto(
@@ -62,7 +61,7 @@ internal actual fun coil3.Image.AnimationEffect() {
     val scope = rememberCoroutineScope()
     DisposableEffect(image, scope) {
         // Decode remaining frames in the background
-        val decodeJob = scope.launch(Dispatchers.Default) {
+        val decodeJob = scope.launch {
             for (index in image.frames.indices) {
                 if (image.frames[index] == null) {
                     image.frames[index] = image.decodeFrame(index)

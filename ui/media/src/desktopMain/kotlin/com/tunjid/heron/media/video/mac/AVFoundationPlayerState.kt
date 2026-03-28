@@ -29,8 +29,11 @@ import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.media.video.PlayerStatus
 import com.tunjid.heron.media.video.VideoPlayerState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.skia.Bitmap
@@ -95,8 +98,11 @@ internal class AVFoundationPlayerState(
             totalDuration != 0L &&
             !isLooping
 
-    // Native player pointer — initialized eagerly since JNA calls are synchronous
-    internal var playerPointer: Pointer? = AVFoundationVideoPlayer.createVideoPlayer()
+    // Native player pointer — initialized eagerly since JNA calls are synchronous.
+    private val playerPointer = AtomicReference(
+        AVFoundationVideoPlayer.createVideoPlayer(),
+    )
+    private var playerScope = playerScope()
     internal var mediaOpenCalled: Boolean = false
 
     // Frame rendering state
@@ -130,16 +136,18 @@ internal class AVFoundationPlayerState(
     }
 
     private val frameCallback = FrameCallback { _ ->
-        appMainScope.launch {
+        playerScope.launch {
             updateFrameAsync()
         }
     }
 
     private val endOfPlaybackCallback = EndOfPlaybackCallback { _ ->
-        if (isLooping) AVFoundationVideoPlayer.seekTo(
-            context = playerPointer ?: return@EndOfPlaybackCallback,
-            time = 0.0,
-        )
+        if (isLooping) tryWithPlayerPointer("endOfPlayback") { pointer ->
+            AVFoundationVideoPlayer.seekTo(
+                context = pointer,
+                time = 0.0,
+            )
+        }
         else status = PlayerStatus.Pause.Confirmed
     }
 
@@ -148,150 +156,151 @@ internal class AVFoundationPlayerState(
         registerCallbacks()
     }
 
-    internal fun openMedia(uri: String) {
-        val ptr = playerPointer ?: return
-        AVFoundationVideoPlayer.openUri(
-            context = ptr,
-            uri = uri,
-        )
-        mediaOpenCalled = true
-    }
+    internal fun openMedia(uri: String) =
+        tryWithPlayerPointer("openMedia") { pointer ->
+            AVFoundationVideoPlayer.openUri(
+                context = pointer,
+                uri = uri,
+            )
+            mediaOpenCalled = true
+        }
 
-    internal fun updateMetadata() {
-        val ptr = playerPointer ?: return
-        val displayWidth = AVFoundationVideoPlayer.getDisplayWidth(ptr)
-        val displayHeight = AVFoundationVideoPlayer.getDisplayHeight(ptr)
-        val duration = AVFoundationVideoPlayer.getVideoDuration(ptr)
+    internal fun updateMetadata() =
+        tryWithPlayerPointer("updateMetadata") { pointer ->
+            val displayWidth = AVFoundationVideoPlayer.getDisplayWidth(pointer)
+            val displayHeight = AVFoundationVideoPlayer.getDisplayHeight(pointer)
+            val duration = AVFoundationVideoPlayer.getVideoDuration(pointer)
 
-        if (duration > 0) totalDuration = duration.secondsToMs()
-        if (displayWidth > 0 && displayHeight > 0) videoSize = IntSize(
-            width = displayWidth,
-            height = displayHeight,
-        )
-    }
+            if (duration > 0) totalDuration = duration.secondsToMs()
+            if (displayWidth > 0 && displayHeight > 0) videoSize = IntSize(
+                width = displayWidth,
+                height = displayHeight,
+            )
+        }
 
     /**
      * Registers native callbacks for status, time, frame, and end-of-playback events.
      */
-    internal fun registerCallbacks() {
-        val ptr = playerPointer ?: return
-        AVFoundationVideoPlayer.registerStatusCallback(
-            context = ptr,
-            callbackCtx = null,
-            callback = statusCallback,
-        )
-        AVFoundationVideoPlayer.registerTimeCallback(
-            context = ptr,
-            callbackCtx = null,
-            callback = timeCallback,
-            interval = TIME_OBSERVER_INTERVAL_SECONDS,
-        )
-        AVFoundationVideoPlayer.registerFrameCallback(
-            context = ptr,
-            callbackCtx = null,
-            callback = frameCallback,
-        )
-        AVFoundationVideoPlayer.registerEndOfPlaybackCallback(
-            context = ptr,
-            callbackCtx = null,
-            callback = endOfPlaybackCallback,
-        )
-    }
+    internal fun registerCallbacks() =
+        tryWithPlayerPointer("registerCallbacks") { pointer ->
+            AVFoundationVideoPlayer.registerStatusCallback(
+                context = pointer,
+                callbackCtx = null,
+                callback = statusCallback,
+            )
+            AVFoundationVideoPlayer.registerTimeCallback(
+                context = pointer,
+                callbackCtx = null,
+                callback = timeCallback,
+                interval = TIME_OBSERVER_INTERVAL_SECONDS,
+            )
+            AVFoundationVideoPlayer.registerFrameCallback(
+                context = pointer,
+                callbackCtx = null,
+                callback = frameCallback,
+            )
+            AVFoundationVideoPlayer.registerEndOfPlaybackCallback(
+                context = pointer,
+                callbackCtx = null,
+                callback = endOfPlaybackCallback,
+            )
+        }
 
     /**
      * Unregisters all native callbacks.
      */
-    internal fun unregisterCallbacks() {
-        val ptr = playerPointer ?: return
-        AVFoundationVideoPlayer.unregisterStatusCallback(ptr)
-        AVFoundationVideoPlayer.unregisterTimeCallback(ptr)
-        AVFoundationVideoPlayer.unregisterFrameCallback(ptr)
-        AVFoundationVideoPlayer.unregisterEndOfPlaybackCallback(ptr)
-    }
+    internal fun unregisterCallbacks() =
+        tryWithPlayerPointer("unregisterCallbacks") { pointer ->
+            AVFoundationVideoPlayer.unregisterStatusCallback(pointer)
+            AVFoundationVideoPlayer.unregisterTimeCallback(pointer)
+            AVFoundationVideoPlayer.unregisterFrameCallback(pointer)
+            AVFoundationVideoPlayer.unregisterEndOfPlaybackCallback(pointer)
+        }
 
-    internal fun playNative() {
-        val ptr = playerPointer ?: return
-        AVFoundationVideoPlayer.playVideo(ptr)
-    }
-
-    internal fun pauseNative() {
-        val ptr = playerPointer ?: return
-        AVFoundationVideoPlayer.pauseVideo(ptr)
-    }
-
-    internal fun seekToNative(positionMs: Long) {
-        val ptr = playerPointer ?: return
-        AVFoundationVideoPlayer.seekTo(
-            context = ptr,
-            time = positionMs.msToSeconds(),
+    internal fun playNative() =
+        tryWithPlayerPointer(
+            tag = "playNative",
+            block = AVFoundationVideoPlayer::playVideo,
         )
-    }
 
-    internal fun applyVolume() {
-        val ptr = playerPointer ?: return
-        AVFoundationVideoPlayer.setVolume(
-            context = ptr,
-            volume = if (isMuted) 0f else 1f,
+    internal fun pauseNative() =
+        tryWithPlayerPointer(
+            tag = "pauseNative",
+            block = AVFoundationVideoPlayer::pauseVideo,
         )
-    }
 
-    private suspend fun updateFrameAsync() {
-        val ptr = playerPointer ?: return
+    internal fun seekToNative(positionMs: Long) =
+        tryWithPlayerPointer("seekToNative") { pointer ->
+            AVFoundationVideoPlayer.seekTo(
+                context = pointer,
+                time = positionMs.msToSeconds(),
+            )
+        }
 
-        try {
+    internal fun applyVolume() =
+        tryWithPlayerPointer("applyVolume") { pointer ->
+            AVFoundationVideoPlayer.setVolume(
+                context = pointer,
+                volume = if (isMuted) 0f else 1f,
+            )
+        }
+
+    private suspend fun updateFrameAsync(): Unit =
+        tryWithPlayerPointer("updateFrameAsync") { pointer ->
             val latestFrameSize = IntSize(
-                width = AVFoundationVideoPlayer.getFrameWidth(ptr),
-                height = AVFoundationVideoPlayer.getFrameHeight(ptr),
+                width = AVFoundationVideoPlayer.getFrameWidth(pointer),
+                height = AVFoundationVideoPlayer.getFrameHeight(pointer),
             )
             if (latestFrameSize.width <= 0 || latestFrameSize.height <= 0) return
 
-            val framePtr = AVFoundationVideoPlayer.getLatestFrame(ptr) ?: return
-
-            val pixelCount = latestFrameSize.width * latestFrameSize.height
-            val frameSizeBytes = pixelCount.toLong() * 4L
-
             withContext(serialDispatcher) {
-                val srcBuf = framePtr.getByteBuffer(0, frameSizeBytes)
+                tryWithPlayerPointer("copyFrame") { pointer ->
+                    AVFoundationVideoPlayer.getLatestFrame(pointer)?.let { framePointer ->
+                        val pixelCount = latestFrameSize.width * latestFrameSize.height
+                        val frameSizeBytes = pixelCount.toLong() * 4L
+                        val srcBuf = framePointer.getByteBuffer(0, frameSizeBytes)
 
-                if (skiaBitmapA == null || currentFrameSize != latestFrameSize) {
-                    skiaBitmapA?.close()
-                    skiaBitmapB?.close()
+                        if (skiaBitmapA == null || currentFrameSize != latestFrameSize) {
+                            skiaBitmapA?.close()
+                            skiaBitmapB?.close()
 
-                    val imageInfo = ImageInfo(
-                        width = latestFrameSize.width,
-                        height = latestFrameSize.height,
-                        colorType = ColorType.BGRA_8888,
-                        alphaType = ColorAlphaType.OPAQUE,
-                    )
-                    skiaBitmapA = Bitmap().apply { allocPixels(imageInfo) }
-                    skiaBitmapB = Bitmap().apply { allocPixels(imageInfo) }
-                    currentFrameSize = latestFrameSize
-                    nextSkiaBitmapA = true
+                            val imageInfo = ImageInfo(
+                                width = latestFrameSize.width,
+                                height = latestFrameSize.height,
+                                colorType = ColorType.BGRA_8888,
+                                alphaType = ColorAlphaType.OPAQUE,
+                            )
+                            skiaBitmapA = Bitmap().apply { allocPixels(imageInfo) }
+                            skiaBitmapB = Bitmap().apply { allocPixels(imageInfo) }
+                            currentFrameSize = latestFrameSize
+                            nextSkiaBitmapA = true
+                        }
+
+                        val targetBitmap =
+                            if (nextSkiaBitmapA) requireNotNull(skiaBitmapA)
+                            else requireNotNull(skiaBitmapB)
+
+                        nextSkiaBitmapA = !nextSkiaBitmapA
+
+                        val pixmap = targetBitmap.peekPixels() ?: return@withContext
+                        val pixelsAddr = pixmap.addr
+                        if (pixelsAddr == 0L) return@withContext
+
+                        srcBuf.rewind()
+                        val destRowBytes = pixmap.rowBytes
+                        val destSizeBytes = destRowBytes.toLong() * latestFrameSize.height.toLong()
+                        val destBuf = Pointer(pixelsAddr).getByteBuffer(0, destSizeBytes)
+                        copyBgraFrame(
+                            src = srcBuf,
+                            dst = destBuf,
+                            width = latestFrameSize.width,
+                            height = latestFrameSize.height,
+                            dstRowBytes = destRowBytes,
+                        )
+
+                        currentFrame = targetBitmap.asComposeImageBitmap()
+                    }
                 }
-
-                val targetBitmap =
-                    if (nextSkiaBitmapA) requireNotNull(skiaBitmapA)
-                    else requireNotNull(skiaBitmapB)
-
-                nextSkiaBitmapA = !nextSkiaBitmapA
-
-                val pixmap = targetBitmap.peekPixels() ?: return@withContext
-                val pixelsAddr = pixmap.addr
-                if (pixelsAddr == 0L) return@withContext
-
-                srcBuf.rewind()
-                val destRowBytes = pixmap.rowBytes
-                val destSizeBytes = destRowBytes.toLong() * latestFrameSize.height.toLong()
-                val destBuf = Pointer(pixelsAddr).getByteBuffer(0, destSizeBytes)
-                copyBgraFrame(
-                    src = srcBuf,
-                    dst = destBuf,
-                    width = latestFrameSize.width,
-                    height = latestFrameSize.height,
-                    dstRowBytes = destRowBytes,
-                )
-
-                currentFrame = targetBitmap.asComposeImageBitmap()
             }
 
             lastFrameUpdateTime = System.currentTimeMillis()
@@ -299,18 +308,17 @@ internal class AVFoundationPlayerState(
             if (!hasRenderedFirstFrame) {
                 hasRenderedFirstFrame = true
             }
-        } catch (e: Exception) {
-            logcat(LogPriority.ERROR) {
-                "Video frame extraction failed: ${e.loggableText()}"
-            }
         }
-    }
 
     /**
      * Re-creates the native player after [dispose]. Used by retry flows.
      */
     internal fun reinitialize() {
-        playerPointer = AVFoundationVideoPlayer.createVideoPlayer()
+        // Clean up old player resources before creating new ones
+        dispose()
+
+        playerPointer.set(AVFoundationVideoPlayer.createVideoPlayer())
+        playerScope = playerScope()
         mediaOpenCalled = false
         applyVolume()
         registerCallbacks()
@@ -318,9 +326,16 @@ internal class AVFoundationPlayerState(
 
     internal fun dispose() {
         unregisterCallbacks()
+        playerScope.cancel()
 
-        val pointerToDispose = playerPointer
-        playerPointer = null
+        playerPointer.getAndSet(null)?.let { pointerToDispose ->
+            try {
+                AVFoundationVideoPlayer.disposeVideoPlayer(pointerToDispose)
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR) { "dispose failed: ${e.loggableText()}" }
+            }
+        }
+
         mediaOpenCalled = false
 
         skiaBitmapA?.close()
@@ -330,9 +345,28 @@ internal class AVFoundationPlayerState(
         currentFrameSize = IntSize.Zero
         nextSkiaBitmapA = true
 
-        pointerToDispose?.let(AVFoundationVideoPlayer::disposeVideoPlayer)
-
         currentFrame = null
+    }
+
+    private fun playerScope(): CoroutineScope =
+        CoroutineScope(
+            appMainScope.coroutineContext + Job(
+                parent = appMainScope.coroutineContext[Job],
+            ),
+        )
+
+    private inline fun tryWithPlayerPointer(
+        tag: String,
+        block: (Pointer) -> Unit,
+    ) {
+        val pointer = playerPointer.get() ?: return
+        try {
+            block(pointer)
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR) {
+                "$tag failed: ${e.loggableText()}"
+            }
+        }
     }
 }
 
