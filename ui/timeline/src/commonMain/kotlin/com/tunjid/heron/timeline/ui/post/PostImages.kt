@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.timeline.ui.post
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
@@ -25,7 +24,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.tunjid.heron.data.core.models.Image
@@ -35,12 +33,14 @@ import com.tunjid.heron.data.core.models.aspectRatioOrSquare
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.timeline.utilities.bucketedRatio
 import com.tunjid.heron.timeline.utilities.sensitiveContentBlur
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.localOverlayClip
 import com.tunjid.heron.ui.modifiers.TrackingOverlayClip
 import com.tunjid.heron.ui.modifiers.ifNotNull
 import com.tunjid.heron.ui.modifiers.ifTrue
+import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.modifiers.trackOverlayClipBounds
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
@@ -75,7 +75,8 @@ internal fun PostImages(
             ),
         horizontalArrangement = spacedBy(8.dp),
     ) {
-        val tallestAspectRatio = feature.images.minOf { it.aspectRatioOrSquare }
+        val tallestImage = feature.images.minBy { it.aspectRatioOrSquare }
+
         itemsIndexed(
             items = feature.images,
             key = { _, item -> item.thumb.uri },
@@ -102,18 +103,20 @@ internal fun PostImages(
                                     )
                         }
 
-                        Timeline.Presentation.Media.Condensed,
-                        Timeline.Presentation.Media.Expanded,
-                        -> itemModifier
-                            .fillParentMaxWidth()
-                            .aspectRatio(tallestAspectRatio)
+                        Timeline.Presentation.Media.Condensed ->
+                            itemModifier
+                                .fillParentMaxWidth()
+                                .aspectRatio(tallestImage.bucketedRatio())
+                        Timeline.Presentation.Media.Expanded ->
+                            itemModifier
+                                .fillParentMaxWidth()
+                                .aspectRatio(tallestImage.aspectRatioOrSquare)
                         Timeline.Presentation.Media.Grid ->
                             itemModifier
                                 .fillParentMaxWidth()
                                 .aspectRatio(1f)
                     }
-                        .clip(shape)
-                        .clickable { onImageClicked(index) },
+                        .shapedClickable(shape) { onImageClicked(index) },
                     clipInOverlayDuringTransition = overlayClip ?: paneTransitionScope.localOverlayClip,
                     sharedContentState = with(paneTransitionScope) {
                         rememberSharedContentState(

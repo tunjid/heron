@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -84,6 +83,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -791,8 +791,7 @@ private fun ProfileBanner(
         ),
         zIndexInOverlay = BannerZIndex,
         modifier = modifier
-            .fillMaxWidth()
-            .aspectRatio(BannerAspectRatio)
+            .profileBannerSize()
             .graphicsLayer {
                 alpha = headerState.bannerAlpha
             }
@@ -1589,7 +1588,12 @@ private class HeaderState(
     val headerState: CollapsingHeaderState,
 ) {
     var width by mutableStateOf(160.dp * 3)
-    private val profileBannerHeight by derivedStateOf { width / BannerAspectRatio }
+    private val profileBannerHeight by derivedStateOf {
+        min(
+            width / BannerAspectRatio,
+            MaxBannerHeight,
+        )
+    }
 
     val bioTopPadding get() = profileBannerHeight - sizeToken
     val bioAlpha get() = 1f - headerState.progress

@@ -14,44 +14,22 @@
  *    limitations under the License.
  */
 
-import java.util.Properties
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
-    id("android-application-convention")
-    alias(libs.plugins.kotlinMultiplatform)
+    id("kotlin-library-convention")
     alias(libs.plugins.kotlinSerialization)
-    alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
-    alias(libs.plugins.axionRelease)
-    alias(libs.plugins.googleServices)
+    id("release-convention")
     id("ksp-convention")
     id("kotlin-jvm-convention")
 }
 
-scmVersion {
-    tag {
-        // Use an empty string for prefix
-        prefix.set("")
-    }
-    repository {
-        pushTagsOnly.set(true)
-    }
-    providers.gradleProperty("heron.releaseBranch")
-        .orNull
-        ?.let { releaseBranch ->
-            when {
-                releaseBranch.contains("bugfix/") -> versionIncrementer("incrementPatch")
-                releaseBranch.contains("feature/") -> versionIncrementer("incrementMinor")
-                releaseBranch.contains("release/") -> versionIncrementer("incrementMajor")
-                else -> throw IllegalArgumentException("Unknown release type")
-            }
-        }
-}
-
 kotlin {
-    androidTarget()
+    androidLibrary {
+        namespace = "com.tunjid.heron.app"
+    }
 
     listOf(
         iosArm64(),
@@ -63,18 +41,11 @@ kotlin {
         }
     }
 
-    jvm("desktop")
-
     sourceSets {
         val desktopMain by getting
 
         androidMain.dependencies {
             implementation(libs.connectivity.device)
-            implementation(libs.androidx.activity.compose)
-            implementation(libs.androidx.core.splashscreen)
-
-            implementation(project.dependencies.platform(libs.firebase.bom))
-            implementation(libs.firebase.messaging)
         }
         commonMain.dependencies {
             implementation(project(":data:models"))
@@ -137,57 +108,6 @@ kotlin {
     }
 }
 
-android {
-    namespace = "com.tunjid.heron"
-
-    defaultConfig {
-        applicationId = "com.tunjid.heron"
-        versionCode = providers.gradleProperty("heron.versionCode")
-            .get()
-            .toInt()
-        versionName = scmVersion.version
-    }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-    val releaseSigning = when {
-        // Do not sign the build output, it will be signed on CI
-        providers.gradleProperty("heron.isPlayStore").orNull.toBoolean() -> null
-        file("debugKeystore.properties").exists() -> signingConfigs.create("release") {
-            val props = Properties()
-            file("debugKeystore.properties")
-                .inputStream()
-                .use(props::load)
-            storeFile = file(props.getProperty("keystore"))
-            storePassword = props.getProperty("keystore.password")
-            keyAlias = props.getProperty("keyAlias")
-            keyPassword = props.getProperty("keyPassword")
-        }
-        else -> signingConfigs["debug"]
-    }
-    buildTypes {
-        all {
-            signingConfig = releaseSigning
-        }
-        debug {
-            applicationIdSuffix = ".debug"
-        }
-        release {
-            isMinifyEnabled = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-            )
-        }
-    }
-}
-
-dependencies {
-    debugImplementation(libs.compose.multiplatform.ui.tooling.preview)
-}
-
 compose.desktop {
     application {
         mainClass = "com.tunjid.heron.MainKt"
@@ -208,9 +128,29 @@ compose.desktop {
             packageVersion = scmVersion.version.split("-").first()
             outputBaseDir.set(layout.buildDirectory.dir("release"))
 
+            // Bundle pre-built native libraries (JNA dispatch + AVFoundation) into the
+            // .app package so the hardened runtime / sandbox can load them directly.
+            // Run copyNativeLibsForSandbox before packaging.
+            appResourcesRootDir.set(project.layout.projectDirectory.dir("resources"))
+
             val resourcesDir = project.file("src/desktopMain/resources")
             macOS {
+                bundleID = "com.tunjid.heron"
                 iconFile.set(resourcesDir.resolve("icon.icns"))
+                entitlementsFile.set(project.file("entitlements.plist"))
+                runtimeEntitlementsFile.set(project.file("entitlements.plist"))
+
+                providers.gradleProperty("heron.macOS.signing.identity")
+                    .let { identityProperty ->
+                        if (identityProperty.isPresent) signing {
+                            sign.set(true)
+                            identity.set(identityProperty)
+                        }
+                    }
+
+                // Notarization is handled externally via xcrun notarytool
+                // to maintain compatibility with Gradle configuration cache.
+                // See the publish workflow and README for details.
             }
             windows {
                 iconFile.set(resourcesDir.resolve("icon.ico"))
@@ -220,6 +160,39 @@ compose.desktop {
             }
         }
     }
+}
+
+// Copy native libraries into app resources for sandboxed App Store builds.
+// These are picked up by appResourcesRootDir and bundled into the .app package,
+// accessible at runtime via the compose.application.resources.dir system property.
+// The build and extraction tasks live in :ui:media; this module just copies the outputs.
+val copyNativeLibsTasks = listOf(
+    "Arm" to ("aarch64" to "macos-arm64"),
+    "X64" to ("x86-64" to "macos-x86-64"),
+).map { (taskSuffix, archPair) ->
+    val (buildArch, resourceArch) = archPair
+    tasks.register<Copy>("copyNativeLibs${resourceArch.replace("-", "")}") {
+        from(project(":ui:media").layout.buildDirectory.dir("native-libs/darwin-$buildArch"))
+        include("libAVFoundationVideoPlayer.dylib", "libjnidispatch.jnilib")
+        into(project.file("resources/$resourceArch"))
+        dependsOn(
+            ":ui:media:buildAVFoundationMac$taskSuffix",
+            ":ui:media:extractJnaNative$taskSuffix",
+        )
+    }
+}
+
+val copyNativeLibsForSandbox = tasks.register("copyNativeLibsForSandbox") {
+    dependsOn(copyNativeLibsTasks)
+}
+
+val nativeLibDependentTasks = setOf(
+    "packageDmg",
+    "packageReleaseDmg",
+    "prepareAppResources",
+)
+tasks.matching { it.name in nativeLibDependentTasks }.configureEach {
+    dependsOn(copyNativeLibsForSandbox)
 }
 
 configurations {

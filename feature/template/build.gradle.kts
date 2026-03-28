@@ -15,14 +15,15 @@
  */
 
 plugins {
-    id("android-library-convention")
     id("kotlin-library-convention")
     alias(libs.plugins.composeCompiler)
     id("org.jetbrains.compose")
     kotlin("plugin.serialization")
 }
-android {
-    namespace = "com.tunjid.heron.feature.template"
+kotlin {
+    androidLibrary {
+        namespace = "com.tunjid.heron.feature.template"
+    }
 }
 
 kotlin {

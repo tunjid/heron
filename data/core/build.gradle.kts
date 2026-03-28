@@ -15,15 +15,16 @@
  */
 
 plugins {
-    id("android-library-convention")
     id("kotlin-library-convention")
     id("ksp-convention")
     id("app.cash.burst")
     kotlin("plugin.serialization")
     alias(libs.plugins.buildConfig)
 }
-android {
-    namespace = "com.tunjid.heron.data"
+kotlin {
+    androidLibrary {
+        namespace = "com.tunjid.heron.data"
+    }
 }
 
 kotlin {

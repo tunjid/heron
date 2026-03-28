@@ -15,7 +15,6 @@
  */
 
 plugins {
-    id("android-library-convention")
     id("kotlin-library-convention")
     id("ksp-convention")
     alias(libs.plugins.kotlinSerialization)
@@ -23,8 +22,11 @@ plugins {
     id("org.jetbrains.compose")
 }
 
-android {
-    namespace = "com.tunjid.heron.domain.navigation"
+kotlin {
+    androidLibrary {
+        namespace = "com.tunjid.heron.domain.navigation"
+        androidResources.enable = true
+    }
 }
 
 kotlin {

@@ -15,10 +15,17 @@
  */
 
 plugins {
+    id("com.android.kotlin.multiplatform.library")
     kotlin("multiplatform")
     id("com.google.devtools.ksp")
 }
 
 kotlin {
     configureKotlinMultiplatform(this)
+    androidLibrary {
+        compileSdk = 36
+        minSdk = 31
+
+        androidResources.enable = true
+    }
 }

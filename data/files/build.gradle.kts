@@ -1,5 +1,4 @@
 plugins {
-    id("android-library-convention")
     id("kotlin-library-convention")
     id("ksp-convention")
     kotlin("plugin.serialization")
@@ -7,8 +6,10 @@ plugins {
 
 val modulePackageName = "com.tunjid.heron.data.files"
 
-android {
-    namespace = modulePackageName
+kotlin {
+    androidLibrary {
+        namespace = modulePackageName
+    }
 }
 
 kotlin {

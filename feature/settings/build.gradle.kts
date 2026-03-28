@@ -15,15 +15,16 @@
  */
 
 plugins {
-    id("android-library-convention")
     id("kotlin-library-convention")
     id("ui-module-convention")
     id("ksp-convention")
     alias(libs.plugins.aboutLibraries)
 }
 
-android {
-    namespace = "com.tunjid.heron.feature.settings"
+kotlin {
+    androidLibrary {
+        namespace = "com.tunjid.heron.feature.settings"
+    }
 }
 
 kotlin {

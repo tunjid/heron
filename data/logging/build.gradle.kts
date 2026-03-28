@@ -15,18 +15,20 @@
  */
 
 plugins {
-    id("android-library-convention")
     id("kotlin-library-convention")
 }
 
-android {
-    namespace = "com.tunjid.heron.data.logging"
+kotlin {
+    androidLibrary {
+        namespace = "com.tunjid.heron.data.logging"
+    }
 }
 
 kotlin {
     sourceSets {
         commonMain {
             dependencies {
+                implementation(project(":data:platform"))
             }
         }
         androidMain {

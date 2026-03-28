@@ -1,4 +1,5 @@
 import com.android.build.gradle.internal.ide.kmp.KotlinAndroidSourceSetMarker.Companion.android
+import java.util.zip.ZipFile
 
 /*
  *    Copyright 2024 Adetunji Dahunsi
@@ -17,13 +18,14 @@ import com.android.build.gradle.internal.ide.kmp.KotlinAndroidSourceSetMarker.Co
  */
 
 plugins {
-    id("android-library-convention")
     id("kotlin-library-convention")
     id("org.jetbrains.compose")
     alias(libs.plugins.composeCompiler)
 }
-android {
-    namespace = "com.tunjid.heron.ui.images"
+kotlin {
+    androidLibrary {
+        namespace = "com.tunjid.heron.ui.images"
+    }
 }
 
 kotlin {
@@ -40,6 +42,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":data:files"))
+                implementation(project(":data:logging"))
                 implementation(project(":data:models"))
                 implementation(project(":ui:core"))
 
@@ -115,17 +118,69 @@ val macTargets = listOf(
     Triple("X64", "x86_64-apple-macosx14.0", "x86-64"),
 )
 
+val swiftSourceFile = file("src/desktopMain/swift/AVFoundationVideoPlayer.swift")
+
 macTargets.forEach { (name, target, arch) ->
+    val outputDir = layout.buildDirectory.dir("native-libs/darwin-$arch")
+    val dylibFile = layout.buildDirectory.file("native-libs/darwin-$arch/libAVFoundationVideoPlayer.dylib")
     tasks.register<Exec>("buildAVFoundationMac$name") {
         onlyIf { System.getProperty("os.name").startsWith("Mac") }
+        inputs.file(swiftSourceFile)
+        outputs.file(dylibFile)
         workingDir(rootDir)
         commandLine(
             "swiftc", "-emit-library", "-emit-module", "-module-name", "AVFoundationVideoPlayer",
             "-target", target,
-            "-o", "ui/media/src/desktopMain/resources/darwin-$arch/libAVFoundationVideoPlayer.dylib",
-            "ui/media/src/desktopMain/swift/AVFoundationVideoPlayer.swift",
+            "-o", dylibFile.get().asFile.absolutePath,
+            swiftSourceFile.absolutePath,
             "-O", "-whole-module-optimization",
         )
+    }
+}
+
+// Add the native-libs build output as a resource directory so desktopProcessResources
+// picks up the dylib and jnilib for development runs (IDE run configurations).
+kotlin.sourceSets.named("desktopMain") {
+    resources.srcDir(layout.buildDirectory.dir("native-libs"))
+}
+
+tasks.named("desktopProcessResources") {
+    if (System.getProperty("os.name").startsWith("Mac")) {
+        dependsOn(
+            "buildAVFoundationMacArm",
+            "buildAVFoundationMacX64",
+            "extractJnaNativeArm",
+            "extractJnaNativeX64",
+        )
+    }
+}
+
+// Extract JNA's native dispatch library from the JNA JAR for sandboxed App Store builds.
+// The extracted libjnidispatch.jnilib is placed alongside the AVFoundation dylib so that
+// composeApp can copy both into appResourcesRootDir.
+val jnaJar = configurations.named("desktopRuntimeClasspath").map { config ->
+    config.files.first { it.name.startsWith("jna-") && !it.name.contains("platform") }
+}
+
+macTargets.forEach { (name, _, arch) ->
+    tasks.register("extractJnaNative$name") {
+        val outputDir = layout.buildDirectory.dir("native-libs/darwin-$arch")
+        val jnaJarFile = jnaJar
+        inputs.files(jnaJarFile)
+        outputs.file(outputDir.map { it.file("libjnidispatch.jnilib") })
+        doLast {
+            val jarFile = jnaJarFile.get()
+            val entryPath = "com/sun/jna/darwin-$arch/libjnidispatch.jnilib"
+            val dir = outputDir.get().asFile
+            val outputFile = dir.resolve("libjnidispatch.jnilib")
+            ZipFile(jarFile).use { zip ->
+                val entry = zip.getEntry(entryPath)
+                    ?: error("Entry $entryPath not found in ${jarFile.name}")
+                zip.getInputStream(entry).use { stream ->
+                    outputFile.outputStream().use { out -> stream.copyTo(out) }
+                }
+            }
+        }
     }
 }
 

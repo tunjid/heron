@@ -15,7 +15,6 @@
  */
 
 plugins {
-    id("android-library-convention")
     id("kotlin-library-convention")
     id("org.jetbrains.compose")
     alias(libs.plugins.composeCompiler)
@@ -25,8 +24,10 @@ compose.resources {
     publicResClass = true
 }
 
-android {
-    namespace = "com.tunjid.heron.ui.core"
+kotlin {
+    androidLibrary {
+        namespace = "com.tunjid.heron.ui.core"
+    }
 }
 
 kotlin {

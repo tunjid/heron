@@ -22,13 +22,18 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import coil3.Canvas
 import coil3.Image
+import com.tunjid.heron.data.logging.LogPriority
+import com.tunjid.heron.data.logging.logcat
+import com.tunjid.heron.data.logging.loggableText
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.skia.AnimationFrameInfo
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Codec
 
 internal class AnimatedSkiaImage(
     internal val codec: Codec,
-    bufferedFramesCount: Int,
 ) : Image {
 
     override val size: Long
@@ -70,12 +75,10 @@ internal class AnimatedSkiaImage(
     internal val frameCount: Int
         get() = codec.frameCount
 
+    private val decodeDispatcher = Dispatchers.Default.limitedParallelism(1)
     private val tempBitmap = Bitmap().apply { allocPixels(codec.imageInfo) }
 
-    internal val frames = Array(codec.frameCount) { index ->
-        if (index in 0..<bufferedFramesCount.coerceAtMost(codec.frameCount)) decodeFrame(index)
-        else null
-    }
+    internal val frames = arrayOfNulls<org.jetbrains.skia.Image>(codec.frameCount)
 
     internal var currentFrameIndex by mutableIntStateOf(0)
 
@@ -88,20 +91,32 @@ internal class AnimatedSkiaImage(
         }
     }
 
-    internal fun decodeFrame(frameIndex: Int): org.jetbrains.skia.Image? {
-        if (tempBitmap.isClosed) return null
-        codec.readPixels(tempBitmap, frameIndex)
-        return org.jetbrains.skia.Image.makeFromBitmap(
-            tempBitmap,
-        )
+    internal suspend fun decodeFrame(frameIndex: Int): org.jetbrains.skia.Image? {
+        return withContext(decodeDispatcher) {
+            if (tempBitmap.isClosed) return@withContext null
+            try {
+                codec.readPixels(tempBitmap, frameIndex)
+                org.jetbrains.skia.Image.makeFromBitmap(tempBitmap)
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR) {
+                    "Gif frame decode failed: ${e.loggableText()}"
+                }
+                null
+            }
+        }
     }
 
-    internal fun closeTempBitmap() {
-        if (!tempBitmap.isClosed) tempBitmap.close()
+    internal suspend fun closeTempBitmap() {
+        withContext(decodeDispatcher) {
+            if (!tempBitmap.isClosed) tempBitmap.close()
+        }
     }
 
     internal fun close() {
-        closeTempBitmap()
+        // Run on decodeDispatcher to serialize with any in-flight decode
+        runBlocking(decodeDispatcher) {
+            if (!tempBitmap.isClosed) tempBitmap.close()
+        }
         frames.forEach { it?.close() }
         codec.close()
     }

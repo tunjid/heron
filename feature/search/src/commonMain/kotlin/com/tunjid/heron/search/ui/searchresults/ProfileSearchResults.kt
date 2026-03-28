@@ -17,13 +17,13 @@
 package com.tunjid.heron.search.ui.searchresults
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -49,6 +49,7 @@ import com.tunjid.heron.ui.AttributionLayout
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.UiTokens.bottomNavAndInsetPaddingValues
+import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
 import com.tunjid.tiler.compose.PivotedTilingEffect
 import com.tunjid.treenav.compose.UpdatedMovableStickySharedElementOf
@@ -145,7 +146,7 @@ private fun ProfileSearchResult(
 ) = with(paneTransitionScope) {
     AttributionLayout(
         modifier = Modifier
-            .clickable {
+            .shapedClickable {
                 onProfileClicked(
                     result.profileWithViewerState.profile,
                     sharedElementPrefix,
@@ -155,7 +156,7 @@ private fun ProfileSearchResult(
             UpdatedMovableStickySharedElementOf(
                 modifier = Modifier
                     .size(UiTokens.avatarSize)
-                    .clickable {
+                    .shapedClickable(CircleShape) {
                         onProfileClicked(
                             result.profileWithViewerState.profile,
                             sharedElementPrefix,

@@ -117,3 +117,63 @@ persisted across app restarts.
         * All subtypes of `Action.Navigation` typically share the same key.
         * All subtypes of pagination actions, also share the same key and are processed with
           the [Tiling library](https://github.com/tunjid/Tiler).
+
+## Building
+
+### Gradle Properties
+
+The following properties can be set in `~/.gradle/gradle.properties` or passed via `-P` flags.
+None are required for basic development builds.
+
+| Property | Description                                                                                                                                                           |
+|---|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `heron.versionCode` | Integer version code. Managed by CI via `github.run_number`.                                                                                                          |
+| `heron.endpoint` | Backend endpoint URL for the app.                                                                                                                                     |
+| `heron.isRelease` | Set to `true` when building release artifacts.                                                                                                                        |
+| `heron.releaseBranch` | Branch prefix (`bugfix/`, `feature/`, `release/`) controlling version increments.                                                                                     |
+| `heron.macOS.signing.identity` | Name of the Developer ID Application certificate in your Keychain (e.g. `Developer ID Application: Name (TEAM_ID)`). When present, the macOS DMG will be code signed. |
+macOS signing is only configured when `heron.macOS.signing.identity` is present,
+so contributors without an Apple Developer account can still build unsigned DMGs with
+`./gradlew packageReleaseDmg`.
+
+Notarization is handled externally via `xcrun notarytool` (not a Gradle task) to maintain
+compatibility with the Gradle configuration cache. To notarize locally after building a signed DMG:
+
+```bash
+./gradlew packageReleaseDmg
+xcrun notarytool submit <path-to-dmg> \
+  --apple-id <your-apple-id> \
+  --password <app-specific-password> \
+  --team-id <team-id> \
+  --wait
+xcrun stapler staple <path-to-dmg>
+```
+
+### Publishing
+
+Publishing is triggered manually via the `Publish` GitHub Actions workflow (`workflow_dispatch`).
+It runs two jobs in parallel:
+
+**Android** (`publish-android-app`) builds a release AAB, signs it, uploads to the Play Store
+internal track, extracts a universal APK, and attaches it to a draft GitHub Release.
+
+**macOS** (`publish-mac-app`) imports a signing certificate, builds a signed DMG
+via `packageReleaseDmg`, notarizes it with `xcrun notarytool`, staples the ticket,
+and attaches it to the same draft GitHub Release.
+
+The following repository secrets are required for CI publishing:
+
+| Secret | Used by |
+|---|---|
+| `HERON_ENDPOINT` | Both jobs |
+| `GOOGLE_SERVICES_BASE_64` | Android |
+| `SIGNING_KEY_BASE_64` | Android |
+| `ALIAS` | Android |
+| `KEY_STORE_PASSWORD` | Android |
+| `KEY_PASSWORD` | Android |
+| `MACOS_SIGNING_CERTIFICATE_P12_DATA` | macOS - base64-encoded Developer ID Application `.p12` file |
+| `MACOS_SIGNING_CERTIFICATE_PASSWORD` | macOS - password for the `.p12` file |
+| `MACOS_SIGNING_IDENTITY` | macOS - certificate identity string (e.g. `Developer ID Application: Name (TEAM_ID)`) |
+| `MACOS_NOTARIZATION_APPLE_ID` | macOS - Apple ID email |
+| `MACOS_NOTARIZATION_PASSWORD` | macOS - app-specific password |
+| `MACOS_NOTARIZATION_TEAM_ID` | macOS - Apple Developer Team ID |

@@ -29,11 +29,11 @@ jobs:
           GOOGLE_SERVICES_ENCODED: ${{ secrets.GOOGLE_SERVICES_BASE_64 }}
         run: |
           # Create the directory structure
-          mkdir -p "composeApp/src/release/"
+          mkdir -p "androidApp/src/release/"
 
           # Decode the env variable into the file
           echo "$GOOGLE_SERVICES_ENCODED" | openssl base64 -d -A \
-            -out "composeApp/src/release/google-services.json"
+            -out "androidApp/src/release/google-services.json"
 
       - name: Build Unsigned AAB
         env:
@@ -42,14 +42,14 @@ jobs:
           ./gradlew spotlessCheck \
             bundleRelease \
             -Pheron.versionCode=${{ github.run_number }} \
-            -Pheron.isPlayStore=true \
+            -Pheron.isRelease=true \
             -Pheron.endpoint="$HERON_ENDPOINT"
 
       - name: Sign AAB
         uses: r0adkll/sign-android-release@v1
         id: sign_app
         with:
-          releaseDirectory: composeApp/build/outputs/bundle/release
+          releaseDirectory: androidApp/build/outputs/bundle/release
           signingKeyBase64: ${{ secrets.SIGNING_KEY_BASE_64 }}
           alias: ${{ secrets.ALIAS }}
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
@@ -70,8 +70,8 @@ jobs:
           packageName: com.tunjid.heron
           releaseFiles: ${{steps.sign_app.outputs.signedReleaseFile}}
           track: internal
-          mappingFile: composeApp/build/outputs/mapping/release/mapping.txt
-          debugSymbols: composeApp/build/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib
+          mappingFile: androidApp/build/outputs/mapping/release/mapping.txt
+          debugSymbols: androidApp/build/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib
 
 
       - name: Extract signed APKs
@@ -79,78 +79,78 @@ jobs:
           curl -L -o bundletool.jar https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar
           java -jar bundletool.jar build-apks \
             --bundle=${{ steps.sign_app.outputs.signedReleaseFile }} \
-            --output=composeApp/build/outputs/apk/release/heron.apks \
+            --output=androidApp/build/outputs/apk/release/heron.apks \
             --mode=universal
 
-          unzip -o composeApp/build/outputs/apk/release/heron.apks -d composeApp/build/outputs/apk/release/
+          unzip -o androidApp/build/outputs/apk/release/heron.apks -d androidApp/build/outputs/apk/release/
 
       - name: Upload to GitHub releases
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ github.run_number }}
           name: Heron v${{ github.run_number }}
-          files: composeApp/build/outputs/apk/release/universal.apk
+          files: androidApp/build/outputs/apk/release/universal.apk
           draft: true
           allow_updates: true
 
-#  publish-mac-app:
-#    runs-on: macos-latest
-#    permissions:
-#      contents: 'write'
-#    steps:
-#      - name: Checkout Code
-#        uses: actions/checkout@v5
-#
-#      - name: Setup java
-#        uses: actions/setup-java@v5
-#        with:
-#          distribution: 'zulu'
-#          java-version: 21
-#
-#      - name: Setup Gradle
-#        uses: gradle/actions/setup-gradle@v4
-#
-#      - name: Cache KMP tooling
-#        uses: actions/cache@v4
-#        with:
-#          path: |
-#            ~/.konan
-#          key: ${{ runner.os }}-v1-${{ hashFiles('gradle/libs.versions.toml') }}
-#
-#      - name: Import signing certificate
-#        uses: apple-actions/import-codesign-certs@v2
-#        with:
-#          p12-file-base64: ${{ secrets.SIGNING_CERTIFICATE_P12_DATA_MACOS }}
-#          p12-password: ${{ secrets.SIGNING_CERTIFICATE_PASSWORD_MACOS }}
-#
-#      - name: Build release DMG
-#        env:
-#          HERON_ENDPOINT: ${{ secrets.HERON_ENDPOINT }}
-#        run: |
-#          ./gradlew packageReleaseDmg \
-#            -Pheron.versionCode=${{ github.run_number }} \
-#            -Pheron.endpoint="$HERON_ENDPOINT"
-#
-#      - name: Notarize DMG
-#        env:
-#          APPLE_ID_NOTARIZATION: ${{ secrets.APPLE_ID_NOTARIZATION }}
-#          APPSTORE_TEAM_ID: ${{ secrets.APPSTORE_TEAM_ID }}
-#          NOTARIZATION_PWD: ${{ secrets.NOTARIZATION_PWD }}
-#        run: |
-#          DMG_PATH=$(find composeApp/build/release/main-release/dmg -name "*.dmg" | head -1)
-#          xcrun notarytool submit "$DMG_PATH" \
-#            --apple-id "$APPLE_ID_NOTARIZATION" \
-#            --password "$NOTARIZATION_PWD" \
-#            --team-id "$APPSTORE_TEAM_ID" \
-#            --wait
-#          xcrun stapler staple "$DMG_PATH"
-#          echo "DMG_PATH=$DMG_PATH" >> $GITHUB_ENV
-#
-#      - name: Upload to GitHub releases
-#        uses: softprops/action-gh-release@v2
-#        with:
-#          tag_name: v${{ github.run_number }}
-#          name: Heron v${{ github.run_number }}
-#          files: ${{ env.DMG_PATH }}
-#          draft: true
-#          allow_updates: true
+  publish-mac-app:
+    runs-on: macos-latest
+    permissions:
+      contents: 'write'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v5
+
+      - name: Setup java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Cache KMP tooling
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.konan
+          key: ${{ runner.os }}-v1-${{ hashFiles('gradle/libs.versions.toml') }}
+
+      - name: Import signing certificate
+        uses: apple-actions/import-codesign-certs@v2
+        with:
+          p12-file-base64: ${{ secrets.MACOS_SIGNING_CERTIFICATE_P12_DATA }}
+          p12-password: ${{ secrets.MACOS_SIGNING_CERTIFICATE_PASSWORD }}
+
+      - name: Build and sign release DMG
+        env:
+          HERON_ENDPOINT: ${{ secrets.HERON_ENDPOINT }}
+        run: |
+          ./gradlew packageReleaseDmg \
+            -Pheron.versionCode=${{ github.run_number }} \
+            -Pheron.endpoint="$HERON_ENDPOINT" \
+            -Pheron.macOS.signing.identity="${{ secrets.MACOS_SIGNING_IDENTITY }}"
+
+      - name: Notarize and staple DMG
+        env:
+          MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
+          MACOS_NOTARIZATION_PASSWORD: ${{ secrets.MACOS_NOTARIZATION_PASSWORD }}
+          MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}
+        run: |
+          DMG_PATH=$(find composeApp/build/release/main-release/dmg -name "*.dmg" | head -1)
+          xcrun notarytool submit "$DMG_PATH" \
+            --apple-id "$MACOS_NOTARIZATION_APPLE_ID" \
+            --password "$MACOS_NOTARIZATION_PASSWORD" \
+            --team-id "$MACOS_NOTARIZATION_TEAM_ID" \
+            --wait
+          xcrun stapler staple "$DMG_PATH"
+
+      - name: Upload to GitHub releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Heron v${{ github.run_number }}
+          files: composeApp/build/release/main-release/dmg/*.dmg
+          draft: true
+          allow_updates: true

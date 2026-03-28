@@ -37,24 +37,22 @@ import org.jetbrains.skia.Data
  */
 class AnimatedSkiaImageDecoder(
     private val source: ImageSource,
-    private val bufferedFramesCount: Int,
 ) : Decoder {
 
     override suspend fun decode(): DecodeResult {
         val bytes = source.source().use { it.readByteArray() }
         val codec = Codec.makeFromData(Data.makeFromBytes(bytes))
+        val image = AnimatedSkiaImage(codec = codec)
+        if (image.frameCount > 0) {
+            image.frames[0] = image.decodeFrame(0)
+        }
         return DecodeResult(
-            image = AnimatedSkiaImage(
-                codec = codec,
-                bufferedFramesCount = bufferedFramesCount,
-            ),
+            image = image,
             isSampled = false,
         )
     }
 
-    class Factory(
-        private val bufferedFramesCount: Int = DEFAULT_BUFFERED_FRAMES_COUNT,
-    ) : Decoder.Factory {
+    class Factory : Decoder.Factory {
 
         override fun create(
             result: SourceFetchResult,
@@ -64,7 +62,6 @@ class AnimatedSkiaImageDecoder(
             if (!isApplicable(result.source.source())) return null
             return AnimatedSkiaImageDecoder(
                 source = result.source,
-                bufferedFramesCount = bufferedFramesCount,
             )
         }
 
@@ -98,4 +95,3 @@ private const val WEBP_HEADER_OFFSET = 8L
 private const val VP8X_HEADER_OFFSET = 12L
 private const val VP8X_FLAGS_OFFSET = 20L
 private const val ANIMATION_FLAG_MASK: Byte = 0b00000010
-private const val DEFAULT_BUFFERED_FRAMES_COUNT = 5

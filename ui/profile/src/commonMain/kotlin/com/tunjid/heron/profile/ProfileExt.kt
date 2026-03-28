@@ -17,8 +17,10 @@
 package com.tunjid.heron.profile
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,7 +40,14 @@ fun String.withProfileBioTabSharedElementPrefix() = "bio-tab-$this"
 fun String.withProfileAvatarHaloSharedElementPrefix() = "avatar-halo-$this"
 fun String.withProfileAvatarLiveSharedElementPrefix() = "avatar-live-$this"
 
+fun Modifier.profileBannerSize() =
+    heightIn(max = MaxBannerHeight)
+        .fillMaxWidth()
+        .aspectRatio(BannerAspectRatio)
+
 val ProfileBioTabHeight = 32.dp
+val MaxBannerHeight = 240.dp
+
 const val BannerAspectRatio = 16f / 9
 const val AvatarLiveZIndex = 7f
 const val AvatarZIndex = 6f
