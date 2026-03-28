@@ -84,8 +84,11 @@ class GStreamerPlayerController(
         }
 
         val position = stateToPlay.seekPositionOnPlayMs(seekToMs)
+        if (position > 0) {
+            stateToPlay.playBin?.pause()
+            stateToPlay.seekNative(position)
+        }
         stateToPlay.playBin?.play()
-        if (position > 0) stateToPlay.seekNative(position)
     }
 
     override fun pauseActiveVideo() {
