@@ -15,13 +15,14 @@
  */
 
 plugins {
-    id("android-library-convention")
     id("kotlin-library-convention")
     alias(libs.plugins.buildConfig)
 }
 
-android {
-    namespace = "com.tunjid.heron.data.platform"
+kotlin {
+    androidLibrary {
+        namespace = "com.tunjid.heron.data.platform"
+    }
 }
 
 buildConfig {

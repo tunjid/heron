@@ -17,13 +17,14 @@ import com.android.build.gradle.internal.ide.kmp.KotlinAndroidSourceSetMarker.Co
  */
 
 plugins {
-    id("android-library-convention")
     id("kotlin-library-convention")
     id("org.jetbrains.compose")
     alias(libs.plugins.composeCompiler)
 }
-android {
-    namespace = "com.tunjid.heron.ui.profile"
+kotlin {
+    androidLibrary {
+        namespace = "com.tunjid.heron.ui.profile"
+    }
 }
 
 kotlin {

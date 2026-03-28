@@ -15,13 +15,14 @@
  */
 
 plugins {
-    id("android-library-convention")
     id("kotlin-library-convention")
     id("org.jetbrains.compose")
     alias(libs.plugins.composeCompiler)
 }
-android {
-    namespace = "com.tunjid.heron.ui.timeline"
+kotlin {
+    androidLibrary {
+        namespace = "com.tunjid.heron.ui.timeline"
+    }
 }
 
 kotlin {

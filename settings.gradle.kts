@@ -49,6 +49,7 @@ dependencyResolutionManagement {
 }
 
 include(
+    ":androidApp",
     ":composeApp",
     ":data:core",
     ":data:files",

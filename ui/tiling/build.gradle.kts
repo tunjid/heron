@@ -15,12 +15,13 @@
  */
 
 plugins {
-    id("android-library-convention")
     id("kotlin-library-convention")
     kotlin("plugin.serialization")
 }
-android {
-    namespace = "com.tunjid.heron.ui.tiling"
+kotlin {
+    androidLibrary {
+        namespace = "com.tunjid.heron.ui.tiling"
+    }
 }
 
 kotlin {

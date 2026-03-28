@@ -18,13 +18,14 @@ import java.util.zip.ZipFile
  */
 
 plugins {
-    id("android-library-convention")
     id("kotlin-library-convention")
     id("org.jetbrains.compose")
     alias(libs.plugins.composeCompiler)
 }
-android {
-    namespace = "com.tunjid.heron.ui.images"
+kotlin {
+    androidLibrary {
+        namespace = "com.tunjid.heron.ui.images"
+    }
 }
 
 kotlin {
