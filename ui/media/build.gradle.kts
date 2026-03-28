@@ -1,4 +1,3 @@
-import com.android.build.gradle.internal.ide.kmp.KotlinAndroidSourceSetMarker.Companion.android
 import java.util.zip.ZipFile
 
 /*
@@ -152,22 +151,27 @@ tasks.named("desktopProcessResources") {
 val jnaJar = configurations.named("desktopRuntimeClasspath").map { config ->
     config.files.first { it.name.startsWith("jna-") && !it.name.contains("platform") }
 }
+enum class OsFamily {
+    MAC,
+    LINUX,
+}
 
 data class JnaTarget(
     val taskSuffix: String,
     val arch: String,
     val jnaPath: String,
     val libName: String,
+    val osFamily: OsFamily,
 )
 
 val jnaTargets = buildList {
-    add(JnaTarget("Arm", "darwin-aarch64", "darwin-aarch64", "libjnidispatch.jnilib"))
-    add(JnaTarget("X64", "darwin-x86-64", "darwin-x86-64", "libjnidispatch.jnilib"))
-    add(JnaTarget("LinuxX64", "linux-x86-64", "linux-x86-64", "libjnidispatch.so"))
-    add(JnaTarget("LinuxArm", "linux-aarch64", "linux-aarch64", "libjnidispatch.so"))
+    add(JnaTarget("Arm", "darwin-aarch64", "darwin-aarch64", "libjnidispatch.jnilib", OsFamily.MAC))
+    add(JnaTarget("X64", "darwin-x86-64", "darwin-x86-64", "libjnidispatch.jnilib", OsFamily.MAC))
+    add(JnaTarget("LinuxX64", "linux-x86-64", "linux-x86-64", "libjnidispatch.so", OsFamily.LINUX))
+    add(JnaTarget("LinuxArm", "linux-aarch64", "linux-aarch64", "libjnidispatch.so", OsFamily.LINUX))
 }
 
-jnaTargets.forEach { (suffix, arch, jnaPath, libName) ->
+jnaTargets.forEach { (suffix, arch, jnaPath, libName, osFamily) ->
     tasks.register("extractJnaNative$suffix") {
         val outputDir = layout.buildDirectory.dir("native-libs/$arch")
         val jnaJarFile = jnaJar
@@ -177,11 +181,10 @@ jnaTargets.forEach { (suffix, arch, jnaPath, libName) ->
         // Task is declared on all platforms to satisfy Gradle 9 implicit
         // dependency detection, but only executes on the relevant OS
         onlyIf {
-            val os = System.getProperty("os.name")
-            when (suffix) {
-                "Arm", "X64" -> os.startsWith("Mac")
-                "LinuxX64", "LinuxArm" -> os.startsWith("Linux")
-                else -> false
+            val osName = System.getProperty("os.name")
+            when (osFamily) {
+                OsFamily.MAC -> osName.startsWith("Mac")
+                OsFamily.LINUX -> osName.startsWith("Linux")
             }
         }
 
