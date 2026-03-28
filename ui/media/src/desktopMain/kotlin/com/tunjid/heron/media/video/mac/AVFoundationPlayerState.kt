@@ -328,12 +328,13 @@ internal class AVFoundationPlayerState(
         unregisterCallbacks()
         playerScope.cancel()
 
-        tryWithPlayerPointer(
-            tag = "dispose",
-            block = AVFoundationVideoPlayer::disposeVideoPlayer,
-        )
-
-        playerPointer.set(null)
+        playerPointer.getAndSet(null)?.let { pointerToDispose ->
+            try {
+                AVFoundationVideoPlayer.disposeVideoPlayer(pointerToDispose)
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR) { "dispose failed: ${e.loggableText()}" }
+            }
+        }
 
         mediaOpenCalled = false
 
