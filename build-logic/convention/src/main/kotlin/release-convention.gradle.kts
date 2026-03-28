@@ -15,27 +15,25 @@
  */
 
 plugins {
-    id("com.android.library")
+    id("pl.allegro.tech.build.axion-release")
 }
 
-android {
-    commonConfiguration(this)
-
-    defaultConfig {
-        lint.targetSdk = 35
+scmVersion {
+    tag {
+        // Use an empty string for prefix
+        prefix.set("")
     }
-    buildTypes {
-        create("staging") {
-            initWith(getByName("release"))
-            isMinifyEnabled = false
+    repository {
+        pushTagsOnly.set(true)
+    }
+    providers.gradleProperty("heron.releaseBranch")
+        .orNull
+        ?.let { releaseBranch ->
+            when {
+                releaseBranch.contains("bugfix/") -> versionIncrementer("incrementPatch")
+                releaseBranch.contains("feature/") -> versionIncrementer("incrementMinor")
+                releaseBranch.contains("release/") -> versionIncrementer("incrementMajor")
+                else -> throw IllegalArgumentException("Unknown release type")
+            }
         }
-    }
-    sourceSets {
-        named("main") {
-            manifest.srcFile("src/androidMain/AndroidManifest.xml")
-            res.srcDirs("src/androidMain/res")
-        }
-    }
 }
-
-addDesugarDependencies()

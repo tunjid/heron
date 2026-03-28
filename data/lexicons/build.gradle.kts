@@ -2,7 +2,6 @@ import sh.christian.ozone.api.generator.ApiReturnType
 import sh.christian.ozone.api.generator.BinaryDataType
 
 plugins {
-    id("android-library-convention")
     id("kotlin-library-convention")
     id("ksp-convention")
     id("com.tunjid.ozone.generator")
@@ -11,8 +10,10 @@ plugins {
 
 val modulePackageName = "com.tunjid.heron.data.lexicons"
 
-android {
-    namespace = modulePackageName
+kotlin {
+    androidLibrary {
+        namespace = modulePackageName
+    }
 }
 
 kotlin {

@@ -14,12 +14,29 @@
  *    limitations under the License.
  */
 
+import ext.ProjectJavaVersion
+import ext.configureKotlinJvm
+import ext.libs
+
 plugins {
     id("com.android.application")
 }
 
 android {
-    commonConfiguration(this)
+    compileSdk = 36
+
+    defaultConfig {
+        // The app uses Modifier.blur which is Android 12 and up
+        minSdk = 31
+        targetSdk = 35
+    }
+
+    compileOptions {
+        isCoreLibraryDesugaringEnabled = true
+        sourceCompatibility = ProjectJavaVersion
+        targetCompatibility = ProjectJavaVersion
+    }
+
     buildTypes {
         create("staging") {
             initWith(getByName("release"))
@@ -28,9 +45,12 @@ android {
         }
     }
 
-    defaultConfig {
-        targetSdk = 35
-    }
+    configureKotlinJvm()
 }
 
-addDesugarDependencies()
+dependencies {
+    add(
+        configurationName = "coreLibraryDesugaring",
+        dependencyNotation = libs.android.desugarJdkLibs,
+    )
+}

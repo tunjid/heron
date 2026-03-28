@@ -15,14 +15,15 @@
  */
 
 plugins {
-    id("android-library-convention")
     id("kotlin-library-convention")
     id("ksp-convention")
     kotlin("plugin.serialization")
     id("androidx.room")
 }
-android {
-    namespace = "com.tunjid.heron.data"
+kotlin {
+    androidLibrary {
+        namespace = "com.tunjid.heron.data.database"
+    }
 }
 
 kotlin {

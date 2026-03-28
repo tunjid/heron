@@ -15,15 +15,16 @@
  */
 
 plugins {
-    id("android-library-convention")
     id("kotlin-library-convention")
     id("ksp-convention")
     id("app.cash.burst")
     kotlin("plugin.serialization")
 }
 
-android {
-    namespace = "com.tunjid.heron.data"
+kotlin {
+    androidLibrary {
+        namespace = "com.tunjid.heron.data.models"
+    }
 }
 
 kotlin {
@@ -44,9 +45,4 @@ kotlin {
             }
         }
     }
-}
-
-dependencies {
-    // For Android JUnit runner to see Burst
-    testImplementation(libs.burst)
 }

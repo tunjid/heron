@@ -80,11 +80,11 @@ jobs:
           GOOGLE_SERVICES_ENCODED: ${{ secrets.GOOGLE_SERVICES_BASE_64 }}
         run: |
           # Create the directory structure
-          mkdir -p "composeApp/src/release/"
+          mkdir -p "androidApp/src/release/"
 
           # Decode the env variable into the file
           echo "$GOOGLE_SERVICES_ENCODED" | openssl base64 -d -A \
-            -out "composeApp/src/release/google-services.json"
+            -out "androidApp/src/release/google-services.json"
 
       - name: Build App
         run: ./gradlew assembleRelease
