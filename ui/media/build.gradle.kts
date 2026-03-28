@@ -41,6 +41,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":data:files"))
+                implementation(project(":data:logging"))
                 implementation(project(":data:models"))
                 implementation(project(":ui:core"))
 

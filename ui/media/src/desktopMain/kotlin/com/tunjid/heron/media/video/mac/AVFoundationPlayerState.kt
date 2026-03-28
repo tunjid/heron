@@ -23,6 +23,9 @@ import androidx.compose.ui.graphics.asComposeImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.IntSize
 import com.sun.jna.Pointer
+import com.tunjid.heron.data.logging.LogPriority
+import com.tunjid.heron.data.logging.logcat
+import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.media.video.PlayerStatus
 import com.tunjid.heron.media.video.VideoPlayerState
 import com.tunjid.heron.ui.shapes.RoundedPolygonShape
@@ -98,8 +101,7 @@ internal class AVFoundationPlayerState(
 
     // Frame rendering state
     internal var currentFrame by mutableStateOf<ImageBitmap?>(null)
-    private var skiaBitmapWidth: Int = 0
-    private var skiaBitmapHeight: Int = 0
+    private var currentFrameSize = IntSize.Zero
     private var skiaBitmapA: Bitmap? = null
     private var skiaBitmapB: Bitmap? = null
     private var nextSkiaBitmapA: Boolean = true
@@ -236,64 +238,71 @@ internal class AVFoundationPlayerState(
     private suspend fun updateFrameAsync() {
         val ptr = playerPointer ?: return
 
-        val width = AVFoundationVideoPlayer.getFrameWidth(ptr)
-        val height = AVFoundationVideoPlayer.getFrameHeight(ptr)
-        if (width <= 0 || height <= 0) return
+        try {
+            val latestFrameSize = IntSize(
+                width = AVFoundationVideoPlayer.getFrameWidth(ptr),
+                height = AVFoundationVideoPlayer.getFrameHeight(ptr),
+            )
+            if (latestFrameSize.width <= 0 || latestFrameSize.height <= 0) return
 
-        val framePtr = AVFoundationVideoPlayer.getLatestFrame(ptr) ?: return
+            val framePtr = AVFoundationVideoPlayer.getLatestFrame(ptr) ?: return
 
-        val pixelCount = width * height
-        val frameSizeBytes = pixelCount.toLong() * 4L
+            val pixelCount = latestFrameSize.width * latestFrameSize.height
+            val frameSizeBytes = pixelCount.toLong() * 4L
 
-        withContext(serialDispatcher) {
-            val srcBuf = framePtr.getByteBuffer(0, frameSizeBytes)
+            withContext(serialDispatcher) {
+                val srcBuf = framePtr.getByteBuffer(0, frameSizeBytes)
 
-            if (skiaBitmapA == null || skiaBitmapWidth != width || skiaBitmapHeight != height) {
-                skiaBitmapA?.close()
-                skiaBitmapB?.close()
+                if (skiaBitmapA == null || currentFrameSize != latestFrameSize) {
+                    skiaBitmapA?.close()
+                    skiaBitmapB?.close()
 
-                val imageInfo = ImageInfo(
-                    width = width,
-                    height = height,
-                    colorType = ColorType.BGRA_8888,
-                    alphaType = ColorAlphaType.OPAQUE,
+                    val imageInfo = ImageInfo(
+                        width = latestFrameSize.width,
+                        height = latestFrameSize.height,
+                        colorType = ColorType.BGRA_8888,
+                        alphaType = ColorAlphaType.OPAQUE,
+                    )
+                    skiaBitmapA = Bitmap().apply { allocPixels(imageInfo) }
+                    skiaBitmapB = Bitmap().apply { allocPixels(imageInfo) }
+                    currentFrameSize = latestFrameSize
+                    nextSkiaBitmapA = true
+                }
+
+                val targetBitmap =
+                    if (nextSkiaBitmapA) requireNotNull(skiaBitmapA)
+                    else requireNotNull(skiaBitmapB)
+
+                nextSkiaBitmapA = !nextSkiaBitmapA
+
+                val pixmap = targetBitmap.peekPixels() ?: return@withContext
+                val pixelsAddr = pixmap.addr
+                if (pixelsAddr == 0L) return@withContext
+
+                srcBuf.rewind()
+                val destRowBytes = pixmap.rowBytes
+                val destSizeBytes = destRowBytes.toLong() * latestFrameSize.height.toLong()
+                val destBuf = Pointer(pixelsAddr).getByteBuffer(0, destSizeBytes)
+                copyBgraFrame(
+                    src = srcBuf,
+                    dst = destBuf,
+                    width = latestFrameSize.width,
+                    height = latestFrameSize.height,
+                    dstRowBytes = destRowBytes,
                 )
-                skiaBitmapA = Bitmap().apply { allocPixels(imageInfo) }
-                skiaBitmapB = Bitmap().apply { allocPixels(imageInfo) }
-                skiaBitmapWidth = width
-                skiaBitmapHeight = height
-                nextSkiaBitmapA = true
+
+                currentFrame = targetBitmap.asComposeImageBitmap()
             }
 
-            val targetBitmap =
-                if (nextSkiaBitmapA) requireNotNull(skiaBitmapA)
-                else requireNotNull(skiaBitmapB)
+            lastFrameUpdateTime = System.currentTimeMillis()
 
-            nextSkiaBitmapA = !nextSkiaBitmapA
-
-            val pixmap = targetBitmap.peekPixels() ?: return@withContext
-            val pixelsAddr = pixmap.addr
-            if (pixelsAddr == 0L) return@withContext
-
-            srcBuf.rewind()
-            val destRowBytes = pixmap.rowBytes
-            val destSizeBytes = destRowBytes.toLong() * height.toLong()
-            val destBuf = Pointer(pixelsAddr).getByteBuffer(0, destSizeBytes)
-            copyBgraFrame(
-                src = srcBuf,
-                dst = destBuf,
-                width = width,
-                height = height,
-                dstRowBytes = destRowBytes,
-            )
-
-            currentFrame = targetBitmap.asComposeImageBitmap()
-        }
-
-        lastFrameUpdateTime = System.currentTimeMillis()
-
-        if (!hasRenderedFirstFrame) {
-            hasRenderedFirstFrame = true
+            if (!hasRenderedFirstFrame) {
+                hasRenderedFirstFrame = true
+            }
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR) {
+                "Video frame extraction failed: ${e.loggableText()}"
+            }
         }
     }
 
@@ -318,8 +327,7 @@ internal class AVFoundationPlayerState(
         skiaBitmapB?.close()
         skiaBitmapA = null
         skiaBitmapB = null
-        skiaBitmapWidth = 0
-        skiaBitmapHeight = 0
+        currentFrameSize = IntSize.Zero
         nextSkiaBitmapA = true
 
         pointerToDispose?.let(AVFoundationVideoPlayer::disposeVideoPlayer)

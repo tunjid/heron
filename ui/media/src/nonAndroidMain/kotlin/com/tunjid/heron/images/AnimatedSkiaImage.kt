@@ -22,6 +22,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import coil3.Canvas
 import coil3.Image
+import com.tunjid.heron.data.logging.LogPriority
+import com.tunjid.heron.data.logging.logcat
+import com.tunjid.heron.data.logging.loggableText
 import org.jetbrains.skia.AnimationFrameInfo
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Codec
@@ -90,10 +93,15 @@ internal class AnimatedSkiaImage(
 
     internal fun decodeFrame(frameIndex: Int): org.jetbrains.skia.Image? {
         if (tempBitmap.isClosed) return null
-        codec.readPixels(tempBitmap, frameIndex)
-        return org.jetbrains.skia.Image.makeFromBitmap(
-            tempBitmap,
-        )
+        return try {
+            codec.readPixels(tempBitmap, frameIndex)
+            org.jetbrains.skia.Image.makeFromBitmap(tempBitmap)
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR) {
+                "Gif frame decode failed: ${e.loggableText()}"
+            }
+            null
+        }
     }
 
     internal fun closeTempBitmap() {
