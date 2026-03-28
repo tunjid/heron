@@ -286,9 +286,7 @@ internal class GStreamerPlayerState(
             pb.dispose()
         }
 
-        appSink?.let { sink ->
-            newSampleConnection?.let { sink.disconnect(it) }
-        }
+        newSampleConnection?.let { appSink?.disconnect(it) }
         newSampleConnection = null
 
         skiaBitmapA?.close()
