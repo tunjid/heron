@@ -314,6 +314,9 @@ internal class AVFoundationPlayerState(
      * Re-creates the native player after [dispose]. Used by retry flows.
      */
     internal fun reinitialize() {
+        // Clean up old player resources before creating new ones
+        dispose()
+
         playerPointer.set(AVFoundationVideoPlayer.createVideoPlayer())
         playerScope = playerScope()
         mediaOpenCalled = false
