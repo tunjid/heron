@@ -130,12 +130,16 @@ kotlin.sourceSets.named("desktopMain") {
 }
 
 tasks.named("desktopProcessResources") {
+    // JNA native extraction needed on all desktop platforms
+    dependsOn(
+        "extractJnaNativeArm",
+        "extractJnaNativeX64",
+    )
+    // AVFoundation only built on Mac
     if (System.getProperty("os.name").startsWith("Mac")) {
         dependsOn(
             "buildAVFoundationMacArm",
             "buildAVFoundationMacX64",
-            "extractJnaNativeArm",
-            "extractJnaNativeX64",
         )
     }
 }
