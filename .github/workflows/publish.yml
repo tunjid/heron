@@ -29,11 +29,11 @@ jobs:
           GOOGLE_SERVICES_ENCODED: ${{ secrets.GOOGLE_SERVICES_BASE_64 }}
         run: |
           # Create the directory structure
-          mkdir -p "composeApp/src/release/"
+          mkdir -p "androidApp/src/release/"
 
           # Decode the env variable into the file
           echo "$GOOGLE_SERVICES_ENCODED" | openssl base64 -d -A \
-            -out "composeApp/src/release/google-services.json"
+            -out "androidApp/src/release/google-services.json"
 
       - name: Build Unsigned AAB
         env:
@@ -49,7 +49,7 @@ jobs:
         uses: r0adkll/sign-android-release@v1
         id: sign_app
         with:
-          releaseDirectory: composeApp/build/outputs/bundle/release
+          releaseDirectory: androidApp/build/outputs/bundle/release
           signingKeyBase64: ${{ secrets.SIGNING_KEY_BASE_64 }}
           alias: ${{ secrets.ALIAS }}
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
@@ -70,8 +70,8 @@ jobs:
           packageName: com.tunjid.heron
           releaseFiles: ${{steps.sign_app.outputs.signedReleaseFile}}
           track: internal
-          mappingFile: composeApp/build/outputs/mapping/release/mapping.txt
-          debugSymbols: composeApp/build/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib
+          mappingFile: androidApp/build/outputs/mapping/release/mapping.txt
+          debugSymbols: androidApp/build/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib
 
 
       - name: Extract signed APKs
@@ -79,17 +79,17 @@ jobs:
           curl -L -o bundletool.jar https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar
           java -jar bundletool.jar build-apks \
             --bundle=${{ steps.sign_app.outputs.signedReleaseFile }} \
-            --output=composeApp/build/outputs/apk/release/heron.apks \
+            --output=androidApp/build/outputs/apk/release/heron.apks \
             --mode=universal
 
-          unzip -o composeApp/build/outputs/apk/release/heron.apks -d composeApp/build/outputs/apk/release/
+          unzip -o androidApp/build/outputs/apk/release/heron.apks -d androidApp/build/outputs/apk/release/
 
       - name: Upload to GitHub releases
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ github.run_number }}
           name: Heron v${{ github.run_number }}
-          files: composeApp/build/outputs/apk/release/universal.apk
+          files: androidApp/build/outputs/apk/release/universal.apk
           draft: true
           allow_updates: true
 
