@@ -143,12 +143,14 @@ kotlin.sourceSets.named("desktopMain") {
 }
 
 tasks.named("desktopProcessResources") {
-    // JNA native extraction needed on all desktop platforms
+    // Declare all extraction tasks so Gradle 9 implicit dependency
+    // checks pass onlyIf guards on each task handle actual execution
     dependsOn(
         "extractJnaNativeArm",
         "extractJnaNativeX64",
+        "extractJnaNativeLinuxX64",
+        "extractJnaNativeLinuxArm",
     )
-    // AVFoundation only built on Mac
     if (System.getProperty("os.name").startsWith("Mac")) {
         dependsOn(
             "buildAVFoundationMacArm",
@@ -164,17 +166,42 @@ val jnaJar = configurations.named("desktopRuntimeClasspath").map { config ->
     config.files.first { it.name.startsWith("jna-") && !it.name.contains("platform") }
 }
 
-macTargets.forEach { (name, _, arch) ->
-    tasks.register("extractJnaNative$name") {
-        val outputDir = layout.buildDirectory.dir("native-libs/darwin-$arch")
+data class JnaTarget(
+    val taskSuffix: String,
+    val arch: String,
+    val jnaPath: String,
+    val libName: String,
+)
+
+val jnaTargets = buildList {
+    add(JnaTarget("Arm", "darwin-aarch64", "darwin-aarch64", "libjnidispatch.jnilib"))
+    add(JnaTarget("X64", "darwin-x86-64", "darwin-x86-64", "libjnidispatch.jnilib"))
+    add(JnaTarget("LinuxX64", "linux-x86-64", "linux-x86-64", "libjnidispatch.so"))
+    add(JnaTarget("LinuxArm", "linux-aarch64", "linux-aarch64", "libjnidispatch.so"))
+}
+
+jnaTargets.forEach { (suffix, arch, jnaPath, libName) ->
+    tasks.register("extractJnaNative$suffix") {
+        val outputDir = layout.buildDirectory.dir("native-libs/$arch")
         val jnaJarFile = jnaJar
         inputs.files(jnaJarFile)
-        outputs.file(outputDir.map { it.file("libjnidispatch.jnilib") })
+        outputs.file(outputDir.map { it.file(libName) })
+
+        // Task is declared on all platforms to satisfy Gradle 9 implicit
+        // dependency detection, but only executes on the relevant OS
+        onlyIf {
+            val os = System.getProperty("os.name")
+            when (suffix) {
+                "Arm", "X64" -> os.startsWith("Mac")
+                "LinuxX64", "LinuxArm" -> os.startsWith("Linux")
+                else -> false
+            }
+        }
+
         doLast {
             val jarFile = jnaJarFile.get()
-            val entryPath = "com/sun/jna/darwin-$arch/libjnidispatch.jnilib"
-            val dir = outputDir.get().asFile
-            val outputFile = dir.resolve("libjnidispatch.jnilib")
+            val entryPath = "com/sun/jna/$jnaPath/$libName"
+            val outputFile = outputDir.get().asFile.also { it.mkdirs() }.resolve(libName)
             ZipFile(jarFile).use { zip ->
                 val entry = zip.getEntry(entryPath)
                     ?: error("Entry $entryPath not found in ${jarFile.name}")
