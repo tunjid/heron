@@ -14,6 +14,7 @@
  *    limitations under the License.
  */
 
+import org.gradle.process.ExecOperations
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
@@ -148,9 +149,14 @@ compose.desktop {
                         }
                     }
 
-                // Notarization is handled externally via xcrun notarytool
-                // to maintain compatibility with Gradle configuration cache.
-                // See the publish workflow and README for details.
+                // The notarizeDmg task does not support the Gradle configuration
+                // cache, so CI uses xcrun notarytool directly instead.
+                // This block is for local testing only.
+                notarization {
+                    appleID.set(providers.gradleProperty("heron.macOS.notarization.appleID"))
+                    password.set(providers.gradleProperty("heron.macOS.notarization.password"))
+                    teamID.set(providers.gradleProperty("heron.macOS.notarization.teamID"))
+                }
             }
             windows {
                 iconFile.set(resourcesDir.resolve("icon.ico"))
@@ -186,13 +192,46 @@ val copyNativeLibsForSandbox = tasks.register("copyNativeLibsForSandbox") {
     dependsOn(copyNativeLibsTasks)
 }
 
+// Sign native libraries with Developer ID so they pass notarization.
+// Must run after copying but before packaging.
+val signingIdentity = providers.gradleProperty("heron.macOS.signing.identity")
+abstract class SignNativeLibsTask : DefaultTask() {
+    @get:InputFiles abstract val libraries: ConfigurableFileCollection
+
+    @get:Input abstract val signingIdentity: Property<String>
+
+    @get:Inject abstract val execOps: ExecOperations
+
+    @TaskAction
+    fun sign() {
+        val identity = signingIdentity.get()
+        libraries.forEach { lib ->
+            execOps.exec {
+                commandLine("codesign", "--force", "--timestamp", "--sign", identity, lib.absolutePath)
+            }
+        }
+    }
+}
+
+val nativeLibsResourcesDir = layout.projectDirectory.dir("resources")
+val signNativeLibsForSandbox = tasks.register<SignNativeLibsTask>("signNativeLibsForSandbox") {
+    dependsOn(copyNativeLibsForSandbox)
+    onlyIf { signingIdentity.isPresent }
+    libraries.from(
+        nativeLibsResourcesDir.asFileTree.matching {
+            include("**/*.dylib", "**/*.jnilib")
+        },
+    )
+    signingIdentity.set(providers.gradleProperty("heron.macOS.signing.identity"))
+}
+
 val nativeLibDependentTasks = setOf(
     "packageDmg",
     "packageReleaseDmg",
     "prepareAppResources",
 )
 tasks.matching { it.name in nativeLibDependentTasks }.configureEach {
-    dependsOn(copyNativeLibsForSandbox)
+    dependsOn(signNativeLibsForSandbox)
 }
 
 configurations {
