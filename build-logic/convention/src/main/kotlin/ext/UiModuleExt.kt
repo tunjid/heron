@@ -23,9 +23,10 @@ fun org.gradle.api.Project.configureUiModule(
     sourceSets.apply {
         named("commonMain") {
             dependencies {
-                implementation(project(":data:models"))
                 implementation(project(":data:core"))
+                implementation(project(":data:models"))
                 implementation(project(":data:logging"))
+                implementation(project(":data:platform"))
 
                 api(libs.lifecycle.multiplatform.runtime)
                 api(libs.lifecycle.multiplatform.runtime.compose)
