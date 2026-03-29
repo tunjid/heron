@@ -48,19 +48,17 @@ allprojects {
     configurations.all {
         resolutionStrategy.eachDependency {
             val navigation3ComposeAnimationBug = """
-                Shared element eekable transition bug compounded in Nav 3 predictive back
+                Shared element seekable transition bug compounded in Nav 3 predictive back
             """.trimIndent()
-            if (requested.group == "androidx.navigation3" &&
-                requested.name == "navigation3-ui"
-            ) {
-                useVersion("1.1.0-alpha05")
-                because(navigation3ComposeAnimationBug)
-            }
-            if (requested.group == "androidx.compose.animation" &&
-                requested.name == "animation"
-            ) {
-                useVersion("1.11.0-alpha06")
-                because(navigation3ComposeAnimationBug)
+            when (requested.group) {
+                "androidx.navigation3" if requested.name == "navigation3-ui" -> {
+                    useVersion("1.1.0-alpha05")
+                    because(navigation3ComposeAnimationBug)
+                }
+                "androidx.compose.animation" if requested.name == "animation" -> {
+                    useVersion("1.11.0-alpha06")
+                    because(navigation3ComposeAnimationBug)
+                }
             }
         }
     }
