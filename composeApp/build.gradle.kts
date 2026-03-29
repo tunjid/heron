@@ -14,7 +14,6 @@
  *    limitations under the License.
  */
 
-import org.gradle.process.ExecOperations
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
@@ -195,29 +194,9 @@ val copyNativeLibsForSandbox = tasks.register("copyNativeLibsForSandbox") {
 // Sign native libraries with Developer ID so they pass notarization.
 // Must run after copying but before packaging.
 val signingIdentityProperty = providers.gradleProperty("heron.macOS.signing.identity")
-abstract class SignNativeLibsTask : DefaultTask() {
-    @get:InputFiles abstract val libraries: ConfigurableFileCollection
-
-    @get:Input abstract val signingIdentity: Property<String>
-
-    @get:Inject abstract val execOps: ExecOperations
-
-    @TaskAction
-    fun sign() {
-        if (libraries.isEmpty) return
-
-        val identity = signingIdentity.get()
-        val paths = libraries.files.map { it.absolutePath }
-        execOps.exec {
-            commandLine("codesign", "--force", "--timestamp", "--sign", identity, *paths.toTypedArray())
-        }
-    }
-}
-
 val nativeLibsResourcesDir = layout.projectDirectory.dir("resources")
 val signNativeLibsForSandbox = tasks.register<SignNativeLibsTask>("signNativeLibsForSandbox") {
     dependsOn(copyNativeLibsForSandbox)
-    onlyIf { signingIdentityProperty.isPresent }
     libraries.from(
         nativeLibsResourcesDir.asFileTree.matching {
             include("**/*.dylib", "**/*.jnilib")
