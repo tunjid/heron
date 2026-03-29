@@ -194,7 +194,7 @@ val copyNativeLibsForSandbox = tasks.register("copyNativeLibsForSandbox") {
 
 // Sign native libraries with Developer ID so they pass notarization.
 // Must run after copying but before packaging.
-val signingIdentity = providers.gradleProperty("heron.macOS.signing.identity")
+val signingIdentityProperty = providers.gradleProperty("heron.macOS.signing.identity")
 abstract class SignNativeLibsTask : DefaultTask() {
     @get:InputFiles abstract val libraries: ConfigurableFileCollection
 
@@ -204,11 +204,12 @@ abstract class SignNativeLibsTask : DefaultTask() {
 
     @TaskAction
     fun sign() {
+        if (libraries.isEmpty) return
+
         val identity = signingIdentity.get()
-        libraries.forEach { lib ->
-            execOps.exec {
-                commandLine("codesign", "--force", "--timestamp", "--sign", identity, lib.absolutePath)
-            }
+        val paths = libraries.files.map { it.absolutePath }
+        execOps.exec {
+            commandLine("codesign", "--force", "--timestamp", "--sign", identity, *paths.toTypedArray())
         }
     }
 }
@@ -216,13 +217,13 @@ abstract class SignNativeLibsTask : DefaultTask() {
 val nativeLibsResourcesDir = layout.projectDirectory.dir("resources")
 val signNativeLibsForSandbox = tasks.register<SignNativeLibsTask>("signNativeLibsForSandbox") {
     dependsOn(copyNativeLibsForSandbox)
-    onlyIf { signingIdentity.isPresent }
+    onlyIf { signingIdentityProperty.isPresent }
     libraries.from(
         nativeLibsResourcesDir.asFileTree.matching {
             include("**/*.dylib", "**/*.jnilib")
         },
     )
-    signingIdentity.set(providers.gradleProperty("heron.macOS.signing.identity"))
+    signingIdentity.set(signingIdentityProperty)
 }
 
 val nativeLibDependentTasks = setOf(
