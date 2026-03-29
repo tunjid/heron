@@ -19,8 +19,7 @@ import java.util.zip.ZipFile
 
 plugins {
     id("kotlin-library-convention")
-    id("org.jetbrains.compose")
-    alias(libs.plugins.composeCompiler)
+    id("ui-module-convention")
 }
 kotlin {
     androidLibrary {
@@ -42,18 +41,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":data:files"))
-                implementation(project(":data:logging"))
-                implementation(project(":data:models"))
                 implementation(project(":ui:core"))
-
-                implementation(libs.compose.multiplatform.animation)
-                implementation(libs.compose.multiplatform.components.resources)
-                implementation(libs.compose.multiplatform.foundation.layout)
-                implementation(libs.compose.multiplatform.foundation.foundation)
-                implementation(libs.compose.multiplatform.material.icons.extended)
-                implementation(libs.compose.multiplatform.material3)
-                implementation(libs.compose.multiplatform.runtime)
-                implementation(libs.compose.multiplatform.ui.ui)
 
                 implementation(libs.coil.compose)
                 implementation(libs.coil.ktor)
@@ -61,10 +49,7 @@ kotlin {
                 implementation(libs.filekit.coil)
                 implementation(libs.filekit.dialogs.compose)
 
-                implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)
-
-                implementation(libs.tunjid.composables)
             }
         }
         androidMain {

@@ -14,35 +14,30 @@
  *    limitations under the License.
  */
 
-plugins {
-    id("kotlin-library-convention")
-    id("feature-module-convention")
-    id("ksp-convention")
-}
-kotlin {
-    androidLibrary {
-        namespace = "com.tunjid.heron.feature.compose"
-    }
-}
+import ext.libs
+import org.gradle.api.Project
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
-kotlin {
-    sourceSets {
-        commonMain {
+fun Project.configureFeatureModule(
+    extension: KotlinMultiplatformExtension,
+) = extension.apply {
+    sourceSets.apply {
+        named("commonMain") {
             dependencies {
+                implementation(project(":data:models"))
                 implementation(project(":data:core"))
-                implementation(project(":data:files"))
+                implementation(project(":data:logging"))
                 implementation(project(":scaffold"))
                 implementation(project(":feature:template"))
+                implementation(project(":ui:core"))
+                implementation(project(":ui:media"))
+                implementation(project(":ui:tiling"))
+                implementation(project(":ui:timeline"))
 
-                implementation(libs.codepoints.deluxe)
+                api(libs.lifecycle.multiplatform.viewmodel)
+                api(libs.lifecycle.multiplatform.viewmodel.compose)
 
-                implementation(libs.kotlinx.coroutines.core)
-                implementation(libs.kotlinx.datetime)
-                implementation(libs.kotlinx.serialization.cbor)
-                implementation(libs.kotlinx.serialization.json)
-
-                implementation(libs.tunjid.tiler.tiler)
-                implementation(libs.tunjid.tiler.compose)
+                implementation(libs.navigation.event.compose)
             }
         }
     }

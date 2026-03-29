@@ -14,14 +14,16 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.data.platform
-
-import platform.UIKit.UIDevice
-
-class IOSPlatform internal constructor() : Platform {
-    override val name: String =
-        UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
-    override val isDesktop: Boolean = false
+plugins {
+    kotlin("multiplatform")
+    id("org.jetbrains.kotlin.plugin.compose")
+    id("org.jetbrains.compose")
+    kotlin("plugin.serialization")
 }
 
-actual val Platform.Companion.current: Platform by lazy(::IOSPlatform)
+configureCompose()
+kotlin {
+    configureKotlinMultiplatform(this)
+    configureUiModule(this)
+    configureFeatureModule(this)
+}

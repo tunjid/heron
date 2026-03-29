@@ -20,6 +20,7 @@ import android.os.Build
 
 class AndroidPlatform internal constructor() : Platform {
     override val name: String = "Android ${Build.VERSION.SDK_INT}"
+    override val isDesktop: Boolean = false
 }
 
 actual val Platform.Companion.current: Platform by lazy(::AndroidPlatform)
