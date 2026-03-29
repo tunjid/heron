@@ -16,6 +16,8 @@
 
 package com.tunjid.heron.images
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -255,9 +257,9 @@ fun AsyncImage(
     }
 
     val contentDescription = state.args.contentDescription
-    val contentScale = state.args.contentScale.animate()
-    val alignment = state.args.alignment.animate()
-    val shape = state.args.shape.animate()
+    val contentScale = state.args.contentScale.animate(ImageInterpolationSpec)
+    val alignment = state.args.alignment.animate(ImageInterpolationSpec)
+    val shape = state.args.shape.animate(ImageInterpolationSpec)
 
     Box(
         modifier = modifier
@@ -307,5 +309,9 @@ private val IntSize.isUsable: Boolean
         width < Int.MAX_VALUE &&
         height > IntSize.Zero.height &&
         height < Int.MAX_VALUE
+
+private val ImageInterpolationSpec = spring<Float>(
+    stiffness = Spring.StiffnessLow,
+)
 
 private const val ImageLayoutSizeRefetchDebounce = 100

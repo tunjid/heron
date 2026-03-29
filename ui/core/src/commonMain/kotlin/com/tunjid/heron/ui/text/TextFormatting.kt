@@ -31,6 +31,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.em
 import com.tunjid.heron.data.core.models.Link
 import com.tunjid.heron.data.core.models.LinkTarget
+import com.tunjid.heron.data.platform.Platform
+import com.tunjid.heron.data.platform.current
 import heron.ui.core.generated.resources.Res
 
 typealias CommonStrings = Res.string
@@ -75,7 +77,7 @@ fun formatTextPost(
     append(text)
 
     val newlineIndices = text.indices.filter { text[it] == '\n' }
-    newlineIndices.forEach { index ->
+    if (!Platform.current.isDesktop) newlineIndices.forEach { index ->
         addStyle(
             style = ParagraphStyle(lineHeight = 0.1.em),
             start = index,
