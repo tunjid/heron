@@ -16,7 +16,7 @@
 
 plugins {
     id("kotlin-library-convention")
-    id("ui-module-convention")
+    id("feature-module-convention")
     id("ksp-convention")
 }
 kotlin {

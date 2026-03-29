@@ -16,7 +16,7 @@
 
 plugins {
     id("kotlin-library-convention")
-    kotlin("plugin.serialization")
+    id("ui-module-convention")
 }
 kotlin {
     androidLibrary {
@@ -28,14 +28,11 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(project(":data:models"))
                 implementation(project(":ui:core"))
 
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.core)
 
-                implementation(libs.tunjid.mutator.core.common)
-                implementation(libs.tunjid.mutator.coroutines.common)
                 implementation(libs.tunjid.tiler.tiler)
             }
         }
