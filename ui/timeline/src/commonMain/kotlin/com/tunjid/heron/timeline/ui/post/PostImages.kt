@@ -31,6 +31,8 @@ import com.tunjid.heron.data.core.models.ImageList
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.aspectRatioOrSquare
 import com.tunjid.heron.data.core.types.PostUri
+import com.tunjid.heron.data.platform.Platform
+import com.tunjid.heron.data.platform.current
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
 import com.tunjid.heron.timeline.utilities.bucketedRatio
@@ -64,7 +66,7 @@ internal fun PostImages(
 
     val imagesSize = feature.images.size
     val overlayClip = remember(imagesSize) {
-        if (imagesSize > 1) TrackingOverlayClip() else null
+        if (imagesSize > 1 && !Platform.current.isDesktop) TrackingOverlayClip() else null
     }
 
     LazyRow(
