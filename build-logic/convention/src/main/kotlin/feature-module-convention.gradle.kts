@@ -15,30 +15,15 @@
  */
 
 plugins {
-    id("kotlin-library-convention")
-    id("feature-module-convention")
-    id("ksp-convention")
-}
-kotlin {
-    androidLibrary {
-        namespace = "com.tunjid.heron.feature.profile.avatar"
-    }
+    kotlin("multiplatform")
+    id("org.jetbrains.kotlin.plugin.compose")
+    id("org.jetbrains.compose")
+    kotlin("plugin.serialization")
 }
 
+configureCompose()
 kotlin {
-    sourceSets {
-        commonMain {
-            dependencies {
-                implementation(project(":data:core"))
-                implementation(project(":scaffold"))
-
-                implementation(libs.tunjid.composables)
-            }
-        }
-        commonTest {
-            dependencies {
-                implementation(kotlin("test"))
-            }
-        }
-    }
+    configureKotlinMultiplatform(this)
+    configureUiModule(this)
+    configureFeatureModule(this)
 }

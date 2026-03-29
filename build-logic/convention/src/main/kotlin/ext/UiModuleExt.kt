@@ -26,17 +26,9 @@ fun org.gradle.api.Project.configureUiModule(
                 implementation(project(":data:models"))
                 implementation(project(":data:core"))
                 implementation(project(":data:logging"))
-                implementation(project(":scaffold"))
-                implementation(project(":feature:template"))
-                implementation(project(":ui:core"))
-                implementation(project(":ui:media"))
-                implementation(project(":ui:tiling"))
-                implementation(project(":ui:timeline"))
 
                 api(libs.lifecycle.multiplatform.runtime)
                 api(libs.lifecycle.multiplatform.runtime.compose)
-                api(libs.lifecycle.multiplatform.viewmodel)
-                api(libs.lifecycle.multiplatform.viewmodel.compose)
 
                 api(libs.compose.multiplatform.components.resources)
                 api(libs.compose.multiplatform.runtime)
@@ -44,12 +36,12 @@ fun org.gradle.api.Project.configureUiModule(
                 api(libs.compose.multiplatform.material.icons.extended)
                 api(libs.compose.multiplatform.material3)
                 api(libs.compose.multiplatform.foundation.layout)
+                api(libs.compose.multiplatform.foundation.foundation)
+                api(libs.compose.multiplatform.ui.ui)
 
                 api(libs.androidx.graphics.shapes)
 
                 api(libs.kotlinx.coroutines.core)
-
-                implementation(libs.navigation.event.compose)
 
                 api(libs.savedstate.multiplatform.savedstate)
                 api(libs.savedstate.multiplatform.compose)

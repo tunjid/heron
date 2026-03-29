@@ -16,8 +16,7 @@
 
 plugins {
     id("kotlin-library-convention")
-    id("org.jetbrains.compose")
-    alias(libs.plugins.composeCompiler)
+    id("ui-module-convention")
 }
 kotlin {
     androidLibrary {
@@ -29,34 +28,17 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(project(":data:models"))
-                implementation(project(":data:core"))
-
                 implementation(project(":ui:core"))
                 implementation(project(":ui:profile"))
                 implementation(project(":ui:media"))
                 implementation(project(":ui:tiling"))
 
-                implementation(libs.compose.multiplatform.components.resources)
-                implementation(libs.compose.multiplatform.foundation.foundation)
-                implementation(libs.compose.multiplatform.material.icons.extended)
-                implementation(libs.compose.multiplatform.material3)
-                implementation(libs.compose.multiplatform.runtime)
-                implementation(libs.compose.multiplatform.ui.ui)
-
-                implementation(libs.androidx.graphics.shapes)
                 implementation(libs.androidx.collection)
 
-                implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.json)
 
-                implementation(libs.tunjid.composables)
-                implementation(libs.tunjid.mutator.core.common)
-                implementation(libs.tunjid.mutator.coroutines.common)
                 implementation(libs.tunjid.tiler.tiler)
-                implementation(libs.tunjid.treenav.compose)
-                implementation(libs.tunjid.treenav.compose.threepane)
             }
         }
     }
