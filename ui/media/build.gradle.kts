@@ -129,18 +129,17 @@ kotlin.sourceSets.named("desktopMain") {
 }
 
 tasks.named("desktopProcessResources") {
-    // Declare all extraction tasks so Gradle 9 implicit dependency
-    // checks pass onlyIf guards on each task handle actual execution
-    dependsOn(
-        "extractJnaNativeArm",
-        "extractJnaNativeX64",
-        "extractJnaNativeLinuxX64",
-        "extractJnaNativeLinuxArm",
-    )
-    if (System.getProperty("os.name").startsWith("Mac")) {
-        dependsOn(
+    val osName = System.getProperty("os.name")
+    when {
+        osName.startsWith("Mac") -> dependsOn(
             "buildAVFoundationMacArm",
             "buildAVFoundationMacX64",
+            "extractJnaNativeArm",
+            "extractJnaNativeX64",
+        )
+        osName.startsWith("Linux") -> dependsOn(
+            "extractJnaNativeLinuxX64",
+            "extractJnaNativeLinuxArm",
         )
     }
 }
