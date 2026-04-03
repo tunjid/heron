@@ -26,15 +26,14 @@ internal fun MultipleEntitySaver.add(
     label: Label,
 ) {
     val entity = label.toLabelEntity()
+    val exp = label.exp
 
     // Negation labels remove previously applied labels
-    if (label.neg == true) {
+    // and expired labels should be deleted
+    if (label.neg == true || (exp != null && exp <= Clock.System.now())) {
         remove(entity)
         return
     }
-    // Skip already-expired labels
-    val exp = label.exp
-    if (exp != null && exp <= Clock.System.now()) return
 
     stubProfileEntity(label.src).let(::add)
     add(entity)
