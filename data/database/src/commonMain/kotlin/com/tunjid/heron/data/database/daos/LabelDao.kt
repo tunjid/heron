@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.database.daos
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Upsert
 import com.tunjid.heron.data.core.types.LabelerUri
@@ -63,6 +64,11 @@ interface LabelDao {
     @Upsert
     suspend fun upsertLabelers(
         entities: List<LabelerEntity>,
+    )
+
+    @Delete
+    suspend fun deleteLabels(
+        entities: List<LabelEntity>,
     )
 
     @Query(

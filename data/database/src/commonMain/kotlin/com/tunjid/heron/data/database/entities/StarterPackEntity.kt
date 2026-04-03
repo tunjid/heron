@@ -102,5 +102,5 @@ fun PopulatedStarterPackEntity.asExternalModel() =
         joinedWeekCount = entity.joinedWeekCount,
         joinedAllTimeCount = entity.joinedAllTimeCount,
         indexedAt = entity.indexedAt,
-        labels = labelEntities.map(LabelEntity::asExternalModel),
+        labels = labelEntities.asActiveExternalModels(),
     )

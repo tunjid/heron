@@ -26,4 +26,5 @@ internal fun com.atproto.label.Label.asExternalModel() = Label(
     value = Label.Value(`val`),
     version = ver,
     createdAt = cts,
+    expiresAt = exp,
 )
