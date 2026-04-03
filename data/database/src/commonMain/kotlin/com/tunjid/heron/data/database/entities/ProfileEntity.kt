@@ -159,7 +159,7 @@ fun PopulatedProfileEntity.asExternalModel() = with(entity) {
                 allowed = associated.allowedChat(),
             ),
         ),
-        labels = labelEntities.map(LabelEntity::asExternalModel),
+        labels = labelEntities.asActiveExternalModels(),
         isLabeler = associated.labeler ?: false,
         status = toProfileStatus(),
     )

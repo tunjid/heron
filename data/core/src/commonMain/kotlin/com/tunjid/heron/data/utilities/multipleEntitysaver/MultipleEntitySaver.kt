@@ -167,6 +167,7 @@ internal class MultipleEntitySaver(
     private val labelerEntities = LazyList<LabelerEntity>()
     private val labelDefinitionsEntities = LazyList<LabelDefinitionEntity>()
     private val labelEntities = LazyList<LabelEntity>()
+    private val labelEntitiesToDelete = LazyList<LabelEntity>()
 
     private val feedGeneratorEntities = LazyList<FeedGeneratorEntity>()
 
@@ -317,6 +318,9 @@ internal class MultipleEntitySaver(
         if (labelEntities.isNotEmpty) {
             labelDao.upsertLabels(labelEntities.list)
         }
+        if (labelEntitiesToDelete.isNotEmpty) {
+            labelDao.deleteLabels(labelEntitiesToDelete.list)
+        }
 
         if (timelineItemEntities.isNotEmpty) {
             timelineDao.insertOrPartiallyUpdateTimelineItems(timelineItemEntities.list)
@@ -431,6 +435,8 @@ internal class MultipleEntitySaver(
     fun add(entity: ProfileViewerStateEntity) = profileViewerEntities.add(entity)
 
     fun add(entity: LabelEntity) = labelEntities.add(entity)
+
+    fun remove(entity: LabelEntity) = labelEntitiesToDelete.add(entity)
 
     fun add(entity: LabelerEntity) = labelerEntities.add(entity)
 

@@ -234,7 +234,7 @@ fun PopulatedPostEntity.asExternalModel(
     record = entity.record?.asExternalModel(),
     viewerStats = postStatisticsEntity?.asExternalModel(),
     viewerState = viewerStateEntity?.asExternalModel(),
-    labels = labelEntities.map(LabelEntity::asExternalModel),
+    labels = labelEntities.asActiveExternalModels(),
     embeddedRecord = embeddedRecord,
 )
 

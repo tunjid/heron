@@ -97,7 +97,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    version = 36,
+    version = 37,
     entities = [
         BookmarkEntity::class,
         ExternalEmbedEntity::class,
@@ -214,6 +214,8 @@ import kotlinx.coroutines.IO
         AutoMigration(from = 34, to = 35),
         // Add standard site tables (publications, documents, subscriptions)
         AutoMigration(from = 35, to = 36),
+        // Add expiresAt to LabelEntity for timed label support
+        AutoMigration(from = 36, to = 37),
     ],
     exportSchema = true,
 )
