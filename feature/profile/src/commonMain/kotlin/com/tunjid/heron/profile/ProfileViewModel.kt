@@ -570,7 +570,7 @@ private fun CoroutineScope.recordStateHolders(
                     ),
                 ),
                 itemId = StandardDocument::uri,
-                cursorListLoader = recordRepository::standardDocuments,
+                cursorListLoader = recordRepository::authorDocuments,
             ),
         ),
         ProfileScreenStateHolders.Records.StarterPacks(
