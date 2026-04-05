@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.VisibilityOff
@@ -39,7 +38,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.text.intl.Locale
@@ -197,8 +195,7 @@ private fun AttributionContent(
                     UpdatedMovableStickySharedElementOf(
                         modifier = Modifier
                             .size(UiTokens.avatarSize)
-                            .clip(data.avatarShape)
-                            .shapedClickable(CircleShape) {
+                            .shapedClickable(data.avatarShape) {
                                 data.postActions.onPostAction(
                                     PostAction.OfProfile(
                                         profile = data.post.author,
