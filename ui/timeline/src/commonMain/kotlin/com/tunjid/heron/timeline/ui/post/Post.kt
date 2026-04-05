@@ -16,7 +16,9 @@
 
 package com.tunjid.heron.timeline.ui.post
 
+import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.animateBounds
+import androidx.compose.animation.core.SnapSpec
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -38,6 +40,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.ui.text.intl.Locale
@@ -371,7 +374,7 @@ private fun TextContent(
                 )
                 .animateBounds(
                     lookaheadScope = data.presentationLookaheadScope,
-                    boundsTransform = data.paneTransitionScope.childBoundsTransform,
+                    boundsTransform = data.delayedBoundsTransform,
                 )
                 .fillMaxWidth(),
             maxLines = when (data.presentation) {
@@ -421,7 +424,7 @@ private fun EmbedContent(
             )
             .animateBounds(
                 lookaheadScope = data.presentationLookaheadScope,
-                boundsTransform = data.paneTransitionScope.childBoundsTransform,
+                boundsTransform = data.delayedBoundsTransform,
             )
             .fillMaxWidth(),
         now = data.now,
@@ -498,7 +501,7 @@ private fun ActionsContent(
                 )
                 .animateBounds(
                     lookaheadScope = data.presentationLookaheadScope,
-                    boundsTransform = data.paneTransitionScope.childBoundsTransform,
+                    boundsTransform = data.delayedBoundsTransform,
                 ),
             onInteraction = data.postActions::onPostAction,
         )
@@ -787,6 +790,19 @@ private class PostData(
     var hasClickedThroughMutedWords by mutableStateOf(hasClickedThroughMutedWords)
     var hasClickedThroughSensitiveMedia by mutableStateOf(hasClickedThroughSensitiveMedia)
 
+    // Stop bounds transform from running on first composition as it causes
+    // a jelly scroll.
+    private var isBoundsTransformDelayed by mutableStateOf(true)
+    val delayedBoundsTransform = BoundsTransform { initial, target ->
+        if (isBoundsTransformDelayed) BoundsSnapSpec.also {
+            isBoundsTransformDelayed = false
+        }
+        else paneTransitionScope.childBoundsTransform.createAnimationSpec(
+            initial,
+            target,
+        )
+    }
+
     val hasLabels
         get() = post.labels.isNotEmpty() || post.author.labels.isNotEmpty()
 
@@ -871,3 +887,5 @@ private const val EmbedContentZIndex = 2f
 private const val TextContentZIndex = 1f
 
 private val MutedWordShape = RoundedCornerShape(8.dp)
+
+private val BoundsSnapSpec = SnapSpec<Rect>()
