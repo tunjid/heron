@@ -41,7 +41,7 @@ internal object Migration37To38StandardSubscriptionViewerIds : Migration(37, 38)
                     `publicationUri` TEXT NOT NULL,
                     `viewingProfileId` TEXT NOT NULL,
                     `sortedAt` INTEGER NOT NULL DEFAULT 0,
-                    PRIMARY KEY(`uri`, `viewingProfileId`),
+                    PRIMARY KEY(`publicationUri`, `viewingProfileId`),
                     FOREIGN KEY(`publicationUri`)
                         REFERENCES `standardPublications`(`uri`)
                         ON UPDATE CASCADE

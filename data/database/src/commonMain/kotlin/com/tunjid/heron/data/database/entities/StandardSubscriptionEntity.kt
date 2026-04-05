@@ -30,7 +30,7 @@ import kotlin.time.Instant
 @Entity(
     tableName = "standardSubscriptions",
     primaryKeys = [
-        "uri",
+        "publicationUri",
         "viewingProfileId",
     ],
     foreignKeys = [
