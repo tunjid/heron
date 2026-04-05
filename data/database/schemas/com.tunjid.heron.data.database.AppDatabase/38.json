@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 38,
-    "identityHash": "cbb7caeaaf9254cd5c85e3b32fb4b849",
+    "identityHash": "2c709693496fe46af614304941c19927",
     "entities": [
       {
         "tableName": "bookmarks",
@@ -3602,7 +3602,7 @@
       },
       {
         "tableName": "standardSubscriptions",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uri` TEXT NOT NULL, `cid` TEXT, `publicationUri` TEXT NOT NULL, `viewingProfileId` TEXT NOT NULL, `sortedAt` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`uri`, `viewingProfileId`), FOREIGN KEY(`publicationUri`) REFERENCES `standardPublications`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`viewingProfileId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uri` TEXT NOT NULL, `cid` TEXT, `publicationUri` TEXT NOT NULL, `viewingProfileId` TEXT NOT NULL, `sortedAt` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`publicationUri`, `viewingProfileId`), FOREIGN KEY(`publicationUri`) REFERENCES `standardPublications`(`uri`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`viewingProfileId`) REFERENCES `profiles`(`did`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "uri",
@@ -3638,7 +3638,7 @@
         "primaryKey": {
           "autoGenerate": false,
           "columnNames": [
-            "uri",
+            "publicationUri",
             "viewingProfileId"
           ]
         },
@@ -3708,7 +3708,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'cbb7caeaaf9254cd5c85e3b32fb4b849')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2c709693496fe46af614304941c19927')"
     ]
   }
 }
