@@ -32,7 +32,6 @@ import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.StandardSiteDao
 import com.tunjid.heron.data.database.entities.PopulatedStandardDocumentEntity
 import com.tunjid.heron.data.database.entities.PopulatedStandardPublicationEntity
-import com.tunjid.heron.data.database.entities.StandardSubscriptionEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.network.NetworkService
@@ -247,27 +246,27 @@ internal class OfflineFirstStandardSiteRecordOperations @Inject constructor(
     ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
         if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
 
+        val subscription = Subscription(
+            publication = AtUri(create.publicationUri.uri),
+        )
         networkService.runCatchingWithMonitoredNetworkRetry {
             createRecord(
                 CreateRecordRequest(
                     repo = Did(signedInProfileId.id),
                     collection = Nsid(StandardSubscriptionUri.NAMESPACE),
                     rkey = RKey(create.recordKey.value),
-                    record = Subscription(
-                        publication = AtUri(create.publicationUri.uri),
-                    ).asJsonContent(Subscription.serializer()),
+                    record = subscription
+                        .asJsonContent(Subscription.serializer()),
                 ),
             )
         }.mapCatchingUnlessCancelled { response ->
             multipleEntitySaverProvider.saveInTransaction {
                 add(
-                    StandardSubscriptionEntity(
-                        uri = response.uri.atUri.let(::StandardSubscriptionUri),
-                        cid = response.cid.cid.let(::StandardSubscriptionId),
-                        publicationUri = create.publicationUri,
-                        viewingProfileId = signedInProfileId,
-                        sortedAt = create.sortedAt,
-                    ),
+                    subscriptionUri = response.uri.atUri.let(::StandardSubscriptionUri),
+                    subscriptionCid = response.cid.cid.let(::StandardSubscriptionId),
+                    subscription = subscription,
+                    viewingProfileId = signedInProfileId,
+                    sortedAt = create.sortedAt,
                 )
             }
         }
