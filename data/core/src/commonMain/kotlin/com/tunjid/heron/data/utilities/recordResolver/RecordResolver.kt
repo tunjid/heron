@@ -67,8 +67,8 @@ import com.tunjid.heron.data.core.types.RecordUri
 import com.tunjid.heron.data.core.types.RepostUri
 import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
-import com.tunjid.heron.data.core.types.StandardPublicationId
 import com.tunjid.heron.data.core.types.StandardPublicationUri
+import com.tunjid.heron.data.core.types.StandardSubscriptionId
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.UnknownRecordUri
@@ -89,6 +89,7 @@ import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedLabelerEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedPostEntity
+import com.tunjid.heron.data.database.entities.PopulatedStandardPublicationEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.AppMainScope
@@ -98,7 +99,6 @@ import com.tunjid.heron.data.logging.LogPriority
 import com.tunjid.heron.data.logging.logcat
 import com.tunjid.heron.data.logging.loggableText
 import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.network.PdsResolver
 import com.tunjid.heron.data.network.currentSessionContext
 import com.tunjid.heron.data.network.models.asExternalModel
 import com.tunjid.heron.data.network.models.post
@@ -113,14 +113,15 @@ import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.mapToResult
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
-import com.tunjid.heron.data.utilities.multipleEntitysaver.asExternalModel
 import com.tunjid.heron.data.utilities.recordResolver.RecordResolver.TimelineItemCreationContext
 import com.tunjid.heron.data.utilities.runCatchingUnlessCancelled
+import com.tunjid.heron.data.utilities.tidInstant
 import com.tunjid.heron.data.utilities.toDistinctUntilChangedFlowOrEmpty
 import com.tunjid.heron.data.utilities.toOutcome
 import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import io.ktor.http.HttpStatusCode
+import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
@@ -140,9 +141,9 @@ import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
 import site.standard.Document
-import site.standard.Publication
 import site.standard.graph.Subscription
 import site.standard.heron.GetDocumentQueryParams
+import site.standard.heron.GetPublicationQueryParams
 
 internal interface RecordResolver {
     val subscribedLabelers: Flow<List<Labeler>>
@@ -209,7 +210,6 @@ internal class OfflineRecordResolver @Inject constructor(
     private val starterPackDao: StarterPackDao,
     private val savedStateDataSource: SavedStateDataSource,
     private val networkService: NetworkService,
-    private val pdsResolver: PdsResolver,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
 ) : RecordResolver {
 
@@ -494,26 +494,28 @@ internal class OfflineRecordResolver @Inject constructor(
                     )
                 }
 
-            is StandardPublicationUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
+            is StandardPublicationUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
+                getPublication(
+                    GetPublicationQueryParams(
+                        uri = uri.uri.let(::AtUri),
+                    ),
+                )
+            }
                 .mapCatchingUnlessCancelled { response ->
-                    val pdsUrl = requireNotNull(pdsResolver.resolve(Did(uri.profileId().id)))
-                        .toString()
-                    val publicationCid = response.cid?.cid?.let(::StandardPublicationId)
-
-                    val publication = response.value.decodeAs<Publication>()
                     multipleEntitySaverProvider.saveInTransaction {
                         add(
-                            publicationUri = uri,
-                            publicationCid = publicationCid,
-                            publication = publication,
-                            pdsUrl = pdsUrl,
+                            publicationView = response.publication,
+                            viewingProfileId = viewingProfileId,
                         )
                     }
-                    publication.asExternalModel(
-                        uri = uri,
-                        cid = publicationCid,
-                        pdsUrl = pdsUrl,
+
+                    standardSiteDao.publications(
+                        viewingProfileId = viewingProfileId.id,
+                        uris = listOf(uri),
                     )
+                        .first(List<PopulatedStandardPublicationEntity>::isNotEmpty)
+                        .first()
+                        .asExternalModel()
                 }
 
             is StandardDocumentUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
@@ -535,7 +537,7 @@ internal class OfflineRecordResolver @Inject constructor(
                     }
 
                     StandardDocument(
-                        uri = documentView.uri.atUri.let(::StandardDocumentUri),
+                        uri = uri,
                         cid = documentView.cid.cid.let(::StandardDocumentId),
                         authorId = documentView.author.did.did.let(::ProfileId),
                         title = document.title,
@@ -556,10 +558,13 @@ internal class OfflineRecordResolver @Inject constructor(
                         publication = documentView.publication
                             ?.uri
                             ?.atUri
-                            ?.let(::StandardPublicationUri)
-                            ?.let(::listOf)
-                            ?.let(standardSiteDao::publications)
-                            ?.first()
+                            ?.let {
+                                standardSiteDao.publications(
+                                    viewingProfileId = viewingProfileId.id,
+                                    uris = listOf(StandardPublicationUri(it)),
+                                )
+                            }
+                            ?.first(List<PopulatedStandardPublicationEntity>::isNotEmpty)
                             ?.firstOrNull()
                             ?.asExternalModel(),
                     )
@@ -568,15 +573,21 @@ internal class OfflineRecordResolver @Inject constructor(
             is StandardSubscriptionUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
                 .mapCatchingUnlessCancelled { response ->
                     val subscription = response.value.decodeAs<Subscription>()
+                    val cid = response.cid?.cid?.let(::StandardSubscriptionId)
+                    val sortedAt = uri.recordKey.tidInstant ?: Instant.DISTANT_PAST
                     multipleEntitySaverProvider.saveInTransaction {
                         add(
                             subscriptionUri = uri,
+                            subscriptionCid = cid,
                             subscription = subscription,
+                            sortedAt = sortedAt,
                             viewingProfileId = viewingProfileId,
                         )
                     }
                     StandardSubscription(
                         uri = uri,
+                        cid = cid,
+                        sortedAt = sortedAt,
                         publicationUri = StandardPublicationUri(
                             subscription.publication.atUri,
                         ),

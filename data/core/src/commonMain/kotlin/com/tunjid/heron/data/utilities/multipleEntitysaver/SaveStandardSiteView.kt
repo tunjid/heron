@@ -19,6 +19,7 @@ package com.tunjid.heron.data.utilities.multipleEntitysaver
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
@@ -28,16 +29,18 @@ import com.tunjid.heron.data.core.types.StandardDocumentId
 import com.tunjid.heron.data.core.types.StandardDocumentUri
 import com.tunjid.heron.data.core.types.StandardPublicationId
 import com.tunjid.heron.data.core.types.StandardPublicationUri
+import com.tunjid.heron.data.core.types.StandardSubscriptionId
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
-import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.core.types.profileId
+import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.database.entities.ProfileEntity
 import com.tunjid.heron.data.database.entities.StandardDocumentEntity
 import com.tunjid.heron.data.database.entities.StandardPublicationEntity
 import com.tunjid.heron.data.database.entities.StandardSubscriptionEntity
 import com.tunjid.heron.data.utilities.Collections
 import com.tunjid.heron.data.utilities.safeDecodeAs
-import sh.christian.ozone.api.Did
+import com.tunjid.heron.data.utilities.tidInstant
+import kotlin.time.Instant
 import sh.christian.ozone.api.model.Blob
 import site.standard.Document
 import site.standard.Publication
@@ -51,45 +54,6 @@ import site.standard.theme.BasicBackgroundUnion
 import site.standard.theme.BasicForegroundUnion
 import site.standard.theme.ColorRgb
 import site.standard.theme.ColorRgba
-
-internal fun MultipleEntitySaver.add(
-    publicationUri: StandardPublicationUri,
-    publicationCid: StandardPublicationId?,
-    publication: Publication,
-    pdsUrl: String,
-) {
-    val publisherId = publicationUri.profileId()
-    add(
-        stubProfileEntity(did = Did(publisherId.id)),
-    )
-    add(
-        StandardPublicationEntity(
-            uri = publicationUri,
-            cid = publicationCid,
-            publisherId = publisherId,
-            name = publication.name,
-            description = publication.description,
-            url = publication.url.uri,
-            icon = publication.icon.imageUri(
-                profileId = publisherId,
-                pdsUrl = pdsUrl,
-            ),
-            preferences = publication.preferences?.let { prefs ->
-                StandardPublicationEntity.Preferences(
-                    showInDiscover = prefs.showInDiscover == true,
-                )
-            },
-            basicTheme = publication.basicTheme?.let { theme ->
-                StandardPublicationEntity.BasicTheme(
-                    accent = theme.accent.toColor(),
-                    accentForeground = theme.accentForeground.toColor(),
-                    background = theme.background.toColor(),
-                    foreground = theme.foreground.toColor(),
-                )
-            },
-        ),
-    )
-}
 
 internal fun MultipleEntitySaver.add(
     documentView: DocumentView,
@@ -141,6 +105,8 @@ internal fun MultipleEntitySaver.add(
             add(
                 StandardSubscriptionEntity(
                     uri = it.uri.atUri.let(::StandardSubscriptionUri),
+                    cid = it.cid.cid.let(::StandardSubscriptionId),
+                    sortedAt = it.sortedAt,
                     publicationUri = publicationUri,
                     viewingProfileId = profileId,
                 ),
@@ -163,6 +129,7 @@ internal fun MultipleEntitySaver.add(
             description = publication.description,
             url = publication.url.uri,
             icon = publicationView.iconUrl?.uri?.let(::ImageUri),
+            sortedAt = publicationView.sortedAt,
             preferences = publication.preferences?.let { prefs ->
                 StandardPublicationEntity.Preferences(
                     showInDiscover = prefs.showInDiscover == true,
@@ -210,57 +177,24 @@ private fun MultipleEntitySaver.add(
 }
 
 internal fun MultipleEntitySaver.add(
-    documentUri: StandardDocumentUri,
-    documentCid: StandardDocumentId?,
-    document: Document,
-    pdsUrl: String,
-) {
-    val authorId = documentUri.profileId()
-    val publicationUri = document.site.uri.asRecordUriOrNull() as? StandardPublicationUri
-    add(
-        stubProfileEntity(did = Did(authorId.id)),
-    )
-
-    if (publicationUri != null) add(
-        stubPublicationEntity(publicationUri),
-    )
-    add(
-        StandardDocumentEntity(
-            uri = documentUri,
-            cid = documentCid,
-            authorId = authorId,
-            title = document.title,
-            description = document.description,
-            textContent = document.textContent,
-            path = document.path,
-            site = document.site.uri,
-            publishedAt = document.publishedAt,
-            updatedAt = document.updatedAt,
-            coverImage = document.coverImage?.imageUri(
-                profileId = authorId,
-                pdsUrl = pdsUrl,
-            ),
-            bskyPostRefUri = document.bskyPostRef?.uri?.atUri?.let(::PostUri),
-            bskyPostRefCid = document.bskyPostRef?.cid?.cid?.let(::PostId),
-            tags = document.tags?.joinToString(separator = ","),
-            publicationUri = publicationUri,
-            // Markdown content is always null for now.
-            // To be added in later as support for different standard doc
-            // types are added.
-            markdownContent = null,
-        ),
-    )
-}
-
-internal fun MultipleEntitySaver.add(
     subscriptionUri: StandardSubscriptionUri,
+    subscriptionCid: StandardSubscriptionId?,
     subscription: Subscription,
+    sortedAt: Instant,
     viewingProfileId: ProfileId,
 ) {
+    val publicationUri = StandardPublicationUri(subscription.publication.atUri)
+    add(
+        stubPublicationEntity(
+            publicationUri = publicationUri,
+        ),
+    )
     add(
         StandardSubscriptionEntity(
             uri = subscriptionUri,
-            publicationUri = StandardPublicationUri(subscription.publication.atUri),
+            cid = subscriptionCid,
+            sortedAt = sortedAt,
+            publicationUri = publicationUri,
             viewingProfileId = viewingProfileId,
         ),
     )
@@ -280,10 +214,13 @@ private fun Blob?.imageUri(
     }
 }
 
-private fun stubPublicationEntity(publicationUri: StandardPublicationUri): StandardPublicationEntity =
+private fun stubPublicationEntity(
+    publicationUri: StandardPublicationUri,
+): StandardPublicationEntity =
     StandardPublicationEntity(
         uri = publicationUri,
         cid = null,
+        sortedAt = publicationUri.recordKey.tidInstant ?: Instant.DISTANT_PAST,
         publisherId = publicationUri.profileId(),
         name = "",
         description = null,
@@ -334,7 +271,8 @@ private fun ColorRgba.toColor() = StandardPublicationEntity.Color(
 internal fun Publication.asExternalModel(
     uri: StandardPublicationUri,
     cid: StandardPublicationId?,
-    pdsUrl: String,
+    iconUrl: ImageUri?,
+    subscription: StandardSubscription?,
 ) = StandardPublication(
     uri = uri,
     cid = cid,
@@ -342,11 +280,9 @@ internal fun Publication.asExternalModel(
     name = name,
     description = description,
     url = url.uri,
-    icon = icon?.imageUri(
-        profileId = uri.profileId(),
-        pdsUrl = pdsUrl,
-    ),
+    icon = iconUrl,
     showInDiscover = preferences?.showInDiscover ?: true,
+    subscription = subscription,
     basicTheme = basicTheme?.let { theme ->
         StandardPublication.BasicTheme(
             accent = theme.accent.toThemeColor() ?: return@let null,

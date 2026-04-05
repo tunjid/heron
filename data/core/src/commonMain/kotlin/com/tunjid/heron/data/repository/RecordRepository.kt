@@ -444,6 +444,7 @@ internal class OfflineRecordRepository @Inject constructor(
 
             combine(
                 standardSiteDao.authorDocuments(
+                    viewingProfileId = signedInProfileId?.id,
                     authorId = profileDid.did,
                     offset = query.data.offset,
                     limit = query.data.limit,

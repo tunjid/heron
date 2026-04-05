@@ -1,0 +1,40 @@
+{
+  "lexicon": 1,
+  "id": "site.standard.heron.getPublication",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "Get a single publication with full hydration.",
+      "parameters": {
+        "type": "params",
+        "required": ["uri"],
+        "properties": {
+          "uri": {
+            "type": "string",
+            "format": "at-uri",
+            "description": "AT URI of the publication."
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["publication"],
+          "properties": {
+            "publication": {
+              "type": "ref",
+              "ref": "site.standard.heron.defs#publicationView"
+            }
+          }
+        }
+      },
+      "errors": [
+        {
+          "name": "NotFound",
+          "description": "The publication does not exist."
+        }
+      ]
+    }
+  }
+}

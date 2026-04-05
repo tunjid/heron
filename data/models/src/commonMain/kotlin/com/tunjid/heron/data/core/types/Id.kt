@@ -138,3 +138,11 @@ value class StandardDocumentId(
 ) : Id {
     override fun toString(): String = id
 }
+
+@Serializable
+@JvmInline
+value class StandardSubscriptionId(
+    override val id: String,
+) : Id {
+    override fun toString(): String = id
+}
