@@ -424,7 +424,7 @@ private fun atProtoAuth(
             context.url.set(
                 host = Url(urlString = SignedOutUrl).host,
             )
-        } else if (authTokens != null && context.proxyHeader() == null) {
+        } else if (authTokens != null && context.proxyHeader() != ChatAtProtoProxyHeaderValue) {
             val pdsUrl = Url(authTokens.defaultUrl)
             if (context.url.host != pdsUrl.host) {
                 context.url.protocol = pdsUrl.protocol
