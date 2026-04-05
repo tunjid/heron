@@ -55,8 +55,32 @@
         },
         "viewerSubscription": {
           "type": "ref",
-          "ref": "com.atproto.repo.strongRef",
-          "description": "StrongRef to the authenticated viewer's subscription record for this publication. Absent if not subscribed or unauthenticated."
+          "ref": "#subscriptionView",
+          "description": "The authenticated viewer's subscription record for this publication. Absent if not subscribed or unauthenticated."
+        }
+      }
+    },
+    "subscriptionView": {
+      "type": "object",
+      "required": ["uri", "cid", "publicationUri", "sortedAt"],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "publicationUri": {
+          "type": "string",
+          "format": "at-uri",
+          "description": "AT URI of the publication this subscription targets."
+        },
+        "sortedAt": {
+          "type": "string",
+          "format": "datetime",
+          "description": "Canonical sort timestamp for the subscription (derived from the record TID)."
         }
       }
     },

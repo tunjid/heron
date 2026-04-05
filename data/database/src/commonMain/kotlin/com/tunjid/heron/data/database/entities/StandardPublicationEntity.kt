@@ -16,16 +16,19 @@
 
 package com.tunjid.heron.data.database.entities
 
+import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StandardPublicationId
 import com.tunjid.heron.data.core.types.StandardPublicationUri
+import kotlin.time.Instant
 
 @Entity(
     tableName = "standardPublications",
@@ -41,6 +44,7 @@ import com.tunjid.heron.data.core.types.StandardPublicationUri
     indices = [
         Index(value = ["uri"]),
         Index(value = ["publisherId"]),
+        Index(value = ["sortedAt"]),
     ],
 )
 data class StandardPublicationEntity(
@@ -56,6 +60,8 @@ data class StandardPublicationEntity(
     val preferences: Preferences?,
     @Embedded(prefix = "theme_")
     val basicTheme: BasicTheme?,
+    @ColumnInfo(defaultValue = "0")
+    val sortedAt: Instant,
 ) {
     data class Preferences(
         val showInDiscover: Boolean,
@@ -80,7 +86,16 @@ data class StandardPublicationEntity(
     )
 }
 
-fun StandardPublicationEntity.asExternalModel() = StandardPublication(
+data class PopulatedStandardPublicationEntity(
+    @Embedded
+    val entity: StandardPublicationEntity,
+    @Embedded(prefix = "subscription_")
+    val subscription: StandardSubscriptionEntity?,
+)
+
+fun StandardPublicationEntity.asExternalModel(
+    subscription: StandardSubscription?,
+) = StandardPublication(
     uri = uri,
     cid = cid,
     publisherId = publisherId,
@@ -89,6 +104,7 @@ fun StandardPublicationEntity.asExternalModel() = StandardPublication(
     url = url,
     icon = icon,
     showInDiscover = preferences?.showInDiscover ?: true,
+    subscription = subscription,
     basicTheme = basicTheme?.let { theme ->
         StandardPublication.BasicTheme(
             accent = theme.accent.asThemeColor() ?: return@let null,
@@ -97,6 +113,10 @@ fun StandardPublicationEntity.asExternalModel() = StandardPublication(
             foreground = theme.foreground.asThemeColor() ?: return@let null,
         )
     },
+)
+
+fun PopulatedStandardPublicationEntity.asExternalModel() = entity.asExternalModel(
+    subscription?.asExternalModel(),
 )
 
 private fun StandardPublicationEntity.Color?.asThemeColor(): StandardPublication.ThemeColor? =

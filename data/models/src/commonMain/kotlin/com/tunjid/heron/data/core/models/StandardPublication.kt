@@ -33,6 +33,7 @@ data class StandardPublication(
     val icon: ImageUri?,
     val showInDiscover: Boolean,
     val basicTheme: BasicTheme?,
+    val subscription: StandardSubscription?,
 ) : Record {
     override val reference: Record.Reference =
         Record.Reference(

@@ -16,16 +16,23 @@
 
 package com.tunjid.heron.data.database.entities
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import androidx.room.PrimaryKey
+import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StandardPublicationUri
+import com.tunjid.heron.data.core.types.StandardSubscriptionId
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
+import kotlin.time.Instant
 
 @Entity(
     tableName = "standardSubscriptions",
+    primaryKeys = [
+        "publicationUri",
+        "viewingProfileId",
+    ],
     foreignKeys = [
         ForeignKey(
             entity = StandardPublicationEntity::class,
@@ -46,16 +53,26 @@ import com.tunjid.heron.data.core.types.StandardSubscriptionUri
         Index(value = ["uri"]),
         Index(value = ["publicationUri"]),
         Index(value = ["viewingProfileId"]),
+        Index(value = ["sortedAt"]),
     ],
 )
 data class StandardSubscriptionEntity(
-    @PrimaryKey
     val uri: StandardSubscriptionUri,
+    val cid: StandardSubscriptionId?,
     val publicationUri: StandardPublicationUri,
     val viewingProfileId: ProfileId,
+    @ColumnInfo(defaultValue = "0")
+    val sortedAt: Instant,
 ) {
     data class Deletion(
         val publicationUri: StandardPublicationUri,
         val viewingProfileId: ProfileId,
     )
 }
+
+internal fun StandardSubscriptionEntity.asExternalModel() = StandardSubscription(
+    uri = uri,
+    cid = cid,
+    publicationUri = publicationUri,
+    sortedAt = sortedAt,
+)

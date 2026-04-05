@@ -17,17 +17,21 @@
 package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.StandardPublicationUri
+import com.tunjid.heron.data.core.types.StandardSubscriptionId
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
+import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class StandardSubscription(
     val uri: StandardSubscriptionUri,
+    val cid: StandardSubscriptionId?,
     val publicationUri: StandardPublicationUri,
+    val sortedAt: Instant,
 ) : Record {
     override val reference: Record.Reference =
         Record.Reference(
-            id = null,
+            id = cid,
             uri = uri,
         )
 }
