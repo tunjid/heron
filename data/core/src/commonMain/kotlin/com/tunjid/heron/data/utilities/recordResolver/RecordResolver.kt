@@ -43,7 +43,7 @@ import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.Repost
-import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.ThreadGate
 import com.tunjid.heron.data.core.models.TimelineItem
@@ -55,10 +55,12 @@ import com.tunjid.heron.data.core.types.ExpiredSessionException
 import com.tunjid.heron.data.core.types.FeedGeneratorUri
 import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.GenericId
+import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.LabelerUri
 import com.tunjid.heron.data.core.types.LikeUri
 import com.tunjid.heron.data.core.types.ListMemberUri
 import com.tunjid.heron.data.core.types.ListUri
+import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
@@ -71,7 +73,6 @@ import com.tunjid.heron.data.core.types.StandardSubscriptionUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.UnknownRecordUri
 import com.tunjid.heron.data.core.types.UnresolvableRecordException
-import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordKey
 import com.tunjid.heron.data.core.types.requireCollection
@@ -127,6 +128,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -140,6 +142,7 @@ import sh.christian.ozone.api.RKey
 import site.standard.Document
 import site.standard.Publication
 import site.standard.graph.Subscription
+import site.standard.heron.GetDocumentQueryParams
 
 internal interface RecordResolver {
     val subscribedLabelers: Flow<List<Labeler>>
@@ -513,31 +516,52 @@ internal class OfflineRecordResolver @Inject constructor(
                     )
                 }
 
-            is StandardDocumentUri -> fetchRecordAndSaveCreator(uri, viewingProfileId)
+            is StandardDocumentUri -> networkService.runCatchingWithMonitoredNetworkRetry(times = 2) {
+                getDocument(
+                    GetDocumentQueryParams(
+                        uri = uri.uri.let(::AtUri),
+                    ),
+                )
+            }
                 .mapCatchingUnlessCancelled { response ->
-                    val pdsUrl = requireNotNull(pdsResolver.resolve(Did(uri.profileId().id)))
-                        .toString()
-                    val documentCid = response.cid?.cid?.let(::StandardDocumentId)
+                    val documentView = response.document
+                    val document = response.document.record.decodeAs<Document>()
 
-                    val document = response.value.decodeAs<Document>()
-                    val publicationUri = document.site.uri
-                        .asRecordUriOrNull() as? StandardPublicationUri
-                    val publication = publicationUri?.let {
-                        resolve(it).getOrNull() as? StandardPublication
-                    }
                     multipleEntitySaverProvider.saveInTransaction {
                         add(
-                            documentUri = uri,
-                            documentCid = documentCid,
-                            document = document,
-                            pdsUrl = pdsUrl,
+                            documentView = response.document,
+                            viewingProfileId = viewingProfileId,
                         )
                     }
-                    document.asExternalModel(
-                        uri = uri,
-                        cid = documentCid,
-                        publication = publication,
-                        pdsUrl = pdsUrl,
+
+                    StandardDocument(
+                        uri = documentView.uri.atUri.let(::StandardDocumentUri),
+                        cid = documentView.cid.cid.let(::StandardDocumentId),
+                        authorId = documentView.author.did.did.let(::ProfileId),
+                        title = document.title,
+                        description = document.description,
+                        textContent = document.textContent,
+                        path = document.path,
+                        site = document.site.uri,
+                        publishedAt = document.publishedAt,
+                        updatedAt = document.updatedAt,
+                        coverImage = documentView.coverImageUrl?.uri?.let(::ImageUri),
+                        bskyPostRef = document.bskyPostRef?.let { ref ->
+                            Record.Reference(
+                                id = ref.cid.cid.let(::PostId),
+                                uri = PostUri(ref.uri.atUri),
+                            )
+                        },
+                        tags = document.tags ?: emptyList(),
+                        publication = documentView.publication
+                            ?.uri
+                            ?.atUri
+                            ?.let(::StandardPublicationUri)
+                            ?.let(::listOf)
+                            ?.let(standardSiteDao::publications)
+                            ?.first()
+                            ?.firstOrNull()
+                            ?.asExternalModel(),
                     )
                 }
 

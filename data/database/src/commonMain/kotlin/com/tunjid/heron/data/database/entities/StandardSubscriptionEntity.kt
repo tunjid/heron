@@ -53,4 +53,9 @@ data class StandardSubscriptionEntity(
     val uri: StandardSubscriptionUri,
     val publicationUri: StandardPublicationUri,
     val viewingProfileId: ProfileId,
-)
+) {
+    data class Deletion(
+        val publicationUri: StandardPublicationUri,
+        val viewingProfileId: ProfileId,
+    )
+}

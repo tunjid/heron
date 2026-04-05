@@ -1,0 +1,49 @@
+{
+  "lexicon": 1,
+  "id": "site.standard.heron.getSubscriptions",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "List publications the authenticated viewer is subscribed to. Requires authentication.",
+      "parameters": {
+        "type": "params",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string"
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["publications"],
+          "properties": {
+            "cursor": {
+              "type": "string"
+            },
+            "publications": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "site.standard.heron.defs#publicationView"
+              }
+            }
+          }
+        }
+      },
+      "errors": [
+        {
+          "name": "AuthRequired",
+          "description": "Authentication is required for this endpoint."
+        }
+      ]
+    }
+  }
+}

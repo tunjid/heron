@@ -1,0 +1,95 @@
+{
+  "lexicon": 1,
+  "id": "site.standard.heron.defs",
+  "defs": {
+    "profileView": {
+      "type": "object",
+      "required": ["did", "handle"],
+      "properties": {
+        "did": {
+          "type": "string",
+          "format": "did"
+        },
+        "handle": {
+          "type": "string",
+          "format": "handle"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "publicationView": {
+      "type": "object",
+      "required": ["uri", "cid", "author", "record", "sortedAt"],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "author": {
+          "type": "ref",
+          "ref": "#profileView"
+        },
+        "record": {
+          "type": "unknown",
+          "description": "The full site.standard.publication record."
+        },
+        "iconUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "Resolved PDS URL for the publication icon blob."
+        },
+        "sortedAt": {
+          "type": "string",
+          "format": "datetime",
+          "description": "Canonical sort timestamp. Derived from TID in record key, or publishedAt for documents."
+        },
+        "viewerSubscription": {
+          "type": "ref",
+          "ref": "com.atproto.repo.strongRef",
+          "description": "StrongRef to the authenticated viewer's subscription record for this publication. Absent if not subscribed or unauthenticated."
+        }
+      }
+    },
+    "documentView": {
+      "type": "object",
+      "required": ["uri", "cid", "author", "record"],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "author": {
+          "type": "ref",
+          "ref": "#profileView"
+        },
+        "record": {
+          "type": "unknown",
+          "description": "The full site.standard.document record."
+        },
+        "coverImageUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "Resolved PDS URL for the document cover image blob."
+        },
+        "publication": {
+          "type": "ref",
+          "ref": "#publicationView"
+        }
+      }
+    }
+  }
+}
