@@ -16,7 +16,6 @@
 
 package com.tunjid.heron.data.utilities.multipleEntitysaver
 
-import com.tunjid.heron.data.core.models.Constants
 import com.tunjid.heron.data.core.models.Constants.isUnknown
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.EmbedDao
