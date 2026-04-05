@@ -90,7 +90,9 @@ import heron.ui.core.generated.resources.post_author_label
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.mute_words_post_hidden
 import heron.ui.timeline.generated.resources.sensitive_media
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
+import kotlin.time.TimeSource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -792,11 +794,10 @@ private class PostData(
 
     // Stop bounds transform from running on first composition as it causes
     // a jelly scroll.
-    private var isBoundsTransformDelayed by mutableStateOf(true)
+    private val createdTime = TimeSource.Monotonic.markNow()
     val delayedBoundsTransform = BoundsTransform { initial, target ->
-        if (isBoundsTransformDelayed) BoundsSnapSpec.also {
-            isBoundsTransformDelayed = false
-        }
+        val elapsed = createdTime.elapsedNow()
+        if (elapsed < BoundsTransformDelay) BoundsSnapSpec
         else paneTransitionScope.childBoundsTransform.createAnimationSpec(
             initial,
             target,
@@ -888,4 +889,5 @@ private const val TextContentZIndex = 1f
 
 private val MutedWordShape = RoundedCornerShape(8.dp)
 
+private val BoundsTransformDelay = 200.milliseconds
 private val BoundsSnapSpec = SnapSpec<Rect>()
