@@ -59,6 +59,7 @@ interface StandardSiteDao {
         publicationUri: String,
     ): Flow<PopulatedStandardPublicationEntity>
 
+    @Transaction
     @Query(
         """
             SELECT
