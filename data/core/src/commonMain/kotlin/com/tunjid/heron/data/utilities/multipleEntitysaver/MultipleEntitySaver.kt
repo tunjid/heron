@@ -212,8 +212,8 @@ internal class MultipleEntitySaver(
         if (profileEntities.isNotEmpty) {
             val (fullProfileEntities, usablePartialProfileEntities, emptyProfileEntities) = profileEntities.list.triage(
                 firstPredicate = {
-                    !it.handle.isUnknown()
-                    it.followersCount != null &&
+                    !it.handle.isUnknown() &&
+                        it.followersCount != null &&
                         it.followsCount != null &&
                         it.postsCount != null
                 },

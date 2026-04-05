@@ -464,7 +464,6 @@ internal class OfflineRecordRepository @Inject constructor(
                     },
                     nextCursor = GetDocumentsResponse::cursor,
                     onResponse = {
-                        println("Fetched: ${documents.size}")
                         multipleEntitySaverProvider.saveInTransaction {
                             documents.forEach {
                                 add(
