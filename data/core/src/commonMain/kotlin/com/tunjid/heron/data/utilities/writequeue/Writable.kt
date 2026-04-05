@@ -21,6 +21,7 @@ import com.tunjid.heron.data.core.models.Message
 import com.tunjid.heron.data.core.models.NotificationPreferences
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.sourceId
 import com.tunjid.heron.data.core.types.RecordUri
@@ -125,6 +126,21 @@ sealed interface Writable {
 
             override suspend fun WriteQueue.write(): Outcome =
                 recordRepository.addListMember(create)
+        }
+    }
+
+    @Serializable
+    sealed interface StandardSite {
+        @Serializable
+        data class Subscribe(
+            val create: StandardSubscription.Create,
+        ) : StandardSite,
+            Writable {
+            override val queueId: String
+                get() = "subscribe-standard-publication-${create.publicationUri}"
+
+            override suspend fun WriteQueue.write(): Outcome =
+                recordRepository.createSubscription(create)
         }
     }
 

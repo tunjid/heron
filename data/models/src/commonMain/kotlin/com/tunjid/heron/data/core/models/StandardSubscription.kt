@@ -34,4 +34,9 @@ data class StandardSubscription(
             id = cid,
             uri = uri,
         )
+
+    @Serializable
+    data class Create(
+        val publicationUri: StandardPublicationUri,
+    )
 }
