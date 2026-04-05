@@ -145,13 +145,13 @@ interface BlueskyRecordOperations {
 internal class OfflineFirstBlueskyRecordOperations @Inject constructor(
     @AppMainScope
     appMainScope: CoroutineScope,
+    recordResolver: RecordResolver,
     @param:IODispatcher
     private val ioDispatcher: CoroutineDispatcher,
     private val listDao: ListDao,
     private val starterPackDao: StarterPackDao,
     private val feedGeneratorDao: FeedGeneratorDao,
     private val savedStateDataSource: SavedStateDataSource,
-    private val recordResolver: RecordResolver,
     private val feedCreationService: FeedCreationService,
     private val profileLookup: ProfileLookup,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
@@ -172,7 +172,7 @@ internal class OfflineFirstBlueskyRecordOperations @Inject constructor(
             .flowOn(ioDispatcher)
             .stateIn(
                 scope = appMainScope,
-                started = SharingStarted.Companion.WhileSubscribed(1_000),
+                started = SharingStarted.WhileSubscribed(1_000),
                 initialValue = emptyList(),
             )
 
@@ -429,13 +429,13 @@ internal class OfflineFirstBlueskyRecordOperations @Inject constructor(
             return@inCurrentProfileSession prospectiveMemberRefreshOutcome
 
         val createdAt = Clock.System.now()
-        val recordKey = RecordKey.Companion.generate()
+        val recordKey = RecordKey.generate()
 
         networkService.runCatchingWithMonitoredNetworkRetry {
             createRecord(
                 CreateRecordRequest(
                     repo = Did(listOwnerId.id),
-                    collection = Nsid(ListMemberUri.Companion.NAMESPACE),
+                    collection = Nsid(ListMemberUri.NAMESPACE),
                     rkey = RKey(recordKey.value),
                     record = Listitem(
                         subject = Did(create.subjectId.id),
@@ -448,7 +448,7 @@ internal class OfflineFirstBlueskyRecordOperations @Inject constructor(
             val listMemberUri = requireNotNull(
                 recordUriOrNull(
                     profileId = listOwnerId,
-                    namespace = ListMemberUri.Companion.NAMESPACE,
+                    namespace = ListMemberUri.NAMESPACE,
                     recordKey = recordKey,
                 ),
             ) as ListMemberUri
@@ -477,7 +477,7 @@ private suspend fun NetworkService.updateFeedRecord(
             is GrazeResponse.Created -> createRecord(
                 CreateRecordRequest(
                     repo = Did(profileId.id),
-                    collection = Nsid(FeedGeneratorUri.Companion.NAMESPACE),
+                    collection = Nsid(FeedGeneratorUri.NAMESPACE),
                     rkey = RKey(response.rkey.value),
                     record = Generator(
                         did = Did(GrazeDid.id),
@@ -495,7 +495,7 @@ private suspend fun NetworkService.updateFeedRecord(
                 val currentRecordResponse = getRecord(
                     GetRecordQueryParams(
                         repo = Did(profileId.id),
-                        collection = Nsid(FeedGeneratorUri.Companion.NAMESPACE),
+                        collection = Nsid(FeedGeneratorUri.NAMESPACE),
                         rkey = RKey(response.rkey.value),
                     ),
                 ).requireResponse()
@@ -507,7 +507,7 @@ private suspend fun NetworkService.updateFeedRecord(
                 putRecord(
                     PutRecordRequest(
                         repo = Did(profileId.id),
-                        collection = Nsid(FeedGeneratorUri.Companion.NAMESPACE),
+                        collection = Nsid(FeedGeneratorUri.NAMESPACE),
                         rkey = RKey(response.rkey.value),
                         record = currentRecord.copy(
                             displayName = editableFeed?.displayName ?: currentRecord.displayName,
@@ -525,7 +525,7 @@ private suspend fun NetworkService.updateFeedRecord(
                 deleteRecord(
                     DeleteRecordRequest(
                         repo = Did(profileId.id),
-                        collection = Nsid(FeedGeneratorUri.Companion.NAMESPACE),
+                        collection = Nsid(FeedGeneratorUri.NAMESPACE),
                         rkey = RKey(response.rkey.value),
                     ),
                 )
