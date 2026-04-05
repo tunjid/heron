@@ -17,6 +17,7 @@
 package com.tunjid.heron.data.utilities.multipleEntitysaver
 
 import com.tunjid.heron.data.core.models.Constants
+import com.tunjid.heron.data.core.models.Constants.isUnknown
 import com.tunjid.heron.data.database.TransactionWriter
 import com.tunjid.heron.data.database.daos.EmbedDao
 import com.tunjid.heron.data.database.daos.FeedGeneratorDao
@@ -200,6 +201,7 @@ internal class MultipleEntitySaver(
     private val standardPublicationEntities = LazyList<StandardPublicationEntity>()
     private val standardDocumentEntities = LazyList<StandardDocumentEntity>()
     private val standardSubscriptionEntities = LazyList<StandardSubscriptionEntity>()
+    private val standardSubscriptionDeletions = LazyList<StandardSubscriptionEntity.Deletion>()
 
     /**
      * Saves all entities added to this [MultipleEntitySaver] in a single transaction
@@ -210,14 +212,14 @@ internal class MultipleEntitySaver(
         if (profileEntities.isNotEmpty) {
             val (fullProfileEntities, usablePartialProfileEntities, emptyProfileEntities) = profileEntities.list.triage(
                 firstPredicate = {
-                    it.handle != Constants.unknownAuthorHandle &&
-                        it.followersCount != null &&
+                    !it.handle.isUnknown()
+                    it.followersCount != null &&
                         it.followsCount != null &&
                         it.postsCount != null
                 },
                 // Profiles from messages may just be empty profiles with Dids
                 secondPredicate = {
-                    it.handle != Constants.unknownAuthorHandle && it.displayName != null
+                    !it.handle.isUnknown() && it.displayName != null
                 },
             )
             profileDao.upsertProfiles(fullProfileEntities)
@@ -380,6 +382,9 @@ internal class MultipleEntitySaver(
         if (standardSubscriptionEntities.isNotEmpty) {
             standardSiteDao.upsertSubscriptions(standardSubscriptionEntities.list)
         }
+        if (standardSubscriptionDeletions.isNotEmpty) {
+            standardSiteDao.deleteSubscriptions(standardSubscriptionDeletions.list)
+        }
 
         if (threadGateEntities.isNotEmpty) {
             threadGateDao.upsertThreadGates(threadGateEntities.list)
@@ -479,6 +484,8 @@ internal class MultipleEntitySaver(
     fun add(entity: StandardDocumentEntity) = standardDocumentEntities.add(entity)
 
     fun add(entity: StandardSubscriptionEntity) = standardSubscriptionEntities.add(entity)
+
+    fun remove(entity: StandardSubscriptionEntity.Deletion) = standardSubscriptionDeletions.add(entity)
 
     private fun add(entity: ExternalEmbedEntity) = externalEmbedEntities.add(entity)
 

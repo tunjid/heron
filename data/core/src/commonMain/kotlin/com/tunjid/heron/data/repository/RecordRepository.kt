@@ -31,8 +31,6 @@ import app.bsky.graph.Listitem as BskyListMember
 import com.atproto.repo.CreateRecordRequest
 import com.atproto.repo.DeleteRecordRequest
 import com.atproto.repo.GetRecordQueryParams
-import com.atproto.repo.ListRecordsQueryParams
-import com.atproto.repo.ListRecordsResponse
 import com.atproto.repo.PutRecordRequest
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
@@ -56,12 +54,8 @@ import com.tunjid.heron.data.core.types.PostUri
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.RecordUri
-import com.tunjid.heron.data.core.types.StandardDocumentId
-import com.tunjid.heron.data.core.types.StandardDocumentUri
-import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StarterPackUri
 import com.tunjid.heron.data.core.types.UnauthorizedException
-import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.core.types.profileId
 import com.tunjid.heron.data.core.types.recordUriOrNull
 import com.tunjid.heron.data.core.utilities.Outcome
@@ -86,7 +80,6 @@ import com.tunjid.heron.data.graze.GrazeFeed
 import com.tunjid.heron.data.network.FeedCreationService
 import com.tunjid.heron.data.network.GrazeResponse
 import com.tunjid.heron.data.network.NetworkService
-import com.tunjid.heron.data.network.PdsResolver
 import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.distinctUntilChangedMap
 import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
@@ -101,9 +94,6 @@ import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -112,12 +102,12 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.plus
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
 import sh.christian.ozone.api.Nsid
 import sh.christian.ozone.api.RKey
-import site.standard.Document
+import site.standard.heron.GetDocumentsQueryParams
+import site.standard.heron.GetDocumentsResponse
 
 interface RecordRepository {
 
@@ -189,7 +179,6 @@ internal class OfflineRecordRepository @Inject constructor(
     private val profileLookup: ProfileLookup,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
-    private val pdsResolver: PdsResolver,
 ) : RecordRepository {
 
     override val subscribedLabelers: Flow<List<Labeler>> =
@@ -448,14 +437,10 @@ internal class OfflineRecordRepository @Inject constructor(
         query: ProfilesQuery,
         cursor: Cursor,
     ): Flow<CursorList<StandardDocument>> =
-        savedStateDataSource.singleSessionFlow {
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
             val profileDid = profileLookup.lookupProfileDid(
                 profileId = query.profileId,
             ) ?: return@singleSessionFlow emptyFlow()
-
-            val pdsUrl = pdsResolver.resolve(Did(profileDid.did))
-                ?.toString()
-                ?: return@singleSessionFlow emptyFlow()
 
             combine(
                 standardSiteDao.authorDocuments(
@@ -469,41 +454,25 @@ internal class OfflineRecordRepository @Inject constructor(
                 networkService.nextCursorFlow(
                     currentCursor = cursor,
                     currentRequestWithNextCursor = {
-                        listRecords(
-                            params = ListRecordsQueryParams(
-                                repo = Did(profileDid.did),
-                                collection = Nsid(StandardDocumentUri.NAMESPACE),
+                        getDocuments(
+                            params = GetDocumentsQueryParams(
+                                author = profileDid,
                                 limit = query.data.limit,
                                 cursor = cursor.value,
                             ),
                         )
                     },
-                    nextCursor = ListRecordsResponse::cursor,
+                    nextCursor = GetDocumentsResponse::cursor,
                     onResponse = {
-                        val publicationUris = mutableSetOf<StandardPublicationUri>()
+                        println("Fetched: ${documents.size}")
                         multipleEntitySaverProvider.saveInTransaction {
-                            records.forEach { record ->
-                                val documentUri = record.uri.atUri.let(::StandardDocumentUri)
-                                val documentCid = record.cid.cid.let(::StandardDocumentId)
-                                val document = record.value.decodeAs<Document>()
-
-                                (document.site.uri.asRecordUriOrNull() as? StandardPublicationUri)?.let {
-                                    if (publicationUris.add(it)) recordResolver.resolve(it)
-                                }
-
+                            documents.forEach {
                                 add(
-                                    documentUri = documentUri,
-                                    documentCid = documentCid,
-                                    document = document,
-                                    pdsUrl = pdsUrl,
+                                    documentView = it,
+                                    viewingProfileId = signedInProfileId,
                                 )
                             }
                         }
-                        coroutineScope {
-                            publicationUris.map {
-                                async { recordResolver.resolve(it) }
-                            }
-                        }.awaitAll()
                     },
                 ),
                 ::CursorList,

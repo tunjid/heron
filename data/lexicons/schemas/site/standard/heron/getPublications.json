@@ -1,0 +1,48 @@
+{
+  "lexicon": 1,
+  "id": "site.standard.heron.getPublications",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "List publications. Optionally filter by author.",
+      "parameters": {
+        "type": "params",
+        "properties": {
+          "author": {
+            "type": "string",
+            "format": "did",
+            "description": "DID of the publication author to filter by."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string"
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["publications"],
+          "properties": {
+            "cursor": {
+              "type": "string"
+            },
+            "publications": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "site.standard.heron.defs#publicationView"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

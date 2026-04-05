@@ -410,10 +410,10 @@ private fun atProtoAuth(
     on(Send) intercept@{ context ->
         val authTokens = readAuth.invoke()
 
-        if (ChatProxyPaths.any(predicate = context.url.encodedPath::endsWith)) {
+        context.proxyHeader()?.let { headerValue ->
             context.headers.append(
                 name = AtProtoProxyHeader,
-                value = ChatAtProtoProxyHeaderValue,
+                value = headerValue,
             )
             authTokens?.serviceUrl?.let {
                 context.url.set(host = Url(urlString = it).host)
@@ -424,7 +424,7 @@ private fun atProtoAuth(
             context.url.set(
                 host = Url(urlString = SignedOutUrl).host,
             )
-        } else if (authTokens != null && !ChatProxyPaths.any(predicate = context.url.encodedPath::endsWith)) {
+        } else if (authTokens != null && context.proxyHeader() == null) {
             val pdsUrl = Url(authTokens.defaultUrl)
             if (context.url.host != pdsUrl.host) {
                 context.url.protocol = pdsUrl.protocol
@@ -536,6 +536,13 @@ private fun SavedState.AuthTokens.Authenticated?.maybeUpdateDPoPNonce(
     else null
 }
 
+private fun HttpRequestBuilder.proxyHeader(): String? =
+    when {
+        ChatProxyPaths.any(predicate = url.encodedPath::endsWith) -> ChatAtProtoProxyHeaderValue
+        HeronProxyPaths.any(predicate = url.encodedPath::endsWith) -> HeronAtProtoProxyHeaderValue
+        else -> null
+    }
+
 private fun HttpRequestBuilder.clearAuth() {
     headers.remove(Authorization)
     headers.remove(DPoP)
@@ -627,6 +634,13 @@ private val ChatProxyPaths = listOf(
     "chat.bsky.convo.removeReaction",
 )
 
+private val HeronProxyPaths = listOf(
+    "site.standard.heron.getDocument",
+    "site.standard.heron.getDocuments",
+    "site.standard.heron.getPublications",
+    "site.standard.heron.getSubscriptions",
+)
+
 private val SignedOutPaths = listOf(
     "app.bsky.actor.getProfile",
     "app.bsky.actor.searchActors",
@@ -645,6 +659,7 @@ private val PendingTokenTimeout = 2.seconds
 private const val AtProtoProxyHeader = "Atproto-Proxy"
 private const val AtProtoLabelerHeader = "atproto-accept-labelers"
 private const val ChatAtProtoProxyHeaderValue = "did:web:api.bsky.chat#bsky_chat"
+private const val HeronAtProtoProxyHeaderValue = "did:web:heron.tunji.dev#heron_appview"
 private const val SignedOutUrl = "https://public.api.bsky.app"
 private const val RefreshTokenEndpoint = "/xrpc/com.atproto.server.refreshSession"
 private const val OauthCallbackUriCodeParam = "code"

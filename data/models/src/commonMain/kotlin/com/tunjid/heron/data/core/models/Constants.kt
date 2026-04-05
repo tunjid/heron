@@ -28,6 +28,11 @@ object Constants {
     private val unknownRecordKey = "2222222222222"
     const val UNKNOWN = "at://unknown"
 
+    private val UnknownHandles = setOf(
+        UNKNOWN,
+        "unknown.handle",
+    )
+
     val timelineFeed = GenericUri("at://self")
 
     val blueSkyDiscoverFeed = FeedGeneratorUri("at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot")
@@ -48,4 +53,6 @@ object Constants {
     val pendingProfileId = ProfileId(id = "did:web:heron.app.pending.user")
     val unknownFollowUri = FollowUri("${unknownAuthorId.id}/${FollowUri.NAMESPACE}/$unknownRecordKey")
     val unknownAuthorHandle = ProfileHandle(UNKNOWN)
+
+    fun ProfileHandle.isUnknown() = id in UnknownHandles
 }
