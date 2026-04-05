@@ -42,11 +42,11 @@ interface StandardSiteDao {
         """
             SELECT
                 standardPublications.*,
-                standardSubscriptions.uri as subscriptions_uri,
-                standardSubscriptions.cid as subscriptions_cid,
-                standardSubscriptions.publicationUri as subscriptions_publicationUri,
-                standardSubscriptions.sortedAt as subscriptions_sortedAt,
-                standardSubscriptions.viewingProfileId as subscriptions_viewingProfileId
+                standardSubscriptions.uri as subscription_uri,
+                standardSubscriptions.cid as subscription_cid,
+                standardSubscriptions.publicationUri as subscription_publicationUri,
+                standardSubscriptions.sortedAt as subscription_sortedAt,
+                standardSubscriptions.viewingProfileId as subscription_viewingProfileId
             FROM standardPublications
             LEFT JOIN standardSubscriptions
                 ON standardPublications.uri = standardSubscriptions.publicationUri
@@ -87,11 +87,11 @@ interface StandardSiteDao {
         """
             SELECT
                 standardDocuments.*,
-                standardSubscriptions.uri as subscriptions_uri,
-                standardSubscriptions.cid as subscriptions_cid,
-                standardSubscriptions.publicationUri as subscriptions_publicationUri,
-                standardSubscriptions.sortedAt as subscriptions_sortedAt,
-                standardSubscriptions.viewingProfileId as subscriptions_viewingProfileId
+                standardSubscriptions.uri as subscription_uri,
+                standardSubscriptions.cid as subscription_cid,
+                standardSubscriptions.publicationUri as subscription_publicationUri,
+                standardSubscriptions.sortedAt as subscription_sortedAt,
+                standardSubscriptions.viewingProfileId as subscription_viewingProfileId
             FROM standardDocuments
             LEFT JOIN standardSubscriptions
                 ON standardDocuments.publicationUri = standardSubscriptions.publicationUri
