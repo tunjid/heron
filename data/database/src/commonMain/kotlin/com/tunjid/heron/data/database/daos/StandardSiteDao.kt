@@ -51,12 +51,38 @@ interface StandardSiteDao {
             LEFT JOIN standardSubscriptions
                 ON standardPublications.uri = standardSubscriptions.publicationUri
                 AND standardSubscriptions.viewingProfileId = :viewingProfileId
-            WHERE standardPublications.uri IN (:uris)
+            WHERE standardPublications.uri = :publicationUri
         """,
     )
-    fun publications(
+    fun publication(
         viewingProfileId: String?,
-        uris: Collection<StandardPublicationUri>,
+        publicationUri: String,
+    ): Flow<PopulatedStandardPublicationEntity>
+
+    @Transaction
+    @Query(
+        """
+            SELECT
+                standardPublications.*,
+                standardSubscriptions.uri as subscription_uri,
+                standardSubscriptions.cid as subscription_cid,
+                standardSubscriptions.publicationUri as subscription_publicationUri,
+                standardSubscriptions.sortedAt as subscription_sortedAt,
+                standardSubscriptions.viewingProfileId as subscription_viewingProfileId
+            FROM standardPublications
+            LEFT JOIN standardSubscriptions
+                ON standardPublications.uri = standardSubscriptions.publicationUri
+                AND standardSubscriptions.viewingProfileId = :viewingProfileId
+            WHERE standardSubscriptions.viewingProfileId = :viewingProfileId
+            ORDER BY standardSubscriptions.sortedAt DESC
+            LIMIT :limit
+            OFFSET :offset
+        """,
+    )
+    fun subscribedPublications(
+        viewingProfileId: String?,
+        limit: Long,
+        offset: Long,
     ): Flow<List<PopulatedStandardPublicationEntity>>
 
     @Upsert
@@ -105,6 +131,33 @@ interface StandardSiteDao {
     fun authorDocuments(
         viewingProfileId: String?,
         authorId: String,
+        limit: Long,
+        offset: Long,
+    ): Flow<List<PopulatedStandardDocumentEntity>>
+
+    @Transaction
+    @Query(
+        """
+            SELECT
+                standardDocuments.*,
+                standardSubscriptions.uri as subscription_uri,
+                standardSubscriptions.cid as subscription_cid,
+                standardSubscriptions.publicationUri as subscription_publicationUri,
+                standardSubscriptions.sortedAt as subscription_sortedAt,
+                standardSubscriptions.viewingProfileId as subscription_viewingProfileId
+            FROM standardDocuments
+            LEFT JOIN standardSubscriptions
+                ON standardDocuments.publicationUri = standardSubscriptions.publicationUri
+                AND standardSubscriptions.viewingProfileId = :viewingProfileId
+            WHERE standardDocuments.publicationUri = :publicationUri
+            ORDER BY publishedAt DESC
+            LIMIT :limit
+            OFFSET :offset
+        """,
+    )
+    fun publicationDocuments(
+        viewingProfileId: String?,
+        publicationUri: String,
         limit: Long,
         offset: Long,
     ): Flow<List<PopulatedStandardDocumentEntity>>

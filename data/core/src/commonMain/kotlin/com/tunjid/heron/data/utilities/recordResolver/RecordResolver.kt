@@ -89,7 +89,6 @@ import com.tunjid.heron.data.database.entities.PopulatedFeedGeneratorEntity
 import com.tunjid.heron.data.database.entities.PopulatedLabelerEntity
 import com.tunjid.heron.data.database.entities.PopulatedListEntity
 import com.tunjid.heron.data.database.entities.PopulatedPostEntity
-import com.tunjid.heron.data.database.entities.PopulatedStandardPublicationEntity
 import com.tunjid.heron.data.database.entities.PopulatedStarterPackEntity
 import com.tunjid.heron.data.database.entities.asExternalModel
 import com.tunjid.heron.data.di.AppMainScope
@@ -130,6 +129,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -509,11 +509,10 @@ internal class OfflineRecordResolver @Inject constructor(
                         )
                     }
 
-                    standardSiteDao.publications(
+                    standardSiteDao.publication(
                         viewingProfileId = viewingProfileId.id,
-                        uris = listOf(uri),
+                        publicationUri = uri.uri,
                     )
-                        .first(List<PopulatedStandardPublicationEntity>::isNotEmpty)
                         .first()
                         .asExternalModel()
                 }
@@ -559,12 +558,11 @@ internal class OfflineRecordResolver @Inject constructor(
                             ?.uri
                             ?.atUri
                             ?.let {
-                                standardSiteDao.publications(
+                                standardSiteDao.publication(
                                     viewingProfileId = viewingProfileId.id,
-                                    uris = listOf(StandardPublicationUri(it)),
+                                    publicationUri = it,
                                 )
                             }
-                            ?.first(List<PopulatedStandardPublicationEntity>::isNotEmpty)
                             ?.firstOrNull()
                             ?.asExternalModel(),
                     )
