@@ -25,7 +25,6 @@ import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
-import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StandardSubscriptionId
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
@@ -52,7 +51,6 @@ import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
 import com.tunjid.heron.data.utilities.toOutcome
 import dev.zacsweers.metro.Inject
-import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -249,15 +247,12 @@ internal class OfflineFirstStandardSiteRecordOperations @Inject constructor(
     ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
         if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
 
-        val sortedAt = Clock.System.now()
-        val recordKey = RecordKey.generate()
-
         networkService.runCatchingWithMonitoredNetworkRetry {
             createRecord(
                 CreateRecordRequest(
                     repo = Did(signedInProfileId.id),
                     collection = Nsid(StandardSubscriptionUri.NAMESPACE),
-                    rkey = RKey(recordKey.value),
+                    rkey = RKey(create.recordKey.value),
                     record = Subscription(
                         publication = AtUri(create.publicationUri.uri),
                     ).asJsonContent(Subscription.serializer()),
@@ -271,7 +266,7 @@ internal class OfflineFirstStandardSiteRecordOperations @Inject constructor(
                         cid = response.cid.cid.let(::StandardSubscriptionId),
                         publicationUri = create.publicationUri,
                         viewingProfileId = signedInProfileId,
-                        sortedAt = sortedAt,
+                        sortedAt = create.sortedAt,
                     ),
                 )
             }

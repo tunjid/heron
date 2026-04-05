@@ -16,9 +16,11 @@
 
 package com.tunjid.heron.data.core.models
 
+import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.StandardSubscriptionId
 import com.tunjid.heron.data.core.types.StandardSubscriptionUri
+import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
@@ -38,5 +40,7 @@ data class StandardSubscription(
     @Serializable
     data class Create(
         val publicationUri: StandardPublicationUri,
+        val recordKey: RecordKey = RecordKey.generate(),
+        val sortedAt: Instant = Clock.System.now(),
     )
 }
