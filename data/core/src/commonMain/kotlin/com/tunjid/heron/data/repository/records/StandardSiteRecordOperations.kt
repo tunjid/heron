@@ -16,14 +16,19 @@
 
 package com.tunjid.heron.data.repository.records
 
+import com.atproto.repo.CreateRecordRequest
 import com.tunjid.heron.data.core.models.Cursor
 import com.tunjid.heron.data.core.models.CursorList
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.offset
 import com.tunjid.heron.data.core.models.value
 import com.tunjid.heron.data.core.types.StandardPublicationUri
+import com.tunjid.heron.data.core.types.StandardSubscriptionId
+import com.tunjid.heron.data.core.types.StandardSubscriptionUri
+import com.tunjid.heron.data.core.utilities.Outcome
 import com.tunjid.heron.data.database.daos.StandardSiteDao
 import com.tunjid.heron.data.database.entities.PopulatedStandardDocumentEntity
 import com.tunjid.heron.data.database.entities.PopulatedStandardPublicationEntity
@@ -32,13 +37,18 @@ import com.tunjid.heron.data.di.IODispatcher
 import com.tunjid.heron.data.network.NetworkService
 import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.data.repository.SavedStateDataSource
+import com.tunjid.heron.data.repository.expiredSessionOutcome
+import com.tunjid.heron.data.repository.inCurrentProfileSession
 import com.tunjid.heron.data.repository.singleAuthorizedSessionFlow
 import com.tunjid.heron.data.repository.singleSessionFlow
+import com.tunjid.heron.data.utilities.asJsonContent
 import com.tunjid.heron.data.utilities.distinctUntilChangedMap
+import com.tunjid.heron.data.utilities.mapCatchingUnlessCancelled
 import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverProvider
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
+import com.tunjid.heron.data.utilities.toOutcome
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -48,6 +58,10 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.serialization.Serializable
 import sh.christian.ozone.api.AtUri
+import sh.christian.ozone.api.Did
+import sh.christian.ozone.api.Nsid
+import sh.christian.ozone.api.RKey
+import site.standard.graph.Subscription
 import site.standard.heron.GetDocumentsQueryParams
 import site.standard.heron.GetDocumentsResponse
 import site.standard.heron.GetSubscriptionsQueryParams
@@ -75,6 +89,10 @@ interface StandardSiteRecordOperations {
         query: CursorQuery,
         cursor: Cursor,
     ): Flow<CursorList<StandardPublication>>
+
+    suspend fun createSubscription(
+        create: StandardSubscription.Create,
+    ): Outcome
 }
 
 internal class OfflineFirstStandardSiteRecordOperations @Inject constructor(
@@ -222,4 +240,36 @@ internal class OfflineFirstStandardSiteRecordOperations @Inject constructor(
                 .distinctUntilChanged()
         }
             .flowOn(ioDispatcher)
+
+    override suspend fun createSubscription(
+        create: StandardSubscription.Create,
+    ): Outcome = savedStateDataSource.inCurrentProfileSession { signedInProfileId ->
+        if (signedInProfileId == null) return@inCurrentProfileSession expiredSessionOutcome()
+
+        val subscription = Subscription(
+            publication = AtUri(create.publicationUri.uri),
+        )
+        networkService.runCatchingWithMonitoredNetworkRetry {
+            createRecord(
+                CreateRecordRequest(
+                    repo = Did(signedInProfileId.id),
+                    collection = Nsid(StandardSubscriptionUri.NAMESPACE),
+                    rkey = RKey(create.recordKey.value),
+                    record = subscription
+                        .asJsonContent(Subscription.serializer()),
+                ),
+            )
+        }.mapCatchingUnlessCancelled { response ->
+            multipleEntitySaverProvider.saveInTransaction {
+                add(
+                    subscriptionUri = response.uri.atUri.let(::StandardSubscriptionUri),
+                    subscriptionCid = response.cid.cid.let(::StandardSubscriptionId),
+                    subscription = subscription,
+                    viewingProfileId = signedInProfileId,
+                    sortedAt = create.sortedAt,
+                )
+            }
+        }
+            .toOutcome()
+    } ?: expiredSessionOutcome()
 }
