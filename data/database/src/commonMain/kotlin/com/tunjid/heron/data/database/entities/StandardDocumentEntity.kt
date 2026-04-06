@@ -83,6 +83,8 @@ data class PopulatedStandardDocumentEntity(
     val entity: StandardDocumentEntity,
     @Embedded(prefix = "subscription_")
     val subscription: StandardSubscriptionEntity?,
+    @Embedded(prefix = "publisher_")
+    val publisher: ProfileEntity?,
     @Relation(
         parentColumn = "publicationUri",
         entityColumn = "uri",
@@ -109,9 +111,12 @@ fun PopulatedStandardDocumentEntity.asExternalModel() = StandardDocument(
         )
     },
     tags = entity.tags?.deserializeTags() ?: emptyList(),
-    publication = publication?.asExternalModel(
-        subscription?.asExternalModel(),
-    ),
+    publication = publisher?.let { publisher ->
+        publication?.asExternalModel(
+            publisher = publisher.asExternalModel(),
+            subscription = subscription?.asExternalModel(),
+        )
+    },
 )
 
 private fun String.deserializeTags(): List<String> =

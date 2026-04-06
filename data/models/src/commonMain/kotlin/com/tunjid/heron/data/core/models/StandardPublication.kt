@@ -17,7 +17,6 @@
 package com.tunjid.heron.data.core.models
 
 import com.tunjid.heron.data.core.types.ImageUri
-import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.StandardPublicationId
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import kotlinx.serialization.Serializable
@@ -26,7 +25,7 @@ import kotlinx.serialization.Serializable
 data class StandardPublication(
     val uri: StandardPublicationUri,
     val cid: StandardPublicationId?,
-    val publisherId: ProfileId,
+    val publisher: Profile,
     val name: String,
     val description: String?,
     val url: String,
@@ -34,7 +33,8 @@ data class StandardPublication(
     val showInDiscover: Boolean,
     val basicTheme: BasicTheme?,
     val subscription: StandardSubscription?,
-) : Record {
+) : Record,
+    UrlEncodableModel {
     override val reference: Record.Reference =
         Record.Reference(
             id = cid,

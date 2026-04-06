@@ -22,6 +22,8 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import androidx.room.Relation
+import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.types.ImageUri
@@ -89,16 +91,19 @@ data class StandardPublicationEntity(
 data class PopulatedStandardPublicationEntity(
     @Embedded
     val entity: StandardPublicationEntity,
+    @Embedded(prefix = "publisher_")
+    val publisher: ProfileEntity,
     @Embedded(prefix = "subscription_")
     val subscription: StandardSubscriptionEntity?,
 )
 
 fun StandardPublicationEntity.asExternalModel(
+    publisher: Profile,
     subscription: StandardSubscription?,
 ) = StandardPublication(
     uri = uri,
     cid = cid,
-    publisherId = publisherId,
+    publisher = publisher,
     name = name,
     description = description,
     url = url,
@@ -116,6 +121,7 @@ fun StandardPublicationEntity.asExternalModel(
 )
 
 fun PopulatedStandardPublicationEntity.asExternalModel() = entity.asExternalModel(
+    publisher.asExternalModel(),
     subscription?.asExternalModel(),
 )
 
