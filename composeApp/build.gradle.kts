@@ -74,6 +74,8 @@ kotlin {
             implementation(project(":feature:profiles"))
             implementation(project(":feature:search"))
             implementation(project(":feature:settings"))
+            implementation(project(":feature:standard-publication"))
+            implementation(project(":feature:standard-subscription"))
             implementation(project(":feature:splash"))
             implementation(project(":ui:media"))
 
