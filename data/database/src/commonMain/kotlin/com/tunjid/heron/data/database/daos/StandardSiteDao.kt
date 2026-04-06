@@ -46,11 +46,17 @@ interface StandardSiteDao {
                 standardSubscriptions.cid as subscription_cid,
                 standardSubscriptions.publicationUri as subscription_publicationUri,
                 standardSubscriptions.sortedAt as subscription_sortedAt,
-                standardSubscriptions.viewingProfileId as subscription_viewingProfileId
+                standardSubscriptions.viewingProfileId as subscription_viewingProfileId,
+                profiles.did as publisher_did,
+                profiles.handle as publisher_handle,
+                profiles.displayName as publisher_displayName,
+                profiles.avatar as publisher_avatar
             FROM standardPublications
             LEFT JOIN standardSubscriptions
                 ON standardPublications.uri = standardSubscriptions.publicationUri
                 AND standardSubscriptions.viewingProfileId = :viewingProfileId
+            LEFT JOIN profiles
+                ON standardPublications.publisherId = profiles.did
             WHERE standardPublications.uri = :publicationUri
         """,
     )
@@ -68,11 +74,17 @@ interface StandardSiteDao {
                 standardSubscriptions.cid as subscription_cid,
                 standardSubscriptions.publicationUri as subscription_publicationUri,
                 standardSubscriptions.sortedAt as subscription_sortedAt,
-                standardSubscriptions.viewingProfileId as subscription_viewingProfileId
+                standardSubscriptions.viewingProfileId as subscription_viewingProfileId,
+                profiles.did as publisher_did,
+                profiles.handle as publisher_handle,
+                profiles.displayName as publisher_displayName,
+                profiles.avatar as publisher_avatar
             FROM standardPublications
             LEFT JOIN standardSubscriptions
                 ON standardPublications.uri = standardSubscriptions.publicationUri
                 AND standardSubscriptions.viewingProfileId = :viewingProfileId
+            LEFT JOIN profiles
+                ON standardPublications.publisherId = profiles.did
             WHERE standardSubscriptions.viewingProfileId = :viewingProfileId
             ORDER BY standardSubscriptions.sortedAt DESC
             LIMIT :limit
@@ -117,11 +129,19 @@ interface StandardSiteDao {
                 standardSubscriptions.cid as subscription_cid,
                 standardSubscriptions.publicationUri as subscription_publicationUri,
                 standardSubscriptions.sortedAt as subscription_sortedAt,
-                standardSubscriptions.viewingProfileId as subscription_viewingProfileId
+                standardSubscriptions.viewingProfileId as subscription_viewingProfileId,
+                profiles.did as publisher_did,
+                profiles.handle as publisher_handle,
+                profiles.displayName as publisher_displayName,
+                profiles.avatar as publisher_avatar
             FROM standardDocuments
             LEFT JOIN standardSubscriptions
                 ON standardDocuments.publicationUri = standardSubscriptions.publicationUri
                 AND standardSubscriptions.viewingProfileId = :viewingProfileId
+            LEFT JOIN standardPublications
+                ON standardPublications.uri = standardDocuments.publicationUri
+            LEFT JOIN profiles
+                ON standardPublications.publisherId = profiles.did
             WHERE authorId = :authorId
             ORDER BY publishedAt DESC
             LIMIT :limit
@@ -144,11 +164,19 @@ interface StandardSiteDao {
                 standardSubscriptions.cid as subscription_cid,
                 standardSubscriptions.publicationUri as subscription_publicationUri,
                 standardSubscriptions.sortedAt as subscription_sortedAt,
-                standardSubscriptions.viewingProfileId as subscription_viewingProfileId
+                standardSubscriptions.viewingProfileId as subscription_viewingProfileId,
+                profiles.did as publisher_did,
+                profiles.handle as publisher_handle,
+                profiles.displayName as publisher_displayName,
+                profiles.avatar as publisher_avatar
             FROM standardDocuments
             LEFT JOIN standardSubscriptions
                 ON standardDocuments.publicationUri = standardSubscriptions.publicationUri
                 AND standardSubscriptions.viewingProfileId = :viewingProfileId
+            LEFT JOIN standardPublications
+                ON standardPublications.uri = standardDocuments.publicationUri
+            LEFT JOIN profiles
+                ON standardPublications.publisherId = profiles.did
             WHERE standardDocuments.publicationUri = :publicationUri
             ORDER BY publishedAt DESC
             LIMIT :limit

@@ -19,7 +19,6 @@ package com.tunjid.heron.data.utilities.multipleEntitysaver
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StandardDocument
 import com.tunjid.heron.data.core.models.StandardPublication
-import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.types.ImageUri
 import com.tunjid.heron.data.core.types.PostId
 import com.tunjid.heron.data.core.types.PostUri
@@ -268,31 +267,6 @@ private fun ColorRgba.toColor() = StandardPublicationEntity.Color(
     a = a.toInt(),
 )
 
-internal fun Publication.asExternalModel(
-    uri: StandardPublicationUri,
-    cid: StandardPublicationId?,
-    iconUrl: ImageUri?,
-    subscription: StandardSubscription?,
-) = StandardPublication(
-    uri = uri,
-    cid = cid,
-    publisherId = uri.profileId(),
-    name = name,
-    description = description,
-    url = url.uri,
-    icon = iconUrl,
-    showInDiscover = preferences?.showInDiscover ?: true,
-    subscription = subscription,
-    basicTheme = basicTheme?.let { theme ->
-        StandardPublication.BasicTheme(
-            accent = theme.accent.toThemeColor() ?: return@let null,
-            accentForeground = theme.accentForeground.toThemeColor() ?: return@let null,
-            background = theme.background.toThemeColor() ?: return@let null,
-            foreground = theme.foreground.toThemeColor() ?: return@let null,
-        )
-    },
-)
-
 internal fun Document.asExternalModel(
     uri: StandardDocumentUri,
     cid: StandardDocumentId?,
@@ -321,43 +295,4 @@ internal fun Document.asExternalModel(
     },
     tags = tags ?: emptyList(),
     publication = publication,
-)
-
-private fun BasicAccentUnion.toThemeColor(): StandardPublication.ThemeColor? = when (this) {
-    is BasicAccentUnion.Rgb -> value.toThemeColor()
-    is BasicAccentUnion.Rgba -> value.toThemeColor()
-    is BasicAccentUnion.Unknown -> null
-}
-
-private fun BasicAccentForegroundUnion.toThemeColor(): StandardPublication.ThemeColor? =
-    when (this) {
-        is BasicAccentForegroundUnion.Rgb -> value.toThemeColor()
-        is BasicAccentForegroundUnion.Rgba -> value.toThemeColor()
-        is BasicAccentForegroundUnion.Unknown -> null
-    }
-
-private fun BasicBackgroundUnion.toThemeColor(): StandardPublication.ThemeColor? = when (this) {
-    is BasicBackgroundUnion.Rgb -> value.toThemeColor()
-    is BasicBackgroundUnion.Rgba -> value.toThemeColor()
-    is BasicBackgroundUnion.Unknown -> null
-}
-
-private fun BasicForegroundUnion.toThemeColor(): StandardPublication.ThemeColor? = when (this) {
-    is BasicForegroundUnion.Rgb -> value.toThemeColor()
-    is BasicForegroundUnion.Rgba -> value.toThemeColor()
-    is BasicForegroundUnion.Unknown -> null
-}
-
-private fun ColorRgb.toThemeColor() = StandardPublication.ThemeColor(
-    r = r.toInt(),
-    g = g.toInt(),
-    b = b.toInt(),
-    a = 100,
-)
-
-private fun ColorRgba.toThemeColor() = StandardPublication.ThemeColor(
-    r = r.toInt(),
-    g = g.toInt(),
-    b = b.toInt(),
-    a = a.toInt(),
 )
