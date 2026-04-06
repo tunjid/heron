@@ -70,6 +70,10 @@ import com.tunjid.heron.signin.di.SignInBindings
 import com.tunjid.heron.signin.di.SignInNavigationBindings
 import com.tunjid.heron.splash.di.SplashBindings
 import com.tunjid.heron.splash.di.SplashNavigationBindings
+import com.tunjid.heron.standard.publication.di.StandardPublicationBindings
+import com.tunjid.heron.standard.publication.di.StandardPublicationNavigationBindings
+import com.tunjid.heron.standard.subscription.di.StandardSubscriptionBindings
+import com.tunjid.heron.standard.subscription.di.StandardSubscriptionNavigationBindings
 import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -107,6 +111,8 @@ fun createAppState(
         profilesNavigationBindings = ProfilesNavigationBindings,
         searchNavigationBindings = SearchNavigationBindings,
         splashNavigationBindings = SplashNavigationBindings,
+        standardPublicationNavigationBindings = StandardPublicationNavigationBindings,
+        standardSubscriptionNavigationBindings = StandardSubscriptionNavigationBindings,
         settingsNavigationBindings = SettingsNavigationBindings,
     )
 
@@ -205,6 +211,14 @@ fun createAppState(
             dataBindings = dataBindings,
         ),
         splashBindings = SplashBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
+        ),
+        standardPublicationBindings = StandardPublicationBindings(
+            scaffoldBindings = scaffoldBindings,
+            dataBindings = dataBindings,
+        ),
+        standardSubscriptionBindings = StandardSubscriptionBindings(
             scaffoldBindings = scaffoldBindings,
             dataBindings = dataBindings,
         ),

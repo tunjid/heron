@@ -49,6 +49,8 @@ import com.tunjid.heron.search.di.SearchBindings
 import com.tunjid.heron.settings.di.SettingsBindings
 import com.tunjid.heron.signin.di.SignInBindings
 import com.tunjid.heron.splash.di.SplashBindings
+import com.tunjid.heron.standard.publication.di.StandardPublicationBindings
+import com.tunjid.heron.standard.subscription.di.StandardSubscriptionBindings
 import com.tunjid.treenav.compose.PaneEntry
 import com.tunjid.treenav.compose.threepane.ThreePane
 import com.tunjid.treenav.strings.Route
@@ -89,6 +91,8 @@ interface AppGraph {
             @Includes profilesBindings: ProfilesBindings,
             @Includes searchBindings: SearchBindings,
             @Includes splashBindings: SplashBindings,
+            @Includes standardPublicationBindings: StandardPublicationBindings,
+            @Includes standardSubscriptionBindings: StandardSubscriptionBindings,
             @Includes settingsBindings: SettingsBindings,
         ): AppGraph
     }

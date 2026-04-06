@@ -82,6 +82,8 @@ include(
     ":feature:search",
     ":feature:splash",
     ":feature:settings",
+    ":feature:standard-publication",
+    ":feature:standard-subscription",
     ":feature:template",
     ":ui:core",
     ":ui:media",
