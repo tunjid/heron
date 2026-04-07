@@ -48,7 +48,9 @@ import com.tunjid.heron.data.utilities.multipleEntitysaver.MultipleEntitySaverPr
 import com.tunjid.heron.data.utilities.multipleEntitysaver.add
 import com.tunjid.heron.data.utilities.nextCursorFlow
 import com.tunjid.heron.data.utilities.profileLookup.ProfileLookup
+import com.tunjid.heron.data.utilities.recordResolver.RecordResolver
 import com.tunjid.heron.data.utilities.toOutcome
+import com.tunjid.heron.data.utilities.withRefresh
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -56,6 +58,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import sh.christian.ozone.api.AtUri
 import sh.christian.ozone.api.Did
@@ -74,6 +77,10 @@ data class StandardPublicationDocumentsQuery(
 ) : CursorQuery
 
 interface StandardSiteRecordOperations {
+
+    fun publication(
+        uri: StandardPublicationUri,
+    ): Flow<StandardPublication>
 
     fun authorDocuments(
         query: ProfilesQuery,
@@ -103,7 +110,23 @@ internal class OfflineFirstStandardSiteRecordOperations @Inject constructor(
     private val profileLookup: ProfileLookup,
     private val multipleEntitySaverProvider: MultipleEntitySaverProvider,
     private val networkService: NetworkService,
+    private val recordResolver: RecordResolver,
 ) : StandardSiteRecordOperations {
+
+    override fun publication(
+        uri: StandardPublicationUri,
+    ): Flow<StandardPublication> =
+        savedStateDataSource.singleSessionFlow { signedInProfileId ->
+            standardSiteDao.publication(
+                viewingProfileId = signedInProfileId?.id,
+                publicationUri = uri.uri,
+            )
+                .map(PopulatedStandardPublicationEntity::asExternalModel)
+                .withRefresh {
+                    recordResolver.resolve(uri)
+                }
+        }
+            .flowOn(ioDispatcher)
 
     override fun authorDocuments(
         query: ProfilesQuery,

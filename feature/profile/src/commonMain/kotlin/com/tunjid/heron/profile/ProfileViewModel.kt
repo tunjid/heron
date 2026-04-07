@@ -28,6 +28,7 @@ import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
 import com.tunjid.heron.data.core.models.StandardDocument
+import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.models.StarterPack
 import com.tunjid.heron.data.core.models.Timeline
 import com.tunjid.heron.data.core.models.TimelineItem
@@ -197,6 +198,9 @@ class ActualProfileViewModel(
                         )
                         is Action.UpdateRecentLists -> action.flow.recentListsMutations(
                             recordRepository = recordRepository,
+                        )
+                        is Action.TogglePublicationSubscription -> action.flow.togglePublicationSubscriptionMutations(
+                            writeQueue = writeQueue,
                         )
                         is Action.DeleteRecord -> action.flow.deleteRecordMutations(
                             writeQueue = writeQueue,
@@ -486,6 +490,24 @@ private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mu
     mapToMutation { action ->
         copy(messages = messages - action.message)
     }
+
+private fun Flow<Action.TogglePublicationSubscription>.togglePublicationSubscriptionMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
+    toWritable = { action ->
+        when (action) {
+            is Action.TogglePublicationSubscription.Subscribe -> Writable.StandardSite.Subscribe(
+                create = StandardSubscription.Create(publicationUri = action.publicationUri),
+            )
+            is Action.TogglePublicationSubscription.Unsubscribe -> Writable.RecordDeletion(
+                recordUri = action.subscriptionUri,
+            )
+        }
+    },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
+}
 
 private fun Flow<Action.DeleteRecord>.deleteRecordMutations(
     writeQueue: WriteQueue,

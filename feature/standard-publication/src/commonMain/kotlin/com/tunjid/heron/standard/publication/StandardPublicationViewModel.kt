@@ -18,19 +18,24 @@ package com.tunjid.heron.standard.publication
 
 import androidx.lifecycle.ViewModel
 import com.tunjid.heron.data.core.models.StandardDocument
+import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.data.core.types.RecordKey
 import com.tunjid.heron.data.core.types.StandardPublicationUri
 import com.tunjid.heron.data.core.types.recordUriOrNull
 import com.tunjid.heron.data.repository.ProfileRepository
 import com.tunjid.heron.data.repository.RecordRepository
+import com.tunjid.heron.data.utilities.writequeue.Writable
+import com.tunjid.heron.data.utilities.writequeue.WriteQueue
 import com.tunjid.heron.feature.AssistedViewModelFactory
 import com.tunjid.heron.feature.FeatureWhileSubscribed
 import com.tunjid.heron.scaffold.navigation.NavigationMutation
 import com.tunjid.heron.scaffold.navigation.consumeNavigationActions
 import com.tunjid.heron.standard.publication.di.PublicationRequest
 import com.tunjid.heron.standard.publication.di.publicationRequest
+import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.tiling.reset
 import com.tunjid.heron.tiling.tilingMutations
+import com.tunjid.heron.timeline.utilities.enqueueMutations
 import com.tunjid.mutator.ActionStateMutator
 import com.tunjid.mutator.Mutation
 import com.tunjid.mutator.coroutines.SuspendingStateHolder
@@ -46,9 +51,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.merge
 
 internal typealias StandardPublicationStateHolder = ActionStateMutator<Action, StateFlow<State>>
 
@@ -65,6 +71,7 @@ class ActualStandardPublicationViewModel(
     navActions: (NavigationMutation) -> Unit,
     profileRepository: ProfileRepository,
     recordRepository: RecordRepository,
+    writeQueue: WriteQueue,
     @Assisted
     scope: CoroutineScope,
     @Assisted
@@ -74,32 +81,40 @@ class ActualStandardPublicationViewModel(
         initialState = State(route),
         started = SharingStarted.WhileSubscribed(FeatureWhileSubscribed),
         actionTransform = transform@{ actions ->
-            actions.toMutationStream(
-                keySelector = Action::key,
-            ) {
-                when (val action = type()) {
-                    is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
-                    is Action.Navigate -> action.flow.consumeNavigationActions(
-                        navigationMutationConsumer = navActions,
-                    )
-                    is Action.Tile -> action.flow.publicationDocumentLoadMutations(
-                        request = route.publicationRequest,
-                        stateHolder = this@transform,
-                        profileRepository = profileRepository,
-                        recordRepository = recordRepository,
-                    )
-                }
-            }
+            merge(
+                publicationMutations(
+                    route = route,
+                    scope = scope,
+                    stateHolder = this,
+                    profileRepository = profileRepository,
+                    recordRepository = recordRepository,
+                ),
+                actions.toMutationStream(
+                    keySelector = Action::key,
+                ) {
+                    when (val action = type()) {
+                        is Action.SnackbarDismissed -> action.flow.snackbarDismissalMutations()
+                        is Action.Navigate -> action.flow.consumeNavigationActions(
+                            navigationMutationConsumer = navActions,
+                        )
+                        is Action.TogglePublicationSubscription -> action.flow.togglePublicationSubscriptionMutations(
+                            writeQueue = writeQueue,
+                        )
+                    }
+                },
+            )
         },
     )
 
-private suspend fun Flow<Action.Tile>.publicationDocumentLoadMutations(
-    request: PublicationRequest,
+private fun publicationMutations(
+    route: Route,
+    scope: CoroutineScope,
     stateHolder: SuspendingStateHolder<State>,
     profileRepository: ProfileRepository,
     recordRepository: RecordRepository,
-): Flow<Mutation<State>> {
-    val publicationUri = when (request) {
+): Flow<Mutation<State>> = flow {
+    val state = stateHolder.state()
+    val publicationUri = state.publication?.uri ?: when (val request = route.publicationRequest) {
         is PublicationRequest.WithUri -> request.uri
         is PublicationRequest.WithProfile ->
             recordUriOrNull(
@@ -109,33 +124,68 @@ private suspend fun Flow<Action.Tile>.publicationDocumentLoadMutations(
                 namespace = StandardPublicationUri.NAMESPACE,
                 recordKey = RecordKey(request.publicationUriSuffix),
             ) as? StandardPublicationUri
-    } ?: return emptyFlow()
+    } ?: return@flow
 
-    return map { it.tilingAction }
-        .tilingMutations(
-            currentState = { stateHolder.state() },
-            updateQueryData = { copy(data = it) },
-            refreshQuery = { copy(data = data.reset()) },
-            cursorListLoader = { query, cursor ->
-                recordRepository.publicationDocuments(
-                    query = query.copy(publicationUri = publicationUri),
-                    cursor = cursor,
-                )
-            },
-            onNewItems = { items -> items.distinctBy(StandardDocument::uri) },
-            onTilingDataUpdated = {
-                val publication = it.items.firstNotNullOfOrNull(StandardDocument::publication)
-                copy(
-                    publication = publication ?: this.publication,
-                    tilingData = it.copy(
-                        currentQuery = it.currentQuery.copy(publicationUri = publicationUri),
-                    ),
-                )
-            },
-        )
+    if (state.documentsTilingStateHolder == null) {
+        emit {
+            copy(
+                documentsTilingStateHolder = scope.documentsStateHolder(
+                    publicationUri = publicationUri,
+                    recordRepository = recordRepository,
+                ),
+            )
+        }
+    }
+
+    emitAll(
+        recordRepository.publication(publicationUri)
+            .mapToMutation { copy(publication = it) },
+    )
+}
+
+private fun Flow<Action.TogglePublicationSubscription>.togglePublicationSubscriptionMutations(
+    writeQueue: WriteQueue,
+): Flow<Mutation<State>> = this.enqueueMutations(
+    writeQueue,
+    toWritable = { action ->
+        when (action) {
+            is Action.TogglePublicationSubscription.Subscribe -> Writable.StandardSite.Subscribe(
+                create = StandardSubscription.Create(publicationUri = action.publicationUri),
+            )
+            is Action.TogglePublicationSubscription.Unsubscribe -> Writable.RecordDeletion(
+                recordUri = action.subscriptionUri,
+            )
+        }
+    },
+) { _, memo ->
+    if (memo != null) emit { copy(messages = messages + memo) }
 }
 
 private fun Flow<Action.SnackbarDismissed>.snackbarDismissalMutations(): Flow<Mutation<State>> =
     mapToMutation { action ->
         copy(messages = messages - action.message)
     }
+
+private fun CoroutineScope.documentsStateHolder(
+    publicationUri: StandardPublicationUri,
+    recordRepository: RecordRepository,
+) = actionStateFlowMutator<TilingState.Action, DocumentsTilingState>(
+    initialState = DocumentsTilingState(
+        publicationUri = publicationUri,
+    ),
+    actionTransform = transform@{ actions ->
+        actions.toMutationStream {
+            type().flow
+                .tilingMutations(
+                    currentState = { state() },
+                    updateQueryData = { copy(data = it) },
+                    refreshQuery = { copy(data = data.reset()) },
+                    cursorListLoader = recordRepository::publicationDocuments,
+                    onNewItems = { items ->
+                        items.distinctBy(StandardDocument::uri)
+                    },
+                    onTilingDataUpdated = { copy(tilingData = it) },
+                )
+        }
+    },
+)

@@ -119,6 +119,10 @@
     <string name="notifications_replied_to_you">%1$s replied to your post</string>
     <string name="notifications_unknown">You have a new notification</string>
     <string name="notifications_create_post">Create Post</string>
+
+   <string name="subscription_subscribed">Subscribed</string>
+   <string name="subscription_unsubscribed">Unsubscribed</string>
+
     <string name="more_options">More Options</string>
     <string name="likes">Likes</string>
     <string name="reposts">Reposts</string>

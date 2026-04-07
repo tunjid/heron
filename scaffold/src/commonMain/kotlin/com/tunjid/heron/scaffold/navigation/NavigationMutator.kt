@@ -29,6 +29,7 @@ import com.tunjid.heron.data.core.models.FeedGenerator
 import com.tunjid.heron.data.core.models.Post
 import com.tunjid.heron.data.core.models.Profile
 import com.tunjid.heron.data.core.models.Record
+import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.UrlEncodableModel
 import com.tunjid.heron.data.core.models.fromBase64EncodedUrl
 import com.tunjid.heron.data.core.models.toUrlEncodedBase64
@@ -281,6 +282,26 @@ fun grazeEditorDestination(
     models = listOfNotNull(
         feedGenerator,
     ),
+    sharedElementPrefix = sharedElementPrefix,
+    referringRouteOption = ReferringRouteOption.Current,
+)
+
+fun standardPublicationDestination(
+    publication: StandardPublication,
+    sharedElementPrefix: String?,
+): NavigationAction.Destination = pathDestination(
+    path = "/profile/${publication.publisher.did.id}/standard/publication/${publication.uri.recordKey.value}",
+    models = listOfNotNull(
+        publication,
+    ),
+    sharedElementPrefix = sharedElementPrefix,
+    referringRouteOption = ReferringRouteOption.Current,
+)
+
+fun standardSubscriptionsDestination(
+    sharedElementPrefix: String? = null,
+): NavigationAction.Destination = pathDestination(
+    path = "/standard/subscriptions",
     sharedElementPrefix = sharedElementPrefix,
     referringRouteOption = ReferringRouteOption.Current,
 )

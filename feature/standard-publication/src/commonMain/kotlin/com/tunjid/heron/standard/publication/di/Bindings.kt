@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tunjid.heron.data.core.types.ProfileHandleOrId
@@ -31,7 +32,6 @@ import com.tunjid.heron.data.utilities.getAsRawUri
 import com.tunjid.heron.scaffold.di.ScaffoldBindings
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.decodeReferringRoute
 import com.tunjid.heron.scaffold.navigation.NavigationAction.ReferringRouteOption.Companion.hydrate
-import com.tunjid.heron.scaffold.scaffold.AppBarTitle
 import com.tunjid.heron.scaffold.scaffold.PaneScaffold
 import com.tunjid.heron.scaffold.scaffold.PoppableDestinationTopAppBar
 import com.tunjid.heron.scaffold.scaffold.SecondaryPaneCloseBackHandler
@@ -43,6 +43,8 @@ import com.tunjid.heron.standard.publication.Action
 import com.tunjid.heron.standard.publication.ActualStandardPublicationViewModel
 import com.tunjid.heron.standard.publication.RouteViewModelInitializer
 import com.tunjid.heron.standard.publication.StandardPublicationScreen
+import com.tunjid.heron.standard.publication.ui.PublicationTitle
+import com.tunjid.heron.standard.publication.ui.SubscribeButton
 import com.tunjid.heron.ui.topAppBarNestedScrollConnection
 import com.tunjid.heron.ui.verticalOffsetProgress
 import com.tunjid.treenav.compose.PaneEntry
@@ -63,9 +65,6 @@ import dev.zacsweers.metro.Includes
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.StringKey
-import heron.feature.standard_publication.generated.resources.Res
-import heron.feature.standard_publication.generated.resources.publication
-import org.jetbrains.compose.resources.stringResource
 
 private const val StandardPublicationRoutePattern =
     "/profile/{profileId}/standard/publication/{publicationUriSuffix}"
@@ -204,10 +203,30 @@ class StandardPublicationBindings(
                 topBar = {
                     PoppableDestinationTopAppBar(
                         title = {
-                            AppBarTitle(
-                                title = state.publication?.name
-                                    ?: stringResource(Res.string.publication),
+                            PublicationTitle(
+                                paneTransitionScope = this,
+                                sharedElementPrefix = state.sharedElementPrefix,
+                                publication = state.publication,
                             )
+                        },
+                        actions = {
+                            state.publication?.let {
+                                SubscribeButton(
+                                    modifier = Modifier
+                                        .padding(horizontal = 8.dp),
+                                    publication = it,
+                                    onSubscriptionToggled = { publication, subscription ->
+                                        viewModel.accept(
+                                            if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
+                                                subscriptionUri = subscription.uri,
+                                            )
+                                            else Action.TogglePublicationSubscription.Subscribe(
+                                                publicationUri = publication.uri,
+                                            ),
+                                        )
+                                    },
+                                )
+                            }
                         },
                         transparencyFactor = topAppBarNestedScrollConnection::verticalOffsetProgress,
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
