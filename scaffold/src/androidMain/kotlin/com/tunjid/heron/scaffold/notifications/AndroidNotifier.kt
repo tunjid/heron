@@ -46,6 +46,7 @@ import heron.scaffold.generated.resources.notification_channel_quotes
 import heron.scaffold.generated.resources.notification_channel_replies
 import heron.scaffold.generated.resources.notification_channel_repost_reposts
 import heron.scaffold.generated.resources.notification_channel_reposts
+import heron.scaffold.generated.resources.notification_channel_standard_publications
 import org.jetbrains.compose.resources.getString
 
 class AndroidNotifier(
@@ -106,7 +107,7 @@ class AndroidNotifier(
         Intent().apply {
             component = ComponentName(context.packageName, DEEP_LINK_ACTIVITY)
             data = AndroidUri.Builder()
-                .scheme(Uri.Host.AtProto.prefix)
+                .scheme(deepLinkScheme())
                 .path(deepLinkPath())
                 .build()
             putExtra(EXTRA_NOTIFICATION_ID, androidNotificationId)
@@ -172,6 +173,7 @@ private val Notification.channelId: String
         is Notification.Mentioned -> "channel-mentioned"
         is Notification.RepliedTo -> "channel-replied"
         is Notification.Quoted -> "channel-quoted"
+        is Notification.DocumentPublished -> "channel-standard-publications"
         is Notification.JoinedStarterPack,
         is Notification.SubscribedPost,
         is Notification.Verified,
@@ -190,6 +192,7 @@ private suspend fun Notification.channelName(): String =
         is Notification.Mentioned -> getString(Res.string.notification_channel_mentions)
         is Notification.RepliedTo -> getString(Res.string.notification_channel_replies)
         is Notification.Quoted -> getString(Res.string.notification_channel_quotes)
+        is Notification.DocumentPublished -> getString(Res.string.notification_channel_standard_publications)
         is Notification.JoinedStarterPack,
         is Notification.SubscribedPost,
         is Notification.Verified,

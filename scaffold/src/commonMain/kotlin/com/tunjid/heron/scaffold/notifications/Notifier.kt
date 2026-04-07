@@ -20,13 +20,16 @@ import androidx.compose.runtime.Composable
 import com.tunjid.heron.data.core.models.LinkTarget
 import com.tunjid.heron.data.core.models.Notification
 import com.tunjid.heron.data.core.models.Profile
+import com.tunjid.heron.data.core.models.link
 import com.tunjid.heron.data.core.models.path
+import com.tunjid.heron.data.core.types.Uri
 import com.tunjid.heron.data.core.types.asRecordUriOrNull
 import com.tunjid.heron.data.utilities.path
 import com.tunjid.heron.scaffold.navigation.AppStack
 import com.tunjid.heron.ui.text.CommonStrings
 import heron.ui.core.generated.resources.notifications_account_unverified
 import heron.ui.core.generated.resources.notifications_account_verified
+import heron.ui.core.generated.resources.notifications_document_published
 import heron.ui.core.generated.resources.notifications_followed_you
 import heron.ui.core.generated.resources.notifications_joined_from_your_starter_pack
 import heron.ui.core.generated.resources.notifications_liked_your_post
@@ -60,9 +63,22 @@ expect fun notificationPermissionsLauncher(
     onPermissionResult: (Boolean) -> Unit = {},
 ): () -> Unit
 
+internal fun Notification.deepLinkScheme(): String =
+    when (this) {
+        is Notification.DocumentPublished -> when (associatedDocument.link) {
+            null -> Uri.Host.Https.prefix
+            else -> Uri.Host.AtProto.prefix
+        }
+        else -> Uri.Host.AtProto.prefix
+    }
+
 internal fun Notification.deepLinkPath(): String {
     return when (this) {
         is Notification.PostAssociated -> associatedPost.uri.path
+        is Notification.DocumentPublished -> when (val link = associatedDocument.link) {
+            null -> AppStack.Home.rootRoute.id
+            else -> "/${link.substringAfter(Uri.Host.Https.prefix)}"
+        }
         is Notification.Followed -> LinkTarget.UserDidMention(author.did).path
         is Notification.JoinedStarterPack -> reasonSubject?.asRecordUriOrNull()?.path
             ?: AppStack.Home.rootRoute.id
@@ -111,12 +127,17 @@ internal suspend fun Notification.title(): String = when (this) {
         author.nameOrHandle,
     )
     is Notification.SubscribedPost -> getString(CommonStrings.notifications_post_subscription_description)
+    is Notification.DocumentPublished -> getString(
+        CommonStrings.notifications_document_published,
+        author.nameOrHandle,
+    )
     is Notification.Verified -> getString(CommonStrings.notifications_account_verified)
     is Notification.Unverified -> getString(CommonStrings.notifications_account_unverified)
     is Notification.Unknown -> getString(CommonStrings.notifications_unknown)
 }
 
 internal fun Notification.body(): String? = when (this) {
+    is Notification.DocumentPublished -> associatedDocument.title
     is Notification.Followed -> null
     is Notification.JoinedStarterPack -> null
     is Notification.PostAssociated -> associatedPost.record?.text
