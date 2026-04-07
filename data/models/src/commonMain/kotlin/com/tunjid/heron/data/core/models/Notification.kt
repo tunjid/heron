@@ -150,6 +150,17 @@ sealed class Notification {
         override val viewerState: ProfileViewerState?,
     ) : PostAssociated()
 
+    data class DocumentPublished(
+        override val uri: GenericUri,
+        override val cid: GenericId,
+        override val author: Profile,
+        override val reasonSubject: GenericUri?,
+        override val isRead: Boolean,
+        override val indexedAt: Instant,
+        override val viewerState: ProfileViewerState?,
+        val associatedDocument: StandardDocument,
+    ) : Notification()
+
     data class Unknown(
         override val uri: GenericUri,
         override val cid: GenericId,
@@ -194,6 +205,7 @@ sealed class Notification {
         LikeViaRepost,
         RepostViaRepost,
         SubscribedPost,
+        DocumentPublished,
     }
 }
 
@@ -207,6 +219,7 @@ val Notification.associatedPostUri
         is Notification.RepliedTo -> null
         is Notification.Reposted -> associatedPost.uri
         is Notification.SubscribedPost -> associatedPost.uri
+        is Notification.DocumentPublished -> null
         is Notification.Unknown -> null
         is Notification.Unverified -> null
         is Notification.Verified -> null

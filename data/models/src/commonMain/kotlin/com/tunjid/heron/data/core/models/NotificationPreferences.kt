@@ -98,12 +98,16 @@ data class NotificationPreferences(
 fun NotificationPreferences.shouldShowNotification(
     reason: Notification.Reason,
     isAuthorFollowed: Boolean = false,
-): Boolean = when (val pref = forReason(reason)) {
-    is NotificationPreferences.Preference.Filterable ->
-        pref.allowsPush() && pref.allowsAuthor(isAuthorFollowed)
-    is NotificationPreferences.Preference.Simple ->
-        pref.allowsPush()
-    null -> false
+): Boolean {
+    // DocumentPublished notifications are always shown since the user explicitly subscribed
+    if (reason == Notification.Reason.DocumentPublished) return true
+    return when (val pref = forReason(reason)) {
+        is NotificationPreferences.Preference.Filterable ->
+            pref.allowsPush() && pref.allowsAuthor(isAuthorFollowed)
+        is NotificationPreferences.Preference.Simple ->
+            pref.allowsPush()
+        null -> false
+    }
 }
 
 private fun NotificationPreferences.forReason(
@@ -121,5 +125,6 @@ private fun NotificationPreferences.forReason(
     Notification.Reason.SubscribedPost -> subscribedPost
     Notification.Reason.Verified -> verified
     Notification.Reason.Unverified -> unverified
+    Notification.Reason.DocumentPublished -> null
     Notification.Reason.Unknown -> null
 }

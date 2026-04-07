@@ -34,6 +34,7 @@
     <string name="notification_channel_replies">Replies</string>
     <string name="notification_channel_reposts">Reposts</string>
     <string name="notification_channel_repost_reposts">Reposts of your reposts</string>
+    <string name="notification_channel_standard_publications">Subscribed publications</string>
     <string name="notification_channel_misc">Miscellaneous</string>
     <string name="notification_permissions_dialog_title">Push notifications</string>
     <string name="notification_permissions_request_dialog_text">Heron can send push notifications to your device when people interact with your public data like posts, likes and reposts.
