@@ -39,6 +39,8 @@ import com.tunjid.heron.data.core.types.FollowUri
 import com.tunjid.heron.data.core.types.ProfileHandle
 import com.tunjid.heron.data.core.types.ProfileId
 import com.tunjid.heron.data.core.types.RecordUri
+import com.tunjid.heron.data.core.types.StandardPublicationUri
+import com.tunjid.heron.data.core.types.StandardSubscriptionUri
 import com.tunjid.heron.data.repository.ProfilesQuery
 import com.tunjid.heron.profile.ProfileScreenStateHolders.LabelerSettings
 import com.tunjid.heron.profile.ProfileScreenStateHolders.LabelerSettings.Settings
@@ -254,6 +256,16 @@ sealed class Action(val key: String) {
     data class UpdateMutedWord(
         val mutedWordPreference: List<MutedWordPreference>,
     ) : Action(key = "UpdateMutedWord")
+
+    sealed class TogglePublicationSubscription : Action(key = "TogglePublicationSubscription") {
+        data class Subscribe(
+            val publicationUri: StandardPublicationUri,
+        ) : TogglePublicationSubscription()
+
+        data class Unsubscribe(
+            val subscriptionUri: StandardSubscriptionUri,
+        ) : TogglePublicationSubscription()
+    }
 
     data class DeleteRecord(
         val recordUri: RecordUri,

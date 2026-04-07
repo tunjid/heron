@@ -137,6 +137,7 @@ import com.tunjid.heron.scaffold.navigation.profileFollowersDestination
 import com.tunjid.heron.scaffold.navigation.profileFollowsDestination
 import com.tunjid.heron.scaffold.navigation.recordDestination
 import com.tunjid.heron.scaffold.navigation.signInDestination
+import com.tunjid.heron.scaffold.navigation.standardPublicationDestination
 import com.tunjid.heron.scaffold.scaffold.PaneScaffoldState
 import com.tunjid.heron.scaffold.scaffold.SignInPopUpState.Companion.rememberSignInPopUpState
 import com.tunjid.heron.scaffold.scaffold.paneClip
@@ -519,7 +520,29 @@ internal fun ProfileScreen(
                                                 }
                                             }
                                             .recordPadding(),
+                                        paneTransitionScope = paneScaffoldState,
+                                        sharedElementPrefix = document.uri.uri,
                                         document = document,
+                                        onPublicationClicked = {
+                                            actions(
+                                                Action.Navigate.To(
+                                                    standardPublicationDestination(
+                                                        publication = it,
+                                                        sharedElementPrefix = document.uri.uri,
+                                                    ),
+                                                ),
+                                            )
+                                        },
+                                        onSubscriptionToggled = { publication, subscription ->
+                                            actions(
+                                                if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
+                                                    subscriptionUri = subscription.uri,
+                                                )
+                                                else Action.TogglePublicationSubscription.Subscribe(
+                                                    publicationUri = publication.uri,
+                                                ),
+                                            )
+                                        },
                                     )
                                 },
                             )

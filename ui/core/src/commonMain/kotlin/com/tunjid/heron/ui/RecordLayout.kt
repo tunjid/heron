@@ -96,13 +96,14 @@ fun RecordLayout(
 @Composable
 fun RecordTitle(
     title: String,
+    maxLines: Int = 1,
     modifier: Modifier = Modifier,
 ) {
     Text(
         modifier = modifier,
         text = title,
         overflow = TextOverflow.Ellipsis,
-        maxLines = 1,
+        maxLines = maxLines,
         style = LocalTextStyle.current.copy(fontWeight = Bold),
     )
 }

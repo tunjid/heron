@@ -146,21 +146,29 @@ fun EmbeddedRecord(
     }
 }
 
-fun Record.Embeddable.avatarSharedElementKey(
+inline fun <T : Record> T.avatarSharedElementKey(
     prefix: String?,
     quotingPostUri: PostUri? = null,
+    creator: T.() -> Profile,
 ): String {
     val finalPrefix = quotingPostUri
         ?.let { "$prefix-$it" }
         ?: prefix
-    val creator = when (this) {
+    val creator = creator()
+    return creator.avatarSharedElementKey("$finalPrefix-${reference.uri.uri}")
+}
+
+fun Record.Embeddable.avatarSharedElementKey(
+    prefix: String?,
+    quotingPostUri: PostUri? = null,
+): String = avatarSharedElementKey(prefix, quotingPostUri) {
+    when (this) {
         is Labeler -> creator
         is Post -> author
         is FeedGenerator -> creator
         is FeedList -> creator
         is StarterPack -> creator
     }
-    return creator.avatarSharedElementKey("$finalPrefix-${reference.uri.uri}")
 }
 
 fun Profile.avatarSharedElementKey(
@@ -177,6 +185,11 @@ fun EmbeddableRecordUri.shareUri(): GenericUri =
             is PostUri -> "https://bsky.app/profile/${profileId().id}/post/${recordKey.value}"
         },
     )
+
+fun Record.collectionShape() = when (this) {
+    is Record.Embeddable -> embeddableRecordUri.collectionShape()
+    else -> DocumentCollectionShape
+}
 
 fun EmbeddableRecordUri.collectionShape() = when (this) {
     is FeedGeneratorUri -> FeedGeneratorCollectionShape

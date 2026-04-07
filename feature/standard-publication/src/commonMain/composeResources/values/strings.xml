@@ -16,4 +16,5 @@
 
 <resources>
     <string name="publication">Publication</string>
+    <string name="publication_publisher">Published by %1$s</string>
 </resources>
