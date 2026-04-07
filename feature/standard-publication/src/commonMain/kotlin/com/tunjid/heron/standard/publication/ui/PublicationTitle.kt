@@ -51,8 +51,11 @@ import com.tunjid.heron.ui.AppBarButton
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.rememberLatchedState
+import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.standard_publication.generated.resources.Res
 import heron.feature.standard_publication.generated.resources.publication_publisher
+import heron.ui.core.generated.resources.subscription_subscribed
+import heron.ui.core.generated.resources.subscription_unsubscribed
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -146,7 +149,10 @@ fun SubscribeButton(
             icon =
             if (isSubscribed) Icons.Rounded.NotificationsActive
             else Icons.Rounded.NotificationsOff,
-            iconDescription = "",
+            iconDescription = stringResource(
+                if (isSubscribed) CommonStrings.subscription_subscribed
+                else CommonStrings.subscription_unsubscribed,
+            ),
             onClick = {
                 if (latchedSubscribedState.isCurrent) {
                     onSubscriptionToggled(

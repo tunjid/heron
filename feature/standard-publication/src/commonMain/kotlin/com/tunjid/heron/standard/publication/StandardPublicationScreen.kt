@@ -32,6 +32,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -123,7 +124,9 @@ internal fun StandardPublicationScreen(
                     state.publication?.description
                         ?.takeIf(String::isNotBlank)
                         ?.let { description ->
-                            val textLinks = AnnotatedString(description).links()
+                            val textLinks = remember(description) {
+                                AnnotatedString(description).links()
+                            }
                             val annotatedText = rememberFormattedTextPost(
                                 text = description,
                                 textLinks = textLinks,

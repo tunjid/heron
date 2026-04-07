@@ -54,6 +54,9 @@ import com.tunjid.heron.ui.RecordSubtitle
 import com.tunjid.heron.ui.RecordText
 import com.tunjid.heron.ui.RecordTitle
 import com.tunjid.heron.ui.rememberLatchedState
+import com.tunjid.heron.ui.text.CommonStrings
+import heron.ui.core.generated.resources.subscription_subscribed
+import heron.ui.core.generated.resources.subscription_unsubscribed
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.standard_site_published_in
 import kotlinx.datetime.LocalDateTime
@@ -216,7 +219,10 @@ private fun SubscribeButton(
                         imageVector =
                         if (isSubscribed) Icons.Rounded.NotificationsActive
                         else Icons.Rounded.NotificationsOff,
-                        contentDescription = null,
+                        contentDescription = stringResource(
+                            if (isSubscribed) CommonStrings.subscription_subscribed
+                            else CommonStrings.subscription_unsubscribed,
+                        ),
                         tint = MaterialTheme.colorScheme.outline,
                     )
                 }
