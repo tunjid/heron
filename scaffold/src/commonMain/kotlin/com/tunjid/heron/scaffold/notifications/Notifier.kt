@@ -66,8 +66,8 @@ expect fun notificationPermissionsLauncher(
 internal fun Notification.deepLinkScheme(): String =
     when (this) {
         is Notification.DocumentPublished -> when (associatedDocument.link) {
-            null -> Uri.Host.Https.prefix
-            else -> Uri.Host.AtProto.prefix
+            null -> Uri.Host.AtProto.prefix
+            else -> Uri.Host.Https.prefix
         }
         else -> Uri.Host.AtProto.prefix
     }
@@ -77,6 +77,8 @@ internal fun Notification.deepLinkPath(): String {
         is Notification.PostAssociated -> associatedPost.uri.path
         is Notification.DocumentPublished -> when (val link = associatedDocument.link) {
             null -> AppStack.Home.rootRoute.id
+            // Valid links are always https, append leading slash
+            // and remove the "https://" prefix.
             else -> "/${link.substringAfter(Uri.Host.Https.prefix)}"
         }
         is Notification.Followed -> LinkTarget.UserDidMention(author.did).path

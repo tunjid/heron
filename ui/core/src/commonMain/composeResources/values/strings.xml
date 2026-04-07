@@ -114,7 +114,7 @@
     <string name="notifications_multiple_post_subscription">New content from %1$s and %2$d others</string>
     <string name="notifications_document_published_description">New document published</string>
     <string name="notifications_document_published">%1$s published a document</string>
-    <string name="notifications_multiple_document_published">%1$s and %2$d others published docments</string>
+    <string name="notifications_multiple_document_published">%1$s and %2$d others published documents</string>
     <string name="notifications_account_verified">Your account has been verified</string>
     <string name="notifications_account_unverified">Your account has been unverified</string>
     <string name="notifications_mentioned_you">%1$s mentioned you</string>
