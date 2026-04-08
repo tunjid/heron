@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -52,6 +51,7 @@ import com.tunjid.heron.profile.AvatarZIndex
 import com.tunjid.heron.profile.ProfileLiveChip
 import com.tunjid.heron.profile.profileLiveAvatarBorder
 import com.tunjid.heron.profile.withProfileAvatarLiveSharedElementPrefix
+import com.tunjid.heron.scaffold.scaffold.components.ClickPassThroughToolbar
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.blur
 import com.tunjid.heron.ui.modifiers.ifTrue
@@ -70,7 +70,7 @@ fun PaneScaffoldState.RootDestinationTopAppBar(
     onSignedInProfileClicked: (Profile, String) -> Unit,
 ) {
     val isLive = signedInProfile?.status?.isLive == true
-    TopAppBar(
+    ClickPassThroughToolbar(
         modifier = modifier
             .constrainedSizePlacement(
                 orientation = Orientation.Horizontal,
@@ -174,7 +174,7 @@ fun PaneScaffoldState.PoppableDestinationTopAppBar(
     transparencyFactor: () -> Float = { 0f },
     onBackPressed: () -> Unit,
 ) {
-    TopAppBar(
+    ClickPassThroughToolbar(
         modifier = modifier
             .constrainedSizePlacement(
                 orientation = Orientation.Horizontal,

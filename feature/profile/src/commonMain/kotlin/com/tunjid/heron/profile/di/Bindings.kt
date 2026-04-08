@@ -183,8 +183,6 @@ class ProfileBindings(
                 showNavigation = true,
                 topBar = {
                     PoppableDestinationTopAppBar(
-                        // Limit width so tabs may be tapped
-                        modifier = Modifier.wrapContentWidth(Alignment.Start),
                         transparencyFactor = ::fullAppbarTransparency,
                         onBackPressed = { viewModel.accept(Action.Navigate.Pop) },
                     )

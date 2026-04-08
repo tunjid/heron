@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.tunjid.heron.scaffold.scaffold
+package com.tunjid.heron.scaffold.scaffold.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.offset
 import com.tunjid.heron.ui.platformStatusBars
+import kotlin.jvm.JvmInline
 import kotlin.math.max
 
 /**
@@ -276,7 +277,7 @@ object ScaffoldDefaults {
 }
 
 /** The possible positions for a [FloatingActionButton] attached to a [Scaffold]. */
-@kotlin.jvm.JvmInline
+@JvmInline
 value class FabPosition internal constructor(@Suppress("unused") private val value: Int) {
     companion object {
         /**
