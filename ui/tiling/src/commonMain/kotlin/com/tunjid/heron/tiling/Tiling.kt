@@ -236,7 +236,7 @@ fun CursorQuery.hasDifferentAnchor(newQuery: CursorQuery) =
 fun <Query : CursorQuery, Item> TiledList<Query, Item>.isValidFor(
     currentQuery: Query,
 ): Boolean {
-    if(isEmpty()) return true
+    if (isEmpty()) return true
 
     // Ignore results from stale queries
     var seenQuery = false

@@ -53,8 +53,8 @@ fun PublicationSubscriptionIcon(
             modifier = Modifier
                 .size(iconSize),
             imageVector =
-                if (isSubscribed) Icons.Rounded.NotificationsOff
-                else Icons.Rounded.NotificationsActive,
+            if (isSubscribed) Icons.Rounded.NotificationsOff
+            else Icons.Rounded.NotificationsActive,
             contentDescription = stringResource(
                 if (isSubscribed) CommonStrings.standard_publication_unsubscribe_from
                 else CommonStrings.standard_publication_subscribe_to,
