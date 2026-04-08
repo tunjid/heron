@@ -23,9 +23,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.windowInsetsTopHeight
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -49,17 +51,23 @@ fun ClickPassThroughToolbar(
         Spacer(Modifier.windowInsetsTopHeight(windowInsets))
         Row(
             modifier = Modifier
-                .height(UiTokens.appBarHeight),
+                .height(UiTokens.toolbarHeight),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            navigationIcon()
-            Row(
-                modifier = Modifier
-                    .weight(1f),
-            ) {
-                title()
+            CompositionLocalProvider(LocalContentColor provides colors.navigationIconContentColor) {
+                navigationIcon()
             }
-            actions()
+            CompositionLocalProvider(LocalContentColor provides colors.titleContentColor) {
+                Row(
+                    modifier = Modifier
+                        .weight(1f),
+                ) {
+                    title()
+                }
+            }
+            CompositionLocalProvider(LocalContentColor provides colors.actionIconContentColor) {
+                actions()
+            }
         }
     }
 }

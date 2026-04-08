@@ -44,8 +44,6 @@ object UiTokens {
 
     val tabsHeight = 48.dp
 
-    val appBarHeight = 64.dp
-
     val appBarButtonSize = 40.dp
 
     val appBarBlurRadius = 60.dp
