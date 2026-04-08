@@ -53,7 +53,6 @@ import heron.ui.timeline.generated.resources.empty_timeline_thread_description
 import heron.ui.timeline.generated.resources.empty_timeline_videos
 import heron.ui.timeline.generated.resources.empty_timeline_videos_description
 import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun EmptyPost(
