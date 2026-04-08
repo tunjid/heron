@@ -15,5 +15,7 @@
   -->
 
 <resources>
-    <string name="subscriptions">Subscriptions</string>
+    <string name="subscriptions">Publication subscriptions</string>
+    <string name="empty_subscriptions">No subscriptions yet</string>
+    <string name="empty_subscriptions_description">Publications you subscribe to will appear here.</string>
 </resources>
