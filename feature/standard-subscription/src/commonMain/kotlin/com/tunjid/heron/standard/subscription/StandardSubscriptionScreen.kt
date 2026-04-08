@@ -130,6 +130,8 @@ internal fun StandardSubscriptionScreen(
                                     Action.Navigate.To(
                                         pathDestination(
                                             path = publication.uri.path,
+                                            models = listOf(publication),
+                                            sharedElementPrefix = SharedElementPrefix,
                                             referringRouteOption = NavigationAction.ReferringRouteOption.Current,
                                         ),
                                     ),
