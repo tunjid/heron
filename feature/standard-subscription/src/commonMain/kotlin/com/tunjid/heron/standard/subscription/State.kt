@@ -19,6 +19,8 @@ package com.tunjid.heron.standard.subscription
 import com.tunjid.heron.data.core.models.CursorQuery
 import com.tunjid.heron.data.core.models.DataQuery
 import com.tunjid.heron.data.core.models.StandardPublication
+import com.tunjid.heron.data.core.types.StandardPublicationUri
+import com.tunjid.heron.data.core.types.StandardSubscriptionUri
 import com.tunjid.heron.scaffold.navigation.NavigationAction
 import com.tunjid.heron.tiling.TilingState
 import com.tunjid.heron.ui.text.Memo
@@ -53,6 +55,16 @@ sealed class Action(val key: String) {
     data class SnackbarDismissed(
         val message: Memo,
     ) : Action(key = "SnackbarDismissed")
+
+    sealed class TogglePublicationSubscription : Action(key = "TogglePublicationSubscription") {
+        data class Subscribe(
+            val publicationUri: StandardPublicationUri,
+        ) : TogglePublicationSubscription()
+
+        data class Unsubscribe(
+            val subscriptionUri: StandardSubscriptionUri,
+        ) : TogglePublicationSubscription()
+    }
 
     sealed class Navigate :
         Action(key = "Navigate"),

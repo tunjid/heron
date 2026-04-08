@@ -20,9 +20,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Article
 import androidx.compose.material.icons.rounded.Forum
 import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.Newspaper
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -55,7 +55,7 @@ fun ContentAndMediaItem(
             .settingsItemPaddingAndMinHeight()
             .fillMaxWidth(),
         title = stringResource(Res.string.content_and_media),
-        icon = Icons.Rounded.Newspaper,
+        icon = Icons.AutoMirrored.Rounded.Article,
     ) {
         SettingsItem(
             modifier = Modifier

@@ -16,10 +16,6 @@
 
 package com.tunjid.heron.timeline.ui.standard
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -27,13 +23,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.NotificationsActive
-import androidx.compose.material.icons.rounded.NotificationsOff
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -55,8 +46,8 @@ import com.tunjid.heron.ui.RecordText
 import com.tunjid.heron.ui.RecordTitle
 import com.tunjid.heron.ui.rememberLatchedState
 import com.tunjid.heron.ui.text.CommonStrings
-import heron.ui.core.generated.resources.subscription_subscribed
-import heron.ui.core.generated.resources.subscription_unsubscribed
+import heron.ui.core.generated.resources.standard_publication_subscribe_to
+import heron.ui.core.generated.resources.standard_publication_unsubscribe_from
 import heron.ui.timeline.generated.resources.Res
 import heron.ui.timeline.generated.resources.standard_site_published_in
 import kotlinx.datetime.LocalDateTime
@@ -199,43 +190,29 @@ private fun SubscribeButton(
     onSubscriptionToggled: (StandardPublication, StandardSubscription?) -> Unit,
 ) {
     document.publication?.let { publication ->
-        val subscription = publication.subscription
-        val latchedSubscribedState = rememberLatchedState(subscription != null)
-        val subscribed by latchedSubscribedState
+        val subscribed = publication.subscription != null
+        val latchedSubscribedState = rememberLatchedState(subscribed)
 
         Label(
-            contentDescription = "",
+            contentDescription = stringResource(
+                if (latchedSubscribedState.value) CommonStrings.standard_publication_unsubscribe_from
+                else CommonStrings.standard_publication_subscribe_to,
+            ),
             isElevated = true,
             icon = {
-                AnimatedContent(
-                    targetState = subscribed,
-                    transitionSpec = {
-                        SubscriptionContentTransform
-                    },
-                ) { isSubscribed ->
-                    Icon(
-                        modifier = Modifier
-                            .size(16.dp),
-                        imageVector =
-                        if (isSubscribed) Icons.Rounded.NotificationsActive
-                        else Icons.Rounded.NotificationsOff,
-                        contentDescription = stringResource(
-                            if (isSubscribed) CommonStrings.subscription_subscribed
-                            else CommonStrings.subscription_unsubscribed,
-                        ),
-                        tint = MaterialTheme.colorScheme.outline,
-                    )
-                }
+                PublicationSubscriptionIcon(
+                    subscribed = latchedSubscribedState.value,
+                    iconSize = 16.dp,
+                    iconTint = MaterialTheme.colorScheme.outline,
+                )
             },
             description = {},
             onClick = {
-                if (latchedSubscribedState.isCurrent) {
-                    onSubscriptionToggled(
-                        publication,
-                        subscription,
-                    )
-                    latchedSubscribedState.latch(!subscribed)
-                }
+                latchedSubscribedState.latch(!subscribed)
+                onSubscriptionToggled(
+                    publication,
+                    publication.subscription,
+                )
             },
         )
     }
@@ -253,5 +230,3 @@ private fun StandardDocument.publishDate(): String =
                 year()
             },
         )
-
-private val SubscriptionContentTransform = fadeIn() togetherWith fadeOut()

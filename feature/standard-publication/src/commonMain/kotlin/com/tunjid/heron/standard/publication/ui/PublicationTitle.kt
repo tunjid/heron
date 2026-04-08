@@ -16,10 +16,6 @@
 
 package com.tunjid.heron.standard.publication.ui
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,14 +23,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.NotificationsActive
-import androidx.compose.material.icons.rounded.NotificationsOff
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,17 +37,15 @@ import com.tunjid.heron.data.core.models.StandardPublication
 import com.tunjid.heron.data.core.models.StandardSubscription
 import com.tunjid.heron.images.AsyncImage
 import com.tunjid.heron.images.ImageArgs
+import com.tunjid.heron.timeline.ui.standard.PublicationSubscriptionIcon
 import com.tunjid.heron.timeline.utilities.avatarSharedElementKey
 import com.tunjid.heron.timeline.utilities.collectionShape
 import com.tunjid.heron.ui.AppBarButton
 import com.tunjid.heron.ui.PaneTransitionScope
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.rememberLatchedState
-import com.tunjid.heron.ui.text.CommonStrings
 import heron.feature.standard_publication.generated.resources.Res
 import heron.feature.standard_publication.generated.resources.publication_publisher
-import heron.ui.core.generated.resources.subscription_subscribed
-import heron.ui.core.generated.resources.subscription_unsubscribed
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -134,36 +124,24 @@ fun SubscribeButton(
     publication: StandardPublication,
     onSubscriptionToggled: (StandardPublication, StandardSubscription?) -> Unit,
 ) {
-    val subscription = publication.subscription
-    val latchedSubscribedState = rememberLatchedState(subscription != null)
-    val subscribed by latchedSubscribedState
+    val subscribed = publication.subscription != null
+    val latchedSubscribedState = rememberLatchedState(subscribed)
 
-    AnimatedContent(
+    AppBarButton(
         modifier = modifier,
-        targetState = subscribed,
-        transitionSpec = {
-            SubscriptionContentTransform
+        onClick = {
+            latchedSubscribedState.latch(!subscribed)
+            onSubscriptionToggled(
+                publication,
+                publication.subscription,
+            )
         },
-    ) { isSubscribed ->
-        AppBarButton(
-            icon =
-            if (isSubscribed) Icons.Rounded.NotificationsActive
-            else Icons.Rounded.NotificationsOff,
-            iconDescription = stringResource(
-                if (isSubscribed) CommonStrings.subscription_subscribed
-                else CommonStrings.subscription_unsubscribed,
-            ),
-            onClick = {
-                if (latchedSubscribedState.isCurrent) {
-                    onSubscriptionToggled(
-                        publication,
-                        subscription,
-                    )
-                    latchedSubscribedState.latch(!subscribed)
-                }
-            },
-        )
-    }
+        content = {
+            PublicationSubscriptionIcon(
+                subscribed = latchedSubscribedState.value,
+                iconSize = 24.dp,
+                iconTint = MaterialTheme.colorScheme.primary,
+            )
+        },
+    )
 }
-
-private val SubscriptionContentTransform = fadeIn() togetherWith fadeOut()

@@ -16,11 +16,11 @@
 
 package com.tunjid.heron.standard.subscription
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
@@ -45,6 +45,7 @@ import com.tunjid.heron.timeline.ui.DismissableRefreshIndicator
 import com.tunjid.heron.timeline.ui.standard.Publication
 import com.tunjid.heron.ui.UiTokens
 import com.tunjid.heron.ui.modifiers.gridColumnCount
+import com.tunjid.heron.ui.modifiers.shapedClickable
 import com.tunjid.tiler.compose.PivotedTilingEffect
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -106,8 +107,9 @@ internal fun StandardSubscriptionScreen(
                     Publication(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .padding(horizontal = 8.dp)
                             .animateItem()
-                            .clickable {
+                            .shapedClickable {
                                 actions(
                                     Action.Navigate.To(
                                         pathDestination(
@@ -116,10 +118,21 @@ internal fun StandardSubscriptionScreen(
                                         ),
                                     ),
                                 )
-                            },
+                            }
+                            .padding(horizontal = 8.dp),
                         paneTransitionScope = paneScaffoldState,
                         sharedElementPrefix = SharedElementPrefix,
                         publication = publication,
+                        onSubscriptionToggled = { publication, subscription ->
+                            actions(
+                                if (subscription != null) Action.TogglePublicationSubscription.Unsubscribe(
+                                    subscriptionUri = subscription.uri,
+                                )
+                                else Action.TogglePublicationSubscription.Subscribe(
+                                    publicationUri = publication.uri,
+                                ),
+                            )
+                        },
                     )
                 },
             )
